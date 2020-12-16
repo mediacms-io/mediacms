@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Liked media - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/liked.css" %}" rel="preload" as="style">
+<link href="{% static "css/liked.css" %}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+{% if user %}<div id="page-liked"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/liked.js" %}"></script>
+{% endblock bottomimports %}

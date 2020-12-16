@@ -1,0 +1,27 @@
+MediaCMS.user = {
+	name: {% if request.user.is_authenticated %}"{{request.user.username}}"{% else %}null{% endif %},
+	username: {% if request.user.is_authenticated %}"{{request.user.username}}"{% else %}null{% endif %},
+	thumbnail: {% if request.user.is_authenticated %}"{{request.user.thumbnail_url}}"{% else %}null{% endif %},
+	is: {
+		admin: {% if IS_MEDIACMS_ADMIN %}true{% else %}false{% endif %},
+		anonymous: {% if request.user.is_authenticated %}false{% else %}true{% endif %},
+	},
+	can: {
+		addMedia: {% if CAN_UPLOAD_MEDIA %}true{% else %}false{% endif %},
+		editMedia: {% if CAN_EDIT_MEDIA %}true{% else %}false{% endif %},
+		deleteMedia: {% if CAN_DELETE_MEDIA %}true{% else %}false{% endif %},
+		editSubtitle: {% if CAN_EDIT_MEDIA %}true{% else %}false{% endif %},
+		readComment: true,
+		addComment: true,
+		deleteComment: {% if CAN_DELETE_COMMENTS %}true{% else %}false{% endif %},
+		editProfile: {% if CAN_EDIT %}true{% else %}false{% endif %},
+		deleteProfile: {% if CAN_DELETE_PROFILE %}true{% else %}false{% endif %},
+		manageMedia: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
+		manageUsers: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}true{% else %}false{% endif %},
+		manageComments: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
+	},
+	pages: {
+		home: '/user/{{request.user.username}}',
+		about: '/user/{{request.user.username}}/about',
+	}
+};

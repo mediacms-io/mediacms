@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+
+        <title>{% block headtitle %}{{PORTAL_NAME}}{% endblock headtitle %}</title>
+
+        {% include "common/head-meta.html" %}
+
+        {% block headermeta %}
+        
+        <meta property="og:title" content="{{PORTAL_NAME}}">
+        <meta property="og:type" content="website">
+
+        {%endblock headermeta %}
+
+        {% block externallinks %}{% endblock externallinks %}
+
+        {% include "common/head-links.html" %}
+
+        {% block topimports %}{%endblock topimports %}
+
+        {% include "config/index.html" %}
+        
+    {% endblock head %}
+
+</head>
+
+<body>
+
+    {% block beforecontent %}{% endblock %}
+
+    <div class="page-main-wrap">
+        {% include "messages.html" %}
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block aftercontent %}{% endblock %}
+
+    {% if LOAD_FROM_CDN %}
+    <script src="https://vjs.zencdn.net/7.7.5/video.min.js"></script>
+    {% else %}
+    <script src="{% static "lib/video-js/7.7.5/video.min.js" %}"></script>
+    {% endif %}
+
+    {% block externalscripts %}{% endblock externalscripts %}
+
+    {% include "common/body-scripts.html" %}
+
+    {% block bottomimports %}{% endblock bottomimports %}
+
+</body>
+
+</html>

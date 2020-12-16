@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headermeta %}
+
+<link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
+
+<meta property="og:title" content="{{PORTAL_NAME}}">
+<meta property="og:url" content="{{FRONTEND_HOST}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	"url": "{{FRONTEND_HOST}}",
+	"potentialAction": {
+		"@type": "SearchAction",
+		"target": "{{FRONTEND_HOST}}/search?q={search_query_string}",
+		"query-input": "required name=search_query_string"
+	}
+}
+</script>
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+        	"@type": "WebPage",
+        	"@id": "{{FRONTEND_HOST}}"
+    	}
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-home"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/index.js" %}"></script>
+{% endblock bottomimports %}

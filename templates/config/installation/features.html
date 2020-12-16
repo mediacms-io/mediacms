@@ -1,0 +1,28 @@
+MediaCMS.features = {
+	embeddedVideo: {
+		initialDimensions: {	// In pixels.
+			width: 560,		
+            height: 315,
+		},
+	},
+	headerBar:{
+		hideLogin: {% if CAN_LOGIN %}false{% else %}true{% endif %},
+		hideRegister: {% if CAN_REGISTER %}false{% else %}true{% endif %},
+	},
+	media:{
+		actions:{
+			share: {% if CAN_SHARE_MEDIA %}true{% else %}false{% endif %},
+			report: {% if CAN_REPORT_MEDIA %}true{% else %}false{% endif %},
+			like: {% if CAN_LIKE_MEDIA %}true{% else %}false{% endif %},
+			dislike: {% if CAN_DISLIKE_MEDIA %}true{% else %}false{% endif %},
+			download: true,
+			comment: true,
+		},
+		shareOptions: [ 'embed', 'fb', 'tw', 'whatsapp', 'telegram', 'reddit', 'tumblr', 'vk', 'pinterest', 'mix', 'linkedin', 'email' ],
+	},
+	mediaItem:{
+		hideDate: false,
+		hideViews: false,
+		hideAuthor: false,
+	},
+};

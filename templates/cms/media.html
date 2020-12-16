@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}{{media_object.title}} - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
+
+<meta name="description" content="{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}">
+
+<meta property="og:title" content="{{media_object.title}} - {{PORTAL_NAME}}">
+<meta property="og:url" content="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
+<meta property="og:description" content="{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}">
+<meta property="og:updated_time" content="{{media_object.edit_date}}">
+
+{% if media_object.media_type == "video" %}
+<meta property="og:type" content="video.other">
+{% else %}
+<meta property="og:type" content="website">
+{% endif %}
+
+{% if media_object.media_type == "video" %}
+
+<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "VideoObject",
+    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+    "thumbnailUrl": [
+    	"{{FRONTEND_HOST}}{{media_object.poster_url}}"
+    ],
+    "uploadDate": "{{media_object.add_date}}",
+    "dateModified": "{{media_object.edit_date}}",
+    "embedUrl": "{{FRONTEND_HOST}}/embed?m={{media}}",
+    "duration": "T{{media_object.duration}}S",
+    "potentialAction": {
+        "@type": "ViewAction",
+        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    }
+}
+</script>
+
+{% elif media_object.media_type == "audio" %}
+
+<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "AudioObject",
+    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+    "uploadDate": "{{media_object.add_date}}",
+    "dateModified": "{{media_object.edit_date}}",
+    "duration": "T{{media_object.duration}}S",
+    "potentialAction": {
+        "@type": "ViewAction",
+        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    }
+}
+</script>
+
+{% elif media_object.media_type == "image" %}
+
+<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.original_media_url}}">
+
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "ImageObject",
+    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+    "uploadDate": "{{media_object.add_date}}",
+    "dateModified": "{{media_object.edit_date}}",
+    "potentialAction": {
+        "@type": "ViewAction",
+        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    }
+}
+</script>
+
+{% else %}
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "MediaObject",
+    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+    "uploadDate": "{{media_object.add_date}}",
+    "dateModified": "{{media_object.edit_date}}",
+    "potentialAction": {
+        "@type": "ViewAction",
+        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    }
+}
+</script>
+
+{% endif %}
+
+{% endblock headermeta %}
+
+{% block topimports %}
+<link href="{% static "css/media.css" %}" rel="preload" as="style">
+<link href="{% static "css/media.css" %}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}<div id="page-media"></div>{% endblock content %}
+
+{% block bottomimports %}
+<script src="{% static "js/media.js" %}"></script>
+{% endblock bottomimports %}

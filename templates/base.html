@@ -1,0 +1,22 @@
+{% extends "root.html" %}
+{% load static %}
+
+{% block beforecontent %}
+{% include "components/header.html" %}
+{% include "components/sidebar.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <div class="page-main-inner">
+    {% block innercontent %}{% endblock innercontent %}
+    </div>
+    <div class="page-sidebar-content-overlay"></div>
+</div>
+{% endblock %}
+
+{% block aftercontent %}
+{% include "components/footer.html" %}
+{% endblock %}
+
+{% block bottomimports %}<script src="{% static "js/base.js" %}"></script>{% endblock bottomimports %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block headtitle %}Add subtitle - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block innercontent %}
+	<div class="user-action-form-wrap">
+		<div class="user-action-form-inner">
+			<h1>Add subtitle</h1>
+			<form enctype="multipart/form-data" action="" method="post" class="post-form">
+				{% csrf_token %}
+				{{ form|crispy }}
+				<button class="primaryAction" type="submit">Add</button>
+			</form>
+		</div>
+	</div>
+{% endblock innercontent %}

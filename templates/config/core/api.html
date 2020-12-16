@@ -1,0 +1,14 @@
+MediaCMS.api = {
+	media: "/media",
+    comments: '/comments',
+    search: "/search",
+    tags: '/tags',
+    categories: '/categories',
+    members: '/users',
+    liked: '/user/action/like',
+    history: '/user/action/watch',
+	actions: '/actions',
+    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_media: '/manage_media',{% endif %}
+    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}manage_users: '/manage_users',{% endif %}
+    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_comments: '/manage_comments',{% endif %}
+};

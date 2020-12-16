@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block headtitle %}Contact us - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Contact us - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}"
+        }
+    },
+    {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Contact us",
+        "item": {
+            "@type": "ContactPage",
+            "@id": "{{FRONTEND_HOST}}/contact"
+        }
+    }]
+}
+</script>
+
+{%endblock headermeta %}
+
+{% block innercontent %}
+
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+        {% if success_msg %}
+            <h1>{{success_msg}}<h1>
+        {% else %}
+            <h1>Contact us</h1>
+            <form enctype="multipart/form-data" action="" method="post" class="post-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="primaryAction" type="submit">Submit</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

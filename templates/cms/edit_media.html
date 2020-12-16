@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block headtitle %}Edit media - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}{% endblock headermeta %}
+
+{% block innercontent %}
+<script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+<script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
+
+        <div class="user-action-form-wrap">
+		<div class="user-action-form-inner">
+			<h1>Edit Media</h1>
+			<form enctype="multipart/form-data" action="" method="post" class="post-form">
+				{% csrf_token %}
+				{{ form|crispy }}
+				<button class="primaryAction" type="submit">Update Media</button>
+			</form>
+		</div>
+	</div>
+{% endblock innercontent %}
+

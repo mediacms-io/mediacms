@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block headtitle %}Terms - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Terms - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}"
+        }
+    },
+    {
+    	"@type": "ListItem",
+        "position": 2,
+        "name": "Terms",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}/terms"
+        }
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block innercontent %}
+<div class="custom-page-wrapper">
+	<h2>Terms</h2>
+	<hr/>
+	<p>Terms of service</p>
+</div>
+{% endblock %}

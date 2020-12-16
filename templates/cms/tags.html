@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Tags - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Tags - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}"
+        }
+    },
+    {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Tags",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}/tags"
+        }
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-tags"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/tags.js" %}"></script>
+{% endblock bottomimports %}

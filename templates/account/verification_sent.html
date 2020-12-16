@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block headtitle %} | Verify Your E-mail Address{% endblock headtitle %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+
+		<h1>{% trans "Verify Your E-mail Address" %}</h1>
+
+		<p>{% blocktrans %}We have sent an e-mail to you for verification. Follow the link provided to finalize the signup process. Please contact us if you do not receive it within a few minutes.{% endblocktrans %}</p>
+
+    </div>
+</div>
+{% endblock innercontent %}
+

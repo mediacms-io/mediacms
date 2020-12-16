@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% if user %}<div id="page-search"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/search.js" %}"></script>
+{% endblock bottomimports %}

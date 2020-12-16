@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Manage comments - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Manage comments - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-manage-comments"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/manage-comments.js" %}"></script>
+{% endblock bottomimports %}

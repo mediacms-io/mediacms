@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}{% if user.name %}{{user.name}} - {% endif %}About - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="{% if user.name %}{{user.name}} - {% endif %}About - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+{% endblock headermeta %}
+
+{% block topimports %}
+<link href="{% static "css/profile-about.css" %}" rel="preload" as="style">
+<link href="{% static "css/profile-about.css" %}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block innercontent %}
+{% if user %}{% else %}
+No such user
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if user %}<div id="page-profile-about"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/profile-about.js" %}"></script>
+{% endblock bottomimports %}

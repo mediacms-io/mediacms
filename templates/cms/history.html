@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}History - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/history.css" %}" rel="preload" as="style">
+<link href="{% static "css/history.css" %}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+{% if user %}<div id="page-history"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/history.js" %}"></script>
+{% endblock bottomimports %}

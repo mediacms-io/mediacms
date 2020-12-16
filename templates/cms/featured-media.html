@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Featured - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Featured - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}"
+        }
+    },
+    {
+		"@type": "ListItem",
+		"position": 2,
+        "name": "Featured",
+        "item": {
+        	"@type": "WebPage",
+        	"@id": "{{FRONTEND_HOST}}/featured"
+    	}
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block content %}
+{% if user %}<div id="page-featured"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/featured.js" %}"></script>
+{% endblock bottomimports %}

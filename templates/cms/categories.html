@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Categories - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Categories - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+			"@type": "WebPage",
+	        "@id": "{{FRONTEND_HOST}}"
+	    }
+    },
+    {
+		"@type": "ListItem",
+		"position": 2,
+        "name": "Categories",
+        "item": {
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}/categories"
+        }
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-categories"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/categories.js" %}"></script>
+{% endblock bottomimports %}
