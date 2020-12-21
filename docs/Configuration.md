@@ -7,7 +7,7 @@ It is advisable to override any of them by adding it to `cms/local_settings.py` 
 Any change needs restart of MediaCMS in order to take effect. So edit `cms/local_settings.py`, make a change and restart MediaCMS 
 
 ```
-#systectl restart mediacms
+#systemctl restart mediacms
 ```
 
 
