@@ -226,13 +226,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="media",
-            index=models.Index(
-                fields=["state", "encoding_status", "is_reviewed"],
-                name="files_media_state_666b93_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="media",
             index=django.contrib.postgres.indexes.GinIndex(
                 fields=["search"], name="files_media_search_7194c6_gin"
             ),
