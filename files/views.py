@@ -296,6 +296,8 @@ def search(request):
     """Search view"""
 
     context = {}
+    RSS_URL = f"/rss{request.environ['REQUEST_URI']}"
+    context["RSS_URL"] = RSS_URL
     return render(request, "cms/search.html", context)
 
 

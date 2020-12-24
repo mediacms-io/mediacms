@@ -37,4 +37,5 @@ def stuff(request):
     ret[
         "VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"
     ] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE
+    ret["RSS_URL"] = "/rss"
     return ret

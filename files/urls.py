@@ -5,7 +5,7 @@ from django.urls import path
 
 from . import views
 from . import management_views
-from .feeds import RssMediaFeed
+from .feeds import IndexRSSFeed, SearchRSSFeed
 
 urlpatterns = [
     url(r"^$", views.index),
@@ -33,7 +33,8 @@ urlpatterns = [
     ),
     url(r"^popular$", views.recommended_media),
     url(r"^recommended$", views.recommended_media),
-    path("rss/", RssMediaFeed()),
+    path("rss/", IndexRSSFeed()),
+    url("^rss/search", SearchRSSFeed()),
     url(r"^search", views.search, name="search"),
     url(r"^scpublisher", views.upload_media, name="upload_media"),
     url(r"^tags", views.tags, name="tags"),
