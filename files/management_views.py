@@ -137,11 +137,10 @@ class CommentList(APIView):
         serializer = CommentSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
-
     def delete(self, request, format=None):
-        comment_ids = request.GET.get('comment_ids')
+        comment_ids = request.GET.get("comment_ids")
         if comment_ids:
-            comments = comment_ids.split(',')
+            comments = comment_ids.split(",")
             Comment.objects.filter(uid__in=comments).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -161,6 +160,7 @@ class UserList(APIView):
         params = self.request.query_params
         ordering = params.get("ordering", "").strip()
         sort_by = params.get("sort_by", "").strip()
+        role = params.get("role", "all").strip()
 
         sort_by_options = ["date_added", "name"]
         if sort_by not in sort_by_options:
@@ -173,11 +173,16 @@ class UserList(APIView):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
         qs = User.objects.filter()
-        media = qs.order_by(f"{ordering}{sort_by}")
+        if role == "manager":
+            qs = qs.filter(is_manager=True)
+        elif role == "editor":
+            qs = qs.filter(is_editor=True)
+
+        users = qs.order_by(f"{ordering}{sort_by}")
 
         paginator = pagination_class()
 
-        page = paginator.paginate_queryset(media, request)
+        page = paginator.paginate_queryset(users, request)
 
         serializer = UserSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
