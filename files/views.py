@@ -735,7 +735,7 @@ class MediaSearch(APIView):
             # move this processing to a prepare_query function
             query = clean_query(query)
             q_parts = [
-                q_part.strip("y")
+                q_part.rstrip("y")
                 for q_part in query.split()
                 if q_part not in STOP_WORDS
             ]
