@@ -173,7 +173,7 @@ Media becomes private if it gets reported %s times %s\n
             d = {}
             d["title"] = title
             d["msg"] = msg
-            d["to"] = media.user.email
+            d["to"] = [media.user.email]
             notify_items.append(d)
 
     if action == "media_added" and media:
@@ -211,7 +211,7 @@ URL: %s
             msg = f"A comment was added on media {media_url}\n"
             d["title"] = title
             d["msg"] = msg
-            d["to"] = media.user.username
+            d["to"] = [media.user.username]
             notify_items.append(d)
 
     for item in notify_items:
