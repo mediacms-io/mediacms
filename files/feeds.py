@@ -72,7 +72,7 @@ class IndexRSSFeed(Feed):
         return item.title
 
     def item_description(self, item):
-        return item.summary
+        return item.description
 
     def item_author_name(self, item):
         return item.user.username
@@ -89,7 +89,7 @@ class IndexRSSFeed(Feed):
     def item_extra_kwargs(self, item):
         item = {
             "media:title": item.title,
-            "media:description": item.summary,
+            "media:description": item.description,
             "content_width": 720,
             "thumbnail_url": f"{settings.SSL_FRONTEND_HOST}/{item.poster_url}",
             "content_url": f"{settings.SSL_FRONTEND_HOST}/{item.get_absolute_url()}",
@@ -144,7 +144,7 @@ class SearchRSSFeed(Feed):
         return item.title
 
     def item_description(self, item):
-        return item.summary
+        return item.description
 
     def item_author_name(self, item):
         return item.user.username
@@ -161,7 +161,7 @@ class SearchRSSFeed(Feed):
     def item_extra_kwargs(self, item):
         item = {
             "media:title": item.title,
-            "media:description": item.summary,
+            "media:description": item.description,
             "content_width": 720,
             "thumbnail_url": f"{settings.SSL_FRONTEND_HOST}/{item.poster_url}",
             "content_url": f"{settings.SSL_FRONTEND_HOST}/{item.get_absolute_url()}",
