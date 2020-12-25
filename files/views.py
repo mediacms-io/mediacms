@@ -1112,7 +1112,7 @@ class CommentDetail(APIView):
     Delete comment (DELETE)
     """
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
+    permission_classes = (IsAuthorizedToAdd,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):

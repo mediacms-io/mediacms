@@ -24,7 +24,7 @@ class IsUserOrManager(permissions.BasePermission):
         if is_mediacms_manager(request.user):
             return True
 
-        return obj == request.user
+        return obj.user == request.user
 
 
 class IsUserOrEditor(permissions.BasePermission):
@@ -41,7 +41,7 @@ class IsUserOrEditor(permissions.BasePermission):
         if is_mediacms_editor(request.user):
             return True
 
-        return obj == request.user
+        return obj.user == request.user
 
 
 def user_allowed_to_upload(request):
