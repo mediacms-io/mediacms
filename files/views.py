@@ -732,8 +732,13 @@ class MediaSearch(APIView):
         media = Media.objects.filter(state="public", is_reviewed=True)
 
         if query:
+            # move this processing to a prepare_query function
             query = clean_query(query)
-            q_parts = [q_part for q_part in query.split() if q_part not in STOP_WORDS]
+            q_parts = [
+                q_part.strip("y")
+                for q_part in query.split()
+                if q_part not in STOP_WORDS
+            ]
             if q_parts:
                 query = SearchQuery(q_parts[0] + ":*", search_type="raw")
                 for part in q_parts[1:]:

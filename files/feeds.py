@@ -117,6 +117,7 @@ class SearchRSSFeed(Feed):
         elif tag:
             media = media.filter(tags__title=tag)
         elif query:
+            # same as on files.views.MediaSearch: move this processing to a prepare_query function
             query = helpers.clean_query(query)
             q_parts = [
                 q_part.strip("y")
