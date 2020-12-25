@@ -210,7 +210,7 @@ URL: %s
             item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"]
         )
         email.send(fail_silently=True)
-        return True
+    return True
 
 
 def show_recommended_media(request, limit=100):
