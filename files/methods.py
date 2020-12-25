@@ -149,21 +149,31 @@ def notify_users(friendly_token=None, action=None, extra=None):
         media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if action == "media_reported" and media:
-        if settings.ADMINS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
-            msg = """
+        msg = """
 Media %s was reported.
 Reason: %s\n
-Total times this media has been reported: %s
-            """ % (
-                media_url,
-                extra,
-                media.reported_times,
-            )
+Total times this media has been reported: %s\n
+Media becomes private if it gets reported %s times %s\n
+        """ % (
+            media_url,
+            extra,
+            media.reported_times,
+            settings.REPORTED_TIMES_THRESHOLD,
+        )
+
+        if settings.ADMINS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
+            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
             d = {}
             d["title"] = title
             d["msg"] = msg
             d["to"] = settings.ADMIN_EMAIL_LIST
+            notify_items.append(d)
+        if settings.USERS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
+            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            d = {}
+            d["title"] = title
+            d["msg"] = msg
+            d["to"] = media.user.email
             notify_items.append(d)
 
     if action == "media_added" and media:
@@ -192,6 +202,16 @@ URL: %s
             d["title"] = title
             d["msg"] = msg
             d["to"] = [media.user.email]
+            notify_items.append(d)
+
+    if action == "comment_added" and media:
+        if settings.USERS_NOTIFICATIONS.get("COMMENT_ADDED", False):
+            d = {}
+            title = f"[{settings.PORTAL_NAME}] - Comment was added"
+            msg = f"A comment was added on media {media_url}\n"
+            d["title"] = title
+            d["msg"] = msg
+            d["to"] = media.user.username
             notify_items.append(d)
 
     for item in notify_items:
