@@ -1713,10 +1713,3 @@ def encoding_file_delete(sender, instance, **kwargs):
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
 
-
-@receiver(post_save, sender=Comment)
-def comment_save(sender, instance, created, **kwargs):
-    if created:
-        notify_users(
-            friendly_token=instance.media.friendly_token, action="comment_added"
-        )

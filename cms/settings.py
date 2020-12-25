@@ -174,7 +174,6 @@ USERS_NOTIFICATIONS = {
     "MEDIA_ADDED": True,  # in use
     "MEDIA_ENCODED": False,  # not implemented
     "MEDIA_REPORTED": True,  # in use
-    "COMMENT_ADDED": True,  # in use
 }
 
 ADMINS_NOTIFICATIONS = {

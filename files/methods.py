@@ -204,15 +204,6 @@ URL: %s
             d["to"] = [media.user.email]
             notify_items.append(d)
 
-    if action == "comment_added" and media:
-        if settings.USERS_NOTIFICATIONS.get("COMMENT_ADDED", False):
-            d = {}
-            title = f"[{settings.PORTAL_NAME}] - Comment was added"
-            msg = f"A comment was added on media {media_url}\n"
-            d["title"] = title
-            d["msg"] = msg
-            d["to"] = [media.user.username]
-            notify_items.append(d)
 
     for item in notify_items:
         email = EmailMessage(
