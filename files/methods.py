@@ -153,7 +153,7 @@ def notify_users(friendly_token=None, action=None, extra=None):
 Media %s was reported.
 Reason: %s\n
 Total times this media has been reported: %s\n
-Media becomes private if it gets reported %s times %s\n
+Media becomes private if it gets reported %s times\n
         """ % (
             media_url,
             extra,
