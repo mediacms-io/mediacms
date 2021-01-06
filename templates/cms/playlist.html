@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Playlist - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/playlist.css" %}" rel="preload" as="style">
+<link href="{% static "css/playlist.css" %}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+{% if user %}<div id="page-playlist"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/playlist.js" %}"></script>
+{% endblock bottomimports %}
