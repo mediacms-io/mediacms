@@ -58,7 +58,7 @@ SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secre
 FRONTEND_HOST=`echo "$FRONTEND_HOST" | sed -r 's/http:\/\///g'`
 FRONTEND_HOST=`echo "$FRONTEND_HOST" | sed -r 's/https:\/\///g'`
 
-sed -i s/localhost/$FRONTEND_HOST/g deploy/mediacms.io
+sed -i s/localhost/$FRONTEND_HOST/g deploy/local_install/mediacms.io
 
 
 echo 'FRONTEND_HOST='\'"$FRONTEND_HOST"\' >> cms/local_settings.py
@@ -66,6 +66,7 @@ echo 'PORTAL_NAME='\'"$PORTAL_NAME"\' >> cms/local_settings.py
 echo "SSL_FRONTEND_HOST = FRONTEND_HOST.replace('http', 'https')" >> cms/local_settings.py
 
 echo 'SECRET_KEY='\'"$SECRET_KEY"\' >> cms/local_settings.py
+echo "LOCAL_INSTALL = True" >> cms/local_settings.py
 
 mkdir logs
 mkdir pids
@@ -80,19 +81,19 @@ echo "from users.models import User; User.objects.create_superuser('admin', 'adm
 echo "from django.contrib.sites.models import Site; Site.objects.update(name='$FRONTEND_HOST', domain='$FRONTEND_HOST')" | python manage.py shell
 
 chown -R www-data. /home/mediacms.io/
-cp deploy/celery_long.service /etc/systemd/system/celery_long.service && systemctl enable celery_long && systemctl start celery_long
-cp deploy/celery_short.service /etc/systemd/system/celery_short.service && systemctl enable celery_short && systemctl start celery_short
-cp deploy/celery_beat.service /etc/systemd/system/celery_beat.service && systemctl enable celery_beat &&systemctl start celery_beat
-cp deploy/mediacms.service /etc/systemd/system/mediacms.service && systemctl enable mediacms.service && systemctl start mediacms.service
+cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service && systemctl enable celery_long && systemctl start celery_long
+cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service && systemctl enable celery_short && systemctl start celery_short
+cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service && systemctl enable celery_beat &&systemctl start celery_beat
+cp deploy/local_install/mediacms.service /etc/systemd/system/mediacms.service && systemctl enable mediacms.service && systemctl start mediacms.service
 
 mkdir -p /etc/letsencrypt/live/mediacms.io/
 mkdir -p /etc/letsencrypt/live/$FRONTEND_HOST
-cp deploy/mediacms.io_fullchain.pem /etc/letsencrypt/live/$FRONTEND_HOST/fullchain.pem
-cp deploy/mediacms.io_privkey.pem /etc/letsencrypt/live/$FRONTEND_HOST/privkey.pem
-cp deploy/mediacms.io /etc/nginx/sites-available/default
-cp deploy/mediacms.io /etc/nginx/sites-enabled/default
-cp deploy/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
-cp deploy/nginx.conf /etc/nginx/
+cp deploy/local_install/mediacms.io_fullchain.pem /etc/letsencrypt/live/$FRONTEND_HOST/fullchain.pem
+cp deploy/local_install/mediacms.io_privkey.pem /etc/letsencrypt/live/$FRONTEND_HOST/privkey.pem
+cp deploy/local_install/mediacms.io /etc/nginx/sites-available/default
+cp deploy/local_install/mediacms.io /etc/nginx/sites-enabled/default
+cp deploy/local_install/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
+cp deploy/local_install/nginx.conf /etc/nginx/
 systemctl stop nginx
 systemctl start nginx
 

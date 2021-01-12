@@ -5,7 +5,7 @@ from .methods import is_mediacms_editor, is_mediacms_manager
 def stuff(request):
     """Pass settings to the frontend"""
     ret = {}
-    if request.is_secure():
+    if request.is_secure() and settings.LOCAL_INSTALL:
         # in case session is https, pass this setting so
         # that the frontend uses https too
         ret["FRONTEND_HOST"] = settings.SSL_FRONTEND_HOST
