@@ -27,6 +27,7 @@ class MediaForm(forms.ModelForm):
             "thumbnail_time",
             "reported_times",
             "is_reviewed",
+            "allow_download"
         )
         widgets = {
             "tags": MultipleSelect(),
