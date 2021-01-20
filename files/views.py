@@ -896,7 +896,7 @@ class PlaylistDetail(APIView):
 
         if action in ["add", "remove", "ordering"]:
             media = Media.objects.filter(
-                friendly_token=media_friendly_token, state="public", media_type="video"
+                friendly_token=media_friendly_token, state="public"
             ).first()
             if media:
                 if action == "add":
