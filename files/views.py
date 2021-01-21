@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.conf import settings
@@ -713,6 +714,7 @@ class MediaSearch(APIView):
         media_type = params.get("media_type", "").strip()
 
         author = params.get("author", "").strip()
+        upload_date = params.get('upload_date', '').strip()
 
         sort_by_options = ["title", "add_date", "edit_date", "views", "likes"]
         if sort_by not in sort_by_options:
@@ -759,6 +761,24 @@ class MediaSearch(APIView):
 
         if author:
             media = media.filter(user__username=author)
+
+        if upload_date:
+            gte = lte = None
+            if upload_date == 'today':
+                gte = datetime.now().date()
+            if upload_date == 'this_week':
+                gte = datetime.now() - timedelta(days=7)
+            if upload_date == 'this_month':
+                year = datetime.now().date().year
+                month = datetime.now().date().month
+                gte = datetime(year,month,1)
+            if upload_date == 'this_year':
+                year = datetime.now().date().year
+                gte = datetime(year,1,1)
+            if lte:
+                media = media.filter(add_date__lte=lte)
+            if gte:
+                media = media.filter(add_date__gte=gte)
 
         media = media.order_by(f"{ordering}{sort_by}")
 
@@ -876,7 +896,7 @@ class PlaylistDetail(APIView):
 
         if action in ["add", "remove", "ordering"]:
             media = Media.objects.filter(
-                friendly_token=media_friendly_token, state="public", media_type="video"
+                friendly_token=media_friendly_token, state="public"
             ).first()
             if media:
                 if action == "add":

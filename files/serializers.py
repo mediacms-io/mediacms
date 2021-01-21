@@ -23,7 +23,10 @@ class MediaSerializer(serializers.ModelSerializer):
         )
 
     def get_thumbnail_url(self, obj):
-        return self.context["request"].build_absolute_uri(obj.thumbnail_url)
+        if obj.thumbnail_url:
+            return self.context["request"].build_absolute_uri(obj.thumbnail_url)
+        else:
+            return None
 
     def get_author_profile(self, obj):
         return self.context["request"].build_absolute_uri(obj.author_profile())
