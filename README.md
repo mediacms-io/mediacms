@@ -94,6 +94,19 @@ cd /home/mediacms.io/mediacms/ && bash ./install.sh
 The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate. 
 
 
+## Update
+
+If you've used the above way to install MediaCMS, update with the following:
+
+```bash
+cd /home/mediacms.io/mediacms # enter mediacms directory
+source  /home/mediacms.io/bin/activate # use virtualenv
+git pull # update code
+python manage.py migrate # run Django migrations
+sudo systemctl restart mediacms celery_long celery_short # restart services
+```
+
+
 ## Configure
 
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
