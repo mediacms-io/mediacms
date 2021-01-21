@@ -27,6 +27,7 @@ Embed video page
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
 - **Easy media searching**: enriched with live search functionality
+- **Playlists for audio and video content**: create playlists, add and reorder content
 - **Responsive design**: including light and dark themes
 - **Advanced users management**: allow self registration, invite only, closed.
 - **Configurable actions**: allow download, add comments, add likes, dislikes, report media
