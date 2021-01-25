@@ -8,12 +8,12 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./deploy/docker/reverse_proxy/certs:/etc/nginx/certs
+      - ./deploy/docker/reverse_proxy/certs/:/etc/nginx/certs/
       - ./deploy/docker/reverse_proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
   migrations:
     image: mediacms:latest
     volumes:
-      - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/cms/local_settings.py
+      - ./:/home/mediacms.io/mediacms/
     environment:
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
@@ -33,9 +33,7 @@ services:
     deploy:
       replicas: 1
     volumes:
-      - ./media_files/:/home/mediacms.io/mediacms/media_files/
-      - ./static/:/home/mediacms.io/mediacms/static/
-      - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/cms/local_settings.py
+      - ./:/home/mediacms.io/mediacms/
     environment:
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_CELERY_SHORT: 'no'
@@ -47,7 +45,7 @@ services:
   celery_beat:
     image: mediacms:latest
     volumes:
-      - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/cms/local_settings.py
+      - ./:/home/mediacms.io/mediacms/
     environment:
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
@@ -61,9 +59,7 @@ services:
     deploy:
       replicas: 2
     volumes:
-      - ./media_files/:/home/mediacms.io/mediacms/media_files/
-      - ./static/:/home/mediacms.io/mediacms/static/
-      - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/cms/local_settings.py
+      - ./:/home/mediacms.io/mediacms/
     environment:
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
@@ -74,7 +70,7 @@ services:
   db:
     image: postgres
     volumes:
-      - ./postgres_data/:/var/lib/postgresql/data/
+      - ../postgres_data/:/var/lib/postgresql/data/
     restart: always
     environment:
       POSTGRES_USER: mediacms

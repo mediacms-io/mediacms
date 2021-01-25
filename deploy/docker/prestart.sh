@@ -1,7 +1,4 @@
 #!/bin/bash
-mkdir -p /home/mediacms.io/mediacms/logs
-touch /home/mediacms.io/mediacms/logs/debug.log
-chown www-data. -R /home/mediacms.io/mediacms/logs
 
 RANDOM_ADMIN_PASS=`python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"`
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}

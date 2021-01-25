@@ -21,12 +21,11 @@ RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-632.x86_64-u
     unzip -j Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls -d Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/ && \
     rm Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
 
-RUN chown -R www-data. /home/mediacms.io/ && chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
-
 ############ RUNTIME IMAGE ############
 FROM python:3.8-slim-buster as runtime-image
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV ADMIN_USER='admin'
 ENV ADMIN_PASSWORD='mediacms'
 ENV ADMIN_EMAIL='admin@localhost'
@@ -54,13 +53,12 @@ RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-reco
     apt-get purge --auto-remove && \
     apt-get clean
 
-# forward request and error logs to docker log collector
-RUN ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/nginx/error.log && \
-    ln -sf /dev/stdout /var/log/nginx/mediacms.io.access.log && ln -sf /dev/stderr /var/log/nginx/mediacms.io.error.log
-
 WORKDIR /home/mediacms.io/mediacms
 
 EXPOSE 9000 80
 
+RUN chmod +x ./deploy/docker/entrypoint.sh
+
+ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
+
 CMD ["./deploy/docker/start.sh"]
-  
