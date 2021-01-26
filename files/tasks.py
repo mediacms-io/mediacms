@@ -287,10 +287,10 @@ def encode_media(
     else:
         original_media_path = media.media_file.path
 
-    if not media.duration:
-        encoding.status = "fail"
-        encoding.save(update_fields=["status"])
-        return False
+    #if not media.duration:
+    #    encoding.status = "fail"
+    #    encoding.save(update_fields=["status"])
+    #    return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
 
