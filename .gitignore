@@ -9,3 +9,4 @@ static/ckeditor/
 static/debug_toolbar/
 static/mptt/
 static/rest_framework/
+cms/local_settings.py
