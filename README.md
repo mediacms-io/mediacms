@@ -77,7 +77,26 @@ For a small to medium installation, with a few hours of video uploaded daily, an
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
 
 
-## Install
+## Installation
+
+MediaCMS can be installed through an automated script that installs and configures all needed services on a single server, and through Docker Compose.
+
+### Docker Compose installation
+With a recent version of Docker Compose installed, run as root
+
+
+```bash
+git clone https://github.com/mediacms-io/mediacms
+cd mediacms
+docker-compose build && docker-compose up
+```
+
+This will build an image, download and setup necessary images and start all containers. Once it finishes, MediaCMS will be installed on http://localhost
+
+For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page. Docker Compose support has been contributed by @swiftugandan.
+
+
+### Single server installation
 
 The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
 
@@ -113,7 +132,7 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
 
 ## Authors
-MediaCMS is developed by Yiannis Stergiou and Markos Gogoulos. We are Wordgames - https://wordgames.gr
+MediaCMS is developed by Yiannis Stergiou and Markos Gogoulos. We are Wordgames - https://wordgames.gr. 
 
 
 ## Technology
@@ -156,6 +175,17 @@ This software uses the following list of awesome technologies:
 
 - **Werner Robitza**, for helping us with ffmpeg related stuff.
 
+
+## How to contribute
+
+If you like the project, here's a few things you can do
+- Hire us, for custom installations, training, support, maintenance work
+- Suggest us to others that are interested to hire us
+- Write a blog post/article about MediaCMS
+- Share on social media about the project
+- Open issues, participate on discussions, report bugs, suggest ideas
+- Star the project
+- Add functionality, work on a PR, fix an issue! 
 
 ## Contact
 info@mediacms.io
