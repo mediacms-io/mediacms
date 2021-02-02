@@ -419,6 +419,8 @@ CELERY_BEAT_SCHEDULE = {
 # TODO: beat, delete chunks from media root
 # chunks_dir after xx days...(also uploads_dir)
 
+LOCAL_INSTALL = False
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *
@@ -434,4 +436,7 @@ if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
     FRONTEND_HOST = f"http://{FRONTEND_HOST}"
 
-SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
+if LOCAL_INSTALL:
+    SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
+else:
+    SSL_FRONTEND_HOST = FRONTEND_HOST

@@ -59,7 +59,7 @@ server {
     location /media/original {
         alias /home/mediacms.io/mediacms/media_files/original;
         #auth_basic "auth protected area";
-        #auth_basic_user_file /home/mediacms.io/mediacms/deploy/.htpasswd;
+        #auth_basic_user_file /home/mediacms.io/mediacms/deploy/local_install/.htpasswd;
     }
 
     location /media {

@@ -2,7 +2,7 @@
 Description=MediaCMS uwsgi
 
 [Service]
-ExecStart=/home/mediacms.io/bin/uwsgi --ini /home/mediacms.io/mediacms/uwsgi.ini
+ExecStart=/home/mediacms.io/bin/uwsgi --ini /home/mediacms.io/mediacms/deploy/local_install/uwsgi.ini
 ExecStop=/usr/bin/killall -9 uwsgi
 RestartSec=3
 #ExecRestart=killall -9 uwsgi; sleep 5; /home/sss/bin/uwsgi --ini /home/sss/wordgames/uwsgi.ini

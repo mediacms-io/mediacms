@@ -1,0 +1,12 @@
+media_files/encoded/
+media_files/original/
+postgres_data/
+celerybeat-schedule
+logs/
+pids/
+static/admin/
+static/ckeditor/
+static/debug_toolbar/
+static/mptt/
+static/rest_framework/
+cms/local_settings.py
