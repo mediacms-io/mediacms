@@ -79,7 +79,24 @@ In terms of disk space, think of what the needs will be. A general rule is to mu
 
 ## Install
 
-MediaCMS can be installed through an automated script on a single server, and through Docker Compose. For Docker Compose instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page.
+MediaCMS can be installed through an automated script that installs and configures all needed services on a single server, and through Docker Compose.
+
+## Docker Compose installation
+With a recent version of Docker Compose installed, run as root
+
+
+```bash
+git clone https://github.com/mediacms-io/mediacms
+cd mediacms
+docker-compose build && docker-compose up
+```
+
+This will build an image, download and setup necessary images and start all containers. Once it finishes, MediaCMS will be installed on http://localhost
+
+For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page. Docker Compose support has been contributed by @swiftugandan.
+
+
+## Single server installation
 
 The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
 
