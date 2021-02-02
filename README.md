@@ -79,6 +79,8 @@ In terms of disk space, think of what the needs will be. A general rule is to mu
 
 ## Install
 
+MediaCMS can be installed through an automated script on a single server, and through Docker Compose. For Docker Compose instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page.
+
 The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
 
 Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
@@ -113,7 +115,7 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
 
 ## Authors
-MediaCMS is developed by Yiannis Stergiou and Markos Gogoulos. We are Wordgames - https://wordgames.gr
+MediaCMS is developed by Yiannis Stergiou and Markos Gogoulos. We are Wordgames - https://wordgames.gr. 
 
 
 ## Technology
