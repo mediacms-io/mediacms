@@ -4,6 +4,9 @@ MediaCMS is a modern, fully featured open source video and media CMS. It is deve
 
 It is built mostly using the modern stack Django + React and includes a REST API.
 
+A demo is available at https://demo.mediacms.io
+
+
 ## Screenshots
 
 ![MediaCMS](docs/images/index.jpg)
