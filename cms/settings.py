@@ -23,7 +23,7 @@ DEFAULT_THEME = "black"  # this is not taken under consideration currently
 # if set to False will not fetch external content
 # this is only for the static files, as fonts/css/js files loaded from CDNs
 # not for user uploaded media!
-LOAD_FROM_CDN = False
+LOAD_FROM_CDN = True
 LOGIN_ALLOWED = True  # whether the login button appears
 REGISTER_ALLOWED = True  # whether the register button appears
 UPLOAD_MEDIA_ALLOWED = True  # whether the upload media button appears
