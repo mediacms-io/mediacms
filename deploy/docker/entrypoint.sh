@@ -6,7 +6,7 @@ ln -sf /dev/stdout /var/log/nginx/access.log && ln -sf /dev/stderr /var/log/ngin
 ln -sf /dev/stdout /var/log/nginx/mediacms.io.access.log && ln -sf /dev/stderr /var/log/nginx/mediacms.io.error.log
 cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
 
-mkdir -p /home/mediacms.io/mediacms/{logs,pids}
+mkdir -p /home/mediacms.io/mediacms/{logs,pids,media_files/hls}
 touch /home/mediacms.io/mediacms/logs/debug.log
 
 chown -R www-data. /home/mediacms.io/

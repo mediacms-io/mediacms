@@ -17,8 +17,10 @@ COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
 RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip && \
-    mkdir -p /home/mediacms.io/mediacms/media_files/hls Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/ && \
-    unzip -j Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/mp4hls -d Bento4-SDK-1-6-0-632.x86_64-unknown-linux/bin/ && \
+    unzip Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip -d ../bento4 && \
+    mv ../bento4/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/* ../bento4/ && \
+    rm -rf ../bento4/Bento4-SDK-1-6-0-632.x86_64-unknown-linux && \
+    rm -rf ../bento4/docs && \
     rm Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############

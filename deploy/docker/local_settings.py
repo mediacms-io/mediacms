@@ -29,4 +29,8 @@ CACHES = {
 BROKER_URL = REDIS_LOCATION
 CELERY_RESULT_BACKEND = BROKER_URL
 
+MP4HLS_COMMAND = (
+    "/home/mediacms.io/bento4/bin/mp4hls"
+)
+
 DEBUG = False

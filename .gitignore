@@ -1,5 +1,6 @@
 media_files/encoded/
 media_files/original/
+media_files/hls/
 postgres_data/
 celerybeat-schedule
 logs/
