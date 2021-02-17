@@ -82,19 +82,27 @@ In terms of disk space, think of what the needs will be. A general rule is to mu
 
 ## Installation
 
-MediaCMS can be installed through an automated script that installs and configures all needed services on a single server, and through Docker Compose.
+There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services.
 
 ### Docker Compose installation
-With a recent version of Docker Compose installed, run as root
+Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
+Run as root
 
 ```bash
 git clone https://github.com/mediacms-io/mediacms
 cd mediacms
+```
+
+The default option to serve MediaCMS is on http://localhost. If you want to set a url and have it served there, set the `FRONTEND_HOST` variable on file `deploy/docker/local_settings.py`.
+
+Now run
+
+```bash
 docker-compose build && docker-compose up
 ```
 
-This will build an image, download and setup necessary images and start all containers. Once it finishes, MediaCMS will be installed on http://localhost
+This will build an image, download and setup necessary Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost (or the url you've set as `FRONTEND_HOST` on file `deploy/docker/local_settings.py`)
 
 For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page. Docker Compose support has been contributed by @swiftugandan.
 
