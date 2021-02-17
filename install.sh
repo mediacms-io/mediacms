@@ -60,8 +60,9 @@ FRONTEND_HOST=`echo "$FRONTEND_HOST" | sed -r 's/https:\/\///g'`
 
 sed -i s/localhost/$FRONTEND_HOST/g deploy/local_install/mediacms.io
 
+FRONTEND_HOST_HTTP_PREFIX='http://'$FRONTEND_HOST
 
-echo 'FRONTEND_HOST='\'"$FRONTEND_HOST"\' >> cms/local_settings.py
+echo 'FRONTEND_HOST='\'"$FRONTEND_HOST_HTTP_PREFIX"\' >> cms/local_settings.py
 echo 'PORTAL_NAME='\'"$PORTAL_NAME"\' >> cms/local_settings.py
 echo "SSL_FRONTEND_HOST = FRONTEND_HOST.replace('http', 'https')" >> cms/local_settings.py
 
