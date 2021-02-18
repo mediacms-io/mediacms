@@ -9,6 +9,9 @@ cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/
 mkdir -p /home/mediacms.io/mediacms/{logs,pids,media_files/hls}
 touch /home/mediacms.io/mediacms/logs/debug.log
 
+# Remove any dangling pids
+rm -rf /home/mediacms.io/mediacms/pids/*
+
 chown -R www-data. /home/mediacms.io/
 
 TARGET_GID=$(stat -c "%g" /home/mediacms.io/mediacms/)
