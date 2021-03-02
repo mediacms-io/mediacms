@@ -11,7 +11,7 @@ services:
       - ./deploy/docker/reverse_proxy/certs/:/etc/nginx/certs/
       - ./deploy/docker/reverse_proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
   migrations:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -29,7 +29,7 @@ services:
     build:
       context: .
       target: runtime-image
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
@@ -43,7 +43,7 @@ services:
     depends_on:
       - migrations
   celery_beat:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -55,7 +55,7 @@ services:
     depends_on:
       - redis
   celery_worker:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 2
     volumes:
