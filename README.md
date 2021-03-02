@@ -9,6 +9,13 @@ A demo is available at https://demo.mediacms.io
 
 ## Screenshots
 
+<p align="center">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/index.jpg" width="290">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/video.jpg" width="290">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/embed.jpg" width="290">
+</p>
+
+
 ![MediaCMS](docs/images/index.jpg)
 
 Vanilla MediaCMS index page
