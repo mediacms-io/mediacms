@@ -10,24 +10,10 @@ A demo is available at https://demo.mediacms.io
 ## Screenshots
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/index.jpg" width="290">
-    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/video.jpg" width="290">
-    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/embed.jpg" width="290">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/index.jpg" width="320">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/video.jpg" width="320">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/embed.jpg" width="320">
 </p>
-
-
-![MediaCMS](docs/images/index.jpg)
-
-Vanilla MediaCMS index page
-
-![MediaCMS](docs/images/video.jpg)
-
-Video page with player different options
-
-![MediaCMS](docs/images/embed.jpg)
-
-Embed video page
-
 
 ## Features
 - **Complete control over your data**: host it yourself!
