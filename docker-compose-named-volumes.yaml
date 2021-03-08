@@ -2,7 +2,7 @@ version: "3"
 
 services:
   migrations:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/deploy/docker/local_settings.py
     environment:
@@ -17,10 +17,7 @@ services:
       db:
         condition: service_healthy
   web:
-    build:
-      context: .
-      target: runtime-image
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     ports:
@@ -37,7 +34,7 @@ services:
     depends_on:
       - migrations
   celery_beat:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/deploy/docker/local_settings.py
     environment:
@@ -49,7 +46,7 @@ services:
     depends_on:
       - redis
   celery_worker:
-    image: mediacms:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
