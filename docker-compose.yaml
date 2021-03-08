@@ -17,9 +17,6 @@ services:
       db:
         condition: service_healthy
   web:
-    build:
-      context: .
-      target: runtime-image
     image: mediacms/mediacms:latest
     deploy:
       replicas: 1
