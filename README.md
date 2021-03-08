@@ -9,18 +9,11 @@ A demo is available at https://demo.mediacms.io
 
 ## Screenshots
 
-![MediaCMS](docs/images/index.jpg)
-
-Vanilla MediaCMS index page
-
-![MediaCMS](docs/images/video.jpg)
-
-Video page with player different options
-
-![MediaCMS](docs/images/embed.jpg)
-
-Embed video page
-
+<p align="center">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/index.jpg" width="340">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/video.jpg" width="340">
+    <img src="https://raw.githubusercontent.com/mediacms-io/mediacms/main/docs/images/embed.jpg" width="340">
+</p>
 
 ## Features
 - **Complete control over your data**: host it yourself!
