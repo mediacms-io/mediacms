@@ -94,6 +94,14 @@ Make changes (True/False) to any of the following:
 - CAN_SHARE_MEDIA = True  # whether the share media appears
 ```
 
+### show/hide the download option on a media
+
+Edit `templates/config/installation/features.html` and set 
+
+```
+download: false
+```
+
 ### automatically hide media upon being reported
 
 set a low number for variable `REPORTED_TIMES_THRESHOLD`
