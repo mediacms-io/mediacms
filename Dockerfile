@@ -47,7 +47,7 @@ ENV ENABLE_MIGRATIONS='yes'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --from=compile-image /home/mediacms.io /home/mediacms.io
+COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
 
 RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends \
     supervisor nginx ffmpeg imagemagick procps -y && \
