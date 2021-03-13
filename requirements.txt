@@ -7,7 +7,10 @@ psycopg2-binary==2.8.6
 uwsgi==2.0.19.1
 
 django-redis==4.12.1
+
 celery==4.4.7
+django_celery_results
+django_celery_beat
 
 Pillow==8.0.1
 django-imagekit

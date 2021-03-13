@@ -27,7 +27,7 @@ CACHES = {
 
 # CELERY STUFF
 BROKER_URL = REDIS_LOCATION
-CELERY_RESULT_BACKEND = BROKER_URL
+CELERY_RESULT_BACKEND = 'django-db'
 
 MP4HLS_COMMAND = (
     "/home/mediacms.io/bento4/bin/mp4hls"

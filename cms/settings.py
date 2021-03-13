@@ -288,6 +288,9 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "ckeditor",
+    'celery',
+    'django_celery_results',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -391,7 +394,7 @@ SESSION_CACHE_ALIAS = "default"
 
 # CELERY STUFF
 BROKER_URL = REDIS_LOCATION
-CELERY_RESULT_BACKEND = BROKER_URL
+CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -399,6 +402,11 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_SOFT_TIME_LIMIT = 2 * 60 * 60
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERYD_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_SEND_SENT_EVENT = True
+CELERY_SEND_EVENTS = True
+CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_TIMEZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
     # clear expired sessions, every sunday 1.01am. By default Django has 2week
