@@ -87,7 +87,7 @@ git clone https://github.com/mediacms-io/mediacms
 cd mediacms
 ```
 
-The default option to serve MediaCMS is on http://localhost. If you want to set a url and have it served there, set the `FRONTEND_HOST` variable on file `deploy/docker/local_settings.py`.
+The default option is to serve MediaCMS on all ips available of the server (including localhost).
 
 Now run
 
@@ -95,7 +95,7 @@ Now run
 docker-compose up
 ```
 
-This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost (or the url you've set as `FRONTEND_HOST` on file `deploy/docker/local_settings.py`)
+This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
 
 For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page. Docker Compose support has been contributed by @swiftugandan.
 

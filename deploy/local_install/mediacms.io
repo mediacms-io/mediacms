@@ -7,15 +7,15 @@ server {
 
     error_log  /var/log/nginx/mediacms.io.error.log  warn;
 
-    # redirect to https if logged in
-    if ($http_cookie ~* "sessionid") {
-        rewrite  ^/(.*)$  https://localhost/$1  permanent;
-    }
+#    # redirect to https if logged in
+#    if ($http_cookie ~* "sessionid") {
+#        rewrite  ^/(.*)$  https://localhost/$1  permanent;
+#    }
 
-    # redirect basic forms to https
-    location ~ (login|login_form|register|mail_password_form)$ {
-        rewrite  ^/(.*)$  https://localhost/$1  permanent;
-    }
+#    # redirect basic forms to https
+#    location ~ (login|login_form|register|mail_password_form)$ {
+#        rewrite  ^/(.*)$  https://localhost/$1  permanent;
+#    }
 
     location /static {
         alias /home/mediacms.io/mediacms/static ;

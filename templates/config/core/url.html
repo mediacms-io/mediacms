@@ -1,37 +1,37 @@
 MediaCMS.url = {
-    home: "{{FRONTEND_HOST}}",
-	search: "{{FRONTEND_HOST}}/search",
-    latestMedia: "{{FRONTEND_HOST}}/latest",
-    featuredMedia: "{{FRONTEND_HOST}}/featured",
-    recommendedMedia: "{{FRONTEND_HOST}}/recommended",
-    members: "{{FRONTEND_HOST}}/members",
+    home: "/",
+        search: "/search",
+    latestMedia: "/latest",
+    featuredMedia: "/featured",
+    recommendedMedia: "/recommended",
+    members: "/members",
     /* Error pages */
-    error404: "{{FRONTEND_HOST}}/error",
+    error404: "/error",
     /* Taxonomies pages */
-    tags: "{{FRONTEND_HOST}}/tags",
-    categories: "{{FRONTEND_HOST}}/categories",
-    topics: "{{FRONTEND_HOST}}/topics",
-    languages: "{{FRONTEND_HOST}}/languages",
-    countries: "{{FRONTEND_HOST}}/countries",
+    tags: "/tags",
+    categories: "/categories",
+    topics: "/topics",
+    languages: "/languages",
+    countries: "/countries",
     /* User pages */
-    likedMedia: "{{FRONTEND_HOST}}/liked",
-    history: "{{FRONTEND_HOST}}/history",
+    likedMedia: "/liked",
+    history: "/history",
     /* Add/edit pages */
-    addMedia: "{{FRONTEND_HOST}}/upload",
+    addMedia: "/upload",
     /* User account pages */
     editProfile: "{{user.edit_url}}",
     {% if request.user.is_authenticated %}
-    signout: "{{FRONTEND_HOST}}/accounts/logout/",
+    signout: "/accounts/logout/",
     editChannel: "{{user.default_channel_edit_url}}",
-    changePassword: "{{FRONTEND_HOST}}/accounts/password/change/",
+    changePassword: "/accounts/password/change/",
     /* Administration pages */
     {% if IS_MEDIACMS_ADMIN %}admin: '/admin',{% endif %}
     /* Management pages */
-    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manageMedia: "{{FRONTEND_HOST}}/manage/media",{% endif %}
-    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}manageUsers: "{{FRONTEND_HOST}}/manage/users",{% endif %}
-    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manageComments: "{{FRONTEND_HOST}}/manage/comments",{% endif %}
+    {% if IS_MEDIACMS_EDITOR %}manageMedia: "/manage/media",{% endif %}
+    {% if IS_MEDIACMS_MANAGER %}manageUsers: "/manage/users",{% endif %}
+    {% if IS_MEDIACMS_EDITOR %}manageComments: "/manage/comments",{% endif %}
     {% else %}
-    signin: "{{FRONTEND_HOST}}/accounts/login/",
-    register: "{{FRONTEND_HOST}}/accounts/signup/",
+    signin: "/accounts/login/",
+    register: "/accounts/signup/",
     {% endif %}
 };

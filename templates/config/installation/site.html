@@ -1,8 +1,8 @@
 MediaCMS.site = {
  	id: 'mediacms',
     title: "{{PORTAL_NAME}}",
-    url: '{{FRONTEND_HOST}}/',
-    api: '{{FRONTEND_HOST}}/api/v1',
+    url: '{{FRONTEND_HOST}}',
+    api: '{{FRONTEND_HOST}}api/v1',
     theme: {
     	mode: 'light',    // Valid values: 'light', 'dark'.
 		switch: {
@@ -11,12 +11,12 @@ MediaCMS.site = {
     },
     logo:{
     	lightMode:{
-            img: "{{FRONTEND_HOST}}/static/images/logo_dark.png",
-            svg: "{{FRONTEND_HOST}}/static/images/logo_dark.svg",
+            img: "/static/images/logo_dark.png",
+            svg: "/static/images/logo_dark.svg",
     	},
     	darkMode:{
-            img: "{{FRONTEND_HOST}}/static/images/logo_light.png",
-            svg: "{{FRONTEND_HOST}}/static/images/logo_light.svg",
+            img: "/static/images/logo_light.png",
+            svg: "/static/images/logo_light.svg",
     	},
     },
     pages: {
@@ -50,3 +50,4 @@ MediaCMS.site = {
 	    },
     },
 };
+
