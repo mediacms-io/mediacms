@@ -16,12 +16,12 @@ RUN pip install -r requirements.txt
 COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
-RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip && \
-    unzip Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip -d ../bento4 && \
-    mv ../bento4/Bento4-SDK-1-6-0-632.x86_64-unknown-linux/* ../bento4/ && \
-    rm -rf ../bento4/Bento4-SDK-1-6-0-632.x86_64-unknown-linux && \
+RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip && \
+    unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip -d ../bento4 && \
+    mv ../bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/* ../bento4/ && \
+    rm -rf ../bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux && \
     rm -rf ../bento4/docs && \
-    rm Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
+    rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
 FROM python:3.8-slim-buster as runtime-image
@@ -47,7 +47,7 @@ ENV ENABLE_MIGRATIONS='yes'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --from=compile-image /home/mediacms.io /home/mediacms.io
+COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
 
 RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends \
     supervisor nginx ffmpeg imagemagick procps -y && \

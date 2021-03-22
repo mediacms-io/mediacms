@@ -115,8 +115,8 @@ fi
 # Bento4 utility installation, for HLS
 
 cd /home/mediacms.io/mediacms
-wget http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
-unzip Bento4-SDK-1-6-0-632.x86_64-unknown-linux.zip
+wget http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
+unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 mkdir /home/mediacms.io/mediacms/media_files/hls
 
 # last, set default owner
