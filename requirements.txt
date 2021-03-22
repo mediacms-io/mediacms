@@ -9,7 +9,7 @@ uwsgi==2.0.19.1
 django-redis==4.12.1
 celery==4.4.7
 
-Pillow==8.0.1
+Pillow==8.1.1
 django-imagekit
 markdown
 django-filter
