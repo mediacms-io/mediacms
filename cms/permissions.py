@@ -24,7 +24,10 @@ class IsUserOrManager(permissions.BasePermission):
         if is_mediacms_manager(request.user):
             return True
 
-        return obj.user == request.user
+        if hasattr(obj, 'user'):
+            return obj.user == request.user
+        else:
+            return obj == request.user
 
 
 class IsUserOrEditor(permissions.BasePermission):
