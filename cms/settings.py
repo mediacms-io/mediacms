@@ -16,7 +16,8 @@ CAN_ADD_MEDIA = "all"
 # valid choices here are 'public', 'private', 'unlisted
 PORTAL_WORKFLOW = "public"
 
-DEFAULT_THEME = "black"  # this is not taken under consideration currently
+# valid values: 'light', 'dark'.
+DEFAULT_THEME = "light"  
 
 
 # These are passed on every request
