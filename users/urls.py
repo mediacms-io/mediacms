@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     url(r"^user/(?P<username>[\w@._-]*)$", views.view_user, name="get_user"),
+    url(r"^user/(?P<username>[\w@._-]*)/$", views.view_user, name="get_user"),
     url(
         r"^user/(?P<username>[\w@.]*)/media$",
         views.view_user_media,
