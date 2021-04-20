@@ -59,10 +59,10 @@ def view_user_media(request, username):
     context["user"] = user
     context["CAN_EDIT"] = (
         True
-        if ((user and user == request.user) or request.user.is_superuser)
+        if ((user and user == request.user) or is_mediacms_manager(request.user))
         else False
     )
-    context["CAN_DELETE"] = True if request.user.is_superuser else False
+    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = (
         True if (user.allow_contact or is_mediacms_editor(request.user)) else False
     )
@@ -78,10 +78,10 @@ def view_user_playlists(request, username):
     context["user"] = user
     context["CAN_EDIT"] = (
         True
-        if ((user and user == request.user) or request.user.is_superuser)
+        if ((user and user == request.user) or is_mediacms_manager(request.user))
         else False
     )
-    context["CAN_DELETE"] = True if request.user.is_superuser else False
+    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = (
         True if (user.allow_contact or is_mediacms_editor(request.user)) else False
     )
@@ -98,10 +98,10 @@ def view_user_about(request, username):
     context["user"] = user
     context["CAN_EDIT"] = (
         True
-        if ((user and user == request.user) or request.user.is_superuser)
+        if ((user and user == request.user) or is_mediacms_manager(request.user))
         else False
     )
-    context["CAN_DELETE"] = True if request.user.is_superuser else False
+    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = (
         True if (user.allow_contact or is_mediacms_editor(request.user)) else False
     )
@@ -136,7 +136,7 @@ def view_channel(request, friendly_token):
     context["user"] = user
     context["CAN_EDIT"] = (
         True
-        if ((user and user == request.user) or request.user.is_superuser)
+        if ((user and user == request.user) or is_mediacms_manager(request.user))
         else False
     )
     return render(request, "cms/channel.html", context)
