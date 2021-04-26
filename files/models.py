@@ -1386,7 +1386,7 @@ class Playlist(models.Model):
     @property
     def thumbnail_url(self):
         pm = self.playlistmedia_set.first()
-        if pm:
+        if pm and pm.media.thumbnail:
             return helpers.url_from_path(pm.media.thumbnail.path)
         return None
 
