@@ -17,7 +17,6 @@ class UserAdmin(admin.ModelAdmin):
         "last_name",
         "media_count",
         "date_joined",
-        "is_staff",
         "is_active",
     )
     list_display = [
