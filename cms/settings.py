@@ -439,7 +439,7 @@ except ImportError:
 
 if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
-    FRONTEND_HOST = f"http://{FRONTEND_HOST}"
+    FRONTEND_HOST = "http://{FRONTEND_HOST}"
 
 if LOCAL_INSTALL:
     SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
