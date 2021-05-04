@@ -2,11 +2,11 @@
 
 A number of options are available on `cms/settings.py`. 
 
-It is advisable to override any of them by adding it to `local_settings.py` . 
+It is advisable not to modify that file directly but to override the values by adding them to `local_settings.py` . 
 
-In case of a the single server installation, add to `cms/local_settings.py` .
+In case of a the single server installation, copy `cms/default_local_settings.py` to `cms/local_settings.py` .
 
-In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
+In case of a docker compose installation, copy `cms/default_local_settings.py` to `deploy/docker/local_settings.py`. This will automatically overwrite `cms/local_settings.py` .
 
 Any change needs restart of MediaCMS in order to take effect. So edit `cms/local_settings.py`, make a change and restart MediaCMS 
 
