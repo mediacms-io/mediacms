@@ -1,13 +1,17 @@
 ## How To Add A Static Page To The Sidebar
 
-#create your html page in templates/cms/ e.g. duplicate and rename about.html
-templates/cms/volunteer.html
+### 1. Create your html page in templates/cms/ 
+e.g. duplicate and rename about.html
+```
+sudo cp templates/cms/about.html templates/cms/volunteer.html
+```
 
-#create your css file in static/css/ e.g.
-static/css/volunteer.css
+### 2. Create your css file in static/css/ 
+```
+touch static/css/volunteer.css
+```
 
-#update block headermeta to reflect your new page
-
+### 3. In your html file, update block headermeta to reflect your new page
 ```
 {% block headermeta %}
 <meta property="og:title" content="Volunteer - {{PORTAL_NAME}}">
@@ -42,22 +46,32 @@ static/css/volunteer.css
 {% endblock headermeta %}
 ```
 
-#update block innercontent to reflect your actual content
+### 4. In your html file, update block innercontent to reflect your actual content
+Write whatever you like.
 
-#add your view to files/views.py
+### 5. In your css file, write matching styles for you html file.
+Write whatever you like.
+
+### 6. Add your view to files/views.py
+```
 def volunteer(request):
     """Volunteer view"""
     context = {}
     return render(request, "cms/volunteer.html", context)
+```
 
-#add your url pattern to files/urls.py
+### 7. Add your url pattern to files/urls.py
+```
 urlpatterns = [
     url(r"^$", views.index),
     url(r"^about", views.about, name="about"),
     url(r"^volunteer", views.volunteer, name="volunteer"),
-    
-#to add a link to your page as a menu item in the left sidebar,
-#add the folling code to _commons.js    
+```
+
+### 8. Add your page to the left sidebar
+To add a link to your page as a menu item in the left sidebar,
+add the following code after the last line in _commons.js   
+```
 /* Checks that a given selector has loaded. */
 const checkElement = async selector => {
     while ( document.querySelector(selector) === null) {
@@ -105,3 +119,15 @@ checkElement('.nav-menu')
         }       
     })();
 });
+```
+
+### 9. Restart the mediacms web server
+On docker:
+```
+sudo docker stop mediacms_web_1 && sudo docker start mediacms_web_1
+```
+
+Otherwise
+```
+sudo systemctl restart mediacms
+```
