@@ -7,6 +7,7 @@ templates/cms/volunteer.html
 static/css/volunteer.css
 
 #update block headermeta to reflect your new page
+
 ```
 {% block headermeta %}
 <meta property="og:title" content="Volunteer - {{PORTAL_NAME}}">
