@@ -1188,3 +1188,7 @@ class TaskDetail(APIView):
     def delete(self, request, uid, format=None):
         revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def papaki():
+    return 'asdasdad'

@@ -192,4 +192,4 @@ If you like the project, here's a few things you can do
 - Add functionality, work on a PR, fix an issue! 
 - Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
 ## Contact
-info@mediacms.io
+idsadsanfo@mediacms.io
