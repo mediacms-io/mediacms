@@ -1,4 +1,5 @@
 from rest_framework import permissions
+
 from .methods import is_mediacms_editor
 
 

@@ -1,15 +1,17 @@
 # Kudos to Werner Robitza, AVEQ GmbH, for helping with ffmpeg
 # related content
 
+import itertools
 import logging
 import random
-import itertools
 from datetime import datetime
-from cms import celery_app
+
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q
 from django.core.mail import EmailMessage
+from django.db.models import Q
+
+from cms import celery_app
 
 from . import models
 from .helpers import mask_ip
@@ -48,9 +50,7 @@ def pre_save_action(media, user, session_key, action, remote_ip):
     if user:
         query = MediaAction.objects.filter(media=media, action=action, user=user)
     else:
-        query = MediaAction.objects.filter(
-            media=media, action=action, session_key=session_key
-        )
+        query = MediaAction.objects.filter(media=media, action=action, session_key=session_key)
     query = query.order_by("-action_date")
 
     if query:
@@ -71,11 +71,7 @@ def pre_save_action(media, user, session_key, action, remote_ip):
         # perform some checking for requests where no session
         # id is specified (and user is anonymous) to avoid spam
         # eg allow for the same remote_ip for a specific number of actions
-        query = (
-            MediaAction.objects.filter(media=media, action=action, remote_ip=remote_ip)
-            .filter(user=None)
-            .order_by("-action_date")
-        )
+        query = MediaAction.objects.filter(media=media, action=action, remote_ip=remote_ip).filter(user=None).order_by("-action_date")
         if query:
             query = query.first()
             now = datetime.now(query.action_date.tzinfo)
@@ -204,11 +200,8 @@ URL: %s
             d["to"] = [media.user.email]
             notify_items.append(d)
 
-
     for item in notify_items:
-        email = EmailMessage(
-            item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"]
-        )
+        email = EmailMessage(item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"])
         email.send(fail_silently=True)
     return True
 
@@ -222,17 +215,9 @@ def show_recommended_media(request, limit=100):
     pmi = cache.get("popular_media_ids")
     # produced by task get_list_of_popular_media and cached
     if pmi:
-        media = list(
-            models.Media.objects.filter(friendly_token__in=pmi)
-            .filter(basic_query)
-            .prefetch_related("user")[:limit]
-        )
+        media = list(models.Media.objects.filter(friendly_token__in=pmi).filter(basic_query).prefetch_related("user")[:limit])
     else:
-        media = list(
-            models.Media.objects.filter(basic_query)
-            .order_by("-views", "-likes")
-            .prefetch_related("user")[:limit]
-        )
+        media = list(models.Media.objects.filter(basic_query).order_by("-views", "-likes").prefetch_related("user")[:limit])
     random.shuffle(media)
     return media
 
@@ -257,11 +242,7 @@ def show_related_media_content(media, request, limit):
     # and include author videos in any case
 
     q_author = Q(listable=True, user=media.user)
-    m = list(
-        models.Media.objects.filter(q_author)
-        .order_by()
-        .prefetch_related("user")[:limit]
-    )
+    m = list(models.Media.objects.filter(q_author).order_by().prefetch_related("user")[:limit])
 
     # order by random criteria so that it doesn't bring the same results
     # attention: only fields that are indexed make sense here! also need
@@ -282,20 +263,12 @@ def show_related_media_content(media, request, limit):
         category = media.category.first()
         if category:
             q_category = Q(listable=True, category=category)
-            q_res = (
-                models.Media.objects.filter(q_category)
-                .order_by(order_criteria[random.randint(0, len(order_criteria) - 1)])
-                .prefetch_related("user")[: limit - media.user.media_count]
-            )
+            q_res = models.Media.objects.filter(q_category).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[: limit - media.user.media_count]
             m = list(itertools.chain(m, q_res))
 
         if len(m) < limit:
             q_generic = Q(listable=True)
-            q_res = (
-                models.Media.objects.filter(q_generic)
-                .order_by(order_criteria[random.randint(0, len(order_criteria) - 1)])
-                .prefetch_related("user")[: limit - media.user.media_count]
-            )
+            q_res = models.Media.objects.filter(q_generic).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[: limit - media.user.media_count]
             m = list(itertools.chain(m, q_res))
 
     m = list(set(m[:limit]))  # remove duplicates
@@ -313,11 +286,7 @@ def show_related_media_author(media, request, limit):
     """Return a list of related media form the same author"""
 
     q_author = Q(listable=True, user=media.user)
-    m = list(
-        models.Media.objects.filter(q_author)
-        .order_by()
-        .prefetch_related("user")[:limit]
-    )
+    m = list(models.Media.objects.filter(q_author).order_by().prefetch_related("user")[:limit])
 
     # order by random criteria so that it doesn't bring the same results
     # attention: only fields that are indexed make sense here! also need
@@ -347,13 +316,7 @@ def update_user_ratings(user, media, user_ratings):
     """Populate user ratings for a media"""
 
     for rating in user_ratings:
-        user_rating = (
-            models.Rating.objects.filter(
-                user=user, media_id=media, rating_category_id=rating.get("category_id")
-            )
-            .only("score")
-            .first()
-        )
+        user_rating = models.Rating.objects.filter(user=user, media_id=media, rating_category_id=rating.get("category_id")).only("score").first()
         if user_rating:
             rating["score"] = user_rating.score
     return user_ratings
@@ -379,9 +342,7 @@ View it on %s
             media.title,
             media_url,
         )
-        email = EmailMessage(
-            title, msg, settings.DEFAULT_FROM_EMAIL, [media.user.email]
-        )
+        email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [media.user.email])
         email.send(fail_silently=True)
     return True
 
@@ -420,27 +381,17 @@ def list_tasks():
                     friendly_token = task_args.split()[0]
                     profile_id = task_args.split()[1]
 
-                    media = models.Media.objects.filter(
-                        friendly_token=friendly_token
-                    ).first()
+                    media = models.Media.objects.filter(friendly_token=friendly_token).first()
                     if media:
-                        profile = models.EncodeProfile.objects.filter(
-                            id=profile_id
-                        ).first()
+                        profile = models.EncodeProfile.objects.filter(id=profile_id).first()
                         if profile:
-                            media_profile_pairs.append(
-                                (media.friendly_token, profile.id)
-                            )
+                            media_profile_pairs.append((media.friendly_token, profile.id))
                             task_dict["info"] = {}
                             task_dict["info"]["profile name"] = profile.name
                             task_dict["info"]["media title"] = media.title
-                            encoding = models.Encoding.objects.filter(
-                                task_id=task.get("id")
-                            ).first()
+                            encoding = models.Encoding.objects.filter(task_id=task.get("id")).first()
                             if encoding:
-                                task_dict["info"][
-                                    "encoding progress"
-                                ] = encoding.progress
+                                task_dict["info"]["encoding progress"] = encoding.progress
 
                 ret[state]["tasks"].append(task_dict)
     ret["task_ids"] = task_ids

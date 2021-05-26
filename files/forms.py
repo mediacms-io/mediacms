@@ -1,6 +1,7 @@
 from django import forms
+
+from .methods import get_next_state, is_mediacms_editor
 from .models import Media, Subtitle
-from .methods import is_mediacms_editor, get_next_state
 
 
 class MultipleSelect(forms.CheckboxSelectMultiple):
@@ -8,9 +9,7 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 
 class MediaForm(forms.ModelForm):
-    new_tags = forms.CharField(
-        label="Tags", help_text="a comma separated list of new tags.", required=False
-    )
+    new_tags = forms.CharField(label="Tags", help_text="a comma separated list of new tags.", required=False)
 
     class Meta:
         model = Media
@@ -27,7 +26,7 @@ class MediaForm(forms.ModelForm):
             "thumbnail_time",
             "reported_times",
             "is_reviewed",
-            "allow_download"
+            "allow_download",
         )
         widgets = {
             "tags": MultipleSelect(),
@@ -42,9 +41,7 @@ class MediaForm(forms.ModelForm):
             self.fields.pop("featured")
             self.fields.pop("reported_times")
             self.fields.pop("is_reviewed")
-        self.fields["new_tags"].initial = ", ".join(
-            [tag.title for tag in self.instance.tags.all()]
-        )
+        self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
 
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)
@@ -57,9 +54,7 @@ class MediaForm(forms.ModelForm):
         data = self.cleaned_data
         state = data.get("state")
         if state != self.initial["state"]:
-            self.instance.state = get_next_state(
-                self.user, self.initial["state"], self.instance.state
-            )
+            self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
 
         media = super(MediaForm, self).save(*args, **kwargs)
         return media

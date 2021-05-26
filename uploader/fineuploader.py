@@ -1,6 +1,7 @@
-from os.path import join
-from io import StringIO
 import shutil
+from io import StringIO
+from os.path import join
+
 from django.conf import settings
 
 from . import utils

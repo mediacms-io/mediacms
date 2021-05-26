@@ -1,41 +1,40 @@
-import re
-import os
 import json
-import subprocess
-from datetime import datetime, timedelta
-import tempfile
+import os
+import re
 import shutil
-from django.core.cache import cache
-from django.conf import settings
-from django.core.files import File
-from django.db.models import Q
+import subprocess
+import tempfile
+from datetime import datetime, timedelta
 
 from celery import Task
 from celery.decorators import task
-from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
-
-from celery.task.control import revoke
 from celery.signals import task_revoked
+from celery.task.control import revoke
+from celery.utils.log import get_task_logger
+from django.conf import settings
+from django.core.cache import cache
+from django.core.files import File
+from django.db.models import Q
+
+from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from users.models import User
 
 from .backends import FFmpegBackend
 from .exceptions import VideoEncodingError
 from .helpers import (
     calculate_seconds,
-    rm_file,
     create_temp_file,
     get_file_name,
     get_file_type,
     media_file_info,
-    run_command,
     produce_ffmpeg_commands,
     produce_friendly_token,
+    rm_file,
+    run_command,
 )
-
-from actions.models import MediaAction, USER_MEDIA_ACTIONS
-from users.models import User
-from .models import Encoding, EncodeProfile, Media, Category, Rating, Tag
-from .methods import list_tasks, pre_save_action, notify_users
+from .methods import list_tasks, notify_users, pre_save_action
+from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 
 logger = get_task_logger(__name__)
 
@@ -83,10 +82,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 chunks.append(ch[0])
     if not chunks:
         # command completely failed to segment file.putting to normal encode
-        logger.info(
-            "Failed to break file {0} in chunks."
-            " Putting to normal encode queue".format(friendly_token)
-        )
+        logger.info("Failed to break file {0} in chunks." " Putting to normal encode queue".format(friendly_token))
         for profile in profiles:
             if media.video_height and media.video_height < profile.resolution:
                 if profile.resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
@@ -94,9 +90,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
             encoding = Encoding(media=media, profile=profile)
             encoding.save()
             enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
-            encode_media.delay(
-                friendly_token, profile.id, encoding.id, enc_url, force=force
-            )
+            encode_media.delay(friendly_token, profile.id, encoding.id, enc_url, force=force)
         return False
 
     chunks = [os.path.join(cwd, ch) for ch in chunks]
@@ -137,11 +131,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 priority=priority,
             )
 
-    logger.info(
-        "got {0} chunks and will encode to {1} profiles".format(
-            len(chunks), to_profiles
-        )
-    )
+    logger.info("got {0} chunks and will encode to {1} profiles".format(len(chunks), to_profiles))
     return True
 
 
@@ -180,11 +170,7 @@ def encode_media(
 ):
     """Encode a media to given profile, using ffmpeg, storing progress"""
 
-    logger.info(
-        "Encode Media started, friendly token {0}, profile id {1}, force {2}".format(
-            friendly_token, profile_id, force
-        )
-    )
+    logger.info("Encode Media started, friendly token {0}, profile id {1}, force {2}".format(friendly_token, profile_id, force))
 
     if self.request.id:
         task_id = self.request.id
@@ -202,13 +188,7 @@ def encode_media(
         # TODO: in case a video is chunkized and this enters here many times
         # it will always run since chunk_file_path is always different
         # thus find a better way for this check
-        if (
-            Encoding.objects.filter(
-                media=media, profile=profile, chunk_file_path=chunk_file_path
-            ).count()
-            > 1
-            and force == False
-        ):
+        if Encoding.objects.filter(media=media, profile=profile, chunk_file_path=chunk_file_path).count() > 1 and force is False:
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
@@ -230,19 +210,14 @@ def encode_media(
                     chunk_file_path=chunk_file_path,
                 )
     else:
-        if (
-            Encoding.objects.filter(media=media, profile=profile).count() > 1
-            and force is False
-        ):
+        if Encoding.objects.filter(media=media, profile=profile).count() > 1 and force is False:
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
             try:
                 encoding = Encoding.objects.get(id=encoding_id)
                 encoding.status = "running"
-                Encoding.objects.filter(media=media, profile=profile).exclude(
-                    id=encoding_id
-                ).delete()
+                Encoding.objects.filter(media=media, profile=profile).exclude(id=encoding_id).delete()
             except BaseException:
                 encoding = Encoding(media=media, profile=profile, status="running")
 
@@ -287,7 +262,7 @@ def encode_media(
     else:
         original_media_path = media.media_file.path
 
-    #if not media.duration:
+    # if not media.duration:
     #    encoding.status = "fail"
     #    encoding.save(update_fields=["status"])
     #    return False
@@ -337,9 +312,7 @@ def encode_media(
                             if n_times % 60 == 0:
                                 encoding.progress = percent
                                 try:
-                                    encoding.save(
-                                        update_fields=["progress", "update_date"]
-                                    )
+                                    encoding.save(update_fields=["progress", "update_date"])
                                     logger.info("Saved {0}".format(round(percent, 2)))
                                 except BaseException:
                                     pass
@@ -383,18 +356,12 @@ def encode_media(
 
                 with open(tf, "rb") as f:
                     myfile = File(f)
-                    output_name = "{0}.{1}".format(
-                        get_file_name(original_media_path), profile.extension
-                    )
+                    output_name = "{0}.{1}".format(get_file_name(original_media_path), profile.extension)
                     encoding.media_file.save(content=myfile, name=output_name)
-                encoding.total_run_time = (
-                    encoding.update_date - encoding.add_date
-                ).seconds
+                encoding.total_run_time = (encoding.update_date - encoding.add_date).seconds
 
         try:
-            encoding.save(
-                update_fields=["status", "logs", "progress", "total_run_time"]
-            )
+            encoding.save(update_fields=["status", "logs", "progress", "total_run_time"])
         # this will raise a django.db.utils.DatabaseError error when task is revoked,
         # since we delete the encoding at that stage
         except BaseException:
@@ -457,18 +424,14 @@ def create_hls(friendly_token):
 
     p = media.uid.hex
     output_dir = os.path.join(settings.HLS_DIR, p)
-    encodings = media.encodings.filter(
-        profile__extension="mp4", status="success", chunk=False, profile__codec="h264"
-    )
+    encodings = media.encodings.filter(profile__extension="mp4", status="success", chunk=False, profile__codec="h264")
     if encodings:
         existing_output_dir = None
         if os.path.exists(output_dir):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
         files = " ".join([f.media_file.path for f in encodings if f.media_file])
-        cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(
-            settings.MP4HLS_COMMAND, output_dir, files
-        )
+        cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(settings.MP4HLS_COMMAND, output_dir, files)
         ret = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if existing_output_dir:
             # override content with -T !
@@ -515,11 +478,7 @@ def check_running_states():
 def check_media_states():
     # Experimental - unused
     # check encoding status of not success media
-    media = Media.objects.filter(
-        Q(encoding_status="running")
-        | Q(encoding_status="fail")
-        | Q(encoding_status="pending")
-    )
+    media = Media.objects.filter(Q(encoding_status="running") | Q(encoding_status="fail") | Q(encoding_status="pending"))
 
     logger.info("got {0} media that are not in state success".format(media.count()))
 
@@ -564,11 +523,7 @@ def check_pending_states():
             media.encode(profiles=[profile], force=False)
             changed += 1
     if changed:
-        logger.info(
-            "set to the encode queue {0} encodings that were on pending state".format(
-                changed
-            )
-        )
+        logger.info("set to the encode queue {0} encodings that were on pending state".format(changed))
     return True
 
 
@@ -602,6 +557,7 @@ def clear_sessions():
 
     try:
         from importlib import import_module
+
         from django.conf import settings
 
         engine = import_module(settings.SESSION_ENGINE)
@@ -612,9 +568,7 @@ def clear_sessions():
 
 
 @task(name="save_user_action", queue="short_tasks")
-def save_user_action(
-    user_or_session, friendly_token=None, action="watch", extra_info=None
-):
+def save_user_action(user_or_session, friendly_token=None, action="watch", extra_info=None):
     """Short task that saves a user action"""
 
     if action not in VALID_USER_ACTIONS:
@@ -652,9 +606,7 @@ def save_user_action(
         if user:
             MediaAction.objects.filter(user=user, media=media, action="watch").delete()
         else:
-            MediaAction.objects.filter(
-                session_key=session_key, media=media, action="watch"
-            ).delete()
+            MediaAction.objects.filter(session_key=session_key, media=media, action="watch").delete()
     if action == "rate":
         try:
             score = extra_info.get("score")
@@ -663,9 +615,7 @@ def save_user_action(
             # TODO: better error handling?
             return False
         try:
-            rating = Rating.objects.filter(
-                user=user, media=media, rating_category_id=rating_category
-            ).first()
+            rating = Rating.objects.filter(user=user, media=media, rating_category_id=rating_category).first()
             if rating:
                 rating.score = score
                 rating.save(update_fields=["score"])
@@ -735,14 +685,10 @@ def get_list_of_popular_media():
 
     for media in media_x:
         ft = media["friendly_token"]
-        num = MediaAction.objects.filter(
-            action_date__gte=period_x, action="watch", media__friendly_token=ft
-        ).count()
+        num = MediaAction.objects.filter(action_date__gte=period_x, action="watch", media__friendly_token=ft).count()
         if num:
             valid_media_x[ft] = num
-        num = MediaAction.objects.filter(
-            action_date__gte=period_y, action="like", media__friendly_token=ft
-        ).count()
+        num = MediaAction.objects.filter(action_date__gte=period_y, action="like", media__friendly_token=ft).count()
         if num:
             valid_media_y[ft] = num
 
@@ -767,12 +713,7 @@ def update_listings_thumbnails():
     saved = 0
     qs = Category.objects.filter().order_by("-media_count")
     for object in qs:
-        media = (
-            Media.objects.exclude(friendly_token__in=used_media)
-            .filter(category=object, state="public", is_reviewed=True)
-            .order_by("-views")
-            .first()
-        )
+        media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state="public", is_reviewed=True).order_by("-views").first()
         if media:
             object.listings_thumbnail = media.thumbnail_url
             object.save(update_fields=["listings_thumbnail"])
@@ -785,12 +726,7 @@ def update_listings_thumbnails():
     saved = 0
     qs = Tag.objects.filter().order_by("-media_count")
     for object in qs:
-        media = (
-            Media.objects.exclude(friendly_token__in=used_media)
-            .filter(tags=object, state="public", is_reviewed=True)
-            .order_by("-views")
-            .first()
-        )
+        media = Media.objects.exclude(friendly_token__in=used_media).filter(tags=object, state="public", is_reviewed=True).order_by("-views").first()
         if media:
             object.listings_thumbnail = media.thumbnail_url
             object.save(update_fields=["listings_thumbnail"])

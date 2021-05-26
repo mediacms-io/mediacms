@@ -1,4 +1,5 @@
 import os
+
 from celery.schedules import crontab
 
 DEBUG = False
@@ -17,7 +18,7 @@ CAN_ADD_MEDIA = "all"
 PORTAL_WORKFLOW = "public"
 
 # valid values: 'light', 'dark'.
-DEFAULT_THEME = "light"  
+DEFAULT_THEME = "light"
 
 
 # These are passed on every request
@@ -213,9 +214,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 CANNOT_ADD_MEDIA_MESSAGE = ""
 
 # mp4hls command, part of Bendo4
-MP4HLS_COMMAND = (
-    "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
-)
+MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
 
 # highly experimental, related with remote workers
 ADMIN_TOKEN = "c2b8e1838b6128asd333ddc5e24"

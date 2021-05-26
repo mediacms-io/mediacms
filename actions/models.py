@@ -1,6 +1,7 @@
 from django.db import models
-from users.models import User
+
 from files.models import Media
+from users.models import User
 
 USER_MEDIA_ACTIONS = (
     ("like", "Like"),
@@ -30,15 +31,11 @@ class MediaAction(models.Model):
         help_text="for not logged in users",
     )
 
-    action = models.CharField(
-        max_length=20, choices=USER_MEDIA_ACTIONS, default="watch"
-    )
+    action = models.CharField(max_length=20, choices=USER_MEDIA_ACTIONS, default="watch")
     # keeps extra info, eg on report action, why it is reported
     extra_info = models.TextField(blank=True, null=True)
 
-    media = models.ForeignKey(
-        Media, on_delete=models.CASCADE, related_name="mediaactions"
-    )
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name="mediaactions")
     action_date = models.DateTimeField(auto_now_add=True)
     remote_ip = models.CharField(max_length=40, blank=True, null=True)
 
