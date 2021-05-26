@@ -32,3 +32,4 @@ flake8
 pep8
 django-silk
 django-debug-toolbar
+pre-commit
