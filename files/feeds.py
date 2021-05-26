@@ -1,12 +1,12 @@
-from django.contrib.syndication.views import Feed
-from django.utils.feedgenerator import Rss201rev2Feed
-from django.urls import reverse
-from django.db.models import Q
 from django.conf import settings
 from django.contrib.postgres.search import SearchQuery
+from django.contrib.syndication.views import Feed
+from django.db.models import Q
+from django.urls import reverse
+from django.utils.feedgenerator import Rss201rev2Feed
 
-from .models import Media, Category
 from . import helpers
+from .models import Category, Media
 from .stop_words import STOP_WORDS
 
 
@@ -119,11 +119,7 @@ class SearchRSSFeed(Feed):
         elif query:
             # same as on files.views.MediaSearch: move this processing to a prepare_query function
             query = helpers.clean_query(query)
-            q_parts = [
-                q_part.rstrip("y")
-                for q_part in query.split()
-                if q_part not in STOP_WORDS
-            ]
+            q_parts = [q_part.rstrip("y") for q_part in query.split() if q_part not in STOP_WORDS]
             if q_parts:
                 query = SearchQuery(q_parts[0] + ":*", search_type="raw")
                 for part in q_parts[1:]:

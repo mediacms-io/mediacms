@@ -1,5 +1,6 @@
 from django import forms
-from .models import User, Channel
+
+from .models import Channel, User
 
 
 class SignupForm(forms.Form):
@@ -23,7 +24,7 @@ class UserForm(forms.ModelForm):
             "advancedUser",
             "is_manager",
             "is_editor",
-            #"allow_contact",
+            # "allow_contact",
         )
 
     def clean_logo(self):

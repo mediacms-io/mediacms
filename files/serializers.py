@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Media, EncodeProfile, Playlist, Comment, Category, Tag
+from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
 # TODO: put them in a more DRY way
 
@@ -18,9 +18,7 @@ class MediaSerializer(serializers.ModelSerializer):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
     def get_api_url(self, obj):
-        return self.context["request"].build_absolute_uri(
-            obj.get_absolute_url(api=True)
-        )
+        return self.context["request"].build_absolute_uri(obj.get_absolute_url(api=True))
 
     def get_thumbnail_url(self, obj):
         if obj.thumbnail_url:
@@ -210,16 +208,7 @@ class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
         read_only_fields = ("add_date", "user")
-        fields = (
-            "add_date",
-            "title",
-            "description",
-            "user",
-            "media_count",
-            "url",
-            "api_url",
-            "thumbnail_url"
-        )
+        fields = ("add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url")
 
 
 class PlaylistDetailSerializer(serializers.ModelSerializer):
@@ -228,16 +217,7 @@ class PlaylistDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
         read_only_fields = ("add_date", "user")
-        fields = (
-            "title",
-            "add_date",
-            "user_thumbnail_url",
-            "description",
-            "user",
-            "media_count",
-            "url",
-            "thumbnail_url"
-        )
+        fields = ("title", "add_date", "user_thumbnail_url", "description", "user", "media_count", "url", "thumbnail_url")
 
 
 class CommentSerializer(serializers.ModelSerializer):

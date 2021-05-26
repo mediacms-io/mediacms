@@ -1,18 +1,17 @@
-from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
-from django.urls import reverse
-from django.dispatch import receiver
-from django.db.models.signals import post_save, post_delete
-from django.utils.html import strip_tags
 from django.core.mail import EmailMessage
-
-from imagekit.processors import ResizeToFill
+from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
-from files.models import Media, Tag, Category
+from files.models import Category, Media, Tag
 
 
 class User(AbstractUser):
@@ -40,9 +39,7 @@ class User(AbstractUser):
     location = models.CharField("Location", max_length=250, blank=True)
     is_editor = models.BooleanField("MediaCMS Editor", default=False, db_index=True)
     is_manager = models.BooleanField("MediaCMS Manager", default=False, db_index=True)
-    allow_contact = models.BooleanField(
-        "Whether allow contact will be shown on profile page", default=False
-    )
+    allow_contact = models.BooleanField("Whether allow contact will be shown on profile page", default=False)
 
     class Meta:
         ordering = ["-date_added", "name"]
@@ -117,9 +114,7 @@ class User(AbstractUser):
 class Channel(models.Model):
     title = models.CharField(max_length=90, db_index=True)
     description = models.TextField(blank=True, help_text="description")
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, db_index=True, related_name="channels"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True, related_name="channels")
     add_date = models.DateTimeField(auto_now_add=True, db_index=True)
     subscribers = models.ManyToManyField(User, related_name="subscriptions", blank=True)
     friendly_token = models.CharField(blank=True, max_length=12)
@@ -150,13 +145,9 @@ class Channel(models.Model):
 
     def get_absolute_url(self, edit=False):
         if edit:
-            return reverse(
-                "edit_channel", kwargs={"friendly_token": self.friendly_token}
-            )
+            return reverse("edit_channel", kwargs={"friendly_token": self.friendly_token})
         else:
-            return reverse(
-                "view_channel", kwargs={"friendly_token": self.friendly_token}
-            )
+            return reverse("view_channel", kwargs={"friendly_token": self.friendly_token})
 
     @property
     def edit_url(self):
@@ -178,9 +169,7 @@ Visit user profile page at %s
                 instance.email,
                 settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),
             )
-            email = EmailMessage(
-                title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST
-            )
+            email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
             email.send(fail_silently=True)
 
 
@@ -193,14 +182,10 @@ class Notification(models.Model):
     Needs work
     """
 
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, db_index=True, related_name="notifications"
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True, related_name="notifications")
     action = models.CharField(max_length=30, blank=True)
     notify = models.BooleanField(default=False)
-    method = models.CharField(
-        max_length=20, choices=NOTIFICATION_METHODS, default="email"
-    )
+    method = models.CharField(max_length=20, choices=NOTIFICATION_METHODS, default="email")
 
     def save(self, *args, **kwargs):
         super(Notification, self).save(*args, **kwargs)

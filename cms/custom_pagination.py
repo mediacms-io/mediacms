@@ -1,8 +1,9 @@
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
 from collections import OrderedDict  # requires Python 2.7 or later
+
 from django.core.paginator import Paginator
 from django.utils.functional import cached_property
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 
 class FasterDjangoPaginator(Paginator):

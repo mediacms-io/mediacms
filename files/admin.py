@@ -1,14 +1,14 @@
 from django.contrib import admin
 
 from .models import (
-    Media,
-    Encoding,
-    EncodeProfile,
     Category,
     Comment,
-    Tag,
+    EncodeProfile,
+    Encoding,
     Language,
+    Media,
     Subtitle,
+    Tag,
 )
 
 
