@@ -1,5 +1,5 @@
 #!/bin/bash
-# should be run as root and only on Ubuntu 18/20 versions!
+# should be run as root and only on Ubuntu 18/20, Debian Buster versions!
 echo "Welcome to the MediacMS installation!";
 
 if [ `id -u` -ne 0 ]

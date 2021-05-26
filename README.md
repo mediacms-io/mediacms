@@ -107,7 +107,7 @@ The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. A
 Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings. 
 
-Automated script - to run on Ubuntu 18 or Ubuntu 20 flavors only!
+Automated script - tested on Ubuntu 18, Ubuntu 20, and Debian Buster
 
 ```bash
 mkdir /home/mediacms.io && cd /home/mediacms.io/
