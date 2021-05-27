@@ -660,13 +660,13 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
 
     if codec == "h264":
         encoder = "libx264"
-        ext = "mp4"
+        # ext = "mp4"
     elif codec in ["h265", "hevc"]:
         encoder = "libx265"
-        ext = "mp4"
+        # ext = "mp4"
     elif codec == "vp9":
         encoder = "libvpx-vp9"
-        ext = "webm"
+        # ext = "webm"
     else:
         return False
 

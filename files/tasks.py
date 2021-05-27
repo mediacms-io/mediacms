@@ -391,7 +391,7 @@ def produce_sprite_from_video(friendly_token):
                 tmpdirname,
                 output_name,
             )
-            ret = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
             if os.path.exists(output_name) and get_file_type(output_name) == "image":
                 with open(output_name, "rb") as f:
                     myfile = File(f)
@@ -432,11 +432,11 @@ def create_hls(friendly_token):
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
         files = " ".join([f.media_file.path for f in encodings if f.media_file])
         cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(settings.MP4HLS_COMMAND, output_dir, files)
-        ret = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+        subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if existing_output_dir:
             # override content with -T !
             cmd = "cp -rT {0} {1}".format(output_dir, existing_output_dir)
-            ret = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
             shutil.rmtree(output_dir)
             output_dir = existing_output_dir
         pp = os.path.join(output_dir, "master.m3u8")
@@ -626,7 +626,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                     rating_category_id=rating_category,
                     score=score,
                 )
-        except Exception as exc:
+        except Exception:
             # TODO: more specific handling, for errors in score, or
             # rating_category?
             return False
