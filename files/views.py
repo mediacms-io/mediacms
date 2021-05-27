@@ -210,8 +210,6 @@ def embed_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    user_or_session = get_user_or_session(request)
-
     context = {}
     context["media"] = friendly_token
     return render(request, "cms/embed.html", context)

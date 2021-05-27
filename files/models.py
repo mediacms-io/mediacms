@@ -537,7 +537,7 @@ class Media(models.Model):
             "-y",
             tf,
         ]
-        ret = helpers.run_command(command)
+        helpers.run_command(command)
 
         if os.path.exists(tf) and helpers.get_file_type(tf) == "image":
             with open(tf, "rb") as f:
@@ -657,7 +657,6 @@ class Media(models.Model):
         """Property used on serializers"""
 
         ret = {}
-        chunks_ret = {}
 
         if self.media_type not in ["video"]:
             return ret
