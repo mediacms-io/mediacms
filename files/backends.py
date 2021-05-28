@@ -1,9 +1,9 @@
 # ffmpeg only backend
 
-from subprocess import PIPE, Popen
 import locale
-import re
 import logging
+import re
+from subprocess import PIPE, Popen
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# should be run as root and only on Ubuntu 18/20 versions!
+# should be run as root and only on Ubuntu 18/20, Debian Buster versions!
 echo "Welcome to the MediacMS installation!";
 
 if [ `id -u` -ne 0 ]
@@ -25,6 +25,10 @@ if [[ `lsb_release -d` == *"Ubuntu 20"* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
 elif [[ `lsb_release -d`  = *"Ubuntu 18"* ]]; then
+    echo 'Performing system update and dependency installation, this will take a few minutes'
+    apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
+# added check for Debian 10 (buster)
+elif [[ `lsb_release -d` == *"buster"* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
 else

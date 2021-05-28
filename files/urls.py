@@ -1,10 +1,9 @@
-from django.conf.urls.static import static
 from django.conf import settings
-from django.conf.urls import url, include
+from django.conf.urls import include, url
+from django.conf.urls.static import static
 from django.urls import path
 
-from . import views
-from . import management_views
+from . import management_views, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
 urlpatterns = [

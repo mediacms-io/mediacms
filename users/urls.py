@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from . import views
 
 urlpatterns = [
@@ -20,9 +21,7 @@ urlpatterns = [
         name="get_user_about",
     ),
     url(r"^user/(?P<username>[\w@.]*)/edit$", views.edit_user, name="edit_user"),
-    url(
-        r"^channel/(?P<friendly_token>[\w]*)$", views.view_channel, name="view_channel"
-    ),
+    url(r"^channel/(?P<friendly_token>[\w]*)$", views.view_channel, name="view_channel"),
     url(
         r"^channel/(?P<friendly_token>[\w]*)/edit$",
         views.edit_channel,

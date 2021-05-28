@@ -2,17 +2,18 @@
 import os
 import shutil
 
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
+from django.core.files import File
 from django.http import JsonResponse
 from django.views import generic
-from django.conf import settings
-from django.core.files import File
-from django.core.exceptions import PermissionDenied
 
 from cms.permissions import user_allowed_to_upload
-from files.models import Media
 from files.helpers import rm_file
-from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
+from files.models import Media
+
 from .fineuploader import ChunkedFineUploader
+from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
 
 
 class FineUploaderView(generic.FormView):
@@ -67,9 +68,7 @@ class FineUploaderView(generic.FormView):
             new = Media.objects.create(media_file=myfile, user=self.request.user)
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
-        return self.make_response(
-            {"success": True, "media_url": new.get_absolute_url()}
-        )
+        return self.make_response({"success": True, "media_url": new.get_absolute_url()})
 
     def form_invalid(self, form):
         data = {"success": False, "error": "%s" % repr(form.errors)}

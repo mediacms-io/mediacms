@@ -1,16 +1,16 @@
-from rest_framework.views import APIView
-from rest_framework.parsers import JSONParser
-from rest_framework.settings import api_settings
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.parsers import JSONParser
+from rest_framework.response import Response
+from rest_framework.settings import api_settings
+from rest_framework.views import APIView
 
 from users.models import User
 from users.serializers import UserSerializer
-from .permissions import IsMediacmsEditor
-from .models import Media, Comment
-from .methods import is_mediacms_manager
 
-from .serializers import MediaSerializer, CommentSerializer
+from .methods import is_mediacms_manager
+from .models import Comment, Media
+from .permissions import IsMediacmsEditor
+from .serializers import CommentSerializer, MediaSerializer
 
 
 class MediaList(APIView):
@@ -189,9 +189,7 @@ class UserList(APIView):
 
     def delete(self, request, format=None):
         if not is_mediacms_manager(request.user):
-            return Response(
-                {"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
 
         tokens = request.GET.get("tokens")
         if tokens:
