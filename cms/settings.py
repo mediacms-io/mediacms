@@ -292,8 +292,8 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "ckeditor",
-    "drf_yasg"
-    ]
+    "drf_yasg",
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
