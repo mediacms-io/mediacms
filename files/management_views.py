@@ -1,3 +1,5 @@
+from drf_yasg import openapi as openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -23,6 +25,17 @@ class MediaList(APIView):
     permission_classes = (IsMediacmsEditor,)
     parser_classes = (JSONParser,)
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='sort_by', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Sort by any of: title, add_date, edit_date, views, likes, reported_times'),
+            openapi.Parameter(name='ordering', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Order by: asc, desc'),
+            openapi.Parameter(name='state', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Media state, options: private", "public", "unlisted'),
+            openapi.Parameter(name='encoding_status', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Encoding status, options "pending", "running", "fail", "success"'),
+        ],
+        tags=['Manage'],
+        operation_summary='Manage Media',
+        operation_description='Manage media for MediaCMS managers and reviewers',
+    )
     def get(self, request, format=None):
         params = self.request.query_params
         ordering = params.get("ordering", "").strip()
@@ -94,6 +107,12 @@ class MediaList(APIView):
         serializer = MediaSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Delete Media',
+        operation_description='Delete media for MediaCMS managers and reviewers',
+    )
     def delete(self, request, format=None):
         tokens = request.GET.get("tokens")
         if tokens:
@@ -112,6 +131,12 @@ class CommentList(APIView):
     permission_classes = (IsMediacmsEditor,)
     parser_classes = (JSONParser,)
 
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Manage Comments',
+        operation_description='Manage comments for MediaCMS managers and reviewers',
+    )
     def get(self, request, format=None):
         params = self.request.query_params
         ordering = params.get("ordering", "").strip()
@@ -137,6 +162,12 @@ class CommentList(APIView):
         serializer = CommentSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Delete Comments',
+        operation_description='Delete comments for MediaCMS managers and reviewers',
+    )
     def delete(self, request, format=None):
         comment_ids = request.GET.get("comment_ids")
         if comment_ids:
@@ -156,6 +187,12 @@ class UserList(APIView):
     permission_classes = (IsMediacmsEditor,)
     parser_classes = (JSONParser,)
 
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Manage Users',
+        operation_description='Manage users for MediaCMS managers and reviewers',
+    )
     def get(self, request, format=None):
         params = self.request.query_params
         ordering = params.get("ordering", "").strip()
@@ -187,6 +224,12 @@ class UserList(APIView):
         serializer = UserSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Delete Users',
+        operation_description='Delete users for MediaCMS managers',
+    )
     def delete(self, request, format=None):
         if not is_mediacms_manager(request.user):
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
