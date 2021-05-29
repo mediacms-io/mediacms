@@ -158,7 +158,7 @@ This software uses the following list of awesome technologies:
 
 ## Who is using it
 
-- **EngageMedia** non-profit media, technology and culture organization - https://video.engagemedia.org
+- **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
 
