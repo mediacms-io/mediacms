@@ -292,6 +292,7 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "ckeditor",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
@@ -422,6 +423,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 # TODO: beat, delete chunks from media root
 # chunks_dir after xx days...(also uploads_dir)
+
 
 LOCAL_INSTALL = False
 

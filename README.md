@@ -158,26 +158,11 @@ This software uses the following list of awesome technologies:
 
 ## Who is using it
 
-- **EngageMedia** non-profit media, technology and culture organization - https://video.engagemedia.org
+- **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
 
 - **Heritales** International Heritage Film Festival - https://stage.heritales.org
-
-
-## Thanks To
-
-- **Anna Helme**, for such a great partnership all these years!
-
-- **Steve Anderson**, for trusting us and helping the Wordgames team make this real.
-
-- **Andrew Lowenthal, King Catoy, Rezwan Islam** and the rest of the great team of [Engage Media](https://engagemedia.org). 
-
-- **Ioannis Korovesis, Ioannis Maistros, Diomidis Spinellis and Theodoros Karounos**, for their mentorship all these years, their contribution to science and the promotion of open source and free software technologies.
-
-- **Antonis Ikonomou**, for hosting us on the excellent [Innovathens](https://www.innovathens.gr) space.
-
-- **Werner Robitza**, for helping us with ffmpeg related stuff.
 
 
 ## How to contribute
@@ -190,6 +175,13 @@ If you like the project, here's a few things you can do
 - Open issues, participate on discussions, report bugs, suggest ideas
 - Star the project
 - Add functionality, work on a PR, fix an issue! 
+
+## Developers info
+
+- API documentation available under /swagger URL (example https://demo.mediacms.io/swagger/)
+- We're working on proper documentation for users, managers and developers, until then checkout what's available on the docs/ folder of this repository
 - Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
+- Checkout the [Code of conduct page](CODE_OF_CONDUCT.md) if you want to contribute to this repository
+
 ## Contact
 info@mediacms.io
