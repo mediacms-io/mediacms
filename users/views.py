@@ -272,8 +272,8 @@ class UserDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Users'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='Xto_be_written',
+        operation_description='to_be_written',
     )
     def put(self, request, uid, format=None):
         # ADMIN
@@ -298,8 +298,8 @@ class UserDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Users'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def delete(self, request, username, format=None):
         # Delete a user

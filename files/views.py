@@ -371,8 +371,8 @@ class MediaList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, format=None):
         # Show media
@@ -416,8 +416,8 @@ class MediaList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, format=None):
         # Add new media
@@ -463,8 +463,8 @@ class MediaDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, friendly_token, format=None):
         # Get media details
@@ -494,8 +494,8 @@ class MediaDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, friendly_token, format=None):
         """superuser actions
@@ -550,8 +550,8 @@ class MediaDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def put(self, request, friendly_token, format=None):
         # Update a media object
@@ -569,8 +569,8 @@ class MediaDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def delete(self, request, friendly_token, format=None):
         # Delete a media object
@@ -606,8 +606,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
@@ -627,8 +627,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, friendly_token, format=None):
         # perform like/dislike/report actions
@@ -662,8 +662,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def delete(self, request, friendly_token, format=None):
         media = self.get_object(friendly_token)
@@ -698,8 +698,8 @@ class MediaSearch(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Search'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, format=None):
         params = self.request.query_params
@@ -801,8 +801,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, format=None):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -821,8 +821,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, format=None):
         serializer = PlaylistSerializer(data=request.data, context={"request": request})
@@ -854,8 +854,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -876,8 +876,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -892,8 +892,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def put(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -952,8 +952,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def delete(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -1119,7 +1119,7 @@ class CommentList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
-            openapi.Parameter(name='author', type=openapi.TYPE_S, in_=openapi.IN_QUERY, description='username'),
+            openapi.Parameter(name='author', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='username'),
         ],
         tags=['Comments'],
         operation_summary='Lists Comments',
@@ -1172,8 +1172,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, friendly_token):
         # list comments for a media
@@ -1190,8 +1190,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def delete(self, request, friendly_token, uid=None):
         """Delete a comment
@@ -1215,8 +1215,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def post(self, request, friendly_token):
         """Create a comment"""
@@ -1314,8 +1314,8 @@ class EncodeProfileList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Encoding Profiles'],
-        operation_summary='XXX',
-        operation_description='XXX',
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
     )
     def get(self, request, format=None):
         profiles = EncodeProfile.objects.all()
