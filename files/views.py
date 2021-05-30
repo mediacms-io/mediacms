@@ -366,13 +366,18 @@ class MediaList(APIView):
     """Media listings views"""
 
     permission_classes = (IsAuthorizedToAdd,)
-    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='author', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='username'),
+            openapi.Parameter(name='show', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='show', enum=['recommended', 'featured', 'latest']),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List Media',
+        operation_description='Lists all media',
+        responses={200: MediaSerializer(many=True)},
     )
     def get(self, request, format=None):
         # Show media
@@ -414,10 +419,15 @@ class MediaList(APIView):
         return paginator.get_paginated_response(serializer.data)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="media_file"),
+            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
+            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Add new Media',
+        operation_description='Adds a new media, for authenticated users',
+        responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
         # Add new media
@@ -435,7 +445,7 @@ class MediaDetail(APIView):
     """
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
-    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token, password=None):
         try:
@@ -461,10 +471,13 @@ class MediaDetail(APIView):
             )
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='friendly_token', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='unique identifier', required=True),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Get information for Media',
+        operation_description='Get information for a media',
+        responses={200: SingleMediaSerializer(), 400: 'bad request'},
     )
     def get(self, request, friendly_token, format=None):
         # Get media details
@@ -492,10 +505,23 @@ class MediaDetail(APIView):
         return Response(ret)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='friendly_token', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='unique identifier', required=True),
+            openapi.Parameter(name='type', type=openapi.TYPE_STRING, in_=openapi.IN_FORM, description='action to perform', enum=['encode', 'review']),
+            openapi.Parameter(
+                name='encoding_profiles',
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Items(type=openapi.TYPE_STRING),
+                in_=openapi.IN_FORM,
+                description='if action to perform is encode, need to specify list of ids of encoding profiles',
+            ),
+            openapi.Parameter(name='result', type=openapi.TYPE_BOOLEAN, in_=openapi.IN_FORM, description='if action is review, this is the result (True for reviewed, False for not reviewed)'),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Run action on Media',
+        operation_description='Actions for a media, for MediaCMS editors and managers',
+        responses={201: 'action created', 400: 'bad request'},
+        operation_id='media_manager_actions',
     )
     def post(self, request, friendly_token, format=None):
         """superuser actions
@@ -514,7 +540,6 @@ class MediaDetail(APIView):
         action = request.data.get("type")
         profiles_list = request.data.get("encoding_profiles")
         result = request.data.get("result", True)
-
         if action == "encode":
             # Create encoding tasks for specific profiles
             valid_profiles = []
@@ -548,10 +573,15 @@ class MediaDetail(APIView):
         )
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
+            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
+            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="media_file"),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Update Media',
+        operation_description='Update a Media, for Media uploader',
+        responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def put(self, request, friendly_token, format=None):
         # Update a media object
@@ -561,16 +591,24 @@ class MediaDetail(APIView):
 
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
-            media_file = request.data["media_file"]
-            serializer.save(user=request.user, media_file=media_file)
+            if request.data.get('media_file'):
+                media_file = request.data["media_file"]
+                serializer.save(user=request.user, media_file=media_file)
+            else:
+                serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='friendly_token', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='unique identifier', required=True),
+        ],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete Media',
+        operation_description='Delete a Media, for MediaCMS editors and managers',
+        responses={
+            204: 'no content',
+        },
     )
     def delete(self, request, friendly_token, format=None):
         # Delete a media object
@@ -803,6 +841,9 @@ class PlaylistList(APIView):
         tags=['Playlists'],
         operation_summary='to_be_written',
         operation_description='to_be_written',
+        responses={
+            200: openapi.Response('response description', PlaylistSerializer(many=True)),
+        },
     )
     def get(self, request, format=None):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -1124,6 +1165,9 @@ class CommentList(APIView):
         tags=['Comments'],
         operation_summary='Lists Comments',
         operation_description='Paginated listing of all comments',
+        responses={
+            200: openapi.Response('response description', CommentSerializer(many=True)),
+        },
     )
     def get(self, request, format=None):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -1280,6 +1324,9 @@ class CategoryList(APIView):
         tags=['Categories'],
         operation_summary='Lists Categories',
         operation_description='Lists all categories',
+        responses={
+            200: openapi.Response('response description', CategorySerializer),
+        },
     )
     def get(self, request, format=None):
         categories = Category.objects.filter().order_by("title")
@@ -1298,6 +1345,9 @@ class TagList(APIView):
         tags=['Tags'],
         operation_summary='Lists Tags',
         operation_description='Paginated listing of all tags',
+        responses={
+            200: openapi.Response('response description', TagSerializer),
+        },
     )
     def get(self, request, format=None):
         tags = Tag.objects.filter().order_by("-media_count")
@@ -1314,8 +1364,9 @@ class EncodeProfileList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Encoding Profiles'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List Encoding Profiles',
+        operation_description='Lists all encoding profiles for videos',
+        responses={200: EncodeProfileSerializer(many=True)},
     )
     def get(self, request, format=None):
         profiles = EncodeProfile.objects.all()

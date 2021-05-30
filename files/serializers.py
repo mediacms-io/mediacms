@@ -38,7 +38,6 @@ class MediaSerializer(serializers.ModelSerializer):
             "friendly_token",
             "user",
             "add_date",
-            "views",
             "media_type",
             "state",
             "duration",
@@ -49,6 +48,7 @@ class MediaSerializer(serializers.ModelSerializer):
             "reported_times",
             "size",
             "is_reviewed",
+            "featured",
         )
         fields = (
             "friendly_token",
@@ -64,8 +64,6 @@ class MediaSerializer(serializers.ModelSerializer):
             "duration",
             "thumbnail_url",
             "is_reviewed",
-            "url",
-            "api_url",
             "preview_url",
             "author_name",
             "author_profile",
