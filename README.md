@@ -34,6 +34,7 @@ A demo is available at https://demo.mediacms.io
 - **Subtitles/CC**: support for multilingual subtitle files
 - **Scalable transcoding**: transcoding through priorities. Experimental support for remote workers
 - **Chunked file uploads**: for pausable/resumable upload of content
+- **REST API**: Documented through Swagger
 
 
 ## Example cases
