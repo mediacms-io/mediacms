@@ -206,7 +206,7 @@ class UserDetail(APIView):
     """"""
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrManager)
-    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get_user(self, username):
         try:
@@ -239,18 +239,15 @@ class UserDetail(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[
+            openapi.Parameter(name="logo", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="logo"),
+            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
+            openapi.Parameter(name="name", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="name"),
             openapi.Parameter(name='username', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=True),
         ],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description='description'),
-                'name': openapi.Schema(type=openapi.TYPE_STRING, description='name'),
-            },
-        ),
         tags=['Users'],
         operation_summary='Edit user details',
         operation_description='Post user details - authenticated view',
+        responses={201: openapi.Response('response description', UserDetailSerializer), 400: 'bad request'},
     )
     def post(self, request, username, format=None):
         # USER
