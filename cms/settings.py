@@ -446,3 +446,7 @@ if LOCAL_INSTALL:
     SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
 else:
     SSL_FRONTEND_HOST = FRONTEND_HOST
+
+GLOBAL_LOGIN_REQUIRED = False
+if GLOBAL_LOGIN_REQUIRED:
+    MIDDLEWARE.insert(5, "login_required.middleware.LoginRequiredMiddleware")
