@@ -427,6 +427,10 @@ CELERY_BEAT_SCHEDULE = {
 
 LOCAL_INSTALL = False
 
+# this is an option to make the whole portal available to logged in users only
+# it is placed here so it can be overrided on local_settings.py
+GLOBAL_LOGIN_REQUIRED = False
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *
@@ -446,3 +450,12 @@ if LOCAL_INSTALL:
     SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
 else:
     SSL_FRONTEND_HOST = FRONTEND_HOST
+
+if GLOBAL_LOGIN_REQUIRED:
+    # this should go after the AuthenticationMiddleware middleware
+    MIDDLEWARE.insert(5, "login_required.middleware.LoginRequiredMiddleware")
+    LOGIN_REQUIRED_IGNORE_PATHS = [
+        r'/accounts/login/$',
+        r'/accounts/logout/$',
+        r'/accounts/signup/$',
+    ]
