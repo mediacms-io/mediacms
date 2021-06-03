@@ -1046,8 +1046,8 @@ class EncodingDetail(APIView):
                     chunk=chunk,
                     chunk_file_path=chunk_file_path,
                 ).count()
-                > 1
-                and force is False
+                > 1  # noqa
+                and force is False  # noqa
             ):
                 Encoding.objects.filter(id=encoding_id).delete()
                 return Response({"status": "fail"}, status=status.HTTP_400_BAD_REQUEST)

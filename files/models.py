@@ -1507,7 +1507,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
                     # to avoid that this is run twice
                     if (
                         len(orig_chunks)
-                        == Encoding.objects.filter(
+                        == Encoding.objects.filter(  # noqa
                             media=instance.media,
                             profile=instance.profile,
                             chunks_info=instance.chunks_info,
