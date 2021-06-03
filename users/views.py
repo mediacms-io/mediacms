@@ -149,7 +149,6 @@ def contact_user(request, username):
         )
     user = User.objects.filter(username=username).first()
     if user and (user.allow_contact or is_mediacms_editor(request.user)):
-        subject = request.data.get("subject")
         from_email = request.user.email
         subject = f"[{settings.PORTAL_NAME}] - Message from {from_email}"
         body = request.data.get("body")

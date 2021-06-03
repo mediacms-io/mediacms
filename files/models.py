@@ -1549,7 +1549,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
         who = Encoding.objects.filter(media=encoding.media, profile=encoding.profile).exclude(id=encoding.id)
 
         who.delete()
-        pass  # TODO: merge with above if, do not repeat code
+        # TODO: merge with above if, do not repeat code
     else:
         if instance.status in ["fail", "success"]:
             instance.media.post_encode_actions(encoding=instance, action="add")
@@ -1557,7 +1557,6 @@ def encoding_file_save(sender, instance, created, **kwargs):
         encodings = set([encoding.status for encoding in Encoding.objects.filter(media=instance.media)])
         if ("running" in encodings) or ("pending" in encodings):
             return
-        workers = list(set([encoding.worker for encoding in Encoding.objects.filter(media=instance.media)]))
 
 
 @receiver(post_delete, sender=Encoding)
