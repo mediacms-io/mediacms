@@ -24,7 +24,6 @@ from imagekit.processors import ResizeToFit
 from mptt.models import MPTTModel, TreeForeignKey
 
 from . import helpers
-from .methods import notify_users
 from .stop_words import STOP_WORDS
 
 logger = logging.getLogger(__name__)
@@ -1343,6 +1342,8 @@ def media_save(sender, instance, created, **kwargs):
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
     if created:
+        from .methods import notify_users
+
         instance.media_init()
         notify_users(friendly_token=instance.friendly_token, action="media_added")
 
