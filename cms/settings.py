@@ -433,7 +433,7 @@ GLOBAL_LOGIN_REQUIRED = False
 
 try:
     # keep a local_settings.py file for local overrides
-    from .local_settings import *
+    from .local_settings import *  # noqa
 
     # ALLOWED_HOSTS needs a url/ip
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))

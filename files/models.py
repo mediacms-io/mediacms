@@ -24,7 +24,6 @@ from imagekit.processors import ResizeToFit
 from mptt.models import MPTTModel, TreeForeignKey
 
 from . import helpers
-from .methods import notify_users
 from .stop_words import STOP_WORDS
 
 logger = logging.getLogger(__name__)
@@ -1343,6 +1342,8 @@ def media_save(sender, instance, created, **kwargs):
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
     if created:
+        from .methods import notify_users
+
         instance.media_init()
         notify_users(friendly_token=instance.friendly_token, action="media_added")
 
@@ -1507,7 +1508,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
                     # to avoid that this is run twice
                     if (
                         len(orig_chunks)
-                        == Encoding.objects.filter(
+                        == Encoding.objects.filter(  # noqa
                             media=instance.media,
                             profile=instance.profile,
                             chunks_info=instance.chunks_info,
@@ -1537,7 +1538,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
         chunks_paths = [f.media_file.path for f in chunks]
 
         all_logs = "\n".join([st.logs for st in chunks])
-        encoding.logs = "{0}\n{1}\n{2}".format(chunks_paths, all_logs)
+        encoding.logs = "{0}\n{1}".format(chunks_paths, all_logs)
         workers = list(set([st.worker for st in chunks]))
         encoding.worker = json.dumps({"workers": workers})
         start_date = min([st.add_date for st in chunks])
@@ -1548,7 +1549,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
         who = Encoding.objects.filter(media=encoding.media, profile=encoding.profile).exclude(id=encoding.id)
 
         who.delete()
-        pass  # TODO: merge with above if, do not repeat code
+        # TODO: merge with above if, do not repeat code
     else:
         if instance.status in ["fail", "success"]:
             instance.media.post_encode_actions(encoding=instance, action="add")
@@ -1556,7 +1557,6 @@ def encoding_file_save(sender, instance, created, **kwargs):
         encodings = set([encoding.status for encoding in Encoding.objects.filter(media=instance.media)])
         if ("running" in encodings) or ("pending" in encodings):
             return
-        workers = list(set([encoding.worker for encoding in Encoding.objects.filter(media=instance.media)]))
 
 
 @receiver(post_delete, sender=Encoding)

@@ -795,7 +795,7 @@ class MediaSearch(APIView):
             media = media.filter(user__username=author)
 
         if upload_date:
-            gte = lte = None
+            gte = None
             if upload_date == 'today':
                 gte = datetime.now().date()
             if upload_date == 'this_week':
@@ -807,8 +807,6 @@ class MediaSearch(APIView):
             if upload_date == 'this_year':
                 year = datetime.now().date().year
                 gte = datetime(year, 1, 1)
-            if lte:
-                media = media.filter(add_date__lte=lte)
             if gte:
                 media = media.filter(add_date__gte=gte)
 
@@ -1046,8 +1044,8 @@ class EncodingDetail(APIView):
                     chunk=chunk,
                     chunk_file_path=chunk_file_path,
                 ).count()
-                > 1
-                and force is False
+                > 1  # noqa
+                and force is False  # noqa
             ):
                 Encoding.objects.filter(id=encoding_id).delete()
                 return Response({"status": "fail"}, status=status.HTTP_400_BAD_REQUEST)

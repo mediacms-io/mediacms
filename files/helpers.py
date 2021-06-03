@@ -381,7 +381,6 @@ def media_file_info(input_file):
     }
 
     if has_audio:
-        audio_duration = 1
         if "duration" in audio_info.keys():
             audio_duration = float(audio_info["duration"])
         elif "tags" in audio_info.keys() and "DURATION" in audio_info["tags"]:

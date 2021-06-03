@@ -1,12 +1,11 @@
 from django.conf import settings
 from django.contrib.postgres.search import SearchQuery
 from django.contrib.syndication.views import Feed
-from django.db.models import Q
 from django.urls import reverse
 from django.utils.feedgenerator import Rss201rev2Feed
 
 from . import helpers
-from .models import Category, Media
+from .models import Media
 from .stop_words import STOP_WORDS
 
 
