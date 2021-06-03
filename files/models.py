@@ -1537,7 +1537,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
         chunks_paths = [f.media_file.path for f in chunks]
 
         all_logs = "\n".join([st.logs for st in chunks])
-        encoding.logs = "{0}\n{1}\n{2}".format(chunks_paths, all_logs)
+        encoding.logs = "{0}\n{1}".format(chunks_paths, all_logs)
         workers = list(set([st.worker for st in chunks]))
         encoding.worker = json.dumps({"workers": workers})
         start_date = min([st.add_date for st in chunks])
