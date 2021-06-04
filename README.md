@@ -1,4 +1,13 @@
-![MediaCMS](static/images/logo_dark.png)
+# MediaCMS
+
+[![Code Quality: Cpp](https://img.shields.io/lgtm/grade/python/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:python)
+[![Code Quality: Cpp](https://img.shields.io/lgtm/grade/javascript/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:javascript)
+<br/>
+[![GitHub license](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://raw.githubusercontent.com/mediacms-io/mediacms/main/LICENSE.txt)
+[![Downloads](https://img.shields.io/badge/download-all%20releases-brightgreen.svg)](https://github.com/mediacms-io/mediacms/releases/)
+[![DockerHub](https://img.shields.io/docker/pulls/mediacms/mediacms)](https://hub.docker.com/repository/docker/mediacms/mediacms/)
+
+
 
 MediaCMS is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media. It can be used to build a small to medium video and media portal within minutes. 
 
@@ -98,7 +107,7 @@ docker-compose up
 
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
 
-For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page. Docker Compose support has been contributed by @swiftugandan.
+For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page.
 
 
 ### Single server installation
@@ -136,33 +145,15 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
 
-## Authors
-MediaCMS is developed by Yiannis Stergiou and Markos Gogoulos. We are Wordgames - https://wordgames.gr. 
-
 
 ## Technology
-This software uses the following list of awesome technologies:
-- Python
-- Django
-- Django Rest Framework
-- Celery
-- PostgreSQL
-- Redis
-- Nginx
-- uWSGI
-- React
-- Fine Uploader
-- video.js
-- FFMPEG
-- Bento4
+This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
 ## Who is using it
 
 - **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
-
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
-
 - **Heritales** International Heritage Film Festival - https://stage.heritales.org
 
 
@@ -179,7 +170,7 @@ If you like the project, here's a few things you can do
 
 ## Developers info
 
-- API documentation available under /swagger URL (example https://demo.mediacms.io/swagger/)
+- API documentation through Swagger is available under /swagger URL of your installation -example https://demo.mediacms.io/swagger/
 - We're working on proper documentation for users, managers and developers, until then checkout what's available on the docs/ folder of this repository
 - Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
 - Checkout the [Code of conduct page](CODE_OF_CONDUCT.md) if you want to contribute to this repository
