@@ -2,7 +2,6 @@
 
 [![Code Quality: Cpp](https://img.shields.io/lgtm/grade/python/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:python)
 [![Code Quality: Cpp](https://img.shields.io/lgtm/grade/javascript/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:javascript)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/github/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/alerts)
 <br/>
 [![GitHub license](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://raw.githubusercontent.com/mediacms-io/mediacms/main/LICENSE.txt)
 [![Downloads](https://img.shields.io/badge/download-all%20releases-brightgreen.svg)](https://github.com/mediacms-io/mediacms/releases/)
