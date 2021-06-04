@@ -160,7 +160,7 @@ This software uses the following list of awesome technologies: Python, Django, D
 ## How to contribute
 
 If you like the project, here's a few things you can do
-- [Hire us](info@mediacms.io), for custom installations, training, support, maintenance work
+- Hire us, for custom installations, training, support, maintenance work
 - Suggest us to others that are interested to hire us
 - Write a blog post/article about MediaCMS
 - Share on social media about the project
