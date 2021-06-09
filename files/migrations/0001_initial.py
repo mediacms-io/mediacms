@@ -109,6 +109,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         choices=[
                             (2160, "2160"),
+                            (1530, "1530"),
                             (1440, "1440"),
                             (1080, "1080"),
                             (720, "720"),
