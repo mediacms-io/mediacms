@@ -14,8 +14,8 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-<link href="{% static "css/profile-home.css" %}" rel="preload" as="style">
-<link href="{% static "css/profile-home.css" %}" rel="stylesheet">
+<link href="{% static "css/profile-media.css" %}" rel="preload" as="style">
+<link href="{% static "css/profile-media.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -25,9 +25,9 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-home"></div>{% endif %}
+{% if user %}<div id="page-profile-media"></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/profile-home.js" %}"></script>
+<script src="{% static "js/profile-media.js" %}"></script>
 {% endblock bottomimports %}

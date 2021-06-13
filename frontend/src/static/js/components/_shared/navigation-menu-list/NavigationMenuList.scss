@@ -1,0 +1,147 @@
+@import '../../../../css/includes/_variables_dimensions.scss';
+
+.nav-menu {
+  padding: 12px 0;
+
+  &.pv0 {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  nav {
+  }
+
+  ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  li {
+    > * {
+      width: 100%;
+      display: block;
+      padding: $sidebar-nav-padding;
+      outline: 0;
+      border: 0;
+      background: none;
+
+      > * {
+        display: inline-block;
+        vertical-align: middle;
+      }
+    }
+
+    &.link-item {
+      &.active {
+      }
+    }
+
+    a,
+    button {
+      &:hover,
+      &:focus {
+        .popup & {
+        }
+      }
+    }
+
+    &.label-item {
+      button {
+        font-weight: 500;
+        cursor: default;
+
+        &:hover,
+        &:focus {
+          background-color: transparent;
+        }
+      }
+    }
+
+    .reported-label {
+      padding: 0 1rem;
+      line-height: 48px;
+      font-size: 13px;
+      color: initial;
+      color: red;
+
+      &:before {
+        content: '\e153';
+        display: inline-block;
+        vertical-align: middle;
+        width: 1rem;
+        padding: 0;
+        margin: 0 1.5rem 0 0;
+        font-family: 'Material Icons';
+        font-size: 24px;
+      }
+    }
+  }
+
+  a,
+  button {
+    color: inherit;
+  }
+
+  .menu-item-icon {
+    margin-right: 24px;
+
+    color: #888;
+
+    .material-icons {
+      margin-bottom: 2px;
+    }
+  }
+
+  .menu-item-icon-right {
+    float: right;
+    margin-left: 24px;
+  }
+}
+
+.nav-menu {
+  li {
+    &.link-item {
+      &.active {
+        background-color: var(--nav-menu-active-item-bg-color);
+      }
+    }
+
+    a,
+    button {
+      &:hover,
+      &:focus {
+        background-color: var(--nav-menu-item-hover-bg-color);
+
+        .popup & {
+          background-color: var(--in-popup-nav-menu-item-hover-bg-color);
+        }
+      }
+    }
+  }
+}
+
+.nav-menu {
+  li {
+    > * {
+      text-align: initial;
+      text-decoration: none;
+
+      > * {
+        line-height: 40px;
+      }
+    }
+
+    &.link-item {
+      &.active {
+        font-weight: 500;
+      }
+    }
+  }
+
+  .menu-item-icon {
+    .material-icons {
+      font-size: 1.715em;
+    }
+  }
+}

@@ -1,0 +1,92 @@
+<% var item, key %>
+
+<body>
+  
+  <% if (htmlWebpackPlugin.options.unsupportedBrowser) { %>
+    <!-- Unsupported browser -->
+    <style>.unsupported-browser { display: none; }</style>
+    <div class="unsupported-browser">
+      Sorry, your browser is not supported. Please upgrade to the latest version or switch your browser to use this
+      site. See <a href="http://outdatedbrowser.com/">outdatedbrowser.com</a> for options.
+    </div>
+  <% } %>
+
+  <% if (htmlWebpackPlugin.options.appMountId) { %>
+    <!-- App mount (single) -->
+    <div id="<%= htmlWebpackPlugin.options.appMountId %>">
+      <% if (htmlWebpackPlugin.options.appMountHtmlSnippet) { %>
+        <%= htmlWebpackPlugin.options.appMountHtmlSnippet %>
+      <% } %>
+  </div>
+  <% } %>
+
+  <% if (Array.isArray(htmlWebpackPlugin.options.appMountIds) && htmlWebpackPlugin.options.appMountIds.length ) { %>
+    <!-- App mount ids (multiple) -->
+    <% for (item of htmlWebpackPlugin.options.appMountIds) { %>
+      <div id="<%= item %>"></div>
+    <% } %>
+  <% } %>
+
+  <% if (htmlWebpackPlugin.options.html.body.snippet && '' !== htmlWebpackPlugin.options.html.body.snippet ) { %>
+    <!-- Body snippet -->
+    <%- htmlWebpackPlugin.options.html.body.snippet %>
+  <% } %>
+
+  <% if (htmlWebpackPlugin.options.window && Object.keys( htmlWebpackPlugin.options.window ).length) { %>
+    <!-- Global object -->
+    <script type="text/javascript">
+      <% for (key in htmlWebpackPlugin.options.window) { %>
+        window['<%= key %>'] = <%- JSON.stringify( htmlWebpackPlugin.options.window[key] ) %>;
+      <% } %>
+    </script>
+  <% } %>
+
+  <% if (Array.isArray(htmlWebpackPlugin.options.html.body.scripts) && htmlWebpackPlugin.options.html.body.scripts.length ) { %>
+    <!-- Scripts -->
+    <% for (item of htmlWebpackPlugin.options.html.body.scripts) {
+      %><script<% for (key in item) { %> <%= key %>="<%= item[key] %>"<% } %>></script><%
+    }
+  } %>
+
+  <% if ( Array.isArray(htmlWebpackPlugin.files.chunks) && htmlWebpackPlugin.files.chunks.length ) { %>
+    <!-- Chunks -->
+    <% for (key in htmlWebpackPlugin.files.chunks) {
+      if (htmlWebpackPlugin.files.jsIntegrity) { %>
+        <script
+          src="<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+          type="text/javascript"
+          integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
+          crossorigin="<%= webpackConfig.output.crossOriginLoading %>"></script>
+      <% } else { %>
+        <script src="<%= htmlWebpackPlugin.files.chunks[key].entry %>" type="text/javascript"></script>
+      <% }
+    }
+  } %>
+
+  <% if (htmlWebpackPlugin.options.googleAnalytics) { %>
+
+    <!-- Google analytics script -->
+
+    <script type="text/javascript">
+    
+      window.GoogleAnalyticsObject='ga';window.ga=function(){ga.q.push(arguments)};ga.q=[];ga.l=+new Date;
+
+      <% if (htmlWebpackPlugin.options.googleAnalytics.trackingId) { %>
+        ga('create','<%= htmlWebpackPlugin.options.googleAnalytics.trackingId %>','auto');
+      <% } else {
+        throw new Error("html-webpack-template requires googleAnalytics.trackingId config");
+      } %>
+
+      <% if (htmlWebpackPlugin.options.googleAnalytics.pageViewOnLoad) { %>
+        ga('send','pageview');
+      <% } %>
+
+    </script>
+
+    <script async defer src="https://www.google-analytics.com/analytics.js" type="text/javascript"></script>
+
+  <% } %>
+
+  <!---->
+
+</body>

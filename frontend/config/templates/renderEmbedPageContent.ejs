@@ -1,0 +1,15 @@
+<% if (page) { %>
+
+	import { renderEmbedPage } from './static/js/utils/renderer';
+
+	<% if (page.component) { %>
+
+		import { <%= page.component %> } from './static/js/pages/<%= page.component %>';
+
+		<% if (page.id) { %>
+			renderEmbedPage( '<%= page.id %>', <%= page.component %> );
+		<% } %>
+
+	<% } %>
+	
+<% } %>

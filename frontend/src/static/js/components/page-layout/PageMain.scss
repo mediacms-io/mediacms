@@ -1,0 +1,57 @@
+.page-main-wrap {
+  padding-top: var(--header-height);
+  will-change: padding-left;
+
+  @media (min-width: 768px) {
+    .visible-sidebar & {
+      padding-left: var(--sidebar-width);
+      opacity: 1;
+    }
+  }
+
+  .visible-sidebar #page-media & {
+    padding-left: 0;
+  }
+
+  .visible-sidebar & {
+    #page-media {
+      padding-left: 0;
+    }
+  }
+
+  body.sliding-sidebar & {
+    transition-property: padding-left;
+    transition-duration: 0.2s;
+  }
+}
+
+#page-profile-media,
+#page-profile-playlists,
+#page-profile-about,
+#page-liked.profile-page-liked,
+#page-history.profile-page-history {
+  .page-main {
+    min-height: calc(100vh - var(--header-height));
+  }
+}
+
+.page-main {
+  position: relative;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+.page-main-inner {
+  display: block;
+  margin: 1em 1em 0 1em;
+}
+
+#page-profile-media,
+#page-profile-playlists,
+#page-profile-about,
+#page-liked.profile-page-liked,
+#page-history.profile-page-history {
+  .page-main-wrap {
+    background-color: var(--body-bg-color);
+  }
+}

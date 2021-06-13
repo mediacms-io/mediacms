@@ -1,0 +1,343 @@
+body.dark_theme {
+  --body-text-color: rgba(255, 255, 255, 0.88);
+  --body-bg-color: #121212;
+
+  --hr-color: #2a2a2a;
+
+  --dotted-outline-color: rgba(255, 255, 255, 0.4);
+
+  /* ################################################## */
+
+  --input-color: hsla(0, 0%, 100%, 0.88);
+  --input-bg-color: hsla(0, 0%, 0%, 0.55);
+  --input-border-color: hsl(0, 0%, 19%);
+
+  /* ################################################## */
+
+  --header-bg-color: #272727;
+
+  --header-circle-button-color: #fff;
+
+  --header-popup-menu-color: #fff;
+  --header-popup-menu-icon-color: rgb(144, 144, 144);
+
+  /* ################################################## */
+
+  --sidebar-bg-color: #1c1c1c;
+
+  --sidebar-nav-border-color: rgba(255, 255, 255, 0.1);
+
+  --sidebar-nav-item-text-color: #fff;
+  --sidebar-nav-item-icon-color: rgb(144, 144, 144);
+
+  --sidebar-bottom-link-color: rgba(255, 255, 255, 0.88);
+
+  /* ################################################## */
+
+  --spinner-loader-color: rgba(255, 255, 255, 0.74);
+
+  /* ################################################## */
+
+  --nav-menu-active-item-bg-color: rgba(255, 255, 255, 0.1);
+
+  --nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.1);
+
+  --in-popup-nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.1);
+
+  /* ################################################## */
+
+  --search-field-input-text-color: rgba(255, 255, 255, 0.88);
+  --search-field-input-bg-color: #121212; // darken( #272727, 8.25% )
+  --search-field-input-border-color: #303030; // lighten( #272727, 3.5% )
+
+  --search-field-submit-text-color: rgba(255, 255, 255, 0.5); // lighten(#66b1c3, 15%)
+
+  --search-field-submit-bg-color: rgba(255, 255, 255, 0.08); // lighten( #272727, 6.75% )
+  --search-field-submit-border-color: #2e2e2e; // lighten( #272727, 2.75% )
+
+  --search-field-submit-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --search-field-submit-hover-border-color: #2e2e2e;
+
+  /* ################################################## */
+
+  --search-results-item-content-link-title-text-color: rgba(255, 255, 255, 0.88);
+
+  /* ################################################## */
+
+  --logged-in-user-thumb-bg-color: rgba(255, 255, 255, 0.14);
+
+  /* ################################################## */
+
+  --popup-bg-color: #242424;
+
+  --popup-hr-bg-color: rgba(255, 255, 255, 0.08);
+
+  --popup-top-text-color: #fff;
+  --popup-top-bg-color: rgba(136, 136, 136, 0.4);
+
+  --popup-msg-title-text-color: rgba(255, 255, 255, 0.88);
+  --popup-msg-main-text-color: rgba(255, 255, 255, 0.5);
+
+  /* ################################################## */
+
+  --comments-textarea-wrapper-border-color: #898989;
+  --comments-textarea-wrapper-after-bg-color: #fff;
+
+  --comments-textarea-text-color: #fff;
+  --comments-textarea-text-placeholder-color: #898989;
+
+  --comments-list-inner-border-color: rgba(255, 255, 255, 0.08);
+
+  --comment-author-text-color: rgba(255, 255, 255, 0.88);
+
+  --comment-date-text-color: #888;
+  --comment-date-hover-text-color: #fff;
+
+  --comment-text-color: rgba(255, 255, 255, 0.88);
+
+  --comment-actions-material-icon-text-color: rgba(255, 255, 255, 0.74);
+
+  --comment-actions-likes-num-text-color: rgba(255, 255, 255, 0.5);
+
+  --comment-actions-reply-button-text-color: rgba(255, 255, 255, 0.5);
+  --comment-actions-reply-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --comment-actions-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
+  --comment-actions-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  /* ################################################## */
+
+  --item-bg-color: #121212;
+
+  --item-title-text-color: rgba(255, 255, 255, 0.88);
+
+  --item-thumb-bg-color: var(--sidebar-bg-color);
+
+  --item-meta-text-color: #888;
+  --item-meta-link-text-color: var(--item-text-color);
+  --item-meta-link-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --profile-page-item-content-title-bg-color: #121212;
+
+  --playlist-item-main-view-full-link-text-color: rgb(170, 170, 170);
+  --playlist-item-main-view-full-link-hover-text-color: #fff;
+
+  /* ################################################## */
+
+  --item-list-load-more-text-color: #888;
+  --item-list-load-more-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  /* ################################################## */
+
+  --media-list-row-border-color: rgba(255, 255, 255, 0.08);
+  --media-list-header-title-link-text-color: rgba(255, 255, 255, 0.5);
+
+  /* ################################################## */
+
+  --playlist-form-title-focused-bg-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-privacy-border-color: #888;
+
+  --playlist-form-cancel-button-text-color: rgba(255, 255, 255, 0.5);
+  --playlist-form-cancel-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --playlist-form-field-text-color: #fff;
+  --playlist-form-field-border-color: #888;
+
+  /* ################################################## */
+
+  --playlist-save-popup-text-color: rgba(255, 255, 255, 0.88);
+  --playlist-save-popup-border-color: rgba(255, 255, 255, 0.1);
+
+  --playlist-save-popup-create-icon-text-color: #909090;
+  --playlist-save-popup-create-focus-bg-color: rgba(255, 255, 255, 0.14);
+
+  /* ################################################## */
+
+  --playlist-view-header-bg-color: #252525;
+
+  --playlist-view-header-toggle-text-color: #fff;
+
+  --playlist-view-header-toggle-bg-color: #252525;
+
+  --playlist-view-title-link-text-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-view-meta-text-color: rgb(238, 238, 238);
+  --playlist-view-meta-link-color: #fff;
+  --playlist-view-meta-link-hover-text-color: #fff;
+
+  --playlist-view-status-text-color: rgba(255, 255, 255, 0.6);
+  --playlist-view-status-bg-color: rgba(255, 255, 255, 0.1);
+
+  --playlist-view-status-icon-text-color: rgba(255, 255, 255, 0.6);
+
+  --playlist-view-actions-bg-color: #252525;
+
+  --playlist-view-media-bg-color: var(--sidebar-bg-color);
+
+  --playlist-view-media-order-number-color: rgb(136, 136, 136);
+
+  --playlist-view-item-title-text-color: #fff;
+
+  --playlist-view-item-author-text-color: #fff;
+
+  --playlist-view-item-author-bg-color: var(--sidebar-bg-color);
+
+  /* ################################################## */
+
+  --profile-page-bg-color: var(--body-bg-color);
+
+  --profile-page-header-bg-color: #1a1a1a;
+
+  --profile-page-info-videos-number-text-color: #888;
+
+  --profile-page-nav-link-text-color: #888;
+  --profile-page-nav-link-hover-text-color: rgba(255, 255, 255, 0.88);
+
+  --profile-page-nav-link-active-text-color: rgba(255, 255, 255, 0.88);
+  --profile-page-nav-link-active-after-bg-color: #888;
+
+  /* ################################################## */
+
+  --add-media-page-tmplt-dialog-bg-color: #242424;
+  --add-media-page-tmplt-uploader-bg-color: #242424;
+  --add-media-page-tmplt-dropzone-bg-color: rgba(28, 28, 28, 0.5);
+  --add-media-page-tmplt-drag-drop-inner-text-color: rgba(255, 255, 255, 0.5);
+  --add-media-page-tmplt-upload-item-spiner-text-color: rgba(255, 255, 255, 0.4);
+  --add-media-page-tmplt-upload-item-actions-text-color: rgba(255, 255, 255, 0.5);
+
+  /* ################################################## */
+
+  --add-media-page-qq-gallery-upload-button-text-color: rgba(255, 255, 255, 0.528);
+  --add-media-page-qq-gallery-upload-button-icon-text-color: rgba(255, 255, 255, 0.528);
+
+  --add-media-page-qq-gallery-upload-button-hover-text-color: rgba(255, 255, 255, 0.88);
+  --add-media-page-qq-gallery-upload-button-hover-icon-text-color: rgba(255, 255, 255, 0.88);
+
+  --add-media-page-qq-gallery-upload-button-focus-text-color: rgba(255, 255, 255, 0.704);
+
+  /* ################################################## */
+
+  --playlist-page-bg-color: #1a1a1a;
+  --playlist-page-details-text-color: rgb(170, 170, 170);
+  --playlist-page-thumb-bg-color: #272727;
+  --playlist-page-title-link-text-color: #fff;
+
+  --playlist-page-actions-circle-icon-text-color: #1a1a1a;
+  --playlist-page-actions-circle-icon-bg-color: inherit; // TODO: Check this value.
+
+  --playlist-page-actions-nav-item-button-text-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-page-actions-popup-message-bottom-cancel-button-text-color: rgba(255, 255, 255, 0.5);
+  --playlist-page-actions-popup-message-bottom-cancel-button-hover-text-color: rgba(255, 255, 255, 0.74);
+  --playlist-page-actions-popup-message-bottom-cancel-button-icon-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --playlist-page-status-text-color: rgba(255, 255, 255, 0.6);
+  --playlist-page-status-bg-color: rgba(255, 255, 255, 0.1);
+
+  --playlist-page-status-icon-text-color: rgba(255, 255, 255, 0.4);
+
+  --playlist-page-author-border-top-color: rgba(255, 255, 255, 0.1);
+  --playlist-page-author-name-link-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-page-author-edit-playlist-icon-button-text-color: rgb(170, 170, 170);
+
+  --playlist-page-author-edit-playlist-icon-button-bg-color: #252525;
+
+  --playlist-page-author-edit-playlist-icon-button-active-text-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-page-author-edit-playlist-form-wrap-text-color: rgba(255, 255, 255, 0.88);
+  --playlist-page-author-edit-playlist-form-wrap-bg-color: #242424;
+
+  --playlist-page-author-edit-playlist-form-wrap-border-color: rgba(255, 255, 255, 0.1);
+
+  --playlist-page-author-edit-playlist-form-wrap-title-circle-icon-hover-text-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-page-author-edit-playlist-author-thumb-text-color: #fff;
+  --playlist-page-author-edit-playlist-author-thumb-bg-color: #272727;
+
+  --playlist-page-details-bg-color: #252525;
+
+  --playlist-page-video-list-bg-color: #1c1c1c;
+
+  --playlist-page-video-list-item-title-bg-color: #1c1c1c;
+
+  --playlist-page-video-list-item-hover-bg-color: #333;
+
+  --playlist-page-video-list-item-title-hover-bg-color: #333;
+
+  --playlist-page-video-list-item-after-bg-color: rgba(255, 255, 255, 0.1);
+  --playlist-page-video-list-item-order-text-color: rgb(170, 170, 170);
+
+  --playlist-page-video-list-item-options-icon-hover-color: rgba(255, 255, 255, 0.88);
+
+  --playlist-page-video-list-item-options-popup-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
+  --playlist-page-video-list-item-options-popup-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --playlist-page-video-list-item-options-popup-cancel-removal-button-hover-icon-text-color: rgba(255, 255, 255, 0.74);
+
+  /* ################################################## */
+
+  --media-author-actions-popup-bottom-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
+  --media-author-actions-popup-bottom-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
+  --media-author-actions-popup-bottom-cancel-removal-button-hover-icon-text-color: rgba(255, 255, 255, 0.74);
+
+  --profile-banner-wrap-popup-bottom-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
+  --profile-banner-wrap-popup-bottom-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
+  --profile-banner-wrap-popup-bottom-cancel-removal-button-hover-icon-text-color: rgba(255, 255, 255, 0.74);
+
+  --media-title-banner-border-color: rgba(255, 255, 255, 0.08);
+  --media-title-labels-area-text-color: rgba(255, 255, 255, 0.6);
+  --media-title-labels-area-bg-color: rgba(255, 255, 255, 0.08);
+  --media-title-views-text-color: rgb(136, 136, 136);
+
+  --media-actions-not-popup-circle-icon-focus-bg-color: rgba(255, 255, 255, 0.07);
+  --media-actions-not-popup-circle-icon-active-bg-color: rgba(255, 255, 255, 0.14);
+  --media-actions-like-before-border-color: rgba(255, 255, 255, 0.5);
+  --media-actions-share-title-text-color: rgba(255, 255, 255, 0.88);
+  --media-actions-share-options-nav-button-text-color: rgba(255, 255, 255, 0.5);
+  --media-actions-share-options-link-text-color: rgba(255, 255, 255, 0.88);
+  --media-actions-share-copy-field-border-color: rgb(41, 41, 41);
+  --media-actions-share-copy-field-bg-color: rgb(28, 28, 28);
+  --media-actions-share-copy-field-input-text-color: rgba(255, 255, 255, 0.88);
+  --media-actions-more-options-popup-bg-color: #242424;
+  --media-actions-more-options-popup-nav-link-text-color: rgba(255, 255, 255, 0.88);
+  --media-actions-share-fullscreen-popup-main-bg-color: #242424;
+
+  --report-form-title-text-color: rgba(255, 255, 255, 0.88);
+  --report-form-field-label-text-color: rgba(255, 255, 255, 0.88);
+  --report-form-field-input-text-color: rgba(255, 255, 255, 0.88);
+  --report-form-field-input-border-color: rgb(41, 41, 41);
+  --report-form-field-input-bg-color: rgb(28, 28, 28);
+  --report-form-help-text-color: rgb(136, 136, 136);
+
+  --form-actions-bottom-border-top-color: rgba(255, 255, 255, 0.08);
+
+  --media-author-banner-name-text-color: rgba(255, 255, 255, 0.88);
+  --media-author-banner-date-text-color: rgba(255, 255, 255, 0.6);
+
+  --media-content-banner-border-color: rgba(255, 255, 255, 0.08);
+
+  --share-embed-inner-on-right-border-color: rgba(255, 255, 255, 0.08);
+  --share-embed-inner-on-right-ttl-text-color: rgba(255, 255, 255, 0.88);
+  --share-embed-inner-on-right-icon-text-color: rgba(255, 255, 255, 0.5);
+  --share-embed-inner-textarea-text-color: rgba(255, 255, 255, 0.55);
+  --share-embed-inner-textarea-border-color: rgb(41, 41, 41);
+  --share-embed-inner-textarea-bg-color: rgb(28, 28, 28);
+  --share-embed-inner-embed-wrap-iconn-text-color: rgba(255, 255, 255, 0.5);
+
+  --media-status-info-item-text-color: rgba(255, 255, 255, 0.88);
+
+  --viewer-sidebar-auto-play-border-bottom-color: rgba(255, 255, 255, 0.1);
+  --viewer-sidebar-auto-play-next-label-text-color: #fff;
+  --viewer-sidebar-auto-play-option-text-color: #aaa;
+
+  /* ################################################## */
+
+  --user-action-form-inner-bg-color: #242424;
+  --user-action-form-inner-title-border-bottom-color: var(--sidebar-nav-border-color);
+
+  --user-action-form-inner-input-border-color: #303030;
+  --user-action-form-inner-input-text-color: rgba(255, 255, 255, 0.88);
+  --user-action-form-inner-input-bg-color: #121212;
+}

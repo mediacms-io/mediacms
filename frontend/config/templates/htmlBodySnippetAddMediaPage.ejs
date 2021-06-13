@@ -1,0 +1,65 @@
+<div id="add-media-page">
+	
+	<div class="page-container">
+	
+		<div id="app-header"></div>
+		<div id="app-sidebar"></div>
+
+		<div class="page-main-wrap">
+		
+			<main class="page-main">
+				<div class="page-main-inner">
+
+					<div class="media-uploader-wrap">
+						
+						<div class="media-uploader-top-wrap">
+							
+							<div class="media-uploader-top-left-wrap">
+								<h1>Upload media files</h1>
+							</div>
+							
+							<div class="media-uploader-top-right-wrap"></div>
+						</div>
+
+						<script type="text/template" id="qq-template"> <div class="media-uploader-bottom-wrap qq-uploader-selector"> <div class="media-uploader-bottom-left-wrap"> <div class="media-drag-drop-wrap"> <div class="media-drag-drop-inner" qq-drop-area-text="Drop files here"> <div class="media-drag-drop-content"> <div class="media-drag-drop-content-inner"> <span><i class="material-icons">cloud_upload</i></span> <span>Drag and drop files</span> <span>or</span> <span class="browse-files-btn-wrap"><span class="qq-upload-button-selector">Browse your files</span></span><div class="qq-upload-drop-area-selector media-dropzone" qq-hide-dropzone><span class="qq-upload-drop-area-text-selector"></span></div> </div></div></div></div></div><div class="media-uploader-bottom-right-wrap"> <ul class="media-upload-items-list qq-upload-list-selector"> <li> <div class="media-upload-item-main"> <div class="media-upload-item-thumb"> <img class="qq-thumbnail-selector" qq-max-size="120" qq-server-scale alt=""/> <span class="media-upload-item-spinner qq-upload-spinner-selector"><i class="material-icons">autorenew</i></span> <button type="button" class="qq-upload-retry-selector retry-media-upload-item" aria-label="Retry"><i class="material-icons">refresh</i> Retry</button> </div><div class="media-upload-item-details"> <div class="media-upload-item-name"> <span class="media-upload-item-filename qq-upload-file-selector"></span> <input class="media-upload-item-filename-input qq-edit-filename-selector" tab-index="0" type="text"/> </div><div class="media-upload-item-details-bottom"> <div class="media-upload-item-progress-bar-container qq-progress-bar-container-selector"> <div role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" class="media-upload-item-progress-bar qq-progress-bar-selector"></div></div><span class="media-upload-item-upload-size qq-upload-size-selector"></span> <span role="status" class="media-upload-item-status-text qq-upload-status-text-selector"></span> </div><div class="media-upload-item-top-actions"> <span class="filename-edit qq-edit-filename-icon-selector" aria-label="Edit filename">Edit filename <i class="material-icons">create</i></span> <button type="button" class="delete-media-upload-item qq-upload-delete-selector" aria-label="Delete">Delete <i class="material-icons">delete</i></button> <button type="button" class="cancel-media-upload-item qq-upload-cancel-selector" aria-label="Cancel">Cancel <i class="material-icons">cancel</i></button> </div><div class="media-upload-item-bottom-actions"> <button type="button" class="continue-media-upload-item qq-upload-continue-selector" aria-label="Continue"><i class="material-icons">play_circle_outline</i> Continue</button> <button type="button" class="pause-media-upload-item qq-upload-pause-selector" aria-label="Pause"><i class="material-icons">pause_circle_outline</i> Pause</button> </div></div></div></li></ul> <dialog class="qq-alert-dialog-selector"> <div class="qq-dialog-message-selector"></div><div class="qq-dialog-buttons"> <button type="button" class="qq-cancel-button-selector">Close</button> </div></dialog> <dialog class="qq-confirm-dialog-selector"> <div class="qq-dialog-message-selector"></div><div class="qq-dialog-buttons"> <button type="button" class="qq-cancel-button-selector">No</button> <button type="button" class="qq-ok-button-selector">Yes</button> </div></dialog> <dialog class="qq-prompt-dialog-selector"> <div class="qq-dialog-message-selector"></div><input type="text"> <div class="qq-dialog-buttons"> <button type="button" class="qq-cancel-button-selector">Cancel</button> <button type="button" class="qq-ok-button-selector">Ok</button> </div></dialog> </div></div></script>
+
+						<div class="media-uploader"></div>
+					</div>
+
+				</div>
+			</main>
+
+		</div>
+	
+	</div>
+
+</div>
+<script type='text/javascript'>
+
+	function csrfToken(){var a,b=null;if(document.cookie&&""!==document.cookie){var c=document.cookie.split(";");for(a=0;a<c.length;){var d=c[a].trim();if("csrftoken="===d.substring(0,10)){b=decodeURIComponent(d.substring(10));break}a+=1}}return b};
+
+	document.addEventListener("DOMContentLoaded", function(event) {
+	    var default_concurrent_chunked_uploader = new qq.FineUploader({
+	        debug: true,
+	        element: document.querySelector('.media-uploader'),
+	        request: {
+	            endpoint: '/fu/upload/',
+	            customHeaders: {
+	                'X-CSRFToken': csrfToken('csrftoken'),
+	            },
+	        },
+	        retry: {
+	            enableAuto: true,
+	        },
+	        chunking: {
+	            enabled: true,
+	            concurrent: {
+	                enabled: true,
+	            },
+	            success: {
+	                endpoint: '/fu/upload/?done',
+	            },
+	        },
+	    });
+	});
+</script>
