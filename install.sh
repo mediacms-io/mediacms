@@ -122,8 +122,13 @@ else
 fi
 
 # Generate individual DH params
-openssl dhparam -out /etc/nginx/dhparams/dhparams.pem 4096
-systemctl restart nginx
+if [ "$FRONTEND_HOST" != "localhost" ]; then
+    # Only generate new DH params when using "real" certificates.
+    openssl dhparam -out /etc/nginx/dhparams/dhparams.pem 4096
+    systemctl restart nginx
+else
+    echo "will not generate new DH params for url 'localhost', using default DH params"
+fi
 
 # Bento4 utility installation, for HLS
 
