@@ -93,8 +93,10 @@ cp deploy/local_install/mediacms.service /etc/systemd/system/mediacms.service &&
 
 mkdir -p /etc/letsencrypt/live/mediacms.io/
 mkdir -p /etc/letsencrypt/live/$FRONTEND_HOST
+mkdir -p /etc/nginx/dhparams/
 cp deploy/local_install/mediacms.io_fullchain.pem /etc/letsencrypt/live/$FRONTEND_HOST/fullchain.pem
 cp deploy/local_install/mediacms.io_privkey.pem /etc/letsencrypt/live/$FRONTEND_HOST/privkey.pem
+cp deploy/local_install/dhparams.pem /etc/nginx/dhparams/dhparams.pem
 cp deploy/local_install/mediacms.io /etc/nginx/sites-available/default
 cp deploy/local_install/mediacms.io /etc/nginx/sites-enabled/default
 cp deploy/local_install/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
@@ -114,6 +116,10 @@ if [ "$FRONTEND_HOST" != "localhost" ]; then
 else
     echo "will not call certbot utility to update ssl certificate for url 'localhost', using default ssl certificate"
 fi
+
+# Generate individual DH params
+openssl dhparam -out /etc/nginx/dhparams/dhparams.pem 4096
+systemctl restart nginx
 
 
 # Bento4 utility installation, for HLS
