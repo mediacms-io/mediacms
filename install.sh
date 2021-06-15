@@ -96,6 +96,8 @@ mkdir -p /etc/letsencrypt/live/$FRONTEND_HOST
 mkdir -p /etc/nginx/sites-enabled
 mkdir -p /etc/nginx/sites-available
 mkdir -p /etc/nginx/dhparams/
+rm -rf /etc/nginx/conf.d/default.conf
+rm -rf /etc/nginx/sites-enabled/default
 cp deploy/local_install/mediacms.io_fullchain.pem /etc/letsencrypt/live/$FRONTEND_HOST/fullchain.pem
 cp deploy/local_install/mediacms.io_privkey.pem /etc/letsencrypt/live/$FRONTEND_HOST/privkey.pem
 cp deploy/local_install/dhparams.pem /etc/nginx/dhparams/dhparams.pem
