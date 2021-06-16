@@ -31,8 +31,8 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
 
 ## Configuration
-Checkout the configuration docs on [Configuration](docs/Configuration.md) page.
+Checkout the configuration docs on [Configuration](/docs/Configuration.md) page.
 
 
 ## Maintenance
-Database can be backed up with pg_dump and media_files on Y/home/mediacms.io/mediacms/media_files
+Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
