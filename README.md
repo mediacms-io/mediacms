@@ -88,7 +88,7 @@ In terms of disk space, think of what the needs will be. A general rule is to mu
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
 * [Single Server](docs/Single_Server.md) page
-* [Docker Compose](docs/Docker_Compose) page
+* [Docker Compose](docs/Docker_Compose.md) page
 
 ## Configuration
 
