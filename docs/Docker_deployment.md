@@ -23,6 +23,7 @@ The main container runs migrations, mediacms_web, celery_beat, celery_workers (c
 
 ## Server with ssl certificate through letencrypt service, https://host.com
 In this case the FRONTEND_HOST should be set to https://host.com. Uses [this deployment](../docker-compose-letsencrypt.yaml).
+Also you have to set a valid email on that file, on settings `LETSENCRYPT_EMAIL`
 
 ## Advanced Deployment, accessed as http://localhost:8000
 
