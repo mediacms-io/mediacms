@@ -19,7 +19,7 @@ Single server installation: edit `cms/local_settings.py`, make a change and rest
 Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
 
 ```bash
-#docker-compose restart web worker
+#docker-compose restart web celery_worker celery_beat
 ```
 
 ### change portal logo

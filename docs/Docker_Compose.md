@@ -32,10 +32,10 @@ This will download all MediaCMS related Docker images and start all containers. 
 
 
 ## Configuration
-Checkout the configuration docs on [Configuration](docs/Configuration.md) page.
+Checkout the configuration docs on [Configuration](/docs/Configuration.md) page.
 
 
 ## Maintenance
-Database is stored on XX and media_files on YY
+Database is stored on ../postgres_data/ and media_files on media_files/
 
 
