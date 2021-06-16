@@ -20,6 +20,7 @@ cd mediacms
 ```
 
 The default option is to serve MediaCMS on all ips available of the server (including localhost).
+If you want to explore more options (including setup of https with letsencrypt certificate) checkout the docs on the [Docker deployment](/docs/Docker_deployment.md) page for different docker-compose setups to use.
 
 Run
 
@@ -38,4 +39,3 @@ Checkout the configuration docs on [Configuration](docs/Configuration.md) page.
 Database is stored on XX and media_files on YY
 
 
-For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page.
