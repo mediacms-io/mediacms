@@ -8,12 +8,19 @@ In case of a the single server installation, add to `cms/local_settings.py` .
 
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
-Any change needs restart of MediaCMS in order to take effect. So edit `cms/local_settings.py`, make a change and restart MediaCMS 
+Any change needs restart of MediaCMS in order to take effect. 
 
-```
+Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS 
+
+```bash
 #systemctl restart mediacms
 ```
 
+Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
+
+```bash
+#docker-compose restart web worker
+```
 
 ### change portal logo
 

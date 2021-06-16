@@ -83,65 +83,14 @@ For a small to medium installation, with a few hours of video uploaded daily, an
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
 
 
-## Installation
+## Installation / Maintanance
 
-There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services.
+There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-### Docker Compose installation
-Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
+* [Single Server](docs/Single_Server.md) page
+* [Docker Compose](docs/Docker_Compose.md) page
 
-Run as root
-
-```bash
-git clone https://github.com/mediacms-io/mediacms
-cd mediacms
-```
-
-The default option is to serve MediaCMS on all ips available of the server (including localhost).
-
-Now run
-
-```bash
-docker-compose up
-```
-
-This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
-
-For more instructions, checkout the docs on the [Docker deployment](docs/Docker_deployment.md) page.
-
-
-### Single server installation
-
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
-
-Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings. 
-
-Automated script - tested on Ubuntu 18, Ubuntu 20, and Debian Buster
-
-```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
-```
-
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate. 
-
-
-## Update
-
-If you've used the above way to install MediaCMS, update with the following:
-
-```bash
-cd /home/mediacms.io/mediacms # enter mediacms directory
-source  /home/mediacms.io/bin/activate # use virtualenv
-git pull # update code
-python manage.py migrate # run Django migrations
-sudo systemctl restart mediacms celery_long celery_short # restart services
-```
-
-
-## Configure
+## Configuration
 
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
 
