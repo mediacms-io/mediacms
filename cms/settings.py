@@ -349,6 +349,16 @@ FILE_UPLOAD_HANDLERS = [
 
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
+error_filename = os.path.join(LOGS_DIR, "debug.log")
+if not os.path.exists(LOGS_DIR):
+    try:
+        os.mkdir(LOGS_DIR)
+    except PermissionError:
+        pass
+
+if not os.path.isfile(error_filename):
+    open(error_filename, 'a').close()
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -356,7 +366,7 @@ LOGGING = {
         "file": {
             "level": "ERROR",
             "class": "logging.FileHandler",
-            "filename": os.path.join(LOGS_DIR, "debug.log"),
+            "filename": error_filename,
         },
     },
     "loggers": {

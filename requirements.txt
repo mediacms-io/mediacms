@@ -41,3 +41,4 @@ pep8
 django-silk
 django-debug-toolbar
 pre-commit
+pytest-django
