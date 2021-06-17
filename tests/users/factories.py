@@ -1,10 +1,10 @@
 import factory
-from faker import Faker
-
 from django.conf import settings
+from faker import Faker
 
 fake = Faker()
 User = settings.AUTH_USER_MODEL
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:

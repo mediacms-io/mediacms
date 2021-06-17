@@ -1,5 +1,3 @@
-import pytest
-
 from django.test import LiveServerTestCase
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
