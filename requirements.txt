@@ -32,8 +32,10 @@ django-ckeditor
 django-login-required-middleware==0.6.1
 
 pytest-django
-factory-boy
+pytest-factoryboy
 Faker
+selenium
+webdriver-manager
 
 # extra nice utilities!
 rpdb
