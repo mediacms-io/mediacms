@@ -7,11 +7,11 @@ ln -sf /dev/stdout /var/log/nginx/mediacms.io.access.log && ln -sf /dev/stderr /
 
 cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
 
-mkdir -p /home/mediacms.io/mediacms/{logs,pids,media_files/hls}
+mkdir -p /home/mediacms.io/mediacms/{logs,media_files/hls}
 touch /home/mediacms.io/mediacms/logs/debug.log
 
-# Remove any dangling pids
-rm -rf /home/mediacms.io/mediacms/pids/*
+mkdir -p /var/run/mediacms
+chown www-data:www-data /var/run/mediacms
 
 TARGET_GID=$(stat -c "%g" /home/mediacms.io/mediacms/)
 

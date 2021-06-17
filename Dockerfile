@@ -7,7 +7,7 @@ ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_NO_CACHE_DIR=1
 
-RUN mkdir -p /home/mediacms.io/mediacms/{logs,pids} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
+RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
 
 # Install dependencies:
 COPY requirements.txt .
