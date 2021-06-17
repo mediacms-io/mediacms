@@ -32,8 +32,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest-django
-        mkdir logs # needed for the logger handler, breaks if this doesn't exist
-        touch logs/debug.log
     - name: Run migrations
       run: python manage.py migrate
     - name: Run tests
