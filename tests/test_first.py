@@ -10,4 +10,4 @@ class UserTests(TestCase):
 
     def test_users(self):
         self.assertEqual(User.objects.filter().count(), 2, 'prb')
-        self.assertEqual(User.objects.filter().count(), 22, 'problem')
+        self.assertEqual(User.objects.filter().count(), 2, 'problem')
