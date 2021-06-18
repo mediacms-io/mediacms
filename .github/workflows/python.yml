@@ -40,6 +40,6 @@ jobs:
     - name: Run tests
       run: |
         sudo apt install unzip libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
-        wget -L https://chromedriver.storage.googleapis.com/92.0.4515.43/chromedriver_linux64.zip
+        wget -L https://chromedriver.storage.googleapis.com/91.0.4472.101/chromedriver_linux64.zip
         unzip chromedriver_linux64.zip
         pytest
