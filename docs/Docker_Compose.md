@@ -31,6 +31,17 @@ docker-compose up
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
 
 
+## Update
+
+Get latest MediaCMS image and stop/start containers
+
+```bash
+cd /path/to/mediacms/installation
+docker pull mediacms/mediacms
+docker-compose down
+docker-compose up
+```
+
 ## Configuration
 Checkout the configuration docs on [Configuration](/docs/Configuration.md) page.
 
