@@ -592,7 +592,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
     if not (user or session_key):
         return False
 
-    if action in ["like", "dislike", "report"]:
+    if action in ["like", "dislike", "watch", "report"]:
         if not pre_save_action(
             media=media,
             user=user,
