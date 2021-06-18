@@ -38,6 +38,8 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_CELERY_BEAT: 'no'
+    command: "./deploy/docker/prestart.sh"
+    restart: on-failure
     depends_on:
       redis:
         condition: service_healthy
