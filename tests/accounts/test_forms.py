@@ -1,10 +1,10 @@
 from django.test import LiveServerTestCase
 from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-
 
 class TestBrowser1(LiveServerTestCase):
     def test_example(self):
-        driver = webdriver.Chrome(ChromeDriverManager().install())
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome( executable_path= r"./chromedriver", options=options)
         driver.get(("%s%s" % (self.live_server_url, "/admin/")))
         assert "Log in | Django site admin" in driver.title
