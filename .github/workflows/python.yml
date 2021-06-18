@@ -42,4 +42,4 @@ jobs:
         sudo apt install unzip libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
         wget -L https://chromedriver.storage.googleapis.com/91.0.4472.101/chromedriver_linux64.zip
         unzip chromedriver_linux64.zip
-        pytest
+        pytest --cov --cov-report=xml
