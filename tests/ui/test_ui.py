@@ -1,8 +1,7 @@
+import time
+
 from django.test import LiveServerTestCase
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 class TestUI(LiveServerTestCase):
@@ -12,5 +11,7 @@ class TestUI(LiveServerTestCase):
 
     def test_featured_url(self, driver):
         driver.get(("%s%s" % (self.live_server_url, "/")))
-        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='app-sidebar']/div/div/div[1]/nav/ul/li[2]/a"))).click()
+        featured_button = driver.find_elements_by_xpath("//*[@id='app-sidebar']/div/div/div[1]/nav/ul/li[2]/a")
+        featured_button.click()
+        time.wait(10)
         assert driver.getCurrentUrl() == 'localhost/featured'
