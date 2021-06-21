@@ -12,4 +12,4 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     description = fake.paragraph(nb_sentences=4)
     name = fake.name()
-    is_editor = 'True'
+    is_editor = True
