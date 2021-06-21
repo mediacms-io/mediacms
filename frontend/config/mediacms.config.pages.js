@@ -11,17 +11,21 @@ const DEV_SAMPLE_DATA = {
   playlistId: process.env.MEDIACMS_PLAYLIST_ID,
 };
 
-const formatPage = page => {
+const formatPage = (page) => {
   const pageContentId = 'page-' + page.id;
   const filename = page.filename ? page.filename : ('home' === page.id ? 'index' : page.id) + '.html';
-  const render = page.renderer ? page.renderer : (page.component ? templates.renderPageContent({ page: { id: pageContentId, component: page.component } }) : undefined);
+  const render = page.renderer
+    ? page.renderer
+    : page.component
+    ? templates.renderPageContent({ page: { id: pageContentId, component: page.component } })
+    : undefined;
   const headLinks = [
     { rel: 'preload', href: './static/lib/video-js/7.7.5/video.min.js', as: 'script' },
-    ...(page.headLinks ? page.headLinks : [])
+    ...(page.headLinks ? page.headLinks : []),
   ];
   const bodyScripts = [
     { src: './static/lib/video-js/7.7.5/video.min.js' },
-    ...(page.bodyScripts ? page.bodyScripts : [])
+    ...(page.bodyScripts ? page.bodyScripts : []),
   ];
 
   const ret = {
@@ -38,23 +42,27 @@ const formatPage = page => {
         snippet: page.snippet || templates.htmlBodySnippet({ id: pageContentId }),
       },
     },
-    window: { MediaCMS: page.global ? { ...page.global } : {} }
+    window: { MediaCMS: page.global ? { ...page.global } : {} },
   };
 
   return ret;
 };
 
-const formatPageData = page => {
+const formatPageData = (page) => {
   return formatPage({
     ...page,
   });
 };
 
-const formatStaticPageData = page => {
+const formatStaticPageData = (page) => {
   const pageContentId = 'page-' + page.id;
   return formatPage({
     ...page,
-    renderer: page.renderer ? page.renderer : (page.component ? templates.renderPageStaticContent({ page: { id: pageContentId, component: page.component } }) : undefined),
+    renderer: page.renderer
+      ? page.renderer
+      : page.component
+      ? templates.renderPageStaticContent({ page: { id: pageContentId, component: page.component } })
+      : undefined,
   });
 };
 
@@ -189,7 +197,8 @@ const DEV_ONLY_STATIC_PAGES = {
     buildExclude: true,
     id: 'edit-media',
     title: 'Edit media',
-    component: 'EditMediaPage',
+    renderer: templates.renderBase(),
+    snippet: templates.static.editMediaPage(),
   },
   'edit-channel': {
     buildExclude: true,

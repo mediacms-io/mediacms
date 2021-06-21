@@ -1,47 +1,43 @@
 <div id="app-header"></div>
 <div id="app-sidebar"></div>
 <div class="page-main-wrap">
-	<div class="page-main">
-		<div class="page-main-inner">
-			<div class="user-action-form-wrap">
-				<div class="user-action-form-inner">
-					<h1>Edit Profile</h1>
-					<form encType="multipart/form-data" action="" method="post" className="post-form">
-						<input type="hidden" name="csrfmiddlewaretoken" defaultValue="" />
-						<p>
-							<label htmlFor="id_name">Full name:</label>
-							<input type="text" name="name" defaultValue="" maxLength="250" required id="id_name" />
-						</p>
-						<p>
-							<label htmlFor="id_description">About me:</label>
-							<textarea name="description" cols="40" rows="10" id="id_description" defaultValue=""></textarea>
-						</p>
-						<p>
-							<label htmlFor="id_logo">Logo:</label>
-							Currently: <a href="/media/userlogos/2020/04/11/photo.jpg">userlogos/2020/04/11/photo.jpg</a>
-							<input type="checkbox" name="logo-clear" id="logo-clear_id" />
-							<label htmlFor="logo-clear_id">Clear</label>
-							<br />
-							Change: <input type="file" name="logo" accept="image/*" id="id_logo" />
-						</p>
-						<p>
-							<label htmlFor="id_notification_on_comments">Whether you will receive email notifications for comments added to your content:</label>
-							<input type="checkbox" name="notification_on_comments" id="id_notification_on_comments" defaultChecked />
-						</p>
-						<p>
-							<label htmlFor="id_is_featured">Is featured:</label>
-							<input type="checkbox" name="is_featured" id="id_is_featured" />
-						</p>
-						<p>
-							<label htmlFor="id_advancedUser">Advanced user:</label>
-							<input type="checkbox" name="advancedUser" id="id_advancedUser" />
-						</p>
-						<button className="primaryAction" type="submit">Update Profile</button>
-					</form>
-				</div>
-			</div>
-		</div>
-		<div class="page-sidebar-content-overlay"></div>
-	</div>
+  <div class="page-main">
+    <div class="page-main-inner">
+      <div class="user-action-form-wrap">
+        <div class="user-action-form-inner">
+          <h1>Edit Profile</h1>
+          <form enctype="multipart/form-data" action="" method="post" class="post-form">
+            <p>
+              <label for="id_name">Full name:</label>
+              <input type="text" name="name" value="" maxlength="250" required="" id="id_name" />
+            </p>
+            <p>
+              <label for="id_description">About me:</label>
+              <textarea name="description" cols="40" rows="10" id="id_description"></textarea>
+            </p>
+            <p>
+              <label for="id_email">Email address:</label>
+              <input type="email" name="email" value="" maxlength="254" id="id_email" />
+            </p>
+            <p>
+              <label for="id_logo">Logo:</label> Currently: <a href="#">*****</a>
+              <input type="checkbox" name="logo-clear" id="logo-clear_id" />
+              <label for="logo-clear_id">Clear</label><br />
+              Change:
+              <input type="file" name="logo" accept="image/*" id="id_logo" />
+            </p>
+            <p>
+              <label for="id_notification_on_comments"
+                >Whether you will receive email notifications for comments added to your content:</label
+              >
+              <input type="checkbox" name="notification_on_comments" id="id_notification_on_comments" checked="" />
+            </p>
+            <button class="primaryAction" type="submit">Update Profile</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="page-sidebar-content-overlay"></div>
+  </div>
 </div>
 <div id="app-footer"></div>
