@@ -11,5 +11,6 @@ class TestUI(LiveServerTestCase):
     driver = webdriver.Chrome(executable_path=r"./chromedriver", options=options)
 
     def test_featured_url(self, driver):
+        driver.get(("%s%s" % (self.live_server_url, "/")))
         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='app-sidebar']/div/div/div[1]/nav/ul/li[2]/a"))).click()
         assert driver.getCurrentUrl() == 'localhost/featured'
