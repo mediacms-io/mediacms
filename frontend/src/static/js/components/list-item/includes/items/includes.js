@@ -109,25 +109,6 @@ export function UserItemThumbnailLink(props) {
   return <a {...attr}></a>;
 }
 
-export function MediaItemCategories(props) {
-  if (!props.categories.length) {
-    return null;
-  }
-
-  const catElems = [];
-  let i = 0;
-  while (i < props.categories.length) {
-    catElems.push(
-      <span key={'cat_elem_' + i}>
-        <span>{props.categories[i].title}</span>
-      </span>
-    );
-    i += 1;
-  }
-
-  return <span className="item-categories">{catElems}</span>;
-}
-
 export function MediaItemAuthor(props) {
   return '' === props.name ? null : (
     <span className="item-author">

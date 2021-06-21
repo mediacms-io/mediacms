@@ -233,26 +233,6 @@ a.item-thumb {
   }
 }
 
-.item-categories {
-  display: block;
-
-  span {
-    margin-right: 4px;
-
-    &:after {
-      content: ',';
-    }
-
-    &:last-child {
-      margin: 0;
-
-      &:after {
-        content: '';
-      }
-    }
-  }
-}
-
 .item-meta {
   clear: left;
   float: left;
