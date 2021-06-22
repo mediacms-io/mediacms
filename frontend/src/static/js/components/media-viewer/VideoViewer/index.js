@@ -5,7 +5,11 @@ import { SiteContext, SiteConsumer } from '../../../utils/contexts/';
 import { PageStore, MediaPageStore, VideoViewerStore } from '../../../utils/stores/';
 import { addClassname, removeClassname, formatInnerLink } from '../../../utils/helpers/';
 import { BrowserCache, UpNextLoaderView, MediaDurationInfo, PlayerRecommendedMedia } from '../../../utils/classes/';
-import { orderedSupportedVideoFormats, videoAvailableCodecsAndResolutions, extractDefaultVideoResolution } from './functions';
+import {
+  orderedSupportedVideoFormats,
+  videoAvailableCodecsAndResolutions,
+  extractDefaultVideoResolution,
+} from './functions';
 import { VideoPlayer } from '../../video-player/VideoPlayer';
 
 import '../VideoViewer.scss';
@@ -53,8 +57,6 @@ export default class VideoViewer extends React.PureComponent {
     this.videoInfo = videoAvailableCodecsAndResolutions(this.props.data.encodings_info, this.props.data.hls_info);
 
     const resolutionsKeys = Object.keys(this.videoInfo);
-
-    // console.log( resolutionsKeys );
 
     if (!resolutionsKeys.length) {
       this.videoInfo = null;
@@ -163,10 +165,10 @@ export default class VideoViewer extends React.PureComponent {
     if (this.videoSources.length) {
       this.recommendedMedia = this.props.data.related_media.length
         ? new PlayerRecommendedMedia(
-          this.props.data.related_media,
-          this.props.inEmbed,
-          !PageStore.get('config-media-item').displayViews
-        )
+            this.props.data.related_media,
+            this.props.inEmbed,
+            !PageStore.get('config-media-item').displayViews
+          )
         : null;
 
       this.upNextLoaderView =
@@ -199,8 +201,8 @@ export default class VideoViewer extends React.PureComponent {
           userThumbLink.setAttribute(
             'style',
             'background-image:url(' +
-            formatInnerLink(MediaPageStore.get('media-author-thumbnail-url'), this.props.siteUrl) +
-            ')'
+              formatInnerLink(MediaPageStore.get('media-author-thumbnail-url'), this.props.siteUrl) +
+              ')'
           );
         }
 
@@ -501,9 +503,9 @@ export default class VideoViewer extends React.PureComponent {
 
     const previewSprite = !!this.props.data.sprites_url
       ? {
-        url: this.props.siteUrl + '/' + this.props.data.sprites_url.replace(/^\//g, ''),
-        frame: { width: 160, height: 90, seconds: 10 },
-      }
+          url: this.props.siteUrl + '/' + this.props.data.sprites_url.replace(/^\//g, ''),
+          frame: { width: 160, height: 90, seconds: 10 },
+        }
       : null;
 
     return (
@@ -566,63 +568,43 @@ VideoViewer.propTypes = {
   inEmbed: PropTypes.bool,
 };
 
-// callback executed when canvas was found
 function findGetParameter(parameterName) {
-  var result = null,
-    tmp = [];
+  let result = null;
+  let tmp = [];
   var items = location.search.substr(1).split('&');
-  // console.log( items );
-  for (var index = 0; index < items.length; index++) {
-    tmp = items[index].split('=');
-    if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+  for (let i = 0; i < items.length; i++) {
+    tmp = items[i].split('=');
+    if (tmp[0] === parameterName) {
+      result = decodeURIComponent(tmp[1]);
+    }
   }
   return result;
 }
-function handleCanvas() {
-  var Player = videojs(document.getElementById('vjs_video_3_html5_api'));
+
+function handleCanvas(canvasElem) {
+  const Player = videojs(canvasElem);
   Player.playsinline(true);
-  //   //Player.controls(false);
-
-  //   console.log( '#####' );
-  //   console.log( location.search );
-  //     console.log( findGetParameter("muted") );
-  //     console.log( findGetParameter("time") );
-  //     console.log( findGetParameter("autoplay") );
-  //     console.log( '#####' );
-  //     return;
-
-  //   if(findGetParameter("muted")==1){
-  //         Player.muted(true);
-  //   }
-  //   if(findGetParameter("time")>=0){
-  //         Player.currentTime(findGetParameter("time"));
-  //   }
-  //   if(findGetParameter("autoplay")==1){
-  //         Player.play();
-  //   }
+  // TODO: Make them work only in embedded player...?
+  if (findGetParameter('muted') == 1) {
+    Player.muted(true);
+  }
+  if (findGetParameter('time') >= 0) {
+    Player.currentTime(findGetParameter('time'));
+  }
+  if (findGetParameter('autoplay') == 1) {
+    Player.play();
+  }
 }
 
-// set up the mutation observer
-var observer = new MutationObserver(function (mutations, me) {
-  // `mutations` is an array of mutations that occurred
-  // `me` is the MutationObserver instance
-  var canvas = document.getElementById('vjs_video_3_html5_api');
+const observer = new MutationObserver(function (mutations, me) {
+  const canvas = document.querySelector('.video-js.vjs-mediacms video');
   if (canvas) {
-    // console.log( document.querySelector('.video-js.vjs-mediacms.vjs-loading-video video') );
-
-    const videoElem = document.querySelector('.video-js.vjs-mediacms video');
-    if (videoElem) {
-      videoElem.style.opacity = '1';
-      videoElem.style.visibility = 'visible';
-    }
-
-    handleCanvas();
-    me.disconnect(); // stop observing
+    handleCanvas(canvas);
+    me.disconnect();
     return;
   }
 });
 
-// start observing
 observer.observe(document, {
   childList: true,
   subtree: true,
