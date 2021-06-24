@@ -31,12 +31,6 @@ django-ckeditor
 
 django-login-required-middleware==0.6.1
 
-pytest-cov
-pytest-django
-pytest-factoryboy
-Faker
-selenium
-webdriver-manager
 
 # extra nice utilities!
 rpdb
@@ -48,4 +42,3 @@ pep8
 django-silk
 django-debug-toolbar
 pre-commit
-pytest-django

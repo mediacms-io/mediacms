@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  # frontend:
+  #   image: node:14
+  #   volumes:
+  #     - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
+  #   working_dir: /home/mediacms.io/mediacms/frontend/
+  #   command: bash -c "npm install && npm run start"
+  #   env_file:
+  #     - ${PWD}/frontend/.env
+  #   ports:
+  #     - "8097:8097"
+  #   depends_on:
+  #     - web
+  selenium_hub:
+    container_name: selenium_hub
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+  selenium_chrome:
+    container_name: selenium_chrome
+    image: selenium/node-chrome-debug
+    environment:
+      - HUB_PORT_4444_TCP_ADDR=selenium_hub
+      - HUB_PORT_4444_TCP_PORT=4444
+    ports:
+      - "5900:5900"
+    depends_on:
+      - selenium_hub
+  selenium_firefox:
+    container_name: selenium_firefox
+    image: selenium/node-firefox-debug
+    environment:
+      - HUB_PORT_4444_TCP_ADDR=selenium_hub
+      - HUB_PORT_4444_TCP_PORT=4444
+    ports:
+      - "5901:5900"
+    depends_on:
+      - selenium_hub
