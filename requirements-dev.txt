@@ -1,3 +1,14 @@
+-r requirements.txt
+
+rpdb
+tqdm
+ipython
+flake8
+pylint
+pep8
+django-silk
+django-debug-toolbar
+pre-commit
 pytest-cov
 pytest-django
 pytest-factoryboy

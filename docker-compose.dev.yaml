@@ -13,6 +13,20 @@ services:
   #     - "8097:8097"
   #   depends_on:
   #     - web
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    image: mediacms/mediacms-dev:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
   selenium_hub:
     container_name: selenium_hub
     image: selenium/hub
