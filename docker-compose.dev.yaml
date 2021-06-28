@@ -16,7 +16,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
     ports:
       - "80:80"
