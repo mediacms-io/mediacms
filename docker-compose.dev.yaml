@@ -52,3 +52,25 @@ services:
       - "5901:5900"
     depends_on:
       - selenium_hub
+  db:
+    image: postgres
+    volumes:
+      - ../postgres_data:/var/lib/postgresql/data/
+    restart: always
+    environment:
+      POSTGRES_USER: mediacms
+      POSTGRES_PASSWORD: mediacms
+      POSTGRES_DB: mediacms
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediacms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: "redis:alpine"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
