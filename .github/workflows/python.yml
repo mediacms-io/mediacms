@@ -15,11 +15,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v1
 
-    - name: Build Containers
-      run: docker-compose -f "docker-compose-dev.yaml" up -d --build
+    - name: Build the Stack
+      run:  docker-compose -f docker-compose-dev.yaml build
 
-    - name: Run Containers in detach mode
-      run: docker-compose -f docker-compose-dev.yaml up --detach
-    
-    - name: Run pytest
-      run: docker ps
+    - name: Run DB Migrations
+      run:  docker-compose -f docker-compose-dev.yaml run --rm django python manage.py migrate
+
+    - name: Run Django Tests
+      run:  docker-compose -f docker-compose-dev.yaml run django pytest
+
+    - name: Tear down the Stack
+      run:  docker-compose -f local.yml down
