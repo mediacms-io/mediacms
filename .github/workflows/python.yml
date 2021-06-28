@@ -11,35 +11,15 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: mediacms
-          POSTGRES_PASSWORD: mediacms
-          POSTGRES_DB: mediacms
-        ports:
-          - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: psycopg2 prerequisites
-      run: sudo apt-get install libpq-dev
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run migrations
-      run: python manage.py migrate
-    - name: Run tests
-      run: |
-        sudo apt install unzip libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev
-        wget -L https://chromedriver.storage.googleapis.com/91.0.4472.101/chromedriver_linux64.zip
-        unzip chromedriver_linux64.zip
-        pytest --cov --cov-report=xml
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Build Containers
+      run: docker-compose -f "docker-compose-dev.yml" up -d --build
+
+    - name: Run Containers in detach mode
+      run: docker-compose -f docker-compose-dev.yaml up --detach
+    
+    - name: Run pytest
+      run: docker ps
