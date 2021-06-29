@@ -19,7 +19,7 @@ jobs:
       run:  docker-compose -f docker-compose-dev.yaml build
 
     - name: Start containers
-      run: docker-compose -f docker-compose-dev.yml up -d
+      run: docker-compose -f docker-compose-dev.yaml up -d
 
     - name: Run Django Tests
       run:  docker-compose -f docker-compose-dev.yaml run web pytest
