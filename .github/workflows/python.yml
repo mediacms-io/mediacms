@@ -22,7 +22,7 @@ jobs:
       run: docker-compose -f docker-compose-dev.yaml up -d
 
     - name: Run Django Tests
-      run:  docker-compose -f docker-compose-dev.yaml run web pytest
+      run:  docker-compose -f docker-compose-dev.yaml exec web pytest
 
     - name: Tear down the Stack
       run:  docker-compose -f docker-compose-dev.yaml down
