@@ -9,5 +9,5 @@ class SeleniumTest(TestCase):
         self.chrome.implicitly_wait(10)
 
     def test_visit_site_with_chrome(self):
-        self.chrome.get('http://web:80/admin')
+        self.chrome.get('https://demo.mediacms.io/admin')
         self.assertIn(self.chrome.title, "Log in | Django site admin")
