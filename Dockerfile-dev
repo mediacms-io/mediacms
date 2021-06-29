@@ -7,6 +7,8 @@ ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_NO_CACHE_DIR=1
 
+EXPOSE 80
+
 RUN cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
 
 COPY requirements.txt . 
