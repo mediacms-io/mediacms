@@ -24,11 +24,11 @@ jobs:
     - name: List containers
       run: docker ps
 
-    # - name: Sleep for 60 seconds
-    #   run: sleep 60s
-    #   shell: bash
+    - name: Sleep for 60 seconds
+      run: sleep 60s
+      shell: bash
 
-      - name: Run Django Tests
+    - name: Run Django Tests
       run:  docker-compose -f docker-compose-dev.yaml exec -T web pytest
 
     - name: Tear down the Stack
