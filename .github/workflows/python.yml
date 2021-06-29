@@ -21,6 +21,9 @@ jobs:
     - name: Start containers
       run: docker-compose -f docker-compose-dev.yaml up -d
 
+    - name: List containers
+      run: docker pa
+
     - name: Run Django Tests
       run:  docker-compose -f docker-compose-dev.yaml exec -T web pytest
 
