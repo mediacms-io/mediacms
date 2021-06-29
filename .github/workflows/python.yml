@@ -24,7 +24,7 @@ jobs:
     - name: List containers
       run: docker ps
 
-    - name: Sleep for 30 seconds
+    - name: Sleep for 60 seconds
       run: sleep 60s
       shell: bash
 
