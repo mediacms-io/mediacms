@@ -18,8 +18,8 @@ jobs:
     - name: Build the Stack
       run:  docker-compose -f docker-compose-dev.yaml build
 
-    - name: Run DB Migrations
-      run:  docker-compose -f docker-compose-dev.yaml run --rm web python manage.py migrate
+    - name: Start containers
+      run: docker-compose -f docker-compose-dev.yml up -d
 
     - name: Run Django Tests
       run:  docker-compose -f docker-compose-dev.yaml run web pytest
