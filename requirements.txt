@@ -28,17 +28,6 @@ django-celery-email
 m3u8
 
 django-ckeditor
+django-debug-toolbar
 
 django-login-required-middleware==0.6.1
-
-# extra nice utilities!
-rpdb
-tqdm
-ipython
-flake8
-pylint
-pep8
-django-silk
-django-debug-toolbar
-pre-commit
-pytest-django

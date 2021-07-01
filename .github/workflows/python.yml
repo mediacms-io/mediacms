@@ -1,37 +1,35 @@
 name: Python Tests
 
-on: [push]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: mediacms
-          POSTGRES_PASSWORD: mediacms
-          POSTGRES_DB: mediacms
-        ports:
-          - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: psycopg2 prerequisites
-      run: sudo apt-get install libpq-dev
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Run migrations
-      run: python manage.py migrate
-    - name: Run tests
-      run: py.test
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Build the Stack
+      run:  docker-compose -f docker-compose-dev.yaml build
+
+    - name: Start containers
+      run: docker-compose -f docker-compose-dev.yaml up -d
+
+    - name: List containers
+      run: docker ps
+
+    - name: Sleep for 60 seconds
+      run: sleep 60s
+      shell: bash
+
+    - name: Run Django Tests
+      run:  docker-compose -f docker-compose-dev.yaml exec -T web pytest
+
+    - name: Tear down the Stack
+      run:  docker-compose -f docker-compose-dev.yaml down
