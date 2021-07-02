@@ -10,6 +10,6 @@ class SeleniumTest(TestCase):
 
     def test_visit_site_with_chrome(self):
         self.chrome.get('http://web')
-        home_nav = self.chrome.find_element_by_xpath("//*[@id="app-sidebar"]/div/div/div[1]/nav/ul/li[1]/a")
-        self.assertIn(home_nav.text , "Home")
+        home_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[1]/a")
+        self.assertIn(home_nav.text, "Home")
         self.assertIn(home_nav.get_attribute("href"), '/')
