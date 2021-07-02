@@ -2,6 +2,7 @@ import debug_toolbar
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.urls import path, re_path
+from django.views.generic.base import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
@@ -15,6 +16,10 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     url(r"^__debug__/", include(debug_toolbar.urls)),
+    path(
+        "robots.txt",
+        TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
+    ),
     url(r"^", include("files.urls")),
     url(r"^", include("users.urls")),
     url(r"^accounts/", include("allauth.urls")),

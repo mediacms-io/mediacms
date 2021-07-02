@@ -261,3 +261,10 @@ ADMINS_NOTIFICATIONS = {
 - NEW_USER: a new user is added
 - MEDIA_ADDED: a media is added
 - MEDIA_REPORTED: the report for a media was hit
+
+
+
+### Google Analytics
+
+Checkout the instructions by alberto98fx on [Google Analytics](/docs/robots_and_analytics.md) page.
+
