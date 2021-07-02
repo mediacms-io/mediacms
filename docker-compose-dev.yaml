@@ -1,0 +1,66 @@
+version: "3"
+
+services:
+  # frontend:
+  #   image: node:14
+  #   volumes:
+  #     - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
+  #   working_dir: /home/mediacms.io/mediacms/frontend/
+  #   command: bash -c "npm install && npm run start"
+  #   env_file:
+  #     - ${PWD}/frontend/.env
+  #   ports:
+  #     - "8097:8097"
+  #   depends_on:
+  #     - web
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev
+    image: mediacms/mediacms-dev:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+  selenium_hub:
+    container_name: selenium_hub
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+  selenium_chrome:
+    container_name: selenium_chrome
+    image: selenium/node-chrome-debug
+    environment:
+      - HUB_PORT_4444_TCP_ADDR=selenium_hub
+      - HUB_PORT_4444_TCP_PORT=4444
+    ports:
+      - "5900:5900"
+    depends_on:
+      - selenium_hub
+  db:
+    image: postgres
+    volumes:
+      - ../postgres_data:/var/lib/postgresql/data/
+    restart: always
+    environment:
+      POSTGRES_USER: mediacms
+      POSTGRES_PASSWORD: mediacms
+      POSTGRES_DB: mediacms
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediacms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: "redis:alpine"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
