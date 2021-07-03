@@ -12,4 +12,4 @@ class SeleniumTest(TestCase):
         self.chrome.get('http://web')
         home_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[1]/a")
         self.assertIn(home_nav.text, "Home")
-        self.assertIn(home_nav.get_attribute("href"), 'http://web')
+        self.assertIn(home_nav.get_attribute("href"), 'http://web/')
