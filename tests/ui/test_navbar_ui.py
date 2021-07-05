@@ -5,7 +5,9 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 class SeleniumTest(TestCase):
     def setUp(self):
-        self.chrome = webdriver.Remote(command_executor='http://selenium_hub:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        self.chrome = webdriver.Remote(command_executor='http://selenium_hub:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME, options=options)
         self.chrome.implicitly_wait(10)
         self.chrome.get('http://web/')
 
