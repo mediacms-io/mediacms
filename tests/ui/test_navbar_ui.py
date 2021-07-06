@@ -11,6 +11,7 @@ class SeleniumTest(TestCase):
 
     def test_home_nav(self):
         home_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[1]/a")
+        self.chrome.implicitly_wait(5)
         self.assertIn(home_nav.text, "Home")
         self.assertIn(home_nav.get_attribute("href"), 'http://web/')
         home_nav.click()
@@ -19,6 +20,7 @@ class SeleniumTest(TestCase):
 
     def test_featured_nav(self):
         featured_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[2]/a")
+        self.chrome.implicitly_wait(5)
         self.assertIn(featured_nav.text, "Featued")
         self.assertIn(featured_nav.get_attribute("href"), 'http://web/featured')
         featured_nav.click()
