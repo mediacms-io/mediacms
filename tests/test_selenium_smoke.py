@@ -11,3 +11,4 @@ class SeleniumTest(TestCase):
     def test_visit_site_with_chrome(self):
         self.chrome.get('http://web/admin')
         self.assertIn(self.chrome.title, "Log in | Django site admin")
+        self.chrome.close()
