@@ -15,7 +15,7 @@ class SeleniumTest(TestCase):
         self.assertIn(home_nav.get_attribute("href"), 'http://web/')
         home_nav.click()
         self.assertIn(self.chrome.current_url, "http://web/")
-        self.chrome.quit()
+        self.chrome.close()
 
     def test_featured_nav(self):
         featured_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[2]/a")
@@ -23,7 +23,7 @@ class SeleniumTest(TestCase):
         self.assertIn(featured_nav.get_attribute("href"), 'http://web/featured')
         featured_nav.click()
         self.assertIn(self.chrome.current_url, "http://web/featured")
-        self.chrome.quit()
+        self.chrome.close()
 
     # def test_recommended_nav(self):
     #     recommended_nav = self.chrome.find_element_by_xpath("/html/body/div[2]/div/div/div[1]/nav/ul/li[3]/a")
