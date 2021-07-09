@@ -371,7 +371,7 @@ def media_file_info(input_file):
         "filename": input_file,
         "file_size": file_size,
         "video_duration": video_duration,
-        "video_frame_rate": float(Fraction(video_info["r_frame_rate"])),
+        "video_frame_rate": Fraction(video_info["r_frame_rate"]),
         "video_bitrate": video_bitrate,
         "video_width": video_info["width"],
         "video_height": video_info["height"],
@@ -492,7 +492,7 @@ def get_base_ffmpeg_command(
         codec {str} -- video codec
         encoder {str} -- video encoder
         audio_encoder {str} -- audio encoder
-        target_fps {int} -- target FPS
+        target_fps {float} -- target FPS
         target_height {int} -- height
         target_rate {int} -- target bitrate in kbps
         target_rate_audio {int} -- audio target bitrate
@@ -501,10 +501,9 @@ def get_base_ffmpeg_command(
         enc_type {str} -- encoding type (twopass or crf)
     """
 
-    target_fps = int(target_fps)
-    # avoid Frame rate very high for a muxer not efficiently supporting it.
-    if target_fps > 90:
-        target_fps = 90
+    # avoid very high frame rates
+    while target_fps > 60:
+        target_fps = target_fps/2
 
     base_cmd = [
         settings.FFMPEG_COMMAND,
@@ -687,8 +686,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
     #        target_fps = 25
     #    else:
 
-    # adjust the target frame rate if the input is fractional
-    target_fps = src_framerate if isinstance(src_framerate, int) else math.ceil(src_framerate)
+    target_fps = src_framerate
 
     if media_info.get("video_duration") > CRF_ENCODING_NUM_SECONDS:
         enc_type = "crf"
