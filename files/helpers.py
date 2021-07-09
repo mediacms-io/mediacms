@@ -492,7 +492,7 @@ def get_base_ffmpeg_command(
         codec {str} -- video codec
         encoder {str} -- video encoder
         audio_encoder {str} -- audio encoder
-        target_fps {float} -- target FPS
+        target_fps {fractions.Fraction} -- target FPS
         target_height {int} -- height
         target_rate {int} -- target bitrate in kbps
         target_rate_audio {int} -- audio target bitrate
