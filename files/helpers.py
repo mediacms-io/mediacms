@@ -23,6 +23,8 @@ CRF_ENCODING_NUM_SECONDS = 2  # 0 * 60 # videos with greater duration will get
 # you should use CRF encoding.
 
 MAX_RATE_MULTIPLIER = 1.5
+MIN_RATE_MULTIPLIER = 0.5
+
 BUF_SIZE_MULTIPLIER = 1.5
 
 # in seconds, anything between 2 and 6 makes sense
@@ -238,7 +240,8 @@ def media_file_info(input_file):
     - `filename`: Filename
     - `file_size`: Size of the file in bytes
     - `video_duration`: Duration of the video in `s.msec`
-    - `video_frame_rate`: Framerate in Hz
+    - `video_frame_rate_d`: Framerate franction denominator
+    - `video_frame_rate_n`: Framerate fraction nominator
     - `video_bitrate`: Bitrate of the video stream in kBit/s
     - `video_width`: Width in pixels
     - `video_height`: Height in pixels
@@ -366,18 +369,31 @@ def media_file_info(input_file):
         stdout = run_command(cmd).get("out")
         stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
         video_bitrate = round((stream_size * 8 / 1024.0) / video_duration, 2)
+    
+    if "r_frame_rate" in video_info.keys():   
+        video_frame_rate = video_info["r_frame_rate"].partition("/")
+        video_frame_rate_n =  video_frame_rate[0]
+        video_frame_rate_d =  video_frame_rate[2]  
 
     ret = {
         "filename": input_file,
         "file_size": file_size,
-        "video_duration": video_duration,
-        "video_frame_rate": Fraction(video_info["r_frame_rate"]),
+        "video_duration": video_duration, 
+        "video_frame_rate_n": video_frame_rate_n,
+        "video_frame_rate_d": video_frame_rate_d,
         "video_bitrate": video_bitrate,
         "video_width": video_info["width"],
         "video_height": video_info["height"],
         "video_codec": video_info["codec_name"],
         "has_video": has_video,
         "has_audio": has_audio,
+        "color_range": video_info["color_range"],
+        "color_space": video_info["color_space"],
+        "color_transfer": video_info.get("color_space"),
+        "color_primaries": video_info.get("color_primaries"),
+        "field_order": video_info["field_order"],
+        "display_aspect_ratio": video_info["display_aspect_ratio"],
+        "sample_aspect_ratio": video_info["sample_aspect_ratio"],
     }
 
     if has_audio:
@@ -621,6 +637,8 @@ def get_base_ffmpeg_command(
                 str(keyframe_distance),
                 "-maxrate",
                 str(int(int(target_rate) * MAX_RATE_MULTIPLIER)) + "k",
+                "-minrate",
+                str(int(int(target_rate) * MIN_RATE_MULTIPLIER)) + "k",
                 "-bufsize",
                 str(int(int(target_rate) * BUF_SIZE_MULTIPLIER)) + "k",
                 "-speed",
@@ -668,8 +686,8 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
     else:
         return False
 
-    src_framerate = media_info.get("video_frame_rate", 30)
-    if src_framerate <= 30:
+    target_fps = Fraction(int(media_info.get("video_frame_rate_n", 30)), int(media_info.get("video_frame_rate_d", 1)))
+    if target_fps <= 30:
         target_rate = VIDEO_BITRATES[codec][25].get(resolution)
     else:
         target_rate = VIDEO_BITRATES[codec][60].get(resolution)
@@ -686,7 +704,6 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
     #        target_fps = 25
     #    else:
 
-    target_fps = src_framerate
 
     if media_info.get("video_duration") > CRF_ENCODING_NUM_SECONDS:
         enc_type = "crf"
@@ -697,6 +714,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
         passes = [1, 2]
     elif enc_type == "crf":
         passes = [2]
+
 
     cmds = []
     for pass_number in passes:
