@@ -23,6 +23,8 @@ CRF_ENCODING_NUM_SECONDS = 2  # 0 * 60 # videos with greater duration will get
 # you should use CRF encoding.
 
 MAX_RATE_MULTIPLIER = 1.5
+MIN_RATE_MULTIPLIER = 0.5
+
 BUF_SIZE_MULTIPLIER = 1.5
 
 # in seconds, anything between 2 and 6 makes sense
@@ -621,6 +623,8 @@ def get_base_ffmpeg_command(
                 str(keyframe_distance),
                 "-maxrate",
                 str(int(int(target_rate) * MAX_RATE_MULTIPLIER)) + "k",
+                "-minrate",
+                str(int(int(target_rate) * MIN_RATE_MULTIPLIER)) + "k",
                 "-bufsize",
                 str(int(int(target_rate) * BUF_SIZE_MULTIPLIER)) + "k",
                 "-speed",
