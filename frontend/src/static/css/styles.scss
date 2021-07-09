@@ -554,3 +554,47 @@ button {
   border-radius: 2px !important;
   z-index: +5 !important;
 }
+
+.empty-media {
+  padding: 80px 0 32px;
+  text-align: center;
+}
+
+@media screen and (min-width: 1366px) {
+  .empty-media {
+    padding: 96px 0 48px;
+  }
+}
+
+.empty-media .welcome-title {
+  display: block;
+  font-size: 2em;
+}
+
+.empty-media .start-uploading {
+  max-width: 360px;
+  display: block;
+  font-size: 1em;
+  padding: 12px 0 24px;
+  margin: 0 auto;
+}
+
+.empty-media .button-link {
+  display: inline-block;
+  padding: 13px 16px 11px;
+  font-size: 13px;
+  line-height: 1;
+  color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 1px;
+  border-color: var(--default-brand-color);
+  background-color: var(--default-brand-color);
+}
+.empty-media .button-link .material-icons {
+  margin-right: 8px;
+  margin-top: -1px;
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.65;
+}

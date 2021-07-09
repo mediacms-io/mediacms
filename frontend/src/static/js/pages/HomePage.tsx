@@ -7,6 +7,25 @@ import { ItemListAsync } from '../components/item-list/ItemListAsync.jsx';
 import { InlineSliderItemListAsync } from '../components/item-list/InlineSliderItemListAsync.jsx';
 import { Page } from './Page';
 
+const EmptyMedia: React.FC = ({
+}) => {
+  return (
+    <LinksConsumer>
+      {(links) => (
+        <div className="empty-media">
+          <div className="welcome-title">Welcome to MediaCMS!</div>
+          <div className="start-uploading">
+            Start uploading media and sharing your work!
+          </div>
+          <a href={links.user.addMedia} title="Upload media" className="button-link">
+            <i className="material-icons" data-icon="video_call"></i>UPLOAD MEDIA
+          </a>
+        </div>
+      )}
+    </LinksConsumer>
+  );
+};
+
 interface HomePageProps {
   id?: string;
   latest_title: string;
@@ -26,12 +45,14 @@ export const HomePage: React.FC<HomePageProps> = ({
   featured_view_all_link = true,
   recommended_view_all_link = true,
 }) => {
+  const [zeroMedia, setZeroMedia] = useState(false);
   const [visibleLatest, setVisibleLatest] = useState(false);
   const [visibleFeatured, setVisibleFeatured] = useState(false);
   const [visibleRecommended, setVisibleRecommended] = useState(false);
 
   const onLoadLatest = (length: number) => {
     setVisibleLatest(0 < length);
+    setZeroMedia(0 === length);
   };
 
   const onLoadFeatured = (length: number) => {
@@ -97,6 +118,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                     hideDate={!PageStore.get('config-media-item').displayPublishDate}
                   />
                 </MediaListRow>
+
+                { zeroMedia && <EmptyMedia/> }
+
               </MediaMultiListWrapper>
             )}
           </ApiUrlConsumer>
