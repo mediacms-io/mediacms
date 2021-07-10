@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageActions, PlaylistPageActions } from '../utils/actions/';
-import { ApiUrlContext, MemberContext } from '../utils/contexts/';
+import { MemberContext } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
 import { PlaylistPageStore } from '../utils/stores/';
 import {
@@ -17,11 +17,47 @@ import { Page } from './_Page';
 
 import '../components/playlist-page/PlaylistPage.scss';
 
+if (window.MediaCMS.site.devEnv) {
+  const extractUrlParams = () => {
+    let mediaId = null;
+    let playlistId = null;
+
+    const query = window.location.search.split('?')[1];
+
+    if (query) {
+      const params = query.split('&');
+      params.forEach((param) => {
+        if (0 === param.indexOf('m=')) {
+          mediaId = param.split('m=')[1];
+        } else if (0 === param.indexOf('pl=')) {
+          playlistId = param.split('pl=')[1];
+        }
+      });
+    }
+
+    return { mediaId, playlistId };
+  };
+
+  const { playlistId } = extractUrlParams();
+
+  if (playlistId) {
+    window.MediaCMS.playlistId = playlistId;
+  }
+}
+
 function PlayAllLink(props) {
+  let playAllUrl = props.media[0].url;
+
+  if (window.MediaCMS.site.devEnv && -1 < playAllUrl.indexOf('view?')) {
+    playAllUrl = '/media.html?' + playAllUrl.split('view?')[1];
+  }
+
+  playAllUrl += '&pl=' + props.id;
+
   return !props.media || !props.media.length ? (
     <span>{props.children}</span>
   ) : (
-    <a href={props.media[0].url + '&pl=' + props.id} title="">
+    <a href={playAllUrl} title="">
       {props.children}
     </a>
   );

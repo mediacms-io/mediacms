@@ -66,8 +66,14 @@ export function PlaylistItemMetaDate(props) {
 }
 
 export function MediaItemEditLink(props) {
-  return void 0 === props.link ? null : (
-    <a href={props.link} title="Edit media" className="item-edit-link">
+  let link = props.link;
+
+  if (link && window.MediaCMS.site.devEnv) {
+    link = '/edit-media.html';
+  }
+
+  return !link ? null : (
+    <a href={link} title="Edit media" className="item-edit-link">
       EDIT MEDIA
     </a>
   );

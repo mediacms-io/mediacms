@@ -69,16 +69,28 @@ function MediaMetaField(props) {
 }
 
 function EditMediaButton(props) {
+  let link = props.link;
+
+  if (window.MediaCMS.site.devEnv) {
+    link = '/edit-media.html';
+  }
+
   return (
-    <a href={props.link} rel="nofollow" title="Edit media" className="edit-media">
+    <a href={link} rel="nofollow" title="Edit media" className="edit-media">
       EDIT MEDIA
     </a>
   );
 }
 
 function EditSubtitleButton(props) {
+  let link = props.link;
+
+  if (window.MediaCMS.site.devEnv) {
+    link = '#';
+  }
+
   return (
-    <a href={props.link} rel="nofollow" title="Edit subtitle" className="edit-subtitle">
+    <a href={link} rel="nofollow" title="Edit subtitle" className="edit-subtitle">
       EDIT SUBTITLE
     </a>
   );
@@ -96,8 +108,8 @@ export default function ViewerInfoContent(props) {
     ? []
     : !PageStore.get('config-enabled').taxonomies.categories ||
       PageStore.get('config-enabled').taxonomies.categories.enabled
-      ? metafield(MediaPageStore.get('media-categories'))
-      : [];
+    ? metafield(MediaPageStore.get('media-categories'))
+    : [];
 
   let summary = MediaPageStore.get('media-summary');
 
@@ -162,8 +174,8 @@ export default function ViewerInfoContent(props) {
   return (
     <div className="media-info-content">
       {void 0 === PageStore.get('config-media-item').displayAuthor ||
-        null === PageStore.get('config-media-item').displayAuthor ||
-        !!PageStore.get('config-media-item').displayAuthor ? (
+      null === PageStore.get('config-media-item').displayAuthor ||
+      !!PageStore.get('config-media-item').displayAuthor ? (
         <MediaAuthorBanner link={authorLink} thumb={authorThumb} name={props.author.name} published={props.published} />
       ) : null}
 

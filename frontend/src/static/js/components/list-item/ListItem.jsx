@@ -80,6 +80,10 @@ export function listItemProps(props, item, index) {
     edit: props.canEdit ? item.url.replace('view?m=', 'edit?m=') : null,
   };
 
+  if (window.MediaCMS.site.devEnv && -1 < url.view.indexOf('view?')) {
+    url.view = '/media.html?' + url.view.split('view?')[1];
+  }
+
   const thumbnail = item.thumbnail_url || '';
   const previewThumbnail = item.preview_url || '';
 
@@ -89,15 +93,15 @@ export function listItemProps(props, item, index) {
     void 0 !== item.username && 'string' === typeof item.username
       ? item.username
       : void 0 !== item.title && 'string' === typeof item.title
-        ? item.title
-        : null;
+      ? item.title
+      : null;
 
   date =
     void 0 !== item.date_added && 'string' === typeof item.date_added
       ? item.date_added
       : void 0 !== item.add_date && 'string' === typeof item.add_date
-        ? item.add_date
-        : null;
+      ? item.add_date
+      : null;
 
   // description = props.preferSummary && 'string' === typeof props.summary ? props.summary.trim() : ( 'string' === typeof item.description ? item.description.trim() : null );
   // description = null === description ? description : description.replace(/(<([^>]+)>)/ig,"");
@@ -179,8 +183,8 @@ export function listItemProps(props, item, index) {
       props.preferSummary && 'string' === typeof props.summary
         ? props.summary.trim()
         : 'string' === typeof item.description
-          ? item.description.trim()
-          : null;
+        ? item.description.trim()
+        : null;
     description = null === description ? description : description.replace(/(<([^>]+)>)/gi, '');
 
     if (isSearchItem || props.inCategoriesList || 'user' === type) {
@@ -231,7 +235,6 @@ export function listItemProps(props, item, index) {
 }
 
 export function ListItem(props) {
-
   let isMediaItem = false;
 
   const args = {
@@ -310,8 +313,6 @@ export function ListItem(props) {
     args.editLink = props.url.edit;
   }
 
-  // console.log( args );
-
   if (props.taxonomyPage.current) {
     switch (props.taxonomyPage.type) {
       case 'categories':
@@ -325,6 +326,9 @@ export function ListItem(props) {
     case 'user':
       return <UserItem {...args} />;
     case 'playlist':
+      if (window.MediaCMS.site.devEnv) {
+        args.link = args.link.replace('/playlists/', 'playlist.html?pl=');
+      }
       return <PlaylistItem {...args} />;
     case 'video':
       return <VideoItem {...args} />;

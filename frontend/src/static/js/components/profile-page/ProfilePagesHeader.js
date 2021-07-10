@@ -368,24 +368,40 @@ NavMenuInlineTabs.propTypes = {
 };
 
 function AddBannerButton(props) {
+  let link = props.link;
+
+  if (window.MediaCMS.site.devEnv) {
+    link = '/edit-channel.html';
+  }
   return (
-    <a href={props.link} className="edit-channel" title="Add banner">
+    <a href={link} className="edit-channel" title="Add banner">
       ADD BANNER
     </a>
   );
 }
 
 function EditBannerButton(props) {
+  let link = props.link;
+
+  if (window.MediaCMS.site.devEnv) {
+    link = '/edit-channel.html';
+  }
   return (
-    <a href={props.link} className="edit-channel" title="Edit banner">
+    <a href={link} className="edit-channel" title="Edit banner">
       EDIT BANNER
     </a>
   );
 }
 
 function EditProfileButton(props) {
+  let link = props.link;
+
+  if (window.MediaCMS.site.devEnv) {
+    link = '/edit-profile.html';
+  }
+
   return (
-    <a href={props.link} className="edit-profile" title="Edit profile">
+    <a href={link} className="edit-profile" title="Edit profile">
       EDIT PROFILE
     </a>
   );

@@ -42,16 +42,17 @@ export function config(glbl) {
       tag: glbl.url.search + '?t=',
       category: glbl.url.search + '?c=',
     },
-    profile: !!glbl.site.devEnv ? {
-      media: glbl.user.pages.media,
-      about: glbl.user.pages.about,
-      playlists: glbl.user.pages.playlists,
-    } :
-      {
-        media: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId,
-        about: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/about',
-        playlists: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/playlists',
-      },
+    profile: !!glbl.site.devEnv
+      ? {
+          media: glbl.user.pages.media,
+          about: glbl.user.pages.about,
+          playlists: glbl.user.pages.playlists,
+        }
+      : {
+          media: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId,
+          about: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/about',
+          playlists: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/playlists',
+        },
     user: {
       liked: glbl.url.likedMedia,
       history: glbl.url.history,
