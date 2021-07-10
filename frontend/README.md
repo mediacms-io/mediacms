@@ -16,7 +16,7 @@
 
     npm run start
 
-Open in browser: [http://localhost:8087](http://localhost:8087)
+Open in browser: [http://localhost:8088](http://localhost:8088)
 
 ---
 
