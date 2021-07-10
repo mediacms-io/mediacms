@@ -10,6 +10,8 @@
 
     .menu-item-icon {
       color: var(--sidebar-nav-item-icon-color);
+      max-width: 24px;
+      overflow: hidden;
     }
   }
 
