@@ -30,8 +30,8 @@ function CommentForm(props) {
     !MemberContext._currentValue.is.anonymous
       ? null
       : LinksContext._currentValue.signin +
-      '?next=/' +
-      window.location.href.replace(SiteContext._currentValue.url, '').replace(/^\//g, '')
+          '?next=/' +
+          window.location.href.replace(SiteContext._currentValue.url, '').replace(/^\//g, '')
   );
 
   function onFocus() {
@@ -335,58 +335,76 @@ function displayCommentsRelatedAlert() {
   }
 }
 
+const CommentsListHeader = ({ commentsLength }) => {
+  return (
+    <>
+      {!MemberContext._currentValue.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
+        <span className="disabled-comments-msg">{commentsText.disabledCommentsMsg}</span>
+      )}
+
+      {MemberContext._currentValue.can.readComment &&
+      (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia) ? (
+        <h2>
+          {commentsLength
+            ? 1 < commentsLength
+              ? commentsLength + ' ' + commentsText.ucfirstPlural
+              : commentsLength + ' ' + commentsText.ucfirstSingle
+            : MediaPageStore.get('media-data').enable_comments
+            ? 'No ' + commentsText.single + ' yet'
+            : ''}
+        </h2>
+      ) : null}
+    </>
+  );
+};
+
 export default function CommentsList(props) {
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
+
   const [comments, setComments] = useState(
     MemberContext._currentValue.can.readComment ? MediaPageStore.get('media-comments') : []
   );
+
   const [displayComments, setDisplayComments] = useState(false);
 
   function onCommentsLoad() {
     displayCommentsRelatedAlert();
-    setComments(MediaPageStore.get('media-comments'));
+    setComments([...MediaPageStore.get('media-comments')]);
   }
 
   function onCommentSubmit(commentId) {
     onCommentsLoad();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
-    setTimeout(function () {
-      PageActions.addNotification(commentsText.ucfirstSingle + ' added', 'commentSubmit');
-    }, 100);
-    console.info('Added ' + commentsText.single + ' "' + commentId + '"');
+    setTimeout(() => PageActions.addNotification(commentsText.ucfirstSingle + ' added', 'commentSubmit'), 100);
   }
 
   function onCommentSubmitFail() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
-    setTimeout(function () {
-      PageActions.addNotification(commentsText.ucfirstSingle + ' submition failed', 'commentSubmitFail');
-    }, 100);
+    setTimeout(
+      () => PageActions.addNotification(commentsText.ucfirstSingle + ' submition failed', 'commentSubmitFail'),
+      100
+    );
   }
 
   function onCommentDelete(commentId) {
     onCommentsLoad();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
-    setTimeout(function () {
-      PageActions.addNotification(commentsText.ucfirstSingle + ' removed', 'commentDelete');
-    }, 100);
-
-    console.info('Removed ' + commentsText.single + ' "' + commentId + '"');
+    setTimeout(() => PageActions.addNotification(commentsText.ucfirstSingle + ' removed', 'commentDelete'), 100);
   }
 
   function onCommentDeleteFail(commentId) {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
-    setTimeout(function () {
-      PageActions.addNotification(commentsText.ucfirstSingle + ' removal failed', 'commentDeleteFail');
-    }, 100);
-
-    console.info(commentsText.ucfirstSingle + ' "' + commentId + '"' + ' removal failed');
+    setTimeout(
+      () => PageActions.addNotification(commentsText.ucfirstSingle + ' removal failed', 'commentDeleteFail'),
+      100
+    );
   }
 
   useEffect(() => {
     setDisplayComments(
       comments.length &&
-      MemberContext._currentValue.can.readComment &&
-      (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia)
+        MemberContext._currentValue.can.readComment &&
+        (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia)
     );
   }, [comments]);
 
@@ -409,40 +427,27 @@ export default function CommentsList(props) {
   return (
     <div className="comments-list">
       <div className="comments-list-inner">
-        {!MemberContext._currentValue.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
-          <span className="disabled-comments-msg">{commentsText.disabledCommentsMsg}</span>
-        )}
-
-        {MemberContext._currentValue.can.readComment &&
-          (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia) ? (
-          <h2>
-            {comments.length
-              ? 1 < comments.length
-                ? comments.length + ' ' + commentsText.ucfirstPlural
-                : comments.length + ' ' + commentsText.ucfirstSingle
-              : MediaPageStore.get('media-data').enable_comments
-                ? 'No ' + commentsText.single + ' yet'
-                : ''}
-          </h2>
-        ) : null}
+        <CommentsListHeader commentsLength={comments.length} />
 
         {MediaPageStore.get('media-data').enable_comments ? <CommentForm media_id={mediaId} /> : null}
 
         {displayComments
-          ? comments.map((c) => (
-            <Comment
-              key={c.uid}
-              comment_id={c.uid}
-              media_id={mediaId}
-              text={c.text}
-              author_name={c.author_name}
-              author_link={c.author_profile}
-              author_thumb={SiteContext._currentValue.url + '/' + c.author_thumbnail_url.replace(/^\//g, '')}
-              publish_date={c.add_date}
-              likes={0}
-              dislikes={0}
-            />
-          ))
+          ? comments.map((c) => {
+              return (
+                <Comment
+                  key={c.uid}
+                  comment_id={c.uid}
+                  media_id={mediaId}
+                  text={c.text}
+                  author_name={c.author_name}
+                  author_link={c.author_profile}
+                  author_thumb={SiteContext._currentValue.url + '/' + c.author_thumbnail_url.replace(/^\//g, '')}
+                  publish_date={c.add_date}
+                  likes={0}
+                  dislikes={0}
+                />
+              );
+            })
           : null}
       </div>
     </div>

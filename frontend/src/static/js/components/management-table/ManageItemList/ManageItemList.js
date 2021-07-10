@@ -89,7 +89,7 @@ function useManageItemListSync(props) {
     setTotalItems(itemsSumm);
   }
 
-  function afterItemsLoad() { }
+  function afterItemsLoad() {}
 
   function renderBeforeListWrap() {
     return null;
@@ -193,7 +193,7 @@ function BulkActions(props) {
         <option value="delete">Delete selected</option>
       </select>
 
-      {!selectedItemsSize ? null : (
+      {!selectedItemsSize || !selectedBulkAction ? null : (
         <PopupTrigger contentRef={popupContentRef}>
           <button>Apply</button>
         </PopupTrigger>
@@ -551,8 +551,8 @@ export function ManageItemList(props) {
   function deleteSelectedItems() {
     deleteRequest(
       props.requestUrl.split('?')[0] +
-      ('comments' === props.manageType ? '?comment_ids=' : '?tokens=') +
-      selectedItems.join(','),
+        ('comments' === props.manageType ? '?comment_ids=' : '?tokens=') +
+        selectedItems.join(','),
       {
         headers: {
           'X-CSRFToken': csrfToken(),

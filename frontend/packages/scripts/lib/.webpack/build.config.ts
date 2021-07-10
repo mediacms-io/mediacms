@@ -52,48 +52,48 @@ import { Configuration } from 'webpack';
     },
 };*/
 
-export const config : Configuration = {
-    mode: 'production',
-    devtool: 'source-map',
-    optimization: {
-        runtimeChunk: false,
-        /*splitChunks: {
+export const config: Configuration = {
+  mode: 'production',
+  devtool: 'source-map',
+  optimization: {
+    runtimeChunk: false,
+    /*splitChunks: {
             // minSize: 1000000,
             chunks: 'all',
             automaticNameDelimiter: '-',
         },*/
-        /*splitChunks: {
+    /*splitChunks: {
             // minSize: 1000000,
             chunks: 'all',
             automaticNameDelimiter: '-',
             cacheGroups: chunksCacheGroups_0,
         },*/
-        /*splitChunks: {
+    /*splitChunks: {
             chunks: 'all',
             automaticNameDelimiter: '-',
             cacheGroups: chunksCacheGroups_1,
         },*/
-        /*splitChunks: {
+    /*splitChunks: {
             chunks: 'all',
             automaticNameDelimiter: '-',
             cacheGroups: chunksCacheGroups_2,
         },*/
-        /*splitChunks: {
+    /*splitChunks: {
             chunks: 'all',
             automaticNameDelimiter: '-',
             cacheGroups: chunksCacheGroups_3,
         },*/
-        splitChunks: {
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: {
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: "_commons",
-                    priority: 1,
-                    chunks: "initial",
-                },
-            },
+    splitChunks: {
+      chunks: 'all',
+      automaticNameDelimiter: '-',
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: '_commons',
+          priority: 1,
+          chunks: 'initial',
         },
-    }
+      },
+    },
+  },
 };

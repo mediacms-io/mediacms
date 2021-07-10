@@ -45,8 +45,7 @@ export const LayoutProvider = ({ children }) => {
   const site = useContext(SiteContext);
   const cache = new BrowserCache('MediaCMS[' + site.id + '][layout]', 86400);
 
-  const enabledSidebar =
-    document.getElementById('app-sidebar') || document.querySelector('.page-sidebar') ? true : false;
+  const enabledSidebar = !!(document.getElementById('app-sidebar') || document.querySelector('.page-sidebar'));
 
   const [visibleSidebar, setVisibleSidebar] = useState(cache.get('visible-sidebar'));
   const [visibleMobileSearch, setVisibleMobileSearch] = useState(false);
@@ -67,7 +66,9 @@ export const LayoutProvider = ({ children }) => {
     } else {
       removeClassname(document.body, 'visible-sidebar');
     }
-    cache.set('visible-sidebar', visibleSidebar);
+    if ('media' !== PageStore.get('current-page') && 1023 < window.innerWidth) {
+      cache.set('visible-sidebar', visibleSidebar);
+    }
   }, [visibleSidebar]);
 
   useEffect(() => {
@@ -77,11 +78,12 @@ export const LayoutProvider = ({ children }) => {
         removeClassname(document.body, 'visible-sidebar');
       }
     });
-    if ('media' === PageStore.get('current-page')) {
-      setVisibleSidebar(false);
-    } else {
-      setVisibleSidebar(1023 < window.innerWidth && (null === visibleSidebar || visibleSidebar));
-    }
+
+    setVisibleSidebar(
+      'media' !== PageStore.get('current-page') &&
+        1023 < window.innerWidth &&
+        (null === visibleSidebar || visibleSidebar)
+    );
   }, []);
 
   const value = {

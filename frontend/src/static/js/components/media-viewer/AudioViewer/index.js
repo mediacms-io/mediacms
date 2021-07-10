@@ -53,10 +53,10 @@ export default class AudioViewer extends React.PureComponent {
 
     this.recommendedMedia = MediaPageStore.get('media-data').related_media.length
       ? new PlayerRecommendedMedia(
-        MediaPageStore.get('media-data').related_media,
-        this.refs.AudioElem.parentNode,
-        this.props.inEmbed
-      )
+          MediaPageStore.get('media-data').related_media,
+          this.refs.AudioElem.parentNode,
+          this.props.inEmbed
+        )
       : null;
 
     this.upNextLoaderView =
@@ -115,17 +115,33 @@ export default class AudioViewer extends React.PureComponent {
             userThumbLink.innerHTML = '<img src="' + MediaPageStore.get('media-author-thumbnail-url') + '" alt="" />';
           }
 
+          let nextLink = null;
+          let previousLink = null;
+
+          const playlistId = this.props.inEmbed ? null : MediaPageStore.get('playlist-id');
+
+          if (playlistId) {
+            nextLink = MediaPageStore.get('playlist-next-media-url');
+            previousLink = MediaPageStore.get('playlist-previous-media-url');
+          } else {
+            nextLink =
+              MediaPageStore.get('media-data').related_media.length && !this.props.inEmbed
+                ? MediaPageStore.get('media-data').related_media[0].url
+                : null;
+          }
+
           this.AudioPlayerData.instance = new MediaPlayer(
             this.refs.AudioElem,
             {
               sources: this.videoSources,
               poster: this.videoPoster,
               autoplay: !this.props.inEmbed,
-              bigPlayButton: /*this.props.inEmbed*/ true,
+              bigPlayButton: true,
               controlBar: {
                 fullscreen: false,
                 theaterMode: false,
-                next: !this.props.inEmbed && 0 < MediaPageStore.get('media-data').related_media.length,
+                next: !!nextLink,
+                previous: !!previousLink,
               },
               cornerLayers: {
                 topLeft: titleLink,
@@ -142,7 +158,7 @@ export default class AudioViewer extends React.PureComponent {
             null,
             this.onAudioPlayerStateUpdate.bind(this),
             this.onClickNextButton.bind(this),
-            null // this.onClickPreviousButton.bind(this),
+            this.onClickPreviousButton.bind(this)
           );
 
           if (this.upNextLoaderView) {
@@ -190,14 +206,40 @@ export default class AudioViewer extends React.PureComponent {
     this.initialDocumentFocus = null;
   }
 
-  /*onClickPreviousButton(){
-
-  }*/
-
   onClickNextButton() {
-    if (!this.props.inEmbed) {
-      window.location.href = MediaPageStore.get('media-data').related_media[0].url;
+    const playlistId = MediaPageStore.get('playlist-id');
+
+    let nextLink;
+
+    if (playlistId) {
+      nextLink = MediaPageStore.get('playlist-next-media-url');
+
+      if (null === nextLink) {
+        nextLink = MediaPageStore.get('media-data').related_media[0].url;
+      }
+    } else if (!this.props.inEmbed) {
+      nextLink = MediaPageStore.get('media-data').related_media[0].url;
     }
+
+    window.location.href = nextLink;
+  }
+
+  onClickPreviousButton() {
+    const playlistId = MediaPageStore.get('playlist-id');
+
+    let previousLink;
+
+    if (playlistId) {
+      previousLink = MediaPageStore.get('playlist-previous-media-url');
+
+      if (null === previousLink) {
+        previousLink = MediaPageStore.get('media-data').related_media[0].url;
+      }
+    } else if (!this.props.inEmbed) {
+      previousLink = MediaPageStore.get('media-data').related_media[0].url;
+    }
+
+    window.location.href = previousLink;
   }
 
   onUpdateMediaAutoPlay() {

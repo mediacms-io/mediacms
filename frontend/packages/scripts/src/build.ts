@@ -13,57 +13,55 @@ import { config as distWebpackConfig } from '../lib/.webpack/dist.config';
 import generateConfig from '../lib/webpack-helpers/generateConfig';
 
 const defaultOptions: BuildOptionsType = {
-	env: 'production',
-	config: defaultConfig,
+  env: 'production',
+  config: defaultConfig,
 };
 
 export function build(buildOptions: BuildOptionsType = defaultOptions): void {
+  const options: BuildOptionsType = { ...defaultOptions, ...buildOptions };
 
-	const options: BuildOptionsType = { ...defaultOptions, ...buildOptions };
+  options.config = { ...defaultOptions.config, ...buildOptions.config };
 
-	options.config = { ...defaultOptions.config, ...buildOptions.config };
+  if (!isAbsolutePath(options.config.src)) {
+    throw Error('"src" is not an absolute path');
+  }
 
-	if (!isAbsolutePath(options.config.src)) {
-		throw Error('"src" is not an absolute path');
-	}
+  if (!isAbsolutePath(options.config.build)) {
+    throw Error('"build" is not an absolute path');
+  }
 
-	if (!isAbsolutePath(options.config.build)) {
-		throw Error('"build" is not an absolute path');
-	}
+  if (!isAbsolutePath(options.config.postcssConfigFile)) {
+    throw Error('"postcssConfigFile" is not an absolute path');
+  }
 
-	if (!isAbsolutePath(options.config.postcssConfigFile)) {
-		throw Error('"postcssConfigFile" is not an absolute path');
-	}
+  const config = generateConfig(options.env, options.config);
 
-	const config = generateConfig(options.env, options.config);
+  const compiler =
+    'dist' === options.env
+      ? webpack({ ...distWebpackConfig, ...config })
+      : webpack({ ...buildWebpackConfig, ...config });
 
-	const compiler = 'dist' === options.env ? webpack({ ...distWebpackConfig, ...config }) : webpack({ ...buildWebpackConfig, ...config });
+  compiler.run((err?: Error, stats?: any) => {
+    if (err) throw err;
 
-	compiler.run((err?: Error, stats?: any) => {
+    const messages = webpackFormatMessages(stats);
 
-		if (err) throw err;
+    if (!messages.errors.length && !messages.warnings.length) {
+      console.log('Compiled successfully!', '\n');
+    }
 
-		const messages = webpackFormatMessages(stats);
+    if (messages.errors.length) {
+      console.log('Failed to compile.', '\n');
 
-		if (!messages.errors.length && !messages.warnings.length) {
-			console.log('Compiled successfully!', '\n');
-		}
+      for (const m of messages.errors) {
+        console.log(m);
+      }
+    } else if (messages.warnings.length) {
+      console.log('Compiled with warnings.', '\n');
 
-		if (messages.errors.length) {
-
-			console.log('Failed to compile.', '\n');
-
-			for (const m of messages.errors) {
-				console.log(m);
-			}
-		}
-		else if (messages.warnings.length) {
-
-			console.log('Compiled with warnings.', '\n');
-
-			for (const m of messages.warnings) {
-				console.log(m);
-			}
-		}
-	});
+      for (const m of messages.warnings) {
+        console.log(m);
+      }
+    }
+  });
 }

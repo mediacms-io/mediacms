@@ -13,7 +13,6 @@ function rmdir_callback(err) {
 var i, dir;
 
 for (i = 0; i < cliArgs.length; i++) {
-
 	dir = path.resolve(cliArgs[i]);
 
 	if (fs.existsSync(dir)) {

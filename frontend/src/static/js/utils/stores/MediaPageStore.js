@@ -528,25 +528,24 @@ class MediaPageStore extends EventEmitter {
         i = 0;
         while (i < this.pagePlaylistData.playlist_media.length) {
           if (MediaPageStoreData[this.id].mediaId === this.pagePlaylistData.playlist_media[i].friendly_token) {
-            activeItem = i + 1;
+            activeItem = i;
             break;
           }
 
           i += 1;
         }
 
-        if (activeItem === this.pagePlaylistData.playlist_media.length) {
-          browserCache = PageStore.get('browser-cache');
+        let nextItem = activeItem + 1;
 
+        if (nextItem === this.pagePlaylistData.playlist_media.length) {
+          browserCache = PageStore.get('browser-cache');
           if (true === browserCache.get('loopPlaylist[' + this.pagePlaylistId + ']')) {
-            activeItem = 0;
+            nextItem = 0;
           }
         }
 
-        // console.log('ACTIVE (next)', activeItem);
-
-        if (void 0 !== this.pagePlaylistData.playlist_media[activeItem]) {
-          r = this.pagePlaylistData.playlist_media[activeItem].url + '&pl=' + this.pagePlaylistId;
+        if (void 0 !== this.pagePlaylistData.playlist_media[nextItem]) {
+          r = this.pagePlaylistData.playlist_media[nextItem].url + '&pl=' + this.pagePlaylistId;
         }
 
         break;
@@ -566,20 +565,20 @@ class MediaPageStore extends EventEmitter {
           i += 1;
         }
 
+        let previousItem = activeItem - 1;
+
         if (0 === activeItem) {
-          activeItem = this.pagePlaylistData.playlist_media.length;
+          previousItem = null;
 
           browserCache = PageStore.get('browser-cache');
 
           if (true === browserCache.get('loopPlaylist[' + this.pagePlaylistId + ']')) {
-            activeItem = activeItem - 1;
+            previousItem = this.pagePlaylistData.playlist_media.length - 1;
           }
-        } else {
-          activeItem = activeItem - 1;
         }
 
-        if (void 0 !== this.pagePlaylistData.playlist_media[activeItem]) {
-          r = this.pagePlaylistData.playlist_media[activeItem].url + '&pl=' + this.pagePlaylistId;
+        if (void 0 !== this.pagePlaylistData.playlist_media[previousItem]) {
+          r = this.pagePlaylistData.playlist_media[previousItem].url + '&pl=' + this.pagePlaylistId;
         }
 
         break;

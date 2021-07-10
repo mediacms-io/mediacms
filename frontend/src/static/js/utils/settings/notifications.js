@@ -25,9 +25,6 @@ export function init(settings) {
       }
     }
   }
-
-  // console.log( settings.messages );
-  // console.log( NOTIFICATIONS.messages );
 }
 
 export function settings() {

@@ -85,25 +85,25 @@ export class _MediaPage extends Page {
         <div key="viewer-section-nested" className={this.state.viewerNestedClassname}>
           {!this.state.infoAndSidebarViewType
             ? [
-              <ViewerInfo key="viewer-info" />,
-              this.state.pagePlaylistLoaded ? (
-                <ViewerSidebar
-                  key="viewer-sidebar"
-                  mediaId={MediaPageStore.get('media-id')}
-                  playlistData={MediaPageStore.get('playlist-data')}
-                />
-              ) : null,
-            ]
+                <ViewerInfo key="viewer-info" />,
+                this.state.pagePlaylistLoaded ? (
+                  <ViewerSidebar
+                    key="viewer-sidebar"
+                    mediaId={MediaPageStore.get('media-id')}
+                    playlistData={MediaPageStore.get('playlist-data')}
+                  />
+                ) : null,
+              ]
             : [
-              this.state.pagePlaylistLoaded ? (
-                <ViewerSidebar
-                  key="viewer-sidebar"
-                  mediaId={MediaPageStore.get('media-id')}
-                  playlistData={MediaPageStore.get('playlist-data')}
-                />
-              ) : null,
-              <ViewerInfo key="viewer-info" />,
-            ]}
+                this.state.pagePlaylistLoaded ? (
+                  <ViewerSidebar
+                    key="viewer-sidebar"
+                    mediaId={MediaPageStore.get('media-id')}
+                    playlistData={MediaPageStore.get('playlist-data')}
+                  />
+                ) : null,
+                <ViewerInfo key="viewer-info" />,
+              ]}
         </div>
       </div>
     );

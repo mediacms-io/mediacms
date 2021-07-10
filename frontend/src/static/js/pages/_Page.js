@@ -13,15 +13,11 @@ export class Page extends React.PureComponent {
   }
 
   render() {
-    return [
-      /*<div key="alert" className="alert info alert-dismissible" role="alert">
-          <button type="button" className="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">×</span>
-          </button>
-          Media was edited!
-        </div>,*/
-      <PageMain key="page-main">{this.pageContent()}</PageMain>,
-      <Notifications key="notifications" />,
-    ];
+    return (
+      <>
+        <PageMain>{this.pageContent()}</PageMain>
+        <Notifications />
+      </>
+    );
   }
 }

@@ -8,7 +8,7 @@ import { Item } from './Item';
 export function PlaylistItem(props) {
   const type = 'playlist';
 
-  const [titleComponent, thumbnailUrl, UnderThumbWrapper] = useItem({ ...props, type });
+  const { titleComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props, type });
 
   function metaComponents() {
     const publishDate = format(new Date(props.publish_date));
@@ -53,7 +53,6 @@ export function PlaylistItem(props) {
         <UnderThumbWrapper title={props.title} link={props.link}>
           {titleComponent()}
           {metaComponents()}
-
           <a href={props.link} title="" className="view-full-playlist">
             VIEW FULL PLAYLIST
           </a>

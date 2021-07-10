@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { VideoPlayerActions } from '../../../utils/actions/';
+import { VideoViewerActions } from '../../../utils/actions/';
 import { SiteContext, SiteConsumer } from '../../../utils/contexts/';
 import { PageStore, MediaPageStore, VideoViewerStore } from '../../../utils/stores/';
 import { addClassname, removeClassname, formatInnerLink } from '../../../utils/helpers/';
@@ -10,7 +10,7 @@ import {
   videoAvailableCodecsAndResolutions,
   extractDefaultVideoResolution,
 } from './functions';
-import { VideoPlayer } from '../../video-player/VideoPlayer';
+import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
 
 import '../VideoViewer.scss';
 
@@ -155,10 +155,6 @@ export default class VideoViewer extends React.PureComponent {
 
     this.onVideoEnd = this.onVideoEnd.bind(this);
     this.onVideoRestart = this.onVideoRestart.bind(this);
-
-    // console.log( "***************" );
-    // console.log( this.videoSources );
-    // console.log( "***************" );
   }
 
   componentDidMount() {
@@ -211,6 +207,7 @@ export default class VideoViewer extends React.PureComponent {
       }
 
       const mediaUrl = MediaPageStore.get('media-url');
+
       let bottomRightHTML =
         '<button class="share-video-btn"><i class="material-icons">share</i><span>Share</span></button>';
       bottomRightHTML +=
@@ -240,7 +237,9 @@ export default class VideoViewer extends React.PureComponent {
 											<div class="sh-option share-telegram">\
 												<a href="https://t.me/share/url?url=' +
         mediaUrl +
-        '&amp;text=Pretty Good Podcast Episode 11: A Conversation with a Pro-Democracy Activist in Myanmar" title="" target="_blank"><span></span><span>Telegram</span></a>\
+        '&amp;text=' +
+        this.props.data.title +
+        '" title="" target="_blank"><span></span><span>Telegram</span></a>\
 											</div>\
 											<div class="sh-option share-linkedin">\
 													<a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=' +
@@ -250,12 +249,16 @@ export default class VideoViewer extends React.PureComponent {
 											<div class="sh-option share-reddit">\
 												<a href="https://reddit.com/submit?url=' +
         mediaUrl +
-        '&amp;title=Pretty Good Podcast Episode 11: A Conversation with a Pro-Democracy Activist in Myanmar" title="" target="_blank"><span></span><span>reddit</span></a>\
+        '&amp;title=' +
+        this.props.data.title +
+        '" title="" target="_blank"><span></span><span>reddit</span></a>\
 											</div>\
 											<div class="sh-option share-tumblr">\
 												<a href="https://www.tumblr.com/widgets/share/tool?canonicalUrl=' +
         mediaUrl +
-        '&amp;title=Pretty Good Podcast Episode 11: A Conversation with a Pro-Democracy Activist in Myanmar" title="" target="_blank"><span></span><span>Tumblr</span></a>\
+        '&amp;title=' +
+        this.props.data.title +
+        '" title="" target="_blank"><span></span><span>Tumblr</span></a>\
 											</div>\
 											<div class="sh-option share-pinterest">\
 												<a href="http://pinterest.com/pin/create/link/?url=' +
@@ -276,7 +279,6 @@ export default class VideoViewer extends React.PureComponent {
         topRight: this.upNextLoaderView ? this.upNextLoaderView.html() : null,
         bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
         bottomRight: this.props.inEmbed ? bottomRightHTML : null,
-        // bottomRight: bottomRightHTML,
       };
 
       this.setState(
@@ -303,8 +305,6 @@ export default class VideoViewer extends React.PureComponent {
           }, 1000);
         }
       );
-
-      // console.log( this.videoInfo );
     }
   }
 
@@ -332,59 +332,67 @@ export default class VideoViewer extends React.PureComponent {
     if (null === this.recommendedMedia) {
       return;
     }
-
     this.playerInstance.player.off('fullscreenchange', this.recommendedMedia.onResize);
-
     PageStore.removeListener('window_resize', this.recommendedMedia.onResize);
-
     VideoViewerStore.removeListener('changed_viewer_mode', this.recommendedMedia.onResize);
-
     this.recommendedMedia.destroy();
   }
 
   onClickNext() {
     const playlistId = MediaPageStore.get('playlist-id');
 
+    let nextLink;
+
     if (playlistId) {
-      // console.log( "GO TO", MediaPageStore.get('playlist-next-media-url') );
-      window.location.href = MediaPageStore.get('playlist-next-media-url');
+      nextLink = MediaPageStore.get('playlist-next-media-url');
+
+      if (null === nextLink) {
+        nextLink = this.props.data.related_media[0].url;
+      }
     } else if (!this.props.inEmbed) {
-      // console.log( "GO TO", this.props.data.related_media[0].url );
-      window.location.href = this.props.data.related_media[0].url;
+      nextLink = this.props.data.related_media[0].url;
     }
+
+    window.location.href = nextLink;
   }
 
   onClickPrevious() {
     const playlistId = MediaPageStore.get('playlist-id');
 
+    let previousLink;
+
     if (playlistId) {
-      // console.log( "GO TO", MediaPageStore.get('playlist-previous-media-url') );
-      window.location.href = MediaPageStore.get('playlist-previous-media-url');
+      previousLink = MediaPageStore.get('playlist-previous-media-url');
+
+      if (null === previousLink) {
+        previousLink = this.props.data.related_media[0].url;
+      }
     } else if (!this.props.inEmbed) {
-      // console.log( "GO TO", this.props.data.related_media[0].url );
-      window.location.href = this.props.data.related_media[0].url;
+      previousLink = this.props.data.related_media[0].url;
     }
+
+    window.location.href = previousLink;
   }
 
   onStateUpdate(newState) {
     if (VideoViewerStore.get('in-theater-mode') !== newState.theaterMode) {
-      VideoPlayerActions.set_viewer_mode(newState.theaterMode);
+      VideoViewerActions.set_viewer_mode(newState.theaterMode);
     }
 
     if (VideoViewerStore.get('player-volume') !== newState.volume) {
-      VideoPlayerActions.set_player_volume(newState.volume);
+      VideoViewerActions.set_player_volume(newState.volume);
     }
 
     if (VideoViewerStore.get('player-sound-muted') !== newState.soundMuted) {
-      VideoPlayerActions.set_player_sound_muted(newState.soundMuted);
+      VideoViewerActions.set_player_sound_muted(newState.soundMuted);
     }
 
     if (VideoViewerStore.get('video-quality') !== newState.quality) {
-      VideoPlayerActions.set_video_quality(newState.quality);
+      VideoViewerActions.set_video_quality(newState.quality);
     }
 
     if (VideoViewerStore.get('video-playback-speed') !== newState.playbackSpeed) {
-      VideoPlayerActions.set_video_playback_speed(newState.playbackSpeed);
+      VideoViewerActions.set_video_playback_speed(newState.playbackSpeed);
     }
   }
 
@@ -517,7 +525,7 @@ export default class VideoViewer extends React.PureComponent {
       >
         <div className="player-container-inner" ref="playerContainerInner" style={this.props.containerStyles}>
           {this.state.displayPlayer && null !== MediaPageStore.get('media-load-error-type') ? (
-            <VideoPlayer errorMessage={MediaPageStore.get('media-load-error-message')} />
+            <VideoPlayerError errorMessage={MediaPageStore.get('media-load-error-message')} />
           ) : null}
 
           {this.state.displayPlayer && null == MediaPageStore.get('media-load-error-type') ? (

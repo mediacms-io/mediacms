@@ -8,7 +8,7 @@ import { Item } from './Item';
 export function TaxonomyItem(props) {
   const type = props.type;
 
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper] = useItem({ ...props, type });
+  const { titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props, type });
 
   function thumbnailComponent() {
     const attr = {

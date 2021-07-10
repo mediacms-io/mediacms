@@ -52,22 +52,22 @@ const chunksCacheGroups_3 = {
     },
 };*/
 
-export const config : Configuration = {
-    mode: 'production',
-    optimization: {
-        minimize: true,
-        runtimeChunk: false,
-        splitChunks: {
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: {
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: "_commons",
-                    priority: 1,
-                    chunks: "initial",
-                },
-            },
+export const config: Configuration = {
+  mode: 'production',
+  optimization: {
+    minimize: true,
+    runtimeChunk: false,
+    splitChunks: {
+      chunks: 'all',
+      automaticNameDelimiter: '-',
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,
+          name: '_commons',
+          priority: 1,
+          chunks: 'initial',
         },
-    }
+      },
+    },
+  },
 };

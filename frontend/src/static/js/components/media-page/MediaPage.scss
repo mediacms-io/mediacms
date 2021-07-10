@@ -546,7 +546,7 @@
 
 .viewer-container .player-container.viewer-pdf-container,
 .viewer-container .player-container.viewer-attachment-container {
-  background-color: #f5f5f5;
+  background-color: var(--item-thumb-bg-color);
   min-height: 0.5 * 259px;
   padding-top: 0.25 * 56.25%;
 
@@ -1795,7 +1795,7 @@
 
   @media screen and (min-width: 1157px) {
     .on-left {
-      width: math.div(2,3) * 100%;
+      width: math.div(2, 3) * 100%;
     }
 
     .on-right {
@@ -1803,7 +1803,7 @@
       right: 0;
       top: 0;
       bottom: 0;
-      width: math.div(1,3) * 100%;
+      width: math.div(1, 3) * 100%;
     }
 
     .on-right-bottom {
@@ -1834,7 +1834,7 @@
     }
 
     .video-js.vjs-mediacms {
-      padding-top: math.div(9,16) * 100%;
+      padding-top: math.div(9, 16) * 100%;
     }
   }
 }

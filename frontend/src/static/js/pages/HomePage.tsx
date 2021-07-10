@@ -7,16 +7,13 @@ import { ItemListAsync } from '../components/item-list/ItemListAsync.jsx';
 import { InlineSliderItemListAsync } from '../components/item-list/InlineSliderItemListAsync.jsx';
 import { Page } from './Page';
 
-const EmptyMedia: React.FC = ({
-}) => {
+const EmptyMedia: React.FC = ({}) => {
   return (
     <LinksConsumer>
       {(links) => (
         <div className="empty-media">
           <div className="welcome-title">Welcome to MediaCMS!</div>
-          <div className="start-uploading">
-            Start uploading media and sharing your work!
-          </div>
+          <div className="start-uploading">Start uploading media and sharing your work!</div>
           <a href={links.user.addMedia} title="Upload media" className="button-link">
             <i className="material-icons" data-icon="video_call"></i>UPLOAD MEDIA
           </a>
@@ -119,8 +116,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   />
                 </MediaListRow>
 
-                { zeroMedia && <EmptyMedia/> }
-
+                {zeroMedia && <EmptyMedia />}
               </MediaMultiListWrapper>
             )}
           </ApiUrlConsumer>

@@ -6,7 +6,7 @@ import { Item } from './Item';
 export function UserItem(props) {
   const type = 'user';
 
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper] = useItem({ ...props, type });
+  const { titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props, type });
 
   function metaComponents() {
     return props.hideAllMeta ? null : (

@@ -2,12 +2,12 @@ import React from 'react';
 import { format } from 'timeago.js';
 import { formatInnerLink } from '../helpers/';
 import { PageStore } from '../stores/';
-import { 
-  MediaItemAuthor, 
-  MediaItemAuthorLink, 
-  MediaItemMetaViews, 
-  MediaItemMetaDate, 
-  MediaItemEditLink
+import {
+  MediaItemAuthor,
+  MediaItemAuthorLink,
+  MediaItemMetaViews,
+  MediaItemMetaDate,
+  MediaItemEditLink,
 } from '../../components/list-item/includes/items';
 import { useItem } from './useItem';
 
@@ -26,7 +26,7 @@ export function itemClassname(defaultClassname, inheritedClassname, isActiveInPl
 }
 
 export function useMediaItem(props) {
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper] = useItem({ ...props });
+  const { titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props });
 
   function editMediaComponent() {
     return <MediaItemEditLink link={props.editLink} />;

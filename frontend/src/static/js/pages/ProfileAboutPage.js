@@ -274,7 +274,7 @@ export class ProfileAboutPage extends ProfileMediaPage {
         <ProfilePagesContent key="ProfilePagesContent" enabledContactForm={this.enabledContactForm}>
           <div className="media-list-wrapper items-list-ver  profile-about-content ">
             {null === description && 0 < details.length ? null : PageStore.get('config-options').pages.profile
-              .htmlInDescription ? (
+                .htmlInDescription ? (
               <MediaListRow title={this.props.title}>
                 <span dangerouslySetInnerHTML={{ __html: description || null }}></span>
               </MediaListRow>

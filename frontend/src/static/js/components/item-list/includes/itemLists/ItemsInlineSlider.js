@@ -50,12 +50,9 @@ ItemsInlineSlider.prototype.updateDataStateOnResize = function (totalItems, item
   this.state.totalItems = totalItems;
 
   this.state.maxSlideIndex = Math.max(1 + (this.state.totalItems - this.state.slideItemsFit));
-  this.state.currentSlide = Math.min(this.state.currentSlide, this.state.maxSlideIndex || 1);
 
-  // TODO: Recheck this.
-  /*if (this.state.currentSlide <= this.state.slideItemsFit && 1 < this.state.currentSlide) {
-		this.state.currentSlide = 1;
-	}*/
+  this.state.currentSlide = Math.min(this.state.currentSlide, this.state.maxSlideIndex || 1);
+  this.state.currentSlide = 0 >= this.state.currentSlide ? 1 : this.state.currentSlide;
 };
 
 ItemsInlineSlider.prototype.updateDataState = function (totalItems, itemsLoadedAll, forcedRefresh) {
@@ -78,11 +75,7 @@ ItemsInlineSlider.prototype.updateDataState = function (totalItems, itemsLoadedA
   this.state.maxSlideIndex = Math.max(1, 1 + (this.state.totalItems - this.state.slideItemsFit));
 
   this.state.currentSlide = Math.min(this.state.currentSlide, this.state.maxSlideIndex);
-
-  // TODO: Recheck this.
-  /*if (this.state.currentSlide <= this.state.slideItemsFit && 1 < this.state.currentSlide) {
-		this.state.currentSlide = 1;
-	}*/
+  this.state.currentSlide = 0 >= this.state.currentSlide ? 1 : this.state.currentSlide;
 };
 
 ItemsInlineSlider.prototype.nextSlide = function () {

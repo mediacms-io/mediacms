@@ -17,6 +17,23 @@ export function formatInnerLink(url, baseUrl) {
   return link.toString();
 }
 
+export function VideoPlayerError(props) {
+  return (
+    <div className="error-container">
+      <div className="error-container-inner">
+        <span className="icon-wrap">
+          <i className="material-icons">error_outline</i>
+        </span>
+        <span className="msg-wrap">{props.errorMessage}</span>
+      </div>
+    </div>
+  );
+}
+
+VideoPlayerError.propTypes = {
+  errorMessage: PropTypes.string.isRequired,
+};
+
 export function VideoPlayer(props) {
   const videoElemRef = useRef(null);
 

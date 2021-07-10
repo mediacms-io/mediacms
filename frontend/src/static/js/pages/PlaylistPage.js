@@ -3,7 +3,13 @@ import { PageActions, PlaylistPageActions } from '../utils/actions/';
 import { ApiUrlContext, MemberContext } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
 import { PlaylistPageStore } from '../utils/stores/';
-import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../components/_shared/';
+import {
+  CircleIconButton,
+  MaterialIcon,
+  NavigationContentApp,
+  NavigationMenuList,
+  PopupMain,
+} from '../components/_shared/';
 import { PlaylistCreationForm } from '../components/playlist-form/PlaylistCreationForm';
 import { PlaylistMediaList } from '../components/playlist-page/PlaylistMediaList';
 

@@ -65,8 +65,6 @@ export class ManageMediaPage extends Page {
   }
 
   onFiltersUpdate(updatedArgs) {
-    // console.log( "==>", updatedArgs );
-
     const newArgs = [];
 
     for (let arg in updatedArgs) {
@@ -75,9 +73,6 @@ export class ManageMediaPage extends Page {
       }
     }
 
-    // console.log( ApiUrlContext._currentValue.manage.media + ( newArgs.length ? '?' + newArgs.join('&') : '' ) );
-
-    /*if( 1 === this.state.currentPage ){*/
     this.setState({
       filterArgs: newArgs.join('&'),
       requestUrl: genReqUrl(
@@ -87,13 +82,6 @@ export class ManageMediaPage extends Page {
         this.state.currentPage
       ),
     });
-    /*}
-    else{
-      this.setState({
-        filterArgs: newArgs.join('&'),
-        requestUrl: ApiUrlContext._currentValue.manage.media + ( newArgs.length ? '?' + newArgs.join('&') : '' ) + '&page=' + this.state.currentPage,
-      });
-    }*/
   }
 
   onColumnSortClick(sort, order) {

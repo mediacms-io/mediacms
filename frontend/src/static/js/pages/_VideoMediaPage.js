@@ -101,25 +101,25 @@ export class _VideoMediaPage extends Page {
           <div key="viewer-section-nested" className={viewerNestedClassname}>
             {!this.state.wideLayout || (this.state.isVideoMedia && this.state.theaterMode)
               ? [
-                <ViewerInfoVideo key="viewer-info" />,
-                this.state.pagePlaylistLoaded ? (
-                  <ViewerSidebar
-                    key="viewer-sidebar"
-                    mediaId={MediaPageStore.get('media-id')}
-                    playlistData={MediaPageStore.get('playlist-data')}
-                  />
-                ) : null,
-              ]
+                  <ViewerInfoVideo key="viewer-info" />,
+                  this.state.pagePlaylistLoaded ? (
+                    <ViewerSidebar
+                      key="viewer-sidebar"
+                      mediaId={MediaPageStore.get('media-id')}
+                      playlistData={MediaPageStore.get('playlist-data')}
+                    />
+                  ) : null,
+                ]
               : [
-                this.state.pagePlaylistLoaded ? (
-                  <ViewerSidebar
-                    key="viewer-sidebar"
-                    mediaId={MediaPageStore.get('media-id')}
-                    playlistData={MediaPageStore.get('playlist-data')}
-                  />
-                ) : null,
-                <ViewerInfoVideo key="viewer-info" />,
-              ]}
+                  this.state.pagePlaylistLoaded ? (
+                    <ViewerSidebar
+                      key="viewer-sidebar"
+                      mediaId={MediaPageStore.get('media-id')}
+                      playlistData={MediaPageStore.get('playlist-data')}
+                    />
+                  ) : null,
+                  <ViewerInfoVideo key="viewer-info" />,
+                ]}
           </div>,
         ]}
       </div>

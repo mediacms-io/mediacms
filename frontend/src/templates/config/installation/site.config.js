@@ -1,9 +1,9 @@
 module.exports = {
   devEnv: 'true' === process.env.WEBPACK_DEV_SERVER,
-  id: process.env.MEDIACMS_ID | 'media-cms',
+  id: process.env.MEDIACMS_ID || 'mediacms-frontend',
   title: process.env.MEDIACMS_TITLE || 'MediaCMS Demo',
-  url: process.env.MEDIACMS_URL || 'undefined_url',
-  api: process.env.MEDIACMS_API || 'undefined_api',
+  url: process.env.MEDIACMS_URL || 'UNDEFINED_URL',
+  api: process.env.MEDIACMS_API || 'UNDEFINED_API',
   theme: {
     mode: 'light', // Valid values: 'light', 'dark'.
     switch: {

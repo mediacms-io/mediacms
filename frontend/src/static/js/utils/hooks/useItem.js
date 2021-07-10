@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { formatInnerLink } from '../helpers/';
-import { ItemDescription, ItemMain, ItemMainInLink, ItemTitle, ItemTitleLink } from '../../components/list-item/includes/items';
+import {
+  ItemDescription,
+  ItemMain,
+  ItemMainInLink,
+  ItemTitle,
+  ItemTitleLink,
+} from '../../components/list-item/includes/items';
 
 import PageStore from '../stores/PageStore.js';
 
@@ -50,5 +56,5 @@ export function useItem(props) {
     }
   }, []);
 
-  return [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper];
+  return { titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper };
 }

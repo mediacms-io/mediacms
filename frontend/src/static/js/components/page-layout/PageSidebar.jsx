@@ -10,7 +10,7 @@ import { SidebarBottom } from './sidebar/SidebarBottom';
 import './PageSidebar.scss';
 
 export function PageSidebar() {
-  const { visibleSidebar } = useLayout();
+  const { visibleSidebar, toggleSidebar } = useLayout();
 
   const containerRef = useRef(null);
 
@@ -84,6 +84,12 @@ export function PageSidebar() {
     );
   }
 
+  function onClickSidebarContentOverlay(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    toggleSidebar();
+  }
+
   useEffect(() => {
     setIsRendered(true);
     setTimeout(initBottom, 20); // Must delay at least 20ms.
@@ -94,9 +100,18 @@ export function PageSidebar() {
       initBottom();
     }
 
+    const sidebarContentOverlay = document.querySelector('.page-sidebar-content-overlay');
+
+    if (sidebarContentOverlay) {
+      sidebarContentOverlay.addEventListener('click', onClickSidebarContentOverlay);
+    }
+
     return () => {
       if (bottomInited) {
         PageStore.removeListener('window_resize', onWindowResize);
+      }
+      if (sidebarContentOverlay) {
+        sidebarContentOverlay.removeEventListener('click', onClickSidebarContentOverlay);
       }
     };
   }, []);
@@ -104,11 +119,15 @@ export function PageSidebar() {
   return (
     <div ref={containerRef} className={'page-sidebar' + (isFixedBottom ? ' fixed-bottom' : '')}>
       <div className="page-sidebar-inner">
-        {visibleSidebar || isRendered ? <SidebarNavigationMenu /> : null}
-        {visibleSidebar || isRendered ? <SidebarBelowNavigationMenu /> : null}
-        {visibleSidebar || isRendered ? <SidebarThemeSwitcher /> : null}
-        {visibleSidebar || isRendered ? <SidebarBelowThemeSwitcher /> : null}
-        {visibleSidebar || isRendered ? <SidebarBottom /> : null}
+        {visibleSidebar || isRendered ? (
+          <>
+            <SidebarNavigationMenu />
+            <SidebarBelowNavigationMenu />
+            <SidebarThemeSwitcher />
+            <SidebarBelowThemeSwitcher />
+            <SidebarBottom />
+          </>
+        ) : null}
       </div>
     </div>
   );

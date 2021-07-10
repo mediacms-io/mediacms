@@ -157,6 +157,11 @@
     }
   }
 
+  .item-thumb,
+  a.item-thumb {
+    background-color: var(--playlist-page-details-bg-color);
+  }
+
   .item-order-number {
     color: var(--playlist-page-video-list-item-order-text-color);
   }
@@ -679,7 +684,8 @@
   .item {
     position: relative;
     max-width: 100%;
-    padding: 16px 24px 16px 36px;
+    // padding: 16px 24px 16px 36px;
+    padding: 16px 0 16px 36px;
     margin-bottom: 0 !important;
 
     .item-content h3 span {
@@ -865,6 +871,10 @@
 }
 
 .playlist-videos-list.draggable {
+  .item-content {
+    overflow: visible;
+  }
+
   .item {
     &:hover {
       .item-order-number {
