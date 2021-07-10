@@ -597,8 +597,6 @@ export function ManageItemList(props) {
     };
   }, []);
 
-  console.log('=#>', parsedRequestUrl);
-
   return !countedItems ? (
     <PendingItemsList className={classname.listOuter} />
   ) : !items.length ? null : (
