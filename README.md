@@ -100,6 +100,12 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
 
 
+## Documentation
+* [Users documentation](docs/user_docs.md) page
+* [Administrators documentation](docs/admins_docs.md) page
+* [Developers documentation](docs/developers_docs.md) page
+
+
 ## Technology
 This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
 
