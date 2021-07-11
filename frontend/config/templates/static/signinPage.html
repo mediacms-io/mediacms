@@ -1,0 +1,36 @@
+<div id="app-header"></div>
+<div id="app-sidebar"></div>
+<div class="page-main-wrap">
+  <div class="page-main">
+    <div class="page-main-inner">
+      <div class="user-action-form-wrap">
+        <div class="user-action-form-inner">
+          <h1>Sign In</h1>
+          <p>If you have not created an account yet, then please <a href="./register.html">sign up</a> first.</p>
+          <form class="login" method="POST" action="#">
+            <input type="hidden" name="csrfmiddlewaretoken" value="" />
+            <p>
+              <label for="id_login">Login:</label>
+              <input
+                type="text"
+                name="login"
+                id="id_login"
+                required=""
+                autofocus="autofocus"
+                placeholder="Username or e-mail"
+              />
+            </p>
+            <p>
+              <label for="id_password">Password:</label>
+              <input type="password" name="password" id="id_password" required="" placeholder="Password" />
+            </p>
+            <a class="button secondaryAction" href="./reset-password.html">Forgot Password?</a>
+            <button class="primaryAction" type="submit">Sign In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="page-sidebar-content-overlay"></div>
+  </div>
+</div>
+<div id="app-footer"></div>

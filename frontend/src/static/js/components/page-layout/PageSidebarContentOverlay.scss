@@ -1,0 +1,36 @@
+@import '../../../css/includes/_variables_dimensions.scss';
+
+.page-sidebar-content-overlay {
+  position: fixed;
+  top: $header-height;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: +4;
+  background-color: #000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateZ(0);
+  transition-property: opacity;
+  transition-duration: 0.2s;
+
+  #page-media &,
+  #page-media-video &,
+  #page-media-audio &,
+  #page-media-image &,
+  #page-media-pdf & {
+    body.visible-sidebar & {
+      display: block;
+      opacity: 0.5;
+      visibility: visible;
+    }
+  }
+
+  @media (max-width: 767px) {
+    body.visible-sidebar & {
+      display: block;
+      opacity: 0.5;
+      visibility: visible;
+    }
+  }
+}

@@ -1,0 +1,161 @@
+@use "sass:math";
+
+$font-family-serif: 'Roboto Slab', 'Merriweather Web', 'Georgia', 'Cambria', 'Times New Roman', 'Times', serif;
+$font-family-sans-serif: 'Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+$font-family-monospace: 'Roboto Mono', 'Consolas', 'Courier', monospace;
+
+$line-height-serif: 1.29;
+$line-height-sans-serif: 1.33;
+$line-height-monospace: 1.42;
+
+$font-size-serif: 0.85625 * 16px;
+$font-size-sans-serif: 0.93125 * 16px;
+$font-size-monospace: 0.83125 * 16px;
+
+@mixin typeset($font-size, $line-height, $font-family) {
+  $font-size: math.div($font-size, 16px) * 16px;
+
+  font-size: $font-size;
+  font-family: $font-family;
+  line-height: $line-height;
+
+  .font-size-large {
+    font-size: 2.6625em;
+  }
+
+  h1,
+  .h1 {
+    font-size: 2.13125em;
+  }
+
+  h2,
+  .h2 {
+    font-size: 1.4625em;
+  }
+
+  h3,
+  .h3 {
+    font-size: 1.13125em;
+  }
+
+  h4,
+  .h4 {
+    font-size: 1.0625em;
+  }
+
+  h5,
+  .h5 {
+    font-size: 1em;
+  }
+
+  h6,
+  .h6 {
+    font-size: 1em;
+  }
+
+  .font-size-small {
+    font-size: 0.93125em;
+  }
+
+  .sub-heading,
+  .font-size-x-small {
+    font-size: 0.8625em;
+  }
+
+  .section-intro {
+    font-size: 1.25em;
+  }
+
+  small {
+    font-size: 0.8625em;
+  }
+
+  big {
+    font-size: 1.25em;
+  }
+}
+
+@mixin serif_typeset() {
+  @include typeset($font-size-serif, $line-height-serif, $font-family-serif);
+}
+
+@mixin sans_serif_typeset() {
+  @include typeset($font-size-sans-serif, $line-height-sans-serif, $font-family-sans-serif);
+}
+
+@mixin monospace_typeset() {
+  @include typeset($font-size-monospace, $line-height-monospace, $font-family-monospace);
+}
+
+@mixin mediacms_typography(
+  $font-size: $font-size-sans-serif,
+  $font-family: $default-font-family,
+  $line-height: $line-height-sans-serif
+) {
+  body {
+    @include typeset($font-size, $line-height, $font-family);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: bold;
+    font-weight: 500;
+    line-height: 1.15;
+  }
+
+  .sub-heading {
+    display: block;
+    clear: both;
+    line-height: 1.1;
+    letter-spacing: 0.05em;
+    margin: 8px 0;
+    text-transform: uppercase;
+  }
+
+  .section-intro {
+    font-weight: 100;
+    font-weight: 200;
+    font-weight: 300;
+  }
+
+  p,
+  ul {
+    font-size: 1em;
+    line-height: 1.62;
+
+    a {
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  ul,
+  ol {
+    padding: 0;
+    list-style-position: inside;
+  }
+
+  blockquote {
+    line-height: 1.75;
+  }
+
+  button {
+    line-height: 1;
+  }
+
+  hr {
+    display: block;
+    height: 1px;
+    padding: 0;
+    margin: 1em 0 2em 0;
+    border: 0;
+    background-color: var(--hr-color);
+  }
+}

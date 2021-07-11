@@ -1,0 +1,282 @@
+import React, { useRef, useState, useEffect } from 'react';
+import { ShareOptionsContext } from '../../utils/contexts/';
+import { PageStore, MediaPageStore } from '../../utils/stores/';
+import { PageActions, MediaPageActions } from '../../utils/actions/';
+import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
+import { CircleIconButton } from '../_shared/';
+
+function shareOptionsList() {
+  const socialMedia = ShareOptionsContext._currentValue;
+  const mediaUrl = MediaPageStore.get('media-url');
+  const mediaTitle = MediaPageStore.get('media-data').title;
+
+  const ret = {};
+
+  let i = 0;
+
+  while (i < socialMedia.length) {
+    switch (socialMedia[i]) {
+      case 'embed':
+        if ('video' === MediaPageStore.get('media-data').media_type) {
+          ret[socialMedia[i]] = {};
+        }
+        break;
+      case 'email':
+        ret[socialMedia[i]] = {
+          title: 'Email',
+          shareUrl: 'mailto:?body=' + mediaUrl,
+        };
+        break;
+      case 'fb':
+        ret[socialMedia[i]] = {
+          title: 'Facebook',
+          shareUrl: 'https://www.facebook.com/sharer.php?u=' + mediaUrl,
+        };
+        break;
+      case 'tw':
+        ret[socialMedia[i]] = {
+          title: 'Twitter',
+          shareUrl: 'https://twitter.com/intent/tweet?url=' + mediaUrl,
+        };
+        break;
+      case 'reddit':
+        ret[socialMedia[i]] = {
+          title: 'reddit',
+          shareUrl: 'https://reddit.com/submit?url=' + mediaUrl + '&title=' + mediaTitle,
+        };
+        break;
+      case 'tumblr':
+        ret[socialMedia[i]] = {
+          title: 'Tumblr',
+          shareUrl: 'https://www.tumblr.com/widgets/share/tool?canonicalUrl=' + mediaUrl + '&title=' + mediaTitle,
+        };
+        break;
+      case 'pinterest':
+        ret[socialMedia[i]] = {
+          title: 'Pinterest',
+          shareUrl: 'http://pinterest.com/pin/create/link/?url=' + mediaUrl,
+        };
+        break;
+      case 'vk':
+        ret[socialMedia[i]] = {
+          title: 'ВКонтакте',
+          shareUrl: 'http://vk.com/share.php?url=' + mediaUrl + '&title=' + mediaTitle,
+        };
+        break;
+      case 'linkedin':
+        ret[socialMedia[i]] = {
+          title: 'LinkedIn',
+          shareUrl: 'https://www.linkedin.com/shareArticle?mini=true&url=' + mediaUrl,
+        };
+        break;
+      case 'mix':
+        ret[socialMedia[i]] = {
+          title: 'Mix',
+          shareUrl: 'https://mix.com/add?url=' + mediaUrl,
+        };
+        break;
+      case 'whatsapp':
+        ret[socialMedia[i]] = {
+          title: 'WhatsApp',
+          shareUrl: 'whatsapp://send?text=' + mediaUrl,
+        };
+        break;
+      case 'telegram':
+        ret[socialMedia[i]] = {
+          title: 'Telegram',
+          shareUrl: 'https://t.me/share/url?url=' + mediaUrl + '&text=' + mediaTitle,
+        };
+        break;
+    }
+
+    i += 1;
+  }
+
+  return ret;
+}
+
+function ShareOptions() {
+  const shareOptions = shareOptionsList();
+
+  const compList = [];
+
+  for (let k in shareOptions) {
+    if (shareOptions.hasOwnProperty(k)) {
+      if (k === 'embed') {
+        compList.push(
+          <div key={'share-' + k} className={'sh-option share-' + k + '-opt'}>
+            <button className="sh-option change-page" data-page-id="shareEmbed">
+              <span>
+                <i className="material-icons">code</i>
+              </span>
+              <span>Embed</span>
+            </button>
+          </div>
+        );
+      } else if (k === 'whatsapp') {
+        compList.push(
+          <div key={'share-' + k} className={'sh-option share-' + k}>
+            <a
+              href={shareOptions[k].shareUrl}
+              title=""
+              target="_blank"
+              data-action="share/whatsapp/share"
+              rel="noreferrer"
+            >
+              <span></span>
+              <span>{shareOptions[k].title}</span>
+            </a>
+          </div>
+        );
+      } else if (k === 'email') {
+        compList.push(
+          <div key="share-email" className="sh-option share-email">
+            <a href={shareOptions[k].shareUrl} title="">
+              <span>
+                <i className="material-icons">email</i>
+              </span>
+              <span>{shareOptions[k].title}</span>
+            </a>
+          </div>
+        );
+      } else {
+        compList.push(
+          <div key={'share-' + k} className={'sh-option share-' + k}>
+            <a href={shareOptions[k].shareUrl} title="" target="_blank" rel="noreferrer">
+              <span></span>
+              <span>{shareOptions[k].title}</span>
+            </a>
+          </div>
+        );
+      }
+    }
+  }
+
+  return compList;
+}
+
+function NextSlideButton({ onClick }) {
+  return (
+    <span className="next-slide">
+      <CircleIconButton buttonShadow={true} onClick={onClick}>
+        <i className="material-icons">keyboard_arrow_right</i>
+      </CircleIconButton>
+    </span>
+  );
+}
+
+function PreviousSlideButton({ onClick }) {
+  return (
+    <span className="previous-slide">
+      <CircleIconButton buttonShadow={true} onClick={onClick}>
+        <i className="material-icons">keyboard_arrow_left</i>
+      </CircleIconButton>
+    </span>
+  );
+}
+
+function updateDimensions() {
+  return {
+    maxFormContentHeight: window.innerHeight - (56 + 4 * 24 + 44),
+    maxPopupWidth: 518 > window.innerWidth - 2 * 40 ? window.innerWidth - 2 * 40 : null,
+  };
+}
+
+export function MediaShareOptions(props) {
+  const containerRef = useRef(null);
+  const shareOptionsInnerRef = useRef(null);
+
+  const [inlineSlider, setInlineSlider] = useState(null);
+  const [sliderButtonsVisible, setSliderButtonsVisible] = useState({ prev: false, next: false });
+
+  const [dimensions, setDimensions] = useState(updateDimensions());
+  const [shareOptions] = useState(ShareOptions());
+
+  function onWindowResize() {
+    setDimensions(updateDimensions());
+  }
+
+  function onClickCopyMediaLink() {
+    MediaPageActions.copyShareLink(containerRef.current.querySelector('.copy-field input'));
+  }
+
+  function onCompleteCopyMediaLink() {
+    // FIXME: Without delay throws conflict error [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(function () {
+      PageActions.addNotification('Link copied to clipboard', 'clipboardLinkCopy');
+    }, 100);
+  }
+
+  function updateSlider() {
+    inlineSlider.scrollToCurrentSlide();
+    updateSliderButtonsView();
+  }
+
+  function updateSliderButtonsView() {
+    setSliderButtonsVisible({
+      prev: inlineSlider.hasPreviousSlide(),
+      next: inlineSlider.hasNextSlide(),
+    });
+  }
+
+  function nextSlide() {
+    inlineSlider.nextSlide();
+    updateSlider();
+  }
+
+  function prevSlide() {
+    inlineSlider.previousSlide();
+    updateSlider();
+  }
+
+  useEffect(() => {
+    setInlineSlider(new ItemsInlineSlider(shareOptionsInnerRef.current, '.sh-option'));
+  }, [shareOptions]);
+
+  useEffect(() => {
+    if (inlineSlider) {
+      inlineSlider.updateDataStateOnResize(shareOptions.length, true, true);
+      updateSlider();
+    }
+  }, [dimensions, inlineSlider]);
+
+  useEffect(() => {
+    PageStore.on('window_resize', onWindowResize);
+    MediaPageStore.on('copied_media_link', onCompleteCopyMediaLink);
+
+    return () => {
+      PageStore.removeListener('window_resize', onWindowResize);
+      MediaPageStore.removeListener('copied_media_link', onCompleteCopyMediaLink);
+      setInlineSlider(null);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      style={null !== dimensions.maxPopupWidth ? { maxWidth: dimensions.maxPopupWidth + 'px' } : null}
+    >
+      <div
+        className="scrollable-content"
+        style={null !== dimensions.maxFormContentHeight ? { maxHeight: dimensions.maxFormContentHeight + 'px' } : null}
+      >
+        <div className="share-popup-title">Share media</div>
+        {shareOptions.length ? (
+          <div className="share-options">
+            {sliderButtonsVisible.prev ? <PreviousSlideButton onClick={prevSlide} /> : null}
+            <div ref={shareOptionsInnerRef} className="share-options-inner">
+              {shareOptions}
+            </div>
+            {sliderButtonsVisible.next ? <NextSlideButton onClick={nextSlide} /> : null}
+          </div>
+        ) : null}
+      </div>
+      <div className="copy-field">
+        <div>
+          <input type="text" readOnly value={MediaPageStore.get('media-url')} />
+          <button onClick={onClickCopyMediaLink}>COPY</button>
+        </div>
+      </div>
+    </div>
+  );
+}

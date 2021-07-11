@@ -1,0 +1,202 @@
+@import '../../../css/config/index.scss';
+
+.items-list-ver .feat-first-item {
+  .items-list-wrap,
+  .items-list {
+    width: 100%;
+    display: inline-block;
+  }
+
+  &.no-title {
+    margin-top: var(--default-item-margin-bottom-width);
+  }
+}
+
+.items-list-ver .feat-first-item .item:first-child .item-player-wrapper {
+  position: relative;
+  width: 100%;
+  height: auto;
+  padding-bottom: 56.11%;
+}
+
+.items-list-ver .feat-first-item .item:first-child .item-player-wrapper-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  background-color: var(--item-thumb-bg-color);
+}
+
+/* #################################################################################################### */
+
+$item-width: 260px;
+$side-empty-space: 40px;
+
+/* #################################################################################################### */
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 2 * $item-width ) )) {
+  .items-list-ver.media-list-wrapper .media-list-row .item {
+    display: inline-block;
+    max-width: var(--item-width, var(--default-item-width));
+  }
+
+  .items-list-ver.media-list-wrapper .media-list-row .item-content {
+    margin-right: var(--item-margin-right-width, var(--default-item-margin-right-width));
+  }
+
+  .items-list-ver.media-list-wrapper .media-list-row .item-main {
+    h3 {
+      margin: 0.5714285em 0;
+    }
+  }
+}
+
+/* #################################################################################################### */
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 2 * $item-width ) )) {
+  .items-list-ver .feat-first-item .item:first-child {
+    float: left;
+    max-width: calc(3 * var(--item-width, var(--default-item-width)));
+  }
+}
+
+/* #################################################################################################### */
+
+$item-width: 218px;
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 4 * $item-width ) )) {
+  .items-list-ver .feat-first-item .item:nth-child(4n + 4) {
+    clear: left;
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(2) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 5 * $item-width ) )) {
+  .items-list-ver .feat-first-item .item:nth-child(4n + 4) {
+    clear: none;
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(5n + 6) {
+    clear: left;
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(2) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(3) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 6 * $item-width ) )) {
+  .items-list-ver .feat-first-item .item:nth-child(5n + 6) {
+    clear: none;
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(6n + 8) {
+    clear: left;
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(3) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+
+  .items-list-ver .feat-first-item .item:nth-child(4) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}
+
+/* #################################################################################################### */
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 4 * $item-width ) )) {
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4) {
+    clear: none;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(2),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(2) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+}
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 5 * $item-width ) )) {
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4) {
+    clear: left;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(3),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(3) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(2),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(2) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 6 * $item-width ) )) {
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(4n + 4) {
+    clear: none;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(5n + 6),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(5n + 6) {
+    clear: left;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(2),
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(4),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(2),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(4) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(3),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(3) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}
+
+@media (min-width: ( ( 2 * $side-empty-space ) + ( 7 * $item-width ) )) {
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(5n + 6),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(5n + 6) {
+    clear: none;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(6n + 8),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(6n + 8) {
+    clear: left;
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(3),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(3) {
+    min-height: 0;
+    margin-bottom: var(--default-item-margin-bottom-width);
+  }
+
+  .sliding-sidebar .items-list-ver .feat-first-item .item:nth-child(4),
+  .visible-sidebar .items-list-ver .feat-first-item .item:nth-child(4) {
+    min-height: 232px;
+    margin-bottom: 13px;
+  }
+}

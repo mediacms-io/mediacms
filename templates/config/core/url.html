@@ -1,24 +1,21 @@
 MediaCMS.url = {
     home: "/",
-        search: "/search",
+    search: "/search",
     latestMedia: "/latest",
     featuredMedia: "/featured",
     recommendedMedia: "/recommended",
     members: "/members",
     /* Error pages */
     error404: "/error",
-    /* Taxonomies pages */
+    /* Archive pages */
     tags: "/tags",
     categories: "/categories",
-    topics: "/topics",
-    languages: "/languages",
-    countries: "/countries",
     /* User pages */
     likedMedia: "/liked",
     history: "/history",
-    /* Add/edit pages */
+    /* Add pages */
     addMedia: "/upload",
-    /* User account pages */
+    /* Profile/account edit pages */
     editProfile: "{{user.edit_url}}",
     {% if request.user.is_authenticated %}
     signout: "/accounts/logout/",

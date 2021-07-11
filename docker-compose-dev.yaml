@@ -1,18 +1,18 @@
 version: "3"
 
 services:
-  # frontend:
-  #   image: node:14
-  #   volumes:
-  #     - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
-  #   working_dir: /home/mediacms.io/mediacms/frontend/
-  #   command: bash -c "npm install && npm run start"
-  #   env_file:
-  #     - ${PWD}/frontend/.env
-  #   ports:
-  #     - "8097:8097"
-  #   depends_on:
-  #     - web
+  frontend:
+    image: node:14
+    volumes:
+      - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
+    working_dir: /home/mediacms.io/mediacms/frontend/
+    command: bash -c "npm install && npm run start"
+    env_file:
+      - ${PWD}/frontend/.env
+    ports:
+      - "8088:8088"
+    depends_on:
+      - web
   web:
     build:
       context: .
@@ -60,7 +60,7 @@ services:
     image: "redis:alpine"
     restart: always
     healthcheck:
-      test: ["CMD", "redis-cli","ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
