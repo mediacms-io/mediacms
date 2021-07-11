@@ -85,7 +85,7 @@ In terms of disk space, think of what the needs will be. A general rule is to mu
 
 ## Releases
 
-Visit [Releases Page](/release) for detailed Changelog
+Visit [Releases Page](https://github.com/mediacms-io/mediacms/releases) for detailed Changelog
 
 
 ## Installation / Maintanance
