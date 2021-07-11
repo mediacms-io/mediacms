@@ -4,7 +4,7 @@
 [![Code Quality: Cpp](https://img.shields.io/lgtm/grade/javascript/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:javascript)
 <br/>
 [![GitHub license](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://raw.githubusercontent.com/mediacms-io/mediacms/main/LICENSE.txt)
-[![Downloads](https://img.shields.io/badge/download-all%20releases-brightgreen.svg)](https://github.com/mediacms-io/mediacms/releases/)
+[![Releases](https://img.shields.io/github/v/release/mediacms-io/mediacms?color=green)](https://github.com/mediacms-io/mediacms/releases/)
 [![DockerHub](https://img.shields.io/docker/pulls/mediacms/mediacms)](https://hub.docker.com/repository/docker/mediacms/mediacms/)
 
 
@@ -81,6 +81,11 @@ We provide custom installations, development of extra functionality, migration f
 For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.    
 
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
+
+
+## Releases
+
+Visit [Releases Page](https://github.com/mediacms-io/mediacms/releases) for detailed Changelog
 
 
 ## Installation / Maintanance
