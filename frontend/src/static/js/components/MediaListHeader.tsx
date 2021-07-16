@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MediaListHeaderProps {
   title?: string;
@@ -9,7 +10,8 @@ interface MediaListHeaderProps {
 }
 
 export const MediaListHeader: React.FC<MediaListHeaderProps> = (props) => {
-  const viewAllText = props.viewAllText || 'VIEW ALL';
+  const { t } = useTranslation();
+  const viewAllText = props.viewAllText || t('VIEW ALL');
   return (
     <div className={(props.className ? props.className + ' ' : '') + 'media-list-header'} style={props.style}>
       <h2>{props.title}</h2>

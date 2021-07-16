@@ -42,10 +42,12 @@
   "dependencies": {
     "axios": "^0.21.1",
     "flux": "^4.0.1",
+    "i18next": "^20.3.3",
     "mediacms-player": "file:packages/player",
     "normalize.css": "^8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-i18next": "^11.11.3",
     "sortablejs": "^1.13.0",
     "timeago.js": "^4.0.2",
     "url-parse": "^1.5.1"

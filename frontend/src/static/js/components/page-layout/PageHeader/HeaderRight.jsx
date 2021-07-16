@@ -1,8 +1,17 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLayout, usePopup } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
 import { HeaderConsumer, MemberConsumer, LinksConsumer } from '../../../utils/contexts/';
-import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupTop, PopupMain, UserThumbnail } from '../../_shared';
+import {
+  CircleIconButton,
+  MaterialIcon,
+  NavigationContentApp,
+  NavigationMenuList,
+  PopupTop,
+  PopupMain,
+  UserThumbnail,
+} from '../../_shared';
 import { HeaderThemeSwitcher } from './HeaderThemeSwitcher';
 
 function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
@@ -87,6 +96,8 @@ function UploadMediaButton({ user, links }) {
 }
 
 function LoginButton({ user, link, hasHeaderThemeSwitcher }) {
+  const { t } = useTranslation();
+
   return user.is.anonymous && user.can.login ? (
     <div className="sign-in-wrap">
       <a
@@ -95,15 +106,17 @@ function LoginButton({ user, link, hasHeaderThemeSwitcher }) {
         className={
           'button-link sign-in' + (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="Sign in"
+        title="{t('Sign in')}"
       >
-        Sign in
+        {t('Sign in')}
       </a>
     </div>
   ) : null;
 }
 
 function RegisterButton({ user, link, hasHeaderThemeSwitcher }) {
+  const { t } = useTranslation();
+
   return user.is.anonymous && user.can.register ? (
     <div className="register-wrap">
       <a
@@ -112,9 +125,9 @@ function RegisterButton({ user, link, hasHeaderThemeSwitcher }) {
           'button-link register-link' +
           (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="Register"
+        title="{t('Register')}"
       >
-        Register
+        {t('Register')}
       </a>
     </div>
   ) : null;

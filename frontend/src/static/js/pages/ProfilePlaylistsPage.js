@@ -1,4 +1,5 @@
 import React from 'react';
+import { withTranslation } from 'react-i18next';
 import { ApiUrlConsumer } from '../utils/contexts/';
 import { PageStore } from '../utils/stores/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
@@ -7,7 +8,7 @@ import ProfilePagesContent from '../components/profile-page/ProfilePagesContent'
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { ProfileMediaPage } from './ProfileMediaPage';
 
-export class ProfilePlaylistsPage extends ProfileMediaPage {
+class ProfilePlaylistsPageClass extends ProfileMediaPage {
   constructor(props) {
     super(props, 'author-playlists');
 
@@ -37,7 +38,7 @@ export class ProfilePlaylistsPage extends ProfileMediaPage {
           <ApiUrlConsumer>
             {(apiUrl) => (
               <MediaListWrapper
-                title={-1 < this.state.playlistsCount ? 'Created playlists' : void 0}
+                title={-1 < this.state.playlistsCount ? this.props.t('Created playlists') : void 0}
                 className="profile-playlists-content items-list-ver"
               >
                 <LazyLoadItemListAsync
@@ -55,3 +56,7 @@ export class ProfilePlaylistsPage extends ProfileMediaPage {
     ];
   }
 }
+
+const ProfilePlaylistsPage = withTranslation()(ProfilePlaylistsPageClass);
+
+export { ProfilePlaylistsPage };
