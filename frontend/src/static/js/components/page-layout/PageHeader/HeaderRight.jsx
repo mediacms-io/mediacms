@@ -13,8 +13,37 @@ import {
   UserThumbnail,
 } from '../../_shared';
 import { HeaderThemeSwitcher } from './HeaderThemeSwitcher';
+import { LanguageOptions } from './LanguageOptions';
 
-function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
+const OpenThemeSwitcher = () => {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <span>
+        <CircleIconButton className="menu-item-icon change-page" data-page-id="main" aria-label="{t('Switch theme')}">
+          <i className="material-icons">arrow_back</i>
+        </CircleIconButton>
+      </span>
+      <span>{t('Switch theme')}</span>
+    </div>
+  );
+};
+
+const OpenLanguageOptions = () => {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <span>
+        <CircleIconButton className="menu-item-icon change-page" data-page-id="main" aria-label="Language">
+          <i className="material-icons">arrow_back</i>
+        </CircleIconButton>
+      </span>
+      <span>{t('Language')}</span>
+    </div>
+  );
+};
+
+function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher, hasTranslations) {
   const pages = {
     main: null,
   };
@@ -65,17 +94,23 @@ function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
     pages['switch-theme'] = (
       <div>
         <PopupTop>
-          <div>
-            <span>
-              <CircleIconButton className="menu-item-icon change-page" data-page-id="main" aria-label="Switch theme">
-                <i className="material-icons">arrow_back</i>
-              </CircleIconButton>
-            </span>
-            <span>Switch theme</span>
-          </div>
+          <OpenThemeSwitcher />
         </PopupTop>
         <PopupMain>
           <HeaderThemeSwitcher />
+        </PopupMain>
+      </div>
+    );
+  }
+
+  if (hasTranslations) {
+    pages['language'] = (
+      <div>
+        <PopupTop>
+          <OpenLanguageOptions />
+        </PopupTop>
+        <PopupMain>
+          <LanguageOptions />
         </PopupMain>
       </div>
     );
@@ -85,11 +120,12 @@ function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
 }
 
 function UploadMediaButton({ user, links }) {
+  const { t } = useTranslation();
   return !user.is.anonymous && user.can.addMedia ? (
     <div className={'hidden-only-in-small'}>
-      <CircleIconButton type="link" href={links.user.addMedia} title="Upload media">
+      <CircleIconButton type="link" href={links.user.addMedia} title="{t('Upload media')}">
         <MaterialIcon type="video_call" />
-        <span className="hidden-txt">Upload media</span>
+        <span className="hidden-txt">{t('Upload media')}</span>
       </CircleIconButton>
     </div>
   ) : null;
@@ -106,9 +142,9 @@ function LoginButton({ user, link, hasHeaderThemeSwitcher }) {
         className={
           'button-link sign-in' + (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="{t('Sign in')}"
+        title="{t('SIGN IN')}"
       >
-        {t('Sign in')}
+        {t('SIGN IN')}
       </a>
     </div>
   ) : null;
@@ -125,9 +161,9 @@ function RegisterButton({ user, link, hasHeaderThemeSwitcher }) {
           'button-link register-link' +
           (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="{t('Register')}"
+        title="{t('REGISTER')}"
       >
-        {t('Register')}
+        {t('REGISTER')}
       </a>
     </div>
   ) : null;
@@ -157,7 +193,9 @@ export function HeaderRight(props) {
                     <div
                       className={
                         (user.is.anonymous ? 'user-options' : 'user-thumb') +
-                        (!user.is.anonymous || header.hasThemeSwitcher ? '' : ' visible-only-in-extra-small')
+                        (!user.is.anonymous || header.hasThemeSwitcher || header.hasTranslations
+                          ? ''
+                          : ' visible-only-in-extra-small')
                       }
                     >
                       <PopupTrigger contentRef={popupContentRef}>
@@ -173,7 +211,12 @@ export function HeaderRight(props) {
                       <PopupContent contentRef={popupContentRef}>
                         <NavigationContentApp
                           initPage="main"
-                          pages={headerPopupPages(user, header.popupNavItems, header.hasThemeSwitcher)}
+                          pages={headerPopupPages(
+                            user,
+                            header.popupNavItems,
+                            header.hasThemeSwitcher,
+                            header.hasTranslations
+                          )}
                           pageChangeSelector={'.change-page'}
                           pageIdSelectorAttr={'data-page-id'}
                         />

@@ -1,0 +1,39 @@
+@import '../../../../css/includes/_variables.scss';
+@import '../../../../css/includes/_variables_dimensions.scss';
+
+.language-options {
+  position: relative;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.language-option {
+  display: block;
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 0 24px 0 64px;
+    line-height: 40px;
+    text-align: inherit;
+    color: inherit;
+    border: 0;
+    background: 0;
+
+    .material-icons {
+      margin-right: 16px;
+      color: var(--header-popup-menu-icon-color);
+    }
+
+    &:focus,
+    &:hover {
+      background-color: var(--in-popup-nav-menu-item-hover-bg-color);
+    }
+  }
+
+  &.selected-language {
+    button {
+      padding-left: 24px;
+    }
+  }
+}

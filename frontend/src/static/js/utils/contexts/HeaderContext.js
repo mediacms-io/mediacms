@@ -1,4 +1,5 @@
 import React, { createContext } from 'react';
+import i18next from 'i18next';
 import { config as mediacmsConfig } from '../settings/config.js';
 
 const config = mediacmsConfig(window.MediaCMS);
@@ -8,6 +9,7 @@ const theme = config.theme;
 const user = config.member;
 
 const hasThemeSwitcher = theme.switch.enabled && 'header' === theme.switch.position;
+const hasTranslations = true;
 
 function popupTopNavItems() {
   const items = [];
@@ -17,7 +19,7 @@ function popupTopNavItems() {
       items.push({
         link: links.user.addMedia,
         icon: 'video_call',
-        text: 'Upload media',
+        text: i18next.t('Upload media'),
         itemAttr: {
           className: 'visible-only-in-small',
         },
@@ -27,7 +29,7 @@ function popupTopNavItems() {
         items.push({
           link: user.pages.media,
           icon: 'video_library',
-          text: 'My media',
+          text: i18next.t('My media'),
         });
       }
     }
@@ -35,7 +37,7 @@ function popupTopNavItems() {
     items.push({
       link: links.signout,
       icon: 'exit_to_app',
-      text: 'Sign out',
+      text: i18next.t('Sign out'),
     });
   }
 
@@ -50,10 +52,23 @@ function popupMiddleNavItems() {
       itemType: 'open-subpage',
       icon: 'brightness_4',
       iconPos: 'left',
-      text: 'Switch theme',
+      text: i18next.t('Switch theme'),
       buttonAttr: {
         className: 'change-page',
         'data-page-id': 'switch-theme',
+      },
+    });
+  }
+
+  if (hasTranslations) {
+    items.push({
+      itemType: 'open-subpage',
+      icon: 'language',
+      iconPos: 'left',
+      text: i18next.t('Language'),
+      buttonAttr: {
+        className: 'change-page',
+        'data-page-id': 'language',
       },
     });
   }
@@ -77,7 +92,7 @@ function popupMiddleNavItems() {
         itemType: 'link',
         icon: 'person_add',
         iconPos: 'left',
-        text: 'Register',
+        text: i18next.t('Register'),
         link: links.register,
         linkAttr: {
           className: hasThemeSwitcher ? 'visible-only-in-small' : 'visible-only-in-extra-small',
@@ -88,14 +103,14 @@ function popupMiddleNavItems() {
     items.push({
       link: links.user.editProfile,
       icon: 'brush',
-      text: 'Edit profile',
+      text: i18next.t('Edit profile'),
     });
 
     if (user.can.changePassword) {
       items.push({
         link: links.changePassword,
         icon: 'lock',
-        text: 'Change password',
+        text: i18next.t('Change password'),
       });
     }
   }
@@ -110,7 +125,7 @@ function popupBottomNavItems() {
     items.push({
       link: links.admin,
       icon: 'admin_panel_settings',
-      text: 'MediaCMS administration',
+      text: `MediaCMS ${i18next.t('administration')}`,
     });
   }
 
@@ -119,6 +134,7 @@ function popupBottomNavItems() {
 
 export const HeaderContext = createContext({
   hasThemeSwitcher,
+  hasTranslations,
   popupNavItems: {
     top: popupTopNavItems(),
     middle: popupMiddleNavItems(),
