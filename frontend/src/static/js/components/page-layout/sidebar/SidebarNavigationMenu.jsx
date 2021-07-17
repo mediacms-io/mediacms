@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import urlParse from 'url-parse';
 import { useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
@@ -34,13 +35,15 @@ export function SidebarNavigationMenu() {
   }
 
   function MainMenuFirstSection() {
+    const { t } = useTranslation();
+
     const items = [];
 
     if (!sidebar.hideHomeLink) {
       items.push({
         link: links.home,
         icon: 'home',
-        text: 'Home',
+        text: t('Home'),
         className: 'nav-item-home',
       });
     }

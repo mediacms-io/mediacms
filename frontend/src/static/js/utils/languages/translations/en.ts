@@ -5,6 +5,7 @@ export default {
   'Created playlists': 'Created playlists',
   'Edit profile': 'Edit profile',
   History: 'History',
+  Home: 'Home',
   Language: 'Language',
   Members: 'Members',
   'My media': 'My media',

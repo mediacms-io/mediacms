@@ -5,6 +5,7 @@ export default {
   'Created playlists': 'Λίστες αναπαραγωγής',
   'Edit profile': 'Επεξεργασία προφίλ',
   History: 'Ιστορικό',
+  Home: 'Αρχική',
   Language: 'Γλώσσα',
   Members: 'Μέλη',
   'My media': 'Oι μεταφορτώσεις μου',
