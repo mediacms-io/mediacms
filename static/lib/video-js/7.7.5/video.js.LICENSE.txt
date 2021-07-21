@@ -1,0 +1,15 @@
+/*! @name m3u8-parser @version 4.4.0 @license Apache-2.0 */
+
+/*! @name mpd-parser @version 0.8.1 @license Apache-2.0 */
+
+/**
+ * @license
+ * Video.js 7.7.5 <http://videojs.com/>
+ * Copyright Brightcove, Inc. <https://www.brightcove.com/>
+ * Available under Apache License Version 2.0
+ * <https://github.com/videojs/video.js/blob/master/LICENSE>
+ *
+ * Includes vtt.js <https://github.com/mozilla/vtt.js>
+ * Available under Apache License Version 2.0
+ * <https://github.com/mozilla/vtt.js/blob/master/LICENSE>
+ */

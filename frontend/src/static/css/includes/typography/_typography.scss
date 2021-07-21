@@ -1,0 +1,8 @@
+@import './_mixins_typoghraphy.scss';
+
+$body-font-family: 'Roboto', Arial, sans-serif;
+
+$body-font-size: 14px;
+$body-line-height: 1.5;
+
+@include mediacms_typography($body-font-size, $body-font-family, $body-line-height);

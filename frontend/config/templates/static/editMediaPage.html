@@ -1,0 +1,137 @@
+<div id="app-header"></div>
+<div id="app-sidebar"></div>
+<div class="page-main-wrap">
+  <div class="page-main">
+    <div class="page-main-inner">
+      <div class="user-action-form-wrap">
+        <div class="user-action-form-inner">
+          <h1>Edit Media</h1>
+
+          <form enctype="multipart/form-data" action="" method="post" class="post-form">
+            <div id="div_id_title" class="control-group">
+              <label for="id_title" class="control-label"> Title </label>
+              <div class="controls">
+                <input
+                  type="text"
+                  name="title"
+                  value="Media title..."
+                  maxlength="100"
+                  class="textinput textInput"
+                  id="id_title"
+                />
+                <p id="hint_id_title" class="help-block">media title</p>
+              </div>
+            </div>
+            <div id="div_id_category" class="control-group">
+              <label for="id_category" class="control-label"> Category </label>
+              <div class="controls">
+                <select name="category" class="selectmultiple" id="id_category" multiple="">
+                  <option value="1">Art</option>
+                  <option value="2">Documentary</option>
+                  <option value="3">Experimental</option>
+                  <option value="4">Film</option>
+                  <option value="5">Music</option>
+                  <option value="6">TV</option>
+                </select>
+                <p id="hint_id_category" class="help-block">Media can be part of one or more categories</p>
+              </div>
+            </div>
+            <div id="div_id_new_tags" class="control-group">
+              <label for="id_new_tags" class="control-label"> Tags </label>
+              <div class="controls">
+                <input type="text" name="new_tags" class="textinput textInput" id="id_new_tags" />
+                <p id="hint_id_new_tags" class="help-block">a comma separated list of new tags.</p>
+              </div>
+            </div>
+            <div id="div_id_add_date" class="control-group">
+              <label for="id_add_date" class="control-label"> Date produced </label>
+              <div class="controls">
+                <input type="text" name="add_date" value="2021-01-01 00:00:01" class="datetimeinput" id="id_add_date" />
+              </div>
+            </div>
+            <div id="div_id_uploaded_poster" class="control-group">
+              <label for="id_uploaded_poster" class="control-label"> Upload image </label>
+              <div class="controls">
+                <input
+                  type="file"
+                  name="uploaded_poster"
+                  accept="image/*"
+                  class="clearablefileinput"
+                  id="id_uploaded_poster"
+                />
+                <p id="hint_id_uploaded_poster" class="help-block">This image will characterize the media</p>
+              </div>
+            </div>
+            <div id="div_id_description" class="control-group">
+              <label for="id_description" class="control-label"> Description </label>
+              <div class="controls">
+                <textarea name="description" cols="40" rows="10" class="textarea" id="id_description"></textarea>
+              </div>
+            </div>
+            <div id="div_id_state" class="control-group">
+              <label for="id_state" class="control-label requiredField">
+                State<span class="asteriskField">*</span>
+              </label>
+              <div class="controls">
+                <select name="state" class="select" id="id_state">
+                  <option value="private">Private</option>
+                  <option value="public" selected="">Public</option>
+                  <option value="unlisted">Unlisted</option>
+                </select>
+                <p id="hint_id_state" class="help-block">state of Media</p>
+              </div>
+            </div>
+            <div id="div_id_enable_comments" class="control-group">
+              <div class="controls">
+                <label for="id_enable_comments" class="checkbox">
+                  <input
+                    type="checkbox"
+                    name="enable_comments"
+                    class="checkboxinput"
+                    id="id_enable_comments"
+                    checked=""
+                  />
+                  Enable comments
+                </label>
+                <p id="hint_id_enable_comments" class="help-block">Whether comments will be allowed for this media</p>
+              </div>
+            </div>
+            <div id="div_id_thumbnail_time" class="control-group">
+              <label for="id_thumbnail_time" class="control-label"> Thumbnail time </label>
+              <div class="controls">
+                <input
+                  type="number"
+                  name="thumbnail_time"
+                  value="132.5"
+                  step="any"
+                  class="numberinput"
+                  id="id_thumbnail_time"
+                />
+                <p id="hint_id_thumbnail_time" class="help-block">Time on video that a thumbnail will be taken</p>
+              </div>
+            </div>
+            <div id="div_id_allow_download" class="control-group">
+              <div class="controls">
+                <label for="id_allow_download" class="checkbox">
+                  <input
+                    type="checkbox"
+                    name="allow_download"
+                    class="checkboxinput"
+                    id="id_allow_download"
+                    checked=""
+                  />
+                  Allow download
+                </label>
+                <p id="hint_id_allow_download" class="help-block">Whether option to download media is shown</p>
+              </div>
+            </div>
+
+            <button class="primaryAction" type="submit">Update Media</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="page-sidebar-content-overlay"></div>
+  </div>
+</div>
+<div id="app-footer"></div>

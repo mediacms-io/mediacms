@@ -1,0 +1,82 @@
+@use "sass:math";
+
+// #_VARIABLES
+
+$_use_rem_unit: true;
+
+$single-item-breakpoint: 348px;
+$single-item-breakpoint: 492px;
+
+$double-item-breakpoint: 689px;
+
+/* #################################################################################################### */
+
+// #_DIMENSIONS
+
+// #_HeaderHeight
+
+$_header-height-value: 56;
+
+$header-height: $_header-height-value * 1px;
+
+@if $_use_rem_unit {
+  $header-height: math.div($_header-height-value, 16) * 1rem;
+}
+
+// #_HeaderPadding
+
+$_header-padding-vertical-value: 0;
+$_header-padding-horizontal-value: 16;
+
+$_header-padding-vertical-value-pixels: $_header-padding-vertical-value * 1px;
+$_header-padding-horizontal-value-pixels: $_header-padding-horizontal-value * 1px;
+
+$_header-padding-vertical-value-rem: math.div($_header-padding-vertical-value, 16) * 1rem;
+$_header-padding-horizontal-value-rem: math.div($_header-padding-horizontal-value, 16) * 1rem;
+
+$header-padding-horizontal: $_header-padding-horizontal-value-pixels;
+$header-padding: $_header-padding-vertical-value-pixels $_header-padding-horizontal-value-pixels;
+
+@if $_use_rem_unit {
+  $header-padding-horizontal: $_header-padding-horizontal-value-rem;
+  $header-padding: $_header-padding-vertical-value-rem $_header-padding-horizontal-value-rem;
+}
+
+// #_SidebarWidth
+
+$_sidebar-width-value: 240;
+
+$sidebar-width: $_sidebar-width-value * 1px;
+
+@if $_use_rem_unit {
+  $sidebar-width: math.div($_sidebar-width-value, 16) * 1rem;
+}
+
+// #_SidebarPadding
+
+$_sidebar-nav-horizontal-padding-pixels: 24;
+$_sidebar-nav-horizontal-padding-rem: math.div($_sidebar-nav-horizontal-padding-pixels, 16) * 1rem;
+
+$sidebar-nav-padding: 0 $_sidebar-nav-horizontal-padding-pixels;
+
+@if $_use_rem_unit {
+  $sidebar-nav-padding: 0 $_sidebar-nav-horizontal-padding-rem;
+}
+
+// #_AuthorPage
+
+$_authorPage-navHeight-value: 48;
+
+$_authorPage-navHeight: $_authorPage-navHeight-value * 1px;
+
+@if $_use_rem_unit {
+  $_authorPage-navHeight: math.div($_authorPage-navHeight-value, 16) * 1rem;
+}
+
+$_authorPage-navItem-padding-horizontal-value: 32;
+
+$_authorPage-navItem-padding-horizontal: $_authorPage-navItem-padding-horizontal-value * 1px;
+
+@if $_use_rem_unit {
+  $_authorPage-navItem-padding-horizontal: math.div($_authorPage-navItem-padding-horizontal-value, 16) * 1rem;
+}

@@ -1,0 +1,15 @@
+<% if (page) { %> 
+    
+    import { renderPage } from './static/js/utils/renderer'; 
+    
+    <% if (page.component) { %> 
+        
+        import { <%= page.component %> } from './static/js/static-pages/<%= page.component %>'; 
+        
+        <% if (page.id) { %> 
+            renderPage( '<%= page.id %>', <%= page.component %> ); 
+        <% } %> 
+    
+    <% } %> 
+    
+<% } %>

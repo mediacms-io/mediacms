@@ -1,0 +1,439 @@
+@import './_variables.scss';
+
+/// Convert a direction to legacy syntax
+/// @param {Keyword | Angle} $value - Value to convert
+/// @require {function} is-direction
+/// @require {function} convert-angle
+/// @throw Cannot convert `#{$value}` to legacy syntax because it doesn't seem to be a direction.;
+@function legacy-direction($value) {
+  @if is-direction($value) == false {
+    @error "Cannot convert `#{$value}` to legacy syntax because it doesn't seem to be a direction.";
+  }
+
+  $conversion-map: (
+    to top: bottom,
+    to top right: bottom left,
+    to right top: left bottom,
+    to right: left,
+    to bottom right: top left,
+    to right bottom: left top,
+    to bottom: top,
+    to bottom left: top right,
+    to left bottom: right top,
+    to left: right,
+    to left top: right bottom,
+    to top left: bottom right
+  );
+
+  @if map-has-key($conversion-map, $value) {
+    @return map-get($conversion-map, $value);
+  }
+
+  @return 90deg - $value;
+}
+
+/// Test if `$value` is a valid direction
+/// @param {*} $value - Value to test
+/// @return {Bool}
+@function is-direction($value) {
+  $is-keyword: index(
+    (
+      to top,
+      to top right,
+      to right top,
+      to right,
+      to bottom right,
+      to right bottom,
+      to bottom,
+      to bottom left,
+      to left bottom,
+      to left,
+      to left top,
+      to top left
+    ),
+    $value
+  );
+  $is-angle: type-of($value) == 'number' and index('deg' 'grad' 'turn' 'rad', unit($value));
+
+  @return $is-keyword or $is-angle;
+}
+
+@mixin linear-gradient($direction, $color-stops...) {
+  // Direction has been omitted and happens to be a color-stop
+  @if is-direction($direction) == false {
+    $color-stops: $direction, $color-stops;
+    $direction: 180deg;
+  }
+
+  background: nth(nth($color-stops, 1), 1);
+  background: -webkit-linear-gradient(legacy-direction($direction), $color-stops);
+  background: linear-gradient($direction, $color-stops);
+}
+
+$bg-color_theme-color: $theme-color;
+
+@mixin font_color_gradient() {
+  color: $theme-color;
+  /*background: -webkit-linear-gradient( $theme-color, scale-lightness( $theme-color, -15 ) );
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;*/
+}
+
+@mixin font_color_gradient_important() {
+  color: $theme-color !important;
+  /*background: -webkit-linear-gradient( $theme-color, scale-lightness( $theme-color, -15 ) ) !important;
+	-webkit-background-clip: text !important;
+	-webkit-text-fill-color: transparent !important;*/
+}
+
+@mixin background_color_gradient() {
+  background-color: $theme-color;
+  // @include linear-gradient( to bottom right, $theme-color 0%, scale-lightness( $theme-color, -10 ) 100%);
+}
+
+@mixin background_gradient() {
+  background: $theme-color;
+  // @include linear-gradient( to bottom right, $theme-color 0%, scale-lightness( $theme-color, -10 ) 100%);
+}
+
+@mixin border_color_gradient() {
+  border-color: $theme-color;
+  // @include linear-gradient( to bottom right, $theme-color 0%, scale-lightness( $theme-color, -10 ) 100%);
+}
+
+/*
+ * Typography
+ */
+
+.nav-menu {
+  li {
+    &.link-item {
+      &.active {
+        .menu-item-icon {
+          @include font_color_gradient();
+        }
+      }
+    }
+  }
+}
+
+.logo {
+  span {
+    @include font_color_gradient();
+  }
+}
+
+/*
+ * Components
+ */
+
+/* Comments */
+
+.comments-form-inner {
+  .form {
+    .form-buttons {
+      a,
+      button {
+        @include background_gradient();
+      }
+    }
+  }
+}
+
+.comment-text {
+  a {
+    @include font_color_gradient();
+  }
+}
+
+.comment-actions {
+  .remove-comment {
+    > button {
+      @include background_color_gradient();
+    }
+
+    .popup-message-bottom {
+      button {
+        &.proceed-comment-removal {
+          @include font_color_gradient();
+        }
+      }
+    }
+  }
+}
+
+/* NavigationMenuList */
+
+.nav-menu {
+  li {
+    &.label-item {
+      button {
+        &.reported-label,
+        &.reported-label * {
+          @include font_color_gradient();
+        }
+      }
+    }
+  }
+}
+
+/* PageSidebar */
+
+.page-sidebar {
+  .page-sidebar-bottom {
+    a {
+      &:hover {
+        @include font_color_gradient_important();
+      }
+    }
+  }
+}
+
+/*
+ * Components_Pages
+ */
+
+/* AddMediaPage */
+
+.media-drag-drop-content-inner {
+  .browse-files-btn-wrap {
+    span {
+      @include background_color_gradient();
+    }
+  }
+}
+
+.filename-edit {
+  &:hover {
+    @include font_color_gradient();
+  }
+}
+
+.media-upload-item-bottom-actions {
+  > * {
+    &:hover {
+      @include font_color_gradient();
+    }
+  }
+}
+
+.media-upload-item-progress-bar-container {
+  .media-upload-item-progress-bar {
+    @include background_color_gradient();
+  }
+}
+
+/* AddMediaPageTemplate */
+
+dialog {
+  .qq-dialog-buttons {
+    button {
+      color: $theme-color !important;
+    }
+  }
+}
+
+.media-drag-drop-content-inner {
+  .browse-files-btn-wrap {
+    span {
+      @include background_color_gradient();
+    }
+  }
+}
+
+.media-upload-item-top-actions,
+.media-upload-item-bottom-actions {
+  > * {
+    &:hover {
+      @include font_color_gradient();
+    }
+  }
+}
+
+.media-upload-item-bottom-actions {
+  > * {
+    &:hover {
+      @include background_color_gradient();
+    }
+  }
+}
+
+.retry-media-upload-item {
+  @include font_color_gradient();
+
+  &:hover {
+    @include background_color_gradient();
+  }
+}
+
+.media-upload-item-progress-bar-container {
+  .media-upload-item-progress-bar {
+    @include background_color_gradient();
+  }
+}
+
+/* MediaPage */
+
+.viewer-container {
+  .player-container {
+    &.audio-player-container {
+      .vjs-big-play-button {
+        background-color: var(--brand-color, var(--default-brand-color)) !important;
+      }
+    }
+  }
+}
+
+.media-author-actions {
+  > a,
+  > button {
+    @include background_color_gradient();
+  }
+
+  .popup-message-bottom {
+    button {
+      &.proceed-comment-removal {
+        @include font_color_gradient();
+      }
+    }
+  }
+}
+
+.media-title-banner {
+  .media-actions {
+    > * {
+      > * {
+        &.share {
+          .copy-field {
+            button {
+              @include font_color_gradient();
+            }
+          }
+        }
+      }
+    }
+
+    .disliked-media {
+      > * {
+        > * {
+          &.dislike {
+            &:before {
+              @include border_color_gradient();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .media-views-actions {
+    &.liked-media {
+      .media-actions {
+        > * {
+          > * {
+            &.like,
+            &.like button,
+            &.like .circle-icon-button {
+              @include font_color_gradient();
+            }
+
+            &.like,
+            &.dislike {
+              &:before {
+                @include border_color_gradient();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    &.disliked-media {
+      .media-actions {
+        > * {
+          > * {
+            &.dislike,
+            &.dislike button,
+            &.dislike .circle-icon-button {
+              @include font_color_gradient();
+            }
+
+            &.like,
+            &.dislike {
+              &:before {
+                @include border_color_gradient();
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.form-actions-bottom {
+  button {
+    color: $theme-color !important;
+  }
+}
+
+.media-content-field-content {
+  a {
+    @include font_color_gradient();
+  }
+}
+
+.share-embed .share-embed-inner {
+  .on-right-bottom {
+    button {
+      @include font_color_gradient();
+    }
+  }
+}
+
+/* ProfilePage */
+
+.profile-page-header {
+  a.edit-channel,
+  a.edit-profile,
+  button.delete-profile {
+    @include background_color_gradient();
+  }
+}
+
+.profile-banner-wrap {
+  .popup-message-bottom {
+    > a,
+    > button {
+      @include background_color_gradient();
+    }
+
+    button {
+      &.proceed-profile-removal {
+        @include font_color_gradient();
+      }
+    }
+  }
+}
+
+/*
+ * General
+ */
+
+p {
+  a {
+    @include font_color_gradient();
+  }
+}
+
+.user-action-form-inner {
+  a {
+    @include font_color_gradient();
+  }
+
+  button,
+  *[type='submit'],
+  *[type='button'] {
+    @include background_color_gradient();
+  }
+}

@@ -1,0 +1,32 @@
+<% var item, key %>
+
+<head>
+    
+    <% if (htmlWebpackPlugin.options.title) { %>
+	    <!-- Title -->
+	    <title><%= htmlWebpackPlugin.options.title %></title>
+    <% } %>
+
+    <% if (htmlWebpackPlugin.options.baseUrl) { %>
+    	<!-- Base -->
+    	<base href="<%= htmlWebpackPlugin.options.baseUrl %>">
+    <% } %>
+
+	<% if (Array.isArray(htmlWebpackPlugin.options.html.head.meta) && htmlWebpackPlugin.options.html.head.meta.length ) { %>
+		<!-- Meta -->
+	    <% for (item of htmlWebpackPlugin.options.html.head.meta) { %><meta<% for (key in item) { %> <%= key %>="<%= item[key] %>"<% } %> /><% }
+	} %>
+
+	<% if (Array.isArray(htmlWebpackPlugin.options.html.head.links) && htmlWebpackPlugin.options.html.head.links.length ) { %>
+		<!-- Links -->
+	    <% for (item of htmlWebpackPlugin.options.html.head.links) { %><link<% for (key in item) { %> <%= key %>="<%= item[key] %>"<% } %> /><% }
+	} %>
+
+    <% if (Array.isArray(htmlWebpackPlugin.options.html.head.scripts) && htmlWebpackPlugin.options.html.head.scripts.length ) { %>
+		<!-- Scripts -->
+	    <% for (item of htmlWebpackPlugin.options.html.head.scripts) { %>
+	        <script<% for (key in item) { %> <%= key %>="<%= item[key] %>"<% } %>></script><%
+	    }
+	} %>
+
+</head>
