@@ -521,6 +521,9 @@ def get_base_ffmpeg_command(
     while target_fps > 60:
         target_fps = target_fps/2
 
+    if target_fps < 1:
+        target_fps = 1
+
     base_cmd = [
         settings.FFMPEG_COMMAND,
         "-y",
