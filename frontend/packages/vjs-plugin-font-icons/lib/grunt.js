@@ -37,28 +37,28 @@ function merge(target, source) {
   return target;
 }
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   grunt.initConfig({
     sass: {
-            options: {
-                implementation: sass,
-                // sourceMap: true,
-            },
+      options: {
+        implementation: sass,
+        // sourceMap: true,
+      },
       dist: {
         files: {
-          'css/videojs-icons.css': 'scss/videojs-icons.scss'
-        }
-      }
+          'css/videojs-icons.css': 'scss/videojs-icons.scss',
+        },
+      },
     },
     watch: {
       all: {
         files: ['**/*.hbs', '**/*.js', './icons.json'],
-        tasks: ['default']
-      }
-    }
+        tasks: ['default'],
+      },
+    },
   });
 
-  grunt.registerTask('generate-font', function() {
+  grunt.registerTask('generate-font', function () {
     var done = this.async();
 
     let webfontsGenerator = require('webfonts-generator');
@@ -85,7 +85,7 @@ module.exports = function(grunt) {
 
     icons = iconConfig.icons;
 
-    let iconFiles = icons.map(function(icon) {
+    let iconFiles = icons.map(function (icon) {
       // If root-dir is specified for a specific icon, use that.
       if (icon['root-dir']) {
         return icon['root-dir'] + icon.svg;
@@ -95,54 +95,59 @@ module.exports = function(grunt) {
       return svgRootDir + icon.svg;
     });
 
-    webfontsGenerator({
-      files: iconFiles,
-      dest: 'fonts/',
-      fontName: iconConfig['font-name'],
-      cssDest: 'scss/_icons.scss',
-      cssTemplate: './templates/scss.hbs',
-      htmlDest: 'index.html',
-      htmlTemplate: './templates/html.hbs',
-      html: true,
-      rename: function(iconPath) {
-        let fileName = path.basename(iconPath);
+    webfontsGenerator(
+      {
+        files: iconFiles,
+        dest: 'fonts/',
+        fontName: iconConfig['font-name'],
+        cssDest: 'scss/_icons.scss',
+        cssTemplate: './templates/scss.hbs',
+        htmlDest: 'index.html',
+        htmlTemplate: './templates/html.hbs',
+        html: true,
+        rename: function (iconPath) {
+          let fileName = path.basename(iconPath);
 
-        let iconName = _.result(_.find(icons, function(icon) {
-          let svgName = path.basename(icon.svg);
+          let iconName = _.result(
+            _.find(icons, function (icon) {
+              let svgName = path.basename(icon.svg);
 
-          return svgName === fileName;
-        }), 'name');
+              return svgName === fileName;
+            }),
+            'name'
+          );
 
-        return iconName;
+          return iconName;
+        },
+        types: ['svg', 'woff', 'ttf'],
       },
-      types: ['svg', 'woff', 'ttf']
-    }, function(error) {
-      if (error) {
-        console.error(error);
-        done(false);
+      function (error) {
+        if (error) {
+          console.error(error);
+          done(false);
+        }
+
+        done();
       }
-
-      done();
-    });
-
+    );
   });
 
-  grunt.registerTask('update-base64', function() {
+  grunt.registerTask('update-base64', function () {
     let iconScssFile = './scss/_icons.scss';
     let iconConfig;
     if (grunt.option('custom-json')) {
-        iconConfig = grunt.file.readJSON(path.resolve(process.cwd(), grunt.option('custom-json')));
+      iconConfig = grunt.file.readJSON(path.resolve(process.cwd(), grunt.option('custom-json')));
     } else {
-        iconConfig = grunt.file.readJSON(path.join(__dirname, '..', 'icons.json'));
+      iconConfig = grunt.file.readJSON(path.join(__dirname, '..', 'icons.json'));
     }
     let fontName = iconConfig['font-name'];
     let fontFiles = {
-      woff: './fonts/' + fontName + '.woff'
+      woff: './fonts/' + fontName + '.woff',
     };
 
     let scssContents = fs.readFileSync(iconScssFile).toString();
 
-    Object.keys(fontFiles).forEach(function(font) {
+    Object.keys(fontFiles).forEach(function (font) {
       let fontFile = fontFiles[font];
       let fontContent = fs.readFileSync(fontFile);
 

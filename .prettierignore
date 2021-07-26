@@ -1,0 +1,7 @@
+static
+templates
+.vscode
+*.md
+*.yml
+*.yaml
+build
