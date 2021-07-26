@@ -131,4 +131,3 @@ If you like the project, here's a few things you can do
 
 ## Contact
 info@mediacms.io
-{"mode":"full","isActive":false}
