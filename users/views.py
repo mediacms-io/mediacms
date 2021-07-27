@@ -24,7 +24,7 @@ from files.methods import is_mediacms_editor, is_mediacms_manager
 
 from .forms import ChannelForm, UserForm
 from .models import Channel, User
-from .serializers import UserDetailSerializer, UserSerializer
+from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
 
 
 def get_user(username):
@@ -343,3 +343,27 @@ class UserToken(APIView):
             token = Token.objects.create(user=request.user)
 
         return Response({'token': str(token)}, status=200)
+
+
+class LoginAPIView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = LoginSerializer
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Login url',
+        operation_description="Login url endpoint",
+        manual_parameters=[
+            openapi.Parameter(name='username', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=False),
+            openapi.Parameter(name='email', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=False),
+            openapi.Parameter(name='password', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=True),
+        ],
+        responses={200: openapi.Response('response description', UserDetailSerializer), 404: 'Bad request'},
+    )
+    def post(self, request):
+        user = request.data.get('user', {})
+
+        serializer = self.serializer_class(data=user)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
