@@ -5,7 +5,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
@@ -305,3 +306,40 @@ class UserDetail(APIView):
 
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserWhoami(generics.RetrieveAPIView):
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+    queryset = User.objects.all()
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserDetailSerializer
+
+    def get_object(self):
+        return User.objects.get(id=self.request.user.id)
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Whoami user information',
+        operation_description='Whoami user information',
+        responses={200: 'token', 403: 'Forbidden'},
+    )
+    def get(self, request, *args, **kwargs):
+        return super(UserWhoami, self).get(request, *args, **kwargs)
+
+
+class UserToken(APIView):
+    parser_classes = (JSONParser,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Get a user token',
+        operation_description="Returns an authenticated user's token",
+        responses={200: openapi.Response('response description', UserDetailSerializer), 403: 'Forbidden'},
+    )
+    def get(self, request, *args, **kwargs):
+        token = Token.objects.filter(user=request.user).first()
+        if not token:
+            token = Token.objects.create(user=request.user)
+
+        return Response({'token': str(token)}, status=200)
