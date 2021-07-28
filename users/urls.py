@@ -30,7 +30,7 @@ urlpatterns = [
     ),
     # API VIEWS
     path('api/v1/whoami', views.UserWhoami.as_view(), name='user-whoami'),
-    path('api/user/token', views.UserToken.as_view(), name='user-token'),
+    path('api/v1/user/token', views.UserToken.as_view(), name='user-token'),
     path('api/v1/login', views.LoginView.as_view(), name='user-login'),
     url(r"^api/v1/users$", views.UserList.as_view(), name="api_users"),
     url(r"^api/v1/users/$", views.UserList.as_view()),

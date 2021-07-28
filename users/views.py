@@ -321,7 +321,7 @@ class UserWhoami(generics.RetrieveAPIView):
         tags=['Users'],
         operation_summary='Whoami user information',
         operation_description='Whoami user information',
-        responses={200: 'token', 403: 'Forbidden'},
+        responses={200: openapi.Response('response description', UserDetailSerializer), 403: 'Forbidden'},
     )
     def get(self, request, *args, **kwargs):
         return super(UserWhoami, self).get(request, *args, **kwargs)
@@ -335,7 +335,7 @@ class UserToken(APIView):
         tags=['Users'],
         operation_summary='Get a user token',
         operation_description="Returns an authenticated user's token",
-        responses={200: openapi.Response('response description', UserDetailSerializer), 403: 'Forbidden'},
+        responses={200: 'token', 403: 'Forbidden'},
     )
     def get(self, request, *args, **kwargs):
         token = Token.objects.filter(user=request.user).first()
@@ -345,25 +345,26 @@ class UserToken(APIView):
         return Response({'token': str(token)}, status=200)
 
 
-class LoginAPIView(APIView):
+class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = LoginSerializer
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     @swagger_auto_schema(
         tags=['Users'],
         operation_summary='Login url',
-        operation_description="Login url endpoint",
+        operation_description="Login url endpoint. According to what the portal provides, you may provide username and/or email, plus the password",
         manual_parameters=[
-            openapi.Parameter(name='username', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=False),
-            openapi.Parameter(name='email', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=False),
-            openapi.Parameter(name='password', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='username', required=True),
+            openapi.Parameter(name="username", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="username"),
+            openapi.Parameter(name="email", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="email"),
+            openapi.Parameter(name="password", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="password"),
         ],
-        responses={200: openapi.Response('response description', UserDetailSerializer), 404: 'Bad request'},
+        responses={200: openapi.Response('user details', LoginSerializer), 404: 'Bad request'},
     )
     def post(self, request):
-        user = request.data.get('user', {})
+        data = request.data
 
-        serializer = self.serializer_class(data=user)
+        serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

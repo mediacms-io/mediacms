@@ -83,10 +83,10 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=255)
-    username = serializers.CharField(max_length=255, read_only=True)
+    email = serializers.CharField(max_length=255, required=False)
+    username = serializers.CharField(max_length=255, required=False)
     password = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.CharField(max_length=255, read_only=True)
+    token = serializers.CharField(max_length=255, required=False)
 
     def validate(self, data):
         email = data.get('email', None)
