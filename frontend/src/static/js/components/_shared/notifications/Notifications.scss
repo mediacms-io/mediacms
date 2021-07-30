@@ -1,0 +1,43 @@
+@import '../../../../css/includes/_variables.scss';
+
+.notifications {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+
+  > * {
+    position: relative;
+  }
+
+  height: auto !important;
+  max-width: 100%;
+  justify-content: space-between;
+  font-size: 14px;
+  z-index: +5;
+}
+
+.notification-item {
+  display: table;
+  width: 288px;
+  max-width: 100%;
+  min-height: 48px;
+  margin: 12px;
+  color: #f1f1f1;
+  background-color: #323232;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px 0 rgba(#000, 0.26);
+
+  transition: opacity 500ms linear;
+
+  > * {
+    display: table-cell;
+    vertical-align: middle;
+    line-height: 20px;
+    padding: 8px 24px;
+    overflow: hidden;
+  }
+
+  &.hidden {
+    opacity: 0;
+  }
+}

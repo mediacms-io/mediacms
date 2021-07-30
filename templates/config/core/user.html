@@ -21,7 +21,7 @@ MediaCMS.user = {
 		manageComments: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
 	},
 	pages: {
-		home: '/user/{{request.user.username}}',
+		media: '/user/{{request.user.username}}',
 		about: '/user/{{request.user.username}}/about',
 		playlists: '/user/{{request.user.username}}/playlists',
 	}

@@ -1,0 +1,55 @@
+{
+  "name": "mediacms-vjs-plugin",
+  "version": "0.9.0",
+  "description": "",
+  "author": "",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mediacms",
+    "videojs",
+    "videojs-plugin"
+  ],
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "main": "./dist/mediacms-vjs-plugin.js",
+  "module": "./src/",
+  "browser": "./dist/mediacms-vjs-plugin.js",
+  "files": [
+    "dist"
+  ],
+  "browserslist": [
+    "defaults"
+  ],
+  "scripts": {
+    "start": "npx rollup -w -c config/rollup.config.js",
+    "build": "npm run clean:build && npx rollup -c ./config/rollup.config.build.js",
+    "clean:build": "node ./scripts/rmrf.js ./dist"
+  },
+  "peerDependencies": {
+    "video.js": "^7.12.3"
+  },
+  "dependencies": {
+    "mediacms-vjs-plugin-font-icons": "file:../vjs-plugin-font-icons"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/preset-env": "^7.14.5",
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "compass-mixins": "^0.12.10",
+    "core-js": "^3.14.0",
+    "global": "^4.4.0",
+    "minami": "^1.2.3",
+    "node-sass": "^6.0.0",
+    "postcss": "^8.3.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.51.2",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-cleanup": "^3.2.1",
+    "rollup-plugin-gzip": "^2.5.0",
+    "rollup-plugin-postcss": "^4.0.0",
+    "rollup-plugin-visualizer": "^5.5.0"
+  }
+}

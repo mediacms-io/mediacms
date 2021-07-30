@@ -1,0 +1,135 @@
+.popup {
+  background-color: var(--popup-bg-color);
+
+  hr {
+    background-color: var(--popup-hr-bg-color);
+  }
+}
+
+.popup-top {
+  color: var(--popup-top-text-color);
+  background-color: var(--popup-top-bg-color);
+
+  .circle-icon-button.menu-item-icon {
+    color: inherit;
+    background: none;
+  }
+}
+
+.popup-message-title {
+  color: var(--popup-msg-title-text-color);
+}
+
+.popup-message-main {
+  color: var(--popup-msg-main-text-color);
+}
+
+.popup {
+  z-index: +4;
+  display: block;
+  width: 300px;
+  text-align: initial;
+  cursor: default;
+  box-shadow: 0 16px 24px 2px rgba(#000, 0.14), 0 6px 30px 5px rgba(#000, 0.12), 0 8px 10px -5px rgba(#000, 0.4);
+
+  hr {
+    display: block;
+    width: 100%;
+    height: 1px;
+    border: 0;
+    margin: 0;
+  }
+}
+
+.popup-top {
+  padding: 16px * 0.25 8px * 0.5;
+
+  > * {
+    position: relative;
+    display: table;
+
+    > * {
+      display: table-cell;
+      vertical-align: middle;
+      min-width: 44px;
+    }
+  }
+
+  .circle-icon-button.menu-item-icon {
+    background: none;
+  }
+}
+
+.popup-main {
+  overflow: hidden;
+}
+.popup-message {
+  display: inline-block;
+  width: 100%;
+}
+
+.popup-message-title {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 16px;
+  margin-top: 24px;
+  padding: 0 24px;
+  line-height: 20px;
+}
+
+.popup-message-main {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 32px;
+  margin-top: 4px;
+  padding: 0 24px;
+  line-height: 21px;
+}
+
+.popup-message-bottom {
+  display: inline-block;
+  width: 100%;
+  float: left;
+  margin-bottom: 16px;
+  margin-top: 16px;
+  padding: 0 24px;
+}
+
+.popup-fullscreen {
+  z-index: +4;
+  position: fixed;
+  display: table;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 24px 40px;
+  padding-top: calc(var(--header-height) + 24px);
+
+  background: none;
+  box-shadow: none;
+
+  .popup-main {
+    width: 100%;
+    height: 100%;
+    max-width: 1840px;
+    max-height: 940px;
+    margin: 0 auto;
+    display: table-cell;
+    vertical-align: middle;
+
+    text-align: center;
+
+    .popup-fullscreen-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #000;
+      opacity: 0.6;
+    }
+  }
+}

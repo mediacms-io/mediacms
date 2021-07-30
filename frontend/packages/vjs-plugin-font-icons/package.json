@@ -1,0 +1,39 @@
+{
+  "name": "mediacms-vjs-plugin-font-icons",
+  "version": "0.9.0",
+  "description": "",
+  "author": "",
+  "license": "Apache-2.0",
+  "keywords": [
+    "mediacms",
+    "videojs",
+    "font icons"
+  ],
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "version": "grunt && git add .",
+    "build": "npm run clean:build && grunt --base ./ --gruntfile ./mediacms/Gruntfile.js",
+    "clean:build": "node ./scripts/rmrf.js ./dist ./build"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.5",
+    "@babel/preset-env": "^7.14.5",
+    "@babel/register": "^7.14.5",
+    "grunt": "^1.4.1",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-sass": "^3.1.0",
+    "load-grunt-tasks": "^5.1.0",
+    "lodash": "^4.17.21",
+    "material-design-icons": "^3.0.1",
+    "node-sass": "^6.0.0",
+    "rimraf": "^3.0.2",
+    "time-grunt": "^2.0.0",
+    "webfonts-generator": "^0.4.0"
+  },
+  "dependencies": {}
+}
