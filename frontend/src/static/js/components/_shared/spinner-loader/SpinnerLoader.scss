@@ -1,0 +1,87 @@
+@import '../../../../css/includes/_variables.scss';
+
+$green: #008744;
+$blue: #0057e7;
+$red: #d62d20;
+$yellow: #ffa700;
+
+.spinner-loader {
+  position: relative;
+  width: 48px;
+  height: 48px;
+
+  &.tiny {
+    width: 16px;
+    height: 16px;
+  }
+
+  &.x-small {
+    width: 24px;
+    height: 24px;
+  }
+
+  &.small {
+    width: 32px;
+    height: 32px;
+  }
+
+  &.large {
+    width: 56px;
+    height: 56px;
+  }
+
+  &.x-large {
+    width: 64px;
+    height: 64px;
+  }
+
+  &:before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+  }
+
+  svg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    transform-origin: center center;
+    animation: rotate 2s linear infinite;
+  }
+
+  circle {
+    stroke: var(--spinner-loader-color);
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+
+  50% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -35px;
+  }
+
+  100% {
+    stroke-dasharray: 89, 200;
+    stroke-dashoffset: -124px;
+  }
+}

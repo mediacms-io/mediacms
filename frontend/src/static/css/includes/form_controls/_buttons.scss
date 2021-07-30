@@ -1,0 +1,379 @@
+$success-color: #00a28b;
+$warning-color: #e09f1f;
+$danger-color: #de623b;
+
+$brand-color: #008ede;
+
+$body-text-color: #111;
+
+$light-color: #fafafa;
+$dark-color: #111;
+
+$light-accent-color: #98bc92;
+$dark-accent-color: #087e04;
+
+$success-dark-color: shade($success-color, 10);
+$warning-dark-color: shade($warning-color, 10);
+$danger-dark-color: shade($danger-color, 10);
+$brand-dark-color: shade($brand-color, 10);
+$light-dark-color: shade($light-color, 10);
+$dark-dark-color: shade($dark-color, 10);
+$light-accent-dark-color: shade($light-accent-color, 10);
+$dark-accent-dark-color: shade($dark-accent-color, 10);
+
+$success-darker-color: shade($success-dark-color, 10);
+$warning-darker-color: shade($warning-dark-color, 10);
+$danger-darker-color: shade($danger-dark-color, 10);
+$brand-darker-color: shade($brand-dark-color, 10);
+$light-darker-color: shade($light-dark-color, 10);
+$dark-darker-color: shade($dark-dark-color, 10);
+$light-accent-darker-color: shade($light-accent-dark-color, 10);
+$dark-accent-darker-color: shade($dark-accent-dark-color, 10);
+
+$dark-light-color: tint($dark-color, 10);
+$dark-lighter-color: tint($dark-light-color, 10);
+
+$brand-light-color: tint($brand-color, 20);
+$brand-lighter-color: tint($brand-light-color, 20);
+
+$success-light-color: tint($success-color, 36);
+$success-lighter-color: tint($success-light-color, 36);
+
+$warning-light-color: tint($warning-color, 36);
+$warning-lighter-color: tint($warning-light-color, 36);
+
+$danger-light-color: tint($danger-color, 36);
+$danger-lighter-color: tint($danger-light-color, 36);
+
+@mixin outline_button_colors($color) {
+  color: $color;
+  border-color: $color;
+}
+
+@mixin button_colors() {
+  color: $light-color;
+  background-color: $default-gray-color;
+
+  &.brand-btn {
+    background-color: $brand-color;
+  }
+
+  &.light-btn {
+    color: $dark-color;
+    background-color: $light-color;
+  }
+
+  &.dark-btn {
+    background-color: $dark-color;
+  }
+
+  &.light-accent-btn {
+    background-color: $light-accent-color;
+  }
+
+  &.dark-accent-btn {
+    background-color: $dark-accent-color;
+  }
+
+  &.success-btn {
+    background-color: $success-color;
+  }
+
+  &.warning-btn {
+    background-color: $warning-color;
+  }
+
+  &.danger-btn {
+    background-color: $danger-color;
+  }
+
+  &:hover,
+  &:focus {
+    background-color: $default-gray-dark-color;
+
+    &.brand-btn {
+      background-color: $brand-dark-color;
+    }
+
+    &.light-btn {
+      background-color: $light-dark-color;
+    }
+
+    &.dark-btn {
+      background-color: $dark-dark-color;
+    }
+
+    &.light-accent-btn {
+      background-color: $light-accent-dark-color;
+    }
+
+    &.dark-accent-btn {
+      background-color: $dark-accent-dark-color;
+    }
+
+    &.success-btn {
+      background-color: $success-dark-color;
+    }
+
+    &.warning-btn {
+      background-color: $warning-dark-color;
+    }
+
+    &.danger-btn {
+      background-color: $danger-dark-color;
+    }
+  }
+
+  &:active {
+    background-color: $default-gray-darker-color;
+
+    &.brand-btn {
+      background-color: $brand-darker-color;
+    }
+
+    &.light-btn {
+      background-color: $light-darker-color;
+    }
+
+    &.dark-btn {
+      background-color: $dark-darker-color;
+    }
+
+    &.light-accent-btn {
+      background-color: $light-accent-darker-color;
+    }
+
+    &.dark-accent-btn {
+      background-color: $dark-accent-darker-color;
+    }
+
+    &.success-btn {
+      background-color: $success-darker-color;
+    }
+
+    &.warning-btn {
+      background-color: $warning-darker-color;
+    }
+
+    &.danger-btn {
+      background-color: $danger-darker-color;
+    }
+  }
+
+  &:disabled {
+    color: $light-color;
+    background-color: $border-gray-color;
+  }
+
+  &.outline-btn {
+    background-color: transparent;
+
+    box-shadow: inset 0 0 0 $brand-color;
+
+    @include outline_button_colors($default-gray-color);
+
+    &.brand-btn {
+      @include outline_button_colors($brand-color);
+    }
+
+    &.light-btn {
+      @include outline_button_colors($light-color);
+    }
+
+    &.dark-btn {
+      @include outline_button_colors($dark-color);
+    }
+
+    &.light-accent-btn {
+      @include outline_button_colors($light-accent-color);
+    }
+
+    &.dark-accent-btn {
+      @include outline_button_colors($dark-accent-color);
+    }
+
+    &.success-btn {
+      @include outline_button_colors($success-color);
+    }
+
+    &.warning-btn {
+      @include outline_button_colors($warning-color);
+    }
+
+    &.danger-btn {
+      @include outline_button_colors($danger-color);
+    }
+
+    &:hover,
+    &:focus {
+      background-color: transparent;
+
+      @include outline_button_colors($default-gray-dark-color);
+
+      box-shadow: inset 0 0 0 $brand-dark-color;
+      // box-shadow: inset 0 0 0 $default-gray-dark-color;
+
+      &.brand-btn {
+        @include outline_button_colors($brand-dark-color);
+        // box-shadow: inset 0 0 0 $brand-dark-color;
+      }
+
+      &.light-btn {
+        @include outline_button_colors($light-dark-color);
+        // box-shadow: inset 0 0 0 $light-dark-color;
+      }
+
+      &.dark-btn {
+        @include outline_button_colors($dark-dark-color);
+        // box-shadow: inset 0 0 0 $dark-dark-color;
+      }
+
+      &.light-accent-btn {
+        @include outline_button_colors($light-accent-dark-color);
+        // box-shadow: inset 0 0 0 $light-accent-dark-color;
+      }
+
+      &.dark-accent-btn {
+        @include outline_button_colors($dark-accent-dark-color);
+        // box-shadow: inset 0 0 0 $dark-accent-dark-color;
+      }
+
+      &.success-btn {
+        @include outline_button_colors($success-dark-color);
+        // box-shadow: inset 0 0 0 $success-dark-color;
+      }
+
+      &.warning-btn {
+        @include outline_button_colors($warning-dark-color);
+        // box-shadow: inset 0 0 0 $warning-dark-color;
+      }
+
+      &.danger-btn {
+        @include outline_button_colors($danger-dark-color);
+        // box-shadow: inset 0 0 0 $danger-dark-color;
+      }
+    }
+
+    &:active {
+      background-color: transparent;
+
+      @include outline_button_colors($default-gray-darker-color);
+
+      box-shadow: inset 0 0 0 $brand-darker-color;
+      // box-shadow: inset 0 0 0 $default-gray-darker-color;
+
+      &.brand-btn {
+        @include outline_button_colors($brand-darker-color);
+        // box-shadow: inset 0 0 0 $brand-darker-color;
+      }
+
+      &.light-btn {
+        @include outline_button_colors($light-darker-color);
+        // box-shadow: inset 0 0 0 $light-darker-color;
+      }
+
+      &.dark-btn {
+        @include outline_button_colors($dark-darker-color);
+        // box-shadow: inset 0 0 0 $dark-darker-color;
+      }
+
+      &.light-accent-btn {
+        @include outline_button_colors($light-accent-darker-color);
+        // box-shadow: inset 0 0 0 $light-accent-darker-color;
+      }
+
+      &.dark-accent-btn {
+        @include outline_button_colors($dark-accent-darker-color);
+        // box-shadow: inset 0 0 0 $dark-accent-color;
+      }
+
+      &.success-btn {
+        @include outline_button_colors($success-darker-color);
+        // box-shadow: inset 0 0 0 $success-darker-color;
+      }
+
+      &.warning-btn {
+        @include outline_button_colors($warning-darker-color);
+        // box-shadow: inset 0 0 0 $warning-darker-color;
+      }
+
+      &.danger-btn {
+        @include outline_button_colors($danger-darker-color);
+        // box-shadow: inset 0 0 0 $danger-darker-color;
+      }
+    }
+
+    &:disabled {
+      @include outline_button_colors($border-gray-color);
+    }
+  }
+
+  &.unstyled-btn,
+  &.unstyled-btn:hover,
+  &.unstyled-btn:active,
+  &.unstyled-btn:focus {
+    color: $brand-color;
+    background-color: transparent;
+    box-shadow: unset;
+  }
+}
+
+@mixin buttons() {
+  .btn,
+  a.btn,
+  button,
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'] {
+    display: inline-block;
+    width: auto;
+    padding: 0.75rem 1.25rem;
+    margin-right: 0.5rem;
+    line-height: 0.9;
+    font-size: 1em;
+    font-weight: 700;
+    font-weight: 600;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border: 0;
+    border-radius: 0.125rem;
+
+    &.small-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.75em;
+    }
+
+    &.large-btn {
+      padding: 1rem 1.5rem;
+      font-size: 1.25em;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    &:focus {
+      outline-color: $brand-color;
+    }
+
+    &.outline-btn {
+      border-style: solid;
+      border-width: 2px;
+    }
+
+    &.unstyled-btn,
+    &.unstyled-btn:hover,
+    &.unstyled-btn:active,
+    &.unstyled-btn:focus {
+      padding: 0;
+      font-weight: 400;
+      text-decoration: underline;
+      outline-offset: 0;
+      border-width: 0;
+      border-radius: 0;
+    }
+
+    @include button_colors;
+  }
+}

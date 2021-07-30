@@ -9,6 +9,11 @@ MediaCMS.features = {
 		hideLogin: {% if CAN_LOGIN %}false{% else %}true{% endif %},
 		hideRegister: {% if CAN_REGISTER %}false{% else %}true{% endif %},
 	},
+	sideBar: {
+	  hideHomeLink: false,
+	  hideTagsLink: false,
+	  hideCategoriesLink: false,
+	},
 	media:{
 		actions:{
 			share: {% if CAN_SHARE_MEDIA %}true{% else %}false{% endif %},

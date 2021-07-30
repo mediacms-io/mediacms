@@ -1,0 +1,47 @@
+@import './_light_theme.scss';
+@import './_dark_theme.scss';
+
+body {
+  --default-logo-height: 18px;
+
+  --default-theme-color: #009933;
+  --default-brand-color: #009933;
+
+  --success-color: #00a28b;
+  --warning-color: #e09f1f;
+  --danger-color: #de623b;
+
+  --input-disabled-bg-color: hsla(0, 0%, 0%, 0.05);
+
+  --dotted-outline: 1px dotted var(--dotted-outline-color);
+
+  --header-height: 56px;
+
+  --sidebar-width: 240px;
+
+  --item-title-font-size: 14px;
+  --item-title-max-lines: 2;
+  --item-title-line-height: 18px;
+
+  --horizontal-item-title-line-height: 21px;
+
+  --playlist-item-title-line-height: 20px;
+
+  --large-item-title-font-size: 16px;
+  --large-item-title-line-height: 22px;
+
+  --links-color: var(--default-theme-color);
+}
+
+body {
+  --default-item-width: 218px;
+  --default-max-item-width: 344px;
+
+  --default-max-row-items: 6;
+
+  --default-item-margin-right-width: 4px;
+  --default-item-margin-bottom-width: 24px;
+
+  --default-horizontal-item-margin-right-width: 12px;
+  --default-horizontal-item-margin-bottom-width: 12px;
+}

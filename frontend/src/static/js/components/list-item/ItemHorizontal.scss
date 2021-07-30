@@ -1,0 +1,117 @@
+@import '../../../css/config/index.scss';
+
+@media (min-width: 390px) {
+  .items-list-hor .item {
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .items-list-hor .item-content {
+    padding-left: calc(218px - 4px);
+  }
+
+  .items-list-hor .item-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(218px - 4px);
+    height: calc(0.5611 * calc(218px - 4px));
+    padding-bottom: 0;
+  }
+
+  .items-list-hor .item-main {
+    min-height: calc(0.5611 * calc(218px - 4px));
+    padding-left: var(--horizontal-item-margin-right-width, var(--default-horizontal-item-margin-right-width));
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 0;
+      font-size: 16px;
+      line-height: 1em;
+      max-height: initial;
+
+      span {
+        line-height: var(--horizontal-item-title-line-height);
+        max-height: calc(var(--horizontal-item-title-max-lines) * var(--default-horizontal-item-title-line-height));
+      }
+    }
+  }
+
+  .items-list-hor .item-author {
+    display: inline;
+  }
+
+  .items-list-hor .item-views {
+    &:before {
+      content: '•';
+      content: '\2022';
+      margin: 0 4px;
+    }
+  }
+
+  .items-list-hor .item-description {
+    margin-top: 8px;
+  }
+}
+
+@media (min-width: 390px) and (max-width: 599px) {
+  .items-list-hor {
+    .items-list {
+      max-width: 100%;
+    }
+
+    .item {
+    }
+
+    .item-content {
+      padding-left: 168px;
+    }
+
+    .item-thumb,
+    a.item-thumb {
+      width: 168px;
+      height: calc(0.5611 * 168px);
+    }
+
+    .item-main {
+      min-height: calc(0.5611 * 168px);
+    }
+
+    .item-main h3 {
+      line-height: 20px;
+      font-size: 15px;
+    }
+
+    .item-author {
+      display: block;
+    }
+
+    .item-views {
+      &:before {
+        display: none;
+      }
+    }
+
+    .item-meta > .item-views + .item-date:before {
+      content: '•';
+      content: '\2022';
+      margin: 0 4px;
+    }
+
+    .item-description {
+      display: none;
+    }
+  }
+}
+
+@media (min-width: 600px) {
+  .items-list-hor .item-date:before {
+    content: '•';
+    content: '\2022';
+    margin: 0 4px;
+  }
+
+  .items-list-hor .item {
+    margin-bottom: var(--horizontal-item-margin-bottom-width, var(--default-horizontal-item-margin-bottom-width));
+  }
+}
