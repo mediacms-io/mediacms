@@ -1,4 +1,4 @@
-import { el, en, hi } from './translations/';
+import { el, en, hi, cs } from './translations/';
 import { BrowserCache } from '../classes/';
 import { config as mediacmsConfig } from '../settings/config.js';
 
@@ -11,6 +11,7 @@ export const labels = {
   el: 'Greek',
   en: 'English',
   hi: 'Hindi',
+  cs: 'Czech',
 } as { [key: string]: string };
 
 // In display order.
@@ -18,6 +19,7 @@ export const translations: { [key: string]: { [key: string]: string } } = {
   en,
   hi,
   el,
+  cs,
 };
 
 export const enabled: string[] = Object.keys(translations);
