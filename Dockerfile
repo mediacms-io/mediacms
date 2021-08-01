@@ -29,8 +29,8 @@ FROM python:3.8-slim-buster as runtime-image
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV ADMIN_USER='admin'
-ENV ADMIN_PASSWORD='mediacms'
 ENV ADMIN_EMAIL='admin@localhost'
+#ENV ADMIN_PASSWORD='uncomment_and_set_password_here'
 
 # See: https://github.com/celery/celery/issues/6285#issuecomment-715316219
 ENV CELERY_APP='cms'
