@@ -1,6 +1,6 @@
 ## Configuration
 
-A number of options are available on `cms/settings.py`. 
+Several options are available on `cms/settings.py`, most of the things that are allowed or should be disallowed are described there.
 
 It is advisable to override any of them by adding it to `local_settings.py` . 
 

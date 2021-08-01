@@ -1,13 +1,12 @@
 # Administrators documentation
 
 ## Table of contents
-- [Uploading media](#uploading-media)
 - [Manage pages](#manage-pages)
 - [Django admin dashboard](#django-admin-dashboard)
 - [On portal workflow](#on-portal-workflow)
 - [On user roles](#on-user-roles)
 - [Adding languages for Captions and subtitles](#adding-languages-for-captions-and-subtitles)
-- [Add/delete categories and tags](#add-delete-categories-and-tags)
+- [Add/delete categories and tags](#adddelete-categories-and-tags)
 - [Video transcoding](#video-transcoding)
 
 

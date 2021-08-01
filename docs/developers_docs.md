@@ -3,14 +3,20 @@
 ## Table of contents
 - [System architecture](#system-architecture)
 - [API documentation](#api-documentation)
+- [How to contribute](#how-to-contribute)
 - [Working with Docker tips](#working-with-docker-tips)
 - [How video is transcoded](#how-video-is-transcoded)
+
+## How to contribute
+Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
+
+Checkout the [Code of conduct page](../CODE_OF_CONDUCT.md) if you want to contribute to this repository
 
 
 ## System architecture
 
 ## API documentation
-API is documented using Swagger - checkout ot http://your_installation/swagger
+API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
 This page allows you to login to perform authenticated actions - it will also use your session if logged in. 
 
 
