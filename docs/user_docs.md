@@ -1,34 +1,13 @@
 # Users documentation
 
-## Downloading media
-
-MediaCMS offers a configurable option whereby users can make their media files available for download. Downloads are available for transcoded files, and the original file.
-
-### How To Enable Download
-
-Visit the media view page and choose the EDIT MEDIA button.
-
-Select the checkbox for "Allow Downloads"
-
-### How To Download Media
-
-Visit the media view page and click the DOWNLOAD button below the video player.
-
-<p align="left">
-    <img src="./images/Click-Download-Button.png">
-</p>
-
-Choose the version you wish to download - a transcoded file or the original file:
-
-<p align="left">
-    <img src="./images/Click-version-download.png">
-</p>
-
-Choose Save File and click the OK button.
-
-<p align="left">
-    <img src="./images/Save-File.png">
-</p>
+## Table of contents
+- [Uploading media](#uploading-media)
+- [Downloading media](#downloading-media)
+- [Adding captions/subtitles](#adding-captionssubtitles)
+- [Search media](#search-media)
+- [Share media](#share-media)
+- [Embed media](#embed-media)
+- [Customize my profile options](#customize-my-profile-options)
 
 ## Uploading media
 
@@ -130,6 +109,40 @@ Make sure you fill in all the required fields, and try to complete as many of th
     <img src="./images/Edit-Media-Metadata-2.png"/>
 </p>
 
+
+
+## Downloading media
+
+MediaCMS offers a configurable option whereby users can make their media files available for download. Downloads are available for transcoded files, and the original file.
+
+#### How To Enable Download
+
+Visit the media view page and choose the EDIT MEDIA button.
+
+Select the checkbox for "Allow Downloads"
+
+#### How To Download Media
+
+Visit the media view page and click the DOWNLOAD button below the video player.
+
+<p align="left">
+    <img src="./images/Click-Download-Button.png">
+</p>
+
+Choose the version you wish to download - a transcoded file or the original file:
+
+<p align="left">
+    <img src="./images/Click-version-download.png">
+</p>
+
+Choose Save File and click the OK button.
+
+<p align="left">
+    <img src="./images/Save-File.png">
+</p>
+
+
+
 ## Adding captions/subtitles
 
 With MediaCMS you can add subtitles/captions to your video by uploading a subtitles file in the popular .vtt format.
@@ -182,8 +195,14 @@ You can now watch the captions/subtitles play back in the video player - and tog
     <img src="./images/CC-display.png"/>
 </p>
 
-## Search media (how to use it)
+## Search media
+How search can be used
 
-## Share media (share/embed)
+## Share media
+How to share media
+
+## Embed media
+How to use the embed media option
 
 ## Customize my profile options
+Customize profile and channel

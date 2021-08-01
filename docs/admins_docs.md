@@ -1,17 +1,30 @@
 # Administrators documentation
 
+## Table of contents
+- [Uploading media](#uploading-media)
+- [Manage pages](#manage-pages)
+- [Django admin dashboard](#django-admin-dashboard)
+- [On portal workflow](#on-portal-workflow)
+- [On user roles](#on-user-roles)
+- [Adding languages for Captions and subtitles](#adding-languages-for-captions-and-subtitles)
+- [Add/delete categories and tags](#add-delete-categories-and-tags)
+- [Video transcoding](#video-transcoding)
+
+
 ## Manage pages
 
-## Django dashboard
+## Django admin dashboard
 
-## Media workflow
+## On portal workflow
+Who can publish content, how content appears on public listings.Difference between statuses (private, unlisted, public)
 
-## Portal workflow (states)
-
-## User roles
+## On user roles
+Differences over MediaCMS manager, MediaCMS editor, logged in user
 
 ## Adding languages for Captions and subtitles
 
-## Editing categories and tags
+## Add/delete categories and tags
+Through the admin section - http://your_installation/admin/
 
-## Video encodings (add/remove resolutions)
+## Video transcoding
+Add / remove resolutions and profiles through http://your_installation/admin/encodeprofile
