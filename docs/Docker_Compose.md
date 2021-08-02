@@ -30,6 +30,13 @@ docker-compose up
 
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
 
+A user admin has been created with random password, you should be able to see it at the end of migrations container, eg
+
+```
+migrations_1     | Created admin user with password: gwg1clfkwf
+```
+
+or if you have set the ADMIN_PASSWORD variable on Dockerfile, that variable will be set as the admin user's password
 
 ## Update
 

@@ -21,20 +21,23 @@ It is expected to run on a new system **with no running instances of any these s
 done
 
 
-if [[ `lsb_release -d` == *"Ubuntu 20"* ]]; then
+osVersion=$(lsb_release -d)
+if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 18"* ]] || [[ $osVersion == *"buster"* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
-elif [[ `lsb_release -d`  = *"Ubuntu 18"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
-# added check for Debian 10 (buster)
-elif [[ `lsb_release -d` == *"buster"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip ffmpeg imagemagick python3-certbot-nginx certbot wget -y
+    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 else
     echo "This script is tested for Ubuntu 18 and 20 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
-exit
+    exit
 fi
+
+# install ffmpeg
+echo "Downloading and installing ffmpeg"
+wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+mkdir -p tmp
+tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C tmp
+cp -v tmp/{ffmpeg,ffprobe,qt-faststart} /usr/local/bin
+rm -rf tmp ffmpeg-release-amd64-static.tar.xz
+echo "ffmpeg installed to /usr/local/bin"
 
 read -p "Enter portal URL, or press enter for localhost : " FRONTEND_HOST
 read -p "Enter portal name, or press enter for 'MediaCMS : " PORTAL_NAME
