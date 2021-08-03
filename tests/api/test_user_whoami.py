@@ -6,6 +6,8 @@ API_V1_LOGIN_URL = '/api/v1/whoami'
 
 
 class TestUserWhoami(TestCase):
+    fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+
     def setUp(self):
         self.user = create_account()
 

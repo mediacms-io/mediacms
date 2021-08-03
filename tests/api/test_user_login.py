@@ -7,6 +7,8 @@ API_V1_LOGIN_URL = '/api/v1/login'
 
 
 class TestUserLogin(TestCase):
+    fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+
     def setUp(self):
         self.password = 'this_is_a_fake_password'
         self.user = create_account(password=self.password)

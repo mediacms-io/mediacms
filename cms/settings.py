@@ -441,6 +441,13 @@ LOCAL_INSTALL = False
 # it is placed here so it can be overrided on local_settings.py
 GLOBAL_LOGIN_REQUIRED = False
 
+# TODO: separate settings on production/development more properly, for now
+# this should be ok
+CELERY_TASK_ALWAYS_EAGER = False
+if os.environ.get("TESTING"):
+    CELERY_TASK_ALWAYS_EAGER = True
+
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
