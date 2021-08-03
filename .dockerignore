@@ -1,2 +1,12 @@
 node_modules
 npm-debug.log
+media_files/encoded/
+media_files/original/
+media_files/hls/
+media_files/chunks/
+media_files/uploads/
+postgres_data/
+celerybeat-schedule
+logs/
+pids/
+dist/

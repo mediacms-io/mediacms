@@ -1,4 +1,14 @@
-FROM python:3.8-buster AS compile-image
+############ FRONTEND BUILDER IMAGE ############
+FROM node AS frontend-builder
+
+WORKDIR /frontend
+ADD frontend /frontend
+
+RUN npm install
+RUN npm run dist
+
+############ BACKEND BUILDER IMAGE ############
+FROM python:3.8-buster AS backend-builder
 
 SHELL ["/bin/bash", "-c"]
 
@@ -24,13 +34,10 @@ RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-u
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
-FROM python:3.8-slim-buster as runtime-image
+FROM python:3.8-slim-buster AS runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV ADMIN_USER='admin'
-ENV ADMIN_EMAIL='admin@localhost'
-#ENV ADMIN_PASSWORD='uncomment_and_set_password_here'
 
 # See: https://github.com/celery/celery/issues/6285#issuecomment-715316219
 ENV CELERY_APP='cms'
@@ -47,7 +54,12 @@ ENV ENABLE_MIGRATIONS='yes'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
+COPY --chown=www-data:www-data --from=backend-builder /home/mediacms.io /home/mediacms.io
+
+# Add frontend to the image
+# This makes the static here different from the static in the source folder
+# TODO: We need to automatically update the static in the source folder too
+COPY --chown=www-data:www-data --from=frontend-builder /frontend/dist/static /home/mediacms.io/mediacms/static
 
 RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends \
     supervisor nginx imagemagick procps wget xz-utils -y && \

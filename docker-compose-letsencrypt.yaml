@@ -38,6 +38,9 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_CELERY_BEAT: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      #ADMIN_PASSWORD: 'uncomment_and_set_password_here'
     command: "./deploy/docker/prestart.sh"
     restart: on-failure
     depends_on:

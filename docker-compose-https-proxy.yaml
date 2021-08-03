@@ -38,6 +38,9 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      #ADMIN_PASSWORD: 'uncomment_and_set_password_here'
       VIRTUAL_HOST: localhost
     depends_on:
       - migrations
