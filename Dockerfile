@@ -28,9 +28,6 @@ FROM python:3.8-slim-buster as runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV ADMIN_USER='admin'
-ENV ADMIN_PASSWORD='mediacms'
-ENV ADMIN_EMAIL='admin@localhost'
 
 # See: https://github.com/celery/celery/issues/6285#issuecomment-715316219
 ENV CELERY_APP='cms'
@@ -56,10 +53,10 @@ RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-reco
     apt-get clean
 
 RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
-    mkdir -p tmp && \
-    tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C tmp && \
-    cp -v tmp/ffmpeg tmp/ffprobe tmp/qt-faststart /usr/local/bin && \
-    rm -rf tmp ffmpeg-release-amd64-static.tar.xz 
+    mkdir -p ffmpeg-tmp && \
+    tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C ffmpeg-tmp && \
+    cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin && \
+    rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
 WORKDIR /home/mediacms.io/mediacms
 
