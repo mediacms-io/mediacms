@@ -92,12 +92,12 @@ Visit [Releases Page](https://github.com/mediacms-io/mediacms/releases) for deta
 
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-* [Single Server](docs/admins_docs.md#server-installation) page
-* [Docker Compose](docs/admins_docs.md#docker-installation) page
+* [Single Server](docs/admins_docs.md#2-server-installation) page
+* [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
 ## Configuration
 
-Visit [Configuration](docs/admins_docs.md#configuration) page.
+Visit [Configuration](docs/admins_docs.md#5-configuration) page.
 
 
 ## Documentation
