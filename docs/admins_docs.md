@@ -137,13 +137,13 @@ See example deployments in the sections below. These example deployments have be
 
 To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
 
-# Simple Deployment, accessed as http://localhost
+### Simple Deployment, accessed as http://localhost
 
 The main container runs migrations, mediacms_web, celery_beat, celery_workers (celery_short and celery_long services), exposed on port 80 supported by redis and postgres database.
 
  The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://localhost, on the docker host machine.
 
-# Server with ssl certificate through letsencrypt service, accessed as https://my_domain.com
+### Server with ssl certificate through letsencrypt service, accessed as https://my_domain.com
 Before trying this out make sure the ip points to my_domain.com. 
 
 With this method [this deployment](../docker-compose-letsencrypt.yaml) is used. 
@@ -154,19 +154,19 @@ Edit `deploy/docker/local_settings.py` and set https://my_domain.com as `FRONTEN
 
 Now run docker-compose -f docker-compose-letsencrypt.yaml up, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
 
-# Advanced Deployment, accessed as http://localhost:8000
+### Advanced Deployment, accessed as http://localhost:8000
 
 Here we can run 1 mediacms_web instance, with the FRONTEND_HOST in `deploy/docker/local_settings.py` configured as http://localhost:8000. This is bootstrapped by a single migrations instance and supported by a single celery_beat instance and 1 or more celery_worker instances. Redis and postgres containers are also used for persistence. Clients can access the service on http://localhost:8000, on the docker host machine. This is similar to [this deployment](../docker-compose.yaml), with a `port` defined in FRONTEND_HOST.
 
-# Advanced Deployment, with reverse proxy, accessed as http://mediacms.io
+### Advanced Deployment, with reverse proxy, accessed as http://mediacms.io
 
 Here we can use `jwilder/nginx-proxy` to reverse proxy to 1 or more instances of mediacms_web supported by other services as mentioned in the previous deployment. The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://mediacms.io, nginx-proxy has port 80 exposed. Clients can access the service on http://mediacms.io (Assuming DNS or the hosts file is setup correctly to point to the IP of the nginx-proxy instance). This is similar to [this deployment](../docker-compose-http-proxy.yaml).
 
-# Advanced Deployment, with reverse proxy, accessed as https://localhost
+### Advanced Deployment, with reverse proxy, accessed as https://localhost
 
 The reverse proxy (`jwilder/nginx-proxy`) can be configured to provide SSL termination using self-signed certificates, letsencrypt or CA signed certificates (see: https://hub.docker.com/r/jwilder/nginx-proxy or [LetsEncrypt Example](https://www.singularaspect.com/use-nginx-proxy-and-letsencrypt-companion-to-host-multiple-websites/) ). In this case the FRONTEND_HOST should be set to https://mediacms.io. This is similar to [this deployment](../docker-compose-http-proxy.yaml).
 
-# A Scaleable Deployment Architecture (Docker, Swarm, Kubernetes)
+### A Scaleable Deployment Architecture (Docker, Swarm, Kubernetes)
 
 The architecture below generalises all the deployment scenarios above, and provides a conceptual design for other deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple mediacms_web instances and celery_workers. For large deployments, managed postgres, redis and storage may be adopted.
 
@@ -198,11 +198,11 @@ Docker Compose installation: edit `deploy/docker/local_settings.py`, make a chan
 #docker-compose restart web celery_worker celery_beat
 ```
 
-### change portal logo
+### 5.1 Change portal logo
 
 Set a new svg file for the white theme (`static/images/logo_dark.svg`) or the dark theme (`static/images/logo_light.svg`)
 
-### set global portal title
+### 5.2 Set global portal title
 
 set `PORTAL_NAME`, eg
 
@@ -210,7 +210,7 @@ set `PORTAL_NAME`, eg
 PORTAL_NAME = 'my awesome portal'
 ```
 
-### who can add media
+### 5.3 Control who can add media
 
 By default `CAN_ADD_MEDIA = "all"` means that all registered users can add media. Other valid options are:
 
@@ -218,7 +218,7 @@ By default `CAN_ADD_MEDIA = "all"` means that all registered users can add media
 
 - **advancedUser**, only users that are marked as advanced users can add media. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
 
-### what is the portal workflow
+### 5.4 What is the portal workflow
 
 The `PORTAL_WORKFLOW` variable specifies what happens to newly uploaded media, whether they appear on listings (as the index page, or search)
 
@@ -229,7 +229,7 @@ The `PORTAL_WORKFLOW` variable specifies what happens to newly uploaded media, w
 - **unlisted** means that items are unlisted. However if a user visits the url of an unlisted media, it will be shown (as opposed to private)
 
 
-### show/hide the Sign in button
+### 5.5 Show or hide the Sign in button
 
 to show button:
 ```
@@ -242,7 +242,7 @@ to hide button:
 LOGIN_ALLOWED = False
 ```
 
-### show/hide the Register button
+### 5.6 Show or hide the Register button
 
 to show button:
 ```
@@ -256,7 +256,7 @@ REGISTER_ALLOWED = False
 ```
 
 
-### show/hide the upload media button
+### 5.7 Show or hide the upload media button
 
 To show:
 
@@ -270,7 +270,7 @@ To hide:
 UPLOAD_MEDIA_ALLOWED = False
 ```
 
-### show/hide the actions buttons (like/dislike/report)
+### 5.8 Show or hide the actions buttons (like/dislike/report)
 
 Make changes (True/False) to any of the following:
 
@@ -281,7 +281,7 @@ Make changes (True/False) to any of the following:
 - CAN_SHARE_MEDIA = True  # whether the share media appears
 ```
 
-### show/hide the download option on a media
+### 5.9 Show or hide the download option on a media
 
 Edit `templates/config/installation/features.html` and set 
 
@@ -289,7 +289,7 @@ Edit `templates/config/installation/features.html` and set
 download: false
 ```
 
-### automatically hide media upon being reported
+### 5.10 Automatically hide media upon being reported
 
 set a low number for variable `REPORTED_TIMES_THRESHOLD`
 eg 
@@ -300,7 +300,7 @@ REPORTED_TIMES_THRESHOLD = 2
 
 once the limit is reached, media goes to private state and an email is sent to admins
 
-### set a custom message on the media upload page
+### 5.11 Set a custom message on the media upload page
 
 this message will appear below the media drag and drop form
 
@@ -308,7 +308,7 @@ this message will appear below the media drag and drop form
 PRE_UPLOAD_MEDIA_MESSAGE = 'custom message'
 ```
 
-### set email settings
+### 5.12 Set email settings
 
 Set correct settings per provider
 
@@ -323,7 +323,7 @@ EMAIL_PORT = 587
 ADMIN_EMAIL_LIST = ['info@mediacms.io']
 ```
 
-### disallow user registrations from specific domains
+### 5.13 Disallow user registrations from specific domains
 
 set domains that are not valid for registration via this variable:
 
@@ -332,7 +332,7 @@ RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
     'xxx.com', 'emaildomainwhatever.com']
 ```
 
-### require a review by MediaCMS editors/managers/admins
+### 5.14 Require a review by MediaCMS editors/managers/admins
 
 set value
 
@@ -343,7 +343,7 @@ MEDIA_IS_REVIEWED = False
 any uploaded media now needs to be reviewed before it can appear to the listings. 
 MediaCMS editors/managers/admins can visit the media page and edit it, where they can see the option to mark media as reviewed. By default this is set to True, so all media don't require to be reviewed
 
-### specify maximum number of media for a playlist
+### 5.15 Specify maximum number of media for a playlist
 
 set a different threshold on variable `MAX_MEDIA_PER_PLAYLIST`
 
@@ -353,7 +353,7 @@ eg
 MAX_MEDIA_PER_PLAYLIST = 14
 ```
 
-### specify maximum size of a media that can be uploaded
+### 5.16 Specify maximum size of a media that can be uploaded
 
 change `UPLOAD_MAX_SIZE`. 
 
@@ -363,7 +363,7 @@ default is 4GB
 UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5
 ```
 
-### specify maximum size of comments
+### 5.17 Specify maximum size of comments
 
 change `MAX_CHARS_FOR_COMMENT`
 
@@ -373,7 +373,7 @@ default:
 MAX_CHARS_FOR_COMMENT = 10000
 ```
 
-### how many files to upload in parallel
+### 5.18 How many files to upload in parallel
 
 set a different threshold for `UPLOAD_MAX_FILES_NUMBER`
 default:
@@ -382,7 +382,7 @@ default:
 UPLOAD_MAX_FILES_NUMBER = 100
 ```
 
-### force users confirm their email upon registrations
+### 5.18 force users confirm their email upon registrations
 
 default option for email confirmation is optional. Set this to mandatory in order to force users confirm their email before they can login
 
@@ -390,7 +390,7 @@ default option for email confirmation is optional. Set this to mandatory in orde
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ```
 
-### rate limit account login attempts
+### 5.20 Rate limit account login attempts
 
 after this number is reached
 
@@ -404,7 +404,7 @@ sets a timeout (in seconds)
 ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 5
 ```
 
-### disallow user registration
+### 5.21 Disallow user registration
 
 set the following variable to False
 
@@ -412,7 +412,7 @@ set the following variable to False
 USERS_CAN_SELF_REGISTER = True
 ```
 
-### configure notifications
+### 5.22 Configure notifications
 
 Global notifications that are implemented are controlled by the following options:
 
