@@ -1,29 +1,596 @@
 # Administrators documentation
 
 ## Table of contents
-- [Manage pages](#manage-pages)
-- [Django admin dashboard](#django-admin-dashboard)
-- [On portal workflow](#on-portal-workflow)
-- [On user roles](#on-user-roles)
-- [Adding languages for Captions and subtitles](#adding-languages-for-captions-and-subtitles)
-- [Add/delete categories and tags](#adddelete-categories-and-tags)
-- [Video transcoding](#video-transcoding)
+- [1. Welcome](#1-welcome)
+- [2. Server Installaton](#2-server-installation)
+- [3. Docker Installation](#3-docker-installation)
+- [4. Configuration](#4-configuration)
+- [5. Manage pages](#5-manage-pages)
+- [6. Django admin dashboard](#6-django-admin-dashboard)
+- [7. On portal workflow](#7-on-portal-workflow)
+- [8. On user roles](#8-on-user-roles)
+- [9. Adding languages for Captions and subtitles](#9-adding-languages-for-captions-and-subtitles)
+- [10. Add/delete categories and tags](#10-adddelete-categories-and-tags)
+- [11. Video transcoding](#11-video-transcoding)
+- [12. How To Add A Static Page To The Sidebar](#12-how-to-add-a-static-page-to-the-sidebar)
+- [13. Add Google Analytics](#13-add-google-analytics)
 
 
-## Manage pages
+## 1. Welcome
+This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications. 
 
-## Django admin dashboard
+## 2. Server Installation
 
-## On portal workflow
+The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
+
+Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
+Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings. 
+
+Automated script - tested on Ubuntu 18, Ubuntu 20, and Debian Buster
+
+```bash
+mkdir /home/mediacms.io && cd /home/mediacms.io/
+git clone https://github.com/mediacms-io/mediacms
+cd /home/mediacms.io/mediacms/ && bash ./install.sh
+```
+
+The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate. 
+
+
+### Update
+
+If you've used the above way to install MediaCMS, update with the following:
+
+```bash
+cd /home/mediacms.io/mediacms # enter mediacms directory
+source  /home/mediacms.io/bin/activate # use virtualenv
+git pull # update code
+python manage.py migrate # run Django migrations
+sudo systemctl restart mediacms celery_long celery_short # restart services
+```
+
+### Configuration
+Checkout the configuration section here.
+
+
+### Maintenance
+Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
+
+
+## 3. Docker Installation
+
+## Installation
+Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
+
+For Ubuntu 18/20 systems this is:
+
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+Then run as root
+
+```bash
+git clone https://github.com/mediacms-io/mediacms
+cd mediacms
+```
+
+The default option is to serve MediaCMS on all ips available of the server (including localhost).
+If you want to explore more options (including setup of https with letsencrypt certificate) checkout the docs on the [Docker deployment](/docs/Docker_deployment.md) page for different docker-compose setups to use.
+
+Run
+
+```bash
+docker-compose up
+```
+
+This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
+
+A user admin has been created with random password, you should be able to see it at the end of migrations container, eg
+
+```
+migrations_1     | Created admin user with password: gwg1clfkwf
+```
+
+or if you have set the ADMIN_PASSWORD variable on docker-compose file you have used (example `docker-compose.yaml`), that variable will be set as the admin user's password
+
+### Update
+
+Get latest MediaCMS image and stop/start containers
+
+```bash
+cd /path/to/mediacms/installation
+docker pull mediacms/mediacms
+docker-compose down
+docker-compose up
+```
+
+## Configuration
+Checkout the configuration docs here.
+
+
+### Maintenance
+Database is stored on ../postgres_data/ and media_files on media_files/
+
+
+
+
+## 4. Configuration
+Several options are available on `cms/settings.py`, most of the things that are allowed or should be disallowed are described there.
+
+It is advisable to override any of them by adding it to `local_settings.py` . 
+
+In case of a the single server installation, add to `cms/local_settings.py` .
+
+In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
+
+Any change needs restart of MediaCMS in order to take effect. 
+
+Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS 
+
+```bash
+#systemctl restart mediacms
+```
+
+Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
+
+```bash
+#docker-compose restart web celery_worker celery_beat
+```
+
+### change portal logo
+
+Set a new svg file for the white theme (`static/images/logo_dark.svg`) or the dark theme (`static/images/logo_light.svg`)
+
+### set global portal title
+
+set `PORTAL_NAME`, eg
+
+```
+PORTAL_NAME = 'my awesome portal'
+```
+
+### who can add media
+
+By default `CAN_ADD_MEDIA = "all"` means that all registered users can add media. Other valid options are:
+
+- **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails. 
+
+- **advancedUser**, only users that are marked as advanced users can add media. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
+
+### what is the portal workflow
+
+The `PORTAL_WORKFLOW` variable specifies what happens to newly uploaded media, whether they appear on listings (as the index page, or search)
+
+- **public** is the default option and means that a media can appear on listings. If media type is video, it will appear once at least a task that produces an encoded version of the file has finished succesfully. For other type of files, as image/audio they appear instantly
+
+- **private** means that newly uploaded content is private - only users can see it or MediaCMS editors, managers and admins. Those can also set the status to public or unlisted
+
+- **unlisted** means that items are unlisted. However if a user visits the url of an unlisted media, it will be shown (as opposed to private)
+
+
+### show/hide the Sign in button
+
+to show button:
+```
+LOGIN_ALLOWED = True
+```
+
+to hide button:
+
+```
+LOGIN_ALLOWED = False
+```
+
+### show/hide the Register button
+
+to show button:
+```
+REGISTER_ALLOWED = True
+```
+
+to hide button:
+
+```
+REGISTER_ALLOWED = False
+```
+
+
+### show/hide the upload media button
+
+To show:
+
+```
+UPLOAD_MEDIA_ALLOWED = True
+```
+
+To hide:
+
+```
+UPLOAD_MEDIA_ALLOWED = False
+```
+
+### show/hide the actions buttons (like/dislike/report)
+
+Make changes (True/False) to any of the following:
+
+```
+- CAN_LIKE_MEDIA = True  # whether the like media appears
+- CAN_DISLIKE_MEDIA = True  # whether the dislike media appears
+- CAN_REPORT_MEDIA = True  # whether the report media appears
+- CAN_SHARE_MEDIA = True  # whether the share media appears
+```
+
+### show/hide the download option on a media
+
+Edit `templates/config/installation/features.html` and set 
+
+```
+download: false
+```
+
+### automatically hide media upon being reported
+
+set a low number for variable `REPORTED_TIMES_THRESHOLD`
+eg 
+
+```
+REPORTED_TIMES_THRESHOLD = 2
+```
+
+once the limit is reached, media goes to private state and an email is sent to admins
+
+### set a custom message on the media upload page
+
+this message will appear below the media drag and drop form
+
+```
+PRE_UPLOAD_MEDIA_MESSAGE = 'custom message'
+```
+
+### set email settings
+
+Set correct settings per provider
+
+```
+DEFAULT_FROM_EMAIL = 'info@mediacms.io'
+EMAIL_HOST_PASSWORD = 'xyz'
+EMAIL_HOST_USER = 'info@mediacms.io'
+EMAIL_USE_TLS = True
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_HOST = 'mediacms.io'
+EMAIL_PORT = 587
+ADMIN_EMAIL_LIST = ['info@mediacms.io']
+```
+
+### disallow user registrations from specific domains
+
+set domains that are not valid for registration via this variable:
+
+```
+RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
+    'xxx.com', 'emaildomainwhatever.com']
+```
+
+### require a review by MediaCMS editors/managers/admins
+
+set value
+
+```
+MEDIA_IS_REVIEWED = False
+```
+
+any uploaded media now needs to be reviewed before it can appear to the listings. 
+MediaCMS editors/managers/admins can visit the media page and edit it, where they can see the option to mark media as reviewed. By default this is set to True, so all media don't require to be reviewed
+
+### specify maximum number of media for a playlist
+
+set a different threshold on variable `MAX_MEDIA_PER_PLAYLIST`
+
+eg
+
+```
+MAX_MEDIA_PER_PLAYLIST = 14
+```
+
+### specify maximum size of a media that can be uploaded
+
+change `UPLOAD_MAX_SIZE`. 
+
+default is 4GB
+
+```
+UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5
+```
+
+### specify maximum size of comments
+
+change `MAX_CHARS_FOR_COMMENT`
+
+default:
+
+```
+MAX_CHARS_FOR_COMMENT = 10000
+```
+
+### how many files to upload in parallel
+
+set a different threshold for `UPLOAD_MAX_FILES_NUMBER`
+default:
+
+```
+UPLOAD_MAX_FILES_NUMBER = 100
+```
+
+### force users confirm their email upon registrations
+
+default option for email confirmation is optional. Set this to mandatory in order to force users confirm their email before they can login
+
+```
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+```
+
+### rate limit account login attempts
+
+after this number is reached
+
+```
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 20
+```
+
+sets a timeout (in seconds)
+
+```
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 5
+```
+
+### disallow user registration
+
+set the following variable to False
+
+```
+USERS_CAN_SELF_REGISTER = True
+```
+
+### configure notifications
+
+Global notifications that are implemented are controlled by the following options:
+
+```
+USERS_NOTIFICATIONS = {
+    'MEDIA_ADDED': True,    
+}
+```
+
+If you want to disable notification for new media, set to False
+
+Admins also receive notifications on different events, set any of the following to False to disable
+
+```
+ADMINS_NOTIFICATIONS = {
+    'NEW_USER': True,
+    'MEDIA_ADDED': True,
+    'MEDIA_REPORTED': True,
+}
+```
+
+- NEW_USER: a new user is added
+- MEDIA_ADDED: a media is added
+- MEDIA_REPORTED: the report for a media was hit
+
+
+
+## 5. Manage pages
+to be written
+
+## 6. Django admin dashboard
+
+## 7. On portal workflow
 Who can publish content, how content appears on public listings.Difference between statuses (private, unlisted, public)
 
-## On user roles
+## 8. On user roles
 Differences over MediaCMS manager, MediaCMS editor, logged in user
 
-## Adding languages for Captions and subtitles
+## 9. Adding languages for Captions and subtitles
+to be written
 
-## Add/delete categories and tags
+## 10. Add/delete categories and tags
 Through the admin section - http://your_installation/admin/
 
-## Video transcoding
+## 11. Video transcoding
 Add / remove resolutions and profiles through http://your_installation/admin/encodeprofile
+
+## 12. How To Add A Static Page To The Sidebar
+
+### 1. Create your html page in templates/cms/ 
+e.g. duplicate and rename about.html
+```
+sudo cp templates/cms/about.html templates/cms/volunteer.html
+```
+
+### 2. Create your css file in static/css/ 
+```
+touch static/css/volunteer.css
+```
+
+### 3. In your html file, update block headermeta to reflect your new page
+```
+{% block headermeta %}
+<meta property="og:title" content="Volunteer - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+			"@type": "WebPage",
+	        "@id": "{{FRONTEND_HOST}}"
+	    }
+    },
+    {
+		"@type": "ListItem",
+		"position": 2,
+        "name": "Volunteer",
+        "item": {
+			"@type": "VolunteerPage",
+	        "@id": "{{FRONTEND_HOST}}/volunteer"
+	    }
+    }]
+}
+</script>
+<link href="{% static "css/volunteer.css" %}" rel="stylesheet"/>
+{% endblock headermeta %}
+```
+
+### 4. In your html file, update block innercontent to reflect your actual content
+Write whatever you like.
+
+### 5. In your css file, write matching styles for you html file.
+Write whatever you like.
+
+### 6. Add your view to files/views.py
+```
+def volunteer(request):
+    """Volunteer view"""
+    context = {}
+    return render(request, "cms/volunteer.html", context)
+```
+
+### 7. Add your url pattern to files/urls.py
+```
+urlpatterns = [
+    url(r"^$", views.index),
+    url(r"^about", views.about, name="about"),
+    url(r"^volunteer", views.volunteer, name="volunteer"),
+```
+
+### 8. Add your page to the left sidebar
+To add a link to your page as a menu item in the left sidebar,
+add the following code after the last line in _commons.js   
+```
+/* Checks that a given selector has loaded. */
+const checkElement = async selector => {
+    while ( document.querySelector(selector) === null) {
+      await new Promise( resolve =>  requestAnimationFrame(resolve) )
+    }
+    return document.querySelector(selector); 
+  };
+
+/* Checks that sidebar nav menu has loaded, then adds menu item. */
+checkElement('.nav-menu')
+.then((element) => {
+     (function(){    
+        var a = document.createElement('a');        
+        a.href = "/volunteer";
+        a.title = "Volunteer";
+       
+        var s = document.createElement('span');
+        s.className = "menu-item-icon";
+
+        var icon = document.createElement('i');
+        icon.className = "material-icons";
+        icon.setAttribute("data-icon", "people");
+
+        s.appendChild(icon);
+        a.appendChild(s);
+    
+        var linkText = document.createTextNode("Volunteer");
+        var t = document.createElement('span');
+
+        t.appendChild(linkText);
+        a.appendChild(t);
+
+        var listItem = document.createElement('li');
+        listItem.className = "link-item";
+        listItem.appendChild(a);
+
+        //if signed out use 3rd nav-menu
+        var elem = document.querySelector(".nav-menu:nth-child(3) nav ul"); 
+        var loc = elem.innerText;
+        if (loc.includes("About")){
+          elem.insertBefore(listItem, elem.children[2]);
+        } else { //if signed in use 4th nav-menu
+          elem = document.querySelector(".nav-menu:nth-child(4) nav ul");
+          elem.insertBefore(listItem, elem.children[2]);
+        }       
+    })();
+});
+```
+
+### 9. Restart the mediacms web server
+On docker:
+```
+sudo docker stop mediacms_web_1 && sudo docker start mediacms_web_1
+```
+
+Otherwise
+```
+sudo systemctl restart mediacms
+```
+
+
+## 13. Add Google Analytics
+Instructions contributed by @alberto98fx
+
+1. Create a file:
+
+``` touch $DIR/mediacms/templates/tracking.html ```
+
+2. Add the Gtag/Analytics script
+
+3. Inside ``` $DIR/mediacms/templates/root.html``` you'll see a file like this one: 
+
+```
+<head>
+    {% block head %}
+
+        <title>{% block headtitle %}{{PORTAL_NAME}}{% endblock headtitle %}</title>
+
+        {% include "common/head-meta.html" %}
+
+        {% block headermeta %}
+        
+        <meta property="og:title" content="{{PORTAL_NAME}}">
+        <meta property="og:type" content="website">
+
+        {%endblock headermeta %}
+
+        {% block externallinks %}{% endblock externallinks %}
+
+        {% include "common/head-links.html" %}
+
+        {% block topimports %}{%endblock topimports %}
+
+        {% include "config/index.html" %}
+      
+    {% endblock head %}
+
+</head>
+```
+
+4. Add  ``` {% include "tracking.html" %} ``` at the end inside the section ```<head>```
+  
+5. If you are using Docker and didn't  mount the entire dir you need to bind a new volume: 
+```
+  
+    web:
+    image: mediacms/mediacms:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    deploy:
+      replicas: 1
+    volumes:
+      - ./templates/root.html:/home/mediacms.io/mediacms/templates/root.html
+      - ./templates/tracking.html://home/mediacms.io/mediacms/templates/tracking.html
+  
+ ```

@@ -15,6 +15,7 @@ Checkout the [Code of conduct page](../CODE_OF_CONDUCT.md) if you want to contri
 
 
 ## System architecture
+to be written
 
 ## API documentation
 API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
