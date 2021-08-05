@@ -4,16 +4,18 @@
 - [1. Welcome](#1-welcome)
 - [2. Server Installaton](#2-server-installation)
 - [3. Docker Installation](#3-docker-installation)
-- [4. Configuration](#4-configuration)
-- [5. Manage pages](#5-manage-pages)
-- [6. Django admin dashboard](#6-django-admin-dashboard)
-- [7. On portal workflow](#7-on-portal-workflow)
-- [8. On user roles](#8-on-user-roles)
-- [9. Adding languages for Captions and subtitles](#9-adding-languages-for-captions-and-subtitles)
-- [10. Add/delete categories and tags](#10-adddelete-categories-and-tags)
-- [11. Video transcoding](#11-video-transcoding)
-- [12. How To Add A Static Page To The Sidebar](#12-how-to-add-a-static-page-to-the-sidebar)
-- [13. Add Google Analytics](#13-add-google-analytics)
+- [4. Docker Deployement options](#4-docker-deployment-options)
+
+- [5. Configuration](#5-configuration)
+- [6. Manage pages](#6-manage-pages)
+- [7. Django admin dashboard](#7-django-admin-dashboard)
+- [8. On portal workflow](#8-on-portal-workflow)
+- [9. On user roles](#9-on-user-roles)
+- [10. Adding languages for Captions and subtitles](#10-adding-languages-for-captions-and-subtitles)
+- [11. Add/delete categories and tags](#11-adddelete-categories-and-tags)
+- [12. Video transcoding](#12-video-transcoding)
+- [13. How To Add A Static Page To The Sidebar](#13-how-to-add-a-static-page-to-the-sidebar)
+- [14. Add Google Analytics](#14-add-google-analytics)
 
 
 ## 1. Welcome
@@ -116,9 +118,64 @@ Checkout the configuration docs here.
 Database is stored on ../postgres_data/ and media_files on media_files/
 
 
+## 4. Docker Deployement options
+
+The mediacms image is built to use supervisord as the main process, which manages one or more services required to run mediacms. We can toggle which services are run in a given container by setting the environment variables below to `yes` or `no`:
+
+* ENABLE_UWSGI
+* ENABLE_NGINX
+* ENABLE_CELERY_BEAT
+* ENABLE_CELERY_SHORT
+* ENABLE_CELERY_LONG
+* ENABLE_MIGRATIONS
+
+By default, all these services are enabled, but in order to create a scaleable deployment, some of them can be disabled, splitting the service up into smaller services.
+
+Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
+
+See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
+
+To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
+
+# Simple Deployment, accessed as http://localhost
+
+The main container runs migrations, mediacms_web, celery_beat, celery_workers (celery_short and celery_long services), exposed on port 80 supported by redis and postgres database.
+
+ The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://localhost, on the docker host machine.
+
+# Server with ssl certificate through letsencrypt service, accessed as https://my_domain.com
+Before trying this out make sure the ip points to my_domain.com. 
+
+With this method [this deployment](../docker-compose-letsencrypt.yaml) is used. 
+
+Edit this file and set `VIRTUAL_HOST` as my_domain.com, `LETSENCRYPT_HOST` as my_domain.com, and your email on `LETSENCRYPT_EMAIL`
+
+Edit `deploy/docker/local_settings.py` and set https://my_domain.com as `FRONTEND_HOST`
+
+Now run docker-compose -f docker-compose-letsencrypt.yaml up, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
+
+# Advanced Deployment, accessed as http://localhost:8000
+
+Here we can run 1 mediacms_web instance, with the FRONTEND_HOST in `deploy/docker/local_settings.py` configured as http://localhost:8000. This is bootstrapped by a single migrations instance and supported by a single celery_beat instance and 1 or more celery_worker instances. Redis and postgres containers are also used for persistence. Clients can access the service on http://localhost:8000, on the docker host machine. This is similar to [this deployment](../docker-compose.yaml), with a `port` defined in FRONTEND_HOST.
+
+# Advanced Deployment, with reverse proxy, accessed as http://mediacms.io
+
+Here we can use `jwilder/nginx-proxy` to reverse proxy to 1 or more instances of mediacms_web supported by other services as mentioned in the previous deployment. The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://mediacms.io, nginx-proxy has port 80 exposed. Clients can access the service on http://mediacms.io (Assuming DNS or the hosts file is setup correctly to point to the IP of the nginx-proxy instance). This is similar to [this deployment](../docker-compose-http-proxy.yaml).
+
+# Advanced Deployment, with reverse proxy, accessed as https://localhost
+
+The reverse proxy (`jwilder/nginx-proxy`) can be configured to provide SSL termination using self-signed certificates, letsencrypt or CA signed certificates (see: https://hub.docker.com/r/jwilder/nginx-proxy or [LetsEncrypt Example](https://www.singularaspect.com/use-nginx-proxy-and-letsencrypt-companion-to-host-multiple-websites/) ). In this case the FRONTEND_HOST should be set to https://mediacms.io. This is similar to [this deployment](../docker-compose-http-proxy.yaml).
+
+# A Scaleable Deployment Architecture (Docker, Swarm, Kubernetes)
+
+The architecture below generalises all the deployment scenarios above, and provides a conceptual design for other deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple mediacms_web instances and celery_workers. For large deployments, managed postgres, redis and storage may be adopted.
+
+![MediaCMS](images/architecture.png)
 
 
-## 4. Configuration
+
+
+## 5. Configuration
 Several options are available on `cms/settings.py`, most of the things that are allowed or should be disallowed are described there.
 
 It is advisable to override any of them by adding it to `local_settings.py` . 
@@ -383,27 +440,27 @@ ADMINS_NOTIFICATIONS = {
 
 
 
-## 5. Manage pages
+## 6. Manage pages
 to be written
 
-## 6. Django admin dashboard
+## 7. Django admin dashboard
 
-## 7. On portal workflow
+## 8. On portal workflow
 Who can publish content, how content appears on public listings.Difference between statuses (private, unlisted, public)
 
-## 8. On user roles
+## 9. On user roles
 Differences over MediaCMS manager, MediaCMS editor, logged in user
 
-## 9. Adding languages for Captions and subtitles
+## 10. Adding languages for Captions and subtitles
 to be written
 
-## 10. Add/delete categories and tags
+## 11. Add/delete categories and tags
 Through the admin section - http://your_installation/admin/
 
-## 11. Video transcoding
+## 12. Video transcoding
 Add / remove resolutions and profiles through http://your_installation/admin/encodeprofile
 
-## 12. How To Add A Static Page To The Sidebar
+## 13. How To Add A Static Page To The Sidebar
 
 ### 1. Create your html page in templates/cms/ 
 e.g. duplicate and rename about.html
@@ -538,7 +595,7 @@ sudo systemctl restart mediacms
 ```
 
 
-## 13. Add Google Analytics
+## 14. Add Google Analytics
 Instructions contributed by @alberto98fx
 
 1. Create a file:
