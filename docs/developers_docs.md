@@ -6,6 +6,7 @@
 - [How to contribute](#how-to-contribute)
 - [Working with Docker tips](#working-with-docker-tips)
 - [How video is transcoded](#how-video-is-transcoded)
+- [Working with the automated tests](#working-with-the-automated-tests)
 
 ## How to contribute
 Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
@@ -33,7 +34,7 @@ docker-compose -f docker-compose-dev.yaml up
 Eg change `frontend/src/static/js/pages/HomePage.tsx` , dev application refreshes in a number of seconds (hot reloading) and I see the changes, once I'm happy I can run
 
 ```
-docker-compose -f docker-compose-dev.yaml -T frontend npm run dist
+docker-compose -f docker-compose-dev.yaml exec -T frontend npm run dist
 ```
 
 And then in order for the changes to be visible on the application while served through nginx, 
@@ -81,3 +82,42 @@ there is also an experimental small service (not commited to the repo currently)
 When the Encode object is marked as success and chunk=False, and thus is available for download/stream, there is a task that gets started and saves an HLS version of the file (1 mp4-->x number of small .ts chunks). This would be FILES_C
 
 This mechanism allows for workers that have access on the same filesystem (either localhost, or through a shared network filesystem, eg NFS/EFS) to work on the same time and produce results. 
+
+## Working with the automated tests
+
+This instructions assume that you're using the docker installation
+
+1. start docker-compose
+
+```
+docker-compose up
+```
+
+2. Install the requirements on `requirements-dev.txt ` on web container (we'll use the web container for this)
+
+```
+docker-compose exec -T web pip install -r requirements-dev.txt 
+```
+
+3. Now you can run the existing tests
+
+```
+docker-compose exec --env TESTING=True -T web pytest
+```
+
+The `TESTING=True` is passed for Django to be aware this is a testing environment (so that it runs Celery tasks as functions for example and not as background tasks, since Celery is not started in the case of pytest)
+
+
+4. You may try a single test, by specifying the path, for example
+
+```
+docker-compose exec --env TESTING=True -T web pytest tests/test_fixtures.py
+```
+
+5. You can also see the coverage
+
+```
+docker-compose exec --env TESTING=True -T web pytest --cov=. --cov-report=html
+```
+
+and of course...you are very welcome to help us increase it ;)
