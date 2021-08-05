@@ -5,7 +5,6 @@
 - [2. Server Installaton](#2-server-installation)
 - [3. Docker Installation](#3-docker-installation)
 - [4. Docker Deployement options](#4-docker-deployment-options)
-
 - [5. Configuration](#5-configuration)
 - [6. Manage pages](#6-manage-pages)
 - [7. Django admin dashboard](#7-django-admin-dashboard)
@@ -171,8 +170,6 @@ The reverse proxy (`jwilder/nginx-proxy`) can be configured to provide SSL termi
 The architecture below generalises all the deployment scenarios above, and provides a conceptual design for other deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple mediacms_web instances and celery_workers. For large deployments, managed postgres, redis and storage may be adopted.
 
 ![MediaCMS](images/architecture.png)
-
-
 
 
 ## 5. Configuration
