@@ -1,15 +1,13 @@
-from django.test import Client, TestCase
-from rest_framework.authtoken.models import Token
+from django.test import TestCase
 
 from files.models import Category, EncodeProfile
-from files.tests import create_account
 
 
 class TestFixtures(TestCase):
     fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
 
     def test_categories_fixtures(self):
-        categories = Category.objects.all()        
+        categories = Category.objects.all()
         self.assertEqual(
             categories.count(),
             6,
@@ -23,13 +21,13 @@ class TestFixtures(TestCase):
         )
 
     def test_encodeprofile_fixtures(self):
-        profiles = EncodeProfile.objects.all()        
+        profiles = EncodeProfile.objects.all()
         self.assertEqual(
             profiles.count(),
             21,
             "Problem with Encode Profile fixtures",
         )
-        profiles = EncodeProfile.objects.filter(active=True)        
+        profiles = EncodeProfile.objects.filter(active=True)
         self.assertEqual(
             profiles.count(),
             6,
