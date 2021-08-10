@@ -1,5 +1,7 @@
 from django import forms
 
+from files.methods import is_mediacms_manager
+
 from .models import Channel, User
 
 
@@ -17,7 +19,6 @@ class UserForm(forms.ModelForm):
         fields = (
             "name",
             "description",
-            "email",
             "logo",
             "notification_on_comments",
             "is_featured",
@@ -39,7 +40,7 @@ class UserForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super(UserForm, self).__init__(*args, **kwargs)
         self.fields.pop("is_featured")
-        if not user.is_superuser:
+        if not is_mediacms_manager(user):
             self.fields.pop("advancedUser")
             self.fields.pop("is_manager")
             self.fields.pop("is_editor")

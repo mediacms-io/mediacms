@@ -29,7 +29,7 @@ jobs:
       shell: bash
 
     - name: Run Django Tests
-      run:  docker-compose -f docker-compose-dev.yaml exec -T web pytest
+      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
 
     - name: Tear down the Stack
       run:  docker-compose -f docker-compose-dev.yaml down

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.conf.urls import url
+from django.conf.urls import re_path
 
 from . import views
 
 app_name = "uploader"
 
 urlpatterns = [
-    url(r"^upload/$", views.FineUploaderView.as_view(), name="upload"),
+    re_path(r"^upload/$", views.FineUploaderView.as_view(), name="upload"),
 ]

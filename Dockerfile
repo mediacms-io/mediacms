@@ -28,9 +28,6 @@ FROM python:3.8-slim-buster as runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV ADMIN_USER='admin'
-ENV ADMIN_PASSWORD='mediacms'
-ENV ADMIN_EMAIL='admin@localhost'
 
 # See: https://github.com/celery/celery/issues/6285#issuecomment-715316219
 ENV CELERY_APP='cms'
@@ -50,10 +47,16 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
 
 RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends \
-    supervisor nginx ffmpeg imagemagick procps -y && \
+    supervisor nginx imagemagick procps wget xz-utils -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get purge --auto-remove && \
     apt-get clean
+
+RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
+    mkdir -p ffmpeg-tmp && \
+    tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C ffmpeg-tmp && \
+    cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin && \
+    rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
 WORKDIR /home/mediacms.io/mediacms
 
