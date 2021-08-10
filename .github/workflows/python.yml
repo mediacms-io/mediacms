@@ -28,8 +28,20 @@ jobs:
       run: sleep 60s
       shell: bash
 
-    - name: Run Django Tests
-      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+    - name: Run Django Tests and generate coverage report
+      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest pytest --cov --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        directory: ./coverage/reports/
+        env_vars: OS,PYTHON
+        fail_ci_if_error: true
+        files: ./*.xml
+        flags: unittests
+        name: codecov-umbrella
+        path_to_write_report: ./coverage/codecov_report.txt
+        verbose: true
 
     - name: Tear down the Stack
       run:  docker-compose -f docker-compose-dev.yaml down
