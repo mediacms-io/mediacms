@@ -29,7 +29,7 @@ jobs:
       shell: bash
 
     - name: Run Django Tests and generate coverage report
-      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest pytest --cov --cov-report=xml
+      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest --cov --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
