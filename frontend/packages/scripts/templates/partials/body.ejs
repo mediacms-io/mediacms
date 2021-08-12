@@ -1,7 +1,7 @@
 <% var item, key %>
 
 <body>
-  
+
   <% if (htmlWebpackPlugin.options.unsupportedBrowser) { %>
     <!-- Unsupported browser -->
     <style>.unsupported-browser { display: none; }</style>
@@ -68,7 +68,7 @@
     <!-- Google analytics script -->
 
     <script type="text/javascript">
-    
+
       window.GoogleAnalyticsObject='ga';window.ga=function(){ga.q.push(arguments)};ga.q=[];ga.l=+new Date;
 
       <% if (htmlWebpackPlugin.options.googleAnalytics.trackingId) { %>

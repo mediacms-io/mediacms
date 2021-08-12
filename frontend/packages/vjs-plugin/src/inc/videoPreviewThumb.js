@@ -10,7 +10,7 @@ function videoPreviewThumb(player, options){
             height: 120,
         }
     };
-    
+
     function extend() {
         var args = Array.prototype.slice.call(arguments);
         var target = args.shift() || {};
@@ -25,7 +25,7 @@ function videoPreviewThumb(player, options){
         }
         return target;
     }
-    
+
     function getAllComputedStyles(el) {
         return window.getComputedStyle ? window.getComputedStyle(el) : el.currentStyle;
     }
@@ -115,7 +115,7 @@ function videoPreviewThumb(player, options){
         spriteDom.img.onload = function() {
 
             var innerStyles = getAllComputedStyles(spriteDom.inner);
-            
+
             if( void 0 !== innerStyles ){
                 innerBorderWidth.top = parseFloat( innerStyles.borderTopWidth );
                 innerBorderWidth.left = parseFloat( innerStyles.borderLeftWidth );
@@ -124,12 +124,12 @@ function videoPreviewThumb(player, options){
             }
 
             spriteHeight = this.naturalHeight;
-            
+
             spriteDom.img = void 0; // Unset image element.
 
             updateDimensions();
         };
-        
+
         spriteDom.img.src = settings.url;
     });
 
@@ -141,7 +141,7 @@ function videoPreviewThumb(player, options){
 
         var pageXOffset = window.pageXOffset ? window.pageXOffset : document.documentElement.scrollLeft;
         var pageX = event.changedTouches ? event.changedTouches[0].pageX : event.pageX;
-        
+
         var left = ( pageX || ( event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft ) ) - ( progressControlClientRect.left + pageXOffset );
         var right = ( progressControlClientRect.width || progressControlClientRect.right ) + pageXOffset;
 

@@ -34,8 +34,8 @@ interface HtmlWebpackPluginArgs{
 }
 
 function htmlPluginDataFunction (pluginData: HtmlWebpackPluginArgs, options: Options, callback: (err:typeof WebpackError, arg1: HtmlWebpackPluginArgs) => void) {
-	
-	pluginData.html = prettify( 
+
+	pluginData.html = prettify(
 		options.replace.reduce( (res:string, item: string | RegExp) => res.replace( item instanceof RegExp ? new RegExp(item, 'gi') : item, '' ), pluginData.html )/*,
 		options.config*/
 	);
@@ -46,7 +46,7 @@ function htmlPluginDataFunction (pluginData: HtmlWebpackPluginArgs, options: Opt
 export default class MyHtmlBeautifyWebpackPlugin {
 
 	apply(compiler: Compiler): void {
-	
+
 		const options: Options = {
 			config: {	// TODO: Remove it.
 				indent_size: 4,

@@ -22,7 +22,7 @@ export default function rollup_builds( input_file, output_folder, pkg ){
     const postcss_config = {
         extract: true,
         modules: false, // Avoid adding prefixes to classnames (etc).
-        extensions: ['.css', '.sss', '.pcss', '.scss'],        
+        extensions: ['.css', '.sss', '.pcss', '.scss'],
     };
 
     const postcss_plugin = postcss( postcss_config );
@@ -60,7 +60,7 @@ export default function rollup_builds( input_file, output_folder, pkg ){
             external: !! bundle ? {} : dependencies_names,
             output: [ { format: esm_format,  file: filename } ],
             plugins: plugins,
-        };        
+        };
     }
 
     function commonjs_build( filename, visualize, bundle ){

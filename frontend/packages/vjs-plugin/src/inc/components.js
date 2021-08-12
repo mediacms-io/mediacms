@@ -77,7 +77,7 @@ function composeCustomCompMethods(ret, extnd, innerHtml, extraCSSClass, htmlAttr
             if( htmlAttr ){
                 for(k in htmlAttr){
                     if( htmlAttr.hasOwnProperty(k) ){
-                        this.el_.setAttribute( k, htmlAttr[k] );   
+                        this.el_.setAttribute( k, htmlAttr[k] );
                     }
                 }
             }
@@ -111,7 +111,7 @@ export function videojsComposeAndExtendCustomComp( extnd, extraCSSClass, innerHt
 export function composeCustomComp( extnd, extraCSSClass, innerHtml, htmlAttr ){
     const ret = {};
     composeCustomCompMethods(ret, extnd, innerHtml, extraCSSClass, htmlAttr);
-    return videosjsFormatExtendObj( extnd, ret );    
+    return videosjsFormatExtendObj( extnd, ret );
 }
 
 export function composeAndExtendCustomComp( extraCSSClass, innerHtml, htmlAttr ){

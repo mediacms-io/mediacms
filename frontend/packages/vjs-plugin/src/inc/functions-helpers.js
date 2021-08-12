@@ -22,7 +22,7 @@ export function generateControlBarComponents(pluginInstanceRef) {
         allComps[level]= void 0 === allComps[level] ? [] : allComps[level];
 
         for( k in child ){
-        	
+
             if( child.hasOwnProperty(k) ){
 
                 if( child[k] && child[k].children ){
@@ -76,7 +76,7 @@ export function generateTouchControlComponents(pluginInstanceRef, options) {
 
 	if( options.enabledTouchControls ){
 
-		let TouchControls, 
+		let TouchControls,
 			TouchControlsInner,
 			TouchPrevious,
 			TouchPlay,
@@ -107,7 +107,7 @@ export function generateTouchControlComponents(pluginInstanceRef, options) {
         videojs.registerComponent( 'TouchPreviousButton', videojs.extend( previousButton.extend , previousButton.methods) );
 		videojs.registerComponent( 'TouchPlayButton', videojs.extend( playButton.extend , playButton.methods) );
     	videojs.registerComponent( 'TouchNextButton', videojs.extend( nextButton.extend , nextButton.methods) );
-    	
+
     	videojs.registerComponent( 'TouchPlay', videojs.extend( __MediaCMSComponent__ , composeCustomComp( __MediaCMSComponent__, 'vjs-touch-play-button' ).methods ) );
 
     	if( options.controlBar.next || options.controlBar.previous ){
@@ -122,11 +122,11 @@ export function generateTouchControlComponents(pluginInstanceRef, options) {
         pluginInstanceRef.player.addChild( 'TouchControls' );
 
         TouchControls = pluginInstanceRef.player.getChild('TouchControls');
-        
+
         TouchControls.addChild( 'TouchControlsInner' );
 
         TouchControlsInner = TouchControls.getChild('TouchControlsInner');
-		
+
 		TouchControlsInner.addChild( 'TouchPrevious' );
 		TouchControlsInner.addChild( 'TouchPlay' );
 		TouchControlsInner.addChild( 'TouchNext' );
@@ -138,7 +138,7 @@ export function generateTouchControlComponents(pluginInstanceRef, options) {
 		TouchPrevious.addChild( 'TouchPreviousButton' );
 		TouchPlay.addChild( 'TouchPlayButton' );
 		TouchNext.addChild( 'TouchNextButton' );
-	}	
+	}
 }
 
 export function generateCornerLayersComponents(pluginInstanceRef, options) {
@@ -184,7 +184,7 @@ export function generateCornerLayersComponents(pluginInstanceRef, options) {
     		if( layers[k].content ){
 
 	    		videojs.registerComponent( compPrefix + k, videojs.extend( __MediaCMSComponent__ , composeCustomComp( __MediaCMSComponent__, layers[k].className, layers[k].content ).methods ) );
-	    		
+
 	    		layers[k].parent.addChild( compPrefix + k );
 	    	}
     	}
@@ -287,7 +287,7 @@ function initComponents(pluginInstanceRef, which, struct, args){
 		    };
 
 		    videojs.registerComponent('SettingsPanel', videojs.extend( tmp.extend , tmp.methods));
-	        
+
 	        videojs.registerComponent('SettingsPanelInner', videojs.extend( __SettingsPanelInnerComponent__, composeCustomComp( __SettingsPanelInnerComponent__ ).methods));
 
 	        videojs.registerComponent('SettingsMenu', videojs.extend( __SettingsMenuComponent__, composeCustomComp( __SettingsMenuComponent__ ).methods));
@@ -505,7 +505,7 @@ function initComponents(pluginInstanceRef, which, struct, args){
 			        videojs.registerComponent('ResolutionOption_' + key + '_content', videojs.extend( tmp.extend , tmp.methods));
 
 	            }( k, args.resolutions[k].title || k ));
-	        	
+
 	        	i += 1;
 	        }
 

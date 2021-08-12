@@ -23,7 +23,7 @@ export interface ConfigPages{
 }
 
 export interface ConfigWindow{
-	[key: string ]: unknown 
+	[key: string ]: unknown
 }
 
 export interface ConfigType {

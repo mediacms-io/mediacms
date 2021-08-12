@@ -1,5 +1,5 @@
 <script type="text/javascript">
-	
+
 	var MediaCMS = {
 		{% if media %}mediaId: "{{media}}", {% endif %}
 		{% if user %}profileId: "{{user.username}}", {% endif %}
@@ -15,5 +15,5 @@
 	{% include "config/installation/site.html" %}
 
 	window.MediaCMS = MediaCMS;
-	
+
 </script>
