@@ -28,4 +28,3 @@ ExecReload=/bin/sh -c '${CELERY_BIN} multi restart ${CELERYD_NODES} -A ${CELERY_
 
 [Install]
 WantedBy=multi-user.target
-
