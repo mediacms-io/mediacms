@@ -423,13 +423,13 @@ def create_hls(friendly_token):
         return False
 
     p = media.uid.hex
-    output_dir = os.path.join(settings.MEDIA_ROOT, settings.HLS_DIR, p)
+    output_dir = os.path.join(settings.HLS_DIR, p)
     encodings = media.encodings.filter(profile__extension="mp4", status="success", chunk=False, profile__codec="h264")
     if encodings:
         existing_output_dir = None
         if os.path.exists(output_dir):
             existing_output_dir = output_dir
-            output_dir = os.path.join(settings.MEDIA_ROOT, settings.HLS_DIR, p + produce_friendly_token())
+            output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
         files = " ".join([f.media_file.path for f in encodings if f.media_file])
         cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(settings.MP4HLS_COMMAND, output_dir, files)
         subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
