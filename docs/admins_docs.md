@@ -117,7 +117,7 @@ Checkout the configuration docs here.
 Database is stored on ../postgres_data/ and media_files on media_files/
 
 
-## 4. Docker Deployement options
+## 4. Docker Deployment options
 
 The mediacms image is built to use supervisord as the main process, which manages one or more services required to run mediacms. We can toggle which services are run in a given container by setting the environment variables below to `yes` or `no`:
 
