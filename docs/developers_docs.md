@@ -55,7 +55,8 @@ Media page: need to upload content through the main application (nginx/port 80),
 
 There are some issues with CORS too to resolve, in order for some pages to function, eg the manage comments page
 
-```http://localhost:8088/manage-media.html px manage_media
+```
+http://localhost:8088/manage-media.html manage_media
 ```
 
 ### Backend application changes
