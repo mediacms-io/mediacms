@@ -1,28 +1,31 @@
 # Developers documentation
 
 ## Table of contents
-- [System architecture](#system-architecture)
-- [API documentation](#api-documentation)
-- [How to contribute](#how-to-contribute)
-- [Working with Docker tips](#working-with-docker-tips)
-- [How video is transcoded](#how-video-is-transcoded)
-- [Working with the automated tests](#working-with-the-automated-tests)
+- [1. Welcome](#1-welcome)
+- [2. System architecture](#2-system-architecture)
+- [3. API documentation](#3-api-documentation)
+- [4. How to contribute](#4-how-to-contribute)
+- [5. Working with Docker tips](#5-working-with-docker-tips)
+- [6. Working with the automated tests](#6-working-with-the-automated-tests)
+- [7. How video is transcoded](#7-how-video-is-transcoded)
 
-## How to contribute
+## 1. Welcome
+This page is created for MediaCMS developers and contains related information.
+
+## 2. System architecture
+to be written
+
+## 3. API documentation
+API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
+This page allows you to login to perform authenticated actions - it will also use your session if logged in. 
+
+## 4. How to contribute
 Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
 
 Checkout the [Code of conduct page](../CODE_OF_CONDUCT.md) if you want to contribute to this repository
 
 
-## System architecture
-to be written
-
-## API documentation
-API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
-This page allows you to login to perform authenticated actions - it will also use your session if logged in. 
-
-
-## Working with Docker tips
+## 5. Working with Docker tips
 
 To perform the Docker installation, follow instructions to install Docker + Docker compose (docs/Docker_Compose.md) and then build/start docker-compose-dev.yaml . This will run the frontend application on port 8088 on top of all other containers (including the Django web application on port 80)
 
@@ -84,7 +87,7 @@ When the Encode object is marked as success and chunk=False, and thus is availab
 
 This mechanism allows for workers that have access on the same filesystem (either localhost, or through a shared network filesystem, eg NFS/EFS) to work on the same time and produce results. 
 
-## Working with the automated tests
+## 6. Working with the automated tests
 
 This instructions assume that you're using the docker installation
 
