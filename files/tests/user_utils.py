@@ -8,7 +8,7 @@ faker = Factory.create()
 def create_account(username=None, email=None, password=None, name=None, **kwargs):
     "Allow to create accounts by passing None or specific arguements"
     email = email or faker.email()
-    username = username or email.split('a')[0]
+    username = username or email.split('@')[0]
     password = password or faker.password()
     name = name or faker.name()
 
