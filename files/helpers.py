@@ -392,8 +392,8 @@ def media_file_info(input_file):
         "color_transfer": video_info.get("color_space"),
         "color_primaries": video_info.get("color_primaries"),
         "field_order": video_info.get("field_order"),
-        "display_aspect_ratio": video_info["display_aspect_ratio"],
-        "sample_aspect_ratio": video_info["sample_aspect_ratio"],
+        "display_aspect_ratio": video_info.get("display_aspect_ratio"),
+        "sample_aspect_ratio": video_info.get("sample_aspect_ratio"),
     }
 
     if has_audio:
