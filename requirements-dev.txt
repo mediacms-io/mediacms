@@ -14,6 +14,3 @@ pytest-factoryboy
 Faker
 selenium
 webdriver-manager
-rich
-click
-requests
