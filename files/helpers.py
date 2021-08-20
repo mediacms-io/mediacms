@@ -3,7 +3,6 @@
 
 import hashlib
 import json
-import math
 import os
 import random
 import shutil
@@ -369,16 +368,16 @@ def media_file_info(input_file):
         stdout = run_command(cmd).get("out")
         stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
         video_bitrate = round((stream_size * 8 / 1024.0) / video_duration, 2)
-    
-    if "r_frame_rate" in video_info.keys():   
+
+    if "r_frame_rate" in video_info.keys():
         video_frame_rate = video_info["r_frame_rate"].partition("/")
-        video_frame_rate_n =  video_frame_rate[0]
-        video_frame_rate_d =  video_frame_rate[2]  
+        video_frame_rate_n = video_frame_rate[0]
+        video_frame_rate_d = video_frame_rate[2]
 
     ret = {
         "filename": input_file,
         "file_size": file_size,
-        "video_duration": video_duration, 
+        "video_duration": video_duration,
         "video_frame_rate_n": video_frame_rate_n,
         "video_frame_rate_d": video_frame_rate_d,
         "video_bitrate": video_bitrate,
@@ -519,7 +518,7 @@ def get_base_ffmpeg_command(
 
     # avoid very high frame rates
     while target_fps > 60:
-        target_fps = target_fps/2
+        target_fps = target_fps / 2
 
     if target_fps < 1:
         target_fps = 1
@@ -707,7 +706,6 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
     #        target_fps = 25
     #    else:
 
-
     if media_info.get("video_duration") > CRF_ENCODING_NUM_SECONDS:
         enc_type = "crf"
     else:
@@ -717,7 +715,6 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
         passes = [1, 2]
     elif enc_type == "crf":
         passes = [2]
-
 
     cmds = []
     for pass_number in passes:
