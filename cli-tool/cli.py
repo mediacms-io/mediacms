@@ -1,4 +1,5 @@
 import json
+import os
 
 import click
 import requests
@@ -60,6 +61,58 @@ def login():
         print(f"Welcome to MediaCMS [bold blue]{username}[/bold blue]. Your auth creds have been suceesfully stored in the .env file", ":v:")
     else:
         print(f'Error: {response.text}')
+
+
+@apis.command()
+def upload_media():
+    """Upload media to the server"""
+
+    headers = {'authorization': f'Token {AUTH_KEY}'}
+
+    path = input('Enter the location of the file or directory where multiple files are present: ')
+
+    if os.path.isdir(path):
+        for filename in os.listdir(path):
+            files = {}
+            abs = os.path.abspath("{path}/{filename}")
+            files['media_file'] = open(f'{abs}', 'rb')
+            response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
+            if response.status_code == 201:
+                print("[bold blue]{filename}[/bold blue] successfully uploaded!")
+            else:
+                print(f'Error: {response.text}')
+
+    else:
+        files = {}
+        files['media_file'] = open(f'{os.path.abspath(path)}', 'rb')
+        response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
+        if response.status_code == 201:
+            print("[bold blue]{filename}[/bold blue] successfully uploaded!")
+        else:
+            print(f'Error: {response.text}')
+
+
+@apis.command()
+def my_media():
+    """List all my media"""
+
+    headers = {'authorization': f'Token {AUTH_KEY}'}
+    response = requests.get(url=f'{BASE_URL}/media?author={USERNAME}', headers=headers)
+
+    if response.status_code == 200:
+        data_json = json.loads(response.text)
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Name of the media")
+        table.add_column("Media Type")
+        table.add_column("State")
+
+        for data in data_json['results']:
+            table.add_row(data['title'], data['media_type'], data['state'])
+        console.print(table)
+
+    else:
+        print(f'Could not get the media: {response.text}')
 
 
 @apis.command()
