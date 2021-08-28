@@ -35,7 +35,7 @@ set_envs()
 
 @click.group()
 def apis():
-    """A CLI wrapper for the API of Public APIs."""
+    """A CLI wrapper for the MediaCMS API endpoints."""
 
 
 @apis.command()
