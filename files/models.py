@@ -431,8 +431,14 @@ class Media(models.Model):
         self.set_media_type()
         if self.media_type == "video":
             self.set_thumbnail(force=True)
-            self.produce_sprite_from_video()
-            self.encode()
+            if settings.DO_NOT_TRANSCODE_VIDEO:
+                self.encoding_status = "success"
+                if self.state == "public" and self.encoding_status == "success" and self.is_reviewed is True:
+                    self.listable = True
+                self.save(update_fields=['encoding_status', 'listable'])
+            else:
+                self.produce_sprite_from_video()
+                self.encode()
         elif self.media_type == "image":
             self.set_thumbnail(force=True)
         return True
@@ -661,6 +667,11 @@ class Media(models.Model):
             return ret
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
+
+        if settings.DO_NOT_TRANSCODE_VIDEO:
+            ret['720'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
+
         for encoding in self.encodings.select_related("profile").filter(chunk=False):
             if encoding.profile.extension == "gif":
                 continue

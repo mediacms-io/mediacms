@@ -479,3 +479,6 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/logout/$',
         r'/accounts/signup/$',
     ]
+
+# if True, only show original, don't perform any action on videos
+DO_NOT_TRANSCODE_VIDEO = False
