@@ -146,10 +146,13 @@ STATIC_ROOT = BASE_DIR + "/static/"
 # where uploaded + encoded media are stored
 MEDIA_ROOT = BASE_DIR + "/media_files/"
 
-MEDIA_UPLOAD_DIR = os.path.join(MEDIA_ROOT, "original/")
-MEDIA_ENCODING_DIR = os.path.join(MEDIA_ROOT, "encoded/")
-THUMBNAIL_UPLOAD_DIR = os.path.join(MEDIA_UPLOAD_DIR, "thumbnails/")
-SUBTITLES_UPLOAD_DIR = os.path.join(MEDIA_UPLOAD_DIR, "subtitles/")
+# these used to be os.path.join(MEDIA_ROOT, "folder/") but update to
+# Django 3.1.9 requires not absolute paths to be utilized...
+
+MEDIA_UPLOAD_DIR = "original/"
+MEDIA_ENCODING_DIR = "encoded/"
+THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
+SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
 HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
 
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
@@ -440,6 +443,13 @@ LOCAL_INSTALL = False
 # this is an option to make the whole portal available to logged in users only
 # it is placed here so it can be overrided on local_settings.py
 GLOBAL_LOGIN_REQUIRED = False
+
+# TODO: separate settings on production/development more properly, for now
+# this should be ok
+CELERY_TASK_ALWAYS_EAGER = False
+if os.environ.get("TESTING"):
+    CELERY_TASK_ALWAYS_EAGER = True
+
 
 try:
     # keep a local_settings.py file for local overrides

@@ -92,12 +92,18 @@ Visit [Releases Page](https://github.com/mediacms-io/mediacms/releases) for deta
 
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-* [Single Server](docs/Single_Server.md) page
-* [Docker Compose](docs/Docker_Compose.md) page
+* [Single Server](docs/admins_docs.md#2-server-installation) page
+* [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
 ## Configuration
 
-Several options are available on cms/settings.py, most of the things that are allowed or should be disallowed are described there. It is advisable to override any of them by adding it to cms/local_settings.py. All configuration options will be documented gradually on the [Configuration](docs/Configuration.md) page.
+Visit [Configuration](docs/admins_docs.md#5-configuration) page.
+
+
+## Documentation
+* [Users documentation](docs/user_docs.md) page
+* [Administrators documentation](docs/admins_docs.md) page
+* [Developers documentation](docs/developers_docs.md) page
 
 
 ## Technology
@@ -122,12 +128,6 @@ If you like the project, here's a few things you can do
 - Star the project
 - Add functionality, work on a PR, fix an issue! 
 
-## Developers info
-
-- API documentation through Swagger is available under /swagger URL of your installation -example https://demo.mediacms.io/swagger/
-- We're working on proper documentation for users, managers and developers, until then checkout what's available on the docs/ folder of this repository
-- Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
-- Checkout the [Code of conduct page](CODE_OF_CONDUCT.md) if you want to contribute to this repository
 
 ## Contact
 info@mediacms.io

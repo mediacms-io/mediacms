@@ -5,7 +5,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
@@ -23,7 +24,7 @@ from files.methods import is_mediacms_editor, is_mediacms_manager
 
 from .forms import ChannelForm, UserForm
 from .models import Channel, User
-from .serializers import UserDetailSerializer, UserSerializer
+from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
 
 
 def get_user(username):
@@ -305,3 +306,65 @@ class UserDetail(APIView):
 
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserWhoami(generics.RetrieveAPIView):
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+    queryset = User.objects.all()
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserDetailSerializer
+
+    def get_object(self):
+        return User.objects.get(id=self.request.user.id)
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Whoami user information',
+        operation_description='Whoami user information',
+        responses={200: openapi.Response('response description', UserDetailSerializer), 403: 'Forbidden'},
+    )
+    def get(self, request, *args, **kwargs):
+        return super(UserWhoami, self).get(request, *args, **kwargs)
+
+
+class UserToken(APIView):
+    parser_classes = (JSONParser,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Get a user token',
+        operation_description="Returns an authenticated user's token",
+        responses={200: 'token', 403: 'Forbidden'},
+    )
+    def get(self, request, *args, **kwargs):
+        token = Token.objects.filter(user=request.user).first()
+        if not token:
+            token = Token.objects.create(user=request.user)
+
+        return Response({'token': str(token)}, status=200)
+
+
+class LoginView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = LoginSerializer
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        operation_summary='Login url',
+        operation_description="Login url endpoint. According to what the portal provides, you may provide username and/or email, plus the password",
+        manual_parameters=[
+            openapi.Parameter(name="username", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="username"),
+            openapi.Parameter(name="email", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="email"),
+            openapi.Parameter(name="password", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="password"),
+        ],
+        responses={200: openapi.Response('user details', LoginSerializer), 404: 'Bad request'},
+    )
+    def post(self, request):
+        data = request.data
+
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
