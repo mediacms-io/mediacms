@@ -209,7 +209,7 @@ class Media(models.Model):
         help_text="Rating category, if media Rating is allowed",
     )
 
-    reported_times = models.IntegerField(default=0, help_text="how many time a Medis is reported")
+    reported_times = models.IntegerField(default=0, help_text="how many time a media is reported")
 
     search = SearchVectorField(
         null=True,
