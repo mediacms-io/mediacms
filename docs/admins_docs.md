@@ -15,6 +15,7 @@
 - [12. Video transcoding](#12-video-transcoding)
 - [13. How To Add A Static Page To The Sidebar](#13-how-to-add-a-static-page-to-the-sidebar)
 - [14. Add Google Analytics](#14-add-google-analytics)
+- [15. Debugging email issues](#15-debugging-email-issues)
 
 
 ## 1. Welcome
@@ -648,3 +649,38 @@ Instructions contributed by @alberto98fx
       - ./templates/tracking.html://home/mediacms.io/mediacms/templates/tracking.html
   
  ```
+
+## 15. Debugging email issues
+On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
+In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
+
+Enter the Django shell, example if you're using the Single Server installation:
+
+```bash
+source  /home/mediacms.io/bin/activate
+python manage.py shell
+```
+
+and inside the shell
+
+```bash
+from django.core.mail import EmailMessage
+from django.conf import settings
+
+settings.EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+email = EmailMessage(
+    'title',
+    'msg',
+    settings.DEFAULT_FROM_EMAIL,
+    ['recipient@email.com'],
+)
+email.send(fail_silently=False)
+```
+
+You have the chance to either receive the email (in this case it will be sent to recipient@email.com) otherwise you will see the error. 
+For example, while specifying wrong password for my Gmail account I get
+
+```
+SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. Learn more at\n5.7.8  https://support.google.com/mail/?p=BadCredentials d4sm12687785wrc.34 - gsmtp')
+```
