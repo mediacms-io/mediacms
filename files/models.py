@@ -395,17 +395,19 @@ class Media(models.Model):
             b_tags = " ".join([tag.title.replace("-", " ") for tag in self.tags.all()])
 
         items = [
-            helpers.clean_query(self.title),
+            self.title,
             self.user.username,
             self.user.email,
             self.user.name,
-            helpers.clean_query(self.description),
+            self.description,
             a_tags,
             b_tags,
         ]
         items = [item for item in items if item]
         text = " ".join(items)
         text = " ".join([token for token in text.lower().split(" ") if token not in STOP_WORDS])
+
+        text = helpers.clean_query(text)
 
         sql_code = """
             UPDATE {db_table} SET search = to_tsvector(
