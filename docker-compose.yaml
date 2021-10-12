@@ -62,7 +62,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres
+    image: postgres:13
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
