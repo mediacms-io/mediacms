@@ -22,7 +22,7 @@ django-mptt
 
 django-crispy-forms
 
-requests==2.25.0
+requests==2.26.0
 
 django-celery-email
 m3u8
