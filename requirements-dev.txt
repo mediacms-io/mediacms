@@ -2,7 +2,7 @@
 
 rpdb
 tqdm
-ipython
+ipython==7.30.1
 flake8
 pylint
 pep8
