@@ -30,4 +30,4 @@ m3u8
 django-ckeditor
 django-debug-toolbar
 
-django-login-required-middleware==0.6.1
+django-login-required-middleware==0.7.0
