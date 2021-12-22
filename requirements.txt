@@ -27,7 +27,7 @@ requests==2.25.0
 django-celery-email
 m3u8
 
-django-ckeditor
+django-ckeditor==6.2.0
 django-debug-toolbar
 
 django-login-required-middleware==0.6.1
