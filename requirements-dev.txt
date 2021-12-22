@@ -1,6 +1,6 @@
 -r requirements.txt
 
-rpdb
+rpdb==0.1.6
 tqdm
 ipython
 flake8
