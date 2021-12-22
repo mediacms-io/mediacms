@@ -4,7 +4,7 @@ django-allauth==0.44.0
 
 psycopg2-binary==2.8.6
 
-uwsgi==2.0.19.1
+uwsgi==2.0.20
 
 django-redis==4.12.1
 celery==4.4.7
