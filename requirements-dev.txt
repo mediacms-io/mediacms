@@ -5,7 +5,7 @@ tqdm
 ipython
 flake8
 pylint
-pep8
+pep8==1.7.1
 django-silk
 pre-commit
 pytest-cov
