@@ -6,7 +6,7 @@ ipython
 flake8
 pylint
 pep8
-django-silk
+django-silk==4.2.0
 pre-commit
 pytest-cov
 pytest-django
