@@ -3,7 +3,7 @@
 rpdb
 tqdm
 ipython
-flake8
+flake8==4.0.1
 pylint
 pep8
 django-silk
