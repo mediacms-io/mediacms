@@ -4,7 +4,7 @@ rpdb
 tqdm
 ipython
 flake8
-pylint
+pylint==2.12.2
 pep8
 django-silk
 pre-commit
