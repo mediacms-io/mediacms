@@ -7,7 +7,7 @@ flake8
 pylint
 pep8
 django-silk
-pre-commit
+pre-commit==2.16.0
 pytest-cov
 pytest-django
 pytest-factoryboy
