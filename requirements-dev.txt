@@ -11,6 +11,6 @@ pre-commit
 pytest-cov
 pytest-django
 pytest-factoryboy
-Faker
+Faker==11.0.0
 selenium
 webdriver-manager
