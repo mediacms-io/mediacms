@@ -7,7 +7,7 @@ psycopg2-binary==2.8.6
 uwsgi==2.0.19.1
 
 django-redis==4.12.1
-celery==4.4.7
+celery==5.2.3
 
 drf-yasg==1.20.0
 
