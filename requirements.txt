@@ -2,7 +2,7 @@ Django==3.1.12
 djangorestframework==3.12.2
 django-allauth==0.44.0
 
-psycopg2-binary==2.8.6
+psycopg2-binary==2.9.3
 
 uwsgi==2.0.19.1
 
