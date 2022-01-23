@@ -8,7 +8,7 @@ DEBUG = False
 # is also shown on several places as emails
 PORTAL_NAME = "MediaCMS"
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Europe/London"
+TIME_ZONE = "America/Chicago"
 
 # who can add media
 # valid options include 'all', 'email_verified', 'advancedUser'
@@ -18,7 +18,7 @@ CAN_ADD_MEDIA = "all"
 PORTAL_WORKFLOW = "public"
 
 # valid values: 'light', 'dark'.
-DEFAULT_THEME = "light"
+DEFAULT_THEME = "dark"
 
 
 # These are passed on every request
@@ -45,7 +45,7 @@ ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 # ip of the server should be part of this
 ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "http://localhost"
+FRONTEND_HOST = "https://localhost"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
@@ -174,7 +174,7 @@ CHUNKIZE_VIDEO_DURATION = 60 * 5
 VIDEO_CHUNKS_DURATION = 60 * 4
 
 # always get these two, even if upscaling
-MINIMUM_RESOLUTIONS_TO_ENCODE = [240, 360]
+MINIMUM_RESOLUTIONS_TO_ENCODE = [360]
 
 # default settings for notifications
 # not all of them are implemented

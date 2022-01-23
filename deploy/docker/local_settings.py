@@ -1,17 +1,18 @@
-FRONTEND_HOST = 'http://localhost'
-PORTAL_NAME = 'MediaCMS'
-SECRET_KEY = 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
-POSTGRES_HOST = 'db'
-REDIS_LOCATION = "redis://redis:6379/1"
+FRONTEND_HOST = 'https://guys.network'
+PORTAL_NAME = 'Guys.Network'
+SECRET_KEY = 'ma!s3^b-cw!f#7s6sjsdfjj2j5j2l%J#J25L3j6*)#J21lj1jf052j2jf'
+POSTGRES_HOST = '10.108.0.2'
+REDIS_LOCATION = "redis://10.108.0.2:6379/1"
+POSTGRES_DB = "mediacms"
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mediacms",
+        "NAME": POSTGRES_DB,
         "HOST": POSTGRES_HOST,
         "PORT": "5432",
         "USER": "mediacms",
-        "PASSWORD": "mediacms",
+        "PASSWORD": "mediacms_guys_network_32",
     }
 }
 

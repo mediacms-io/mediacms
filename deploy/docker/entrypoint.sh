@@ -14,6 +14,7 @@ mkdir -p /var/run/mediacms
 chown www-data:www-data /var/run/mediacms
 
 TARGET_GID=$(stat -c "%g" /home/mediacms.io/mediacms/)
+#TARGET_GID=33
 
 EXISTS=$(cat /etc/group | grep $TARGET_GID | wc -l)
 
@@ -28,7 +29,7 @@ else
 fi
 
 # We should do this only for folders that have a different owner, since it is an expensive operation
-find /home/mediacms.io/ ! \( -user www-data -group $TARGET_GID \) -exec chown www-data:$TARGET_GID {} +
+find /home/mediacms.io/ ! \( -user www-data -group $TARGET_GID \) ! -path "./media_files" -exec chown www-data:$TARGET_GID {} +
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
 
