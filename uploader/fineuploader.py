@@ -14,7 +14,12 @@ class BaseFineUploader(object):
         self.filename = data.get("qqfilename")
         self.uuid = data.get("qquuid")
         self.file = data.get("qqfile")
-        self.storage_class = settings.FILE_STORAGE
+        self.storage_class = settings.FILE_CHUNKS_STORAGE
+        self.actual_storage_class = settings.FILE_STORAGE
+        if settings.MEDIA_LOCATION != None:
+            self.S3_ROOT_PATH = settings.MEDIA_LOCATION
+        else: 
+            self.S3_ROOT_PATH = None
         self.real_path = None
 
     @property
@@ -35,10 +40,22 @@ class BaseFineUploader(object):
         return file_storage()
 
     @property
+    def actual_storage(self):
+        file_storage = utils.import_class(self.actual_storage_class)
+        return file_storage()
+
+    @property
     def url(self):
         if not self.finished:
             return None
-        return self.storage.url(self.real_path)
+        return self.actual_storage.url(self.prep_path_for_s3(self.real_path))
+
+    def prep_path_for_s3(self, path):
+        print("Prepping path: {0}".format(path))
+        r = path.replace("/home/mediacms.io/media_files/", self.S3_ROOT_PATH)
+        print("New Path: {0}".format(r))
+        return r
+
 
 
 class ChunkedFineUploader(BaseFineUploader):
@@ -72,10 +89,14 @@ class ChunkedFineUploader(BaseFineUploader):
     def is_time_to_combine_chunks(self):
         return self.total_parts - 1 == self.part_index
 
+
     def combine_chunks(self):
         # implement the same behaviour.
+        print("Combining chunks. Full File Path: {0}".format(self._full_file_path))
         self.real_path = self.storage.save(self._full_file_path, StringIO())
-        with self.storage.open(self.real_path, "wb") as final_file:
+        print("Real Path: {0}".format(self.real_path))
+        with self.actual_storage.open(self.prep_path_for_s3(self.real_path), "wb") as final_file:
+            print("Combining files... Total Parts: {0}".format(self.total_parts))
             for i in range(self.total_parts):
                 part = join(self.chunks_path, str(i))
                 with self.storage.open(part, "rb") as source:
@@ -93,5 +114,6 @@ class ChunkedFineUploader(BaseFineUploader):
                 return self.real_path
             return chunk
         else:
-            self.real_path = self.storage.save(self._full_file_path, self.file)
+            print("Saving full file to actual_storage: {0}".format(self.prep_path_for_s3(self._full_file_path)))
+            self.real_path = self.actual_storage.save(self.prep_path_for_s3(self._full_file_path), self.file)
             return self.real_path
