@@ -1,0 +1,201 @@
+@use "sass:math";
+@import '../../../css/includes/_variables.scss';
+@import '../../../css/includes/_variables_dimensions.scss';
+
+@import '../../../css/config/index.scss';
+
+.mi-filters-row {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  transition-property: all;
+  transition-duration: 0.2s;
+
+  &.hidden {
+    height: 0px !important;
+  }
+}
+
+.mi-filters-row-inner {
+  position: relative;
+  display: block;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+  border-style: solid;
+  border-width: 0 0 1px;
+  border-color: var(--sidebar-nav-border-color);
+
+  .mi-filter {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    width: 100%;
+    margin-bottom: 24px;
+
+    @media (min-width: 480px) {
+      width: 50%;
+
+      &:nth-child(2n + 1) {
+        padding-left: 0;
+        padding-right: 16px;
+      }
+
+      &:nth-child(2n + 2) {
+        padding-left: 16px;
+        padding-right: 0;
+      }
+    }
+
+    @media (min-width: 768px) {
+      width: math.div(1,3) * 100%;
+
+      &:nth-child(3n + 1) {
+        padding-left: 0;
+        padding-right: 21px;
+      }
+
+      &:nth-child(3n + 2) {
+        padding-left: 11px;
+        padding-right: 11px;
+      }
+
+      &:nth-child(3n + 3) {
+        padding-left: 21px;
+        padding-right: 0;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      width: 20%;
+
+      &:nth-child(3n + 1),
+      &:nth-child(3n + 2),
+      &:nth-child(3n + 3) {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      &:nth-child(5n + 1) {
+        padding-left: 0;
+        padding-right: 32px;
+      }
+
+      &:nth-child(5n + 2) {
+        padding-right: 24px;
+      }
+
+      &:nth-child(5n + 3) {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      &:nth-child(5n + 4) {
+        padding-left: 24px;
+      }
+
+      &:nth-child(5n + 5) {
+        padding-left: 32px;
+        padding-right: 0;
+      }
+    }
+  }
+
+  .mi-filter-title {
+    padding: 4px 0 16px 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.007px;
+    margin-bottom: 4px;
+    border-style: solid;
+    border-width: 0 0 1px;
+    border-color: var(--sidebar-nav-border-color);
+  }
+
+  .mi-filter-options {
+    position: relative;
+    display: block;
+
+    > * {
+      display: block;
+      margin-top: 8px;
+
+      button {
+        display: inline-block;
+        padding: 3px 6px 4px 0;
+        // line-height:16px;
+        line-height: 1.5;
+        text-align: initial;
+        color: var(--header-circle-button-color);
+        border: 0;
+        background: none;
+        opacity: 0.85;
+
+        .dark_theme & {
+          opacity: 0.5;
+        }
+
+        span {
+          display: inline-block;
+        }
+
+        .material-icons {
+          display: inline-block;
+          vertical-align: top;
+          padding: 1px 0 0;
+          margin: 0 0 0 4px;
+          font-size: 1em;
+          line-height: 1.45;
+        }
+      }
+
+      &.active button,
+      button:hover {
+        color: inherit;
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.mi-filters-toggle {
+  position: absolute;
+  top: 12px;
+  right: 0;
+
+  button {
+    vertical-align: middle;
+    height: 40px;
+    line-height: 40px;
+    margin: 2px 0;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.007px;
+    color: var(--header-circle-button-color);
+    border: 0;
+    background: none;
+
+    opacity: 0.85;
+
+    .dark_theme & {
+      opacity: 0.5;
+    }
+
+    &.active,
+    &:hover {
+      color: inherit;
+      opacity: 1;
+    }
+  }
+
+  .material-icons {
+    margin-top: -2px;
+    margin-right: 8px;
+  }
+
+  .filter-button-label {
+    display: inline-block;
+  }
+
+  .filter-button-label-text {
+  }
+}

@@ -2,11 +2,12 @@ import os
 
 from celery.schedules import crontab
 
-DEBUG = False
+DEBUG =  False
 
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
-PORTAL_NAME = "MediaCMS"
+PORTAL_NAME = "BNWO.Fun"
+MEDIA_SITE_ID = "bnwo-fun"
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "America/Chicago"
 
@@ -45,13 +46,13 @@ ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 # ip of the server should be part of this
 ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "https://localhost"
+FRONTEND_HOST = "http://10.108.0.2:9020"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
 # FRONTEND_HOST needs an http prefix - at the end of the file
 # there's a conversion to https with the SSL_FRONTEND_HOST env
-INTERNAL_IPS = "127.0.0.1"
+INTERNAL_IPS = "127.0.0.1,10.108.0.2,192.168.2.5,192.168.2.6"
 
 # settings that are related with UX/appearance
 # whether a featured item appears enlarged with player on index page
@@ -60,14 +61,14 @@ VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE = False
 PRE_UPLOAD_MEDIA_MESSAGE = ""
 
 # email settings
-DEFAULT_FROM_EMAIL = "info@mediacms.io"
-EMAIL_HOST_PASSWORD = "xyz"
-EMAIL_HOST_USER = "info@mediacms.io"
+DEFAULT_FROM_EMAIL = "admin@guys.network"
+EMAIL_HOST_PASSWORD = "guysnetwork_21c006d7731ad52d8ebee91915c34aaf"
+EMAIL_HOST_USER = "guysnetwork"
 EMAIL_USE_TLS = True
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_HOST = "mediacms.io"
+EMAIL_HOST = "guys.network"
 EMAIL_PORT = 587
-ADMIN_EMAIL_LIST = ["info@mediacms.io"]
+ADMIN_EMAIL_LIST = ["admin@guys.network"]
 
 
 MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.
@@ -93,7 +94,7 @@ RELATED_MEDIA_STRATEGY = "content"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-SITE_ID = 1
+SITE_ID = 2
 
 # protection agains anonymous users
 # per ip address limit, for actions as like/dislike/report
@@ -135,16 +136,49 @@ REST_FRAMEWORK = {
 }
 
 
-SECRET_KEY = "2dii4cog7k=5n37$fz)8dst)kg(s3&10)^qa*gv(kk+nv-z&cu"
+SECRET_KEY = "2dii4cog7k=5n37$fz)8dst)kg(s3&10)^qa*gv(kk+nv-z&cu_guysnetwork_bnwo-fun"
 # TODO: this needs to be changed!
 
+
+FILE_STORAGE = 'django.core.files.storage.DefaultStorage'
+FILE_CHUNKS_STORAGE = "django.core.files.storage.DefaultStorage"
+
+
 TEMP_DIRECTORY = "/tmp"  # Don't use a temp directory inside BASE_DIR!!!
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC_URL = "/static/"  # where js/css files are stored on the filesystem
-MEDIA_URL = "/media/"  # URL where static files are served from the server
-STATIC_ROOT = BASE_DIR + "/static/"
-# where uploaded + encoded media are stored
-MEDIA_ROOT = BASE_DIR + "/media_files/"
+USE_S3 = os.getenv('USE_S3')
+if not USE_S3 or USE_S3 != "true":
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    STATIC_URL = "/static/"  # where js/css files are stored on the filesystem
+    STATIC_ROOT = BASE_DIR + "/static/"
+    # where uploaded + encoded media are stored
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR + "/media_files/"
+    MEDIA_LOCATION = None
+else:
+    AWS_PRELOAD_METADATA = True
+    AWS_QUERYSTRING_AUTH = True
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN')
+    AWS_S3_ENDPOINT_URL_HOST = os.getenv('AWS_S3_ENDPOINT_URL')
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+    AWS_LOCATION = 'static'
+    STATIC_ROOT = BASE_DIR + "/static/"
+    AWS_S3_ENDPOINT_URL = 'https://{0}/'.format(AWS_S3_ENDPOINT_URL_HOST)
+    STATIC_URL = 'https://{0}/{1}/'.format(AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
+    STATICFILES_STORAGE = 'cms.storage_backends.StaticMediaStorage'
+    MEDIA_LOCATION = '{0}/'.format(MEDIA_SITE_ID)
+    MEDIA_URL = 'https://{0}/'.format(AWS_S3_CUSTOM_DOMAIN)
+    MEDIA_ROOT = BASE_DIR + "/media_files/"
+    ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
+    PUBLIC_FILE_STORAGE = 'cms.storage_backends.MediaStorage'
+    AWS_PRIVATE_MEDIA_LOCATION = 'private/{0}'.format(MEDIA_SITE_ID)
+    PRIVATE_FILE_STORAGE = 'cms.storage_backends.PrivateMediaStorage'
+    IMAGEKIT_DEFAULT_FILE_STORAGE = "cms.storage_backends.MediaStorage"
+    DEFAULT_FILE_STORAGE = 'cms.storage_backends.MediaStorage'
 
 # these used to be os.path.join(MEDIA_ROOT, "folder/") but update to
 # Django 3.1.9 requires not absolute paths to be utilized...
@@ -201,7 +235,6 @@ CHUNKS_DIR = "chunks/"
 UPLOAD_MAX_FILES_NUMBER = 100
 CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
-FILE_STORAGE = "django.core.files.storage.DefaultStorage"
 
 X_FRAME_OPTIONS = "ALLOWALL"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
@@ -296,6 +329,7 @@ INSTALLED_APPS = [
     "djcelery_email",
     "ckeditor",
     "drf_yasg",
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -367,7 +401,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "file": {
-            "level": "ERROR",
+            "level": "DEBUG",
             "class": "logging.FileHandler",
             "filename": error_filename,
         },
@@ -375,7 +409,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": "DEBUG",
             "propagate": True,
         },
     },
@@ -384,16 +418,16 @@ LOGGING = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mediacms",
-        "HOST": "127.0.0.1",
+        "NAME": "mediacms_bnwo_fun",
+        "HOST": "10.108.0.2",
         "PORT": "5432",
         "USER": "mediacms",
-        "PASSWORD": "mediacms",
+        "PASSWORD": "mediacms_guys_network_32",
     }
 }
 
 
-REDIS_LOCATION = "redis://127.0.0.1:6379/1"
+REDIS_LOCATION = "redis://10.108.0.2:6379/1"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -404,7 +438,8 @@ CACHES = {
     }
 }
 
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+#SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = "default"
 
 # CELERY STUFF

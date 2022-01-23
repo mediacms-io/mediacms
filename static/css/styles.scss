@@ -1,0 +1,600 @@
+// @import '~compass-mixins';
+@import './includes/_variables.scss';
+@import './includes/_variables_dimensions.scss';
+@import './config/index.scss';
+@import './includes/_theme_color.scss';
+@import '~normalize.css/normalize.css';
+
+html {
+  height: 100%;
+}
+
+body,
+body * {
+  box-sizing: border-box;
+
+  &:after,
+  &:before {
+    box-sizing: border-box;
+  }
+}
+
+body {
+  min-height: 100%;
+  color: var(--body-text-color);
+  background-color: var(--body-bg-color);
+
+  transition-property: overflow;
+  transition-duration: 0.2s;
+  transition-timing-function: linear;
+
+  &.overflow-hidden {
+    overflow: hidden;
+  }
+}
+
+@import './includes/typography/_typography.scss';
+@import './includes/form_controls/_form_controls.scss';
+
+a {
+  color: var(--theme-color, var(--default-theme-color));
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+button {
+  cursor: pointer;
+  padding: 0;
+}
+
+.cf:before,
+.cf:after {
+  content: ' ';
+  display: table;
+}
+.cf:after {
+  clear: both;
+}
+.cf {
+  *zoom: 1;
+}
+
+.fl {
+  float: left;
+}
+
+.fr {
+  float: right;
+}
+
+.hidden-txt {
+  display: none;
+}
+
+.button-link {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(black, 0);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button-link {
+  overflow: hidden;
+  cursor: pointer;
+}
+
+@media screen and (min-width: 640px) {
+  .visible-only-in-small {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 639px) {
+  .hidden-only-in-small {
+    display: none !important;
+  }
+}
+
+@media screen and (min-width: 480px) {
+  .visible-only-in-extra-small {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 479px) {
+  .hidden-only-in-extra-small {
+    display: none !important;
+  }
+}
+
+.user-action-form-wrap {
+  margin: 2em 1em 1em;
+
+  @media screen and (min-width: 1220px) {
+    .sliding-sidebar & {
+      transition-property: padding-right;
+      transition-duration: 0.2s;
+    }
+
+    .visible-sidebar & {
+      padding-right: $_sidebar-width-value * 1px;
+    }
+  }
+}
+
+.user-action-form-inner {
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 480px;
+
+  @media screen and (min-width: 1220px) {
+    max-width: 640px;
+  }
+
+  padding: 2em 2em;
+  font-size: 14px;
+  line-height: 1.5;
+
+  background-color: var(--user-action-form-inner-bg-color);
+
+  border-radius: 2px;
+  box-shadow: 0px 4px 8px 0 rgba(17, 17, 17, 0.06);
+
+  form,
+  label,
+  select,
+  textarea,
+  input[type='text'],
+  input[type='email'],
+  input[type='number'],
+  input[type='password'] {
+    display: block;
+    width: 100%;
+  }
+
+  label {
+    margin-top: 1.5em;
+  }
+
+  h1 {
+    display: inline-block;
+    width: 100%;
+    padding: 0 0 0.67em 0;
+    margin: 0 0 0.5em;
+    font-size: 1.13125em;
+    font-weight: 400;
+    border-width: 0 0 1px;
+    border-style: solid;
+    border-bottom-color: var(--user-action-form-inner-title-border-bottom-color);
+  }
+
+  form {
+    *[type='submit'],
+    .primaryAction,
+    .secondaryAction {
+      line-height: 1.125;
+      padding: 1em 2em;
+      margin: 1em 0 0.5em;
+      cursor: pointer;
+    }
+  }
+
+  h1 + form {
+    margin-top: 0;
+  }
+
+  a {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .help-block {
+    line-height: 1.5;
+    font-weight: lighter;
+    margin-top: 0.25em;
+    margin-bottom: 2em;
+  }
+
+  form {
+    margin-top: 1.5em;
+
+    > .control-group {
+      > *:first-child {
+        &.controls {
+          margin-top: 2em;
+          margin-bottom: 2.5em;
+
+          > *:first-child {
+            margin-top: 0;
+          }
+
+          > *:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+
+      .controls {
+        a {
+          margin: 0 0.25em;
+          word-break: break-all;
+        }
+
+        label {
+          display: inline-block;
+          width: auto;
+          margin: 1em 0 0 0;
+          line-height: 1.5;
+          cursor: pointer;
+
+          &[for='banner_logo-clear_id'] {
+            margin-bottom: 1em;
+          }
+        }
+
+        input[type='file'] {
+          width: 100%;
+          margin-top: 0.5em;
+
+          @media screen and (min-width: 711px) {
+            width: auto;
+            margin-left: 0.5em;
+          }
+        }
+      }
+
+      &:last-of-type {
+        .controls {
+          margin-bottom: 1.5em;
+        }
+      }
+    }
+
+    &.login,
+    &.logout {
+      .primaryAction {
+        margin-right: 1em;
+      }
+
+      .secondaryAction {
+        float: right;
+        padding-left: 0;
+        padding-right: 0;
+      }
+    }
+
+    label.checkbox {
+      display: inline-block;
+      width: auto;
+      cursor: pointer;
+
+      + .help-block {
+        margin-top: 0.25em;
+      }
+
+      input[type='checkbox'] {
+        margin-top: -2px;
+        margin-right: 1em;
+        margin-left: 0;
+      }
+    }
+
+    p {
+      position: relative;
+      margin-bottom: 1.5em;
+
+      a {
+        margin: 0 0.25em;
+        word-break: break-all;
+      }
+
+      label {
+        display: inline-block;
+        width: auto;
+        margin: 0;
+        line-height: 1.5;
+        cursor: pointer;
+
+        + input,
+        + select,
+        + textarea {
+          vertical-align: top;
+          display: inline-block;
+          margin-top: 0.5em;
+        }
+
+        + input[type='radio'],
+        + input[type='checkbox'] {
+          vertical-align: top;
+          display: inline-block;
+          margin: 0.3em 0em 0em 0.75em;
+        }
+
+        &[for='logo-clear_id'] {
+          margin-bottom: 1em;
+        }
+      }
+
+      input[type='file'] {
+        width: 100%;
+        margin-top: 0.5em;
+
+        @media screen and (min-width: 711px) {
+          width: auto;
+          margin-left: 0.5em;
+        }
+      }
+    }
+  }
+
+  button,
+  *[type='submit'],
+  *[type='button'],
+  form.login .secondaryAction,
+  form.logout .secondaryAction {
+    min-width: 88px;
+    text-align: center;
+  }
+
+  button,
+  *[type='submit'],
+  *[type='button'] {
+    border: 0;
+    color: white;
+    border-radius: 1px;
+  }
+
+  textarea {
+    min-width: 100%;
+    max-width: 100%;
+    min-height: 80px;
+    max-height: 50vh;
+  }
+
+  .requiredField {
+    .asteriskField {
+      margin-left: 0.25em;
+      color: $color-error-red;
+    }
+  }
+
+  .control-group {
+    &.error {
+      input {
+        border-color: rgba($color-error-red, 0.4);
+
+        + p {
+          color: $color-error-red;
+        }
+      }
+    }
+  }
+
+  .errorlist {
+    width: 100%;
+    display: inline-block;
+    padding: 0.75rem 0.75rem 0;
+    margin: 0 0 1rem;
+    list-style: lower-latin;
+    list-style-position: inside;
+    color: $message-default-color;
+    background-color: $message-error-bg-color;
+
+    li {
+      margin: 0 0 0.75rem 0;
+    }
+  }
+}
+
+.player-container.player-container-error {
+  .error-container {
+    position: relative;
+    display: table;
+    width: 100%;
+    height: 100%;
+    color: white;
+  }
+
+  .error-container-inner {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 1em;
+    font-size: 20px;
+
+    .icon-wrap {
+      display: block;
+      margin-bottom: 1rem;
+      opacity: 0.4;
+
+      i {
+        font-size: 2.5em;
+      }
+
+      @media screen and (min-width: 640px) {
+        display: inline-block;
+        padding-right: 0.75rem;
+        margin-bottom: 0;
+        text-align: left;
+
+        i {
+          font-size: 3em;
+        }
+      }
+    }
+
+    .msg-wrap {
+      overflow: hidden;
+    }
+
+    @media screen and (max-width: 639px) {
+      padding: 0.5em 0.5em 2.5em;
+      text-align: center;
+    }
+  }
+}
+
+.alert {
+  position: relative;
+  width: 100%;
+  display: block;
+  padding: 1.5rem 4rem 1.5rem 1.5rem;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: $message-default-color;
+  background-color: $message-default-bg-color;
+
+  &.info {
+    background-color: $message-info-bg-color;
+  }
+
+  &.error {
+    background-color: $message-error-bg-color;
+  }
+
+  &.warn,
+  &.warning {
+    background-color: $message-warning-bg-color;
+  }
+
+  &.success {
+    background-color: $message-success-bg-color;
+  }
+
+  &.alert-dismissible {
+    min-height: 4rem;
+  }
+
+  transition-property: margin-top;
+  transition-duration: 0.3s;
+
+  &.hiding {
+    margin-top: -4rem;
+  }
+
+  .close {
+    position: absolute;
+    top: 0.875rem;
+    right: 0.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: block;
+    padding: 0;
+    text-align: center;
+    color: $message-default-color;
+    outline: 0;
+    border: 0;
+    background: none;
+    font-family: serif;
+    font-size: 32px;
+    font-weight: normal;
+    border-radius: 9999px;
+
+    &:focus {
+      background-color: rgba(black, 0.07);
+    }
+  }
+}
+
+.custom-page-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1366px;
+  padding: 1em 3em 1em;
+  margin: 0 auto;
+  display: inline-block;
+
+  p,
+  ul,
+  ol {
+    font-size: 1.071428571em;
+  }
+
+  li {
+    margin-bottom: 0.5em;
+  }
+
+  p {
+    img {
+      &.fl {
+        margin: 0 0.75em 0.5em 0;
+      }
+
+      &.fr {
+        margin: 0 0 0.5em 0.75em;
+      }
+    }
+  }
+}
+
+.page-main-inner .custom-page-wrapper {
+  padding: 0 2em 1em;
+}
+
+.tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  max-width: 15em;
+  padding: 0.916666666667em 0.666666666667em !important;
+  padding: 0.9125em 1.125em !important;
+  padding: 10px 12px !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: rgba(#fff, 1) !important;
+  background-color: #595959 !important;
+  border-radius: 2px !important;
+  z-index: +5 !important;
+}
+
+.empty-media {
+  padding: 80px 0 32px;
+  text-align: center;
+}
+
+@media screen and (min-width: 1366px) {
+  .empty-media {
+    padding: 96px 0 48px;
+  }
+}
+
+.empty-media .welcome-title {
+  display: block;
+  font-size: 2em;
+}
+
+.empty-media .start-uploading {
+  max-width: 360px;
+  display: block;
+  font-size: 1em;
+  padding: 12px 0 24px;
+  margin: 0 auto;
+}
+
+.empty-media .button-link {
+  display: inline-block;
+  padding: 13px 16px 11px;
+  font-size: 13px;
+  line-height: 1;
+  color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 1px;
+  border-color: var(--default-brand-color);
+  background-color: var(--default-brand-color);
+}
+.empty-media .button-link .material-icons {
+  margin-right: 8px;
+  margin-top: -1px;
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0.65;
+}

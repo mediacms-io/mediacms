@@ -520,7 +520,7 @@ export default function ProfilePagesHeader(props) {
               backgroundImage:
                 'url(' +
                 SiteContext._currentValue.url +
-                '/' +
+                '' +
                 props.author.banner_thumbnail_url.replace(/^\//g, '') +
                 ')',
             }}

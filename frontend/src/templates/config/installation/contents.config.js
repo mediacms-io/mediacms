@@ -21,7 +21,7 @@ module.exports = {
       },
     ],
     belowNavMenu: null,
-    footer: 'Powered by <a href="//demo.mediacms.io" title="mediacms.io" target="_blank">mediacms.io</a>',
+    footer: 'A <a href="https://guys.network/">Guys.Network</a> Site',
   },
   uploader: {
     belowUploadArea: '',

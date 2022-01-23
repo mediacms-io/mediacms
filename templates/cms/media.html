@@ -22,7 +22,7 @@
 
 {% if media_object.media_type == "video" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+<meta property="og:image" content="{{media_object.poster_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
@@ -31,10 +31,10 @@
     "@context": "http://schema.org",
     "@type": "VideoObject",
     "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "url": "{{media_object.get_absolute_url}}",
     "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
     "thumbnailUrl": [
-    	"{{FRONTEND_HOST}}{{media_object.poster_url}}"
+    	"{{media_object.poster_url}}"
     ],
     "uploadDate": "{{media_object.add_date}}",
     "dateModified": "{{media_object.edit_date}}",
@@ -42,14 +42,14 @@
     "duration": "T{{media_object.duration}}S",
     "potentialAction": {
         "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        "target": "{{media_object.get_absolute_url}}"
     }
 }
 </script>
 
 {% elif media_object.media_type == "audio" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+<meta property="og:image" content="{{media_object.poster_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
@@ -58,21 +58,21 @@
     "@context": "http://schema.org",
     "@type": "AudioObject",
     "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+    "url": "{{media_object.get_absolute_url}}",
     "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
     "uploadDate": "{{media_object.add_date}}",
     "dateModified": "{{media_object.edit_date}}",
     "duration": "T{{media_object.duration}}S",
     "potentialAction": {
         "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        "target": "{{media_object.get_absolute_url}}"
     }
 }
 </script>
 
 {% elif media_object.media_type == "image" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.original_media_url}}">
+<meta property="og:image" content="{{media_object.original_media_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
@@ -87,7 +87,7 @@
     "dateModified": "{{media_object.edit_date}}",
     "potentialAction": {
         "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        "target": "{{media_object.get_absolute_url}}"
     }
 }
 </script>
@@ -107,7 +107,7 @@
     "dateModified": "{{media_object.edit_date}}",
     "potentialAction": {
         "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        "target": "{{media_object.get_absolute_url}}"
     }
 }
 </script>

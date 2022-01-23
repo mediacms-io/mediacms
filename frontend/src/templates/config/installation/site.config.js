@@ -5,7 +5,7 @@ module.exports = {
   url: process.env.MEDIACMS_URL || 'UNDEFINED_URL',
   api: process.env.MEDIACMS_API || 'UNDEFINED_API',
   theme: {
-    mode: 'light', // Valid values: 'light', 'dark'.
+    mode: 'dark', // Valid values: 'light', 'dark'.
     switch: {
       position: 'sidebar', // Valid values: 'header', 'sidebar'.
     },

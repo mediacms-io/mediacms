@@ -315,7 +315,17 @@ class Media(models.Model):
     def save(self, *args, **kwargs):
 
         if not self.title:
-            self.title = self.media_file.path.split("/")[-1]
+            try:
+                path = self.media_file.path 
+            except:
+                print("Storage Type: " + str(self.media_file.storage))
+                file_name = self.media_file.name
+                print("File Name: " + str(file_name))
+                print("Media File: " + str(self.media_file))
+                path = self.media_file.storage.join_path(file_name)
+            print("Creating Title From Path: " + path)
+            self.title = path.split("/")[-1]
+            print("New Title: " + self.title)
 
         strip_text_items = ["title", "description"]
         for item in strip_text_items:

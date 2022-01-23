@@ -1,0 +1,145 @@
+.media-title-banner .media-actions > * > *.save .popup-fullscreen .popup-main > div.saveto-popup {
+
+	color: var( --playlist-save-popup-text-color );
+
+	.saveto-select,
+	.saveto-create,
+	.saveto-new-playlist{
+		border-color: var( --playlist-save-popup-border-color );
+	}
+
+	.saveto-title{
+
+		.circle-icon-button{
+
+			&:hover,
+			&:focus,
+			&:active{
+				color: var( --playlist-save-popup-text-color );
+			}
+		}
+	}
+
+	.saveto-create{
+
+		color: var( --playlist-save-popup-text-color );
+
+		.material-icons{
+			color: var( --playlist-save-popup-create-icon-text-color );
+		}
+
+		&:focus{
+
+			> * {
+				background-color: var( --playlist-save-popup-create-focus-bg-color );
+			}
+		}
+	}
+
+	.saveto-new-playlist{
+
+	}
+}
+
+.media-title-banner .media-actions > * > *.save .popup-fullscreen{
+	padding-top:64px;
+	padding-bottom:8px;
+}
+
+.media-title-banner .media-actions > * > *.save .popup-fullscreen .popup-main > div.saveto-popup {
+
+	max-width:280px;
+	padding:0;
+
+	.saveto-select,
+	.saveto-create,
+	.saveto-new-playlist{
+		border-width:1px 0 0;
+		border-style:solid;
+	}
+
+	.saveto-title{
+		height:52px;
+		padding:16px 52px 15px 24px;
+		line-height: 20px;
+		font-size:16px;
+
+		.circle-icon-button{
+			position:absolute;
+			top:6px;
+			right:6px;
+			background:none;
+		}
+	}
+
+	.saveto-select{
+
+		overflow:auto;
+		padding:12px 18px 12px 24px;
+
+		> *{
+			width:100%;
+		}
+
+		label{
+			position:relative;
+			display:table;
+			width:100%;
+			padding:4px 0;
+			font-size:14px;
+			line-height:24px;
+			cursor: pointer;
+
+			> * {
+				display:table-cell;
+			}
+
+			input[type="checkbox"]{
+				display:inline-block;
+			}
+
+			span{
+				width:100%;
+				padding:0 4px 0 16px;
+				text-align:initial;
+			}
+
+			.material-icons{
+				width:18px;
+				padding-top:4px;
+				text-align:right;
+				font-size:18px;
+				vertical-align:top;
+				color:rgb(144, 144, 144);
+			}
+		}
+	}
+
+	.saveto-create{
+		width:100%;
+		height:52px;
+		font-size:14px;
+		line-height:21px;
+		text-align:initial;
+		background:none;
+		border-radius: 0;
+
+		> *{
+			padding:0 24px;
+			border-radius: 0;
+		}
+
+		span{
+
+		}
+
+		.material-icons{
+			margin-right:16px;
+		}
+	}
+
+	.saveto-new-playlist{
+
+	}
+
+}

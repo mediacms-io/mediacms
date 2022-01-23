@@ -12,7 +12,7 @@ from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
 from files.models import Category, Media, Tag
-
+from uploader import utils
 
 class User(AbstractUser):
     logo = ProcessedImageField(
@@ -52,13 +52,14 @@ class User(AbstractUser):
 
     def thumbnail_url(self):
         if self.logo:
-            return helpers.url_from_path(self.logo.path)
+            return self.logo.url
         return None
 
     def banner_thumbnail_url(self):
         c = self.channels.filter().order_by("add_date").first()
         if c:
-            return helpers.url_from_path(c.banner_logo.path)
+            #return helpers.url_from_path(c.banner_logo.name)
+            return c.banner_logo.url
         return None
 
     @property
@@ -108,6 +109,11 @@ class User(AbstractUser):
         strip_text_items = ["name", "description", "title"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
+        
+        #if settings.USE_S3 == "true":
+        #    storage = utils.import_class(settings.PUBLIC_FILE_STORAGE)
+        #    storage.save(self.logo.path, content=self.logo)
+
         super(User, self).save(*args, **kwargs)
 
 

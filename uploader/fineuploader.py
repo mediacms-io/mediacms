@@ -1,7 +1,7 @@
 import shutil
-from io import StringIO
+from io import StringIO,BytesIO
 from os.path import join
-
+import os,errno
 from django.conf import settings
 
 from . import utils
@@ -14,12 +14,7 @@ class BaseFineUploader(object):
         self.filename = data.get("qqfilename")
         self.uuid = data.get("qquuid")
         self.file = data.get("qqfile")
-        self.storage_class = settings.FILE_CHUNKS_STORAGE
-        self.actual_storage_class = settings.FILE_STORAGE
-        if settings.MEDIA_LOCATION != None:
-            self.S3_ROOT_PATH = settings.MEDIA_LOCATION
-        else: 
-            self.S3_ROOT_PATH = None
+        self.storage_class = settings.FILE_STORAGE
         self.real_path = None
 
     @property
@@ -40,23 +35,10 @@ class BaseFineUploader(object):
         return file_storage()
 
     @property
-    def actual_storage(self):
-        file_storage = utils.import_class(self.actual_storage_class)
-        return file_storage()
-
-    @property
     def url(self):
         if not self.finished:
             return None
-        return self.actual_storage.url(self.prep_path_for_s3(self.real_path))
-
-    def prep_path_for_s3(self, path):
-        print("Prepping path: {0}".format(path))
-        if self.S3_ROOT_PATH != None:
-            r = path.replace("/home/mediacms.io/media_files/", self.S3_ROOT_PATH)
-        print("New Path: {0}".format(r))
-        return r
-
+        return self.storage.url(self.real_path)
 
 
 class ChunkedFineUploader(BaseFineUploader):
@@ -76,7 +58,7 @@ class ChunkedFineUploader(BaseFineUploader):
 
     @property
     def _abs_chunks_path(self):
-        return join(settings.MEDIA_ROOT, self.chunks_path)
+        return join(settings.TEMP_DIRECTORY, self.chunks_path)
 
     @property
     def chunk_file(self):
@@ -90,22 +72,38 @@ class ChunkedFineUploader(BaseFineUploader):
     def is_time_to_combine_chunks(self):
         return self.total_parts - 1 == self.part_index
 
-
     def combine_chunks(self):
         # implement the same behaviour.
-        print("Combining chunks. Full File Path: {0}".format(self._full_file_path))
-        self.real_path = self.storage.save(self._full_file_path, StringIO())
-        print("Real Path: {0}".format(self.real_path))
-        with self.actual_storage.open(self.prep_path_for_s3(self.real_path), "wb") as final_file:
-            print("Combining files... Total Parts: {0}".format(self.total_parts))
+        self.real_path = self.storage.save(self._full_file_path, BytesIO())
+        with self.storage.open(self.real_path, "wb") as final_file:
             for i in range(self.total_parts):
-                part = join(self.chunks_path, str(i))
-                with self.storage.open(part, "rb") as source:
+                part = join(self._abs_chunks_path, str(i))
+                print("Reading chunk " + str(part) + " and adding to obj " + str(self.real_path))
+                with open(part, "rb") as source:
                     final_file.write(source.read())
+        print("Cleaning up: " + str(self._abs_chunks_path))
         shutil.rmtree(self._abs_chunks_path)
 
     def _save_chunk(self):
-        return self.storage.save(self.chunk_file, self.file)
+        chunk_path = join(settings.TEMP_DIRECTORY, self.chunk_file)
+        print("Temp Upload Dir: " + settings.TEMP_DIRECTORY)
+        if not os.path.exists(chunk_path):
+            try:
+                os.makedirs(os.path.dirname(chunk_path))
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    raise
+        print("Making directories...")
+        print("Processing Chunk: " + str(chunk_path))
+        #f = open(chunk_path, "wb")
+        print("Temp File: " + str(self.file.temporary_file_path()))
+        print("Renaming temp file to chunk file...")
+        shutil.move(self.file.temporary_file_path(), chunk_path)
+        #c = open(self.file.temporary_file_path(), "rb")
+        #f.write(c.read())
+        #c.close()
+        #f.close()
+        return chunk_path #self.storage.save(self.chunk_file, self.file)
 
     def save(self):
         if self.chunked:
@@ -115,6 +113,9 @@ class ChunkedFineUploader(BaseFineUploader):
                 return self.real_path
             return chunk
         else:
-            print("Saving full file to actual_storage: {0}".format(self.prep_path_for_s3(self._full_file_path)))
-            self.real_path = self.actual_storage.save(self.prep_path_for_s3(self._full_file_path), self.file)
+            print("Opening file: " + str(self._full_file_path))
+            self.storage.open(self._full_file_path, mode="wb", encoding="utf-8")
+            print("Saving file...")
+            self.real_path = self.storage.save(self._full_file_path, self.file, encoding="utf-8")
+            print("Done.")
             return self.real_path

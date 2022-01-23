@@ -12,6 +12,8 @@ from cms.permissions import user_allowed_to_upload
 from files.helpers import rm_file
 from files.models import Media
 
+from cms.storage_backends import MediaStorage
+
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
 
@@ -62,12 +64,28 @@ class FineUploaderView(generic.FormView):
             self.upload.save()
             return self.make_response({"success": True})
         # create media!
-        media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
-        with open(media_file, "rb") as f:
-            myfile = File(f)
-            new = Media.objects.create(media_file=myfile, user=self.request.user)
-        rm_file(media_file)
-        shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
+        if settings.USE_S3 == 'true':
+            if hasattr(self.upload, '_file') and self.upload._file is not None:
+                self.upload.file.open("rb")
+            else:
+                path = self.upload._full_file_path
+                print("Opening " + str(path))
+                ms = MediaStorage()
+                print("MediaStorage Path: " + str(path))
+                self.upload.file = ms.open(path, "rb")
+                self.upload.file.path = path
+                print("Opened file.")
+                
+            new = Media.objects.create(media_file=self.upload.file, user=self.request.user)
+            if self.upload.file is not None:
+                self.upload.file.close()
+        else:
+            media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
+            with open(media_file, "rb") as f:
+                myfile = File(f)
+                new = Media.objects.create(media_file=myfile, user=self.request.user)
+            rm_file(media_file)
+            shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
         return self.make_response({"success": True, "media_url": new.get_absolute_url()})
 
     def form_invalid(self, form):
