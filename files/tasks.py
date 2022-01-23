@@ -180,7 +180,6 @@ def encode_media(
         media = Media.objects.get(friendly_token=friendly_token)
         profile = EncodeProfile.objects.get(id=profile_id)
     except BaseException:
-        logger.info("Error getting media object by friendly token or encode profile object by profile id")
         Encoding.objects.filter(id=encoding_id).delete()
         return False
 
@@ -190,11 +189,9 @@ def encode_media(
         # it will always run since chunk_file_path is always different
         # thus find a better way for this check
         if Encoding.objects.filter(media=media, profile=profile, chunk_file_path=chunk_file_path).count() > 1 and force is False:
-            logger.info("Chunks were more than 1")
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
-            logger.info("Chunk file path: {0}".format(chunk_file_path))
             try:
                 encoding = Encoding.objects.get(id=encoding_id)
                 encoding.status = "running"
@@ -214,7 +211,6 @@ def encode_media(
                 )
     else:
         if Encoding.objects.filter(media=media, profile=profile).count() > 1 and force is False:
-            logger.info("Encoding.objects.filter(media={0}, profile={1}).count() > 1 and force is False".format(media, profile))
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
@@ -227,7 +223,7 @@ def encode_media(
 
     if task_id:
         encoding.task_id = task_id
-    encoding.worker = "192.168.2.5"
+    encoding.worker = "localhost"
     encoding.retries = self.request.retries
     encoding.save()
 
@@ -266,7 +262,6 @@ def encode_media(
     else:
         original_media_path = media.media_file.path
 
-    logger.info("Original_Media_Path: {0}".format(original_media_path))
     # if not media.duration:
     #    encoding.status = "fail"
     #    encoding.save(update_fields=["status"])
@@ -288,7 +283,6 @@ def encode_media(
         if not ffmpeg_commands:
             encoding.status = "fail"
             encoding.save(update_fields=["status"])
-            logger.info("Encoding status set to failed. Not ffmpeg_commands")
             return False
 
         encoding.temp_file = tf
@@ -372,7 +366,7 @@ def encode_media(
         # since we delete the encoding at that stage
         except BaseException:
             pass
-        logger.info("media_encoder status: {0}".format(success))
+
         return success
 
 
