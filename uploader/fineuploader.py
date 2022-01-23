@@ -52,7 +52,8 @@ class BaseFineUploader(object):
 
     def prep_path_for_s3(self, path):
         print("Prepping path: {0}".format(path))
-        r = path.replace("/home/mediacms.io/media_files/", self.S3_ROOT_PATH)
+        if self.S3_ROOT_PATH != None:
+            r = path.replace("/home/mediacms.io/media_files/", self.S3_ROOT_PATH)
         print("New Path: {0}".format(r))
         return r
 
