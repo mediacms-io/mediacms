@@ -1,7 +1,7 @@
 from importlib import import_module
 
 from django.core.exceptions import ImproperlyConfigured
-
+from storages.backends.s3boto3 import S3Boto3Storage
 
 def import_class(path):
     path_bits = path.split(".")
@@ -19,3 +19,6 @@ def import_class(path):
         raise ImportError(message)
 
     return getattr(module_itself, class_name)
+
+StaticRootS3BotoStorage = lambda: S3Boto3Storage(location='static')
+MediaRootS3BotoStorage = lambda: S3Boto3Storage(location='media')

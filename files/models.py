@@ -812,7 +812,8 @@ class Media(models.Model):
         """Property used on serializers
         Returns hls info, curated to be read by video.js
         """
-
+        # DELETE THIS LINE
+        return {}
         res = {}
         if self.hls_file:
             if os.path.exists(self.hls_file):
