@@ -13,6 +13,8 @@ from fractions import Fraction
 import filetype
 from django.conf import settings
 
+from cms.storage_backends import MediaStorage
+
 CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 CRF_ENCODING_NUM_SECONDS = 2  # 0 * 60 # videos with greater duration will get
@@ -119,11 +121,17 @@ def get_file_name(filename):
 
 
 def get_file_type(filename):
+    print("get_file_type(" + str(filename) +")")
     if not os.path.exists(filename):
+        print("File did not exist!")
         return None
+    else:
+        print("File Exists!")
+    
     file_type = None
     kind = filetype.guess(filename)
     if kind is not None:
+        print("Mime Type: " + str(kind.mime))
         if kind.mime.startswith("video"):
             file_type = "video"
         elif kind.mime.startswith("image"):
@@ -134,16 +142,48 @@ def get_file_type(filename):
             file_type = "pdf"
     else:
         # TODO: do something for files not supported by filetype lib
+        print("Could not determine file type for " + str(filename) + "...")
         pass
     return file_type
 
+def is_local_file(filename):
+    return os.path.exists(filename)
 
-def rm_file(filename):
+def get_local_file(filename):
+    temp_path = os.path.join(settings.TEMP_DIRECTORY,filename)
+    if os.path.exists(temp_path):
+        return temp_path   
+    else:
+        ms = MediaStorage()
+        filename = ms.exact_in(filename)
+        print("Using temp_path: " + str(temp_path))
+        if not os.path.exists(os.path.dirname(temp_path)):
+            print("Making dirs: " + str(os.path.dirname(temp_path)))
+            os.makedirs(os.path.dirname(temp_path))
+        with open(temp_path ,'wb') as f:
+            with ms.open(filename, 'rb') as ms_f:
+                print("Transferring file to local storage...")
+                f.write(ms_f.read())
+        if os.path.exists(temp_path):
+            return temp_path
+        else:
+            return None
+def cleanup_local_file(filename):
+    rm_file(filename, local=True)
+
+def rm_file(filename, local=False):
     if os.path.isfile(filename):
         try:
             os.remove(filename)
             return True
         except OSError:
+            pass
+    ms = MediaStorage()
+    if ms.exists(filename) and local == False:
+        try:
+            ms.delete(filename)
+            return True
+        except:
             pass
     return False
 
@@ -164,6 +204,13 @@ def rm_dir(directory):
                 return True
             except (FileNotFoundError, PermissionError):
                 pass
+    ms = MediaStorage()
+    if ms.exists(directory):
+        try:
+            ms.delete(directory)
+            return True
+        except:
+            pass
     return False
 
 

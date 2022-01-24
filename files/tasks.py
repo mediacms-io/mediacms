@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 from datetime import datetime, timedelta
+import socket
 
 from celery import Task
 from celery.decorators import task
@@ -32,6 +33,7 @@ from .helpers import (
     produce_friendly_token,
     rm_file,
     run_command,
+    get_local_file
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
@@ -53,8 +55,9 @@ def chunkize_media(self, friendly_token, profiles, force=True):
 
     profiles = [EncodeProfile.objects.get(id=profile) for profile in profiles]
     media = Media.objects.get(friendly_token=friendly_token)
-    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
-    file_name = media.media_file.path.split("/")[-1]
+    local_file = get_local_file(media.media_file.path)
+    cwd = os.path.dirname(os.path.realpath(local_file))
+    file_name = local_file.split("/")[-1]
     random_prefix = produce_friendly_token()
     file_format = "{0}_{1}".format(random_prefix, file_name)
     chunks_file_name = "%02d_{0}".format(file_format)
@@ -63,7 +66,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
         settings.FFMPEG_COMMAND,
         "-y",
         "-i",
-        media.media_file.path,
+        local_file,
         "-c",
         "copy",
         "-f",
@@ -180,6 +183,7 @@ def encode_media(
         media = Media.objects.get(friendly_token=friendly_token)
         profile = EncodeProfile.objects.get(id=profile_id)
     except BaseException:
+        print("An exception occurred trying to retrieve Media object for friendly_token " + str(friendly_token) + " and encoding profile " + str(profile_id))
         Encoding.objects.filter(id=encoding_id).delete()
         return False
 
@@ -189,6 +193,7 @@ def encode_media(
         # it will always run since chunk_file_path is always different
         # thus find a better way for this check
         if Encoding.objects.filter(media=media, profile=profile, chunk_file_path=chunk_file_path).count() > 1 and force is False:
+            print("Force is " + str(force) + ". Filtering By: Media: " + str(media) + " profile: " + str(profile) + "chunk_file_path: " + str(chunk_file_path))
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
@@ -211,6 +216,7 @@ def encode_media(
                 )
     else:
         if Encoding.objects.filter(media=media, profile=profile).count() > 1 and force is False:
+            print("force is " + str(force) + ". Filtering By: Media: " + str(media) + " Profile: " + str(profile))
             Encoding.objects.filter(id=encoding_id).delete()
             return False
         else:
@@ -223,9 +229,11 @@ def encode_media(
 
     if task_id:
         encoding.task_id = task_id
-    encoding.worker = "localhost"
+    encoding.worker = socket.gethostname()
     encoding.retries = self.request.retries
     encoding.save()
+
+    local_file = get_local_file(media.media_file.path)
 
     if profile.extension == "gif":
         tf = create_temp_file(suffix=".gif")
@@ -236,7 +244,7 @@ def encode_media(
             "-ss",
             "3",
             "-i",
-            media.media_file.path,
+            local_file,
             "-hide_banner",
             "-vf",
             "scale=344:-1:flags=lanczos,fps=1",
@@ -260,7 +268,7 @@ def encode_media(
     if chunk:
         original_media_path = chunk_file_path
     else:
-        original_media_path = media.media_file.path
+        original_media_path = get_local_file(media.media_file.path)
 
     # if not media.duration:
     #    encoding.status = "fail"
@@ -283,6 +291,7 @@ def encode_media(
         if not ffmpeg_commands:
             encoding.status = "fail"
             encoding.save(update_fields=["status"])
+            print("ffmpeg is not installed. Failing.")
             return False
 
         encoding.temp_file = tf
@@ -359,7 +368,6 @@ def encode_media(
                     output_name = "{0}.{1}".format(get_file_name(original_media_path), profile.extension)
                     encoding.media_file.save(content=myfile, name=output_name)
                 encoding.total_run_time = (encoding.update_date - encoding.add_date).seconds
-
         try:
             encoding.save(update_fields=["status", "logs", "progress", "total_run_time"])
         # this will raise a django.db.utils.DatabaseError error when task is revoked,
@@ -384,9 +392,10 @@ def produce_sprite_from_video(friendly_token):
         try:
             tmpdir_image_files = tmpdirname + "/img%03d.jpg"
             output_name = tmpdirname + "/sprites.jpg"
+            local_file = get_local_file(media.media_file.path)
             cmd = "{0} -i {1} -f image2 -vf 'fps=1/10, scale=160:90' {2}&&files=$(ls {3}/img*.jpg | sort -t '-' -n -k 2 | tr '\n' ' ')&&convert $files -append {4}".format(
                 settings.FFMPEG_COMMAND,
-                media.media_file.path,
+                local_file,
                 tmpdir_image_files,
                 tmpdirname,
                 output_name,
@@ -397,7 +406,7 @@ def produce_sprite_from_video(friendly_token):
                     myfile = File(f)
                     media.sprites.save(
                         content=myfile,
-                        name=get_file_name(media.media_file.path) + "sprites.jpg",
+                        name=get_file_name(local_file) + "sprites.jpg",
                     )
         except BaseException:
             pass
@@ -430,7 +439,7 @@ def create_hls(friendly_token):
         if os.path.exists(output_dir):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
-        files = " ".join([f.media_file.path for f in encodings if f.media_file])
+        files = " ".join([get_local_file(f.media_file.path) for f in encodings if f.media_file])
         cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(settings.MP4HLS_COMMAND, output_dir, files)
         subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if existing_output_dir:
@@ -440,6 +449,9 @@ def create_hls(friendly_token):
             shutil.rmtree(output_dir)
             output_dir = existing_output_dir
         pp = os.path.join(output_dir, "master.m3u8")
+
+        # TODO Upload hls file to S3 bucket by creating a MediaStorage and reading to a file.
+
         if os.path.exists(pp):
             if media.hls_file != pp:
                 media.hls_file = pp

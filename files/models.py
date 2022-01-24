@@ -21,6 +21,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
+from cms.storage_backends import MediaStorage
 from mptt.models import MPTTModel, TreeForeignKey
 
 from . import helpers
@@ -316,15 +317,14 @@ class Media(models.Model):
 
         if not self.title:
             try:
-                path = self.media_file.path 
+                file_name = self.media_file.path 
             except:
                 print("Storage Type: " + str(self.media_file.storage))
-                file_name = self.media_file.name
+                file_name = self.media_file.storage.exact_in(self.media_file.name)
                 print("File Name: " + str(file_name))
                 print("Media File: " + str(self.media_file))
-                path = self.media_file.storage.join_path(file_name)
-            print("Creating Title From Path: " + path)
-            self.title = path.split("/")[-1]
+            print("Creating Title From Path: " + file_name)
+            self.title = file_name.split("/")[-1]
             print("New Title: " + self.title)
 
         strip_text_items = ["title", "description"]
@@ -439,13 +439,16 @@ class Media(models.Model):
         Performs all related tasks, as check for media type,
         video duration, encode
         """
-
+        print("media_init started")
         self.set_media_type()
+        print("Media Type Registered As: " + str(self.media_type))
         if self.media_type == "video":
+            print("Set Type: video")
             self.set_thumbnail(force=True)
             self.produce_sprite_from_video()
             self.encode()
         elif self.media_type == "image":
+            print("Set Type: image")
             self.set_thumbnail(force=True)
         return True
 
@@ -454,8 +457,8 @@ class Media(models.Model):
         Set encoding_status as success for non video
         content since all listings filter for encoding_status success
         """
-
-        kind = helpers.get_file_type(self.media_file.path)
+        local_file = helpers.get_local_file(self.media_file.path)
+        kind = helpers.get_file_type(local_file)
         if kind is not None:
             if kind == "image":
                 self.media_type = "image"
@@ -465,7 +468,7 @@ class Media(models.Model):
         if self.media_type in ["image", "pdf"]:
             self.encoding_status = "success"
         else:
-            ret = helpers.media_file_info(self.media_file.path)
+            ret = helpers.media_file_info(local_file)
             if ret.get("fail"):
                 self.media_type = ""
                 self.encoding_status = "fail"
@@ -512,22 +515,31 @@ class Media(models.Model):
         For image save thumbnail and poster, this will perform
         resize action
         """
+        print("Running set_thumbnail(Force: " + str(force) + ")")
         if force or (not self.thumbnail):
             if self.media_type == "video":
+                print("Media Type is video, producing thumbnails...")
                 self.produce_thumbnails_from_video()
+                print("Thumbnail creation complete.")
             if self.media_type == "image":
-                with open(self.media_file.path, "rb") as f:
+                print("Media type is image... creating thumbnail")
+                ms = MediaStorage()
+                with ms.open(ms.exact_in(self.media_file.path), "rb") as f:
                     myfile = File(f)
                     thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
                     self.thumbnail.save(content=myfile, name=thumbnail_name)
                     self.poster.save(content=myfile, name=thumbnail_name)
+                    print("Thumbnail creation complete.")
         return True
 
     def produce_thumbnails_from_video(self):
         """Produce thumbnail and poster for media
         Only for video types. Uses ffmpeg
         """
+
+        print("Running produce_thumbnails_from_video")
         if not self.media_type == "video":
+            print("Media type was not a video")
             return False
 
         if self.thumbnail_time and 0 <= self.thumbnail_time < self.duration:
@@ -537,25 +549,30 @@ class Media(models.Model):
             self.thumbnail_time = thumbnail_time  # so that it gets saved
 
         tf = helpers.create_temp_file(suffix=".jpg")
+        temp_file = helpers.get_local_file(self.media_file.path)
         command = [
             settings.FFMPEG_COMMAND,
             "-ss",
             str(thumbnail_time),  # -ss need to be firt here otherwise time taken is huge
             "-i",
-            self.media_file.path,
+            temp_file,
             "-vframes",
             "1",
             "-y",
             tf,
         ]
+        print("Running command: " + str(command))
         helpers.run_command(command)
 
         if os.path.exists(tf) and helpers.get_file_type(tf) == "image":
+            print("Using temp file to create thumbnail: " + str(tf))
             with open(tf, "rb") as f:
                 myfile = File(f)
                 thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
+                print("Thumbnail name: " + str(thumbnail_name))
                 self.thumbnail.save(content=myfile, name=thumbnail_name)
                 self.poster.save(content=myfile, name=thumbnail_name)
+                print("Save complete")
         helpers.rm_file(tf)
         return True
 
@@ -565,7 +582,7 @@ class Media(models.Model):
         """
 
         from . import tasks
-
+        print("Queueing produce_sprite_from_video")
         tasks.produce_sprite_from_video.delay(self.friendly_token)
         return True
 
@@ -575,6 +592,7 @@ class Media(models.Model):
         so that no EncodeProfile for highter heights than the video
         are created
         """
+        print("Encoding started... Force: " + str(force) + ", Chunkize: " + str(chunkize) + ", Profiles: " + str(profiles))
 
         if not profiles:
             profiles = EncodeProfile.objects.filter(active=True)

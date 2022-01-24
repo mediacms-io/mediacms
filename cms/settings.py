@@ -44,9 +44,9 @@ ALLOW_RATINGS = False
 ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 
 # ip of the server should be part of this
-ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["*", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "http://10.108.0.2:9020"
+FRONTEND_HOST = "http://10.108.0.2:8000"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
@@ -187,7 +187,7 @@ MEDIA_UPLOAD_DIR = "original/"
 MEDIA_ENCODING_DIR = "encoded/"
 THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
 SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
-HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
+HLS_DIR = os.path.join(MEDIA_LOCATION, "hls/")
 
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
 FFPROBE_COMMAND = "ffprobe"  # this is the path

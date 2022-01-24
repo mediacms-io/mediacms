@@ -86,7 +86,9 @@ class FineUploaderView(generic.FormView):
                 new = Media.objects.create(media_file=myfile, user=self.request.user)
             rm_file(media_file)
             shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
-        return self.make_response({"success": True, "media_url": new.get_absolute_url()})
+        resp = {"success": True, "media_url": new.get_absolute_url()}
+        print("Response To Send: " + str(resp))
+        return self.make_response(resp)
 
     def form_invalid(self, form):
         data = {"success": False, "error": "%s" % repr(form.errors)}

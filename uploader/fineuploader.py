@@ -113,9 +113,11 @@ class ChunkedFineUploader(BaseFineUploader):
                 return self.real_path
             return chunk
         else:
-            print("Opening file: " + str(self._full_file_path))
-            self.storage.open(self._full_file_path, mode="wb", encoding="utf-8")
+            f_path = self.storage.exact_in(self._full_file_path)
+            #print("Opening file: " + str(f_path))
+            print("Storage Type: " + str(self.storage))
+            #self.storage.open(f_path, "wb")
             print("Saving file...")
-            self.real_path = self.storage.save(self._full_file_path, self.file, encoding="utf-8")
-            print("Done.")
+            self.real_path = self.storage.save(f_path, self.file)
+            print("Done. Real Path: " + str(self.real_path))
             return self.real_path
