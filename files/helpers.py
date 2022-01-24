@@ -149,10 +149,18 @@ def get_file_type(filename):
 def is_local_file(filename):
     return os.path.exists(filename)
 
-def get_local_file(filename):
+def get_local_file(filename, count=0):
     temp_path = os.path.join(settings.TEMP_DIRECTORY,filename)
-    if os.path.exists(temp_path):
-        return temp_path   
+    if os.path.exists(temp_path) and os.path.getsize(temp_path) > 0:
+        ms = MediaStorage()
+        if ms.size(ms.exact_in(filename)) == os.path.getsize(temp_path):
+            print("Files matched. S3 == Local")
+            return temp_path
+        else:
+            print("Files did not match S3 != Local")
+            os.remove(temp_path)
+            if count < 2:
+                get_local_file(filename, count=count+1)
     else:
         ms = MediaStorage()
         filename = ms.exact_in(filename)
@@ -163,7 +171,7 @@ def get_local_file(filename):
         with open(temp_path ,'wb') as f:
             with ms.open(filename, 'rb') as ms_f:
                 print("Transferring file to local storage...")
-                f.write(ms_f.read())
+                shutil.copyfileobj(ms_f, f)
         if os.path.exists(temp_path):
             return temp_path
         else:
