@@ -1423,8 +1423,12 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.sprites:
         helpers.rm_file(instance.sprites.path)
     if instance.hls_file:
-        p = os.path.dirname(instance.hls_file)
-        helpers.rm_dir(p)
+        #p = os.path.dirname(instance.hls_file)
+        try:
+            helpers.rm_file(instance.hls_file)
+        except:
+            print("Unable to remove hls file from local storage...")
+            pass
     instance.user.update_user_media()
 
 

@@ -4,7 +4,11 @@ export function formatInnerLink(url, baseUrl) {
   let link = urlParse(url, {});
 
   if ('' === link.origin || 'null' === link.origin || !link.origin) {
-    link = urlParse(baseUrl + '/' + url.replace(/^\//g, ''), {});
+    href = baseUrl + '/' + url.replace(/^\//g, '');
+    if (href.indexOf("/") == 0) {
+      href = href.substring(1);
+    }
+    link = urlParse(href, {});
   }
 
   return link.toString();

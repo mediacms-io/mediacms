@@ -92,7 +92,8 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                     continue
             encoding = Encoding(media=media, profile=profile)
             encoding.save()
-            enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
+            #enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
+            enc_url = local_file
             encode_media.delay(friendly_token, profile.id, encoding.id, enc_url, force=force)
         return False
 
