@@ -1,6 +1,10 @@
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.js';
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.css';
 
+import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
+// The videojs-wavesurfer plugin automatically registers itself after importing it:
+import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
+
 function isString(v) {
 	return 'string' === typeof v || v instanceof String;
 }
@@ -55,6 +59,19 @@ const defaults = {
 			default: null,
 			languages: [],
 		},
+		plugins: {
+			// enable videojs-wavesurfer plugin
+			wavesurfer: {
+				// configure videojs-wavesurfer
+				backend: 'MediaElement',
+				displayMilliseconds: true,
+				debug: true,
+				waveColor: 'grey',
+				progressColor: 'black',
+				cursorColor: 'black',
+				hideScrollbar: true
+			}
+		}
 	},
 };
 
