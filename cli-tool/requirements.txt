@@ -1,4 +1,4 @@
 click
-python-decouple
+python-decouple==3.5
 requests
 rich
