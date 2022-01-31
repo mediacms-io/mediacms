@@ -1,4 +1,4 @@
 click
 python-decouple
 requests
-rich
+rich==11.1.0
