@@ -1,4 +1,4 @@
 click
 python-decouple
-requests
+requests==2.27.1
 rich
