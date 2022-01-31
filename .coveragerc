@@ -1,0 +1,4 @@
+[run]
+omit =
+    *bento4*
+    */migrations/*
