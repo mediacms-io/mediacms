@@ -849,11 +849,11 @@ class Media(models.Model):
 
     def get_absolute_url(self, api=False, edit=False):
         if edit:
-            return reverse("edit_media") + "?m={0}".format(self.friendly_token)
+            return reverse("edit_media") + "?hello={0}".format(self.friendly_token)
         if api:
             return reverse("api_get_media", kwargs={"friendly_token": self.friendly_token})
         else:
-            return reverse("get_media") + "?m={0}".format(self.friendly_token)
+            return reverse("get_media") + "?hello={0}".format(self.friendly_token)
 
     @property
     def edit_url(self):
@@ -861,7 +861,7 @@ class Media(models.Model):
 
     @property
     def add_subtitle_url(self):
-        return "/add_subtitle?m=%s" % self.friendly_token
+        return "/add_subtitle?hello=%s" % self.friendly_token
 
     @property
     def ratings_info(self):
@@ -1329,7 +1329,7 @@ class Comment(MPTTModel):
         super(Comment, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return reverse("get_media") + "?m={0}".format(self.media.friendly_token)
+        return reverse("get_media") + "?hello={0}".format(self.media.friendly_token)
 
     @property
     def media_url(self):

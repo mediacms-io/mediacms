@@ -77,7 +77,7 @@ export function listItemProps(props, item, index) {
 
   const url = {
     view: itemPageLink(props, item),
-    edit: props.canEdit ? item.url.replace('view?m=', 'edit?m=') : null,
+    edit: props.canEdit ? item.url.replace('view?hello=', 'edit?hello=') : null,
   };
 
   if (window.MediaCMS.site.devEnv && -1 < url.view.indexOf('view?')) {

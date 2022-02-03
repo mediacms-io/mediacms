@@ -27,7 +27,7 @@ export function config(glbl) {
     home: glbl.url.home,
     admin: !glbl.user.is.anonymous && glbl.user.is.admin ? glbl.url.admin : '',
     error404: glbl.url.error404,
-    embed: glbl.site.url.replace(/\/+$/, '') + '/embed?m=',
+    embed: glbl.site.url.replace(/\/+$/, '') + '/embed?hello=',
     latest: glbl.url.latestMedia,
     featured: glbl.url.featuredMedia,
     recommended: glbl.url.recommendedMedia,
