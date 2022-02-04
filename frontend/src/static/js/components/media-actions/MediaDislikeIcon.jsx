@@ -6,8 +6,8 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon } from '../_shared/';
 
 export function MediaDislikeIcon() {
-  const [dislikedMedia, setDislikedMedia] = useState(MediaPageStore.get('user-liked-media'));
-  const [dislikesCounter, setDislikesCounter] = useState(formatViewsNumber(MediaPageStore.get('media-likes'), false));
+  const [dislikedMedia, setDislikedMedia] = useState(MediaPageStore.get('user-disliked-media'));
+  const [dislikesCounter, setDislikesCounter] = useState(formatViewsNumber(MediaPageStore.get('media-dislikes'), false));
 
   function updateStateValues() {
     setDislikedMedia(MediaPageStore.get('user-disliked-media'));
