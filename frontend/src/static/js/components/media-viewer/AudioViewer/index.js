@@ -1,8 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+// The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import WaveSurfer from 'wavesurfer.js';
+
+// The videojs-wavesurfer plugin automatically registers itself after importing it:
+import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
+import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
 
 import { SiteContext } from '../../../utils/contexts/';
 import { formatInnerLink } from '../../../utils/helpers/';
@@ -149,6 +155,19 @@ export default class AudioViewer extends React.PureComponent {
                 bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
                 bottomRight: userThumbLink,
               },
+              plugins: {
+                // enable videojs-wavesurfer plugin
+                wavesurfer: {
+                  // configure videojs-wavesurfer
+                  backend: 'MediaElement',
+                  displayMilliseconds: true,
+                  debug: true,
+                  waveColor: '#163b5b',
+                  progressColor: 'black',
+                  cursorColor: 'black',
+                  hideScrollbar: true
+                }
+              }
             },
             {
               volume: AudioPlayerStore.get('player-volume'),
