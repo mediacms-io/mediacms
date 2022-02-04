@@ -4,10 +4,6 @@ import PropTypes from 'prop-types';
 import MediaPlayer from 'mediacms-player/dist/mediacms-player.js';
 import 'mediacms-player/dist/mediacms-player.css';
 
-// register videojs-wavesurfer plugin with this import
-import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
-import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
-
 import { SiteContext } from '../../../utils/contexts/';
 import { formatInnerLink } from '../../../utils/helpers/';
 import { PageStore, MediaPageStore, VideoViewerStore as AudioPlayerStore } from '../../../utils/stores/';
@@ -153,19 +149,6 @@ export default class AudioViewer extends React.PureComponent {
                 bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
                 bottomRight: userThumbLink,
               },
-              plugins: {
-                // enable videojs-wavesurfer plugin
-                wavesurfer: {
-                  // configure videojs-wavesurfer
-                  backend: 'MediaElement',
-                  displayMilliseconds: true,
-                  debug: true,
-                  waveColor: '#163b5b',
-                  progressColor: 'black',
-                  cursorColor: 'black',
-                  hideScrollbar: true
-                }
-              }
             },
             {
               volume: AudioPlayerStore.get('player-volume'),
