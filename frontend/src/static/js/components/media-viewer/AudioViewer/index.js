@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import MediaPlayer from 'mediacms-player/dist/mediacms-player.js';
-import 'mediacms-player/dist/mediacms-player.css';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 
 import { SiteContext } from '../../../utils/contexts/';
 import { formatInnerLink } from '../../../utils/helpers/';
@@ -130,7 +130,7 @@ export default class AudioViewer extends React.PureComponent {
                 : null;
           }
 
-          this.AudioPlayerData.instance = new MediaPlayer(
+          this.AudioPlayerData.instance = videojs(
             this.refs.AudioElem,
             {
               sources: this.videoSources,
