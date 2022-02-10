@@ -192,6 +192,13 @@ export function VideoPlayer(props) {
       document.addEventListener('visibilitychange', initPlayer);
     }
 
+    player.player.one('play', () => {       
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramT = urlParams.get('t');
+      const timestamp = paramT ? paramT : 0;
+      player.player.currentTime(timestamp);
+    });
+
     return () => {
       unsetPlayer();
 
