@@ -182,6 +182,25 @@ function updateDimensions() {
   };
 }
 
+function UpdateFormattedTimestamp() {
+  const videoPlayer = document.getElementsByTagName("video");
+  const timestamp = videoPlayer[0]?.currentTime;
+  const formattedTimestamp = ToHHMMSS(timestamp);
+  return formattedTimestamp;
+}
+
+function ToHHMMSS (timeInt) {
+  let sec_num = parseInt(timeInt, 10);
+  let hours   = Math.floor(sec_num / 3600);
+  let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+  let seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+  if (hours   < 10) {hours   = "0"+hours;}
+  if (minutes < 10) {minutes = "0"+minutes;}
+  if (seconds < 10) {seconds = "0"+seconds;}
+  return hours >= 1 ? hours + ':' + minutes + ':' + seconds : minutes + ':' + seconds;
+}
+
 export function MediaShareOptions(props) {
   const containerRef = useRef(null);
   const shareOptionsInnerRef = useRef(null);
@@ -191,6 +210,8 @@ export function MediaShareOptions(props) {
 
   const [dimensions, setDimensions] = useState(updateDimensions());
   const [shareOptions] = useState(ShareOptions());
+
+  const [formattedTimestamp, setFormattedTimestamp] = useState(0);
 
   function onWindowResize() {
     setDimensions(updateDimensions());
@@ -243,6 +264,7 @@ export function MediaShareOptions(props) {
   useEffect(() => {
     PageStore.on('window_resize', onWindowResize);
     MediaPageStore.on('copied_media_link', onCompleteCopyMediaLink);
+    setFormattedTimestamp(UpdateFormattedTimestamp());
 
     return () => {
       PageStore.removeListener('window_resize', onWindowResize);
@@ -276,6 +298,18 @@ export function MediaShareOptions(props) {
           <input type="text" readOnly value={MediaPageStore.get('media-url')} />
           <button onClick={onClickCopyMediaLink}>COPY</button>
         </div>
+      </div>
+      <div className="start-at">
+        {/* <label for="id-start-at-checkbox" class="checkbox"> */}
+          {/* <input
+            type="checkbox"
+            name="start-at-checkbox"
+            class="checkboxinput"
+            id="id-start-at-checkbox"
+            checked=""
+          /> */}
+          Start at <div className="stat-at-timefield"> {formattedTimestamp} </div>
+        {/* </label> */}
       </div>
     </div>
   );
