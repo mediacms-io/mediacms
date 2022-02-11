@@ -53,6 +53,12 @@ export default class AudioViewer extends React.PureComponent {
   }
 
   componentDidMount() {
+    // print version information at startup
+    const version_info = 'Using video.js ' + videojs.VERSION +
+      ' with videojs-wavesurfer ' + videojs.getPluginVersion('wavesurfer') +
+      ', wavesurfer.js ' + WaveSurfer.VERSION + ' and React ' + React.version;
+    videojs.log(version_info);
+
     if (!this.videoSources.length) {
       console.warn('Audio DEBUG:', "Audio file doesn't exist");
     }
