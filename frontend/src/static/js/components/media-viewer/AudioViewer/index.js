@@ -147,22 +147,7 @@ export default class AudioViewer extends React.PureComponent {
           this.AudioPlayerData.instance = videojs(
             this.refs.AudioElem,
             {
-              sources: this.videoSources,
-              poster: this.videoPoster,
-              autoplay: !this.props.inEmbed,
               bigPlayButton: true,
-              controlBar: {
-                fullscreen: false,
-                theaterMode: false,
-                next: !!nextLink,
-                previous: !!previousLink,
-              },
-              cornerLayers: {
-                topLeft: titleLink,
-                topRight: this.upNextLoaderView ? this.upNextLoaderView.html() : null,
-                bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
-                bottomRight: userThumbLink,
-              },
               plugins: {
                 // enable videojs-wavesurfer plugin
                 wavesurfer: {
@@ -177,16 +162,11 @@ export default class AudioViewer extends React.PureComponent {
                 }
               }
             },
-            {
-              volume: AudioPlayerStore.get('player-volume'),
-              soundMuted: AudioPlayerStore.get('player-sound-muted'),
-            },
-            null,
-            null,
-            this.onAudioPlayerStateUpdate.bind(this),
-            this.onClickNextButton.bind(this),
-            this.onClickPreviousButton.bind(this)
           );
+
+          // Just like the example code:
+          // https://collab-project.github.io/videojs-wavesurfer/#/react
+          this.AudioPlayerData.instance.src(this.videoSources[0])
 
           if (this.upNextLoaderView) {
             this.upNextLoaderView.setVideoJsPlayerElem(this.AudioPlayerData.instance.player.el_);
