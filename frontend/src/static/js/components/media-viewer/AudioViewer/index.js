@@ -1,14 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-// The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
-import WaveSurfer from 'wavesurfer.js';
-
-// The videojs-wavesurfer plugin automatically registers itself after importing it:
-import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
-import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
+import MediaPlayer from 'mediacms-player/dist/mediacms-player.js';
+import 'mediacms-player/dist/mediacms-player.css';
 
 import { SiteContext } from '../../../utils/contexts/';
 import { formatInnerLink } from '../../../utils/helpers/';
@@ -53,14 +47,6 @@ export default class AudioViewer extends React.PureComponent {
   }
 
   componentDidMount() {
-    // print version information at startup
-    const version_info = 'Using video.js ' + videojs.VERSION +
-      ' with videojs-wavesurfer ' + videojs.getPluginVersion('wavesurfer') +
-      ', wavesurfer.js ' + WaveSurfer.VERSION + ' and React ' + React.version;
-    videojs.log(version_info);
-
-    console.log('media sources:', this.videoSources)
-
     if (!this.videoSources.length) {
       console.warn('Audio DEBUG:', "Audio file doesn't exist");
     }
@@ -144,30 +130,36 @@ export default class AudioViewer extends React.PureComponent {
                 : null;
           }
 
-          this.AudioPlayerData.instance = videojs(
+          this.AudioPlayerData.instance = new MediaPlayer(
             this.refs.AudioElem,
             {
-              controls: true,
+              sources: this.videoSources,
+              poster: this.videoPoster,
+              autoplay: !this.props.inEmbed,
               bigPlayButton: true,
-              plugins: {
-                // enable videojs-wavesurfer plugin
-                wavesurfer: {
-                  // configure videojs-wavesurfer
-                  backend: 'MediaElement',
-                  displayMilliseconds: true,
-                  debug: true,
-                  waveColor: '#163b5b',
-                  progressColor: 'black',
-                  cursorColor: 'black',
-                  hideScrollbar: true
-                }
-              }
+              controlBar: {
+                fullscreen: false,
+                theaterMode: false,
+                next: !!nextLink,
+                previous: !!previousLink,
+              },
+              cornerLayers: {
+                topLeft: titleLink,
+                topRight: this.upNextLoaderView ? this.upNextLoaderView.html() : null,
+                bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
+                bottomRight: userThumbLink,
+              },
             },
+            {
+              volume: AudioPlayerStore.get('player-volume'),
+              soundMuted: AudioPlayerStore.get('player-sound-muted'),
+            },
+            null,
+            null,
+            this.onAudioPlayerStateUpdate.bind(this),
+            this.onClickNextButton.bind(this),
+            this.onClickPreviousButton.bind(this)
           );
-
-          // Just like the example code:
-          // https://collab-project.github.io/videojs-wavesurfer/#/react
-          this.AudioPlayerData.instance.src(this.videoSources[0])
 
           if (this.upNextLoaderView) {
             this.upNextLoaderView.setVideoJsPlayerElem(this.AudioPlayerData.instance.player.el_);

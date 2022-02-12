@@ -37,7 +37,6 @@
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.2",
     "url-loader": "^4.1.1",
-    "video.js": "^7.12.3",
     "webpack": "^5.38.1"
   },
   "dependencies": {
@@ -49,8 +48,6 @@
     "react-dom": "^17.0.2",
     "sortablejs": "^1.13.0",
     "timeago.js": "^4.0.2",
-    "url-parse": "^1.5.1",
-    "videojs-wavesurfer": "^3.8.0",
-    "wavesurfer.js": "^5.2.0"
+    "url-parse": "^1.5.1"
   }
 }
