@@ -147,6 +147,7 @@ export default class AudioViewer extends React.PureComponent {
           this.AudioPlayerData.instance = videojs(
             this.refs.AudioElem,
             {
+              controls: true,
               bigPlayButton: true,
               plugins: {
                 // enable videojs-wavesurfer plugin
