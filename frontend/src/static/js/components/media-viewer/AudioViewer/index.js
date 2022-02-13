@@ -149,19 +149,6 @@ export default class AudioViewer extends React.PureComponent {
                 bottomLeft: this.recommendedMedia ? this.recommendedMedia.html() : null,
                 bottomRight: userThumbLink,
               },
-              plugins: {
-                // enable videojs-wavesurfer plugin
-                wavesurfer: {
-                  // configure videojs-wavesurfer
-                  backend: 'MediaElement',
-                  displayMilliseconds: true,
-                  debug: true,
-                  waveColor: '#163b5b',
-                  progressColor: 'black',
-                  cursorColor: 'black',
-                  hideScrollbar: true
-                }
-              }
             },
             {
               volume: AudioPlayerStore.get('player-volume'),

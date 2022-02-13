@@ -1,16 +1,6 @@
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.js';
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.css';
 
-// Reference to figure out how to import dependencies:
-// https://collab-project.github.io/videojs-wavesurfer/#/react
-
-// The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
-import WaveSurfer from 'wavesurfer.js';
-
-// The videojs-wavesurfer plugin automatically registers itself after importing it:
-import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
-import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
-
 function isString(v) {
 	return 'string' === typeof v || v instanceof String;
 }
