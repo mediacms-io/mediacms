@@ -3,7 +3,8 @@ import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.css';
 
 // Reference to figure out how to import dependencies:
 // https://collab-project.github.io/videojs-wavesurfer/#/react
-
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 // The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
 import WaveSurfer from 'wavesurfer.js';
 
