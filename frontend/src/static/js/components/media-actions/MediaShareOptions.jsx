@@ -182,11 +182,9 @@ function updateDimensions() {
   };
 }
 
-function UpdateFormattedTimestamp() {
+function getTimestamp() {
   const videoPlayer = document.getElementsByTagName("video");
-  const timestamp = videoPlayer[0]?.currentTime;
-  const formattedTimestamp = ToHHMMSS(timestamp);
-  return formattedTimestamp;
+  return videoPlayer[0]?.currentTime;
 }
 
 function ToHHMMSS (timeInt) {
@@ -204,6 +202,7 @@ function ToHHMMSS (timeInt) {
 export function MediaShareOptions(props) {
   const containerRef = useRef(null);
   const shareOptionsInnerRef = useRef(null);
+  const mediaUrl = MediaPageStore.get('media-url');
 
   const [inlineSlider, setInlineSlider] = useState(null);
   const [sliderButtonsVisible, setSliderButtonsVisible] = useState({ prev: false, next: false });
@@ -211,7 +210,11 @@ export function MediaShareOptions(props) {
   const [dimensions, setDimensions] = useState(updateDimensions());
   const [shareOptions] = useState(ShareOptions());
 
+  const [timestamp, setTimestamp] = useState(0);
   const [formattedTimestamp, setFormattedTimestamp] = useState(0);
+  const [startAtSelected, setStartAtSelected] = useState(false);
+
+  const [shareMediaLink, setShareMediaLink] = useState(mediaUrl);
 
   function onWindowResize() {
     setDimensions(updateDimensions());
@@ -240,6 +243,20 @@ export function MediaShareOptions(props) {
     });
   }
 
+  function updateStartAtCheckbox() {
+    console.log("stuff! ", startAtSelected);
+    setStartAtSelected(!startAtSelected);
+    updateShareMediaLink();
+    console.log("post stuff! ", startAtSelected);
+  }
+
+  //Inverted, need to check SetXXX behaviour
+  function updateShareMediaLink()
+  {
+      const newLink = startAtSelected ? mediaUrl : mediaUrl + "&t=" + Math.trunc(timestamp);
+      setShareMediaLink(newLink);
+  }
+
   function nextSlide() {
     inlineSlider.nextSlide();
     updateSlider();
@@ -264,7 +281,11 @@ export function MediaShareOptions(props) {
   useEffect(() => {
     PageStore.on('window_resize', onWindowResize);
     MediaPageStore.on('copied_media_link', onCompleteCopyMediaLink);
-    setFormattedTimestamp(UpdateFormattedTimestamp());
+    
+    //SetXXX has some delay,bypassed by reusing localTimestamp
+    const localTimestamp = getTimestamp();
+    setTimestamp(localTimestamp);
+    setFormattedTimestamp(ToHHMMSS(localTimestamp));
 
     return () => {
       PageStore.removeListener('window_resize', onWindowResize);
@@ -295,22 +316,22 @@ export function MediaShareOptions(props) {
       </div>
       <div className="copy-field">
         <div>
-          <input type="text" readOnly value={MediaPageStore.get('media-url')} />
+          <input type="text" readOnly value={shareMediaLink} />
           <button onClick={onClickCopyMediaLink}>COPY</button>
         </div>
       </div>
       <div className="start-at">
-        {/* <label for="id-start-at-checkbox" class="checkbox"> */}
-          {/* <input
-            type="checkbox"
-            name="start-at-checkbox"
-            class="checkboxinput"
-            id="id-start-at-checkbox"
-            checked=""
-          /> */}
-          Start at <div className="stat-at-timefield"> {formattedTimestamp} </div>
-        {/* </label> */}
-      </div>
+          <label>
+            <input 
+              type="checkbox" 
+              name="start-at-checkbox" 
+              id="id-start-at-checkbox"
+              checked={startAtSelected} 
+              onChange={updateStartAtCheckbox}
+            />
+            Start at {formattedTimestamp}
+          </label>
+        </div>
     </div>
   );
 }

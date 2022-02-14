@@ -16,9 +16,12 @@ export function PopupContent(props) {
 
     const domElem = findDOMNode(wrapperRef.current);
 
-    if (-1 === ev.path.indexOf(domElem)) {
-      hide();
-    }
+    try{
+      if (-1 === ev.path.indexOf(domElem)) {
+        hide();
+      }
+    } catch (error) { console.log("The ev.path error thing")}
+    
   }, []);
 
   const onKeyDown = useCallback((ev) => {
