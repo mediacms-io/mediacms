@@ -1,6 +1,23 @@
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.js';
 import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.css';
 
+// // // // // // // // For visualizing audio by videojs-wavesurfer plugin.
+
+// Apparently videojs is already imported by `mediacms-vjs-plugin` somehow.
+// So, let's skip importing videojs.
+
+// Reference to figure out how to import dependencies:
+// https://collab-project.github.io/videojs-wavesurfer/#/react
+
+// The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
+import WaveSurfer from 'wavesurfer.js';
+
+// The videojs-wavesurfer plugin automatically registers itself after importing it:
+import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
+import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
+
+// // // // // // // //
+
 function isString(v) {
 	return 'string' === typeof v || v instanceof String;
 }
@@ -450,4 +467,21 @@ export function MediaPlayer(
 	if (void 0 !== typeof window) {
 		window.HELP_IMPROVE_VIDEOJS = false;
 	}
+
+	/* 
+	 * Initialize videojs-wavesurfer plugin by calling it.
+	 */
+
+	this.player.wavesurfer(
+		/* Pass wavesurfer options here */
+		{
+			backend: 'MediaElement',
+			displayMilliseconds: true,
+			debug: true,
+			waveColor: '#163b5b',
+			progressColor: 'black',
+			cursorColor: 'black',
+			hideScrollbar: true
+		}
+	);
 }
