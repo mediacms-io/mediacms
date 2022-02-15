@@ -468,6 +468,18 @@ export function MediaPlayer(
 		window.HELP_IMPROVE_VIDEOJS = false;
 	}
 
+	/*
+	 * Debug logs
+	 */
+
+	videojs.log(videojs.getPlugins())
+
+	const version_info = 'Using video.js ' + videojs.VERSION +
+		' with videojs-wavesurfer ' + videojs.getPluginVersion('wavesurfer') +
+		', wavesurfer.js ' + WaveSurfer.VERSION;
+	videojs.log(version_info);
+
+
 	/* 
 	 * Initialize videojs-wavesurfer plugin by calling it.
 	 */
