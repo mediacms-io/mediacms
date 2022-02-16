@@ -12,6 +12,9 @@ import 'mediacms-vjs-plugin/dist/mediacms-vjs-plugin.css';
 // The videojs-wavesurfer plugin depends on the video.js and wavesurfer.js libraries:
 import WaveSurfer from 'wavesurfer.js';
 
+// TODO: For some reason, videojs-wavesurfer plugin doesn't register itself automatically.
+// TODO: Why?
+//
 // The videojs-wavesurfer plugin automatically registers itself after importing it:
 import 'videojs-wavesurfer/dist/css/videojs.wavesurfer.css';
 import Wavesurfer from 'videojs-wavesurfer/dist/videojs.wavesurfer.js';
@@ -467,6 +470,13 @@ export function MediaPlayer(
 	if (void 0 !== typeof window) {
 		window.HELP_IMPROVE_VIDEOJS = false;
 	}
+
+	/*
+	 * Register videojs-wavesurfer plugin manually.
+	 * Since it didn't get registered automatically upon import.
+	 */
+
+	videojs.registerPlugin('wavesurfer', Wavesurfer);
 
 	/*
 	 * Debug logs
