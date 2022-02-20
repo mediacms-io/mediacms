@@ -32,3 +32,15 @@ CELERY_RESULT_BACKEND = BROKER_URL
 MP4HLS_COMMAND = "/home/mediacms.io/bento4/bin/mp4hls"
 
 DEBUG = False
+
+### Set email settings
+### Set correct settings per provider
+DEFAULT_FROM_EMAIL = 'micrufun@gmail.com'
+EMAIL_HOST_PASSWORD = '***REMOVED***'
+EMAIL_HOST_USER = 'micrufun@gmail.com'
+EMAIL_USE_TLS = True
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_HOST = 'gmail.com'
+EMAIL_PORT = 587
+ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
+
