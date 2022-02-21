@@ -59,9 +59,9 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
-      VIRTUAL_HOST: 'mediacms.52.209.5.113.nip.io'
-      LETSENCRYPT_HOST: 'mediacms.52.209.5.113.nip.io'
-      LETSENCRYPT_EMAIL: 'email@example.com'
+      VIRTUAL_HOST: 'micrufun.com'
+      LETSENCRYPT_HOST: 'micrufun.com'
+      LETSENCRYPT_EMAIL: 'micrufun@gmail.com'
     depends_on:
       - migrations
   celery_beat:
