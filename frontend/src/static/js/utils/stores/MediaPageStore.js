@@ -155,6 +155,9 @@ class MediaPageStore extends EventEmitter {
   loadComments() {
     this.commentsAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/comments';
     this.commentsResponse = this.commentsResponse.bind(this);
+    console.log("A : ", this.commentsAPIUrl);
+    console.log("B : ", this.mediacms_config.api.media);
+    console.log("C : ", MediaPageStoreData[this.id].mediaId);
     getRequest(this.commentsAPIUrl, !1, this.commentsResponse);
   }
 

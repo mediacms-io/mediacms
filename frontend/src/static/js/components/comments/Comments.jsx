@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { MentionsInput, Mention } from 'react-mentions';
 import PropTypes from 'prop-types';
 import { format } from 'timeago.js';
 import { usePopup } from '../../utils/hooks/';
@@ -6,6 +7,7 @@ import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
+import { getRequest } from '../../utils/helpers';
 
 import './Comments.scss';
 
@@ -25,6 +27,27 @@ function CommentForm(props) {
   const [madeChanges, setMadeChanges] = useState(false);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const [textareaLineHeight, setTextareaLineHeight] = useState(-1);
+  // const [userList, setUsersList] = useState('');
+  const userList = getUsersArray();
+
+  function getUsersArray()
+  {
+    // getRequest()
+    return [
+      {
+        id: 'test',
+        display: 'Walter White',
+      },
+      {
+        id: 'TomTest',
+        display: 'Jesse Pinkman',
+      },
+      {
+        id: 'gus',
+        display: 'Gustavo "Gus" Fring',
+      },
+    ];
+  }
 
   const [loginUrl] = useState(
     !MemberContext._currentValue.is.anonymous
@@ -41,6 +64,11 @@ function CommentForm(props) {
   function onBlur() {
     setTextareaFocused(false);
   }
+
+  // function onUsersLoad()
+  // {
+  //   setUsersList();
+  // }
 
   function onCommentSubmit() {
     textareaRef.current.style.height = '';
@@ -61,15 +89,13 @@ function CommentForm(props) {
     setMadeChanges(false);
   }
 
-  function onChange(event) {
-    textareaRef.current.style.height = '';
+  function onChange(event, newValue, newPlainTextValue, mentions) {
+    setValue(newValue);
+    setMadeChanges(true);
 
     const contentHeight = textareaRef.current.scrollHeight;
     const contentLineHeight =
       0 < textareaLineHeight ? textareaLineHeight : parseFloat(window.getComputedStyle(textareaRef.current).lineHeight);
-
-    setValue(textareaRef.current.value);
-    setMadeChanges(true);
     setTextareaLineHeight(contentLineHeight);
 
     textareaRef.current.style.height =
@@ -81,70 +107,90 @@ function CommentForm(props) {
       return;
     }
 
-    const val = textareaRef.current.value.trim();
+    const val = value.trim();
 
     if ('' !== val) {
-      MediaPageActions.submitComment(val);
+      MediaPageActions.submitComment(sanitizedComment);
     }
   }
 
   useEffect(() => {
+    // MediaPageStore.on('somethingSomethingUser_load', onUsersLoad);
     MediaPageStore.on('comment_submit', onCommentSubmit);
     MediaPageStore.on('comment_submit_fail', onCommentSubmitFail);
 
     return () => {
+      // MediaPageStore.removeListener('somethingSomethingUser_load', onUsersLoad);
       MediaPageStore.removeListener('comment_submit', onCommentSubmit);
       MediaPageStore.removeListener('comment_submit_fail', onCommentSubmitFail);
     };
   });
 
-  return !MemberContext._currentValue.is.anonymous ? (
-    <div className="comments-form">
-      <div className="comments-form-inner">
-        <UserThumbnail />
-        <div className="form">
-          <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-            <textarea
-              ref={textareaRef}
-              className="form-textarea"
-              rows="1"
-              placeholder={'Add a ' + commentsText.single + '...'}
-              value={value}
-              onChange={onChange}
-              onFocus={onFocus}
-              onBlur={onBlur}
-            ></textarea>
-          </div>
-          <div className="form-buttons">
-            <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
-              {commentsText.submitCommentText}
-            </button>
+  try {
+    return !MemberContext._currentValue.is.anonymous ? (
+      <div className="comments-form">
+        <div className="comments-form-inner">
+          <UserThumbnail />
+          <div className="form">
+            <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
+              {/* <textarea
+                ref={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChange}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              ></textarea> */}
+  
+              <MentionsInput 
+                inputRef={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChange}>
+                <Mention
+                  data={userList}
+                  markup="@(___id___)[___display___]"
+                />
+              </MentionsInput>
+            </div>
+            <div className="form-buttons">
+              <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
+                {commentsText.submitCommentText}
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  ) : (
-    <div className="comments-form">
-      <div className="comments-form-inner">
-        <UserThumbnail />
-        <div className="form">
-          <a
-            href={loginUrl}
-            rel="noffolow"
-            className="form-textarea-wrap"
-            title={'Add a ' + commentsText.single + '...'}
-          >
-            <span className="form-textarea">{'Add a ' + commentsText.single + '...'}</span>
-          </a>
-          <div className="form-buttons">
-            <a href={loginUrl} rel="noffolow" className="disabled">
-              {commentsText.submitCommentText}
+    ) : (
+      <div className="comments-form">
+        <div className="comments-form-inner">
+          <UserThumbnail />
+          <div className="form">
+            <a
+              href={loginUrl}
+              rel="noffolow"
+              className="form-textarea-wrap"
+              title={'Add a ' + commentsText.single + '...'}
+            >
+              <span className="form-textarea">{'Add a ' + commentsText.single + '...'}</span>
             </a>
+            <div className="form-buttons">
+              <a href={loginUrl} rel="noffolow" className="disabled">
+                {commentsText.submitCommentText}
+              </a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.log(error);
+    return  <h1>FUDGE</h1>
+  }
 }
 
 CommentForm.propTypes = {
@@ -236,6 +282,10 @@ function Comment(props) {
     };
   }, []);
 
+  function parseComment(text) {
+    return { __html: text.replace(/\n/g, `<br />`) };
+  }
+
   return (
     <div className="comment">
       <div className="comment-inner">
@@ -255,7 +305,7 @@ function Comment(props) {
             <div
               ref={commentTextInnerRef}
               className="comment-text-inner"
-              dangerouslySetInnerHTML={{ __html: props.text }}
+              dangerouslySetInnerHTML={parseComment(props.text)}
             ></div>
           </div>
           {enabledViewMoreContent ? (
@@ -368,8 +418,24 @@ export default function CommentsList(props) {
   const [displayComments, setDisplayComments] = useState(false);
 
   function onCommentsLoad() {
+    const retrievedComments = [...MediaPageStore.get('media-comments')];
+    console.log([...MediaPageStore.get('media-comments')]);
+    console.log("--------------------");
+    console.log([...MediaPageStore]);
+
+    retrievedComments.forEach(comment => {
+      comment.text = setMentions(comment.text);
+    });
+    
     displayCommentsRelatedAlert();
-    setComments([...MediaPageStore.get('media-comments')]);
+    setComments(retrievedComments);
+  }
+
+  function setMentions(text)
+  {
+    let sanitizedComment = text.split('@(_').join("<a href=\"/user/");
+    sanitizedComment = sanitizedComment.split('_)[_').join("\">");
+    return sanitizedComment.split('_]').join("</a>");
   }
 
   function onCommentSubmit(commentId) {
