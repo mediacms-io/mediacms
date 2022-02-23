@@ -11,6 +11,7 @@ import {
   extractDefaultVideoResolution,
 } from './functions';
 import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
+import Daw from '../../daw'
 
 import '../VideoViewer.scss';
 
@@ -556,6 +557,14 @@ export default class VideoViewer extends React.PureComponent {
                     onClickPreviousCallback={this.onClickPrevious}
                     onStateUpdateCallback={this.onStateUpdate}
                     onPlayerInitCallback={this.onPlayerInit}
+                  />
+                )}
+              </SiteConsumer>
+              <SiteConsumer>
+                {(site) => (
+                  <Daw
+                    siteId={site.id}
+                    siteUrl={site.url}
                   />
                 )}
               </SiteConsumer>
