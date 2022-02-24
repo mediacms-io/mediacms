@@ -27,27 +27,7 @@ function CommentForm(props) {
   const [madeChanges, setMadeChanges] = useState(false);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const [textareaLineHeight, setTextareaLineHeight] = useState(-1);
-  // const [userList, setUsersList] = useState('');
-  const userList = getUsersArray();
-
-  function getUsersArray()
-  {
-    // getRequest()
-    return [
-      {
-        id: 'test',
-        display: 'Walter White',
-      },
-      {
-        id: 'TomTest',
-        display: 'Jesse Pinkman',
-      },
-      {
-        id: 'gus',
-        display: 'Gustavo "Gus" Fring',
-      },
-    ];
-  }
+  const [userList, setUsersList] = useState('');
 
   const [loginUrl] = useState(
     !MemberContext._currentValue.is.anonymous
@@ -65,10 +45,16 @@ function CommentForm(props) {
     setTextareaFocused(false);
   }
 
-  // function onUsersLoad()
-  // {
-  //   setUsersList();
-  // }
+  function onUsersLoad()
+  {
+    const userList =[...MediaPageStore.get('users')];
+    const cleanList = []
+    userList.forEach(user => {
+      cleanList.push({id : user.username, display : user.name});
+    });
+
+    setUsersList(cleanList);
+  }
 
   function onCommentSubmit() {
     textareaRef.current.style.height = '';
@@ -110,19 +96,19 @@ function CommentForm(props) {
     const val = value.trim();
 
     if ('' !== val) {
-      MediaPageActions.submitComment(sanitizedComment);
+      MediaPageActions.submitComment(val);
     }
   }
 
   useEffect(() => {
-    // MediaPageStore.on('somethingSomethingUser_load', onUsersLoad);
     MediaPageStore.on('comment_submit', onCommentSubmit);
     MediaPageStore.on('comment_submit_fail', onCommentSubmitFail);
+    MediaPageStore.on('users_load', onUsersLoad);
 
     return () => {
-      // MediaPageStore.removeListener('somethingSomethingUser_load', onUsersLoad);
       MediaPageStore.removeListener('comment_submit', onCommentSubmit);
       MediaPageStore.removeListener('comment_submit_fail', onCommentSubmitFail);
+      MediaPageStore.removeListener('users_load', onUsersLoad);
     };
   });
 
@@ -419,9 +405,6 @@ export default function CommentsList(props) {
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
-    console.log([...MediaPageStore.get('media-comments')]);
-    console.log("--------------------");
-    console.log([...MediaPageStore]);
 
     retrievedComments.forEach(comment => {
       comment.text = setMentions(comment.text);
