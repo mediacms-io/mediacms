@@ -8,7 +8,7 @@ export default class Daw extends React.PureComponent {
     render() {
         return (
             <div className="daw-container" key="daw-container">
-                <span>DAW</span>
+                <span>DAW placeholder</span>
             </div>
         );
     }
