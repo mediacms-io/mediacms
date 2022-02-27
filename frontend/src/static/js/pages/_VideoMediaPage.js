@@ -99,7 +99,7 @@ export class _VideoMediaPage extends Page {
               ? this.viewerContainerContent(MediaPageStore.get('media-data'))
               : null}
           </div>,
-            <div className='daw-container-outer'>
+            <div className='daw-container-outer' key="daw-container-outer">
               {this.state.mediaLoaded && this.state.pagePlaylistLoaded
                 ? <Daw></Daw>
                 : null}
