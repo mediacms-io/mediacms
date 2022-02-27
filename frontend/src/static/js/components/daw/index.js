@@ -2,6 +2,8 @@ import React from 'react';
 
 import WaveformPlaylist from "waveform-playlist";
 
+import 'waveform-playlist/styles/playlist.scss';
+
 export default class Daw extends React.PureComponent {
     constructor(props) {
         super(props);
