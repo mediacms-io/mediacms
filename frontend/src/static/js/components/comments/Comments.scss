@@ -10,7 +10,7 @@
       }
     }
 
-    .form-textarea {
+    .form-textarea, .form-textarea__input {
       color: var(--comments-textarea-text-color);
 
       &:placeholder {
@@ -160,7 +160,7 @@
       }
     }
 
-    .form-textarea {
+    .form-textarea, .form-textarea__input {
       position: relative;
       resize: none;
       display: block;
@@ -204,7 +204,7 @@
 
       text-decoration: none;
 
-      .form-textarea {
+      .form-textarea, .form-textarea__input {
         opacity: 0.5;
       }
     }

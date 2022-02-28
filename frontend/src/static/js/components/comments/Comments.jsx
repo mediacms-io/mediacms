@@ -75,6 +75,8 @@ function CommentForm(props) {
   }
 
   function onChange(event, newValue, newPlainTextValue, mentions) {
+    textareaRef.current.style.height = '';
+    
     setValue(newValue);
     setMadeChanges(true);
 
@@ -118,24 +120,15 @@ function CommentForm(props) {
           <UserThumbnail />
           <div className="form">
             <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-              {/* <textarea
-                ref={textareaRef}
-                className="form-textarea"
-                rows="1"
-                placeholder={'Add a ' + commentsText.single + '...'}
-                value={value}
-                onChange={onChange}
-                onFocus={onFocus}
-                onBlur={onBlur}
-              ></textarea> */}
-  
               <MentionsInput 
                 inputRef={textareaRef}
                 className="form-textarea"
                 rows="1"
                 placeholder={'Add a ' + commentsText.single + '...'}
                 value={value}
-                onChange={onChange}>
+                onChange={onChange}
+                onFocus={onFocus}
+                onBlur={onBlur}>
                 <Mention
                   data={userList}
                   markup="@(___id___)[___display___]"
