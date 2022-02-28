@@ -15,7 +15,7 @@ export default function Daw() {
         const playlist = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
-            samplesPerPixel: 100,
+            samplesPerPixel: 3000,
             mono: true,
             waveHeight: 100,
             container: node,
@@ -25,11 +25,15 @@ export default function Daw() {
               timeColor: "grey",
               fadeColor: "black",
             },
+            timescale: true,
             controls: {
               show: true,
               width: 150,
             },
-            zoomLevels: [100, 300, 500],
+            barWidth: 3, // width in pixels of waveform bars.
+            barGap: 1, // spacing in pixels between waveform bars.
+            seekStyle: 'line',
+            zoomLevels: [500, 1000, 3000, 5000],
           },
           ee
         );
