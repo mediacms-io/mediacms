@@ -4,6 +4,8 @@ import EventEmitter from "events";
 import WaveformPlaylist from "waveform-playlist";
 import { saveAs } from "file-saver";
 
+import 'waveform-playlist/styles/playlist.scss';
+
 export default function Daw() {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
