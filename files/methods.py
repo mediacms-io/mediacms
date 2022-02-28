@@ -4,6 +4,7 @@
 import itertools
 import logging
 import random
+import re
 from datetime import datetime
 
 from django.conf import settings
@@ -345,6 +346,53 @@ View it on %s
         email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [media.user.email])
         email.send(fail_silently=True)
     return True
+
+
+def notify_user_on_mention(friendly_token, user_mentionned, cleaned_comment):
+
+    """ Notify the user mentionned in the comment """
+    media = None
+    media = models.Media.objects.filter(friendly_token=friendly_token).first()
+    if not media:
+        return False
+
+    user = models.User.objects.filter(username=user_mentionned).first()  
+    media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
+
+    if user.notification_on_comments:
+        title = "[{}] - You were mentionned in a comment".format(settings.PORTAL_NAME)
+        msg = """
+You were mentionned in a comment on  %s .
+View it on %s
+        """ % (
+            media.title,
+            media_url,
+        )
+        email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [user.email])
+        email.send(fail_silently=True)
+    return True
+
+
+def check_comment_for_mention(friendly_token, comment_text):
+    """ Check the comment for any mentions, and notify each mentionned users"""    
+    cleaned_comment = ''
+
+    matches = re.findall('@\(_(.+?)_\)', comment_text)
+    if matches:
+        cleaned_comment = clean_comment(comment_text)
+
+    for match in matches:
+        notify_user_on_mention(friendly_token, match, cleaned_comment)
+
+
+def clean_comment(raw_comment):
+    """ Clean the coment fromn ID and username Mentions for preview purposes  """
+
+    cleaned_comment = re.sub( '@\(_(.+?)_\)', '', raw_comment)
+    cleaned_comment = "<div>".join(cleaned_comment.split("\[_"))
+    cleaned_comment = "</div>".join(cleaned_comment.split("_\]"))
+
+    return cleaned_comment
 
 
 def list_tasks():

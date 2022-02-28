@@ -7,7 +7,6 @@ import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
-import { getRequest } from '../../utils/helpers';
 
 import './Comments.scss';
 

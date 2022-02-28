@@ -37,6 +37,7 @@ from .methods import (
     is_mediacms_manager,
     list_tasks,
     notify_user_on_comment,
+    check_comment_for_mention,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -1277,6 +1278,8 @@ class CommentDetail(APIView):
             serializer.save(user=request.user, media=media)
             if request.user != media.user:
                 notify_user_on_comment(friendly_token=media.friendly_token)
+            # here forward the comment to check if a user was mentionned 
+            check_comment_for_mention(friendly_token=media.friendly_token, comment_text = serializer.data.text)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
