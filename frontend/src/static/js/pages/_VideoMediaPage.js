@@ -101,7 +101,7 @@ export class _VideoMediaPage extends Page {
           </div>,
             <div className='daw-container-outer' key="daw-container-outer">
               {this.state.mediaLoaded && this.state.pagePlaylistLoaded
-                ? <Daw></Daw>
+                ? Daw()
                 : null}
             </div>,
           <div key="viewer-section-nested" className={viewerNestedClassname}>

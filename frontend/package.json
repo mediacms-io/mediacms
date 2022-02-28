@@ -41,8 +41,10 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "file-saver": "^2.0.5",
     "flux": "^4.0.1",
     "mediacms-player": "file:packages/player",
+    "next": "^12.1.0",
     "normalize.css": "^8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
