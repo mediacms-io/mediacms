@@ -19,7 +19,7 @@ export default function Daw() {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
             mono: true,
-            waveHeight: 100,
+            waveHeight: 138,
             container: node,
             state: "cursor",
             colors: {
