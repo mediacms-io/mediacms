@@ -91,6 +91,10 @@ export default function Daw() {
   return (
     <>
       <Script
+        src="https://kit.fontawesome.com/ef69927139.js"
+        crossorigin="anonymous"
+      />
+      <Script
         src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.37/Tone.js"
         onLoad={handleLoad}
       />
