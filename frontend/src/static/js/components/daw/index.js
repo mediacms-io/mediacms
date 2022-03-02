@@ -182,8 +182,6 @@ export default function Daw() {
                 <i class="fas fa-pause"></i>
               </button>
             </div>
-          </div>
-          <div class="controls-group">
             <div class="btn-group">
               <button type="button" title="Zoom in" id="btn-zoom-in" class="btn btn-outline-dark">
                 <i class="fas fa-search-plus"></i>
