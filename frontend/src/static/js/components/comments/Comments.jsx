@@ -113,62 +113,57 @@ function CommentForm(props) {
     };
   });
 
-  try {
-    return !MemberContext._currentValue.is.anonymous ? (
-      <div className="comments-form">
-        <div className="comments-form-inner">
-          <UserThumbnail />
-          <div className="form">
-            <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-              <MentionsInput 
-                inputRef={textareaRef}
-                className="form-textarea"
-                rows="1"
-                placeholder={'Add a ' + commentsText.single + '...'}
-                value={value}
-                onChange={onChange}
-                onFocus={onFocus}
-                onBlur={onBlur}>
-                <Mention
-                  data={userList}
-                  markup="@(___id___)[___display___]"
-                />
-              </MentionsInput>
-            </div>
-            <div className="form-buttons">
-              <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
-                {commentsText.submitCommentText}
-              </button>
-            </div>
+  return !MemberContext._currentValue.is.anonymous ? (
+    <div className="comments-form">
+      <div className="comments-form-inner">
+        <UserThumbnail />
+        <div className="form">
+          <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
+            <MentionsInput 
+              inputRef={textareaRef}
+              className="form-textarea"
+              rows="1"
+              placeholder={'Add a ' + commentsText.single + '...'}
+              value={value}
+              onChange={onChange}
+              onFocus={onFocus}
+              onBlur={onBlur}>
+              <Mention
+                data={userList}
+                markup="@(___id___)[___display___]"
+              />
+            </MentionsInput>
+          </div>
+          <div className="form-buttons">
+            <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
+              {commentsText.submitCommentText}
+            </button>
           </div>
         </div>
       </div>
-    ) : (
-      <div className="comments-form">
-        <div className="comments-form-inner">
-          <UserThumbnail />
-          <div className="form">
-            <a
-              href={loginUrl}
-              rel="noffolow"
-              className="form-textarea-wrap"
-              title={'Add a ' + commentsText.single + '...'}
-            >
-              <span className="form-textarea">{'Add a ' + commentsText.single + '...'}</span>
+    </div>
+  ) : (
+    <div className="comments-form">
+      <div className="comments-form-inner">
+        <UserThumbnail />
+        <div className="form">
+          <a
+            href={loginUrl}
+            rel="noffolow"
+            className="form-textarea-wrap"
+            title={'Add a ' + commentsText.single + '...'}
+          >
+            <span className="form-textarea">{'Add a ' + commentsText.single + '...'}</span>
+          </a>
+          <div className="form-buttons">
+            <a href={loginUrl} rel="noffolow" className="disabled">
+              {commentsText.submitCommentText}
             </a>
-            <div className="form-buttons">
-              <a href={loginUrl} rel="noffolow" className="disabled">
-                {commentsText.submitCommentText}
-              </a>
-            </div>
           </div>
         </div>
       </div>
-    );
-  } catch (error) {
-    console.log(error);
-    return  <h1>FUDGE</h1>
-  }
+    </div>
+  );
 }
 
 CommentForm.propTypes = {

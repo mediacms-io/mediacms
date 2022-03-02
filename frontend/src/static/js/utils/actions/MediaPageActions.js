@@ -46,7 +46,6 @@ export function removeMedia() {
 }
 
 export function submitComment(commentText) {
-  console.log("dispatched comment: ", commentText)
   Dispatcher.dispatch({
     type: 'SUBMIT_COMMENT',
     commentText,
