@@ -169,7 +169,12 @@ export default function Daw() {
               >
                 <i class="fas fa-microphone"></i>
               </button>
-              <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop">
+              <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop"
+                onClick={() => {
+                  ee.emit("stop");
+                  // TODO: pause video.
+                }}
+              >
                 <i class="fas fa-stop"></i>
               </button>
             </div>
