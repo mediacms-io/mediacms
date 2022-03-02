@@ -210,7 +210,11 @@ export default function Daw() {
           <div class="controls-group">
             <div class="btn-group">
               <button type="button" title="Clear the playlist's tracks"
-                class="btn btn-clear btn-outline-danger">
+                class="btn btn-clear btn-outline-danger"
+                onClick={() => {
+                  ee.emit("clear");
+                }}
+              >
                 Clear
               </button>
             </div>
