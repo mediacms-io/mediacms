@@ -9,19 +9,38 @@ import 'waveform-playlist/styles/playlist.scss';
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+window.MNS = {} // Namespace to hold vars.
+MNS.time = 0 // Current media time.
+MNS.paused = true // Is media paused or playing?
+
+let userMediaStream;
+let playlist = {}; // To be filled later.
+let constraints = { audio: true };
+
+navigator.getUserMedia = (navigator.getUserMedia ||
+  navigator.webkitGetUserMedia ||
+  navigator.mozGetUserMedia ||
+  navigator.msGetUserMedia);
+
+function gotStream(stream) {
+  userMediaStream = stream;
+  playlist.initRecorder(userMediaStream);
+  document.getElementById("btn-record").classList.remove("disabled")
+}
+
+function logError(err) {
+  console.error(err);
+}
+
 export default function Daw() {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
 
-  window.MNS = {} // Namespace to hold vars.
-	MNS.time = 0 // Current media time.
-	MNS.paused = true // Is media paused or playing?
-
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        const playlist = WaveformPlaylist(
+        playlist = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -82,10 +101,26 @@ export default function Daw() {
               };
             },
           },
-        ]);
+        ]).then(function () {
+          // can do stuff with the playlist.
 
-        //initialize the WAV exporter.
-        playlist.initExporter();
+          // After you create the playlist you have to call this function if you want to use recording:
+          //initialize the WAV exporter.
+          playlist.initExporter();
+
+          if (navigator.mediaDevices) {
+            navigator.mediaDevices.getUserMedia(constraints)
+              .then(gotStream)
+              .catch(logError);
+          } else if (navigator.getUserMedia && 'MediaRecorder' in window) {
+            navigator.getUserMedia(
+              constraints,
+              gotStream,
+              logError
+            );
+          }
+        });
+
       }
     },
     [ee, toneCtx]
@@ -126,7 +161,12 @@ export default function Daw() {
                 <i class="fas fa-play"></i>
                 <i class="fas fa-pause"></i>
               </button>
-              <button type="button" id="btn-record" class="btn btn-outline-primary disabled" title="Record">
+              <button type="button" id="btn-record" class="btn btn-outline-primary disabled" title="Record"
+                onClick={()=>{
+                  ee.emit("record");
+                  // TODO: play video.
+                }}
+              >
                 <i class="fas fa-microphone"></i>
               </button>
               <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop">
