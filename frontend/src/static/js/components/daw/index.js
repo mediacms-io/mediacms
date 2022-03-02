@@ -144,6 +144,26 @@ export default function Daw() {
         <div class="controls-groups">
           <div class="controls-group">
             <div class="btn-group">
+              <button type="button" id="btn-record" class="btn btn-outline-primary disabled" title="Record"
+                onClick={()=>{
+                  ee.emit("record");
+                  // TODO: play video.
+                }}
+              >
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop"
+                onClick={() => {
+                  ee.emit("stop");
+                  // TODO: pause video.
+                }}
+              >
+                <i class="fas fa-stop"></i>
+              </button>
+            </div>
+          </div>
+          <div class="controls-group">
+            <div class="btn-group">
               <button type="button" id="btn-play" class="btn btn-outline-success" title="Play/Pause"
                 onClick={() => {
                   if (MNS.paused) {
@@ -160,22 +180,6 @@ export default function Daw() {
               >
                 <i class="fas fa-play"></i>
                 <i class="fas fa-pause"></i>
-              </button>
-              <button type="button" id="btn-record" class="btn btn-outline-primary disabled" title="Record"
-                onClick={()=>{
-                  ee.emit("record");
-                  // TODO: play video.
-                }}
-              >
-                <i class="fas fa-microphone"></i>
-              </button>
-              <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop"
-                onClick={() => {
-                  ee.emit("stop");
-                  // TODO: pause video.
-                }}
-              >
-                <i class="fas fa-stop"></i>
               </button>
             </div>
           </div>
