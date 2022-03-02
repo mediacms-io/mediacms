@@ -32,6 +32,17 @@ function logError(err) {
   console.error(err);
 }
 
+function toggleActive(node) {
+  var active = node.parentNode.querySelectorAll('.active');
+  var i = 0, len = active.length;
+
+  for (; i < len; i++) {
+      active[i].classList.remove('active');
+  }
+
+  node.classList.toggle('active');
+}
+
 export default function Daw() {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
@@ -197,7 +208,12 @@ export default function Daw() {
               <button type="button" id="btn-select" class="btn btn-outline-dark" title="Select audio region">
                 <i class="fas fa-italic"></i>
               </button>
-              <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time">
+              <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
+                onClick={() => {
+                  ee.emit("statechange", "shift");
+                  toggleActive(this);
+                }}
+              >
                 <i class="fas fa-arrows-alt-h"></i>
               </button>
             </div>
