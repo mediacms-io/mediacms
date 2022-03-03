@@ -209,17 +209,9 @@ export default function Daw() {
                 <i class="fas fa-italic"></i>
               </button>
               <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
-                onClick={(e) => {
+                onClick={() => {
                   ee.emit("statechange", "shift");
-                  // toggleActive(this);
-                  var active = e.target.parentNode.querySelectorAll('.active');
-                  var i = 0, len = active.length;
-
-                  for (; i < len; i++) {
-                    active[i].classList.remove('active');
-                  }
-
-                  e.target.classList.toggle('active');
+                  toggleActive(this);
                 }}
               >
                 <i class="fas fa-arrows-alt-h"></i>
