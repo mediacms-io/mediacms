@@ -59,7 +59,7 @@ function toggleActive(event) {
       active[i].classList.remove('active');
   }
 
-  event.target.classList.toggle('active');
+  event.target.classList.add('active');
 }
 
 // See this exmample:
