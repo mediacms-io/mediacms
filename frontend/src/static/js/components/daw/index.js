@@ -194,10 +194,18 @@ export default function Daw() {
               </button>
             </div>
             <div class="btn-group">
-              <button type="button" title="Zoom in" id="btn-zoom-in" class="btn btn-outline-dark">
+              <button type="button" title="Zoom in" id="btn-zoom-in" class="btn btn-outline-dark"
+                onClick={() => {
+                  ee.emit("zoomin");
+                }}
+              >
                 <i class="fas fa-search-plus"></i>
               </button>
-              <button type="button" title="Zoom out" id="btn-zoom-out" class="btn btn-outline-dark">
+              <button type="button" title="Zoom out" id="btn-zoom-out" class="btn btn-outline-dark"
+                onClick={() => {
+                  ee.emit("zoomout");
+                }}
+              >
                 <i class="fas fa-search-minus"></i>
               </button>
             </div>
@@ -230,7 +238,10 @@ export default function Daw() {
             <div class="btn-group btn-select-state-group">
               <button type="button" id="btn-trim-audio"
                 title="Keep only the selected audio region for a track"
-                class="btn btn-outline-primary disabled">
+                class="btn btn-outline-primary disabled"
+                onClick={() => {
+                  ee.emit("trim");
+                }}>
                 Trim
               </button>
             </div>
