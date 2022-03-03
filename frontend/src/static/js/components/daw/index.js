@@ -51,17 +51,6 @@ function logError(err) {
   console.error(err);
 }
 
-function toggleActive(event) {
-  var active = event.target.parentNode.querySelectorAll('.active');
-  var i = 0, len = active.length;
-
-  for (; i < len; i++) {
-      active[i].classList.remove('active');
-  }
-
-  event.target.classList.add('active');
-}
-
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function Daw() {
@@ -237,7 +226,10 @@ export default function Daw() {
               <button type="button" id="btn-cursor" class="btn btn-outline-dark active" title="Select cursor"
                 onClick={(event) => {
                   ee.emit("statechange", "cursor");
-                  toggleActive(event);
+                  document.getElementById('btn-cursor').classList.remove('active');
+                  document.getElementById('btn-select').classList.remove('active');
+                  document.getElementById('btn-shift').classList.remove('active');
+                  event.target.classList.add('active');
                 }}
               >
                 <i class="fas fa-headphones"></i>
@@ -245,7 +237,10 @@ export default function Daw() {
               <button type="button" id="btn-select" class="btn btn-outline-dark" title="Select audio region"
                 onClick={(event) => {
                   ee.emit("statechange", "select");
-                  toggleActive(event);
+                  document.getElementById('btn-cursor').classList.remove('active');
+                  document.getElementById('btn-select').classList.remove('active');
+                  document.getElementById('btn-shift').classList.remove('active');
+                  event.target.classList.add('active');
                 }}
               >
                 <i class="fas fa-italic"></i>
@@ -253,7 +248,10 @@ export default function Daw() {
               <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
                 onClick={(event) => {
                   ee.emit("statechange", "shift");
-                  toggleActive(event);
+                  document.getElementById('btn-cursor').classList.remove('active');
+                  document.getElementById('btn-select').classList.remove('active');
+                  document.getElementById('btn-shift').classList.remove('active');
+                  event.target.classList.add('active');
                 }}
               >
                 <i class="fas fa-arrows-alt-h"></i>
