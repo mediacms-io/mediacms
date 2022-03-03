@@ -9,9 +9,28 @@ import 'waveform-playlist/styles/playlist.scss';
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-window.MNS = {} // Namespace to hold vars.
-MNS.time = 0 // Current media time.
-MNS.paused = true // Is media paused or playing?
+// See source code of this example:
+// https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
+let startTime = 0;
+let endTime = 0;
+let audioPos = 0;
+let isLooping = false; // To detect paused or played.
+
+function updateSelect(start, end) {
+  if (start < end) {
+    document.getElementById('btn-trim-audio').classList.remove('disabled');
+  }
+  else {
+    document.getElementById('btn-trim-audio').classList.add('disabled');
+  }
+
+  startTime = start;
+  endTime = end;
+}
+
+function updateTime(time) {
+  audioPos = time;
+}
 
 let userMediaStream;
 let playlist = {}; // To be filled later.
@@ -43,6 +62,8 @@ function toggleActive(event) {
   event.target.classList.toggle('active');
 }
 
+// See this exmample:
+// https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function Daw() {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
@@ -91,6 +112,9 @@ export default function Daw() {
             saveAs(data, "test.wav");
           }
         });
+
+        ee.on("select", updateSelect);
+        ee.on("timeupdate", updateTime);
 
         playlist.load([
           {
@@ -177,16 +201,16 @@ export default function Daw() {
             <div class="btn-group">
               <button type="button" id="btn-play" class="btn btn-outline-success" title="Play/Pause"
                 onClick={() => {
-                  if (MNS.paused) {
-                    ee.emit("play");
-                    // TODO: play video.
-                  } else {
+                  if (isLooping) {
                     ee.emit("pause");
                     // TODO: pause video.
+                  } else {
+                    ee.emit("play");
+                    // TODO: play video.
                   }
 
                   // Toggle play/pause.
-                  MNS.paused = !MNS.paused
+                  isLooping = !isLooping
                 }}
               >
                 <i class="fas fa-play"></i>
