@@ -32,15 +32,15 @@ function logError(err) {
   console.error(err);
 }
 
-function toggleActive(node) {
-  var active = node.parentNode.querySelectorAll('.active');
+function toggleActive(event) {
+  var active = event.target.parentNode.querySelectorAll('.active');
   var i = 0, len = active.length;
 
   for (; i < len; i++) {
       active[i].classList.remove('active');
   }
 
-  node.classList.toggle('active');
+  event.target.classList.toggle('active');
 }
 
 export default function Daw() {
@@ -209,9 +209,9 @@ export default function Daw() {
                 <i class="fas fa-italic"></i>
               </button>
               <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
-                onClick={() => {
+                onClick={(event) => {
                   ee.emit("statechange", "shift");
-                  toggleActive(this);
+                  toggleActive(event);
                 }}
               >
                 <i class="fas fa-arrows-alt-h"></i>
