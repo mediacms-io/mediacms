@@ -202,10 +202,20 @@ export default function Daw() {
               </button>
             </div>
             <div class="btn-group btn-playlist-state-group">
-              <button type="button" id="btn-cursor" class="btn btn-outline-dark active" title="Select cursor">
+              <button type="button" id="btn-cursor" class="btn btn-outline-dark active" title="Select cursor"
+                onClick={(event) => {
+                  ee.emit("statechange", "cursor");
+                  toggleActive(event);
+                }}
+              >
                 <i class="fas fa-headphones"></i>
               </button>
-              <button type="button" id="btn-select" class="btn btn-outline-dark" title="Select audio region">
+              <button type="button" id="btn-select" class="btn btn-outline-dark" title="Select audio region"
+                onClick={(event) => {
+                  ee.emit("statechange", "select");
+                  toggleActive(event);
+                }}
+              >
                 <i class="fas fa-italic"></i>
               </button>
               <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
