@@ -106,25 +106,7 @@ export default function Daw() {
         ee.on("timeupdate", updateTime);
 
         playlist.load([
-          {
-            src: "https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_2MG.mp3",
-            name: "Example",
-            effects: function (graphEnd, masterGainNode, isOffline) {
-              const reverb = new Tone.Reverb(1.2);
-
-              if (isOffline) {
-                setUpChain.current.push(reverb.ready);
-              }
-
-              Tone.connect(graphEnd, reverb);
-              Tone.connect(reverb, masterGainNode);
-
-              return function cleanup() {
-                reverb.disconnect();
-                reverb.dispose();
-              };
-            },
-          },
+          // Empty. Don't load any audio for now.
         ]).then(function () {
           // can do stuff with the playlist.
 
