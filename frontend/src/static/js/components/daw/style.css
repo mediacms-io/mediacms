@@ -1,9 +1,9 @@
 
-.track-drop { border: 2px dashed blue; height: 100px; width: 200px; margin: 1em 0; }
+.track-drop { border: 0.18rem dashed blue; height: 8rem; width: 13rem; margin: 1rem 0; }
 
-.track-drop::before { content: "Drop MP3/WAV file(s) here!"; }
+.track-drop::before { content: "Drop MP3/WAV file(s)."; }
 
-.track-drop.drag-enter { border: 2px solid orange; }
+.track-drop.drag-enter { border: 0.18rem solid orange; }
 
 #track-drop {
     display: flex; align-items: center; flex-direction: column; justify-content: center;
