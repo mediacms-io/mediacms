@@ -6,6 +6,8 @@ import { saveAs } from "file-saver";
 
 import 'waveform-playlist/styles/playlist.scss';
 
+import '../daw/style.css'
+
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -275,7 +277,6 @@ export default function Daw() {
         </div>
         <div ref={container}></div>
         <div class="track-drop" id="track-drop"
-          style="display: flex; align-items: center; flex-direction: column; justify-content: center;"
           onDragEnter={(event) => {
             event.preventDefault();
             event.target.classList.add("drag-enter");
@@ -309,7 +310,7 @@ export default function Daw() {
           >
             <i class="fas fa-plus"></i>
           </button>
-          <input type="file" id="input-drop" multiple style="display: none;"
+          <input type="file" id="input-drop" multiple
             onChange={(event) => {
               for (var i = 0; i < event.target.files.length; i++) {
                 ee.emit("newtrack", event.target.files[i]);
