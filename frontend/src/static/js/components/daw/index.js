@@ -148,7 +148,7 @@ export default function Daw() {
         src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.37/Tone.js"
         onLoad={handleLoad}
       />
-      <main>
+      <main className="daw-container-inner">
         <div class="controls-groups">
           <div class="controls-group">
             <div class="btn-group">
