@@ -149,30 +149,30 @@ export default function Daw() {
         onLoad={handleLoad}
       />
       <main className="daw-container-inner">
-        <div class="controls-groups">
-          <div class="controls-group">
-            <div class="btn-group">
-              <button type="button" id="btn-record" class="btn btn-outline-primary disabled" title="Record"
+        <div className="controls-groups">
+          <div className="controls-group">
+            <div className="btn-group">
+              <button type="button" id="btn-record" className="btn btn-outline-primary disabled" title="Record"
                 onClick={()=>{
                   ee.emit("record");
                   // TODO: play video.
                 }}
               >
-                <i class="fas fa-microphone"></i>
+                <i className="fas fa-microphone"></i>
               </button>
-              <button type="button" id="btn-stop" class="btn btn-outline-danger" title="Stop"
+              <button type="button" id="btn-stop" className="btn btn-outline-danger" title="Stop"
                 onClick={() => {
                   ee.emit("stop");
                   // TODO: pause video.
                 }}
               >
-                <i class="fas fa-stop"></i>
+                <i className="fas fa-stop"></i>
               </button>
             </div>
           </div>
-          <div class="controls-group">
-            <div class="btn-group">
-              <button type="button" id="btn-play" class="btn btn-outline-success" title="Play/Pause"
+          <div className="controls-group">
+            <div className="btn-group">
+              <button type="button" id="btn-play" className="btn btn-outline-success" title="Play/Pause"
                 onClick={() => {
                   if (isLooping) {
                     ee.emit("pause");
@@ -186,28 +186,28 @@ export default function Daw() {
                   isLooping = !isLooping
                 }}
               >
-                <i class="fas fa-play"></i>
-                <i class="fas fa-pause"></i>
+                <i className="fas fa-play"></i>
+                <i className="fas fa-pause"></i>
               </button>
             </div>
-            <div class="btn-group">
-              <button type="button" title="Zoom in" id="btn-zoom-in" class="btn btn-outline-dark"
+            <div className="btn-group">
+              <button type="button" title="Zoom in" id="btn-zoom-in" className="btn btn-outline-dark"
                 onClick={() => {
                   ee.emit("zoomin");
                 }}
               >
-                <i class="fas fa-search-plus"></i>
+                <i className="fas fa-search-plus"></i>
               </button>
-              <button type="button" title="Zoom out" id="btn-zoom-out" class="btn btn-outline-dark"
+              <button type="button" title="Zoom out" id="btn-zoom-out" className="btn btn-outline-dark"
                 onClick={() => {
                   ee.emit("zoomout");
                 }}
               >
-                <i class="fas fa-search-minus"></i>
+                <i className="fas fa-search-minus"></i>
               </button>
             </div>
-            <div class="btn-group btn-playlist-state-group">
-              <button type="button" id="btn-cursor" class="btn btn-outline-dark active" title="Select cursor"
+            <div className="btn-group btn-playlist-state-group">
+              <button type="button" id="btn-cursor" className="btn btn-outline-dark active" title="Select cursor"
                 onClick={(event) => {
                   ee.emit("statechange", "cursor");
                   document.getElementById('btn-cursor').classList.remove('active');
@@ -216,9 +216,9 @@ export default function Daw() {
                   event.target.classList.add('active');
                 }}
               >
-                <i class="fas fa-headphones"></i>
+                <i className="fas fa-headphones"></i>
               </button>
-              <button type="button" id="btn-select" class="btn btn-outline-dark" title="Select audio region"
+              <button type="button" id="btn-select" className="btn btn-outline-dark" title="Select audio region"
                 onClick={(event) => {
                   ee.emit("statechange", "select");
                   document.getElementById('btn-cursor').classList.remove('active');
@@ -227,9 +227,9 @@ export default function Daw() {
                   event.target.classList.add('active');
                 }}
               >
-                <i class="fas fa-italic"></i>
+                <i className="fas fa-italic"></i>
               </button>
-              <button type="button" id="btn-shift" class="btn btn-outline-dark" title="Shift audio in time"
+              <button type="button" id="btn-shift" className="btn btn-outline-dark" title="Shift audio in time"
                 onClick={(event) => {
                   ee.emit("statechange", "shift");
                   document.getElementById('btn-cursor').classList.remove('active');
@@ -238,13 +238,13 @@ export default function Daw() {
                   event.target.classList.add('active');
                 }}
               >
-                <i class="fas fa-arrows-alt-h"></i>
+                <i className="fas fa-arrows-alt-h"></i>
               </button>
             </div>
-            <div class="btn-group btn-select-state-group">
+            <div className="btn-group btn-select-state-group">
               <button type="button" id="btn-trim-audio"
                 title="Keep only the selected audio region for a track"
-                class="btn btn-outline-primary disabled"
+                className="btn btn-outline-primary disabled"
                 onClick={() => {
                   ee.emit("trim");
                 }}>
@@ -252,10 +252,10 @@ export default function Daw() {
               </button>
             </div>
           </div>
-          <div class="controls-group">
-            <div class="btn-group">
+          <div className="controls-group">
+            <div className="btn-group">
               <button type="button" title="Clear the playlist's tracks"
-                class="btn btn-clear btn-outline-danger"
+                className="btn btn-clear btn-outline-danger"
                 onClick={() => {
                   ee.emit("clear");
                 }}
@@ -263,20 +263,20 @@ export default function Daw() {
                 Clear
               </button>
             </div>
-            <div class="btn-group">
+            <div className="btn-group">
               <button type="button" title="Download the current work as Wav file"
-                class="btn btn-download btn-outline-primary"
+                className="btn btn-download btn-outline-primary"
                 onClick={() => {
                   ee.emit("startaudiorendering", "wav");
                 }}
               >
-                <i class="fas fa-download"></i>
+                <i className="fas fa-download"></i>
               </button>
             </div>
           </div>
         </div>
         <div ref={container}></div>
-        <div class="track-drop" id="track-drop"
+        <div className="track-drop" id="track-drop"
           onDragEnter={(event) => {
             event.preventDefault();
             event.target.classList.add("drag-enter");
@@ -301,14 +301,14 @@ export default function Daw() {
             }
           }}
         >
-          <button type="button" id="btn-drop" class="btn btn-outline-dark" title="Add audio file(s)"
+          <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Add audio file(s)"
             onClick={(event) => {
               // To add audio files on smartphone device.
               // By click on a button, rather than drop.
               document.getElementById("input-drop").click()
             }}
           >
-            <i class="fas fa-plus"></i>
+            <i className="fas fa-plus"></i>
           </button>
           <input type="file" id="input-drop" multiple
             onChange={(event) => {
