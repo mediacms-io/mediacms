@@ -8,6 +8,16 @@
     padding: 12px 16px 24px;
 }  
 
+/* DAW controls like play, pause, record */
+
+.controls-groups {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center; /* Vertical alignment */
+    gap: 0.5rem;
+}
+
 /* Audio upload */
 
 .track-drop { border: 0.18rem dashed blue; height: 5rem; width: 8.09rem; margin: 1rem 0; }
