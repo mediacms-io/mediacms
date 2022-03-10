@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 import 'waveform-playlist/styles/playlist.scss';
 
 import '../daw/style.css'
+import '../daw/responsive.css'
 
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
