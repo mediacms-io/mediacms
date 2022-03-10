@@ -277,6 +277,7 @@ export default function Daw() {
           </div>
         </div>
         <div ref={container}></div>
+        <div className="track-drop-outer">
         <div className="track-drop" id="track-drop"
           onDragEnter={(event) => {
             event.preventDefault();
@@ -318,6 +319,7 @@ export default function Daw() {
               }
             }}
           ></input>
+        </div>
         </div>
       </main>
     </>

@@ -10,7 +10,7 @@
 
 /* DAW controls like play, pause, record */
 
-.controls-groups {
+.controls-groups, .track-drop-outer {
     display: flex;
     align-items: center;
     flex-direction: column;
