@@ -94,6 +94,11 @@ export class _VideoMediaPage extends Page {
     ) : (
       <div className={viewerClassname}>
         {[
+            <div className='daw-container-outer' key="daw-container-outer">
+              {this.state.mediaLoaded && this.state.pagePlaylistLoaded
+                ? <Daw />
+                : null}
+            </div>,
           <div className="viewer-container" key="viewer-container">
             {this.state.mediaLoaded && this.state.pagePlaylistLoaded
               ? this.viewerContainerContent(MediaPageStore.get('media-data'))
@@ -102,11 +107,6 @@ export class _VideoMediaPage extends Page {
           <div key="viewer-section-nested" className={viewerNestedClassname}>
             {!this.state.wideLayout || (this.state.isVideoMedia && this.state.theaterMode)
               ? [
-                  <div className='daw-container-outer' key="daw-container-outer">
-                    {this.state.mediaLoaded && this.state.pagePlaylistLoaded
-                      ? <Daw />
-                      : null}
-                  </div>,
                   <ViewerInfoVideo key="viewer-info" />,
                   this.state.pagePlaylistLoaded ? (
                     <ViewerSidebar
@@ -117,11 +117,6 @@ export class _VideoMediaPage extends Page {
                   ) : null,
                 ]
               : [
-                  <div className='daw-container-outer' key="daw-container-outer">
-                    {this.state.mediaLoaded && this.state.pagePlaylistLoaded
-                      ? <Daw />
-                      : null}
-                  </div>,
                   this.state.pagePlaylistLoaded ? (
                     <ViewerSidebar
                       key="viewer-sidebar"
