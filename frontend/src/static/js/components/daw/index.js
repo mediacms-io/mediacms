@@ -186,8 +186,8 @@ export default function Daw() {
               <button type="button" id="btn-record" className="btn btn-outline-primary disabled" title="Record"
                 onClick={()=>{
                   ee.emit("record");
-                  triggerPreviewVideo();
                   // Play video.
+                  triggerPreviewVideo();
                   window.MNS_videoPlayer.player.play();
                 }}
               >
@@ -196,7 +196,8 @@ export default function Daw() {
               <button type="button" id="btn-stop" className="btn btn-outline-danger" title="Stop"
                 onClick={() => {
                   ee.emit("stop");
-                  // TODO: pause video.
+                  // Pause video.
+                  window.MNS_videoPlayer.player.pause();
                 }}
               >
                 <i className="fas fa-stop"></i>
@@ -209,10 +210,13 @@ export default function Daw() {
                 onClick={() => {
                   if (isLooping) {
                     ee.emit("pause");
-                    // TODO: pause video.
+                    // Pause video.
+                    window.MNS_videoPlayer.player.pause();
                   } else {
                     ee.emit("play");
-                    // TODO: play video.
+                    // Play video.
+                    triggerPreviewVideo();
+                    window.MNS_videoPlayer.player.play();
                   }
 
                   // Toggle play/pause.
