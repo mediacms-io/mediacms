@@ -3,6 +3,8 @@ import Script from "next/script";
 import EventEmitter from "events";
 import WaveformPlaylist from "waveform-playlist";
 import { saveAs } from "file-saver";
+import { useEffect } from 'react'; // To use the equivalent of componentDidMount().
+
 
 import 'waveform-playlist/styles/playlist.scss';
 
@@ -138,6 +140,36 @@ export default function Daw() {
   function handleLoad() {
     setToneCtx(Tone.getContext());
   }
+
+  function updatePreviewVideo(v, c, w, h) {
+    if (v.paused || v.ended) return false;
+    c.drawImage(v, 0, 0, w, h);
+    setTimeout(updatePreviewVideo, 20, v, c, w, h);
+  }
+
+  useEffect(() => {
+    // Code here will run just like componentDidMount?
+
+    // https://stackoverflow.com/a/24532111/3405291
+    document.addEventListener('DOMContentLoaded', function () {
+      // Video element is inside:
+      // frontend/src/static/js/components/video-player/VideoPlayer.jsx
+      const collection = document.getElementsByClassName("video-js vjs-mediacms");
+      for (let i = 0; i < collection.length; i++) {
+        console.log('Video element: ', collection[i])
+      }
+      var v = collection[0];
+      var canvas = document.getElementById('video-preview');
+      var context = canvas.getContext('2d');
+      var cw = Math.floor(canvas.clientWidth);
+      var ch = Math.floor(canvas.clientHeight);
+      canvas.width = cw;
+      canvas.height = ch;
+      v.addEventListener('play', function () {
+        updatePreviewVideo(v, context, cw, ch);
+      }, false);
+    }, false);
+  }, []);
 
   return (
     <>
