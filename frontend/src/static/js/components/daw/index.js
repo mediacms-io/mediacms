@@ -54,6 +54,36 @@ function logError(err) {
   console.error(err);
 }
 
+function updatePreviewVideo(v, c, w, h) {
+  if (v.paused || v.ended) return false;
+  c.drawImage(v, 0, 0, w, h);
+  setTimeout(updatePreviewVideo, 20, v, c, w, h);
+}
+
+// Ref:
+// https://stackoverflow.com/a/24532111/3405291
+// Debugged by this:
+// https://stackoverflow.com/a/66685190/3405291
+function triggerPreviewVideo() {
+  // Video element is inside:
+  // frontend/src/static/js/components/video-player/VideoPlayer.jsx
+  // It's created by VideoJS player.
+  const collection = document.getElementsByTagName('video');
+  console.log('Video elements:', collection);
+  for (let i = 0; i < collection.length; i++) {
+    console.log('Video element:', collection[i]);
+  }
+  console.log('VideoJS player:', window.MNS_videoPlayer.player);
+  var v = collection[0];
+  var canvas = document.getElementById('video-preview');
+  var context = canvas.getContext('2d');
+  var cw = Math.floor(canvas.clientWidth);
+  var ch = Math.floor(canvas.clientHeight);
+  canvas.width = cw;
+  canvas.height = ch;
+  updatePreviewVideo(v, context, cw, ch);
+}
+
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function Daw() {
@@ -156,37 +186,8 @@ export default function Daw() {
               <button type="button" id="btn-record" className="btn btn-outline-primary disabled" title="Record"
                 onClick={()=>{
                   ee.emit("record");
-
                   // Play video.
-
-                  function updatePreviewVideo(v, c, w, h) {
-                    if (v.paused || v.ended) return false;
-                    c.drawImage(v, 0, 0, w, h);
-                    setTimeout(updatePreviewVideo, 20, v, c, w, h);
-                  }
-
-                  // Ref:
-                  // https://stackoverflow.com/a/24532111/3405291
-                  // Debugged by this:
-                  // https://stackoverflow.com/a/66685190/3405291
-                  // Video element is inside:
-                  // frontend/src/static/js/components/video-player/VideoPlayer.jsx
-                  // It's created by VideoJS player.
-                  const collection = document.getElementsByTagName('video');
-                  console.log('Video elements:', collection);
-                  for (let i = 0; i < collection.length; i++) {
-                    console.log('Video element:', collection[i]);
-                  }
-                  console.log('VideoJS player:', window.MNS_videoPlayer.player);
-                  var v = collection[0];
-                  var canvas = document.getElementById('video-preview');
-                  var context = canvas.getContext('2d');
-                  var cw = Math.floor(canvas.clientWidth);
-                  var ch = Math.floor(canvas.clientHeight);
-                  canvas.width = cw;
-                  canvas.height = ch;
-                  updatePreviewVideo(v, context, cw, ch);
-
+                  triggerPreviewVideo();
                   window.MNS_videoPlayer.player.play();
                 }}
               >
@@ -213,37 +214,8 @@ export default function Daw() {
                     window.MNS_videoPlayer.player.pause();
                   } else {
                     ee.emit("play");
-
                     // Play video.
-
-                    function updatePreviewVideo(v, c, w, h) {
-                      if (v.paused || v.ended) return false;
-                      c.drawImage(v, 0, 0, w, h);
-                      setTimeout(updatePreviewVideo, 20, v, c, w, h);
-                    }
-
-                    // Ref:
-                    // https://stackoverflow.com/a/24532111/3405291
-                    // Debugged by this:
-                    // https://stackoverflow.com/a/66685190/3405291
-                    // Video element is inside:
-                    // frontend/src/static/js/components/video-player/VideoPlayer.jsx
-                    // It's created by VideoJS player.
-                    const collection = document.getElementsByTagName('video');
-                    console.log('Video elements:', collection);
-                    for (let i = 0; i < collection.length; i++) {
-                      console.log('Video element:', collection[i]);
-                    }
-                    console.log('VideoJS player:', window.MNS_videoPlayer.player);
-                    var v = collection[0];
-                    var canvas = document.getElementById('video-preview');
-                    var context = canvas.getContext('2d');
-                    var cw = Math.floor(canvas.clientWidth);
-                    var ch = Math.floor(canvas.clientHeight);
-                    canvas.width = cw;
-                    canvas.height = ch;
-                    updatePreviewVideo(v, context, cw, ch);
-
+                    triggerPreviewVideo();
                     window.MNS_videoPlayer.player.play();
                   }
 
