@@ -68,12 +68,12 @@ function triggerPreviewVideo() {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
   // It's created by VideoJS player.
-  const collection = document.getElementsByTagName('video')
-  console.log('Video elements:', collection)
-  console.log('VideoJS player:', window.MNS_videoPlayer.player)
+  const collection = document.getElementsByTagName('video');
+  console.log('Video elements:', collection);
   for (let i = 0; i < collection.length; i++) {
-    console.log('Video element:', collection[i])
+    console.log('Video element:', collection[i]);
   }
+  console.log('VideoJS player:', window.MNS_videoPlayer.player);
   var v = collection[0];
   var canvas = document.getElementById('video-preview');
   var context = canvas.getContext('2d');
@@ -186,8 +186,8 @@ export default function Daw() {
               <button type="button" id="btn-record" className="btn btn-outline-primary disabled" title="Record"
                 onClick={()=>{
                   ee.emit("record");
-                  // TODO: play video.
                   triggerPreviewVideo();
+                  // Play video.
                   window.MNS_videoPlayer.player.play();
                 }}
               >
