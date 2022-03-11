@@ -171,6 +171,12 @@ export function VideoPlayer(props) {
       onClickPrevious
     );
 
+    // Looks like this may be a legit approach to access videojs player in react component from other component:
+    // https://stackoverflow.com/q/45412054/3405291
+    // MNS is a prefix acting as a name space. To avoid any possible conflict.
+    // Videojs player would be accessed by DAW component.
+    window.MNS_videoPlayer = player;
+
     if (void 0 !== props.onPlayerInitCallback) {
       props.onPlayerInitCallback(player, videoElemRef.current);
     }

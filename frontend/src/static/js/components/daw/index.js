@@ -64,9 +64,10 @@ function updatePreviewVideo(v, c, w, h) {
 // https://stackoverflow.com/a/24532111/3405291
 // Debugged by this:
 // https://stackoverflow.com/a/66685190/3405291
-function triggerPreviewVideo() {
+document.addEventListener('DOMContentLoaded', function () {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
+  // It's created by VideoJS player.
   const collection = document.getElementsByTagName('video')
   console.log('Video elements:', collection)
   for (let i = 0; i < collection.length; i++) {
@@ -79,8 +80,9 @@ function triggerPreviewVideo() {
   var ch = Math.floor(canvas.clientHeight);
   canvas.width = cw;
   canvas.height = ch;
-  updatePreviewVideo(v, context, cw, ch);
-}
+  // VideoJS player is already added to window, when a new MediaPlayer is initialized.
+  window.MNS_videoPlayer.on('play', () => { updatePreviewVideo(v, context, cw, ch); });
+}, false);
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
@@ -185,7 +187,6 @@ export default function Daw() {
                 onClick={()=>{
                   ee.emit("record");
                   // TODO: play video.
-                  triggerPreviewVideo();
                 }}
               >
                 <i className="fas fa-microphone"></i>
