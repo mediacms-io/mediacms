@@ -276,6 +276,9 @@ export default function Daw() {
             </div>
           </div>
         </div>
+        <div className="video-preview-outer">
+          <canvas className="video-preview" id="video-preview"></canvas>
+        </div>
         <div ref={container}></div>
         <div className="track-drop-outer">
           <div className="track-drop" id="track-drop"
