@@ -64,7 +64,7 @@ function updatePreviewVideo(v, c, w, h) {
 document.addEventListener('DOMContentLoaded', function () {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
-  const collection = document.getElementsByClassName("video-js vjs-mediacms");
+  const collection = document.getElementsByTagName('video')
   console.log('Video elements:', collection)
   for (let i = 0; i < collection.length; i++) {
     console.log('Video element:', collection[i])
