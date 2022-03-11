@@ -60,13 +60,11 @@ function updatePreviewVideo(v, c, w, h) {
   setTimeout(updatePreviewVideo, 20, v, c, w, h);
 }
 
-let previewVideoNeedsSetup = true;
-
 // Ref:
 // https://stackoverflow.com/a/24532111/3405291
 // Debugged by this:
 // https://stackoverflow.com/a/66685190/3405291
-function setupPreviewVideo() {
+function triggerPreviewVideo() {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
   // It's created by VideoJS player.
@@ -83,15 +81,7 @@ function setupPreviewVideo() {
   var ch = Math.floor(canvas.clientHeight);
   canvas.width = cw;
   canvas.height = ch;
-  // VideoJS player is already added to window, when a new MediaPlayer is initialized.
-  if (window.MNS_videoPlayer) {
-    window.MNS_videoPlayer.player.on('play', () => {
-      console.log('Well played sir.')
-      updatePreviewVideo(v, context, cw, ch);
-    });
-  } else {
-    console.log('VideoJS is not added to window')
-  }
+  updatePreviewVideo(v, context, cw, ch);
 }
 
 // See this exmample:
@@ -197,10 +187,7 @@ export default function Daw() {
                 onClick={()=>{
                   ee.emit("record");
                   // TODO: play video.
-                  if (!previewVideoNeedsSetup) {
-                    setupPreviewVideo();
-                    previewVideoNeedsSetup = false;
-                  }
+                  triggerPreviewVideo();
                   window.MNS_videoPlayer.player.play();
                 }}
               >
