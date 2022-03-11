@@ -60,6 +60,8 @@ function updatePreviewVideo(v, c, w, h) {
   setTimeout(updatePreviewVideo, 20, v, c, w, h);
 }
 
+let previewVideoNeedsSetup = true;
+
 // Ref:
 // https://stackoverflow.com/a/24532111/3405291
 // Debugged by this:
@@ -91,12 +93,6 @@ function setupPreviewVideo() {
     console.log('VideoJS is not added to window')
   }
 }
-
-document.onreadystatechange = function () {
-  if (document.readyState == "complete") {
-    setupPreviewVideo();
-  }
-};
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
@@ -201,6 +197,11 @@ export default function Daw() {
                 onClick={()=>{
                   ee.emit("record");
                   // TODO: play video.
+                  if (!previewVideoNeedsSetup) {
+                    setupPreviewVideo();
+                    previewVideoNeedsSetup = false;
+                  }
+                  window.MNS_videoPlayer.player.play();
                 }}
               >
                 <i className="fas fa-microphone"></i>
