@@ -81,7 +81,14 @@ document.addEventListener('DOMContentLoaded', function () {
   canvas.width = cw;
   canvas.height = ch;
   // VideoJS player is already added to window, when a new MediaPlayer is initialized.
-  window.MNS_videoPlayer.on('play', () => { updatePreviewVideo(v, context, cw, ch); });
+  if (window.MNS_videoPlayer) {
+    window.MNS_videoPlayer.player.on('play', () => {
+      console.log('Well played sir.')
+      updatePreviewVideo(v, context, cw, ch);
+    });
+  } else {
+    console.log('VideoJS is not added to window')
+  }
 }, false);
 
 // See this exmample:
