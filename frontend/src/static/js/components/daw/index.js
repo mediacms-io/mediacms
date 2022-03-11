@@ -54,6 +54,33 @@ function logError(err) {
   console.error(err);
 }
 
+function updatePreviewVideo(v, c, w, h) {
+  if (v.paused || v.ended) return false;
+  c.drawImage(v, 0, 0, w, h);
+  setTimeout(updatePreviewVideo, 20, v, c, w, h);
+}
+
+// https://stackoverflow.com/a/24532111/3405291
+document.addEventListener('DOMContentLoaded', function () {
+  // Video element is inside:
+  // frontend/src/static/js/components/video-player/VideoPlayer.jsx
+  const collection = document.getElementsByClassName("video-js vjs-mediacms");
+  console.log('Video elements:', collection)
+  for (let i = 0; i < collection.length; i++) {
+    console.log('Video element:', collection[i])
+  }
+  var v = collection[0];
+  var canvas = document.getElementById('video-preview');
+  var context = canvas.getContext('2d');
+  var cw = Math.floor(canvas.clientWidth);
+  var ch = Math.floor(canvas.clientHeight);
+  canvas.width = cw;
+  canvas.height = ch;
+  v.addEventListener('play', function () {
+    updatePreviewVideo(v, context, cw, ch);
+  }, false);
+}, false);
+
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function Daw() {
