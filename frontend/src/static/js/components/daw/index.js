@@ -64,12 +64,13 @@ function updatePreviewVideo(v, c, w, h) {
 // https://stackoverflow.com/a/24532111/3405291
 // Debugged by this:
 // https://stackoverflow.com/a/66685190/3405291
-document.addEventListener('DOMContentLoaded', function () {
+function setupPreviewVideo() {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
   // It's created by VideoJS player.
   const collection = document.getElementsByTagName('video')
   console.log('Video elements:', collection)
+  console.log('VideoJS player:', window.MNS_videoPlayer.player)
   for (let i = 0; i < collection.length; i++) {
     console.log('Video element:', collection[i])
   }
@@ -89,7 +90,13 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     console.log('VideoJS is not added to window')
   }
-}, false);
+}
+
+document.onreadystatechange = function () {
+  if (document.readyState == "complete") {
+    setupPreviewVideo();
+  }
+};
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
