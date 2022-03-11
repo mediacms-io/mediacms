@@ -187,8 +187,8 @@ export default function Daw() {
                 onClick={()=>{
                   ee.emit("record");
                   // Play video.
-                  triggerPreviewVideo();
                   window.MNS_videoPlayer.player.play();
+                  triggerPreviewVideo();
                 }}
               >
                 <i className="fas fa-microphone"></i>
@@ -215,8 +215,8 @@ export default function Daw() {
                   } else {
                     ee.emit("play");
                     // Play video.
-                    triggerPreviewVideo();
                     window.MNS_videoPlayer.player.play();
+                    triggerPreviewVideo();
                   }
 
                   // Toggle play/pause.
