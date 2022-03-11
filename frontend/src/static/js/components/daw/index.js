@@ -62,9 +62,9 @@ function updatePreviewVideo(v, c, w, h) {
 
 // Ref:
 // https://stackoverflow.com/a/24532111/3405291
-// TODO: Debug by this:
+// Debugged by this:
 // https://stackoverflow.com/a/66685190/3405291
-document.addEventListener('DOMContentLoaded', function () {
+function triggerPreviewVideo() {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
   const collection = document.getElementsByTagName('video')
@@ -79,10 +79,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var ch = Math.floor(canvas.clientHeight);
   canvas.width = cw;
   canvas.height = ch;
-  v.addEventListener('play', function () {
-    updatePreviewVideo(v, context, cw, ch);
-  }, false);
-}, false);
+  updatePreviewVideo(v, context, cw, ch);
+}
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
@@ -187,6 +185,7 @@ export default function Daw() {
                 onClick={()=>{
                   ee.emit("record");
                   // TODO: play video.
+                  triggerPreviewVideo();
                 }}
               >
                 <i className="fas fa-microphone"></i>
