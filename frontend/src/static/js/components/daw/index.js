@@ -60,7 +60,10 @@ function updatePreviewVideo(v, c, w, h) {
   setTimeout(updatePreviewVideo, 20, v, c, w, h);
 }
 
+// Ref:
 // https://stackoverflow.com/a/24532111/3405291
+// TODO: Debug by this:
+// https://stackoverflow.com/a/66685190/3405291
 document.addEventListener('DOMContentLoaded', function () {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
