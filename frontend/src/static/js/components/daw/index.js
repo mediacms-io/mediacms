@@ -68,13 +68,13 @@ function triggerPreviewVideo() {
   // Video element is inside:
   // frontend/src/static/js/components/video-player/VideoPlayer.jsx
   // It's created by VideoJS player.
-  const collection = document.getElementsByTagName('video');
-  console.log('Video elements:', collection);
-  for (let i = 0; i < collection.length; i++) {
-    console.log('Video element:', collection[i]);
+  if (window.MNS_videoPlayer.player) {
+  } else {
+    console.warn('VideoJS player does NOT exist inside window.');
+    return;
   }
-  console.log('VideoJS player:', window.MNS_videoPlayer.player);
-  var v = collection[0];
+  const v_id = window.MNS_videoPlayer.player.id_
+  const v = document.querySelector(`video#${v_id}, #${v_id} video`);
   var canvas = document.getElementById('video-preview');
   var context = canvas.getContext('2d');
   var cw = Math.floor(canvas.clientWidth);
