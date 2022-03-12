@@ -26,23 +26,21 @@
     gap: 0.5rem;
 }
 
-/* video preview to help artists see video while recording */
-.video-preview-outer {
+/* Top row: controls + preview vide */
+
+.daw-top-row {
     width: 100%;
+    /* See media queries... */
 }
+
+/* video preview to help artists see video while recording */
+
 .video-preview-outer {
     display: flex;
     align-items: center;
     flex-direction: row;
     justify-content: center; /* Vertical alignment */
     gap: 0.5rem;
-}
-
-.video-preview {
-    height: 5rem;
-    width: 8.09rem;
-    margin: 1rem 0rem;
-    border: 0.18rem dashed turquoise;
 }
 
 /* Audio upload */

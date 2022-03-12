@@ -180,6 +180,7 @@ export default function Daw() {
         onLoad={handleLoad}
       />
       <main className="daw-container-inner">
+        <div className="daw-top-row">
         <div className="controls-groups">
           <div className="controls-group">
             <div className="btn-group">
@@ -314,6 +315,7 @@ export default function Daw() {
         </div>
         <div className="video-preview-outer">
           <canvas className="video-preview" id="video-preview"></canvas>
+        </div>
         </div>
         <div ref={container}></div>
         <div className="track-drop-outer">
