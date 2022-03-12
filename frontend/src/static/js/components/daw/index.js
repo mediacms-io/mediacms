@@ -203,8 +203,6 @@ export default function Daw() {
                 <i className="fas fa-stop"></i>
               </button>
             </div>
-          </div>
-          <div className="controls-group">
             <div className="btn-group">
               <button type="button" id="btn-play" className="btn btn-outline-success" title="Play/Pause"
                 onClick={() => {
@@ -227,6 +225,8 @@ export default function Daw() {
                 <i className="fas fa-pause"></i>
               </button>
             </div>
+          </div>
+          <div className="controls-group">
             <div className="btn-group">
               <button type="button" title="Zoom in" id="btn-zoom-in" className="btn btn-outline-dark"
                 onClick={() => {
