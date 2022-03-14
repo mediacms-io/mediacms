@@ -12,6 +12,8 @@ import '../daw/responsive.css'
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+import DawVideoPreview from './DawVideoPreview'
+
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
 let startTime = 0;
@@ -52,36 +54,6 @@ function gotStream(stream) {
 
 function logError(err) {
   console.error(err);
-}
-
-function updatePreviewVideo(v, c, w, h) {
-  if (v.paused || v.ended) return false;
-  c.drawImage(v, 0, 0, w, h);
-  setTimeout(updatePreviewVideo, 20, v, c, w, h);
-}
-
-// Ref:
-// https://stackoverflow.com/a/24532111/3405291
-// Debugged by this:
-// https://stackoverflow.com/a/66685190/3405291
-function triggerPreviewVideo() {
-  // Video element is inside:
-  // frontend/src/static/js/components/video-player/VideoPlayer.jsx
-  // It's created by VideoJS player.
-  if (window.MNS_videoPlayer.player) {
-  } else {
-    console.warn('VideoJS player does NOT exist inside window.');
-    return;
-  }
-  const v_id = window.MNS_videoPlayer.player.id_
-  const v = document.querySelector(`video#${v_id}, #${v_id} video`);
-  var canvas = document.getElementById('video-preview');
-  var context = canvas.getContext('2d');
-  var cw = Math.floor(canvas.clientWidth);
-  var ch = Math.floor(canvas.clientHeight);
-  canvas.width = cw;
-  canvas.height = ch;
-  updatePreviewVideo(v, context, cw, ch);
 }
 
 // See this exmample:
@@ -189,7 +161,6 @@ export default function Daw() {
                     ee.emit("record");
                     // Play video.
                     window.MNS_videoPlayer.player.play();
-                    triggerPreviewVideo();
                   }}
                 >
                   <i className="fas fa-microphone"></i>
@@ -215,7 +186,6 @@ export default function Daw() {
                       ee.emit("play");
                       // Play video.
                       window.MNS_videoPlayer.player.play();
-                      triggerPreviewVideo();
                     }
 
                     // Toggle play/pause.
@@ -314,7 +284,7 @@ export default function Daw() {
             </div>
           </div>
           <div className="video-preview-outer">
-            <canvas className="video-preview" id="video-preview"></canvas>
+            <DawVideoPreview></DawVideoPreview>
           </div>
         </div>
         <div ref={container}></div>
