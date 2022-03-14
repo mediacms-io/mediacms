@@ -6,7 +6,7 @@ export default function DawVideoPreview() {
     useEffect(()=>{
         const timerID = setInterval(
             () => tick(),
-            42 // 1000/42 ~ 24 fps. This is the standard for movies and TV shows. Right?
+            20 // Every 20ms, i.e. a framerate of 50 FPS.
         );
         return () => {
             clearInterval(timerID);
