@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react'
 
 export default function DawVideoPreview() {
     const canvasEl = useRef(null);
-    const [ctx, setCtx] = useState(null);
 
     useEffect(()=>{
         const timerID = setInterval(
@@ -19,10 +18,11 @@ export default function DawVideoPreview() {
     function tick() {
         const v_id = "vjs_video_3"; // TODO: Observed from console log. More reliable way?
         const v = document.querySelector(`video#${v_id}, #${v_id} video`); // https://stackoverflow.com/q/71449615/3405291
-        const context = ctx;
-        if (!v || !context) {
+        const canvas = canvasEl.current;
+        if (!v || !canvas) {
             return;
         }
+        const context = canvas.getContext('2d');
         let w = Math.floor(canvas.clientWidth);
         let h = Math.floor(canvas.clientHeight);
         canvas.width = w;
@@ -30,9 +30,5 @@ export default function DawVideoPreview() {
         context.drawImage(v, 0, 0, w, h);
     }
 
-    return (
-        <>
-            <canvas className="video-preview" id="video-preview" ref={canvasEl}></canvas>
-        </>
-    )
+    return <canvas className="video-preview" id="video-preview" ref={canvasEl}></canvas>
 }
