@@ -1,8 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
 
-import '../daw/style.css'
-import '../daw/responsive.css'
-
 export default function DawVideoPreview() {
     const canvasEl = useCallback((node) => {
         const v_id = "vjs_video_3" // TODO: Observed from console log. More reliable way?
