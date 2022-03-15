@@ -1,3 +1,8 @@
+/* Otherwise video palyer would be hidden */
+.player-container {
+    width: 100%;
+}
+
 /* DAW on page layout */
 
 .daw-container-outer {
