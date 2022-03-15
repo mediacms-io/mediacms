@@ -13,6 +13,7 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 
 from cms import celery_app
+from users.models import User
 
 from . import models
 from .helpers import mask_ip
@@ -356,7 +357,7 @@ def notify_user_on_mention(friendly_token, user_mentionned, cleaned_comment):
     if not media:
         return False
 
-    user = models.User.objects.filter(username=user_mentionned).first()  
+    user = User.objects.filter(username=user_mentionned).first()
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
@@ -364,9 +365,12 @@ def notify_user_on_mention(friendly_token, user_mentionned, cleaned_comment):
         msg = """
 You were mentionned in a comment on  %s .
 View it on %s
+
+Comment : %s
         """ % (
             media.title,
             media_url,
+            cleaned_comment,
         )
         email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [user.email])
         email.send(fail_silently=True)
@@ -374,23 +378,25 @@ View it on %s
 
 
 def check_comment_for_mention(friendly_token, comment_text):
-    """ Check the comment for any mentions, and notify each mentionned users"""    
+    """ Check the comment for any mentions, and notify each mentionned users"""
     cleaned_comment = ''
 
-    matches = re.findall('@\(_(.+?)_\)', comment_text)
+    matches = re.findall('@\\(_(.+?)_\\)', comment_text)
     if matches:
         cleaned_comment = clean_comment(comment_text)
 
-    for match in matches:
+    for match in list(dict.fromkeys(matches)):
         notify_user_on_mention(friendly_token, match, cleaned_comment)
 
 
 def clean_comment(raw_comment):
-    """ Clean the coment fromn ID and username Mentions for preview purposes  """
+    """ Clean the comment fromn ID and username Mentions for preview purposes """
 
-    cleaned_comment = re.sub( '@\(_(.+?)_\)', '', raw_comment)
-    cleaned_comment = "<div>".join(cleaned_comment.split("\[_"))
-    cleaned_comment = "</div>".join(cleaned_comment.split("_\]"))
+    cleaned_comment = re.sub('@\\(_(.+?)_\\)', '', raw_comment)
+    # cleaned_comment = "<div>".join(cleaned_comment.split("[_"))
+    # cleaned_comment = "</div>".join(cleaned_comment.split("_]"))
+    cleaned_comment = cleaned_comment.replace("[_", '')
+    cleaned_comment = cleaned_comment.replace("_]", '')
 
     return cleaned_comment
 
