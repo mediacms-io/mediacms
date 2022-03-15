@@ -13,6 +13,7 @@ import {
 import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
 
 import '../VideoViewer.scss';
+import Daw from '../../daw';
 
 function filterVideoEncoding(encoding_status) {
   switch (encoding_status) {
@@ -517,6 +518,10 @@ export default class VideoViewer extends React.PureComponent {
       : null;
 
     return (
+      <>
+      <div className='daw-container-outer' key="daw-container-outer">
+          <Daw></Daw>
+      </div>
       <div
         key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
         className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
@@ -563,6 +568,7 @@ export default class VideoViewer extends React.PureComponent {
           ) : null}
         </div>
       </div>
+      </>
     );
   }
 }

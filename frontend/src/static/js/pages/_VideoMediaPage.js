@@ -7,7 +7,6 @@ import ViewerError from '../components/media-page/ViewerError';
 import ViewerSidebar from '../components/media-page/ViewerSidebar';
 import { Page } from './_Page';
 import _MediaPage from './_MediaPage';
-import Daw from '../components/daw';
 
 const wideLayoutBreakpoint = 1216;
 
@@ -94,11 +93,6 @@ export class _VideoMediaPage extends Page {
     ) : (
       <div className={viewerClassname}>
         {[
-            <div className='daw-container-outer' key="daw-container-outer">
-              {this.state.mediaLoaded && this.state.pagePlaylistLoaded
-                ? <Daw />
-                : null}
-            </div>,
           <div className="viewer-container" key="viewer-container">
             {this.state.mediaLoaded && this.state.pagePlaylistLoaded
               ? this.viewerContainerContent(MediaPageStore.get('media-data'))
