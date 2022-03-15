@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-export default function DawVideoPreview() {
+export default function DawVideoPreview({playerInstance}) {
     const canvasEl = useRef(null);
 
     useEffect(()=>{
@@ -16,7 +16,7 @@ export default function DawVideoPreview() {
     // Ref: React clock example:
     // https://reactjs.org/docs/state-and-lifecycle.html
     function tick() {
-        const v_id = "vjs_video_3"; // TODO: Observed from console log. More reliable way?
+        const v_id = playerInstance.player.id_;
         const v = document.querySelector(`video#${v_id}, #${v_id} video`); // https://stackoverflow.com/q/71449615/3405291
         const canvas = canvasEl.current;
         if (!v || !canvas) {

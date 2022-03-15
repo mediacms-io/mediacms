@@ -38,6 +38,7 @@ export default class VideoViewer extends React.PureComponent {
 
     this.state = {
       displayPlayer: false,
+      playerInstance: null, // To re-render and pass playerInstance to the DAW component.
     };
 
     this.videoSources = [];
@@ -420,6 +421,9 @@ export default class VideoViewer extends React.PureComponent {
     }
 
     this.playerInstance.player.one('ended', this.onVideoEnd);
+
+    // To re-render and pass playerInstance to the DAW component.
+    this.setState({playerInstance: instance})
   }
 
   onVideoRestart() {
@@ -520,7 +524,7 @@ export default class VideoViewer extends React.PureComponent {
     return (
       <>
       <div className='daw-container-outer' key="daw-container-outer">
-          <Daw></Daw>
+          <Daw playerInstance={this.state.playerInstance}></Daw>
       </div>
       <div
         key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
