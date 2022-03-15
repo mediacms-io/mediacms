@@ -160,7 +160,7 @@ export default function Daw({playerInstance}) {
                   onClick={() => {
                     ee.emit("record");
                     // Play video.
-                    window.MNS_videoPlayer.player.play();
+                    playerInstance.player.play();
                   }}
                 >
                   <i className="fas fa-microphone"></i>
@@ -169,7 +169,7 @@ export default function Daw({playerInstance}) {
                   onClick={() => {
                     ee.emit("stop");
                     // Pause video.
-                    window.MNS_videoPlayer.player.pause();
+                    playerInstance.player.pause();
                   }}
                 >
                   <i className="fas fa-stop"></i>
@@ -181,11 +181,11 @@ export default function Daw({playerInstance}) {
                     if (isLooping) {
                       ee.emit("pause");
                       // Pause video.
-                      window.MNS_videoPlayer.player.pause();
+                      playerInstance.player.pause();
                     } else {
                       ee.emit("play");
                       // Play video.
-                      window.MNS_videoPlayer.player.play();
+                      playerInstance.player.play();
                     }
 
                     // Toggle play/pause.
