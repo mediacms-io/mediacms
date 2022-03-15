@@ -424,6 +424,10 @@ export default class VideoViewer extends React.PureComponent {
 
     // To re-render and pass playerInstance to the DAW component.
     this.setState({playerInstance: instance})
+
+    // Expose to console. To investigate if needed.
+    // MNS is a prefix acting as a name space. To avoid any possible conflict.
+    window.MNS_videoPlayerInstance = instance;
   }
 
   onVideoRestart() {
