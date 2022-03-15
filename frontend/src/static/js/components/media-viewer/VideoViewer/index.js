@@ -13,7 +13,7 @@ import {
 import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
 
 import '../VideoViewer.scss';
-import Daw from '../../daw';
+import Daw from '../../daw/Daw';
 
 function filterVideoEncoding(encoding_status) {
   switch (encoding_status) {
