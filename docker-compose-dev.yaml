@@ -4,11 +4,11 @@ services:
   frontend:
     image: node:14
     volumes:
-      - ./frontend:/home/mediacms.io/mediacms/frontend/
+      - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
     working_dir: /home/mediacms.io/mediacms/frontend/
     command: bash -c "npm install && npm run start"
     env_file:
-      - ./frontend/.env
+      - ${PWD}/frontend/.env
     ports:
       - "8088:8088"
     depends_on:
@@ -31,20 +31,17 @@ services:
     container_name: selenium_hub
     image: selenium/hub
     ports:
-      - "4442:4442"
-      - "4443:4443"
       - "4444:4444"
-  selenium_firefox:
-    image: selenium/node-firefox-debug
-    shm_size: 2gb
-    depends_on:
-      - selenium_hub
+  selenium_chrome:
+    container_name: selenium_chrome
+    image: selenium/node-chrome-debug
+    environment:
+      - HUB_PORT_4444_TCP_ADDR=selenium_hub
+      - HUB_PORT_4444_TCP_PORT=4444
     ports:
       - "5900:5900"
-    environment:
-      - SE_EVENT_BUS_HOST=selenium_hub
-      - SE_EVENT_BUS_PUBLISH_PORT=4442
-      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    depends_on:
+      - selenium_hub
   db:
     image: postgres:13
     volumes:
