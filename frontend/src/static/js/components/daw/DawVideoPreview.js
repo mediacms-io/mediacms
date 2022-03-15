@@ -22,12 +22,17 @@ export default function DawVideoPreview({playerInstance}) {
         if (!v || !canvas) {
             return;
         }
+        const v_w = v.videoWidth;
+        const v_h = v.videoHeight;
         const context = canvas.getContext('2d');
         let w = Math.floor(canvas.clientWidth);
         let h = Math.floor(canvas.clientHeight);
-        canvas.width = w;
-        canvas.height = h;
-        context.drawImage(v, 0, 0, w, h);
+        const scale = Math.min(w/v_w, h/v_h); // https://stackoverflow.com/a/1373879/3405291
+        const width = v_w * scale;
+        const height = v_h * scale;
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(v, 0, 0, width, height);
     }
 
     return <canvas className="video-preview" id="video-preview" ref={canvasEl}></canvas>
