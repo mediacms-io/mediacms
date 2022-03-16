@@ -393,8 +393,6 @@ def clean_comment(raw_comment):
     """ Clean the comment fromn ID and username Mentions for preview purposes """
 
     cleaned_comment = re.sub('@\\(_(.+?)_\\)', '', raw_comment)
-    # cleaned_comment = "<div>".join(cleaned_comment.split("[_"))
-    # cleaned_comment = "</div>".join(cleaned_comment.split("_]"))
     cleaned_comment = cleaned_comment.replace("[_", '')
     cleaned_comment = cleaned_comment.replace("_]", '')
 
