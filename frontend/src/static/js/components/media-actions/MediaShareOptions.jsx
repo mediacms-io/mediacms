@@ -244,13 +244,10 @@ export function MediaShareOptions(props) {
   }
 
   function updateStartAtCheckbox() {
-    console.log("stuff! ", startAtSelected);
     setStartAtSelected(!startAtSelected);
     updateShareMediaLink();
-    console.log("post stuff! ", startAtSelected);
   }
 
-  //Inverted, need to check SetXXX behaviour
   function updateShareMediaLink()
   {
       const newLink = startAtSelected ? mediaUrl : mediaUrl + "&t=" + Math.trunc(timestamp);
@@ -282,7 +279,6 @@ export function MediaShareOptions(props) {
     PageStore.on('window_resize', onWindowResize);
     MediaPageStore.on('copied_media_link', onCompleteCopyMediaLink);
     
-    //SetXXX has some delay,bypassed by reusing localTimestamp
     const localTimestamp = getTimestamp();
     setTimestamp(localTimestamp);
     setFormattedTimestamp(ToHHMMSS(localTimestamp));
