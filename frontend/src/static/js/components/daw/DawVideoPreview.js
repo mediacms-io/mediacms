@@ -27,7 +27,7 @@ export default function DawVideoPreview({playerInstance}) {
         const context = canvas.getContext('2d');
         let w = Math.floor(canvas.clientWidth);
         let h = Math.floor(canvas.clientHeight);
-        const scale = Math.max(w/v_w, h/v_h); // https://stackoverflow.com/a/1373879/3405291
+        const scale = Math.min(w/v_w, h/v_h); // https://stackoverflow.com/a/1373879/3405291
         const width = v_w * scale;
         const height = v_h * scale;
         canvas.width = width;
