@@ -392,7 +392,7 @@ export default function CommentsList(props) {
       }
 
       searchParameters.set('t', s)
-      const wrapped = "<a href=\"" + window.location.href.split('?')[0] + "?" + searchParameters + "\">" + match + "</a>";
+      const wrapped = "<a href=\"" + MediaPageStore.get('media-url').split('?')[0] + "?" + searchParameters + "\">" + match + "</a>";
       return wrapped;
     }
 
