@@ -1,8 +1,12 @@
-import React from 'react'
+import React, { useRef } from 'react'
 
 export default function DawControl({ playerInstance, ee }) {
 
     let isLooping = false; // To detect paused or played.
+
+    const btnCursor = useRef(null);
+    const btnSelect = useRef(null);
+    const btnShift = useRef(null);
 
     return (
         <div className="controls-groups">
@@ -67,34 +71,34 @@ export default function DawControl({ playerInstance, ee }) {
                     </button>
                 </div>
                 <div className="btn-group btn-playlist-state-group">
-                    <button type="button" id="btn-cursor" className="btn btn-outline-dark active" title="Select cursor"
+                    <button type="button" ref={btnCursor} className="btn btn-outline-dark active" title="Select cursor"
                         onClick={(event) => {
                             ee.emit("statechange", "cursor");
-                            document.getElementById('btn-cursor').classList.remove('active');
-                            document.getElementById('btn-select').classList.remove('active');
-                            document.getElementById('btn-shift').classList.remove('active');
+                            btnCursor.current.classList.remove('active');
+                            btnSelect.current.classList.remove('active');
+                            btnShift.current.classList.remove('active');
                             event.target.classList.add('active');
                         }}
                     >
                         <i className="fas fa-headphones"></i>
                     </button>
-                    <button type="button" id="btn-select" className="btn btn-outline-dark" title="Select audio region"
+                    <button type="button" ref={btnSelect} className="btn btn-outline-dark" title="Select audio region"
                         onClick={(event) => {
                             ee.emit("statechange", "select");
-                            document.getElementById('btn-cursor').classList.remove('active');
-                            document.getElementById('btn-select').classList.remove('active');
-                            document.getElementById('btn-shift').classList.remove('active');
+                            btnCursor.current.classList.remove('active');
+                            btnSelect.current.classList.remove('active');
+                            btnShift.current.classList.remove('active');
                             event.target.classList.add('active');
                         }}
                     >
                         <i className="fas fa-italic"></i>
                     </button>
-                    <button type="button" id="btn-shift" className="btn btn-outline-dark" title="Shift audio in time"
+                    <button type="button" ref={btnShift} className="btn btn-outline-dark" title="Shift audio in time"
                         onClick={(event) => {
                             ee.emit("statechange", "shift");
-                            document.getElementById('btn-cursor').classList.remove('active');
-                            document.getElementById('btn-select').classList.remove('active');
-                            document.getElementById('btn-shift').classList.remove('active');
+                            btnCursor.current.classList.remove('active');
+                            btnSelect.current.classList.remove('active');
+                            btnShift.current.classList.remove('active');
                             event.target.classList.add('active');
                         }}
                     >
