@@ -8,6 +8,13 @@ export default function DawControl({ playerInstance, ee }) {
     const btnSelect = useRef(null);
     const btnShift = useRef(null);
 
+    const switchState = (event) => {
+        btnCursor.current.classList.remove('active');
+        btnSelect.current.classList.remove('active');
+        btnShift.current.classList.remove('active');
+        event.target.classList.add('active');
+    }
+
     return (
         <div className="controls-groups">
             <div className="controls-group">
@@ -74,10 +81,7 @@ export default function DawControl({ playerInstance, ee }) {
                     <button type="button" ref={btnCursor} className="btn btn-outline-dark active" title="Select cursor"
                         onClick={(event) => {
                             ee.emit("statechange", "cursor");
-                            btnCursor.current.classList.remove('active');
-                            btnSelect.current.classList.remove('active');
-                            btnShift.current.classList.remove('active');
-                            event.target.classList.add('active');
+                            switchState(event);
                         }}
                     >
                         <i className="fas fa-headphones"></i>
@@ -85,10 +89,7 @@ export default function DawControl({ playerInstance, ee }) {
                     <button type="button" ref={btnSelect} className="btn btn-outline-dark" title="Select audio region"
                         onClick={(event) => {
                             ee.emit("statechange", "select");
-                            btnCursor.current.classList.remove('active');
-                            btnSelect.current.classList.remove('active');
-                            btnShift.current.classList.remove('active');
-                            event.target.classList.add('active');
+                            switchState(event);
                         }}
                     >
                         <i className="fas fa-italic"></i>
@@ -96,10 +97,7 @@ export default function DawControl({ playerInstance, ee }) {
                     <button type="button" ref={btnShift} className="btn btn-outline-dark" title="Shift audio in time"
                         onClick={(event) => {
                             ee.emit("statechange", "shift");
-                            btnCursor.current.classList.remove('active');
-                            btnSelect.current.classList.remove('active');
-                            btnShift.current.classList.remove('active');
-                            event.target.classList.add('active');
+                            switchState(event);
                         }}
                     >
                         <i className="fas fa-arrows-alt-h"></i>
