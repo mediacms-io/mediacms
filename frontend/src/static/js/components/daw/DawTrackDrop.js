@@ -1,6 +1,8 @@
-import React from 'react'
+import React, {useRef} from 'react'
 
 export default function DawTrackDrop({ ee }) {
+    const inputEl = useRef(null);
+
     return (
         <div className="track-drop-outer">
             <div className="track-drop" id="track-drop"
@@ -32,12 +34,12 @@ export default function DawTrackDrop({ ee }) {
                     onClick={(event) => {
                         // To add audio files on smartphone device.
                         // By click on a button, rather than drop.
-                        document.getElementById("input-drop").click()
+                        inputEl.current.click()
                     }}
                 >
                     <i className="fas fa-plus"></i>
                 </button>
-                <input type="file" id="input-drop" multiple
+                <input type="file" ref={inputEl} id="input-drop" multiple
                     onChange={(event) => {
                         for (var i = 0; i < event.target.files.length; i++) {
                             ee.emit("newtrack", event.target.files[i]);
