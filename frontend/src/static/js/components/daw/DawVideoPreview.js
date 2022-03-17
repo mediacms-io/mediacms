@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-export default function DawVideoPreview({playerInstance}) {
+export default function DawVideoPreview({ playerInstance }) {
     const canvasEl = useRef(null);
 
-    useEffect(()=>{
+    useEffect(() => {
         const timerID = setInterval(
             () => tick(),
             42 // 1000/42 ~ 24 fps. This is the standard for movies and TV shows. Right?

@@ -59,7 +59,7 @@ function logError(err) {
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
-export default function Daw({playerInstance}) {
+export default function Daw({ playerInstance }) {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
