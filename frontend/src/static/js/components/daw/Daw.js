@@ -18,21 +18,7 @@ import DawControl from "./DawControl";
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
-let startTime = 0;
-let endTime = 0;
 let audioPos = 0;
-
-function updateSelect(start, end) {
-  if (start < end) {
-    document.getElementById('btn-trim-audio').classList.remove('disabled');
-  }
-  else {
-    document.getElementById('btn-trim-audio').classList.add('disabled');
-  }
-
-  startTime = start;
-  endTime = end;
-}
 
 function updateTime(time) {
   audioPos = time;
@@ -63,6 +49,17 @@ export default function Daw({ playerInstance }) {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
+
+  // Disable & enable the trim button.
+  const [trimDisabled, setTrimDisabled] = useState(true);
+  function updateSelect(start, end) {
+    if (start < end) {
+      setTrimDisabled(false);
+    }
+    else {
+      setTrimDisabled(true);
+    }
+  }
 
   const container = useCallback(
     (node) => {
@@ -154,7 +151,7 @@ export default function Daw({ playerInstance }) {
       />
       <main className="daw-container-inner">
         <div className="daw-top-row">
-          <DawControl playerInstance={playerInstance} ee={ee}></DawControl>
+          <DawControl playerInstance={playerInstance} ee={ee} trimDisabled={trimDisabled}></DawControl>
           <div className="video-preview-outer">
             <DawVideoPreview playerInstance={playerInstance}></DawVideoPreview>
           </div>

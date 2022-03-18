@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 
-export default function DawControl({ playerInstance, ee }) {
+export default function DawControl({ playerInstance, ee, trimDisabled }) {
 
     let isLooping = false; // To detect paused or played.
 
@@ -104,9 +104,9 @@ export default function DawControl({ playerInstance, ee }) {
                     </button>
                 </div>
                 <div className="btn-group btn-select-state-group">
-                    <button type="button" id="btn-trim-audio"
+                    <button type="button"
                         title="Keep only the selected audio region for a track"
-                        className="btn btn-outline-primary disabled"
+                        className={"btn btn-outline-primary" + (trimDisabled ? " disabled" : "")}
                         onClick={() => {
                             ee.emit("trim");
                         }}>
