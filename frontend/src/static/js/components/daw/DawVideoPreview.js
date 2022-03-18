@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 
 export default function DawVideoPreview({ playerInstance }) {
     const canvasEl = useRef(null);
