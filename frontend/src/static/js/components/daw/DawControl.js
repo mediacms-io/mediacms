@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useEffect } from 'react'
 
 export default function DawControl({ playerInstance, ee }) {
 
@@ -8,12 +8,33 @@ export default function DawControl({ playerInstance, ee }) {
     const btnSelect = useRef(null);
     const btnShift = useRef(null);
 
+    const btnTrim = useRef(null);
+
     const switchState = (event) => {
         btnCursor.current.classList.remove('active');
         btnSelect.current.classList.remove('active');
         btnShift.current.classList.remove('active');
         event.target.classList.add('active');
     }
+
+    let startTime = 0;
+    let endTime = 0;
+    function updateSelect(start, end) {
+        if (start < end) {
+            btnTrim.current.classList.remove('disabled');
+        }
+        else {
+            btnTrim.current.classList.add('disabled');
+        }
+
+        startTime = start;
+        endTime = end;
+    }
+
+    useEffect(() => {
+        ee.on("select", updateSelect);
+        return () => { }; // Clean up.
+    }, [ee]);
 
     return (
         <div className="controls-groups">
@@ -104,7 +125,7 @@ export default function DawControl({ playerInstance, ee }) {
                     </button>
                 </div>
                 <div className="btn-group btn-select-state-group">
-                    <button type="button" id="btn-trim-audio"
+                    <button type="button" ref={btnTrim}
                         title="Keep only the selected audio region for a track"
                         className="btn btn-outline-primary disabled"
                         onClick={() => {

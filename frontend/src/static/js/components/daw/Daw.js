@@ -18,21 +18,7 @@ import DawControl from "./DawControl";
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
-let startTime = 0;
-let endTime = 0;
 let audioPos = 0;
-
-function updateSelect(start, end) {
-  if (start < end) {
-    document.getElementById('btn-trim-audio').classList.remove('disabled');
-  }
-  else {
-    document.getElementById('btn-trim-audio').classList.add('disabled');
-  }
-
-  startTime = start;
-  endTime = end;
-}
 
 function updateTime(time) {
   audioPos = time;
@@ -108,7 +94,6 @@ export default function Daw({ playerInstance }) {
           }
         });
 
-        ee.on("select", updateSelect);
         ee.on("timeupdate", updateTime);
 
         playlist.load([
