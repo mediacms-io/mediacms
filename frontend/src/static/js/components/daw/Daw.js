@@ -18,11 +18,6 @@ import DawControl from "./DawControl";
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
-let audioPos = 0;
-
-function updateTime(time) {
-  audioPos = time;
-}
 
 let userMediaStream;
 let playlist = {}; // To be filled later.
@@ -59,6 +54,11 @@ export default function Daw({ playerInstance }) {
     else {
       setTrimDisabled(true);
     }
+  }
+
+  let audioPos = 0;
+  function updateTime(time) {
+    audioPos = time;
   }
 
   const container = useCallback(
