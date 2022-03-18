@@ -8,7 +8,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
     const btnSelect = useRef(null);
     const btnShift = useRef(null);
 
-    const switchState = (event) => {
+    const switchTab = (event) => {
         btnCursor.current.classList.remove('active');
         btnSelect.current.classList.remove('active');
         btnShift.current.classList.remove('active');
@@ -83,7 +83,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                     <button type="button" ref={btnCursor} className="btn btn-outline-dark active" title="Select cursor"
                         onClick={(event) => {
                             ee.emit("statechange", "cursor");
-                            switchState(event);
+                            switchTab(event);
                         }}
                     >
                         <i className="fas fa-headphones"></i>
@@ -91,7 +91,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                     <button type="button" ref={btnSelect} className="btn btn-outline-dark" title="Select audio region"
                         onClick={(event) => {
                             ee.emit("statechange", "select");
-                            switchState(event);
+                            switchTab(event);
                         }}
                     >
                         <i className="fas fa-italic"></i>
@@ -99,7 +99,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                     <button type="button" ref={btnShift} className="btn btn-outline-dark" title="Shift audio in time"
                         onClick={(event) => {
                             ee.emit("statechange", "shift");
-                            switchState(event);
+                            switchTab(event);
                         }}
                     >
                         <i className="fas fa-arrows-alt-h"></i>
