@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import Script from "next/script";
 import EventEmitter from "events";
 import WaveformPlaylist from "waveform-playlist";
@@ -18,15 +18,6 @@ import DawControl from "./DawControl";
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
-
-let userMediaStream;
-let playlist = {}; // To be filled later.
-let constraints = { audio: true };
-
-navigator.getUserMedia = (navigator.getUserMedia ||
-  navigator.webkitGetUserMedia ||
-  navigator.mozGetUserMedia ||
-  navigator.msGetUserMedia);
 
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
@@ -54,6 +45,10 @@ export default function Daw({ playerInstance }) {
   // Disable & enable the record button.
   const [recordDisabled, setRecordDisabled] = useState(true);
 
+  let userMediaStream;
+  let playlist = {}; // To be filled later.
+  let constraints = { audio: true };
+
   function gotStream(stream) {
     userMediaStream = stream;
     playlist.initRecorder(userMediaStream);
@@ -63,6 +58,13 @@ export default function Daw({ playerInstance }) {
   function logError(err) {
     console.error(err);
   }
+
+  useEffect(() => {
+    navigator.getUserMedia = (navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia ||
+      navigator.msGetUserMedia);
+  }, []);
 
   const container = useCallback(
     (node) => {
