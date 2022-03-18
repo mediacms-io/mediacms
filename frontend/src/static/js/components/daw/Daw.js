@@ -37,21 +37,25 @@ export default function Daw({ playerInstance }) {
     }
   }
 
-  let audioPos = 0;
+  // The useRef Hook will preserve a variable for the lifetime of the component.
+  // So that whenever there is a re-render, it will NOT recalculate the variable.
+  const audioPos = useRef(0);
   function updateTime(time) {
-    audioPos = time;
+    audioPos.current = time;
   }
 
   // Disable & enable the record button.
   const [recordDisabled, setRecordDisabled] = useState(true);
 
-  let userMediaStream;
-  let playlist = {}; // To be filled later.
-  let constraints = { audio: true };
+  // The useRef Hook will preserve a variable for the lifetime of the component.
+  // So that whenever there is a re-render, it will NOT recalculate the variable.
+  const playlist = useRef({}); // To be filled later.
+
+  const constraints = { audio: true };
 
   function gotStream(stream) {
-    userMediaStream = stream;
-    playlist.initRecorder(userMediaStream);
+    let userMediaStream = stream;
+    playlist.current.initRecorder(userMediaStream);
     setRecordDisabled(false);
   }
 
@@ -69,7 +73,7 @@ export default function Daw({ playerInstance }) {
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        playlist = WaveformPlaylist(
+        playlist.current = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -113,14 +117,14 @@ export default function Daw({ playerInstance }) {
         ee.on("select", updateSelect);
         ee.on("timeupdate", updateTime);
 
-        playlist.load([
+        playlist.current.load([
           // Empty. Don't load any audio for now.
         ]).then(function () {
           // can do stuff with the playlist.
 
           // After you create the playlist you have to call this function if you want to use recording:
           //initialize the WAV exporter.
-          playlist.initExporter();
+          playlist.current.initExporter();
 
           if (navigator.mediaDevices) {
             navigator.mediaDevices.getUserMedia(constraints)
