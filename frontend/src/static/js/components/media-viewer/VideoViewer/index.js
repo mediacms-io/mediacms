@@ -13,6 +13,7 @@ import {
 import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
 
 import '../VideoViewer.scss';
+import Daw from '../../daw/Daw';
 
 function filterVideoEncoding(encoding_status) {
   switch (encoding_status) {
@@ -37,6 +38,7 @@ export default class VideoViewer extends React.PureComponent {
 
     this.state = {
       displayPlayer: false,
+      playerInstance: null, // To re-render and pass playerInstance to the DAW component.
     };
 
     this.videoSources = [];
@@ -419,6 +421,13 @@ export default class VideoViewer extends React.PureComponent {
     }
 
     this.playerInstance.player.one('ended', this.onVideoEnd);
+
+    // To re-render and pass playerInstance to the DAW component.
+    this.setState({playerInstance: instance})
+
+    // Expose to console. To investigate if needed.
+    // MNS is a prefix acting as a name space. To avoid any possible conflict.
+    window.MNS_videoPlayerInstance = instance;
   }
 
   onVideoRestart() {
@@ -517,6 +526,10 @@ export default class VideoViewer extends React.PureComponent {
       : null;
 
     return (
+      <>
+      <div className='daw-container-outer' key="daw-container-outer">
+          <Daw playerInstance={this.state.playerInstance}></Daw>
+      </div>
       <div
         key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
         className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
@@ -563,6 +576,7 @@ export default class VideoViewer extends React.PureComponent {
           ) : null}
         </div>
       </div>
+      </>
     );
   }
 }

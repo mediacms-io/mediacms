@@ -5,6 +5,13 @@ object-assign
 */
 
 /*!
+           * Cross-Browser Split 1.1.1
+           * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
+           * Available under the MIT License
+           * ECMAScript compliant, uniform cross-browser split method
+           */
+
+/*!
  * The buffer module from node.js, for the browser.
  *
  * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>

@@ -1,0 +1,87 @@
+
+@media (min-width:320px)  { /* smartphones, iPhone, portrait 480x320 phones */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: column; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 5rem; /* Changes by media query */
+        width: 8.09rem; /* Changes by media query */
+        margin: 1rem 0rem;
+        border: 0.18rem dashed turquoise;
+    }    
+}
+@media (min-width:481px)  { /* portrait e-readers (Nook/Kindle), smaller tablets @ 600 or @ 640 wide. */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: column; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 5rem; /* Changes by media query */
+        width: 8.09rem; /* Changes by media query */
+        margin: 1rem 0rem;
+        border: 0.18rem dashed turquoise;
+    }    
+}
+@media (min-width:641px)  { /* portrait tablets, portrait iPad, landscape e-readers, landscape 800x480 or 854x480 phones */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: row; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 8.8rem; /* Changes by media query */
+        width: 14.23rem; /* Changes by media query */
+        border: 0.18rem dashed turquoise;
+    }    
+}
+@media (min-width:961px)  { /* tablet, landscape iPad, lo-res laptops ands desktops */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: row; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 8.8rem; /* Changes by media query */
+        width: 14.23rem; /* Changes by media query */
+        border: 0.18rem dashed turquoise;
+    }
+}
+@media (min-width:1025px) { /* big landscape tablets, laptops, and desktops */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: row; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 8.8rem; /* Changes by media query */
+        width: 14.23rem; /* Changes by media query */
+        border: 0.18rem dashed turquoise;
+    }
+}
+@media (min-width:1281px) { /* hi-res laptops and desktops */ 
+    .daw-top-row {
+        display: flex;
+        align-items: center;
+        flex-direction: row; /* Changes by media query */
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .video-preview {
+        height: 8.8rem; /* Changes by media query */
+        width: 14.23rem; /* Changes by media query */
+        border: 0.18rem dashed turquoise;
+    }
+}
