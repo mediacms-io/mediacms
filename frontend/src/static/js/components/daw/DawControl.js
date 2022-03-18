@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 
-export default function DawControl({ playerInstance, ee, trimDisabled }) {
+export default function DawControl({ playerInstance, ee, trimDisabled, recordDisabled }) {
 
     let isLooping = false; // To detect paused or played.
 
@@ -19,7 +19,9 @@ export default function DawControl({ playerInstance, ee, trimDisabled }) {
         <div className="controls-groups">
             <div className="controls-group">
                 <div className="btn-group">
-                    <button type="button" id="btn-record" className="btn btn-outline-primary disabled" title="Record"
+                    <button type="button"
+                        className={"btn btn-outline-primary" + (recordDisabled ? " disabled" : "")}
+                        title="Record"
                         onClick={() => {
                             ee.emit("record");
                             // Play video.

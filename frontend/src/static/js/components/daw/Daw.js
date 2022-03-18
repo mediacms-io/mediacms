@@ -28,16 +28,6 @@ navigator.getUserMedia = (navigator.getUserMedia ||
   navigator.mozGetUserMedia ||
   navigator.msGetUserMedia);
 
-function gotStream(stream) {
-  userMediaStream = stream;
-  playlist.initRecorder(userMediaStream);
-  document.getElementById("btn-record").classList.remove("disabled")
-}
-
-function logError(err) {
-  console.error(err);
-}
-
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function Daw({ playerInstance }) {
@@ -59,6 +49,19 @@ export default function Daw({ playerInstance }) {
   let audioPos = 0;
   function updateTime(time) {
     audioPos = time;
+  }
+
+  // Disable & enable the record button.
+  const [recordDisabled, setRecordDisabled] = useState(true);
+
+  function gotStream(stream) {
+    userMediaStream = stream;
+    playlist.initRecorder(userMediaStream);
+    setRecordDisabled(false);
+  }
+
+  function logError(err) {
+    console.error(err);
   }
 
   const container = useCallback(
@@ -151,7 +154,10 @@ export default function Daw({ playerInstance }) {
       />
       <main className="daw-container-inner">
         <div className="daw-top-row">
-          <DawControl playerInstance={playerInstance} ee={ee} trimDisabled={trimDisabled}></DawControl>
+          <DawControl playerInstance={playerInstance} ee={ee}
+            trimDisabled={trimDisabled}
+            recordDisabled={recordDisabled}
+          ></DawControl>
           <div className="video-preview-outer">
             <DawVideoPreview playerInstance={playerInstance}></DawVideoPreview>
           </div>
