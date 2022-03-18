@@ -17,6 +17,8 @@ export default function DawControl({ playerInstance, ee }) {
         event.target.classList.add('active');
     }
 
+    let startTime = 0;
+    let endTime = 0;
     function updateSelect(start, end) {
         if (start < end) {
             btnTrim.current.classList.remove('disabled');
@@ -24,6 +26,9 @@ export default function DawControl({ playerInstance, ee }) {
         else {
             btnTrim.current.classList.add('disabled');
         }
+
+        startTime = start;
+        endTime = end;
     }
 
     useEffect(() => {
