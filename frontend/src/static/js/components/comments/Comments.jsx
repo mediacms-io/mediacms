@@ -368,8 +368,36 @@ export default function CommentsList(props) {
   const [displayComments, setDisplayComments] = useState(false);
 
   function onCommentsLoad() {
-    displayCommentsRelatedAlert();
-    setComments([...MediaPageStore.get('media-comments')]);
+    const retrievedComments = [...MediaPageStore.get('media-comments')];
+
+      retrievedComments.forEach(comment => {          
+        comment.text = setTimestampAnchors(comment.text);
+      });
+      
+      displayCommentsRelatedAlert();
+      setComments(retrievedComments);
+  }
+
+  function setTimestampAnchors(text)
+  {
+    function wrapTimestampWithAnchor(match, string) 
+    {
+      let split = match.split(':'), s = 0, m = 1;
+      let searchParameters = new URLSearchParams(window.location.search);
+
+      while (split.length > 0)
+      {
+          s += m * parseInt(split.pop(), 10);
+          m *= 60;
+      }
+
+      searchParameters.set('t', s)
+      const wrapped = "<a href=\"" + MediaPageStore.get('media-url').split('?')[0] + "?" + searchParameters + "\">" + match + "</a>";
+      return wrapped;
+    }
+
+    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
+    return text.replace(timeRegex , wrapTimestampWithAnchor);
   }
 
   function onCommentSubmit(commentId) {

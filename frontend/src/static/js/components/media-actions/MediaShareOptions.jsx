@@ -182,15 +182,39 @@ function updateDimensions() {
   };
 }
 
+function getTimestamp() {
+  const videoPlayer = document.getElementsByTagName("video");
+  return videoPlayer[0]?.currentTime;
+}
+
+function ToHHMMSS (timeInt) {
+  let sec_num = parseInt(timeInt, 10);
+  let hours   = Math.floor(sec_num / 3600);
+  let minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+  let seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+  if (hours   < 10) {hours   = "0"+hours;}
+  if (minutes < 10) {minutes = "0"+minutes;}
+  if (seconds < 10) {seconds = "0"+seconds;}
+  return hours >= 1 ? hours + ':' + minutes + ':' + seconds : minutes + ':' + seconds;
+}
+
 export function MediaShareOptions(props) {
   const containerRef = useRef(null);
   const shareOptionsInnerRef = useRef(null);
+  const mediaUrl = MediaPageStore.get('media-url');
 
   const [inlineSlider, setInlineSlider] = useState(null);
   const [sliderButtonsVisible, setSliderButtonsVisible] = useState({ prev: false, next: false });
 
   const [dimensions, setDimensions] = useState(updateDimensions());
   const [shareOptions] = useState(ShareOptions());
+
+  const [timestamp, setTimestamp] = useState(0);
+  const [formattedTimestamp, setFormattedTimestamp] = useState(0);
+  const [startAtSelected, setStartAtSelected] = useState(false);
+
+  const [shareMediaLink, setShareMediaLink] = useState(mediaUrl);
 
   function onWindowResize() {
     setDimensions(updateDimensions());
@@ -219,6 +243,17 @@ export function MediaShareOptions(props) {
     });
   }
 
+  function updateStartAtCheckbox() {
+    setStartAtSelected(!startAtSelected);
+    updateShareMediaLink();
+  }
+
+  function updateShareMediaLink()
+  {
+      const newLink = startAtSelected ? mediaUrl : mediaUrl + "&t=" + Math.trunc(timestamp);
+      setShareMediaLink(newLink);
+  }
+
   function nextSlide() {
     inlineSlider.nextSlide();
     updateSlider();
@@ -243,6 +278,10 @@ export function MediaShareOptions(props) {
   useEffect(() => {
     PageStore.on('window_resize', onWindowResize);
     MediaPageStore.on('copied_media_link', onCompleteCopyMediaLink);
+    
+    const localTimestamp = getTimestamp();
+    setTimestamp(localTimestamp);
+    setFormattedTimestamp(ToHHMMSS(localTimestamp));
 
     return () => {
       PageStore.removeListener('window_resize', onWindowResize);
@@ -273,10 +312,22 @@ export function MediaShareOptions(props) {
       </div>
       <div className="copy-field">
         <div>
-          <input type="text" readOnly value={MediaPageStore.get('media-url')} />
+          <input type="text" readOnly value={shareMediaLink} />
           <button onClick={onClickCopyMediaLink}>COPY</button>
         </div>
       </div>
+      <div className="start-at">
+          <label>
+            <input 
+              type="checkbox" 
+              name="start-at-checkbox" 
+              id="id-start-at-checkbox"
+              checked={startAtSelected} 
+              onChange={updateStartAtCheckbox}
+            />
+            Start at {formattedTimestamp}
+          </label>
+        </div>
     </div>
   );
 }
