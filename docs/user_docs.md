@@ -5,7 +5,7 @@
 - [Downloading media](#downloading-media)
 - [Adding captions/subtitles](#adding-captionssubtitles)
 - [Search media](#search-media)
-- [Using Timestamps for sharing](#-using-timestamp)
+- [Using Timestamps for sharing](#using-timestamps-for-sharing)
 - [Share media](#share-media)
 - [Embed media](#embed-media)
 - [Customize my profile options](#customize-my-profile-options)
@@ -200,13 +200,13 @@ You can now watch the captions/subtitles play back in the video player - and tog
 
 ### Using Timestamp in the URL
 
-An additionnal Get parameter 't' can be added in video URL's to start the video at the given time. The starting time has to be given in seconds.
+An additional GET parameter 't' can be added in video URL's to start the video at the given time. The starting time has to be given in seconds.
 
 <p align="left">
     <img src="./images/Demo1.png"/>
 </p>
 
-Additionnally the share button has an option to generate the URL with the timestamp at current second the video is.
+Additionally the share button has an option to generate the URL with the timestamp at current second the video is.
 
 <p align="left">
     <img src="./images/Demo2.png"/>
