@@ -192,10 +192,10 @@ export function VideoPlayer(props) {
       document.addEventListener('visibilitychange', initPlayer);
     }
 
-    player.player.one('play', () => {       
+    player.player.one('loadedmetadata', () => {       
       const urlParams = new URLSearchParams(window.location.search);
-      const paramT = urlParams.get('t');
-      const timestamp = paramT ? paramT : 0;
+      const paramT = Number(urlParams.get('t'));
+      const timestamp = !isNaN(paramT) ? paramT : 0;
       player.player.currentTime(timestamp);
     });
 
