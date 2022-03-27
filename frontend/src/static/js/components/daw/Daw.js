@@ -129,7 +129,7 @@ export default function Daw({ playerInstance }) {
         const seconds = playerInstance.player.duration();
         if (AlmostEqual(seconds, 57.05699999)) {
           load = {
-            src: "/media/original/user/M4J1D/3d64f321d9ea4c15be0c36c2710ee93d.Viscous_damper_voice-over.mp3",
+            src: "https://micrufun.com//media/original/user/M4J1D/3d64f321d9ea4c15be0c36c2710ee93d.Viscous_damper_voice-over.mp3",
             name: "Voice",
             effects: function (graphEnd, masterGainNode, isOffline) {
               const reverb = new Tone.Reverb(1.2);
