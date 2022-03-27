@@ -16,6 +16,13 @@ import DawVideoPreview from './DawVideoPreview'
 import DawTrackDrop from "./DawTrackDrop";
 import DawControl from "./DawControl";
 
+const AlmostEqual = (v1, v2, epsilon) => {
+  if (epsilon == null) {
+    epsilon = 0.001;
+  }
+  return Math.abs(v1 - v2) < epsilon;
+};
+
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
 
@@ -117,8 +124,37 @@ export default function Daw({ playerInstance }) {
         ee.on("select", updateSelect);
         ee.on("timeupdate", updateTime);
 
+        // Just a trick to load a voice for specific video.
+        let load = {};
+        const seconds = playerInstance.player.duration();
+        if (AlmostEqual(seconds, 57.05699999)) {
+          load = {
+            src: "/media/original/user/M4J1D/3d64f321d9ea4c15be0c36c2710ee93d.Viscous_damper_voice-over.mp3",
+            name: "Voice",
+            effects: function (graphEnd, masterGainNode, isOffline) {
+              const reverb = new Tone.Reverb(1.2);
+
+              if (isOffline) {
+                setUpChain.current.push(reverb.ready);
+              }
+
+              Tone.connect(graphEnd, reverb);
+              Tone.connect(reverb, masterGainNode);
+
+              return function cleanup() {
+                reverb.disconnect();
+                reverb.dispose();
+              };
+            },
+          };
+        } else {
+          load = { src: "" };
+        }
+
         playlist.current.load([
           // Empty. Don't load any audio for now.
+
+          load
         ]).then(function () {
           // can do stuff with the playlist.
 
