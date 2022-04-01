@@ -443,7 +443,8 @@ def media_file_info(input_file):
                 input_file,
             ]
             stdout = run_command(cmd).get("out")
-            stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
+            # ffprobe appends a pipe at the end of the output, thus we have to remove it
+            stream_size = sum([int(line.replace("|", "")) for line in stdout.split("\n") if line != ""])
             audio_bitrate = round((stream_size * 8 / 1024.0) / audio_duration, 2)
 
         ret.update(
