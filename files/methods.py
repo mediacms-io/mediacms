@@ -349,21 +349,19 @@ View it on %s
     return True
 
 
-def notify_user_on_mention(friendly_token, user_mentionned, cleaned_comment):
-
-    """ Notify the user mentionned in the comment """
+def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
     media = None
     media = models.Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return False
 
-    user = User.objects.filter(username=user_mentionned).first()
+    user = User.objects.filter(username=user_mentioned).first()
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - You were mentionned in a comment".format(settings.PORTAL_NAME)
+        title = "[{}] - You were mentioned in a comment".format(settings.PORTAL_NAME)
         msg = """
-You were mentionned in a comment on  %s .
+You were mentioned in a comment on  %s .
 View it on %s
 
 Comment : %s
@@ -378,7 +376,7 @@ Comment : %s
 
 
 def check_comment_for_mention(friendly_token, comment_text):
-    """ Check the comment for any mentions, and notify each mentionned users"""
+    """ Check the comment for any mentions, and notify each mentioned users"""
     cleaned_comment = ''
 
     matches = re.findall('@\\(_(.+?)_\\)', comment_text)

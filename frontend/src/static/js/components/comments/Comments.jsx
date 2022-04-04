@@ -74,7 +74,7 @@ function CommentForm(props) {
     setMadeChanges(false);
   }
 
-  function onChange(event, newValue, newPlainTextValue, mentions) {
+  function onChangeWithMention(event, newValue, newPlainTextValue, mentions) {
     textareaRef.current.style.height = '';
     
     setValue(newValue);
@@ -83,6 +83,21 @@ function CommentForm(props) {
     const contentHeight = textareaRef.current.scrollHeight;
     const contentLineHeight =
       0 < textareaLineHeight ? textareaLineHeight : parseFloat(window.getComputedStyle(textareaRef.current).lineHeight);
+    setTextareaLineHeight(contentLineHeight);
+
+    textareaRef.current.style.height =
+      Math.max(20, textareaLineHeight * Math.ceil(contentHeight / contentLineHeight)) + 'px';
+  }
+
+  function onChange(event) {
+    textareaRef.current.style.height = '';
+
+    const contentHeight = textareaRef.current.scrollHeight;
+    const contentLineHeight =
+      0 < textareaLineHeight ? textareaLineHeight : parseFloat(window.getComputedStyle(textareaRef.current).lineHeight);
+
+    setValue(textareaRef.current.value);
+    setMadeChanges(true);
     setTextareaLineHeight(contentLineHeight);
 
     textareaRef.current.style.height =
@@ -104,12 +119,18 @@ function CommentForm(props) {
   useEffect(() => {
     MediaPageStore.on('comment_submit', onCommentSubmit);
     MediaPageStore.on('comment_submit_fail', onCommentSubmitFail);
-    MediaPageStore.on('users_load', onUsersLoad);
+    if (MediaCMS.features.media.actions.comment_mention === true)
+    {
+      MediaPageStore.on('users_load', onUsersLoad);
+    }
 
     return () => {
       MediaPageStore.removeListener('comment_submit', onCommentSubmit);
       MediaPageStore.removeListener('comment_submit_fail', onCommentSubmitFail);
-      MediaPageStore.removeListener('users_load', onUsersLoad);
+      if (MediaCMS.features.media.actions.comment_mention === true)
+      {
+        MediaPageStore.removeListener('users_load', onUsersLoad);
+      }
     };
   });
 
@@ -119,20 +140,33 @@ function CommentForm(props) {
         <UserThumbnail />
         <div className="form">
           <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-            <MentionsInput 
-              inputRef={textareaRef}
-              className="form-textarea"
-              rows="1"
-              placeholder={'Add a ' + commentsText.single + '...'}
-              value={value}
-              onChange={onChange}
-              onFocus={onFocus}
-              onBlur={onBlur}>
-              <Mention
-                data={userList}
-                markup="@(___id___)[___display___]"
+            { MediaCMS.features.media.actions.comment_mention ? 
+              <MentionsInput 
+                inputRef={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChangeWithMention}
+                onFocus={onFocus}
+                onBlur={onBlur}>
+                <Mention
+                  data={userList}
+                  markup="@(___id___)[___display___]"
               />
-            </MentionsInput>
+              </MentionsInput>
+            :
+              <textarea
+                ref={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChange}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              ></textarea>
+            }
           </div>
           <div className="form-buttons">
             <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
@@ -393,9 +427,12 @@ export default function CommentsList(props) {
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
 
-    retrievedComments.forEach(comment => {
-      comment.text = setMentions(comment.text);
-    });
+    if (MediaCMS.features.media.actions.comment_mention === true)
+    {
+      retrievedComments.forEach(comment => {
+        comment.text = setMentions(comment.text);
+      });
+    }
     
     displayCommentsRelatedAlert();
     setComments(retrievedComments);

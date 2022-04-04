@@ -22,6 +22,7 @@ MediaCMS.features = {
 			dislike: {% if CAN_DISLIKE_MEDIA %}true{% else %}false{% endif %},
 			download: true,
 			comment: true,
+			comment_mention: {% if CAN_MENTION_IN_COMMENTS %}true{% else %}false{% endif %},
 			save: true,
 		},
 		shareOptions: [ 'embed', 'fb', 'tw', 'whatsapp', 'telegram', 'reddit', 'tumblr', 'vk', 'pinterest', 'mix', 'linkedin', 'email' ],
