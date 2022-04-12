@@ -13,6 +13,7 @@ def stuff(request):
     ret["CAN_LOGIN"] = settings.LOGIN_ALLOWED
     ret["CAN_REGISTER"] = settings.REGISTER_ALLOWED
     ret["CAN_UPLOAD_MEDIA"] = settings.UPLOAD_MEDIA_ALLOWED
+    ret["TIMESTAMP_IN_TIMEBAR"] = settings.TIMESTAMP_IN_TIMEBAR
     ret["CAN_LIKE_MEDIA"] = settings.CAN_LIKE_MEDIA
     ret["CAN_DISLIKE_MEDIA"] = settings.CAN_DISLIKE_MEDIA
     ret["CAN_REPORT_MEDIA"] = settings.CAN_REPORT_MEDIA

@@ -7,6 +7,10 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
 
+import './videojs-markers.js';
+import './videojs.markers.css';
+import {enableMarkers, addMarker} from './videojs-markers_config.js'
+
 import './Comments.scss';
 
 const commentsText = {
@@ -369,16 +373,24 @@ export default function CommentsList(props) {
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
+    const video = videojs('vjs_video_3');
 
+    if (MediaCMS.features.media.actions.timestampTimebar)
+    {
+      enableMarkers(video);
+    }
+
+    video.one('loadedmetadata', () => {       
       retrievedComments.forEach(comment => {          
-        comment.text = setTimestampAnchors(comment.text);
+        comment.text = setTimestampAnchorsandMarkers(comment.text, video);
       });
       
       displayCommentsRelatedAlert();
       setComments(retrievedComments);
+    });
   }
 
-  function setTimestampAnchors(text)
+  function setTimestampAnchorsandMarkers(text, videoPlayer)
   {
     function wrapTimestampWithAnchor(match, string) 
     {
@@ -389,6 +401,10 @@ export default function CommentsList(props) {
       {
           s += m * parseInt(split.pop(), 10);
           m *= 60;
+      }
+      if (MediaCMS.features.media.actions.timestampTimebar)
+      {
+        addMarker(videoPlayer, s, text);
       }
 
       searchParameters.set('t', s)
