@@ -376,7 +376,7 @@ Comment : %s
 
 
 def check_comment_for_mention(friendly_token, comment_text):
-    """ Check the comment for any mentions, and notify each mentioned users"""
+    """Check the comment for any mentions, and notify each mentioned users"""
     cleaned_comment = ''
 
     matches = re.findall('@\\(_(.+?)_\\)', comment_text)
@@ -388,7 +388,7 @@ def check_comment_for_mention(friendly_token, comment_text):
 
 
 def clean_comment(raw_comment):
-    """ Clean the comment fromn ID and username Mentions for preview purposes """
+    """Clean the comment fromn ID and username Mentions for preview purposes"""
 
     cleaned_comment = re.sub('@\\(_(.+?)_\\)', '', raw_comment)
     cleaned_comment = cleaned_comment.replace("[_", '')
