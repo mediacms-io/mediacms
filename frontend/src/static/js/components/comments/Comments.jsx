@@ -382,7 +382,7 @@ export default function CommentsList(props) {
 
     video.one('loadedmetadata', () => {       
       retrievedComments.forEach(comment => {          
-        comment.text = setTimestampAnchorsandMarkers(comment.text, video);
+        comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
       });
       
       displayCommentsRelatedAlert();
@@ -390,7 +390,7 @@ export default function CommentsList(props) {
     });
   }
 
-  function setTimestampAnchorsandMarkers(text, videoPlayer)
+  function setTimestampAnchorsAndMarkers(text, videoPlayer)
   {
     function wrapTimestampWithAnchor(match, string) 
     {
