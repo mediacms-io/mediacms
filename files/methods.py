@@ -13,7 +13,6 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 
 from cms import celery_app
-from users.models import User
 
 from . import models
 from .helpers import mask_ip
@@ -326,8 +325,6 @@ def update_user_ratings(user, media, user_ratings):
 
 def notify_user_on_comment(friendly_token):
     """Notify users through email, for a set of actions"""
-
-    media = None
     media = models.Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return False
@@ -350,7 +347,8 @@ View it on %s
 
 
 def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
-    media = None
+    from users.models import User
+
     media = models.Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return False
