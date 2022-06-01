@@ -5,7 +5,7 @@
 - [Downloading media](#downloading-media)
 - [Adding captions/subtitles](#adding-captionssubtitles)
 - [Search media](#search-media)
-- [Using Timestamps for sharing](#-using-timestamps-for-sharing)
+- [Using Timestamps for sharing](#using-timestamps-for-sharing)
 - [Mentionning users in comments](#Mentionning-users-in-comments)
 - [Share media](#share-media)
 - [Embed media](#embed-media)
