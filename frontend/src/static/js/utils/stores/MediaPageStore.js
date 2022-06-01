@@ -51,6 +51,7 @@ class MediaPageStore extends EventEmitter {
 
     this.pagePlaylistId = null;
     this.pagePlaylistData = null;
+    this.userList = null;
 
     MediaPageStoreData[
       Object.defineProperty(this, 'id', { value: 'MediaPageStoreData_' + Object.keys(MediaPageStoreData).length }).id
@@ -158,6 +159,12 @@ class MediaPageStore extends EventEmitter {
     getRequest(this.commentsAPIUrl, !1, this.commentsResponse);
   }
 
+  loadUsers() {
+    this.usersAPIUrl = this.mediacms_config.api.users;
+    this.usersResponse = this.usersResponse.bind(this);
+    getRequest(this.usersAPIUrl, !1, this.usersResponse);
+  }
+
   loadPlaylists() {
     if (!this.mediacms_config.member.can.saveMedia) {
       return;
@@ -187,6 +194,7 @@ class MediaPageStore extends EventEmitter {
     }
 
     this.loadPlaylists();
+    this.loadUsers();
 
     if (this.mediacms_config.member.can.readComment) {
       this.loadComments();
@@ -212,6 +220,13 @@ class MediaPageStore extends EventEmitter {
     if (response && response.data) {
       MediaPageStoreData[this.id].comments = response.data.count ? response.data.results : [];
       this.emit('comments_load');
+    }
+  }
+
+  usersResponse(response) {
+    if (response && response.data) {
+      MediaPageStoreData.userList = response.data.count ? response.data.results : [];
+      this.emit('users_load');
     }
   }
 
@@ -403,6 +418,9 @@ class MediaPageStore extends EventEmitter {
       i,
       r = null;
     switch (type) {
+      case 'users':
+        r = MediaPageStoreData.userList || [];
+      break;
       case 'playlists':
         r = MediaPageStoreData[this.id].playlists || [];
         break;

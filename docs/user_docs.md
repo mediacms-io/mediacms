@@ -5,7 +5,8 @@
 - [Downloading media](#downloading-media)
 - [Adding captions/subtitles](#adding-captionssubtitles)
 - [Search media](#search-media)
-- [Using Timestamps for sharing](#using-timestamps-for-sharing)
+- [Using Timestamps for sharing](#-using-timestamps-for-sharing)
+- [Mentionning users in comments](#Mentionning-users-in-comments)
 - [Share media](#share-media)
 - [Embed media](#embed-media)
 - [Customize my profile options](#customize-my-profile-options)
@@ -218,6 +219,19 @@ Comments can also include timestamps. They are automatically detected upon posti
 
 <p align="left">
     <img src="./images/Demo3.png"/>
+</p>
+
+## Mentionning users in comments
+
+Comments can also mention other users by tagging with '@'. This will open suggestion box showing usernames, and the selection will refine as the user continues typing.
+
+Comments send with mentions will contain a link to the user page, and can be setup to send a mail to the mentionned user.
+
+<p align="left">
+    <img src="./images/Mention1.png"/>
+    <img src="./images/Mention2.png"/>
+    <img src="./images/Mention3.png"/>
+    <img src="./images/Mention4.png"/>
 </p>
 
 ## Search media
