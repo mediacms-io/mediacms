@@ -637,15 +637,16 @@ class Media(models.Model):
 
     def set_encoding_status(self):
         """Set encoding_status for videos
-        Set success if at least one mp4 exists
+        Set success if at least one mp4 or webm exists
         """
         mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False))
+        webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
-        if not mp4_statuses:
+        if not mp4_statuses and not webm_statuses:
             encoding_status = "pending"
-        elif "success" in mp4_statuses:
+        elif "success" in mp4_statuses or "success" in webm_statuses:
             encoding_status = "success"
-        elif "running" in mp4_statuses:
+        elif "running" in mp4_statuses or "running" in webm_statuses:
             encoding_status = "running"
         else:
             encoding_status = "fail"
