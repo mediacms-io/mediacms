@@ -12,5 +12,3 @@ pytest-cov
 pytest-django
 pytest-factoryboy
 Faker
-selenium
-webdriver-manager
