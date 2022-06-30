@@ -54,6 +54,13 @@ docker-compose -f docker-compose-dev.yaml build
 docker-compose -f docker-compose-dev.yaml up
 ```
 
+An `admin` user is created during the installation process. Its attributes are defined in `docker-compose-dev.yaml`:
+```
+ADMIN_USER: 'admin'
+ADMIN_PASSWORD: 'admin'
+ADMIN_EMAIL: 'admin@localhost'
+```
+
 ### Frontend application changes
 Eg change `frontend/src/static/js/pages/HomePage.tsx` , dev application refreshes in a number of seconds (hot reloading) and I see the changes, once I'm happy I can run
 
