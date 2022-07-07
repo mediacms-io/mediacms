@@ -437,6 +437,13 @@ export default function CommentsList(props) {
       enableMarkers(video);
     }
 
+    if (MediaCMS.features.media.actions.comment_mention === true)
+    {
+      retrievedComments.forEach(comment => {
+        comment.text = setMentions(comment.text);
+      });
+    }
+
     video.one('loadedmetadata', () => {       
       retrievedComments.forEach(comment => {          
         comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
@@ -445,13 +452,6 @@ export default function CommentsList(props) {
       displayCommentsRelatedAlert();
       setComments(retrievedComments);
     });
-
-    if (MediaCMS.features.media.actions.comment_mention === true)
-    {
-      retrievedComments.forEach(comment => {
-        comment.text = setMentions(comment.text);
-      });
-    }
   }
   
   function setMentions(text)
