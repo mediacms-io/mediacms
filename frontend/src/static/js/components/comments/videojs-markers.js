@@ -1,3 +1,5 @@
+// based on https://github.com/spchuang/videojs-markers
+
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
     define(['video.js'], factory);
@@ -279,11 +281,16 @@
         }
       });
 
-      // clean up markers array
-      deleteIndexList.reverse();
-      deleteIndexList.forEach(function (deleteIndex) {
-        markersList.splice(deleteIndex, 1);
-      });
+      try {
+        // clean up markers array
+        deleteIndexList.reverse();
+        deleteIndexList.forEach(function (deleteIndex) {
+          markersList.splice(deleteIndex, 1);
+        });
+      } catch (error) {
+        //Splice is the most likely culprit
+        console.log(error);
+      }
 
       // sort again
       sortMarkersList();
