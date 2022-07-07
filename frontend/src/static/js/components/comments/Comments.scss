@@ -2,7 +2,7 @@
 
 .comments-form-inner {
   .form {
-    .form-textarea-wrap {
+    .form-textarea-wrap{
       border-color: var(--comments-textarea-wrapper-border-color);
 
       &:after {
@@ -10,12 +10,19 @@
       }
     }
 
-    .form-textarea {
+    .form-textarea, .form-textarea__input, .form-textarea__suggestions__list {
       color: var(--comments-textarea-text-color);
 
       &:placeholder {
         color: var(--comments-textarea-text-placeholder-color);
       }
+    }
+    .form-textarea__suggestions__list {
+      background-color: var(--body-bg-color);
+    }
+
+    strong {
+      background-color: var(--comment-text-mentions-background-color-highlight)
     }
   }
 }
@@ -160,7 +167,7 @@
       }
     }
 
-    .form-textarea {
+    .form-textarea, .form-textarea__input {
       position: relative;
       resize: none;
       display: block;
@@ -204,7 +211,7 @@
 
       text-decoration: none;
 
-      .form-textarea {
+      .form-textarea, .form-textarea__input {
         opacity: 0.5;
       }
     }

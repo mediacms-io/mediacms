@@ -18,6 +18,7 @@ export function init(user, features) {
       deleteProfile: false,
       readComment: true,
       addComment: false,
+      mentionComment: false,
       deleteComment: false,
       editMedia: false,
       deleteMedia: false,
@@ -60,6 +61,7 @@ export function init(user, features) {
 
       MEMBER.can.deleteProfile = true === user.can.deleteProfile;
       MEMBER.can.addComment = true === user.can.addComment;
+      MEMBER.can.mentionComment = true === user.can.mentionComment;
       MEMBER.can.deleteComment = true === user.can.deleteComment;
       MEMBER.can.editMedia = true === user.can.editMedia;
       MEMBER.can.deleteMedia = true === user.can.deleteMedia;
@@ -100,6 +102,7 @@ export function init(user, features) {
         const mediaActions = features.media.actions;
 
         MEMBER.can.addComment = MEMBER.can.addComment && true === mediaActions.comment;
+        MEMBER.can.mentionComment = MEMBER.can.mentionComment && true === mediaActions.comment_mention;
 
         MEMBER.can.likeMedia = false === mediaActions.like ? false : true;
         MEMBER.can.dislikeMedia = false === mediaActions.dislike ? false : true;

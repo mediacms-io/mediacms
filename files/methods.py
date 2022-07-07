@@ -4,6 +4,7 @@
 import itertools
 import logging
 import random
+import re
 from datetime import datetime
 
 from django.conf import settings
@@ -324,8 +325,6 @@ def update_user_ratings(user, media, user_ratings):
 
 def notify_user_on_comment(friendly_token):
     """Notify users through email, for a set of actions"""
-
-    media = None
     media = models.Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return False
@@ -345,6 +344,55 @@ View it on %s
         email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [media.user.email])
         email.send(fail_silently=True)
     return True
+
+
+def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
+    from users.models import User
+
+    media = models.Media.objects.filter(friendly_token=friendly_token).first()
+    if not media:
+        return False
+
+    user = User.objects.filter(username=user_mentioned).first()
+    media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
+
+    if user.notification_on_comments:
+        title = "[{}] - You were mentioned in a comment".format(settings.PORTAL_NAME)
+        msg = """
+You were mentioned in a comment on  %s .
+View it on %s
+
+Comment : %s
+        """ % (
+            media.title,
+            media_url,
+            cleaned_comment,
+        )
+        email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [user.email])
+        email.send(fail_silently=True)
+    return True
+
+
+def check_comment_for_mention(friendly_token, comment_text):
+    """Check the comment for any mentions, and notify each mentioned users"""
+    cleaned_comment = ''
+
+    matches = re.findall('@\\(_(.+?)_\\)', comment_text)
+    if matches:
+        cleaned_comment = clean_comment(comment_text)
+
+    for match in list(dict.fromkeys(matches)):
+        notify_user_on_mention(friendly_token, match, cleaned_comment)
+
+
+def clean_comment(raw_comment):
+    """Clean the comment fromn ID and username Mentions for preview purposes"""
+
+    cleaned_comment = re.sub('@\\(_(.+?)_\\)', '', raw_comment)
+    cleaned_comment = cleaned_comment.replace("[_", '')
+    cleaned_comment = cleaned_comment.replace("_]", '')
+
+    return cleaned_comment
 
 
 def list_tasks():

@@ -19,6 +19,26 @@ to be written
 API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
 This page allows you to login to perform authenticated actions - it will also use your session if logged in. 
 
+
+An example of working with Python requests library:
+
+```
+import requests
+
+auth = ('user' ,'password')
+upload_url = "https://domain/api/v1/media"
+title = 'x title'
+description = 'x description'
+media_file = '/tmp/file.mp4'
+
+requests.post(
+    url=upload_url,
+    files={'media_file': open(media_file,'rb')},
+    data={'title': title, 'description': description},
+    auth=auth
+)
+```
+
 ## 4. How to contribute
 Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
 
