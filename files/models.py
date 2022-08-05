@@ -1575,3 +1575,33 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
+
+class Voice(models.Model):
+    """The model for voice recordings by user"""
+
+    add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
+
+    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the Media")
+
+    likes = models.IntegerField(db_index=True, default=1)
+
+    md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
+
+    media_file = models.FileField(
+        "voice file",
+        upload_to=original_media_file_path,
+        max_length=500,
+        help_text="voice file",
+    )
+
+    title = models.CharField(max_length=100, help_text="media title", blank=True, db_index=True)
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, help_text="user that uploads the media")
+
+    views = models.IntegerField(db_index=True, default=1)
+
+    class Meta:
+        ordering = ["-add_date"]
+        
+    def __str__(self):
+        return self.title
