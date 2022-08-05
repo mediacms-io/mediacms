@@ -119,6 +119,8 @@ export default function Daw({ playerInstance }) {
 
         playlist.current.load([
           // Empty. Don't load any audio for now.
+          // TODO: Voices of the current media would be loaded here.
+          // TODO: They would be fetched from the database table.
         ]).then(function () {
           // can do stuff with the playlist.
 
