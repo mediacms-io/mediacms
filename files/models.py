@@ -1596,6 +1596,8 @@ class Voice(models.Model):
 
     title = models.CharField(max_length=100, help_text="media title", blank=True, db_index=True)
 
+    uid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="A unique identifier for the Media")
+
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, help_text="user that uploads the media")
 
     views = models.IntegerField(db_index=True, default=1)
