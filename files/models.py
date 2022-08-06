@@ -89,6 +89,12 @@ def original_media_file_path(instance, filename):
     return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
 
 
+def original_voice_file_path(instance, filename):
+    """Helper function to place original voice file"""
+    file_name = "{0}.{1}".format(instance.uid.hex, helpers.get_file_name(filename))
+    # TODO: MEDIA_UPLOAD_DIR could be replaced with VOICE_UPLOAD_DIR.
+    return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
+
 def encoding_media_file_path(instance, filename):
     """Helper function to place encoded media file"""
 
@@ -1581,24 +1587,28 @@ class Voice(models.Model):
 
     add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
 
-    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the Media")
+    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the voice")
 
     likes = models.IntegerField(db_index=True, default=1)
 
     md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
 
-    media_file = models.FileField(
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, db_index=True, related_name="voices")
+
+    voice_file = models.FileField(
         "voice file",
-        upload_to=original_media_file_path,
+        upload_to=original_voice_file_path,
         max_length=500,
         help_text="voice file",
     )
 
-    title = models.CharField(max_length=100, help_text="media title", blank=True, db_index=True)
+    start_time = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
 
-    uid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="A unique identifier for the Media")
+    title = models.CharField(max_length=100, help_text="voice title", blank=True, db_index=True)
 
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, help_text="user that uploads the media")
+    uid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="A unique identifier for the voice")
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, help_text="user that uploads the voice")
 
     views = models.IntegerField(db_index=True, default=1)
 
