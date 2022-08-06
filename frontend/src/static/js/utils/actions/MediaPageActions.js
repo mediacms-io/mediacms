@@ -59,6 +59,23 @@ export function deleteComment(commentId) {
   });
 }
 
+export function submitVoice(voiceTitle, voiceFile, voiceStart, media_id) {
+  Dispatcher.dispatch({
+    type: 'SUBMIT_VOICE',
+    voiceTitle,
+    voiceFile,
+    voiceStart,
+    media_id,
+  });
+}
+
+export function deleteVoice(voiceId) {
+  Dispatcher.dispatch({
+    type: 'DELETE_VOICE',
+    voiceId,
+  });
+}
+
 export function createPlaylist(playlist_data) {
   Dispatcher.dispatch({
     type: 'CREATE_PLAYLIST',

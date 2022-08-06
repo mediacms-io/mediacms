@@ -754,6 +754,12 @@ class MediaPageStore extends EventEmitter {
           this.removeCommentFail
         );
         break;
+      case 'SUBMIT_VOICE':
+        // TODO.
+        break;
+      case 'DELETE_VOICE':
+        // TODO.
+        break;
       case 'CREATE_PLAYLIST':
         postRequest(
           this.mediacms_config.api.playlists,
