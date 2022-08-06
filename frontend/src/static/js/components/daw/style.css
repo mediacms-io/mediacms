@@ -64,6 +64,12 @@
     display: none;
 }
 
+/* Sync voices with database */
+
+.daw-sync-outer {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}
+
 /* General playlist */
 
 .playlist { margin: 2em 0; }

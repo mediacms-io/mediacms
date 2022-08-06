@@ -15,6 +15,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import DawVideoPreview from './DawVideoPreview'
 import DawTrackDrop from "./DawTrackDrop";
 import DawControl from "./DawControl";
+import DawSync from "./DawSync";
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
@@ -172,6 +173,7 @@ export default function Daw({ playerInstance }) {
         </div>
         <div ref={container}></div>
         <DawTrackDrop ee={ee}></DawTrackDrop>
+        <DawSync></DawSync>
       </main>
     </>
   );
