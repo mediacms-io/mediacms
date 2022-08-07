@@ -70,7 +70,7 @@
     display: flex; align-items: center; flex-direction: column; justify-content: center;
 }
 
-.daw-sync { border: 0.18rem dashed blue; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+.daw-sync { border: 0.18rem dashed gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
 
 .daw-sync::before { content: "Sync voices"; }
 
