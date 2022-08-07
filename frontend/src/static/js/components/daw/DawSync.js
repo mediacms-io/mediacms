@@ -23,14 +23,14 @@ export default function DawSync({ ee }) {
     return (
         <div className="daw-sync-outer">
             <div className="daw-sync" id="daw-sync">
-                <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Upload the current work as a voice file"
+                <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Submit or upload the current work as a voice file"
                     onClick={(event) => {
                         // Sync voices with database.
                         // Delete removed ones. Add new ones.
                         submitVoice()
                     }}
                 >
-                    <i className="fas fa-upload"></i>
+                    <i className="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
