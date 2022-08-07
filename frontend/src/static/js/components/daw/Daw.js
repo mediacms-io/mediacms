@@ -174,7 +174,7 @@ export default function Daw({ playerInstance }) {
         <div ref={container}></div>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
-          <DawSync></DawSync>
+          <DawSync ee={ee}></DawSync>
         </div>
       </main>
     </>

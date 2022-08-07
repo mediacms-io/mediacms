@@ -1,15 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
+import { PageActions, MediaPageActions } from '../../utils/actions/';
 
-export default function DawSync() {
+export default function DawSync({ ee }) {
+
+    const [madeChanges, setMadeChanges] = useState(false);
+
+    function onVoiceSubmit() {
+        setMadeChanges(false);
+    }
+
+    function onVoiceSubmitFail() {
+        setMadeChanges(false);
+    }
+
+    function submitVoice() {
+        if (!madeChanges) {
+            return;
+        }
+        MediaPageActions.submitVoice(val);
+    }
+
     return (
         <div className="daw-sync-outer">
             <div className="daw-sync" id="daw-sync">
                 <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Sync voice changes"
                     onClick={(event) => {
-                        // TODO:
                         // Sync voices with database.
                         // Delete removed ones. Add new ones.
-                        console.log('Sync voices with databse...')
+                        submitVoice()
                     }}
                 >
                     <i className="fas fa-sync"></i>
