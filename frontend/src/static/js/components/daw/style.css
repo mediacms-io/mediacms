@@ -33,7 +33,7 @@
 
 /* Top row: controls + preview vide */
 
-.daw-top-row {
+.daw-top-row, .daw-bottom-row {
     width: 100%;
     /* See media queries... */
 }
