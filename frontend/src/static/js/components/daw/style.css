@@ -72,7 +72,7 @@
 
 .daw-sync { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
 
-.daw-sync::before { content: "Submit voice"; }
+.daw-sync::before { content: "Upload voice"; }
 
 #daw-sync {
     display: flex; align-items: center; flex-direction: column; justify-content: center;
