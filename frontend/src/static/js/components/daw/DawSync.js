@@ -23,7 +23,7 @@ export default function DawSync({ ee }) {
     return (
         <div className="daw-sync-outer">
             <div className="daw-sync" id="daw-sync">
-                <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Sync voice changes"
+                <button type="button" id="btn-drop" className="btn btn-outline-dark" title="Submit the current work as a voice file"
                     onClick={(event) => {
                         // Sync voices with database.
                         // Delete removed ones. Add new ones.
