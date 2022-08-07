@@ -30,7 +30,7 @@ export default function DawSync({ ee }) {
                         submitVoice()
                     }}
                 >
-                    <i className="fas fa-sync"></i>
+                    <i className="fas fa-upload"></i>
                 </button>
             </div>
         </div>
