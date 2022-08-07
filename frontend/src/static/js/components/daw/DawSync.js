@@ -35,8 +35,8 @@ export default function DawSync({ ee }) {
             }}
           >
             <svg
-              width="36"
-              height="36"
+              width="32"
+              height="32"
               version="1.1"
               viewBox="0 0 96 96"
             >
