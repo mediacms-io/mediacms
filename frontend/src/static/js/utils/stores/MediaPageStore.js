@@ -74,6 +74,10 @@ class MediaPageStore extends EventEmitter {
 
     this.removeCommentFail = this.removeCommentFail.bind(this);
     this.removeCommentResponse = this.removeCommentResponse.bind(this);
+
+    this.submitVoiceFail = this.submitVoiceFail.bind(this);
+    this.submitVoiceResponse = this.submitVoiceResponse.bind(this);
+
   }
 
   loadData() {
@@ -755,7 +759,20 @@ class MediaPageStore extends EventEmitter {
         );
         break;
       case 'SUBMIT_VOICE':
-        // TODO.
+        if (MediaPageStoreData[this.id].while.submitVoice) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.submitVoice = true;
+
+        postRequest(
+          this.voicesAPIUrl, // TODO: This URL is not defined yet.
+          { title: action.voiceTitle, file: action.voiceFile, start: action.voiceStart, media_id: action.media_id },
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.submitVoiceResponse,
+          this.submitVoiceFail
+        );
         break;
       case 'DELETE_VOICE':
         // TODO.
@@ -890,6 +907,31 @@ class MediaPageStore extends EventEmitter {
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.submitComment = false;
+      },
+      100,
+      this
+    );
+  }
+
+  submitVoiceFail(err) {
+    this.emit('voice_submit_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.submitVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  submitVoiceResponse(response) {
+    if (response && 201 === response.status && response.data && Object.keys(response.data)) {
+      MediaPageStoreData[this.id].voices.push(response.data);
+      this.emit('voice_submit', response.data.uid); // Looks like response data is a databae instance. Since it has `uid`.
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.submitVoice = false;
       },
       100,
       this

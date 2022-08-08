@@ -29,6 +29,7 @@ export default function Daw({ playerInstance }) {
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
+  const [madeChanges, setMadeChanges] = useState(false);
 
   // Disable & enable the trim button.
   const [trimDisabled, setTrimDisabled] = useState(true);
@@ -67,11 +68,29 @@ export default function Daw({ playerInstance }) {
     console.error(err);
   }
 
+  function onVoiceSubmit(uid) {
+    setMadeChanges(false);
+    console.log('SUBMIT_VOICE:', 'ok', 'UID:', uid);
+  }
+
+  function onVoiceSubmitFail(err) {
+    setMadeChanges(false);
+    console.warn('SUBMIT_VOICE:', 'bad', 'ERROR:', err);
+  }
+
   useEffect(() => {
     navigator.getUserMedia = (navigator.getUserMedia ||
       navigator.webkitGetUserMedia ||
       navigator.mozGetUserMedia ||
       navigator.msGetUserMedia);
+
+    MediaPageStore.on('voice_submit', onVoiceSubmit);
+    MediaPageStore.on('voice_submit_fail', onVoiceSubmitFail);
+
+    return () => {
+      MediaPageStore.removeListener('voice_submit', onVoiceSubmit);
+      MediaPageStore.removeListener('voice_submit_fail', onVoiceSubmitFail);
+    };
   }, []);
 
   const container = useCallback(
