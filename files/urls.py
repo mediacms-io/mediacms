@@ -61,6 +61,7 @@ urlpatterns = [
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
+    re_path(r"^api/v1/voices$", views.VoiceList.as_view()),
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/comments$",
         views.CommentDetail.as_view(),
@@ -68,6 +69,14 @@ urlpatterns = [
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/comments/(?P<uid>[\w-]*)$",
         views.CommentDetail.as_view(),
+    ),
+    re_path(
+        r"^api/v1/media/(?P<friendly_token>[\w]*)/voices$",
+        views.VoiceDetail.as_view(),
+    ),
+    re_path(
+        r"^api/v1/media/(?P<friendly_token>[\w]*)/voices/(?P<uid>[\w-]*)$",
+        views.VoiceDetail.as_view(),
     ),
     re_path(r"^api/v1/playlists$", views.PlaylistList.as_view()),
     re_path(r"^api/v1/playlists/$", views.PlaylistList.as_view()),
