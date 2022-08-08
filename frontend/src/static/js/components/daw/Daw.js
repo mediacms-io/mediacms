@@ -3,6 +3,8 @@ import Script from "next/script";
 import EventEmitter from "events";
 import WaveformPlaylist from "waveform-playlist";
 import { saveAs } from "file-saver";
+import { MediaPageStore } from '../../utils/stores/';
+import { MediaPageActions } from '../../utils/actions/';
 
 import 'waveform-playlist/styles/playlist.scss';
 
@@ -26,6 +28,7 @@ export default function Daw({ playerInstance }) {
   const [ee] = useState(new EventEmitter());
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
+  const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
 
   // Disable & enable the trim button.
   const [trimDisabled, setTrimDisabled] = useState(true);
@@ -111,7 +114,12 @@ export default function Daw({ playerInstance }) {
           //restore original ctx for further use.
           Tone.setContext(toneCtx);
           if (type === "wav") {
+            // Download:
             saveAs(data, "voice.wav");
+            // Upload:
+            let title = MediaPageStore.get('media-data').author_name;
+            console.log("MediaPageStore.get('media-data')", MediaPageStore.get('media-data'));
+            MediaPageActions.submitVoice(title, data, 0, mediaId);
           }
         });
 
