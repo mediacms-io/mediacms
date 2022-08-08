@@ -111,7 +111,7 @@ export default function Daw({ playerInstance }) {
           //restore original ctx for further use.
           Tone.setContext(toneCtx);
           if (type === "wav") {
-            saveAs(data, "test.wav");
+            saveAs(data, "voice.wav");
           }
         });
 
