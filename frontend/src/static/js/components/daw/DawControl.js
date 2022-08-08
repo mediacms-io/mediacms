@@ -130,6 +130,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                 <div className="btn-group">
                     <button type="button" title="Download the current work as Wav file"
                         className="btn btn-download btn-outline-primary"
+                        id="btn-download-WAV-file"
                         onClick={() => {
                             ee.emit("startaudiorendering", "wav");
                         }}
