@@ -163,6 +163,12 @@ class MediaPageStore extends EventEmitter {
     getRequest(this.commentsAPIUrl, !1, this.commentsResponse);
   }
 
+  loadVoices() {
+    this.voicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/voices';
+    this.voicesResponse = this.voicesResponse.bind(this);
+    getRequest(this.voicesAPIUrl, !1, this.voicesResponse);
+  }
+
   loadUsers() {
     this.usersAPIUrl = this.mediacms_config.api.users;
     this.usersResponse = this.usersResponse.bind(this);
@@ -203,6 +209,9 @@ class MediaPageStore extends EventEmitter {
     if (this.mediacms_config.member.can.readComment) {
       this.loadComments();
     }
+
+    // TODO: Check if member can access voice.
+    this.loadVoices();
   }
 
   dataErrorResponse(response) {
@@ -224,6 +233,13 @@ class MediaPageStore extends EventEmitter {
     if (response && response.data) {
       MediaPageStoreData[this.id].comments = response.data.count ? response.data.results : [];
       this.emit('comments_load');
+    }
+  }
+
+  voicesResponse(response) {
+    if (response && response.data) {
+      MediaPageStoreData[this.id].voices = response.data.count ? response.data.results : [];
+      this.emit('voices_load');
     }
   }
 
