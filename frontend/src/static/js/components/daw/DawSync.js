@@ -27,7 +27,7 @@ export default function DawSync({ ee }) {
             type="button"
             id="btn-drop"
             className="btn btn-outline-dark"
-            title="Submit or upload the current work as a voice file"
+            title="Save the current work as a voice file"
             onClick={(event) => {
               // Sync voices with database.
               // Delete removed ones. Add new ones.
