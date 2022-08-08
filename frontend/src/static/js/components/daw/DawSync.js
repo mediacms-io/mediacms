@@ -1,25 +1,6 @@
-import React, { useState } from "react";
-import { PageActions, MediaPageActions } from '../../utils/actions/';
+import React from "react";
 
 export default function DawSync({ ee }) {
-
-    const [madeChanges, setMadeChanges] = useState(false);
-
-    function onVoiceSubmit() {
-        setMadeChanges(false);
-    }
-
-    function onVoiceSubmitFail() {
-        setMadeChanges(false);
-    }
-
-    function submitVoice() {
-        if (!madeChanges) {
-            return;
-        }
-        MediaPageActions.submitVoice(val);
-    }
-
     return (
       <div className="daw-sync-outer">
         <div className="daw-sync" id="daw-sync">
@@ -29,9 +10,9 @@ export default function DawSync({ ee }) {
             className="btn btn-outline-primary"
             title="Save the current work as a voice file"
             onClick={(event) => {
-              // Sync voices with database.
-              // Delete removed ones. Add new ones.
-              submitVoice();
+              // Emit a signal to start creating voice file.
+              // On `audiorenderingfinished`, the finished voice file would be saved.
+              ee.emit("startaudiorendering", "wav");
             }}
           >
             <i className="fas fa-download"></i>
