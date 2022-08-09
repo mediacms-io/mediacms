@@ -1321,6 +1321,78 @@ class CommentDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class VoiceDetail(APIView):
+    """Voices related views
+    Listings of voices for a media (GET)
+    Create voice (POST)
+    Delete voice (DELETE)
+    """
+
+    permission_classes = (IsAuthorizedToAdd,)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    def get_object(self, friendly_token):
+        try:
+            media = Media.objects.select_related("user").get(friendly_token=friendly_token)
+            self.check_object_permissions(self.request, media)
+            if media.state == "private" and self.request.user != media.user:
+                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            return media
+        except PermissionDenied:
+            return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        except BaseException:
+            return Response(
+                {"detail": "media file does not exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def get(self, request, friendly_token):
+        # list voices for a media
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+        voices = media.voices.filter().prefetch_related("user")
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        page = paginator.paginate_queryset(voices, request)
+        serializer = VoiceSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def delete(self, request, friendly_token, uid=None):
+        """Delete a voice
+        Administrators, MediaCMS editors and managers,
+        media owner, and voice owners, can delete a voice
+        """
+        return Response(
+                {"detail": "not implemented yet"},
+                status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def post(self, request, friendly_token):
+        """Create a voice"""
+        return Response(
+                {"detail": "not implemented yet"},
+                status=status.HTTP_400_BAD_REQUEST,
+        )
+
 class UserActions(APIView):
     parser_classes = (JSONParser,)
 
