@@ -13,7 +13,9 @@ from .models import (
 )
 
 class VoiceAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ["title", "user", "media"]
+    list_display = ["title", "add_date", "user", "media"]
+    ordering = ("-add_date",)
 
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text"]
