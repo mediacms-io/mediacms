@@ -51,10 +51,12 @@ from .models import (
     Playlist,
     PlaylistMedia,
     Tag,
+    Voice,
 )
 from .serializers import (
     CategorySerializer,
     CommentSerializer,
+    VoiceSerializer,
     EncodeProfileSerializer,
     MediaSearchSerializer,
     MediaSerializer,
@@ -1186,6 +1188,40 @@ class CommentList(APIView):
         serializer = CommentSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
+
+class VoiceList(APIView):
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorizedToAdd)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='author', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='username'),
+        ],
+        tags=['Voices'],
+        operation_summary='Lists Voices',
+        operation_description='Paginated listing of all voices',
+        responses={
+            200: openapi.Response('response description', VoiceSerializer(many=True)),
+        },
+    )
+    def get(self, request, format=None):
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        voices = Voice.objects.filter()
+        voices = voices.prefetch_related("user")
+        voices = voices.prefetch_related("media")
+        params = self.request.query_params
+        if "author" in params:
+            author_param = params["author"].strip()
+            user_queryset = User.objects.all()
+            user = get_object_or_404(user_queryset, username=author_param)
+            voices = voices.filter(user=user)
+
+        page = paginator.paginate_queryset(voices, request)
+
+        serializer = CommentSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
 
 class CommentDetail(APIView):
     """Comments related views

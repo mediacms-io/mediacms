@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
+from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag, Voice
 
 # TODO: put them in a more DRY way
 
@@ -234,5 +234,26 @@ class CommentSerializer(serializers.ModelSerializer):
             "author_profile",
             "author_name",
             "media_url",
+            "uid",
+        )
+
+class VoiceSerializer(serializers.ModelSerializer):
+    author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
+    author_name = serializers.ReadOnlyField(source="user.name")
+    author_thumbnail_url = serializers.ReadOnlyField(source="user.thumbnail_url")
+
+    class Meta:
+        model = Voice
+        read_only_fields = ("add_date", "uid", "friendly_token")
+        # TODO: Play around with the fields:
+        fields = (
+            "add_date",
+            "friendly_token",
+            "title",
+            "likes",
+            "author_thumbnail_url",
+            "author_profile",
+            "author_name",
+            "voice_file",
             "uid",
         )
