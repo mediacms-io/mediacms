@@ -1617,3 +1617,25 @@ class Voice(models.Model):
         
     def __str__(self):
         return self.title
+
+    # Make sure some fields are properly available.
+    def save(self, *args, **kwargs):
+
+        if not self.title:
+            self.title = self.voice_file.path.split("/")[-1]
+
+        self.title = self.title[:99]
+
+        # by default get an add_date of now
+        if not self.add_date:
+            self.add_date = timezone.now()
+
+        if not self.friendly_token:
+            # get a unique identifier
+            while True:
+                friendly_token = helpers.produce_friendly_token()
+                if not Voice.objects.filter(friendly_token=friendly_token):
+                    self.friendly_token = friendly_token
+                    break
+
+        super(Voice, self).save(*args, **kwargs)
