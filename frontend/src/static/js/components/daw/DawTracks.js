@@ -124,7 +124,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           });
       }
     },
-    [ee, toneCtx]
+    [ee, toneCtx, voices]
   );
 
   function handleLoad() {
