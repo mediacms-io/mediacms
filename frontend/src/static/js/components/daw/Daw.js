@@ -6,13 +6,13 @@ import { MemberContext } from '../../utils/contexts/';
 
 import 'waveform-playlist/styles/playlist.scss';
 
-import '../daw/style.css'
-import '../daw/responsive.css'
+import '../daw/style.css';
+import '../daw/responsive.css';
 
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import DawVideoPreview from './DawVideoPreview'
+import DawVideoPreview from './DawVideoPreview';
 import DawTrackDrop from "./DawTrackDrop";
 import DawControl from "./DawControl";
 import DawSync from "./DawSync";
