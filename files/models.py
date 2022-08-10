@@ -1602,7 +1602,7 @@ class Voice(models.Model):
         help_text="voice file",
     )
 
-    start_time = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
+    start = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
 
     title = models.CharField(max_length=100, help_text="voice title", blank=True, db_index=True)
 
@@ -1639,3 +1639,10 @@ class Voice(models.Model):
                     break
 
         super(Voice, self).save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("get_media") + "?m={0}".format(self.media.friendly_token)
+
+    @property
+    def media_url(self):
+        return self.get_absolute_url()

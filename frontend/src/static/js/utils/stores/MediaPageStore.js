@@ -210,8 +210,9 @@ class MediaPageStore extends EventEmitter {
       this.loadComments();
     }
 
-    // TODO: Check if member can access voice.
-    this.loadVoices();
+    if (this.mediacms_config.member.can.hearVoice) {
+      this.loadVoices();
+    }
   }
 
   dataErrorResponse(response) {
@@ -453,6 +454,9 @@ class MediaPageStore extends EventEmitter {
         break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
+        break;
+      case 'media-voices':
+        r = MediaPageStoreData[this.id].voices || [];
         break;
       case 'media-data':
         r = MediaPageStoreData[this.id].data || null;
@@ -782,7 +786,7 @@ class MediaPageStore extends EventEmitter {
         MediaPageStoreData[this.id].while.submitVoice = true;
 
         postRequest(
-          this.voicesAPIUrl, // TODO: This URL is not defined yet.
+          this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().
           { title: action.voiceTitle, file: action.voiceFile, start: action.voiceStart, media_id: action.media_id },
           { headers: { 'X-CSRFToken': csrfToken() } },
           false,

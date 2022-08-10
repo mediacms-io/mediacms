@@ -5,6 +5,7 @@ import WaveformPlaylist from "waveform-playlist";
 import { saveAs } from "file-saver";
 import { MediaPageStore } from '../../utils/stores/';
 import { MediaPageActions } from '../../utils/actions/';
+import { MemberContext } from '../../utils/contexts/';
 
 import 'waveform-playlist/styles/playlist.scss';
 
@@ -64,6 +65,15 @@ export default function Daw({ playerInstance }) {
     setRecordDisabled(false);
   }
 
+  const [voices, setVoices] = useState(
+    MemberContext._currentValue.can.hearVoice ? MediaPageStore.get('media-voices') : []
+  );
+
+  function onVoicesLoad() {
+    const retrievedVoices = [...MediaPageStore.get('media-voices')];
+    setVoices(retrievedVoices);
+  }
+
   function logError(err) {
     console.error(err);
   }
@@ -84,10 +94,12 @@ export default function Daw({ playerInstance }) {
       navigator.mozGetUserMedia ||
       navigator.msGetUserMedia);
 
+    MediaPageStore.on('voices_load', onVoicesLoad);
     MediaPageStore.on('voice_submit', onVoiceSubmit);
     MediaPageStore.on('voice_submit_fail', onVoiceSubmitFail);
 
     return () => {
+      MediaPageStore.removeListener('voices_load', onVoicesLoad);
       MediaPageStore.removeListener('voice_submit', onVoiceSubmit);
       MediaPageStore.removeListener('voice_submit_fail', onVoiceSubmitFail);
     };
@@ -145,11 +157,17 @@ export default function Daw({ playerInstance }) {
         ee.on("select", updateSelect);
         ee.on("timeupdate", updateTime);
 
-        playlist.current.load([
-          // Empty. Don't load any audio for now.
-          // TODO: Voices of the current media would be loaded here.
-          // TODO: They would be fetched from the database table.
-        ]).then(function () {
+        playlist.current.load(
+          // Voices of the current media would be loaded here.
+          // They would be fetched from the database table.
+          voices.map(voice => {
+            return {
+              src: voice.voice_file,
+              name: voice.title,
+              start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
+            };
+          })
+        ).then(function () {
           // can do stuff with the playlist.
 
           // After you create the playlist you have to call this function if you want to use recording:

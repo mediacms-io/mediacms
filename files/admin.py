@@ -13,7 +13,7 @@ from .models import (
 )
 
 class VoiceAdmin(admin.ModelAdmin):
-    search_fields = ["title", "user", "media"]
+    search_fields = ["title"] # Some fields here cannot be searched by `icontains`
     list_display = ["title", "add_date", "user", "media"]
     ordering = ("-add_date",)
 
