@@ -1220,7 +1220,7 @@ class VoiceList(APIView):
 
         page = paginator.paginate_queryset(voices, request)
 
-        serializer = CommentSerializer(page, many=True, context={"request": request})
+        serializer = VoiceSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
 class CommentDetail(APIView):
