@@ -53,15 +53,15 @@ export default function Daw({ playerInstance }) {
   // Disable & enable the record button.
   const [recordDisabled, setRecordDisabled] = useState(true);
 
-  // The useRef Hook will preserve a variable for the lifetime of the component.
-  // So that whenever there is a re-render, it will NOT recalculate the variable.
-  const playlist = useRef({}); // To be filled later.
+  // We need `playlist` to re-render whenever `voices` state changes,
+  // to fetch and set the voices of the DAW.
+  let playlist = {}; // To be filled later.
 
   const constraints = { audio: true };
 
   function gotStream(stream) {
     let userMediaStream = stream;
-    playlist.current.initRecorder(userMediaStream);
+    playlist.initRecorder(userMediaStream);
     setRecordDisabled(false);
   }
 
@@ -108,7 +108,7 @@ export default function Daw({ playerInstance }) {
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        playlist.current = WaveformPlaylist(
+        playlist = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -157,7 +157,7 @@ export default function Daw({ playerInstance }) {
         ee.on("select", updateSelect);
         ee.on("timeupdate", updateTime);
 
-        playlist.current.load(
+        playlist.load(
           // Voices of the current media would be loaded here.
           // They would be fetched from the database table.
           voices.map(voice => {
@@ -172,7 +172,7 @@ export default function Daw({ playerInstance }) {
 
           // After you create the playlist you have to call this function if you want to use recording:
           //initialize the WAV exporter.
-          playlist.current.initExporter();
+          playlist.initExporter();
 
           if (navigator.mediaDevices) {
             navigator.mediaDevices.getUserMedia(constraints)
