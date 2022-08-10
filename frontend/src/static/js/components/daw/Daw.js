@@ -50,12 +50,10 @@ export default function Daw({ playerInstance }) {
   }
 
   function onVoiceSubmit(uid) {
-    setMadeChanges(false);
     console.log('SUBMIT_VOICE:', 'ok', 'UID:', uid);
   }
 
   function onVoiceSubmitFail(err) {
-    setMadeChanges(false);
     console.warn('SUBMIT_VOICE:', 'bad', 'ERROR:', err);
   }
 
