@@ -124,7 +124,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           });
       }
     },
-    [ee, toneCtx, voices]
+    [ee, toneCtx, voices] // The callback is run only when these dependencies change.
   );
 
   function handleLoad() {
