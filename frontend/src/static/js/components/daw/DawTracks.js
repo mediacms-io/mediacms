@@ -2,6 +2,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import Script from 'next/script';
 import WaveformPlaylist from 'waveform-playlist';
 import { saveAs } from 'file-saver';
+import { MediaPageStore } from '../../utils/stores/';
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
