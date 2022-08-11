@@ -92,7 +92,7 @@ def original_media_file_path(instance, filename):
 def original_voice_file_path(instance, filename):
     """Helper function to place original voice file"""
     file_name = "{0}.{1}".format(instance.uid.hex, helpers.get_file_name(filename))
-    # TODO: MEDIA_UPLOAD_DIR could be replaced with VOICE_UPLOAD_DIR.
+    # MEDIA_UPLOAD_DIR is used for `media` upload. It's used for `voice` too.
     return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
 
 def encoding_media_file_path(instance, filename):
@@ -1640,9 +1640,24 @@ class Voice(models.Model):
 
         super(Voice, self).save(*args, **kwargs)
 
+    # Copied from `Comment` model.
     def get_absolute_url(self):
         return reverse("get_media") + "?m={0}".format(self.media.friendly_token)
 
+    # Copied from `Comment` model.
     @property
     def media_url(self):
+        """Property used on serializers"""
+
         return self.get_absolute_url()
+
+    # Copied from `Media` model.
+    @property
+    def original_voice_url(self):
+        """Property used on serializers"""
+
+        # TODO: This new config could be added: settings.SHOW_ORIGINAL_VOICE
+        if settings.SHOW_ORIGINAL_MEDIA:
+            return helpers.url_from_path(self.voice_file.path)
+        else:
+            return None

@@ -257,5 +257,6 @@ class VoiceSerializer(serializers.ModelSerializer):
             "voice_file",
             "uid",
             "start",
-            "media_url"
+            "media_url",
+            "original_voice_url",
         )
