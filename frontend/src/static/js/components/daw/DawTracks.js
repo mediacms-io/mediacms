@@ -103,7 +103,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             // They would be fetched from the database table.
             voices.map((voice) => {
               return {
-                src: voice.voice_file,
+                src: voice.original_voice_url,
                 name: voice.title,
                 start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
               };
