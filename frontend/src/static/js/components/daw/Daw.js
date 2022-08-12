@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Script from "next/script";
 import EventEmitter from "events";
 import { MediaPageStore } from '../../utils/stores/';
+import { MediaPageActions } from '../../utils/actions/';
 import { MemberContext } from '../../utils/contexts/';
 
 import 'waveform-playlist/styles/playlist.scss';
