@@ -38,6 +38,7 @@ from .methods import (
     is_mediacms_manager,
     list_tasks,
     notify_user_on_comment,
+    notify_user_on_voice,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -1388,10 +1389,23 @@ class VoiceDetail(APIView):
     )
     def post(self, request, friendly_token):
         """Create a voice"""
-        return Response(
-                {"detail": "not implemented yet"},
-                status=status.HTTP_400_BAD_REQUEST,
-        )
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        # Currently, recording voices are allowed for all media instances.
+        # But they can be forbidden by adding `media.enable_voices` field to DB table model.
+        # And then checking it here.
+        # Just like `media.enable_comments` field.
+        # For now, let's avoid changing `media` DB table model.
+
+        serializer = VoiceSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save(user=request.user, media=media, title=request.user.name)
+            if request.user != media.user:
+                notify_user_on_voice(friendly_token=media.friendly_token)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserActions(APIView):
     parser_classes = (JSONParser,)
