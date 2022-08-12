@@ -778,6 +778,12 @@ class MediaPageStore extends EventEmitter {
           this.removeCommentFail
         );
         break;
+      case 'LOAD_VOICES':
+        if (MediaPageStoreData[this.id].while.submitVoice) {
+          return;
+        }
+        this.loadVoices();
+        break;
       case 'SUBMIT_VOICE':
         if (MediaPageStoreData[this.id].while.submitVoice) {
           return;

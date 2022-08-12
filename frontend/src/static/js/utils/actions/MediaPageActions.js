@@ -59,6 +59,12 @@ export function deleteComment(commentId) {
   });
 }
 
+export function loadVoices(){
+  Dispatcher.dispatch({
+    type: 'LOAD_VOICES',
+  });
+}
+
 export function submitVoice(voiceFile) {
   Dispatcher.dispatch({
     type: 'SUBMIT_VOICE',

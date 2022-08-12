@@ -51,6 +51,8 @@ export default function Daw({ playerInstance }) {
 
   function onVoiceSubmit(uid) {
     console.log('SUBMIT_VOICE:', 'ok', 'UID:', uid);
+    // After any voice submit, load all the voices again and display them.
+    MediaPageActions.loadVoices();
   }
 
   function onVoiceSubmitFail(err) {
