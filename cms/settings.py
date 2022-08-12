@@ -1,4 +1,5 @@
 import os
+import sys
 
 from celery.schedules import crontab
 
@@ -372,11 +373,20 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": error_filename,
         },
+        "console": {
+            "class": "logging.StreamHandler",
+            "stream": sys.stdout,
+        }
     },
     "loggers": {
         "django": {
             "handlers": ["file"],
             "level": "ERROR",
+            "propagate": True,
+        },
+        "debug_logger" :{
+            "handlers": ["console"],
+            "level": "DEBUG",
             "propagate": True,
         },
     },

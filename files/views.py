@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from celery.task.control import revoke
 from django.conf import settings
@@ -1332,16 +1333,23 @@ class VoiceDetail(APIView):
     permission_classes = (IsAuthorizedToAdd,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
+    logging.config.dictConfig(settings.LOGGING)
+    logger = logging.getLogger("debug_logger")
+
     def get_object(self, friendly_token):
         try:
             media = Media.objects.select_related("user").get(friendly_token=friendly_token)
+            self.logger.debug("media instance is got")
             self.check_object_permissions(self.request, media)
             if media.state == "private" and self.request.user != media.user:
+                self.logger.debug("media is private")
                 return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
             return media
         except PermissionDenied:
+            self.logger.debug("bad permissions")
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
         except BaseException:
+            self.logger.debug("media file does not exist")
             return Response(
                 {"detail": "media file does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1399,12 +1407,15 @@ class VoiceDetail(APIView):
         # Just like `media.enable_comments` field.
         # For now, let's avoid changing `media` DB table model.
 
+        self.logger.debug("media is good :)")
         serializer = VoiceSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
+            self.logger.debug("serializer is valid")
             serializer.save(user=request.user, media=media, title=request.user.name)
             if request.user != media.user:
                 notify_user_on_voice(friendly_token=media.friendly_token)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        self.logger.debug("serializer is NOT valid")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserActions(APIView):
