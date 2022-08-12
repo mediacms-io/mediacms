@@ -785,10 +785,15 @@ class MediaPageStore extends EventEmitter {
 
         MediaPageStoreData[this.id].while.submitVoice = true;
 
+        // https://stackoverflow.com/a/43014086/3405291
+        let formData = new FormData();
+        let voice_file = action.voiceFile;
+        formData.append("voice_file", voice_file);
+
         postRequest(
           this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().
-          { voice_file: action.voiceFile },
-          { headers: { 'X-CSRFToken': csrfToken() } },
+          formData,
+          { headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data' } },
           false,
           this.submitVoiceResponse,
           this.submitVoiceFail
