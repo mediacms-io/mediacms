@@ -244,7 +244,7 @@ class VoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Voice
-        read_only_fields = ("add_date", "uid", "friendly_token")
+        read_only_fields = ("add_date", "uid")
         # TODO: Play around with the fields:
         fields = (
             "add_date",
