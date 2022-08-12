@@ -787,7 +787,7 @@ class MediaPageStore extends EventEmitter {
 
         postRequest(
           this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().
-          { title: action.voiceTitle, file: action.voiceFile, start: action.voiceStart, media_id: action.media_id },
+          { voice_file: action.voiceFile },
           { headers: { 'X-CSRFToken': csrfToken() } },
           false,
           this.submitVoiceResponse,

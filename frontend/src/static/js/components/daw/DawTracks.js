@@ -87,10 +87,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             // Download:
             saveAs(data, 'voice.wav');
             // Upload:
-            const title = MediaPageStore.get('media-data').author_name;
-            const mediaId = MediaPageStore.get('media-id');
-            console.log("MediaPageStore.get('media-data')", MediaPageStore.get('media-data'));
-            MediaPageActions.submitVoice(title, data, 0, mediaId);
+            MediaPageActions.submitVoice(data);
           }
         });
 
