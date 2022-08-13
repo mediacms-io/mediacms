@@ -21,16 +21,6 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
   const constraints = { audio: true };
 
-  function gotStream(stream) {
-    let userMediaStream = stream;
-    playlist.initRecorder(userMediaStream);
-    onRecordDisabledChange(false); // This callback updates the state of the parent component.
-  }
-
-  function logError(err) {
-    console.error(err);
-  }
-
   function updateSelect(start, end) {
     if (start < end) {
       onTrimDisabledChange(false); // This callback updates the state of the parent component.
@@ -39,14 +29,10 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
     }
   }
 
-  // We need `playlist` to re-render whenever `voices` state changes,
-  // to fetch and set the voices of the DAW.
-  let playlist = {}; // To be filled later.
-
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        playlist = WaveformPlaylist(
+        const playlist = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -93,6 +79,16 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         ee.on('select', updateSelect);
         ee.on('timeupdate', updateTime);
 
+        var gotStream = function(stream) {
+          let userMediaStream = stream;
+          playlist.initRecorder(userMediaStream);
+          onRecordDisabledChange(false); // This callback updates the state of the parent component.
+        };
+      
+        var logError = function(err) {
+          console.error(err);
+        };
+      
         playlist
           .load(
             // Voices of the current media would be loaded here.
