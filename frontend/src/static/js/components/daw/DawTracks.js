@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import Script from 'next/script';
 import WaveformPlaylist from 'waveform-playlist';
 import { saveAs } from 'file-saver';
@@ -9,6 +9,8 @@ import { MediaPageActions } from '../../utils/actions/';
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange }) {
+
+  const playlist = useRef({});
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
 
@@ -32,7 +34,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        const playlist = WaveformPlaylist(
+        playlist.current = WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -78,46 +80,57 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('select', updateSelect);
         ee.on('timeupdate', updateTime);
-
-        var gotStream = function(stream) {
-          let userMediaStream = stream;
-          playlist.initRecorder(userMediaStream);
-          onRecordDisabledChange(false); // This callback updates the state of the parent component.
-        };
-      
-        var logError = function(err) {
-          console.error(err);
-        };
-      
-        playlist
-          .load(
-            // Voices of the current media would be loaded here.
-            // They would be fetched from the database table.
-            voices.map((voice) => {
-              return {
-                src: voice.original_voice_url,
-                name: voice.title,
-                start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
-              };
-            })
-          )
-          .then(function () {
-            // can do stuff with the playlist.
-
-            // After you create the playlist you have to call this function if you want to use recording:
-            //initialize the WAV exporter.
-            playlist.initExporter();
-
-            if (navigator.mediaDevices) {
-              navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(logError);
-            } else if (navigator.getUserMedia && 'MediaRecorder' in window) {
-              navigator.getUserMedia(constraints, gotStream, logError);
-            }
-          });
       }
     },
     [ee, toneCtx] // The callback is run only when these dependencies change.
   );
+
+  useEffect(() => {
+    // If playlist is not ready yet, return.
+    if (playlist.current &&
+      Object.keys(playlist.current).length === 0 &&
+      Object.getPrototypeOf(playlist.current) === Object.prototype) {
+        return;
+      }
+
+    var gotStream = function (stream) {
+      let userMediaStream = stream;
+      playlist.current.initRecorder(userMediaStream);
+      onRecordDisabledChange(false); // This callback updates the state of the parent component.
+    };
+
+    var logError = function (err) {
+      console.error(err);
+    };
+
+    console.log("playlist.current", playlist.current);
+
+    playlist.current
+      .load(
+        // Voices of the current media would be loaded here.
+        // They would be fetched from the database table.
+        voices.map((voice) => {
+          return {
+            src: voice.original_voice_url,
+            name: voice.title,
+            start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
+          };
+        })
+      )
+      .then(function () {
+        // can do stuff with the playlist.
+
+        // After you create the playlist you have to call this function if you want to use recording:
+        //initialize the WAV exporter.
+        playlist.current.initExporter();
+
+        if (navigator.mediaDevices) {
+          navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(logError);
+        } else if (navigator.getUserMedia && 'MediaRecorder' in window) {
+          navigator.getUserMedia(constraints, gotStream, logError);
+        }
+      });
+  }, [voices]);
 
   function handleLoad() {
     setToneCtx(Tone.getContext());
