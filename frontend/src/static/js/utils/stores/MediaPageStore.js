@@ -953,6 +953,11 @@ class MediaPageStore extends EventEmitter {
     if (response && 201 === response.status && response.data && Object.keys(response.data)) {
       MediaPageStoreData[this.id].voices.push(response.data);
       this.emit('voice_submit', response.data.uid); // Looks like response data is a databae instance. Since it has `uid`.
+
+      // After any voice submit, all the voices are loaded again.
+      // If voices are re-loaded correctly, a signal is emitted.
+      // The DAW component would handle the signal to get and display re-loaded voices.
+      this.loadVoices();
     }
     setTimeout(
       function (ins) {
