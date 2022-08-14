@@ -54,7 +54,7 @@ export default function Daw({ playerInstance }) {
   }
 
   function onVoiceSubmitFail(err) {
-    console.warn('SUBMIT_VOICE:', 'bad', 'ERROR:', err.response.data);
+    console.warn('SUBMIT_VOICE:', 'bad', 'ERROR:', err);
   }
 
   useEffect(() => {
