@@ -103,8 +103,6 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
       console.error(err);
     };
 
-    console.log("playlist.current", playlist.current);
-
     playlist.current
       .load(
         // Voices of the current media would be loaded here.
@@ -130,7 +128,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           navigator.getUserMedia(constraints, gotStream, logError);
         }
       });
-  }, [voices]);
+  }, [voices]); // The effect only runs when `voices` change.
 
   function handleLoad() {
     setToneCtx(Tone.getContext());
