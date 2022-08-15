@@ -44,3 +44,18 @@ EMAIL_HOST = 'gmail.com'
 EMAIL_PORT = 587
 ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 
+### To fix error when receiving POST response: Error: Network Error
+### Error is thrown by Axios when POST response is received.
+### https://stackoverflow.com/a/58018865/3405291
+###
+### Have to install the Django library by using Docker.
+### The library version should be compatibale with our Django==3.1.12 version:
+### /usr/local/bin/docker-compose exec web python -m pip install "django-cors-headers==3.11.0"
+###
+INSTALLED_APPS.append("corsheaders")
+# Before any middleware that can generate responses such as Django’s CommonMiddleware.
+# If it is not before, it will not be able to add the CORS headers to these responses.
+MIDDLEWARE.insert(1, "corsheaders.middleware.CorsMiddleware") # It would be after "SecurityMiddleware"
+# Allow all URLs to access our website.
+CORS_ALLOW_ALL_ORIGINS = True
+
