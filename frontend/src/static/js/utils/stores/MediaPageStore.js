@@ -793,7 +793,12 @@ class MediaPageStore extends EventEmitter {
         postRequest(
           this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().
           formData,
-          { headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data' } },
+          { // configData:
+            headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data', },
+            crossDomain: true,
+            timeout: null,
+            maxContentLength: null,
+          },
           false,
           this.submitVoiceResponse,
           this.submitVoiceFail
