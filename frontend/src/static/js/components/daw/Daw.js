@@ -50,6 +50,9 @@ export default function Daw({ playerInstance }) {
   }
 
   function onVoiceSubmit(uid) {
+    // Clear the tracks, since tracks/voices will be re-loaded after each voice submit.
+    // This avoids the newly-submitted voice being displayed twice.
+    ee.emit("clear");
     console.log('SUBMIT_VOICE:', 'ok', 'UID:', uid);
   }
 
