@@ -3,6 +3,7 @@ import Script from "next/script";
 import EventEmitter from "events";
 import { MediaPageStore } from '../../utils/stores/';
 import { MemberContext } from '../../utils/contexts/';
+import { PageActions } from '../../utils/actions/';
 
 import 'waveform-playlist/styles/playlist.scss';
 
@@ -17,6 +18,15 @@ import DawTrackDrop from "./DawTrackDrop";
 import DawControl from "./DawControl";
 import DawSync from "./DawSync";
 import DawTracks from "./DawTracks";
+
+const voicesText = {
+  single: 'voice',
+  uppercaseSingle: 'VOICE',
+  ucfirstSingle: 'Voice',
+  ucfirstPlural: 'Voices',
+  submitCommentText: 'SUBMIT',
+  disabledCommentsMsg: 'Voices are disabled',
+};
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
@@ -54,10 +64,20 @@ export default function Daw({ playerInstance }) {
 
   function onVoiceSubmit(uid) {
     console.log('SUBMIT_VOICE:', 'ok', 'UID:', uid);
+    setTimeout(
+      // TODO: Add notificationId of voiceSubmit
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' added', 'voiceSubmit'),
+      100
+      );
   }
 
   function onVoiceSubmitFail(err) {
     console.warn('SUBMIT_VOICE:', 'bad', 'ERROR:', err);
+    setTimeout(
+      // TODO: Add notificationId of voiceSubmitFail
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' submition failed', 'voiceSubmitFail'),
+      100
+    );
   }
 
   useEffect(() => {
