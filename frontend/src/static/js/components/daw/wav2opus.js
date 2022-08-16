@@ -15,10 +15,8 @@ export default function Wav2opus(wavData) {
     outName,
   ];
 
-  // https://stackoverflow.com/questions/27159179/how-to-convert-blob-to-file-in-javascript#comment106156705_31663645
-  var fd = new FormData();
-  fd.append('f', new Blob(wavData), inName);
-  var wavFile = fd.get('f');
+  // https://stackoverflow.com/questions/27159179/how-to-convert-blob-to-file-in-javascript#comment90422918_31663645
+  var wavFile = new File([wavData], inName, 'audio/wav');
 
   // Input file data
   // Object literal mapping
