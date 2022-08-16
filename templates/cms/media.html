@@ -125,9 +125,4 @@
 
 {% block bottomimports %}
 <script src="{% static "js/media.js" %}"></script>
-
-{% if media_object.media_type == "video" %}
-<script src="{% static "worker-opus/EmsWorkerProxy.js" %}"></script>
-{% endif %}
-
 {% endblock bottomimports %}
