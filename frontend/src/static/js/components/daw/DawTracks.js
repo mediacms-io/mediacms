@@ -75,7 +75,8 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             // Download:
             saveAs(data, 'voice.wav');
             // Upload:
-            Wav2opus(data); // To reduce data size & upload it.
+            var dataOpus = Wav2opus(data); // To reduce data size.
+            MediaPageActions.submitVoice(dataOpus);
           }
         });
 

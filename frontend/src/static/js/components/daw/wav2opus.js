@@ -1,10 +1,7 @@
-import { saveAs } from 'file-saver';
-import { MediaPageActions } from '../../utils/actions/';
-
 // Inspired by:
 // https://github.com/Rillke/opusenc.js/blob/3c2fc71a80633a06613320310597746d293f86f3/iframe.html#L39
 export default function Wav2opus(wavData) {
-  var worker = new Worker('static/js/components/daw/worker/EmsWorkerProxy.js');
+  var worker = new Worker('./worker/EmsWorkerProxy.js');
 
   const inName = 'voice.wav';
   const outName = 'voice.opus';
@@ -50,7 +47,7 @@ export default function Wav2opus(wavData) {
   worker.onmessage = function (e) {
     // If the message is a progress message
     if (e.data && e.data.reply === 'progress') {
-      var vals = e.data.values;
+      vals = e.data.values;
       if (vals[1]) {
         // ... push the progress bar forward
         console.log('ENCODE PROGRESS %', (vals[0] / vals[1]) * 100);
@@ -63,9 +60,7 @@ export default function Wav2opus(wavData) {
         // In this case it's only one because we didn't
         // use a command line argument that would force
         // opusenc.js to create another file
-        var dataOpus = e.data.values[fileName].blob;
-        saveAs(dataOpus, outName);
-        MediaPageActions.submitVoice(dataOpus);
+        return e.data.values[fileName].blob;
       }
     }
   };
