@@ -3,7 +3,6 @@ import Script from 'next/script';
 import WaveformPlaylist from 'waveform-playlist';
 import { saveAs } from 'file-saver';
 import { MediaPageActions } from '../../utils/actions/';
-import Wav2opus from './wav2opus';
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
@@ -75,8 +74,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             // Download:
             saveAs(data, 'voice.wav');
             // Upload:
-            var dataOpus = Wav2opus(data); // To reduce data size.
-            MediaPageActions.submitVoice(dataOpus);
+            MediaPageActions.submitVoice(data);
           }
         });
 
