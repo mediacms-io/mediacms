@@ -15,12 +15,15 @@ export default function Wav2opus(wavData) {
     outName,
   ];
 
+  // https://stackoverflow.com/questions/27159179/how-to-convert-blob-to-file-in-javascript#comment90422918_31663645
+  var wavFile = new File([wavData], inName, 'audio/wav');
+
   // Input file data
   // Object literal mapping
   // file names to Uint8Array
   var inData = {};
   // Remember: We set map `key` as input file name
-  inData[inName] = new Uint8Array(wavData);
+  inData[inName] = new Uint8Array(wavFile);
 
   // Meta-information about the files
   // that are being created during encoding
