@@ -480,3 +480,9 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/logout/$',
         r'/accounts/signup/$',
     ]
+
+### Let Django know about some extra `static` folder & files.
+### Used specifically for `opusenc.js` web worker.
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend/src/static/js/components/daw/static/'),
+]

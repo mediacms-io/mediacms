@@ -4,7 +4,7 @@ import { MediaPageActions } from '../../utils/actions/';
 // Inspired by:
 // https://github.com/Rillke/opusenc.js/blob/3c2fc71a80633a06613320310597746d293f86f3/iframe.html#L39
 export default function Wav2opus(wavData) {
-  var worker = new Worker('static/js/components/daw/worker/EmsWorkerProxy.js');
+  var worker = new Worker('static/worker-opus/EmsWorkerProxy.js');
 
   const inName = 'voice.wav';
   const outName = 'voice.opus';
