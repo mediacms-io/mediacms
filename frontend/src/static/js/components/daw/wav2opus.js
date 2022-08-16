@@ -1,7 +1,8 @@
 // Inspired by:
 // https://github.com/Rillke/opusenc.js/blob/3c2fc71a80633a06613320310597746d293f86f3/iframe.html#L39
 export default function Wav2opus(wavData) {
-  var worker = new Worker('./worker/EmsWorkerProxy.js');
+  // The dependency files are inside `static` directory.
+  var worker = new Worker('./worker-opusencjs/EmsWorkerProxy.js');
 
   const inName = 'voice.wav';
   const outName = 'voice.opus';
