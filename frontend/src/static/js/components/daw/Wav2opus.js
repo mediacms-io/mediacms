@@ -1,6 +1,7 @@
 import { MediaPageActions } from '../../utils/actions/';
 import encoderPath from 'opus-recorder/dist/encoderWorker.min.js';
 import { saveAs } from 'file-saver';
+import WavHeader from './WavHeader';
 
 export default function Wav2opus(wavData) {
   var wavFile = new File([wavData], 'voice.wav', { type: 'audio/wav' });
@@ -50,6 +51,11 @@ function chunkBuffers(arrayBuffer, chunkLength, channelCount, bitDepth) {
 }
 
 function encodeOgg(arrayBuffer) {
+    // Reference to read WAV header:
+    // https://github.com/zhuker/lamejs/blob/582bbba6a12f981b984d8fb9e1874499fed85675/example.html#L43
+    var wavHeader = WavHeader.readHeader(new DataView(arrayBuffer));
+    console.debug('wav header:'.toUpperCase(), wavHeader);
+
   // Reference:
   // https://github.com/chris-rudmin/opus-recorder/blob/fdfdadeeb9bc9d045c59dc75ebefed390e4ad6dc/example/fileEncoder.html#L71
   var completeOggData = new Uint8Array(0);
@@ -61,9 +67,9 @@ function encodeOgg(arrayBuffer) {
 
   encoderWorker.postMessage({
     command: 'init',
-    encoderSampleRate: 48000, // Of output OPUS. TODO: Set equal to input WAV?
+    encoderSampleRate: wavHeader.sampleRate, // Of output OPUS. TODO: Set equal to input WAV?
     bufferLength: bufferLength,
-    originalSampleRate: 44100, // Of input WAV.
+    originalSampleRate: wavHeader.sampleRate, // Of input WAV.
     encoderApplication: 2048, // 2048 - Voice
     encoderComplexity: 5, // 0 is fastest with lowest complexity. 10 is slowest with highest complexity.
     resampleQuality: 3, // 0 is fastest with lowest quality. 10 is slowest with highest quality.
@@ -75,7 +81,11 @@ function encodeOgg(arrayBuffer) {
     command: 'getHeaderPages',
   });
 
-  chunkBuffers(arrayBuffer, bufferLength, 2, 16).forEach((bufferChunk) =>
+  // According to this line:
+  // https://github.com/zhuker/lamejs/blob/582bbba6a12f981b984d8fb9e1874499fed85675/example.html#L45
+  // Looks like WAV bit depth is always assumed to be 16.
+
+  chunkBuffers(arrayBuffer, bufferLength, wavHeader.channels, 16).forEach((bufferChunk) =>
     encoderWorker.postMessage({
       command: 'encode',
       buffers: bufferChunk,
