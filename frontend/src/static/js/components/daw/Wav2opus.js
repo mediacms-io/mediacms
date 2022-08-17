@@ -78,6 +78,7 @@ function encodeOgg(arrayBuffer) {
     resampleQuality: 3, // 0 is fastest with lowest quality. 10 is slowest with highest quality.
     numberOfChannels: 1, // Of output OPUS. Only `1` works. Test for `2` throws error.
     //encoderBitRate: 96000, // Let it be according to other configs.
+    //originalSampleRateOverride: 16000, // Google Speech API requires this field to be 16000.
   });
 
   encoderWorker.postMessage({
