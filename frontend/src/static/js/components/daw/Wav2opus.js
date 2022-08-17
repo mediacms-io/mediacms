@@ -35,9 +35,11 @@ function chunkBuffers(arrayBuffer, chunkLength, channelCount, bitDepth) {
     // Convert 16 bit signed int to 32bit float
     var bufferChunk = new Float32Array(chunkLength / channelCount); // Just keep 1st channel. So, divide length.
     var idx = 0; // To skip 2nd channel.
-    for (var j = 0; j < chunkLength; j += channelCount) {
-      // Just keep 1st channel by `j+=`.
-      bufferChunk[idx] = totalFile[i + j] / maxPossible;
+    for (var j = 0; j < chunkLength; j += channelCount) { // Just keep 1st channel by `j+=`.
+      // https://github.com/chris-rudmin/opus-recorder/issues/265#issuecomment-1218059017
+      // Shifting the 0 crossing and keeping the two halves of the waveform symmetric,
+      // by `+-0.5` statements:
+      bufferChunk[idx] = (totalFile[i + j]+ 0.5) / (maxPossible-0.5);
       idx++;
     }
 
