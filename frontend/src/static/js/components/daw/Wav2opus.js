@@ -56,25 +56,28 @@ function encodeOgg(arrayBuffer) {
     var wavHeader = WavHeader.readHeader(new DataView(arrayBuffer));
     console.debug('wav header:'.toUpperCase(), wavHeader);
 
+    if (wavHeader.channels == 0 || wavHeader.sampleRate == 0 || wavHeader.dataOffset != 44) {
+        console.warn('Input file does not have a valid WAV header'.toUpperCase());
+        return;
+    }
+
   // Reference:
   // https://github.com/chris-rudmin/opus-recorder/blob/fdfdadeeb9bc9d045c59dc75ebefed390e4ad6dc/example/fileEncoder.html#L71
   var completeOggData = new Uint8Array(0);
-
-  console.debug('encoderPath'.toUpperCase(), encoderPath);
 
   var encoderWorker = new Worker(encoderPath);
   var bufferLength = 4096; // Is passed to chunk function too.
 
   encoderWorker.postMessage({
     command: 'init',
-    encoderSampleRate: wavHeader.sampleRate, // Of output OPUS. TODO: Set equal to input WAV?
+    encoderSampleRate: 48000, // Of output OPUS.
     bufferLength: bufferLength,
     originalSampleRate: wavHeader.sampleRate, // Of input WAV.
     encoderApplication: 2048, // 2048 - Voice
     encoderComplexity: 5, // 0 is fastest with lowest complexity. 10 is slowest with highest complexity.
     resampleQuality: 3, // 0 is fastest with lowest quality. 10 is slowest with highest quality.
     numberOfChannels: 1, // Of output OPUS. Only `1` works. Test for `2` throws error.
-    encoderBitRate: 96000, // Determines voice quality? TODO: 64000?
+    //encoderBitRate: 96000, // Let it be according to other configs.
   });
 
   encoderWorker.postMessage({
