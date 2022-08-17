@@ -78,6 +78,6 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
 ### cp -r frontend/dist/static/* static/
 ### git checkout static/favicons/ static/images/
-### git add static/css/ static/js/
+### git add static/
 ### git commit
 ###
