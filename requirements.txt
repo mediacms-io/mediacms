@@ -31,3 +31,10 @@ django-ckeditor
 django-debug-toolbar==3.2.4
 
 django-login-required-middleware==0.6.1
+
+### Have to install the Django library by using Docker.
+### The library version should be compatibale with our Django==3.1.12 version:
+### /usr/local/bin/docker-compose exec web python -m pip install "django-cors-headers==3.11.0"
+### ... or we can use this command now:
+### /usr/local/bin/docker-compose exec web python -m pip install -r requirements.txt
+django-cors-headers==3.11.0
