@@ -75,7 +75,7 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### ## There is no need for back-end restart.
 ###
 ### cd /home/mediacms.io/mediacms
-### docker-compose -f docker-compose-dev.yaml exec -T frontend npm run dist
+### docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
 ### cp -r frontend/dist/static/* static/
 ### git checkout static/favicons/ static/images/
 ### git add static/css/ static/js/
