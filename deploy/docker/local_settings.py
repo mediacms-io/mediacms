@@ -69,3 +69,15 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### sudo su
 ### /usr/local/bin/docker-compose exec web python -m pip install -r requirements.txt
 ### /usr/local/bin/docker-compose restart web celery_worker celery_beat
+###
+### # Deploy front-end changes
+###
+### ## There is no need for back-end restart.
+###
+### cd /home/mediacms.io/mediacms
+### docker-compose -f docker-compose-dev.yaml exec -T frontend npm run dist
+### cp -r frontend/dist/static/* static/
+### git checkout static/favicons/ static/images/
+### git add static/css/ static/js/
+### git commit
+###
