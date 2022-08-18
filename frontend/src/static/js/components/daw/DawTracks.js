@@ -61,6 +61,10 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         );
 
         ee.on('audiorenderingstarting', function (offlineCtx, a) {
+          // Safari throws error:
+          // ReferenceError: Can't find variable: OfflineAudioContext
+          console.debug('offlineCtx'.toUpperCase(), offlineCtx);
+
           // Set Tone offline to render effects properly.
           const offlineContext = new Tone.OfflineContext(offlineCtx);
           Tone.setContext(offlineContext);
