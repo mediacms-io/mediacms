@@ -24,14 +24,18 @@ function concatUint8Arrays(a, b) {
   return c;
 }
 
-function chunkBuffers(arrayBuffer, chunkLength, channelCount, bitDepth) {
+// This function assumes the bit depth is 16.
+// Bit depth is the data resolution per sample.
+function chunkBuffers(arrayBuffer, chunkLength, channelCount) {
   var chunkedBuffers = [];
 
-  if (bitDepth != 16) {
-    // Bit depth is the data resolution.
-    // This function assumes the bit depth is 16.
-    console.log('Bit depth of `WAV` must be 16'.toUpperCase(), bitDepth);
-  }
+  // According to this line:
+  // https://github.com/zhuker/lamejs/blob/582bbba6a12f981b984d8fb9e1874499fed85675/example.html#L45
+  // Looks like WAV bit depth is always assumed to be 16.
+
+  // Also, according to this line:
+  // https://github.com/naomiaro/waveform-playlist/blob/526d62a8313c8ae04d70d24c64b8b6e4cbd69764/src/utils/exportWavWorker.js#L55
+  // Waveform-playlist always encodes WAV with 16 bits per sample.
 
   var totalFile = new Int16Array(arrayBuffer);
   // Skip wave header; 44 bytes
@@ -88,15 +92,7 @@ function encodeOgg(arrayBuffer) {
     command: 'getHeaderPages',
   });
 
-  // According to this line:
-  // https://github.com/zhuker/lamejs/blob/582bbba6a12f981b984d8fb9e1874499fed85675/example.html#L45
-  // Looks like WAV bit depth is always assumed to be 16.
-
-  // Also, according to this line:
-  // https://github.com/naomiaro/waveform-playlist/blob/526d62a8313c8ae04d70d24c64b8b6e4cbd69764/src/utils/exportWavWorker.js#L56
-  // Waveform-playlist always encodes WAV with 16 bits per sample.
-
-  chunkBuffers(arrayBuffer, bufferLength, wavHeader.channels, 16).forEach((bufferChunk) =>
+  chunkBuffers(arrayBuffer, bufferLength, wavHeader.channels).forEach((bufferChunk) =>
     encoderWorker.postMessage({
       command: 'encode',
       buffers: bufferChunk,
