@@ -27,8 +27,11 @@ function concatUint8Arrays(a, b) {
 function chunkBuffers(arrayBuffer, chunkLength, channelCount, bitDepth) {
   var chunkedBuffers = [];
 
-  var maxPossible = 2 ** bitDepth / 2; // Bit depth is the data resolution.
-  console.log('MAX POSSIBlE `WAV` DATA VALUE', maxPossible);
+  if (bitDepth != 16) {
+    // Bit depth is the data resolution.
+    // This function assumes the bit depth is 16.
+    console.log('Bit depth of `WAV` must be 16'.toUpperCase(), bitDepth);
+  }
 
   var totalFile = new Int16Array(arrayBuffer);
   // Skip wave header; 44 bytes
@@ -40,7 +43,7 @@ function chunkBuffers(arrayBuffer, chunkLength, channelCount, bitDepth) {
       // https://github.com/chris-rudmin/opus-recorder/issues/265#issuecomment-1218059017
       // Shifting the 0 crossing and keeping the two halves of the waveform symmetric,
       // by `+-0.5` statements:
-      bufferChunk[idx] = (totalFile[i + j]+ 0.5) / (maxPossible-0.5);
+      bufferChunk[idx] = (totalFile[i + j]+ 0.5) / 32767.5; // 32767.5 == 2^16/2-0.5
       idx++;
     }
 
