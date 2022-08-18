@@ -31,13 +31,3 @@ django-ckeditor
 django-debug-toolbar==3.2.4
 
 django-login-required-middleware==0.6.1
-
-### Have to install the Django library by using Docker.
-### The library version should be compatibale with our Django==3.1.12 version:
-### https://github.com/adamchainz/django-cors-headers/blob/main/HISTORY.rst
-###
-### Run this command to apply changes:
-### /usr/local/bin/docker-compose exec web python -m pip install -r requirements.txt
-### Then run this:
-### /usr/local/bin/docker-compose restart web celery_worker celery_beat
-django-cors-headers==3.11.0

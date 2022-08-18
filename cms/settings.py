@@ -297,17 +297,10 @@ INSTALLED_APPS = [
     "djcelery_email",
     "ckeditor",
     "drf_yasg",
-    "corsheaders", # Allow all URLs to access our website.
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-
-    # Allow all URLs to access our website.
-    # Before any middleware that can generate responses such as Django’s CommonMiddleware.
-    # If it is not before, it will not be able to add the CORS headers to these responses.
-    "corsheaders.middleware.CorsMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -487,12 +480,3 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/logout/$',
         r'/accounts/signup/$',
     ]
-
-### To fix error when receiving POST response: Error: Network Error
-### Error is thrown by Axios when POST response is received/finished.
-### https://stackoverflow.com/a/58018865/3405291
-###
-### Proper statements are added to INSTALLED_APPS and MIDDLEWARE too.
-###
-#### Allow all URLs to access our website.
-CORS_ALLOW_ALL_ORIGINS = True
