@@ -70,7 +70,7 @@ function encodeOgg(arrayBuffer) {
 
   encoderWorker.postMessage({
     command: 'init',
-    encoderSampleRate: 48000, // Of output OPUS.
+    //encoderSampleRate: 48000, // Of output OPUS. Let's use default.
     bufferLength: bufferLength,
     originalSampleRate: wavHeader.sampleRate, // Of input WAV.
     encoderApplication: 2048, // 2048 - Voice
