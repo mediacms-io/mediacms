@@ -10,7 +10,9 @@ import Wav2opus from './Wav2opus';
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
 export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange }) {
 
-  const playlist = useRef({});
+  // Playlist should be a `useState` to cause re-render.
+  // Upon re-render due to playlist, the device microphone is access reliably by a `useEffect`.
+  const [playlist, setPlaylist] = useState({});
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
 
@@ -34,7 +36,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
   const container = useCallback(
     (node) => {
       if (node !== null && toneCtx !== null) {
-        playlist.current = WaveformPlaylist(
+        setPlaylist(WaveformPlaylist(
           {
             ac: toneCtx.rawContext,
             samplesPerPixel: 3000,
@@ -58,7 +60,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             zoomLevels: [500, 1000, 3000, 5000],
           },
           ee
-        );
+        ));
 
         ee.on('audiorenderingstarting', function (offlineCtx, a) {
           // Safari throws error:
@@ -91,15 +93,15 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
   useEffect(() => {
     // If playlist is not ready yet, return.
-    if (playlist.current &&
-      Object.keys(playlist.current).length === 0 &&
-      Object.getPrototypeOf(playlist.current) === Object.prototype) {
+    if (playlist &&
+      Object.keys(playlist).length === 0 &&
+      Object.getPrototypeOf(playlist) === Object.prototype) {
         return;
       }
 
     var gotStream = function (stream) {
       let userMediaStream = stream;
-      playlist.current.initRecorder(userMediaStream);
+      playlist.initRecorder(userMediaStream);
       onRecordDisabledChange(false); // This callback updates the state of the parent component.
     };
 
@@ -107,7 +109,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
       console.error(err);
     };
 
-    playlist.current
+    playlist
       .load(
         // Voices of the current media would be loaded here.
         // They would be fetched from the database table.
@@ -124,7 +126,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         // After you create the playlist you have to call this function if you want to use recording:
         //initialize the WAV exporter.
-        playlist.current.initExporter();
+        playlist.initExporter();
 
         if (navigator.mediaDevices) {
           navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(logError);
@@ -132,7 +134,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           navigator.getUserMedia(constraints, gotStream, logError);
         }
       });
-  }, [voices]); // The effect only runs when `voices` change.
+  }, [voices, playlist]); // The effect only runs when a re-render is due to these.
 
   function handleLoad() {
     setToneCtx(Tone.getContext());
