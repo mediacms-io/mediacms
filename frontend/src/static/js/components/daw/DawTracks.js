@@ -11,7 +11,7 @@ import Wav2opus from './Wav2opus';
 export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange }) {
 
   // Playlist should be a `useState` to cause re-render.
-  // Upon re-render due to playlist, the device microphone is access reliably by a `useEffect`.
+  // Upon re-render due to playlist change, the device microphone is accessed reliably by a `useEffect`.
   const [playlist, setPlaylist] = useState({});
   const [toneCtx, setToneCtx] = useState(null);
   const setUpChain = useRef();
