@@ -1,6 +1,5 @@
 import { MediaPageActions } from '../../utils/actions/';
 import encoderPath from 'opus-recorder/dist/encoderWorker.min.js';
-import { saveAs } from 'file-saver';
 import WavHeader from './WavHeader';
 
 export default function Wav2opus(wavData) {
