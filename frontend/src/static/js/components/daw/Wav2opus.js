@@ -107,7 +107,7 @@ function encodeOgg(arrayBuffer) {
     if (data.message === 'done') {
       //finished encoding - save to audio tag
       var dataBlob = new Blob([completeOggData], { type: 'audio/ogg' });
-      saveAs(dataBlob, 'voice.ogg');
+      // Save voice inside server database.
       MediaPageActions.submitVoice(dataBlob);
     } else if (data.message === 'page') {
       completeOggData = concatUint8Arrays(completeOggData, data.page);
