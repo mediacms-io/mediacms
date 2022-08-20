@@ -59,10 +59,11 @@ export function deleteComment(commentId) {
   });
 }
 
-export function submitVoice(voiceFile) {
+export function submitVoice(voiceFile, start) {
   Dispatcher.dispatch({
     type: 'SUBMIT_VOICE',
     voiceFile,
+    start,
   });
 }
 

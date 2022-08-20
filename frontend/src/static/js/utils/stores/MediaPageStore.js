@@ -429,6 +429,9 @@ class MediaPageStore extends EventEmitter {
       case 'media-load-error-message':
         MediaPageStoreData[this.id].loadErrorMessage = value;
         break;
+      case 'media-voice-recording-start':
+        MediaPageStoreData[this.id].voiceRecordingStart = value;
+        break;
     }
   }
 
@@ -451,6 +454,14 @@ class MediaPageStore extends EventEmitter {
       case 'media-load-error-message':
         r =
           void 0 !== MediaPageStoreData[this.id].loadErrorMessage ? MediaPageStoreData[this.id].loadErrorMessage : null;
+        break;
+      case 'media-voice-recording-start':
+        // If it's undefined, don't return `null`, but return `0`.
+        // If `null` is returned, voice cannot be submitted to database with this response error:
+        // Error: Request failed with status code 400
+        // 400 Bad Request
+        r =
+          void 0 !== MediaPageStoreData[this.id].voiceRecordingStart ? MediaPageStoreData[this.id].voiceRecordingStart : 0;
         break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
@@ -789,6 +800,7 @@ class MediaPageStore extends EventEmitter {
         let formData = new FormData();
         let voice_file = action.voiceFile;
         formData.append("voice_file", voice_file);
+        formData.append("start", action.start);
 
         postRequest(
           this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().

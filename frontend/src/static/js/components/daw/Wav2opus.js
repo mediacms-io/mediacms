@@ -1,4 +1,5 @@
 import { MediaPageActions } from '../../utils/actions/';
+import { MediaPageStore } from '../../utils/stores/';
 import encoderPath from 'opus-recorder/dist/encoderWorker.min.js';
 import WavHeader from './WavHeader';
 
@@ -107,7 +108,7 @@ function encodeOgg(arrayBuffer) {
       //finished encoding - save to audio tag
       var dataBlob = new Blob([completeOggData], { type: 'audio/ogg' });
       // Save voice inside server database.
-      MediaPageActions.submitVoice(dataBlob);
+      MediaPageActions.submitVoice(dataBlob, MediaPageStore.get('media-voice-recording-start'));
     } else if (data.message === 'page') {
       completeOggData = concatUint8Arrays(completeOggData, data.page);
     }

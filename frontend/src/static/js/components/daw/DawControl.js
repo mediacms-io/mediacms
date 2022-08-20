@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { MediaPageStore } from '../../utils/stores/';
 
 export default function DawControl({ playerInstance, ee, trimDisabled, recordDisabled }) {
 
@@ -24,6 +25,8 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                         title="Record"
                         onClick={() => {
                             ee.emit("record");
+                            // Register start time.
+                            MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
                             // Play video.
                             playerInstance.player.play();
                         }}
