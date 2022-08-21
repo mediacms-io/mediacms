@@ -4,6 +4,8 @@ import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 import { MediaPageActions } from '../../utils/actions/';
 
+import '../daw/delete.scss';
+
 export default function DawDelete({  }) {
   // Login link is just like:
   // `frontend/src/static/js/components/comments/Comments.jsx`
@@ -38,12 +40,12 @@ export default function DawDelete({  }) {
             className="form-textarea-wrap"
             title='Delete voices permanently'
         >
-        <div className="comment-actions">
-        <div className="comment-action remove-comment">
+        <div className="voice-actions">
+        <div className="voice-action remove-voice">
         <PopupTrigger contentRef={popupContentRef}>
           <button
             type="button"
-            id="btn-drop"
+            id="btn-delete"
             className="btn btn-outline-primary"
             title="Delete voices permanently"
             onClick={(event) => {
@@ -61,10 +63,10 @@ export default function DawDelete({  }) {
               </div>
               <hr />
               <span className="popup-message-bottom">
-                <button className="button-link cancel-comment-removal" onClick={cancelVoiceRemoval}>
+                <button className="button-link cancel-voice-removal" onClick={cancelVoiceRemoval}>
                   CANCEL
                 </button>
-                <button className="button-link proceed-comment-removal" onClick={proceedVoiceRemoval}>
+                <button className="button-link proceed-voice-removal" onClick={proceedVoiceRemoval}>
                   PROCEED
                 </button>
               </span>
