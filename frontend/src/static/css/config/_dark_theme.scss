@@ -106,6 +106,17 @@ body.dark_theme {
   --comment-actions-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
   --comment-actions-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
 
+  --voice-actions-material-icon-text-color: rgba(255, 255, 255, 0.74);
+
+  --voice-actions-likes-num-text-color: rgba(255, 255, 255, 0.5);
+
+  // There is no reply action for voice.
+  //--voice-actions-reply-button-text-color: rgba(255, 255, 255, 0.5);
+  //--voice-actions-reply-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
+  --voice-actions-cancel-removal-button-text-color: rgba(255, 255, 255, 0.5);
+  --voice-actions-cancel-removal-button-hover-text-color: rgba(255, 255, 255, 0.74);
+
   /* ################################################## */
 
   --item-bg-color: #121212;
