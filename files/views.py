@@ -1376,10 +1376,19 @@ class VoiceDetail(APIView):
         Administrators, MediaCMS editors and managers,
         media owner, and voice owners, can delete a voice
         """
-        return Response(
-                {"detail": "not implemented yet"},
-                status=status.HTTP_400_BAD_REQUEST,
-        )
+        if uid:
+            try:
+                voice = Voice.objects.get(uid=uid)
+            except BaseException:
+                return Response(
+                    {"detail": "voice does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if (voice.user == self.request.user) or voice.media.user == self.request.user or is_mediacms_editor(self.request.user):
+                voice.delete()
+            else:
+                return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
         manual_parameters=[],
