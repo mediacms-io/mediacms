@@ -162,6 +162,24 @@ $bg-color_theme-color: $theme-color;
   }
 }
 
+/* Voices */
+
+.voice-actions {
+  .remove-voice {
+    > button {
+      @include background_color_gradient();
+    }
+
+    .popup-message-bottom {
+      button {
+        &.proceed-voice-removal {
+          @include font_color_gradient();
+        }
+      }
+    }
+  }
+}
+
 /* NavigationMenuList */
 
 .nav-menu {
