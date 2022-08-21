@@ -18,6 +18,7 @@ import DawTrackDrop from "./DawTrackDrop";
 import DawControl from "./DawControl";
 import DawSync from "./DawSync";
 import DawTracks from "./DawTracks";
+import DawDelete from "./DawDelete";
 
 const voicesText = {
   single: 'voice',
@@ -119,6 +120,7 @@ export default function Daw({ playerInstance }) {
         ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
+          <DawDelete></DawDelete>
           <DawSync ee={ee}></DawSync>
         </div>
       </main>
