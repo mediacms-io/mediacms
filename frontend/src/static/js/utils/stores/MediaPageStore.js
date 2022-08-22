@@ -817,7 +817,23 @@ class MediaPageStore extends EventEmitter {
         );
         break;
       case 'DELETE_VOICE':
+        // Delete a specific voice by its UID.
         // TODO.
+        break;
+      case 'DELETE_VOICES':
+        // Delete all voices of a media created by a user.
+        if (MediaPageStoreData[this.id].while.deleteVoices) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.deleteVoices = true;
+        deleteRequest(
+          this.voicesAPIUrl,
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.removeVoicesResponse,
+          this.removeVoicesFail
+        );
         break;
       case 'CREATE_PLAYLIST':
         postRequest(
@@ -984,6 +1000,37 @@ class MediaPageStore extends EventEmitter {
       this
     );
   }
+
+
+  removeVoicesFail(err) {
+    this.emit('voices_delete_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
+  removeVoicesResponse(response) {
+    if (response && 204 === response.status) {
+      this.emit('voices_delete', response.data);
+
+      // After any voice deletion, all the voices are loaded again.
+      // If voices are re-loaded correctly, a signal is emitted.
+      // The DAW component would handle the signal to get and display re-loaded voices.
+      this.loadVoices();
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
 }
 
 export default exportStore(new MediaPageStore(), 'actions_handler');

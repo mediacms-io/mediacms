@@ -26,8 +26,7 @@ export default function DawDelete({  }) {
 
   function proceedVoiceRemoval() {
     popupContentRef.current.toggle();
-    // TODO: get voice_id.
-    MediaPageActions.deleteVoice(voice_id);
+    MediaPageActions.deleteVoices();
   }
 
     return (
