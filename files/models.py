@@ -444,7 +444,6 @@ class Media(models.Model):
         Set encoding_status as success for non video
         content since all listings filter for encoding_status success
         """
-
         kind = helpers.get_file_type(self.media_file.path)
         if kind is not None:
             if kind == "image":
@@ -452,7 +451,7 @@ class Media(models.Model):
             elif kind == "pdf":
                 self.media_type = "pdf"
 
-        if self.media_type in ["image", "pdf"]:
+        if self.media_type in ["audio", "image", "pdf"]:
             self.encoding_status = "success"
         else:
             ret = helpers.media_file_info(self.media_file.path)
@@ -470,13 +469,19 @@ class Media(models.Model):
                 self.media_type = ""
                 self.encoding_status = "fail"
 
+            audio_file_with_thumb = False
+            # handle case where a file identified as video is actually an
+            # audio file with thumbnail
             if ret.get("is_video"):
                 # case where Media is video. try to set useful
                 # metadata as duration/height
                 self.media_type = "video"
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
-            elif ret.get("is_audio"):
+                if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
+                    audio_file_with_thumb = True
+
+            if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
                 self.duration = int(float(ret.get("audio_info", {}).get("duration", 0)))
                 self.encoding_status = "success"
