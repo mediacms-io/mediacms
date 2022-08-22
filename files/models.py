@@ -478,11 +478,8 @@ class Media(models.Model):
                 self.media_type = "video"
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
-                try:
-                    if ret['video_info']['codec_name'] in ['mjpeg']:
-                        audio_file_with_thumb = True
-                except:
-                    pass
+                if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
+                    audio_file_with_thumb = True
 
             if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
