@@ -1377,6 +1377,10 @@ class VoiceDetail(APIView):
         media owner, and voice owners, can delete a voice
         """
         if uid:
+            # If `uid` is provided,
+            # the voice with `uid` would be deleted.
+            # Example:
+            # DELETE /api/v1/media/A0eMbWrhe/voices/1832ef79-e262-4d79-940c-dd1b717107fb
             try:
                 voice = Voice.objects.get(uid=uid)
             except BaseException:
@@ -1388,6 +1392,28 @@ class VoiceDetail(APIView):
                 voice.delete()
             else:
                 return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # If `uid` isn't provided,
+            # all the voices of `media` created by `self.request.user` would be deleted.
+            # Example:
+            # DELETE /api/v1/media/A0eMbWrhe/voices
+            media = self.get_object(friendly_token)
+            if isinstance(media, Response):
+                return media
+            try:
+                voices = media.voices.filter(user=self.request.user).prefetch_related("user")
+            except BaseException:
+                return Response(
+                    {"detail:", "BaseException of database query"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if voices.exists():
+                voices.delete()
+            else:
+                return Response(
+                    {"detail": "No voice belongs to user"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
