@@ -81,13 +81,13 @@ export default function Daw({ playerInstance }) {
     );
   }
 
-  function onVoiceDelete(voiceId) {
+  function onVoicesDelete(voiceId) {
     onVoicesLoad();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' removed', 'voiceDelete'), 100);
   }
 
-  function onVoiceDeleteFail(voiceId) {
+  function onVoicesDeleteFail(voiceId) {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
       () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
@@ -104,15 +104,15 @@ export default function Daw({ playerInstance }) {
     MediaPageStore.on('voices_load', onVoicesLoad);
     MediaPageStore.on('voice_submit', onVoiceSubmit);
     MediaPageStore.on('voice_submit_fail', onVoiceSubmitFail);
-    MediaPageStore.on('voice_delete', onVoiceDelete);
-    MediaPageStore.on('voice_delete_fail', onVoiceDeleteFail);
+    MediaPageStore.on('voices_delete', onVoicesDelete);
+    MediaPageStore.on('voices_delete_fail', onVoicesDeleteFail);
 
     return () => {
       MediaPageStore.removeListener('voices_load', onVoicesLoad);
       MediaPageStore.removeListener('voice_submit', onVoiceSubmit);
       MediaPageStore.removeListener('voice_submit_fail', onVoiceSubmitFail);
-      MediaPageStore.removeListener('voice_delete', onVoiceDelete);
-      MediaPageStore.removeListener('voice_delete_fail', onVoiceDeleteFail);
+      MediaPageStore.removeListener('voices_delete', onVoicesDelete);
+      MediaPageStore.removeListener('voices_delete_fail', onVoicesDeleteFail);
     };
   }, []);
 
