@@ -58,7 +58,7 @@ export default function DawDelete({  }) {
             <PopupMain>
               <div className="popup-message">
                 <span className="popup-message-title">Voice delete</span>
-                <span className="popup-message-main">Check voices to remove permanently:</span>
+                <span className="popup-message-main">Delete all your voices permanently?</span>
               </div>
               <hr />
               <span className="popup-message-bottom">
