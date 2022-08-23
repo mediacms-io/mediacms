@@ -1003,7 +1003,7 @@ class MediaPageStore extends EventEmitter {
 
 
   removeVoicesFail(err) {
-    this.emit('voices_delete_fail', err);
+    this.emit('voices_delete_fail');
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.deleteVoices = false;
@@ -1015,7 +1015,7 @@ class MediaPageStore extends EventEmitter {
 
   removeVoicesResponse(response) {
     if (response && 204 === response.status) {
-      this.emit('voices_delete', response.data);
+      this.emit('voices_delete');
 
       // After any voice deletion, all the voices are loaded again.
       // If voices are re-loaded correctly, a signal is emitted.

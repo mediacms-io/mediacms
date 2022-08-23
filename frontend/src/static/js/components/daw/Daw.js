@@ -81,13 +81,13 @@ export default function Daw({ playerInstance }) {
     );
   }
 
-  function onVoicesDelete(voiceId) {
+  function onVoicesDelete() {
     onVoicesLoad();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' removed', 'voiceDelete'), 100);
   }
 
-  function onVoicesDeleteFail(voiceId) {
+  function onVoicesDeleteFail() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
       () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
