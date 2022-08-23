@@ -831,8 +831,8 @@ class MediaPageStore extends EventEmitter {
           this.voicesAPIUrl,
           { headers: { 'X-CSRFToken': csrfToken() } },
           false,
-          this.removeVoicesResponse,
-          this.removeVoicesFail
+          this.removeVoicesResponse.bind(this), // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
+          this.removeVoicesFail.bind(this) // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
         );
         break;
       case 'CREATE_PLAYLIST':
