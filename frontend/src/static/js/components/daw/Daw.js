@@ -82,7 +82,6 @@ export default function Daw({ playerInstance }) {
   }
 
   function onVoicesDelete() {
-    onVoicesLoad();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' removed', 'voiceDelete'), 100);
   }
