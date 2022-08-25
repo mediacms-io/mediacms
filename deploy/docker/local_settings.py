@@ -70,6 +70,11 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### /usr/local/bin/docker-compose exec web python -m pip install -r requirements.txt
 ### /usr/local/bin/docker-compose restart web celery_worker celery_beat
 ###
+### # Start development
+###
+### docker-compose -f docker-compose-dev.yaml build
+### docker-compose -f docker-compose-dev.yaml up
+###
 ### # Deploy front-end changes
 ###
 ### ## There is no need for back-end restart.
