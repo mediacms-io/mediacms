@@ -86,3 +86,15 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### git add static/
 ### git commit
 ###
+### # Merge upstream
+###
+### ## Undeploy before upstream merge
+###
+### While pulling from upstream, if some deployed files like `static/js/_commons.js`,
+### `static/js/embed.js`, `static/js/media.js` have conflict, they can be un-deployed by:
+###
+### git checkout upstream/main --  static/js/_commons.js static/js/embed.js static/js/media.js
+###
+### After pulling from upstream and getting latest updates, then,
+### front-end redeployment can be done by the previous instructions.
+###
