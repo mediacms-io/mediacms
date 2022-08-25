@@ -4,11 +4,11 @@ services:
   frontend:
     image: node:14
     volumes:
-      - ./frontend:/home/mediacms.io/mediacms/frontend/
+      - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
     working_dir: /home/mediacms.io/mediacms/frontend/
     command: bash -c "npm install && npm run start"
     env_file:
-      - ./frontend/.env
+      - ${PWD}/frontend/.env
     ports:
       - "8088:8088"
     depends_on:
