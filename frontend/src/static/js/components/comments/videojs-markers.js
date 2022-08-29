@@ -2,9 +2,9 @@
 
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['video.js'], factory);
+    define(['mediacms-player'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(require('video.js'));
+    factory(require('mediacms-player'));
   } else {
     var mod = {
       exports: {}
