@@ -11,24 +11,26 @@ const overlayStyle = {
 };
 
 function enableMarkers(video) {
-    video.markers({
-        markerStyle: markerStyle,
-        markerTip: {
-            display: true,
-            text: function (marker) {
-                return marker.text;
-            }
-        },
-        breakOverlay: {
-            display: true,
-            displayTime: 20,
-            text: function (marker) {
-                return marker.text;
+    if (!(typeof video.markers === 'object')) {
+        video.markers({
+            markerStyle: markerStyle,
+            markerTip: {
+                display: true,
+                text: function (marker) {
+                    return marker.text;
+                }
             },
-            style : overlayStyle
-        },
-        markers: []
-    });
+            breakOverlay: {
+                display: true,
+                displayTime: 20,
+                text: function (marker) {
+                    return marker.text;
+                },
+                style : overlayStyle
+            },
+            markers: []
+        });
+    }
 }
 
 function addMarker(videoPlayer, time, text)
