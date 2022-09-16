@@ -52,7 +52,7 @@
 
 .track-drop { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
 
-.track-drop::before { content: "" /* "Add track" */; }
+.track-drop::before { content: "Add"; }
 
 .track-drop.drag-enter { border: 0.18rem solid orange; }
 
