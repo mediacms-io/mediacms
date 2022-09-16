@@ -25,7 +25,7 @@ export default function DawSync({ ee }) {
           <button
             type="button"
             id="btn-drop"
-            className="btn btn-outline-primary"
+            className="btn btn-outline-dark"
             title="Save the current work as a voice file"
             onClick={(event) => {
               // Emit a signal to start creating voice file.

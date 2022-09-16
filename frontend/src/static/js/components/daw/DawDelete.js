@@ -45,7 +45,7 @@ export default function DawDelete({  }) {
           <button
             type="button"
             id="btn-delete"
-            className="btn btn-outline-primary"
+            className="btn btn-outline-dark"
             title="Delete voices permanently"
             onClick={(event) => {
               // TODO.
