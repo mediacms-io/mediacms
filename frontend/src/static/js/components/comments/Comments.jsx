@@ -450,8 +450,9 @@ export default function CommentsList(props) {
       });
       
       displayCommentsRelatedAlert();
+      setComments([...retrievedComments]);
     });
-    setComments(retrievedComments);
+    setComments([...retrievedComments]);
   }
   
   function setMentions(text)
