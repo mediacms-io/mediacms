@@ -167,7 +167,8 @@ $bg-color_theme-color: $theme-color;
 .voice-actions {
   .remove-voice {
     > button {
-      @include background_color_gradient();
+      // Avoid `green` background color of `trash` button:
+      //@include background_color_gradient();
     }
 
     .popup-message-bottom {

@@ -76,7 +76,8 @@
     margin-top: 0.5rem;
 
     > button {
-      color: #fff;
+      // Avoid the white color of the `trash` button:
+      //color: #fff;
     }
 
     .popup {
