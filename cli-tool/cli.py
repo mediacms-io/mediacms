@@ -77,7 +77,7 @@ def upload_media():
             files['media_file'] = open(f'{abs}', 'rb')
             response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
             if response.status_code == 201:
-                print("[bold blue]{filename}[/bold blue] successfully uploaded!")
+                print(f"[bold blue]{filename}[/bold blue] successfully uploaded!")
             else:
                 print(f'Error: {response.text}')
 
@@ -86,7 +86,7 @@ def upload_media():
         files['media_file'] = open(f'{os.path.abspath(path)}', 'rb')
         response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
         if response.status_code == 201:
-            print("[bold blue]{filename}[/bold blue] successfully uploaded!")
+            print(f"[bold blue]{filename}[/bold blue] successfully uploaded!")
         else:
             print(f'Error: {response.text}')
 

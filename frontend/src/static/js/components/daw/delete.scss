@@ -1,0 +1,113 @@
+// Statements are copied and modified from:
+// frontend/src/static/js/components/comments/Comments.scss
+
+@import '../../../css/includes/_variables.scss';
+
+.voice-actions {
+  button {
+    &:focus {
+      box-shadow: none;
+    }
+  }
+
+  .circle-icon-button {
+    background-color: var(--body-bg-color);
+  }
+
+  .material-icons {
+    &:hover,
+    &:focus {
+      color: var(--voice-actions-material-icon-text-color);
+    }
+  }
+
+  .remove-voice {
+    .popup-message-bottom {
+      button {
+        &.cancel-voice-removal {
+          color: var(--voice-actions-cancel-removal-button-text-color);
+
+          &:hover,
+          &:focus {
+            color: var(--voice-actions-cancel-removal-button-hover-text-color);
+
+            .material-icons {
+              color: var(--voice-actions-cancel-removal-button-hover-text-color);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.voice-actions {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-top: 4px;
+  color: #909090;
+
+  .circle-icon-button {
+    display: inline-block;
+    vertical-align: middle;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .material-icons {
+    color: #909090;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  .voice-action {
+    display: inline-block;
+
+    ~ * {
+      margin-left: 8px;
+    }
+  }
+
+  .remove-voice {
+    position: relative;
+    width: auto;
+    // float:right;
+    margin-top: 0.5rem;
+
+    > button {
+      // Avoid the white color of the `trash` button:
+      //color: #fff;
+    }
+
+    .popup {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      margin-bottom: 8px;
+
+      .popup-message-bottom {
+        button {
+          position: relative;
+          width: auto;
+          padding: 0;
+          border: 0;
+
+          &.cancel-voice-removal,
+          &.proceed-voice-removal {
+            background-color: transparent;
+            background-color: rgba(0, 0, 0, 0);
+          }
+
+          &.proceed-voice-removal {
+            float: right;
+          }
+
+          &.cancel-voice-removal {
+            float: left;
+          }
+        }
+      }
+    }
+  }
+}

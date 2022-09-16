@@ -59,6 +59,29 @@ export function deleteComment(commentId) {
   });
 }
 
+export function submitVoice(voiceFile, start) {
+  Dispatcher.dispatch({
+    type: 'SUBMIT_VOICE',
+    voiceFile,
+    start,
+  });
+}
+
+// Delete a specific voice by its UID.
+export function deleteVoice(voiceId) {
+  Dispatcher.dispatch({
+    type: 'DELETE_VOICE',
+    voiceId,
+  });
+}
+
+// Delete all voices of a media created by a user.
+export function deleteVoices() {
+  Dispatcher.dispatch({
+    type: 'DELETE_VOICES',
+  });
+}
+
 export function createPlaylist(playlist_data) {
   Dispatcher.dispatch({
     type: 'CREATE_PLAYLIST',

@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { MediaPageStore } from '../../utils/stores/';
 
 export default function DawControl({ playerInstance, ee, trimDisabled, recordDisabled }) {
 
@@ -24,6 +25,8 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                         title="Record"
                         onClick={() => {
                             ee.emit("record");
+                            // Register start time.
+                            MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
                             // Play video.
                             playerInstance.player.play();
                         }}
@@ -130,6 +133,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                 <div className="btn-group">
                     <button type="button" title="Download the current work as Wav file"
                         className="btn btn-download btn-outline-primary"
+                        id="btn-download-WAV-file"
                         onClick={() => {
                             ee.emit("startaudiorendering", "wav");
                         }}

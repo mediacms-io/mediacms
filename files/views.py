@@ -38,6 +38,7 @@ from .methods import (
     is_mediacms_manager,
     list_tasks,
     notify_user_on_comment,
+    notify_user_on_voice,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -51,10 +52,12 @@ from .models import (
     Playlist,
     PlaylistMedia,
     Tag,
+    Voice,
 )
 from .serializers import (
     CategorySerializer,
     CommentSerializer,
+    VoiceSerializer,
     EncodeProfileSerializer,
     MediaSearchSerializer,
     MediaSerializer,
@@ -1187,6 +1190,40 @@ class CommentList(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+class VoiceList(APIView):
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorizedToAdd)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='author', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='username'),
+        ],
+        tags=['Voices'],
+        operation_summary='Lists Voices',
+        operation_description='Paginated listing of all voices',
+        responses={
+            200: openapi.Response('response description', VoiceSerializer(many=True)),
+        },
+    )
+    def get(self, request, format=None):
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        voices = Voice.objects.filter()
+        voices = voices.prefetch_related("user")
+        voices = voices.prefetch_related("media")
+        params = self.request.query_params
+        if "author" in params:
+            author_param = params["author"].strip()
+            user_queryset = User.objects.all()
+            user = get_object_or_404(user_queryset, username=author_param)
+            voices = voices.filter(user=user)
+
+        page = paginator.paginate_queryset(voices, request)
+
+        serializer = VoiceSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
 class CommentDetail(APIView):
     """Comments related views
     Listings of comments for a media (GET)
@@ -1284,6 +1321,126 @@ class CommentDetail(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class VoiceDetail(APIView):
+    """Voices related views
+    Listings of voices for a media (GET)
+    Create voice (POST)
+    Delete voice (DELETE)
+    """
+
+    permission_classes = (IsAuthorizedToAdd,)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    def get_object(self, friendly_token):
+        try:
+            media = Media.objects.select_related("user").get(friendly_token=friendly_token)
+            self.check_object_permissions(self.request, media)
+            if media.state == "private" and self.request.user != media.user:
+                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            return media
+        except PermissionDenied:
+            return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        except BaseException:
+            return Response(
+                {"detail": "media file does not exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def get(self, request, friendly_token):
+        # list voices for a media
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+        voices = media.voices.filter().prefetch_related("user")
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        page = paginator.paginate_queryset(voices, request)
+        serializer = VoiceSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def delete(self, request, friendly_token, uid=None):
+        """Delete a voice
+        Administrators, MediaCMS editors and managers,
+        media owner, and voice owners, can delete a voice
+        """
+        if uid:
+            # If `uid` is provided,
+            # the voice with `uid` would be deleted.
+            # Example:
+            # DELETE /api/v1/media/A0eMbWrhe/voices/1832ef79-e262-4d79-940c-dd1b717107fb
+            try:
+                voice = Voice.objects.get(uid=uid)
+            except BaseException:
+                return Response(
+                    {"detail": "voice does not exist"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if (voice.user == self.request.user) or voice.media.user == self.request.user or is_mediacms_editor(self.request.user):
+                voice.delete()
+            else:
+                return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # If `uid` isn't provided,
+            # all the voices of `media` created by `self.request.user` would be deleted.
+            # Example:
+            # DELETE /api/v1/media/A0eMbWrhe/voices
+            media = self.get_object(friendly_token)
+            if isinstance(media, Response):
+                return media
+            try:
+                voices = media.voices.filter(user=self.request.user).prefetch_related("user")
+            except BaseException:
+                return Response(
+                    {"detail:", "BaseException of database query"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if voices.exists():
+                voices.delete()
+            else:
+                return Response(
+                    {"detail": "No voice belongs to user"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Media'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def post(self, request, friendly_token):
+        """Create a voice"""
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        # Currently, recording voices are allowed for all media instances.
+        # But they can be forbidden by adding `media.enable_voices` field to DB table model.
+        # And then checking it here.
+        # Just like `media.enable_comments` field.
+        # For now, let's avoid changing `media` DB table model.
+
+        serializer = VoiceSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            serializer.save(user=request.user, media=media, title=request.user.name)
+            if request.user != media.user:
+                notify_user_on_voice(friendly_token=media.friendly_token)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserActions(APIView):
     parser_classes = (JSONParser,)

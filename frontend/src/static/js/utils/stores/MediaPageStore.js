@@ -74,6 +74,10 @@ class MediaPageStore extends EventEmitter {
 
     this.removeCommentFail = this.removeCommentFail.bind(this);
     this.removeCommentResponse = this.removeCommentResponse.bind(this);
+
+    this.submitVoiceFail = this.submitVoiceFail.bind(this);
+    this.submitVoiceResponse = this.submitVoiceResponse.bind(this);
+
   }
 
   loadData() {
@@ -159,6 +163,12 @@ class MediaPageStore extends EventEmitter {
     getRequest(this.commentsAPIUrl, !1, this.commentsResponse);
   }
 
+  loadVoices() {
+    this.voicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/voices';
+    this.voicesResponse = this.voicesResponse.bind(this);
+    getRequest(this.voicesAPIUrl, !1, this.voicesResponse);
+  }
+
   loadUsers() {
     this.usersAPIUrl = this.mediacms_config.api.users;
     this.usersResponse = this.usersResponse.bind(this);
@@ -199,6 +209,10 @@ class MediaPageStore extends EventEmitter {
     if (this.mediacms_config.member.can.readComment) {
       this.loadComments();
     }
+
+    if (this.mediacms_config.member.can.hearVoice) {
+      this.loadVoices();
+    }
   }
 
   dataErrorResponse(response) {
@@ -220,6 +234,13 @@ class MediaPageStore extends EventEmitter {
     if (response && response.data) {
       MediaPageStoreData[this.id].comments = response.data.count ? response.data.results : [];
       this.emit('comments_load');
+    }
+  }
+
+  voicesResponse(response) {
+    if (response && response.data) {
+      MediaPageStoreData[this.id].voices = response.data.count ? response.data.results : [];
+      this.emit('voices_load');
     }
   }
 
@@ -408,6 +429,9 @@ class MediaPageStore extends EventEmitter {
       case 'media-load-error-message':
         MediaPageStoreData[this.id].loadErrorMessage = value;
         break;
+      case 'media-voice-recording-start':
+        MediaPageStoreData[this.id].voiceRecordingStart = value;
+        break;
     }
   }
 
@@ -431,8 +455,19 @@ class MediaPageStore extends EventEmitter {
         r =
           void 0 !== MediaPageStoreData[this.id].loadErrorMessage ? MediaPageStoreData[this.id].loadErrorMessage : null;
         break;
+      case 'media-voice-recording-start':
+        // If it's undefined, don't return `null`, but return `0`.
+        // If `null` is returned, voice cannot be submitted to database with this response error:
+        // Error: Request failed with status code 400
+        // 400 Bad Request
+        r =
+          void 0 !== MediaPageStoreData[this.id].voiceRecordingStart ? MediaPageStoreData[this.id].voiceRecordingStart : 0;
+        break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
+        break;
+      case 'media-voices':
+        r = MediaPageStoreData[this.id].voices || [];
         break;
       case 'media-data':
         r = MediaPageStoreData[this.id].data || null;
@@ -754,6 +789,52 @@ class MediaPageStore extends EventEmitter {
           this.removeCommentFail
         );
         break;
+      case 'SUBMIT_VOICE':
+        if (MediaPageStoreData[this.id].while.submitVoice) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.submitVoice = true;
+
+        // https://stackoverflow.com/a/43014086/3405291
+        let formData = new FormData();
+        let voice_file = action.voiceFile;
+        formData.append("voice_file", voice_file);
+        formData.append("start", action.start);
+
+        postRequest(
+          this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().
+          formData,
+          { // configData:
+            headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data', },
+            crossDomain: true,
+            timeout: null,
+            maxContentLength: null,
+          },
+          false,
+          this.submitVoiceResponse,
+          this.submitVoiceFail
+        );
+        break;
+      case 'DELETE_VOICE':
+        // Delete a specific voice by its UID.
+        // TODO.
+        break;
+      case 'DELETE_VOICES':
+        // Delete all voices of a media created by a user.
+        if (MediaPageStoreData[this.id].while.deleteVoices) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.deleteVoices = true;
+        deleteRequest(
+          this.voicesAPIUrl,
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.removeVoicesResponse.bind(this), // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
+          this.removeVoicesFail.bind(this) // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
+        );
+        break;
       case 'CREATE_PLAYLIST':
         postRequest(
           this.mediacms_config.api.playlists,
@@ -889,6 +970,67 @@ class MediaPageStore extends EventEmitter {
       this
     );
   }
+
+  submitVoiceFail(err) {
+    this.emit('voice_submit_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.submitVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  submitVoiceResponse(response) {
+    if (response && 201 === response.status && response.data && Object.keys(response.data)) {
+      MediaPageStoreData[this.id].voices.push(response.data);
+      this.emit('voice_submit', response.data.uid); // Looks like response data is a databae instance. Since it has `uid`.
+
+      // After any voice submit, all the voices are loaded again.
+      // If voices are re-loaded correctly, a signal is emitted.
+      // The DAW component would handle the signal to get and display re-loaded voices.
+      this.loadVoices();
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.submitVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+
+  removeVoicesFail(err) {
+    this.emit('voices_delete_fail');
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
+  removeVoicesResponse(response) {
+    if (response && 204 === response.status) {
+      this.emit('voices_delete');
+
+      // After any voice deletion, all the voices are loaded again.
+      // If voices are re-loaded correctly, a signal is emitted.
+      // The DAW component would handle the signal to get and display re-loaded voices.
+      this.loadVoices();
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
 }
 
 export default exportStore(new MediaPageStore(), 'actions_handler');

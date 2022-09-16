@@ -424,7 +424,15 @@ function webpackAlias() {
     };
 }
 function webpackRules(env, srcDir, postcssConfigFile) {
-    return [{
+    return [
+        {
+            // Load the worker files as a chunk.
+            // TODO: Is there a better way to add it to our `webpack.config.js`?
+            // https://github.com/chris-rudmin/opus-recorder#getting-started-with-webpack
+            test: /encoderWorker\.min\.js$/,
+            use: [{ loader: 'file-loader' }]
+        },
+        {
             test: /\.(jsx|js)?$/,
             use: 'babel-loader'
         },

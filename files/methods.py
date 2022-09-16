@@ -345,6 +345,34 @@ View it on %s
         email.send(fail_silently=True)
     return True
 
+# This is copied from `notify_user_on_comment`.
+# The logic is almost the same.
+def notify_user_on_voice(friendly_token):
+    """Notify users through email, for a set of actions"""
+    media = models.Media.objects.filter(friendly_token=friendly_token).first()
+    if not media:
+        return False
+
+    user = media.user
+    media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
+
+    # We could add a DB table field like `user.notification_on_voices` but
+    # Let's avoid changing the `user` DB table model.
+    # Let's assume if user want's to be notified for comments,
+    # probably they want to be notified for voices too. Assume? Maybe?
+    if user.notification_on_comments:
+        title = "[{}] - A voice was added".format(settings.PORTAL_NAME)
+        msg = """
+A voice has been added to your media %s .
+View it on %s
+        """ % (
+            media.title,
+            media_url,
+        )
+        email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [media.user.email])
+        email.send(fail_silently=True)
+    return True
+
 
 def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
     from users.models import User

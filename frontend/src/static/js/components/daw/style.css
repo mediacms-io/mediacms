@@ -33,7 +33,7 @@
 
 /* Top row: controls + preview vide */
 
-.daw-top-row {
+.daw-top-row, .daw-bottom-row {
     width: 100%;
     /* See media queries... */
 }
@@ -50,9 +50,9 @@
 
 /* Audio upload */
 
-.track-drop { border: 0.18rem dashed blue; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+.track-drop { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
 
-.track-drop::before { content: "MP3/WAV"; }
+.track-drop::before { content: "Add"; }
 
 .track-drop.drag-enter { border: 0.18rem solid orange; }
 
@@ -62,6 +62,26 @@
 
 #input-drop{
     display: none;
+}
+
+/* Sync voices with database */
+
+#btn-download-WAV-file {
+    /* Save/sync button works for both (1) download and (2) upload to database. */
+    /* So, there is no need for another download button. */
+    display: none;
+}
+
+.daw-sync-outer {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}
+
+.daw-sync { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+
+.daw-sync::before { content: "Save voice"; }
+
+#daw-sync {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
 }
 
 /* General playlist */

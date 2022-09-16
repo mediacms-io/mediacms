@@ -89,6 +89,12 @@ def original_media_file_path(instance, filename):
     return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
 
 
+def original_voice_file_path(instance, filename):
+    """Helper function to place original voice file"""
+    file_name = "{0}.{1}".format(instance.uid.hex, helpers.get_file_name(filename))
+    # MEDIA_UPLOAD_DIR is used for `media` upload. It's used for `voice` too.
+    return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
+
 def encoding_media_file_path(instance, filename):
     """Helper function to place encoded media file"""
 
@@ -444,7 +450,6 @@ class Media(models.Model):
         Set encoding_status as success for non video
         content since all listings filter for encoding_status success
         """
-
         kind = helpers.get_file_type(self.media_file.path)
         if kind is not None:
             if kind == "image":
@@ -452,7 +457,7 @@ class Media(models.Model):
             elif kind == "pdf":
                 self.media_type = "pdf"
 
-        if self.media_type in ["image", "pdf"]:
+        if self.media_type in ["audio", "image", "pdf"]:
             self.encoding_status = "success"
         else:
             ret = helpers.media_file_info(self.media_file.path)
@@ -470,13 +475,19 @@ class Media(models.Model):
                 self.media_type = ""
                 self.encoding_status = "fail"
 
+            audio_file_with_thumb = False
+            # handle case where a file identified as video is actually an
+            # audio file with thumbnail
             if ret.get("is_video"):
                 # case where Media is video. try to set useful
                 # metadata as duration/height
                 self.media_type = "video"
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
-            elif ret.get("is_audio"):
+                if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
+                    audio_file_with_thumb = True
+
+            if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
                 self.duration = int(float(ret.get("audio_info", {}).get("duration", 0)))
                 self.encoding_status = "success"
@@ -1575,3 +1586,83 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
+
+class Voice(models.Model):
+    """The model for voice recordings by user"""
+
+    add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
+
+    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the voice")
+
+    likes = models.IntegerField(db_index=True, default=1)
+
+    md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
+
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, db_index=True, related_name="voices")
+
+    voice_file = models.FileField(
+        "voice file",
+        upload_to=original_voice_file_path,
+        max_length=500,
+        help_text="voice file",
+    )
+
+    start = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
+
+    title = models.CharField(max_length=100, help_text="voice title", blank=True, db_index=True)
+
+    uid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="A unique identifier for the voice")
+
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, help_text="user that uploads the voice")
+
+    views = models.IntegerField(db_index=True, default=1)
+
+    class Meta:
+        ordering = ["-add_date"]
+        
+    def __str__(self):
+        return self.title
+
+    # Make sure some fields are properly available.
+    def save(self, *args, **kwargs):
+
+        if not self.title:
+            self.title = self.voice_file.path.split("/")[-1]
+
+        self.title = self.title[:99]
+
+        # by default get an add_date of now
+        if not self.add_date:
+            self.add_date = timezone.now()
+
+        if not self.friendly_token:
+            # get a unique identifier
+            while True:
+                friendly_token = helpers.produce_friendly_token()
+                if not Voice.objects.filter(friendly_token=friendly_token):
+                    self.friendly_token = friendly_token
+                    break
+
+        super(Voice, self).save(*args, **kwargs)
+
+    # Copied from `Comment` model.
+    def get_absolute_url(self):
+        return reverse("get_media") + "?m={0}".format(self.media.friendly_token)
+
+    # Copied from `Comment` model.
+    @property
+    def media_url(self):
+        """Property used on serializers"""
+
+        return self.get_absolute_url()
+
+    # Copied from `Media` model.
+    @property
+    def original_voice_url(self):
+        """Property used on serializers"""
+
+        # TODO: This new config could be added: settings.SHOW_ORIGINAL_VOICE
+        if settings.SHOW_ORIGINAL_MEDIA:
+            return helpers.url_from_path(self.voice_file.path)
+        else:
+            return None

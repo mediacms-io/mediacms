@@ -17,6 +17,8 @@ export function init(user, features) {
       changePassword: true,
       deleteProfile: false,
       readComment: true,
+      hearVoice: true,
+      deleteVoice: true, // It's not added to `user` DB table model yet. TODO? Really needed?
       addComment: false,
       mentionComment: false,
       deleteComment: false,
@@ -94,6 +96,8 @@ export function init(user, features) {
     MEMBER.can.addMedia = true === user.can.addMedia;
     MEMBER.can.editProfile = true === user.can.editProfile;
     MEMBER.can.readComment = false === user.can.readComment ? false : true;
+    MEMBER.can.hearVoice = false === user.can.hearVoice ? false : true;
+    MEMBER.can.deleteVoice = false === user.can.deleteVoice ? false : true;
   }
 
   if (void 0 !== features) {
