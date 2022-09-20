@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import Script from 'next/script';
-import WaveformPlaylist from 'waveform-playlist';
+import WaveformPlaylist from 'waveform-playlist/build/waveform-playlist.umd';
 import { saveAs } from 'file-saver';
 import Wav2opus from './Wav2opus';
 
