@@ -98,3 +98,16 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### After pulling from upstream and getting latest updates, then,
 ### front-end redeployment can be done by the previous instructions.
 ###
+### # Custom DAW
+###
+### ## How to build
+###
+### git clone https://github.com/Micrufun/daw.git wfpl
+### cd wfpl
+### npm install --legacy-peer-deps
+###
+### ## Notes
+###
+### * There would be some errors without the `--legacy-peer-deps` option.
+### * The folder `build` is created by `npm install` command. It contains the build output.
+### * Sometimes clean-up must be done by `rm -rf frontend/node_modules` to avoid `frontend` docker errors.
