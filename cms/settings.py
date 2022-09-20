@@ -86,6 +86,7 @@ MAX_MEDIA_PER_PLAYLIST = 70
 UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5
 
 MAX_CHARS_FOR_COMMENT = 10000  # so that it doesn't end up huge
+TIMESTAMP_IN_TIMEBAR = False  # shows timestamped comments in the timebar for videos
 ALLOW_MENTION_IN_COMMENTS = False  # allowing to mention other users with @ in the comments
 
 # valid options: content, author
