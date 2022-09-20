@@ -111,3 +111,4 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### * There would be some errors without the `--legacy-peer-deps` option.
 ### * The folder `build` is created by `npm install` command. It contains the build output.
 ### * Sometimes clean-up must be done by `rm -rf frontend/node_modules` to avoid `frontend` docker errors.
+### * Maybe helpful: https://github.com/naomiaro/waveform-playlist/issues/51#issuecomment-284560392
