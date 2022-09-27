@@ -109,6 +109,11 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ### ## Notes
 ###
 ### * There would be some errors without the `--legacy-peer-deps` option.
-### * The folder `build` is created by `npm install` command. It contains the build output.
-### * Sometimes clean-up must be done by `rm -rf frontend/node_modules` to avoid `frontend` docker errors.
+### * The folder `build` is created by:
+###    * npm run webpack:unpkg
+### * The folder `build` is copied by:
+###    * cp -a /home/m3/repos/wfpl/build frontend/packages/wfpl
+### * Sometimes clean-up must be done to avoid `frontend` docker errors:
+###    * rm -rf frontend/node_modules
+###    * docker-compose -f docker-compose-dev.yaml exec frontend npm install
 ### * Maybe helpful: https://github.com/naomiaro/waveform-playlist/issues/51#issuecomment-284560392
