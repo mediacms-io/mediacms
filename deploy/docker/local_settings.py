@@ -102,18 +102,25 @@ ADMIN_EMAIL_LIST = ['micrufun@gmail.com']
 ###
 ### ## How to build
 ###
-### git clone https://github.com/Micrufun/daw.git wfpl
-### cd wfpl
+### git clone https://github.com/Micrufun/daw.git frontend/packages/wfpl
+### cd frontend/packages/wfpl/
 ### npm install --legacy-peer-deps
 ###
 ### ## Notes
 ###
 ### * There would be some errors without the `--legacy-peer-deps` option.
-### * The folder `build` is created by:
-###    * npm run webpack:unpkg
-### * The folder `build` is copied by:
-###    * cp -a /home/m3/repos/wfpl/build frontend/packages/wfpl
-### * Sometimes clean-up must be done to avoid `frontend` docker errors:
-###    * rm -rf frontend/node_modules
-###    * docker-compose -f docker-compose-dev.yaml exec frontend npm install
+### * Command `npm run prepare` creates these folders:
+###    * `lib`
+###    * `styles`
+###    * `build`
+### * `prepare` script is also executed when you run `npm install --legacy-peer-deps` 
+###    * https://stackoverflow.com/a/44835454/3405291
+### * To start development server on openSUSE Leap 15.4:
+###    * zypper in ruby-devel
+###    * gem install jekyll
+###    * cd /usr/bin/
+###    * ln -sv jekyll.ruby2.5 jekyll
+###    * cd /home/mediacms.io/mediacms/frontend/packages/wfpl/
+###    * npm run build
+###    * npm run start
 ### * Maybe helpful: https://github.com/naomiaro/waveform-playlist/issues/51#issuecomment-284560392
