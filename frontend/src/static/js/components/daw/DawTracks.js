@@ -89,7 +89,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         ee.on('timeupdate', updateTime);
 
         ee.on('removeTrackFromDatabase', function(track){
-          console.debug('Track to be removed from database:', track.friendly_token);
+          console.debug('Track to be removed from database:', track.friendly_token, track.author_name, track.author_thumbnail_url);
         });
       }
     },
@@ -124,6 +124,8 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             name: voice.title,
             start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
             friendly_token: voice.friendly_token,
+            author_name: voice.author_name,
+            author_thumbnail_url: voice.author_thumbnail_url,
           };
         })
       )
