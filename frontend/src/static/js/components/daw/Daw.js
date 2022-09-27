@@ -5,6 +5,7 @@ import { MediaPageStore } from '../../utils/stores/';
 import { MemberContext } from '../../utils/contexts/';
 import { PageActions } from '../../utils/actions/';
 
+import 'waveform-playlist/styles/playlist.css'
 import 'waveform-playlist/styles/playlist.scss';
 
 import '../daw/style.css';
