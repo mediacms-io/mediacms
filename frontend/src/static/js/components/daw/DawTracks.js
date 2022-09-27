@@ -96,7 +96,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             track.author_name,
             track.author_thumbnail_url,
             track.author_profile,
-            track.logged_author
+            track.logged_user
           );
         });
       }
@@ -135,7 +135,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
-            logged_author: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
+            logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
           };
         })
       )
