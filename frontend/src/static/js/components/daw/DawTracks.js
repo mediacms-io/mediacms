@@ -4,6 +4,7 @@ import Script from 'next/script';
 import WaveformPlaylist from 'waveform-playlist/build/waveform-playlist.umd';
 import { saveAs } from 'file-saver';
 import Wav2opus from './Wav2opus';
+import { MemberContext } from '../../utils/contexts/';
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
@@ -94,7 +95,8 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             track.friendly_token,
             track.author_name,
             track.author_thumbnail_url,
-            track.author_profile
+            track.author_profile,
+            track.logged_user
           );
         });
       }
@@ -133,6 +135,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
+            logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
           };
         })
       )
