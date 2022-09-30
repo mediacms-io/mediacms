@@ -7,8 +7,8 @@
   margin-top: 0.5rem;
 
   > button {
-    // Avoid the white color of the `trash` button:
-    //color: #fff;
+    // Hide the button.
+    display: none;
   }
 
   .popup {
