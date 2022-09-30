@@ -1,0 +1,43 @@
+@import '../../../css/includes/_variables.scss';
+
+.daw-delete-popup {
+  position: relative;
+  width: auto;
+  // float:right;
+  margin-top: 0.5rem;
+
+  > button {
+    // Avoid the white color of the `trash` button:
+    //color: #fff;
+  }
+
+  .popup {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+
+    .popup-message-bottom {
+      button {
+        position: relative;
+        width: auto;
+        padding: 0;
+        border: 0;
+
+        &.cancel-voice-removal,
+        &.proceed-voice-removal {
+          background-color: transparent;
+          background-color: rgba(0, 0, 0, 0);
+        }
+
+        &.proceed-voice-removal {
+          float: right;
+        }
+
+        &.cancel-voice-removal {
+          float: left;
+        }
+      }
+    }
+  }
+}

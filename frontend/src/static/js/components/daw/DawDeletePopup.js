@@ -34,7 +34,7 @@ export default function DawDelete({ ee }) {
   }
 
   return (
-    <div>
+    <div className="daw-delete-popup">
       <PopupTrigger contentRef={popupContentRef}>
         <button
           ref={hiddenButtonEl}
