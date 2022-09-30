@@ -20,6 +20,7 @@ import DawControl from "./DawControl";
 import DawSync from "./DawSync";
 import DawTracks from "./DawTracks";
 import DawDelete from "./DawDelete";
+import DawDeletePopup from "./DawDeletePopup";
 
 const voicesText = {
   single: 'voice',
@@ -140,6 +141,7 @@ export default function Daw({ playerInstance }) {
           <DawTrackDrop ee={ee}></DawTrackDrop>
           {/* This one deletes all owned voices, not needed now: <DawDelete></DawDelete> */}
           <DawSync ee={ee}></DawSync>
+          <DawDeletePopup ee={ee}></DawDeletePopup>
         </div>
       </main>
     </>

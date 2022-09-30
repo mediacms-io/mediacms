@@ -88,17 +88,6 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('select', updateSelect);
         ee.on('timeupdate', updateTime);
-
-        ee.on('removeTrackFromDatabase', function(track){
-          console.debug(
-            'Track to be removed from database:',
-            track.friendly_token,
-            track.author_name,
-            track.author_thumbnail_url,
-            track.author_profile,
-            track.logged_user
-          );
-        });
       }
     },
     [ee, toneCtx] // The callback is run only when these dependencies change.
