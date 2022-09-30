@@ -138,7 +138,7 @@ export default function Daw({ playerInstance }) {
         ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
-          <DawDelete></DawDelete>
+          {/* This one deletes all owned voices, not needed now: <DawDelete></DawDelete> */}
           <DawSync ee={ee}></DawSync>
         </div>
       </main>
