@@ -39,13 +39,7 @@ export default function DawDelete({ ee }) {
         <button
           ref={hiddenButtonEl}
           style={{ display: 'none' }}
-          onClick={(event) => {
-            // Looks like the logic here has no effect:
-            event.preventDefault();
-            console.debug('Poping up a popup...');
-          }}
         >
-          <i className="fas fa-trash"></i>
         </button>
       </PopupTrigger>
       <PopupContent contentRef={popupContentRef}>
