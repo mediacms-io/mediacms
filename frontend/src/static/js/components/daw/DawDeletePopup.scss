@@ -2,9 +2,9 @@
 
 .daw-delete-popup {
   position: relative;
-  width: auto;
-  // float:right;
-  margin-top: 0.5rem;
+  width: 0px;
+  height: 0px;
+  margin-top: 0rem;
 
   > button {
     // Hide the button.
@@ -12,9 +12,7 @@
   }
 
   .popup {
-    position: absolute;
     bottom: 100%;
-    left: 0;
     margin-bottom: 8px;
 
     .popup-message-bottom {
@@ -36,6 +34,19 @@
 
         &.cancel-voice-removal {
           float: left;
+        }
+
+        &.cancel-voice-removal {
+          color: var(--voice-actions-cancel-removal-button-text-color);
+
+          &:hover,
+          &:focus {
+            color: var(--voice-actions-cancel-removal-button-hover-text-color);
+
+            .material-icons {
+              color: var(--voice-actions-cancel-removal-button-hover-text-color);
+            }
+          }
         }
       }
     }
