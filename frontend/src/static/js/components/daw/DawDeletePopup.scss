@@ -5,6 +5,8 @@
   width: auto;
   // float:right;
   margin-top: 0.5rem;
+  width: 0rem; // Zero: to avoid movement of neighbor buttons.
+  height: 0rem; // Zero: to avoid movement of neighbor buttons.
 
   > button {
     // Hide the button.
@@ -16,6 +18,15 @@
     bottom: 100%;
     left: 0;
     margin-bottom: 8px;
+
+    .popup-message {
+      width: 16rem; // Avoid covering the whole width.
+    }
+
+    .popup-message-bottom {
+      width: 16rem; // Avoid covering the whole width.
+      float: none; // Avoid floating left.
+    }
 
     .popup-message-bottom {
       button {
