@@ -48,6 +48,19 @@
         &.cancel-voice-removal {
           float: left;
         }
+
+        &.cancel-voice-removal {
+          color: var(--voice-actions-cancel-removal-button-text-color);
+
+          &:hover,
+          &:focus {
+            color: var(--voice-actions-cancel-removal-button-hover-text-color);
+
+            .material-icons {
+              color: var(--voice-actions-cancel-removal-button-hover-text-color);
+            }
+          }
+        }
       }
     }
   }
