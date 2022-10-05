@@ -2,8 +2,8 @@
 
 .daw-delete-popup {
   position: relative;
-  width: 0rem; // Zero: to avoid movement of neighbor buttons.
-  height: 0rem; // Zero: to avoid movement of neighbor buttons.
+  width: 0px;
+  height: 0px;
   margin-top: 0rem;
 
   > button {
@@ -14,15 +14,6 @@
   .popup {
     bottom: 100%;
     margin-bottom: 8px;
-
-    .popup-message {
-      width: 16rem; // Avoid covering the whole width.
-    }
-
-    .popup-message-bottom {
-      width: 16rem; // Avoid covering the whole width.
-      float: none; // AVoid floating left.
-    }
 
     .popup-message-bottom {
       button {
