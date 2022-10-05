@@ -25,12 +25,13 @@ export default function DawDelete({ ee }) {
 
   function cancelVoiceRemoval() {
     popupContentRef.current.toggle();
+    console.log('Cancel...');
   }
 
   function proceedVoiceRemoval() {
     popupContentRef.current.toggle();
     //MediaPageActions.deleteVoices();
-    console.debug('Trashing the voice...');
+    console.log('Trashing the voice...');
   }
 
   return (
