@@ -10,7 +10,7 @@ export default function DawDelete({ ee }) {
 
   useEffect(() => {
     ee.on('removeTrackFromDatabase', function (track) {
-      console.debug(
+      console.log(
         'Track to be removed from database:',
         track.friendly_token,
         track.author_name,
