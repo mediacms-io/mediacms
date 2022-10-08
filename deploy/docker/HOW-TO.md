@@ -90,11 +90,11 @@ npm install --legacy-peer-deps
 * `prepare` script is also executed when you run `npm install --legacy-peer-deps` 
    * https://stackoverflow.com/a/44835454/3405291
 * To start development server on openSUSE Leap 15.4:
-   * zypper in ruby-devel
-   * gem install jekyll
-   * cd /usr/bin/
-   * ln -sv jekyll.ruby2.5 jekyll
-   * cd /home/mediacms.io/mediacms/frontend/packages/wfpl/
-   * npm run build
-   * npm run start
+   * `zypper in ruby-devel`
+   * `gem install jekyll`
+   * `cd /usr/bin/`
+   * `ln -sv jekyll.ruby2.5 jekyll`
+   * `cd /home/mediacms.io/mediacms/frontend/packages/wfpl/`
+   * `npm run build`
+   * `npm run start`
 * Maybe helpful: https://github.com/naomiaro/waveform-playlist/issues/51#issuecomment-284560392
