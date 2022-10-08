@@ -48,6 +48,7 @@ export default function DawDelete({ ee }) {
                 <span className="popup-message-title">Voice delete</span>
                 <span className="popup-message-main">Trash your voice forever?</span>
               </div>
+              <hr />
               <span className="popup-message-bottom">
                 <button className="button-link cancel-voice-removal" onClick={cancelVoiceRemoval}>
                   NOT SURE
