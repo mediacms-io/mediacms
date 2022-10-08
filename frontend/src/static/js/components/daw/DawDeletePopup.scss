@@ -14,6 +14,8 @@
     margin-bottom: 8px;
 
     .popup-dialog {
+      position: relative;
+      z-index: 88; // z-index only works on positioned elements.
       width: 16rem; // Avoid covering the whole width.
       display: inline-block;
       background-color: var(--popup-bg-color);
