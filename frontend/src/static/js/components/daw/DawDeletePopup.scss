@@ -22,6 +22,8 @@
       width: 16rem; // Avoid covering the whole width.
       float: none; // Avoid floating left.
       background-color: var(--popup-bg-color);
+      margin: 0rem;
+      padding: 1rem 1.5rem;
     }
 
     .popup-message-bottom {
