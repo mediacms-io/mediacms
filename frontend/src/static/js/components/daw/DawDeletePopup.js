@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 
-import './DawDeletePopup.scss'
+import './DawDeletePopup.scss';
 
 export default function DawDelete({ ee }) {
   const hiddenButtonEl = useRef(null);
@@ -37,30 +37,28 @@ export default function DawDelete({ ee }) {
   return (
     <div className="daw-delete-popup">
       <PopupTrigger contentRef={popupContentRef}>
-        <button
-          ref={hiddenButtonEl}
-          style={{ display: 'none' }}
-        >
-        </button>
+        <button ref={hiddenButtonEl} style={{ display: 'none' }}></button>
       </PopupTrigger>
       <PopupContent contentRef={popupContentRef}>
-      <div className="popup-fullscreen">
-        <PopupMain>
-        <span className="popup-fullscreen-overlay"></span>
-          <div className="popup-message">
-            <span className="popup-message-title">Voice delete</span>
-            <span className="popup-message-main">Trash your voice forever?</span>
-          </div>
-          <hr />
-          <span className="popup-message-bottom">
-            <button className="button-link cancel-voice-removal" onClick={cancelVoiceRemoval}>
-              NOT SURE
-            </button>
-            <button className="button-link proceed-voice-removal" onClick={proceedVoiceRemoval}>
-              YES
-            </button>
-          </span>
-        </PopupMain>
+        <div className="popup-fullscreen">
+          <PopupMain>
+            <span className="popup-fullscreen-overlay"></span>
+            <div className="popup-dialog">
+              <div className="popup-message">
+                <span className="popup-message-title">Voice delete</span>
+                <span className="popup-message-main">Trash your voice forever?</span>
+              </div>
+              <hr />
+              <span className="popup-message-bottom">
+                <button className="button-link cancel-voice-removal" onClick={cancelVoiceRemoval}>
+                  NOT SURE
+                </button>
+                <button className="button-link proceed-voice-removal" onClick={proceedVoiceRemoval}>
+                  YES
+                </button>
+              </span>
+            </div>
+          </PopupMain>
         </div>
       </PopupContent>
     </div>
