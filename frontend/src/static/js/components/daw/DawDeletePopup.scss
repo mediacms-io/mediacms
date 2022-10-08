@@ -1,5 +1,9 @@
 @import '../../../css/includes/_variables.scss';
 
+.popup-fullscreen .popup-main>div {
+  background-color: var(--popup-bg-color);
+}
+
 .daw-delete-popup {
   position: relative;
   width: auto;
@@ -21,11 +25,13 @@
 
     .popup-message {
       width: 16rem; // Avoid covering the whole width.
+      background-color: var(--popup-bg-color);
     }
 
     .popup-message-bottom {
       width: 16rem; // Avoid covering the whole width.
       float: none; // Avoid floating left.
+      background-color: var(--popup-bg-color);
     }
 
     .popup-message-bottom {
