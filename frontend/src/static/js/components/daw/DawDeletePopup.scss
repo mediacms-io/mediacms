@@ -13,17 +13,10 @@
     left: 0;
     margin-bottom: 8px;
 
-    .popup-message {
+    .popup-dialog {
       width: 16rem; // Avoid covering the whole width.
+      display: inline-block;
       background-color: var(--popup-bg-color);
-    }
-
-    .popup-message-bottom {
-      width: 16rem; // Avoid covering the whole width.
-      float: none; // Avoid floating left.
-      background-color: var(--popup-bg-color);
-      margin: 0rem;
-      padding: 1rem 1.5rem;
     }
 
     .popup-message-bottom {
