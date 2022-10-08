@@ -8,8 +8,8 @@ import { PageActions } from '../../utils/actions/';
 import 'waveform-playlist/styles/playlist.css'
 import 'waveform-playlist/styles/playlist.scss';
 
-import '../daw/style.css';
-import '../daw/responsive.css';
+import './daw.css';
+import './daw-responsive.css';
 
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
