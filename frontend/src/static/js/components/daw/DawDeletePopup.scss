@@ -2,16 +2,10 @@
 
 .daw-delete-popup {
   position: relative;
-  width: auto;
   // float:right;
   margin-top: 0.5rem;
   width: 0rem; // Zero: to avoid movement of neighbor buttons.
   height: 0rem; // Zero: to avoid movement of neighbor buttons.
-
-  > button {
-    // Hide the button.
-    display: none;
-  }
 
   .popup {
     position: absolute;
