@@ -2,20 +2,20 @@
 
 .daw-delete-popup {
   position: relative;
-  // float:right;
-  margin-top: 0.5rem;
+  z-index: 88;
   width: 0rem; // Zero: to avoid movement of neighbor buttons.
   height: 0rem; // Zero: to avoid movement of neighbor buttons.
 
   .popup {
     position: absolute;
+    z-index: 89;
     bottom: 100%;
     left: 0;
     margin-bottom: 8px;
 
     .popup-dialog {
       position: relative; // z-index only works on positioned elements.
-      z-index: 88;
+      z-index: 90;
       width: 16rem; // Avoid covering the whole width.
       display: inline-block;
       background-color: var(--popup-bg-color);
