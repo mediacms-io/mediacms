@@ -83,15 +83,28 @@ export default function Daw({ playerInstance }) {
     );
   }
 
-  function onVoicesDelete() {
+  function onVoiceDelete() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' removed', 'voiceDelete'), 100);
+  }
+
+  function onVoiceDeleteFail() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
+      100
+    );
+  }
+
+  function onVoicesDelete() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(() => PageActions.addNotification(voicesText.ucfirstPlural + ' removed', 'voicesDelete'), 100);
   }
 
   function onVoicesDeleteFail() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
-      () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
+      () => PageActions.addNotification(voicesText.ucfirstPlural + ' removal failed', 'voicesDeleteFail'),
       100
     );
   }
@@ -105,6 +118,8 @@ export default function Daw({ playerInstance }) {
     MediaPageStore.on('voices_load', onVoicesLoad);
     MediaPageStore.on('voice_submit', onVoiceSubmit);
     MediaPageStore.on('voice_submit_fail', onVoiceSubmitFail);
+    MediaPageStore.on('voice_delete', onVoiceDelete);
+    MediaPageStore.on('voice_delete_fail', onVoiceDeleteFail);
     MediaPageStore.on('voices_delete', onVoicesDelete);
     MediaPageStore.on('voices_delete_fail', onVoicesDeleteFail);
 
@@ -112,6 +127,8 @@ export default function Daw({ playerInstance }) {
       MediaPageStore.removeListener('voices_load', onVoicesLoad);
       MediaPageStore.removeListener('voice_submit', onVoiceSubmit);
       MediaPageStore.removeListener('voice_submit_fail', onVoiceSubmitFail);
+      MediaPageStore.removeListener('voice_delete', onVoiceDelete);
+      MediaPageStore.removeListener('voice_delete_fail', onVoiceDeleteFail);
       MediaPageStore.removeListener('voices_delete', onVoicesDelete);
       MediaPageStore.removeListener('voices_delete_fail', onVoicesDeleteFail);
     };

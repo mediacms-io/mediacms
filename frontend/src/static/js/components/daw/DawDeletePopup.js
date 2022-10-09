@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
+import { MediaPageStore } from '../../utils/stores/';
+import { MediaPageActions } from '../../utils/actions/';
 
 import './DawDeletePopup.scss';
 
@@ -13,11 +15,14 @@ export default function DawDelete({ ee }) {
       console.log(
         'Track to be removed from database:',
         track.friendly_token,
+        track.uid,
         track.author_name,
         track.author_thumbnail_url,
         track.author_profile,
         track.logged_user
       );
+      // Store this track's `uid` to identify it on database when deleting it.
+      MediaPageStore.set('media-voice-deletion-uid', track.uid);
       // Simulate a click on a hidden button, to trigger pop up.
       hiddenButtonEl.current.click();
     });
@@ -30,8 +35,9 @@ export default function DawDelete({ ee }) {
 
   function proceedVoiceRemoval() {
     popupContentRef.current.toggle();
-    //MediaPageActions.deleteVoices();
     console.log('Trashing the voice...');
+    // Delete voice inside server database.
+    MediaPageActions.deleteVoice(MediaPageStore.get('media-voice-deletion-uid'));    
   }
 
   return (

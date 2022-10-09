@@ -432,6 +432,8 @@ class MediaPageStore extends EventEmitter {
       case 'media-voice-recording-start':
         MediaPageStoreData[this.id].voiceRecordingStart = value;
         break;
+      case 'media-voice-deletion-uid':
+        MediaPageStoreData[this.id].voiceDeletionUid = value;
     }
   }
 
@@ -462,6 +464,10 @@ class MediaPageStore extends EventEmitter {
         // 400 Bad Request
         r =
           void 0 !== MediaPageStoreData[this.id].voiceRecordingStart ? MediaPageStoreData[this.id].voiceRecordingStart : 0;
+        break;
+      case 'media-voice-deletion-uid':
+        r =
+          void 0 !== MediaPageStoreData[this.id].voiceDeletionUid ? MediaPageStoreData[this.id].voiceDeletionUid : null;
         break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
@@ -818,7 +824,18 @@ class MediaPageStore extends EventEmitter {
         break;
       case 'DELETE_VOICE':
         // Delete a specific voice by its UID.
-        // TODO.
+        if (MediaPageStoreData[this.id].while.deleteVoice) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.deleteVoice = true;
+        deleteRequest(
+          this.voicesAPIUrl + '/' + action.voiceUid,
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.removeVoiceResponse.bind(this),
+          this.removeVoiceFail.bind(this)
+        );
         break;
       case 'DELETE_VOICES':
         // Delete all voices of a media created by a user.
@@ -995,6 +1012,35 @@ class MediaPageStore extends EventEmitter {
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.submitVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  removeVoiceFail(err) {
+    this.emit('voice_delete_fail');
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  removeVoiceResponse(response) {
+    if (response && 204 === response.status) {
+      this.emit('voice_delete');
+
+      // After any voice deletion, all the voices are loaded again.
+      // If voices are re-loaded correctly, a signal is emitted.
+      // The DAW component would handle the signal to get and display re-loaded voices.
+      this.loadVoices();
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.deleteVoice = false;
       },
       100,
       this
