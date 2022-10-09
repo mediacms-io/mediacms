@@ -74,6 +74,8 @@ After pulling from upstream and getting latest updates, then, front-end redeploy
 
 ### How to build
 
+If root user creates some errors for `prepare` script, try to run as a non-root user:
+
 ```
 git clone https://github.com/Micrufun/daw.git frontend/packages/wfpl
 cd frontend/packages/wfpl/

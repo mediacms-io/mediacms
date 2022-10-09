@@ -125,6 +125,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
+            // `author_profile` path is compared with `logged_user` to detect whether the voice creator is logged in.
             logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
           };
         })
