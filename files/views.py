@@ -1436,7 +1436,7 @@ class VoiceDetail(APIView):
 
         serializer = VoiceSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save(user=request.user, media=media, title=request.user.name)
+            serializer.save(user=request.user, media=media)
             if request.user != media.user:
                 notify_user_on_voice(friendly_token=media.friendly_token)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

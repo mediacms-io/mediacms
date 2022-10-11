@@ -432,6 +432,9 @@ class MediaPageStore extends EventEmitter {
       case 'media-voice-recording-start':
         MediaPageStoreData[this.id].voiceRecordingStart = value;
         break;
+      case 'media-voice-recording-title':
+        MediaPageStoreData[this.id].voiceRecordingTitle = value;
+        break;
       case 'media-voice-deletion-uid':
         MediaPageStoreData[this.id].voiceDeletionUid = value;
     }
@@ -464,6 +467,10 @@ class MediaPageStore extends EventEmitter {
         // 400 Bad Request
         r =
           void 0 !== MediaPageStoreData[this.id].voiceRecordingStart ? MediaPageStoreData[this.id].voiceRecordingStart : 0;
+        break;
+      case 'media-voice-recording-title':
+        r =
+          void 0 !== MediaPageStoreData[this.id].voiceRecordingTitle ? MediaPageStoreData[this.id].voiceRecordingTitle : null;
         break;
       case 'media-voice-deletion-uid':
         r =
@@ -807,6 +814,7 @@ class MediaPageStore extends EventEmitter {
         let voice_file = action.voiceFile;
         formData.append("voice_file", voice_file);
         formData.append("start", action.start);
+        formData.append("title", action.title);
 
         postRequest(
           this.voicesAPIUrl, // This URL is already set when loading voices by loadVoices().

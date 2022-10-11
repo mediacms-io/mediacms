@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
+import { MediaPageStore } from '../../utils/stores/';
 
 export default function DawSync({ ee }) {
   // Login link is just like:
@@ -28,6 +29,8 @@ export default function DawSync({ ee }) {
             className="btn btn-outline-dark"
             title="Save the current work as a voice file"
             onClick={(event) => {
+              // TODO: popup to get title.
+              MediaPageStore.set('media-voice-recording-title', 'A title');
               // Emit a signal to start creating voice file.
               // On `audiorenderingfinished`, the finished voice file would be saved.
               ee.emit("startaudiorendering", "wav");
