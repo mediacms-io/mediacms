@@ -1,0 +1,19 @@
+@import '../../../css/includes/_variables.scss';
+
+.daw-sync-outer {
+  position: relative;
+  z-index: 88;
+
+  .popup {
+    position: absolute;
+    z-index: 89;
+  }
+
+  .popup-dialog {
+    position: relative; // z-index only works on positioned elements.
+    z-index: 90;
+    width: 16rem; // Avoid covering the whole width.
+    display: inline-block;
+    background-color: var(--popup-bg-color);
+  }
+}

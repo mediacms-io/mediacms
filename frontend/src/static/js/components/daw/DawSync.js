@@ -5,6 +5,8 @@ import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 import { addClassname, removeClassname } from '../../utils/helpers/';
 
+import './DawSync.scss'
+
 export default function DawSync({ ee }) {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
@@ -79,6 +81,7 @@ export default function DawSync({ ee }) {
           <div className="popup-fullscreen">
             <PopupMain>
               <span className="popup-fullscreen-overlay"></span>
+              <div className="popup-dialog">
               {/* Input form is according to: */}
               {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
               {/* Class names are kept as before just to have the same CSS styles. */}
@@ -103,6 +106,7 @@ export default function DawSync({ ee }) {
                     CREATE
                   </button>
                 </div>
+              </div>
               </div>
             </PopupMain>
           </div>
