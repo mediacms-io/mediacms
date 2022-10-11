@@ -54,6 +54,7 @@ export default function DawSync({ ee }) {
   useEffect(() => {
     if (nameInputRef.current) {
       // To avoid: Uncaught TypeError: Cannot read properties of null (reading 'focus')
+      // TODO: figure out the error cause. It should work, right?
       nameInputRef.current.focus();
     }
   }, []);
