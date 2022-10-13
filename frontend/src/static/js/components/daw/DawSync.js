@@ -101,6 +101,7 @@ export default function DawSync({ ee }) {
                     onFocus={onFocusNameInput}
                     onBlur={onBlurNameInput}
                     onClick={onChangeNameInput}
+                    maxLength="8"
                   />
                 </div>
 
