@@ -42,6 +42,12 @@ export default function DawSync({ ee }) {
   function onClickCreation() {
     popupContentRef.current.toggle();
     let title = nameInputRef.current.value.trim();
+
+    // https://stackoverflow.com/questions/7463658/how-to-trim-a-string-to-n-chars-in-javascript#comment16678002_7463674
+    // And if you want ellipses for strings exceeding the max length (probably more helpful for longer max):
+    var length = 8;
+    title = title.length > length ? title.substring(0, length - 3) + "..." : title.substring(0, length);
+
     if ('' !== title) {
       console.log('Voice title:', title);
       MediaPageStore.set('media-voice-recording-title', title);
