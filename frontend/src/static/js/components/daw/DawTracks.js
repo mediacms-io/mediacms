@@ -1,8 +1,10 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
 import Script from 'next/script';
-import WaveformPlaylist from 'waveform-playlist';
+// UMD is universal for both front & back, so use it for now.
+import WaveformPlaylist from 'waveform-playlist/build/waveform-playlist.umd';
 import { saveAs } from 'file-saver';
 import Wav2opus from './Wav2opus';
+import { MemberContext } from '../../utils/contexts/';
 
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
@@ -118,6 +120,13 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             src: voice.original_voice_url,
             name: voice.title,
             start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
+            friendly_token: voice.friendly_token,
+            uid: voice.uid,
+            author_name: voice.author_name, // Name may be changed by the user.
+            author_thumbnail_url: voice.author_thumbnail_url,
+            author_profile: voice.author_profile, // Profile is always constant.
+            // `author_profile` path is compared with `logged_user` to detect whether the voice creator is logged in.
+            logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
           };
         })
       )

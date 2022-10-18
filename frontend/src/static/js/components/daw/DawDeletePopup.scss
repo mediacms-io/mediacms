@@ -1,0 +1,60 @@
+@import '../../../css/includes/_variables.scss';
+
+.daw-delete-popup {
+  position: relative;
+  z-index: 88;
+  width: 0rem; // Zero: to avoid movement of neighbor buttons.
+  height: 0rem; // Zero: to avoid movement of neighbor buttons.
+
+  .popup {
+    position: absolute;
+    z-index: 89;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+
+    .popup-dialog {
+      position: relative; // z-index only works on positioned elements.
+      z-index: 90;
+      width: 16rem; // Avoid covering the whole width.
+      display: inline-block;
+      background-color: var(--popup-bg-color);
+    }
+
+    .popup-message-bottom {
+      button {
+        position: relative;
+        width: auto;
+        padding: 0;
+        border: 0;
+
+        &.cancel-voice-removal,
+        &.proceed-voice-removal {
+          background-color: transparent;
+          background-color: rgba(0, 0, 0, 0);
+        }
+
+        &.proceed-voice-removal {
+          float: right;
+        }
+
+        &.cancel-voice-removal {
+          float: left;
+        }
+
+        &.cancel-voice-removal {
+          color: var(--voice-actions-cancel-removal-button-text-color);
+
+          &:hover,
+          &:focus {
+            color: var(--voice-actions-cancel-removal-button-hover-text-color);
+
+            .material-icons {
+              color: var(--voice-actions-cancel-removal-button-hover-text-color);
+            }
+          }
+        }
+      }
+    }
+  }
+}

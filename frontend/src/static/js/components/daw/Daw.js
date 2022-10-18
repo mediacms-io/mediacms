@@ -5,10 +5,11 @@ import { MediaPageStore } from '../../utils/stores/';
 import { MemberContext } from '../../utils/contexts/';
 import { PageActions } from '../../utils/actions/';
 
+import 'waveform-playlist/styles/playlist.css'
 import 'waveform-playlist/styles/playlist.scss';
 
-import '../daw/style.css';
-import '../daw/responsive.css';
+import './daw.css';
+import './daw-responsive.css';
 
 // For extra buttons.
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -19,6 +20,7 @@ import DawControl from "./DawControl";
 import DawSync from "./DawSync";
 import DawTracks from "./DawTracks";
 import DawDelete from "./DawDelete";
+import DawDeletePopup from "./DawDeletePopup";
 
 const voicesText = {
   single: 'voice',
@@ -81,15 +83,28 @@ export default function Daw({ playerInstance }) {
     );
   }
 
-  function onVoicesDelete() {
+  function onVoiceDelete() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' removed', 'voiceDelete'), 100);
+  }
+
+  function onVoiceDeleteFail() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
+      100
+    );
+  }
+
+  function onVoicesDelete() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(() => PageActions.addNotification(voicesText.ucfirstPlural + ' removed', 'voicesDelete'), 100);
   }
 
   function onVoicesDeleteFail() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
-      () => PageActions.addNotification(voicesText.ucfirstSingle + ' removal failed', 'voiceDeleteFail'),
+      () => PageActions.addNotification(voicesText.ucfirstPlural + ' removal failed', 'voicesDeleteFail'),
       100
     );
   }
@@ -103,6 +118,8 @@ export default function Daw({ playerInstance }) {
     MediaPageStore.on('voices_load', onVoicesLoad);
     MediaPageStore.on('voice_submit', onVoiceSubmit);
     MediaPageStore.on('voice_submit_fail', onVoiceSubmitFail);
+    MediaPageStore.on('voice_delete', onVoiceDelete);
+    MediaPageStore.on('voice_delete_fail', onVoiceDeleteFail);
     MediaPageStore.on('voices_delete', onVoicesDelete);
     MediaPageStore.on('voices_delete_fail', onVoicesDeleteFail);
 
@@ -110,6 +127,8 @@ export default function Daw({ playerInstance }) {
       MediaPageStore.removeListener('voices_load', onVoicesLoad);
       MediaPageStore.removeListener('voice_submit', onVoiceSubmit);
       MediaPageStore.removeListener('voice_submit_fail', onVoiceSubmitFail);
+      MediaPageStore.removeListener('voice_delete', onVoiceDelete);
+      MediaPageStore.removeListener('voice_delete_fail', onVoiceDeleteFail);
       MediaPageStore.removeListener('voices_delete', onVoicesDelete);
       MediaPageStore.removeListener('voices_delete_fail', onVoicesDeleteFail);
     };
@@ -137,8 +156,9 @@ export default function Daw({ playerInstance }) {
         ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
-          <DawDelete></DawDelete>
+          {/* This one deletes all owned voices, not needed now: <DawDelete></DawDelete> */}
           <DawSync ee={ee}></DawSync>
+          <DawDeletePopup ee={ee}></DawDeletePopup>
         </div>
       </main>
     </>

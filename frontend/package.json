@@ -55,6 +55,6 @@
     "sortablejs": "^1.13.0",
     "timeago.js": "^4.0.2",
     "url-parse": "^1.5.1",
-    "waveform-playlist": "^4.3.3"
+    "waveform-playlist": "file:packages/wfpl"
   }
 }

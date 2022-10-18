@@ -1,0 +1,85 @@
+/* Otherwise video palyer would be hidden */
+.player-container {
+    width: 100%;
+}
+
+/* DAW on page layout */
+
+.daw-container-outer {
+    position: relative;
+    float: right;
+    width: 100%;
+  
+    padding: 12px 16px 24px;
+}  
+
+/* DAW controls like play, pause, record */
+
+.controls-groups, .track-drop-outer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center; /* Vertical alignment */
+    gap: 0.5rem;
+}
+
+.controls-group {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: center; /* Vertical alignment */
+    gap: 0.5rem;
+}
+
+/* Top row: controls + preview vide */
+
+.daw-top-row, .daw-bottom-row {
+    width: 100%;
+    /* See media queries... */
+}
+
+/* video preview to help artists see video while recording */
+
+.video-preview-outer {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: center; /* Vertical alignment */
+    gap: 0.5rem;
+}
+
+/* Audio upload */
+
+.track-drop { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+
+.track-drop::before { content: "Add"; }
+
+.track-drop.drag-enter { border: 0.18rem solid orange; }
+
+#track-drop {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}
+
+#input-drop{
+    display: none;
+}
+
+/* Sync voices with database */
+
+#btn-download-WAV-file {
+    /* Save/sync button works for both (1) download and (2) upload to database. */
+    /* So, there is no need for another download button. */
+    display: none;
+}
+
+.daw-sync-outer {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}
+
+.daw-sync { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+
+.daw-sync::before { content: "Save voice"; }
+
+#daw-sync {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}

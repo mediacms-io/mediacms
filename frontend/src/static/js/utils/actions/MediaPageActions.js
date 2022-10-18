@@ -59,19 +59,20 @@ export function deleteComment(commentId) {
   });
 }
 
-export function submitVoice(voiceFile, start) {
+export function submitVoice(voiceFile, start, title) {
   Dispatcher.dispatch({
     type: 'SUBMIT_VOICE',
     voiceFile,
     start,
+    title,
   });
 }
 
 // Delete a specific voice by its UID.
-export function deleteVoice(voiceId) {
+export function deleteVoice(voiceUid) {
   Dispatcher.dispatch({
     type: 'DELETE_VOICE',
-    voiceId,
+    voiceUid,
   });
 }
 

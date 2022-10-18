@@ -4,7 +4,7 @@ import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 import { MediaPageActions } from '../../utils/actions/';
 
-import '../daw/delete.scss';
+import './DawDelete.scss';
 
 export default function DawDelete({  }) {
   // Login link is just like:
