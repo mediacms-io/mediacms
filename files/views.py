@@ -728,6 +728,11 @@ class MediaActions(APIView):
         else:
             return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
 
+# TODO:
+class VoiceActions(APIView):
+    """
+    Retrieve, update or delete a voice action instance.
+    """
 
 class MediaSearch(APIView):
     """

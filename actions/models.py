@@ -50,3 +50,6 @@ class MediaAction(models.Model):
             models.Index(fields=["user", "action", "-action_date"]),
             models.Index(fields=["session_key", "action"]),
         ]
+
+# TODO
+#class VoiceAction(models.Model):
