@@ -19,6 +19,10 @@ export function renderPage(idSelector, PageComponent) {
   const appSidebar = document.getElementById('app-sidebar');
   const appContent = idSelector ? document.getElementById(idSelector) : undefined;
 
+  while (appHeader.firstChild) {
+    appHeader.removeChild(appHeader.firstChild);
+  }
+
   if (appContent && PageComponent) {
     ReactDOM.render(
       <AppProviders>
