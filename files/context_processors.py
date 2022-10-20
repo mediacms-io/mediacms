@@ -9,6 +9,7 @@ def stuff(request):
     ret["FRONTEND_HOST"] = request.build_absolute_uri('/')
     ret["DEFAULT_THEME"] = settings.DEFAULT_THEME
     ret["PORTAL_NAME"] = settings.PORTAL_NAME
+    ret["PORTAL_DESCRIPTION"] = settings.PORTAL_DESCRIPTION
     ret["LOAD_FROM_CDN"] = settings.LOAD_FROM_CDN
     ret["CAN_LOGIN"] = settings.LOGIN_ALLOWED
     ret["CAN_REGISTER"] = settings.REGISTER_ALLOWED
