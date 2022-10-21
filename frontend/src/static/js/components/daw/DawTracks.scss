@@ -1,0 +1,13 @@
+// MediaCMS sets some styles of `input[type=range]` globally.
+// Which affects our DAW styles.
+// Here we override the global styles by our own correct styles for DAW.
+.playlist {
+    .controls {
+        .volume-slider, .stereopan-slider {
+            display: inline-block;
+            max-width: unset;
+            min-height: auto;
+            padding: 0rem 0rem;
+        }
+    }
+}
