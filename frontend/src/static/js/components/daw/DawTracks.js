@@ -6,6 +6,8 @@ import { saveAs } from 'file-saver';
 import Wav2opus from './Wav2opus';
 import { MemberContext } from '../../utils/contexts/';
 
+import './DawTracks.scss'
+
 // See source code of this example:
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
 // See this exmample:
