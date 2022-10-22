@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block headtitle %}{{media_object.title}} - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}{{media_object.title|add:" - "|add:PORTAL_NAME|truncatechars:64}}{% endblock headtitle %}
 
 {% block headermeta %}
 
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
 
-<meta name="description" content="{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}">
+<meta name="description" content="{% if media_object.summary %}{{media_object.summary|truncatechars:160}}{% else %}{{media_object.description|truncatechars:160}}{% endif %}">
 
 <meta property="og:title" content="{{media_object.title}} - {{PORTAL_NAME}}">
 <meta property="og:url" content="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
