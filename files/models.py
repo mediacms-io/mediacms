@@ -26,6 +26,8 @@ from mptt.models import MPTTModel, TreeForeignKey
 from . import helpers
 from .stop_words import STOP_WORDS
 
+import webvtt
+
 logger = logging.getLogger(__name__)
 
 RE_TIMECODE = re.compile(r"(\d+:\d+:\d+.\d+)")
@@ -783,6 +785,34 @@ class Media(models.Model):
                     "src": helpers.url_from_path(subtitle.subtitle_file.path),
                     "srclang": subtitle.language.code,
                     "label": subtitle.language.title,
+                }
+            )
+        return ret
+
+    @property
+    def subtitles_info_contents(self):
+        """Property used on serializers
+        Returns subtitles info with file data
+        """
+
+        ret = []
+        for subtitle in self.subtitles.all():
+            contents = open(subtitle.subtitle_file.path, 'r').read()
+            text = ""
+            try:
+                lines = webvtt.read(subtitle.subtitle_file.path)
+                for line in lines:
+                    text += line.text + " "
+            except Exception:
+                pass
+
+            ret.append(
+                {
+                    "src": helpers.url_from_path(subtitle.subtitle_file.path),
+                    "srclang": subtitle.language.code,
+                    "label": subtitle.language.title,
+                    "contents": contents,
+                    "text": text,
                 }
             )
         return ret
