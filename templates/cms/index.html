@@ -43,7 +43,44 @@
 
 {% endblock headermeta %}
 
-{% block content %}<div id="page-home"></div>{% endblock %}
+{% block content %}<div id="page-home">
+        <h2>Featured <a href="/featured">VIEW ALL</a></h2>
+        <ul>
+        {% for media_object in media_featured %}
+        <li>
+                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+                {{media_object.title}}</h3>
+                <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
+                <p>{{media_object.views}} views</p>
+                <p>Published {{media_object.add_date}}</p>
+        </li>
+        {% endfor %}
+        </ul>
+        <h2>Recommended <a href="/recommended">VIEW ALL</a></h2>
+        <ul>
+        {% for media_object in media_recommended %}
+        <li>
+                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+                {{media_object.title}}</h3>
+                <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
+                <p>{{media_object.views}} views</p>
+                <p>Published {{media_object.add_date}}</p>
+        </li>
+        {% endfor %}
+        </ul>
+        <h2>Latest <a href="/latest">VIEW ALL</a></h2>
+        <ul>
+        {% for media_object in media_latest %}
+        <li>
+                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+                {{media_object.title}}</h3>
+                <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
+                <p>{{media_object.views}} views</p>
+                <p>Published {{media_object.add_date}}</p>
+        </li>
+        {% endfor %}
+        </ul>
+</div>{% endblock %}
 
 {% block bottomimports %}
 <script src="{% static "js/index.js" %}"></script>
