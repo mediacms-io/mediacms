@@ -25,7 +25,25 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-media"></div>{% endif %}
+{% if user %}<div id="page-profile-media">
+        <h2>{{user.name}}</h2>
+        <ul>
+                <li><a href="/user/{{user.username}}/about">ABOUT</a></li>
+                <li><a href="/user/{{user.username}}">MEDIA</a></li>
+                <li><a href="/user/{{user.username}}/playlists">PLAYLISTS</a></li>
+        </ul>
+        <h3>Uploads</h3>
+        <ul>
+        {% for media_object in media %}
+        <li>
+                <h4><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+                {{media_object.title}}</h4>
+                <p>{{media_object.views}} views</p>
+                <p>Published {{media_object.add_date}}</p>
+        </li>
+        {% endfor %}
+        </ul>
+</div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
