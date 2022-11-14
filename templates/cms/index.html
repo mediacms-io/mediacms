@@ -48,8 +48,8 @@
         <ul>
         {% for media_object in media_featured %}
         <li>
-                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
-                {{media_object.title}}</h3>
+                <h3><a href="/view?m={{media_object.friendly_token}}"><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+				{{media_object.title}}</a></h3>
                 <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
                 <p>{{media_object.views}} views</p>
                 <p>Published {{media_object.add_date}}</p>
@@ -60,8 +60,8 @@
         <ul>
         {% for media_object in media_recommended %}
         <li>
-                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
-                {{media_object.title}}</h3>
+                <h3><a href="/view?m={{media_object.friendly_token}}"><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+				{{media_object.title}}</a></h3>
                 <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
                 <p>{{media_object.views}} views</p>
                 <p>Published {{media_object.add_date}}</p>
@@ -72,8 +72,8 @@
         <ul>
         {% for media_object in media_latest %}
         <li>
-                <h3><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
-                {{media_object.title}}</h3>
+                <h3><a href="/view?m={{media_object.friendly_token}}"><img src="{{media_object.thumbnail_url}}" alt="Thumbnail" title="{{media_object.title}}" loading="lazy" /><br />
+				{{media_object.title}}</a></h3>
                 <p>Posted by <a href="user/{{media_object.user}}">{{media_object.author_name}}</a></p>
                 <p>{{media_object.views}} views</p>
                 <p>Published {{media_object.add_date}}</p>
