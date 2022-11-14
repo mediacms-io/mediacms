@@ -36,6 +36,7 @@ urlpatterns = [
     re_path("^rss/search", SearchRSSFeed()),
     re_path(r"^search", views.search, name="search"),
     re_path(r"^scpublisher", views.upload_media, name="upload_media"),
+    path("sitemap.xml", views.sitemap, name="sitemap"),
     re_path(r"^tags", views.tags, name="tags"),
     re_path(r"^tos$", views.tos, name="terms_of_service"),
     re_path(r"^view", views.view_media, name="get_media"),
