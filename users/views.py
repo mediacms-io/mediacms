@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 
 from cms.permissions import IsUserOrManager
 from files.methods import is_mediacms_editor, is_mediacms_manager
+from files.models import Playlist
 
 from .forms import ChannelForm, UserForm
 from .models import Channel, User, Media
@@ -73,6 +74,7 @@ def view_user_playlists(request, username):
     context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
     context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
+    context["playlists"] = Playlist.objects.filter(user__username=username)
 
     return render(request, "cms/user_playlists.html", context)
 
