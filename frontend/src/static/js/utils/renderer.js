@@ -22,6 +22,9 @@ export function renderPage(idSelector, PageComponent) {
   while (appHeader.firstChild) {
     appHeader.removeChild(appHeader.firstChild);
   }
+  while (appSidebar.firstChild) {
+    appSidebar.removeChild(appSidebar.firstChild);
+  }
 
   if (appContent && PageComponent) {
     ReactDOM.render(
