@@ -366,6 +366,7 @@ def view_playlist(request, friendly_token):
 
     context = {}
     context["playlist"] = playlist
+    context["media"] = [c.media for c in PlaylistMedia.objects.filter(playlist=playlist)]
     return render(request, "cms/playlist.html", context)
 
 
