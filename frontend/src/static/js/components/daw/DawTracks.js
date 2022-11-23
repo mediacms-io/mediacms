@@ -90,6 +90,11 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('select', updateSelect);
         ee.on('timeupdate', updateTime);
+
+        ee.on('likeTrack', function(track){
+          // TODO: Database.
+          console.log('Voice heart:', track);
+        });
       }
     },
     [ee, toneCtx] // The callback is run only when these dependencies change.
