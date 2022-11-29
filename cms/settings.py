@@ -480,4 +480,5 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/login/$',
         r'/accounts/logout/$',
         r'/accounts/signup/$',
+        r'/api/v[0-9]+/',
     ]
