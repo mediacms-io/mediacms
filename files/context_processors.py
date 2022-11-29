@@ -6,7 +6,7 @@ from .methods import is_mediacms_editor, is_mediacms_manager
 def stuff(request):
     """Pass settings to the frontend"""
     ret = {}
-    ret["FRONTEND_HOST"] = request.build_absolute_uri('/')
+    ret["FRONTEND_HOST"] = request.build_absolute_uri('/').rstrip('/')
     ret["DEFAULT_THEME"] = settings.DEFAULT_THEME
     ret["PORTAL_NAME"] = settings.PORTAL_NAME
     ret["PORTAL_DESCRIPTION"] = settings.PORTAL_DESCRIPTION
