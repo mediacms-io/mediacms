@@ -36,7 +36,6 @@ urlpatterns = [
     re_path("^rss/search", SearchRSSFeed()),
     re_path(r"^search", views.search, name="search"),
     re_path(r"^scpublisher", views.upload_media, name="upload_media"),
-    path("sitemap.xml", views.sitemap, name="sitemap"),
     re_path(r"^tags", views.tags, name="tags"),
     re_path(r"^tos$", views.tos, name="terms_of_service"),
     re_path(r"^view", views.view_media, name="get_media"),
@@ -90,3 +89,6 @@ urlpatterns = [
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.GENERATE_SITEMAP:
+    urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))
