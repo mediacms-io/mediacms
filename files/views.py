@@ -295,13 +295,13 @@ def search(request):
 
 def sitemap(request): 
     """Sitemap"""
-    
+
     context = {}
     context["media"] = list(Media.objects.filter(Q(listable=True)).order_by("-add_date"))
     context["playlists"] = list(Playlist.objects.filter().order_by("-add_date"))
     context["users"] = list(User.objects.filter())
     return render(request, "sitemap.xml", context, content_type="application/xml")
-        
+
 
 def tags(request):
     """List tags view"""
