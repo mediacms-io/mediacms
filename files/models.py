@@ -1406,10 +1406,7 @@ def media_file_delete(sender, instance, **kwargs):
         thumbnails_path = os.path.dirname(instance.thumbnail.path)
         thumbnails = glob.glob(f'{thumbnails_path}/{str(instance.uid).replace("-", "")}.*')
         for thumbnail in thumbnails:
-            try:
-                os.remove(thumbnail)
-            except OSError:
-                pass
+            helpers.rm_file(thumbnail)
 
 
 @receiver(m2m_changed, sender=Media.category.through)
