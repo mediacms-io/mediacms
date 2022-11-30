@@ -1404,7 +1404,7 @@ def media_file_delete(sender, instance, **kwargs):
     # remove extra zombie thumbnails
     if instance.thumbnail:
         thumbnails_path = os.path.dirname(instance.thumbnail.path)
-        thumbnails = glob.glob(f'{thumbnails_path}/{str(instance.uid).replace("-", "")}.*')
+        thumbnails = glob.glob(f'{thumbnails_path}/{instance.uid.hex}.*')
         for thumbnail in thumbnails:
             helpers.rm_file(thumbnail)
 
