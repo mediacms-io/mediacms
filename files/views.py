@@ -293,7 +293,7 @@ def search(request):
     return render(request, "cms/search.html", context)
 
 
-def sitemap(request): 
+def sitemap(request):
     """Sitemap"""
 
     context = {}
