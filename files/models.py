@@ -1400,7 +1400,7 @@ def media_file_delete(sender, instance, **kwargs):
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
     instance.user.update_user_media()
-    
+
     # remove extra zombie thumbnails
     if instance.thumbnail:
         thumbnails_path = os.path.dirname(instance.thumbnail.path)
