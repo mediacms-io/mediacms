@@ -16,6 +16,7 @@
 - [13. How To Add A Static Page To The Sidebar](#13-how-to-add-a-static-page-to-the-sidebar)
 - [14. Add Google Analytics](#14-add-google-analytics)
 - [15. Debugging email issues](#15-debugging-email-issues)
+- [16. Frequently Asked Questions](#16-frequently-asked-questions)
 
 
 ## 1. Welcome
@@ -687,3 +688,41 @@ For example, while specifying wrong password for my Gmail account I get
 ```
 SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. Learn more at\n5.7.8  https://support.google.com/mail/?p=BadCredentials d4sm12687785wrc.34 - gsmtp')
 ```
+
+## 16. Frequently Asked Questions
+Video is playing but preview thumbnails are not showing for large video files
+
+Chances are that the sprites file was not created correctly. 
+The output of files.tasks.produce_sprite_from_video() function in this case is something like this
+
+```
+convert-im6.q16: width or height exceeds limit `/tmp/img001.jpg' @ error/cache.c/OpenPixelCache/3912.
+```
+
+Solution: edit file `/etc/ImageMagick-6/policy.xml` and set bigger values for the lines that contain width and height. For example
+
+```
+  <policy domain="resource" name="height" value="16000KP"/>
+  <policy domain="resource" name="width" value="16000KP"/>
+```
+
+Newly added video files now will be able to produce the sprites file needed for thumbnail previews. To re-run that task on existing videos, enter the Django shell 
+
+
+```
+root@8433f923ccf5:/home/mediacms.io/mediacms# source  /home/mediacms.io/bin/activate 
+root@8433f923ccf5:/home/mediacms.io/mediacms# python manage.py shell
+Python 3.8.14 (default, Sep 13 2022, 02:23:58) 
+```
+
+and run 
+
+```
+In [1]: from files.models import Media
+In [2]: from files.tasks import produce_sprite_from_video
+
+In [3]: for media in Media.objects.filter(media_type='video', sprites=''):
+   ...:     produce_sprite_from_video(media.friendly_token)
+```
+
+this will re-create the sprites for videos that the task failed. 

@@ -7,6 +7,7 @@
 - [Search media](#search-media)
 - [Using Timestamps for sharing](#using-timestamps-for-sharing)
 - [Mentionning users in comments](#Mentionning-users-in-comments)
+- [Show comments in the Timebar](#Show-comments-in-the-Timebar)
 - [Share media](#share-media)
 - [Embed media](#embed-media)
 - [Customize my profile options](#customize-my-profile-options)
@@ -232,6 +233,17 @@ Comments send with mentions will contain a link to the user page, and can be set
     <img src="./images/Mention2.png"/>
     <img src="./images/Mention3.png"/>
     <img src="./images/Mention4.png"/>
+</p>
+
+## Show comments in the Timebar
+
+When enabled, comments including a timestamp will also be displayed in the current video Timebar as a little colorful dot. The comment can be previewed by hovering the dot (left image) and it will be displayed on top of the video when reaching the correct time (right image).
+
+Only comments with correct timestamps formats (HH:MM:SS or MM:SS) will be picked up and appear in the Timebar.
+    
+<p align="left">
+    <img src="./images/TimebarComments_Hover.png" height="180" alt="Comment preview on hover"/>
+    <img src="./images/TimebarComments_Hit.png" height="180" alt="Comment shown when the timestamp is reached "/>
 </p>
 
 ## Search media
