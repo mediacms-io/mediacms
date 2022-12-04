@@ -8,6 +8,10 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
 
+import './videojs-markers.js';
+import './videojs.markers.css';
+import {enableMarkers, addMarker} from './videojs-markers_config.js'
+
 import './Comments.scss';
 
 const commentsText = {
@@ -426,6 +430,12 @@ export default function CommentsList(props) {
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
+    const video = videojs('vjs_video_3');
+    
+    if (MediaCMS.features.media.actions.timestampTimebar)
+    {
+      enableMarkers(video);
+    }
 
     if (MediaCMS.features.media.actions.comment_mention === true)
     {
@@ -433,14 +443,18 @@ export default function CommentsList(props) {
         comment.text = setMentions(comment.text);
       });
     }
-    retrievedComments.forEach(comment => {          
-      comment.text = setTimestampAnchors(comment.text);
-    });
-    
-    displayCommentsRelatedAlert();
-    setComments(retrievedComments);
-  }
 
+    video.one('loadedmetadata', () => {       
+      retrievedComments.forEach(comment => {          
+        comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
+      });
+      
+      displayCommentsRelatedAlert();
+      setComments([...retrievedComments]);
+    });
+    setComments([...retrievedComments]);
+  }
+  
   function setMentions(text)
   {
     let sanitizedComment = text.split('@(_').join("<a href=\"/user/");
@@ -448,7 +462,7 @@ export default function CommentsList(props) {
     return sanitizedComment.split('_]').join("</a>");
   }
 
-  function setTimestampAnchors(text)
+  function setTimestampAnchorsAndMarkers(text, videoPlayer)
   {
     function wrapTimestampWithAnchor(match, string) 
     {
@@ -459,6 +473,10 @@ export default function CommentsList(props) {
       {
           s += m * parseInt(split.pop(), 10);
           m *= 60;
+      }
+      if (MediaCMS.features.media.actions.timestampTimebar)
+      {
+        addMarker(videoPlayer, s, text);
       }
 
       searchParameters.set('t', s)

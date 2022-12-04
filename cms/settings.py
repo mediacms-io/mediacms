@@ -7,6 +7,7 @@ DEBUG = False
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
 PORTAL_NAME = "MediaCMS"
+PORTAL_DESCRIPTION = ""
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Europe/London"
 
@@ -86,6 +87,7 @@ MAX_MEDIA_PER_PLAYLIST = 70
 UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5
 
 MAX_CHARS_FOR_COMMENT = 10000  # so that it doesn't end up huge
+TIMESTAMP_IN_TIMEBAR = False  # shows timestamped comments in the timebar for videos
 ALLOW_MENTION_IN_COMMENTS = False  # allowing to mention other users with @ in the comments
 
 # valid options: content, author
@@ -479,4 +481,5 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/login/$',
         r'/accounts/logout/$',
         r'/accounts/signup/$',
+        r'/api/v[0-9]+/',
     ]

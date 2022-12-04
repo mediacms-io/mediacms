@@ -18,6 +18,10 @@ services:
       context: .
       dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
+    environment:
+      ADMIN_USER: 'admin'
+      ADMIN_PASSWORD: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
     ports:
       - "80:80"
     volumes:
