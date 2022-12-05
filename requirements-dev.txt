@@ -12,3 +12,4 @@ pytest-cov
 pytest-django
 pytest-factoryboy
 Faker
+pytest-playwright==0.3.0

@@ -1,0 +1,31 @@
+name: All Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Build the Stack
+      run:  docker-compose -f docker-compose-dev.yaml build
+
+    - name: Start containers
+      run: docker-compose -f docker-compose-dev.yaml up -d
+
+    - name: Ensure browsers are installed
+      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web python -m playwright install chrome --with-deps 
+    
+    - name: Run all tests
+      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+
+    - name: Tear down the Stack
+      run:  docker-compose -f docker-compose-dev.yaml down
