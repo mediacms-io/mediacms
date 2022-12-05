@@ -1,3 +1,4 @@
+import glob
 import json
 import logging
 import os
@@ -1404,6 +1405,13 @@ def media_file_delete(sender, instance, **kwargs):
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
     instance.user.update_user_media()
+
+    # remove extra zombie thumbnails
+    if instance.thumbnail:
+        thumbnails_path = os.path.dirname(instance.thumbnail.path)
+        thumbnails = glob.glob(f'{thumbnails_path}/{instance.uid.hex}.*')
+        for thumbnail in thumbnails:
+            helpers.rm_file(thumbnail)
 
 
 @receiver(m2m_changed, sender=Media.category.through)
