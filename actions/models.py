@@ -14,7 +14,7 @@ USER_MEDIA_ACTIONS = (
 
 USER_VOICE_ACTIONS = (
     ("like", "Like"),
-    ("dislike", "Dislike"),
+    ("likeundo", "Likeundo"),
     ("watch", "Watch"),
     ("report", "Report"),
     # Rating is meaningless for voice. Maybe?
