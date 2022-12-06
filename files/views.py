@@ -760,7 +760,7 @@ class VoiceActions(APIView):
     def get(self, request, friendly_token, uid=None):
         # Show date and info for each time media was liked.
         # Test example:
-        # curl -X GET http://127.0.0.1:80/api/v1/media/A0eMbWrhe/voices/f07f84a8-cf0a-445f-8ae7-568b16ddce55/actions
+        # curl -X GET http://127.0.0.1:80/api/v1/media/dd9TrZxDe/voices/f07f84a8-cf0a-445f-8ae7-568b16ddce55/actions
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
