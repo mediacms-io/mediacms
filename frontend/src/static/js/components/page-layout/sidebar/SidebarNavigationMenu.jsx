@@ -4,6 +4,7 @@ import { useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
 import { LinksContext, SidebarContext } from '../../../utils/contexts/';
 import { NavigationMenuList } from '../../_shared';
+import { getRequest } from '../../../utils/helpers';
 
 export function SidebarNavigationMenu() {
   const { userCan, isAnonymous, pages: userPages } = useUser();
@@ -19,17 +20,17 @@ export function SidebarNavigationMenu() {
       const url = urlParse(item.link);
       const active = currentHostPath === url.host + url.pathname;
 
-      return {
+      return Object.assign(item, {
         active,
         itemType: 'link',
         link: item.link || '#',
         icon: item.icon || null,
         iconPos: 'left',
         text: item.text || item.link || '#',
-        itemAttr: {
+        itemAttr: Object.assign(item.itemAttr || {}, {
           className: item.className || '',
-        },
-      };
+        }),
+      });
     });
   }
 
@@ -43,6 +44,47 @@ export function SidebarNavigationMenu() {
         text: 'Home',
         className: 'nav-item-home',
       });
+    }
+    
+    if (window.MediaCMS && window.MediaCMS.site && window.MediaCMS.site.livestream && window.MediaCMS.site.livestream.uri) {
+      items.push({
+        link: window.MediaCMS.site.livestream.uri,
+        icon: 'radio_button_unchecked',
+        text: 'Live',
+        className: 'nav-item-live',
+	itemAttr: {
+	  id: 'nav-item-live'
+	},
+	linkAttr: {
+	  target: '_blank'
+	}
+      });
+      switch (window.MediaCMS.site.livestream.backend || null) {
+        case 'owncast': {
+	  getRequest(window.MediaCMS.site.livestream.uri + "/api/status", !1, (response) => {
+            const json = response.data
+            const menuItem = document.getElementById('nav-item-live')
+            var onlineText = "(Offline)"
+            if (json && json.online) {
+	      // Change the icon to show it's live.
+	      const icons = menuItem.getElementsByClassName('material-icons')
+	      if (icons) {
+	        icons[0].setAttribute('data-icon', 'radio_button_checked')
+	      }
+
+              // Also change the text to show it's online.
+	      onlineText = "(Online)"
+	    }
+	    const spans = menuItem.getElementsByTagName('span')
+            const lastSpan = spans[spans.length - 1]
+            const smalls = lastSpan.getElementsByTagName("small")
+            for (var s = 0; s < smalls.length; ++s) {
+              smalls[s].parentNode.removeChild(smalls[s])
+	    }
+            lastSpan.appendChild(document.createElement("small")).appendChild(document.createTextNode(' ' + onlineText))
+	  }, () => {});
+	} break;
+      }
     }
 
     if (PageStore.get('config-enabled').pages.featured && PageStore.get('config-enabled').pages.featured.enabled) {

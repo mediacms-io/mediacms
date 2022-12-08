@@ -49,5 +49,13 @@ MediaCMS.site = {
 	    	title: 'Categories',
 	    },
     },
+    {% if LIVESTREAM_BACKEND %}
+    livestream: {
+        backend: '{{LIVESTREAM_BACKEND}}',
+        {% if LIVESTREAM_URI %}
+        uri: '{{LIVESTREAM_URI}}',
+        {% endif %}
+    },
+    {% endif %}
 };
 
