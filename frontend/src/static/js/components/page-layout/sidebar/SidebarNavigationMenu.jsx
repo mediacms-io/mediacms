@@ -14,6 +14,8 @@ export function SidebarNavigationMenu() {
 
   const currentUrl = urlParse(window.location.href);
   const currentHostPath = (currentUrl.host + currentUrl.pathname).replace(/\/+$/, '');
+  
+  var livePingInterval = 0;
 
   function formatItems(items) {
     return items.map((item) => {
@@ -59,31 +61,37 @@ export function SidebarNavigationMenu() {
 	  target: '_blank'
 	}
       });
-      switch (window.MediaCMS.site.livestream.backend || null) {
-        case 'owncast': {
-	  getRequest(window.MediaCMS.site.livestream.uri + "/api/status", !1, (response) => {
-            const json = response.data
-            const menuItem = document.getElementById('nav-item-live')
-            var onlineText = "(Offline)"
-            if (json && json.online) {
-	      // Change the icon to show it's live.
-	      const icons = menuItem.getElementsByClassName('material-icons')
-	      if (icons) {
-	        icons[0].setAttribute('data-icon', 'radio_button_checked')
-	      }
-
-              // Also change the text to show it's online.
-	      onlineText = "(Online)"
-	    }
-	    const spans = menuItem.getElementsByTagName('span')
-            const lastSpan = spans[spans.length - 1]
-            const smalls = lastSpan.getElementsByTagName("small")
-            for (var s = 0; s < smalls.length; ++s) {
-              smalls[s].parentNode.removeChild(smalls[s])
-	    }
-            lastSpan.appendChild(document.createElement("small")).appendChild(document.createTextNode(' ' + onlineText))
-	  }, () => {});
-	} break;
+      const pingFunc = () => {
+        switch (window.MediaCMS.site.livestream.backend || null) {
+          case 'owncast': {
+            getRequest(window.MediaCMS.site.livestream.uri + "/api/status", !1, (response) => {
+              const json = response.data;
+              const menuItem = document.getElementById('nav-item-live');
+              var onlineText = '(Offline)';
+              var dataIcon = 'radio_button_unchecked';
+              if (json && json.online) {
+                onlineText = '(Online)';
+                dataIcon = 'radio_button_checked';
+              }
+              // Change the icon to show it's live.
+              const icons = menuItem.getElementsByClassName('material-icons');
+              if (icons) {
+                icons[0].setAttribute('data-icon', dataIcon);
+              }
+              const spans = menuItem.getElementsByTagName('span');
+              const lastSpan = spans[spans.length - 1];
+              const smalls = lastSpan.getElementsByTagName('small');
+              for (var s = 0; s < smalls.length; ++s) {
+                smalls[s].parentNode.removeChild(smalls[s]);
+              }
+              lastSpan.appendChild(document.createElement('small')).appendChild(document.createTextNode(' ' + onlineText));
+            }, () => {});
+          } break;
+        }
+      };
+      if (!livePingInterval) {
+        pingFunc();
+        livePingInterval = setInterval(pingFunc, 60000);
       }
     }
 
