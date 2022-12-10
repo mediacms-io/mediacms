@@ -18,6 +18,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from actions.models import USER_VOICE_ACTIONS, VoiceAction
 from users.models import User
 
 from .backends import FFmpegBackend
@@ -39,6 +40,7 @@ from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 logger = get_task_logger(__name__)
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
+VALID_VOICE_ACTIONS = [action for action, name in USER_VOICE_ACTIONS]
 
 ERRORS_LIST = [
     "Output file is empty, nothing was encoded",
@@ -666,11 +668,41 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
     return True
 
 @task(name="save_user_action__voice", queue="short_tasks")
-def save_user_action__voice(user_or_session, friendly_token=None, action="watch", extra_info=None):
+def save_voice_action(user_or_session, friendly_token=None, action="watch", extra_info=None):
     """Short task that saves a user action for voice"""
 
-    # TODO.
+    if action not in VALID_VOICE_ACTIONS:
+        return False
 
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException:
+        return False
+
+    user = user_or_session.get("user_id")
+    session_key = user_or_session.get("user_session")
+    remote_ip = user_or_session.get("remote_ip_addr")
+
+    if user:
+        try:
+            user = User.objects.get(id=user)
+        except BaseException:
+            return False
+
+    if not (user or session_key):
+        return False
+
+    if action in ["like", "dislike", "watch", "report"]:
+        if not pre_voice_action(
+            media=media,
+            user=user,
+            session_key=session_key,
+            action=action,
+            remote_ip=remote_ip,
+        ):
+            return False
+
+    # TODO.
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():

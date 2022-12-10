@@ -67,7 +67,7 @@ from .serializers import (
     TagSerializer,
 )
 from .stop_words import STOP_WORDS
-from .tasks import save_user_action, save_user_action__voice
+from .tasks import save_user_action, save_voice_action
 
 # TODO: Should we consider USER_VOICE_ACTIONS too?
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
@@ -817,7 +817,7 @@ class VoiceActions(APIView):
                 )
         if action:
             user_or_session = get_user_or_session(request)
-            save_user_action__voice.delay(
+            save_voice_action.delay(
                 user_or_session,
                 friendly_token=media.friendly_token,
                 action=action,
