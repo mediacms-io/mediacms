@@ -753,7 +753,7 @@ class VoiceActions(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[],
-        tags=['Voice'],
+        tags=['Voice Actions'],
         operation_summary='to_be_written',
         operation_description='to_be_written',
     )
@@ -785,6 +785,41 @@ class VoiceActions(APIView):
             ret["likeundo"].append(item)
 
         return Response(ret, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Voice Actions'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def post(self, request, friendly_token, uid=None):
+        # perform like/dislike/report actions
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        action = request.data.get("type")
+        extra = request.data.get("extra_info")
+        if request.user.is_anonymous:
+            # there is a list of allowed actions for
+            # anonymous users, specified in settings
+            if action not in settings.ALLOW_ANONYMOUS_ACTIONS:
+                return Response(
+                    {"detail": "action allowed on logged in users only"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if action:
+            user_or_session = get_user_or_session(request)
+            save_user_action__voice.delay(
+                user_or_session,
+                friendly_token=media.friendly_token,
+                action=action,
+                extra_info=extra,
+            )
+
+            return Response({"detail": "action received"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
 
 class MediaSearch(APIView):
     """
