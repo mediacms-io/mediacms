@@ -805,6 +805,12 @@ class VoiceActions(APIView):
         if isinstance(media, Response):
             return media
 
+        # Double-check voice existence.
+        try:
+            voice = Voice.objects.get(uid=uid)
+        except BaseException:
+            return Response({"detail": "voice does not exist"}, status=status.HTTP_400_BAD_REQUEST,)
+
         action = request.data.get("type")
         extra = request.data.get("extra_info")
         if request.user.is_anonymous:
@@ -822,7 +828,7 @@ class VoiceActions(APIView):
                 friendly_token=media.friendly_token,
                 action=action,
                 extra_info=extra,
-                uid=uid
+                uid=voice.uid,
             )
 
             return Response({"detail": "action received"}, status=status.HTTP_201_CREATED)
