@@ -1592,6 +1592,8 @@ class Voice(models.Model):
 
     add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
 
+    duration = models.IntegerField(default=0)
+
     friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the voice")
 
     likes = models.IntegerField(db_index=True, default=1)
