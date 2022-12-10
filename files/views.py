@@ -794,6 +794,12 @@ class VoiceActions(APIView):
     )
     def post(self, request, friendly_token, uid=None):
         # perform like/dislike/report actions
+        #
+        # Test command:
+        # curl -X POST http://127.0.0.1:80/api/v1/media/dd9TrZxDe/voices/f07f84a8-cf0a-445f-8ae7-568b16ddce55/actions
+        # Response:
+        # {"detail":"action allowed on logged in users only"}
+
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
