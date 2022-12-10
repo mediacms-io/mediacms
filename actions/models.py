@@ -61,7 +61,7 @@ class MediaAction(models.Model):
         ]
 
 class VoiceAction(models.Model):
-    """Stores different user actions"""
+    """Stores different voice actions"""
 
     user = models.ForeignKey(
         User,
