@@ -668,9 +668,9 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     return True
 
-@task(name="save_user_action__voice", queue="short_tasks")
+@task(name="save_voice_action", queue="short_tasks")
 def save_voice_action(user_or_session, friendly_token=None, action="watch", extra_info=None, uid=None):
-    """Short task that saves a user action for voice"""
+    """Short task that saves a voice action"""
 
     if action not in VALID_VOICE_ACTIONS:
         return False
