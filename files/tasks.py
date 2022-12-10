@@ -35,6 +35,7 @@ from .helpers import (
     run_command,
 )
 from .methods import list_tasks, notify_users, pre_save_action
+from .methods import pre_save_action__voice
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 from .models import Voice
 
@@ -705,6 +706,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
             session_key=session_key,
             action=action,
             remote_ip=remote_ip,
+            voice=voice
         ):
             return False
 

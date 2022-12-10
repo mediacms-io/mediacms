@@ -87,6 +87,13 @@ def pre_save_action(media, user, session_key, action, remote_ip):
     return False
 
 
+def pre_save_action__voice(media, user, session_key, action, remote_ip, voice):
+    """This will perform some checkes
+    example threshold checks, before performing an action
+    """
+
+    # TODO.
+
 def is_mediacms_editor(user):
     """Whether user is MediaCMS editor"""
 
