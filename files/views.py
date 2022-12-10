@@ -67,7 +67,7 @@ from .serializers import (
     TagSerializer,
 )
 from .stop_words import STOP_WORDS
-from .tasks import save_user_action
+from .tasks import save_user_action, save_user_action__voice
 
 # TODO: Should we consider USER_VOICE_ACTIONS too?
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]

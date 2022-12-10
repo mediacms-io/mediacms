@@ -665,6 +665,12 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     return True
 
+@task(name="save_user_action__voice", queue="short_tasks")
+def save_user_action__voice(user_or_session, friendly_token=None, action="watch", extra_info=None):
+    """Short task that saves a user action for voice"""
+
+    # TODO.
+
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
