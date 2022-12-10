@@ -36,6 +36,7 @@ from .helpers import (
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
+from .models import Voice
 
 logger = get_task_logger(__name__)
 
@@ -676,6 +677,11 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException:
+        return False
+
+    try:
+        voice = Voice.objects.get(uid=uid)
     except BaseException:
         return False
 

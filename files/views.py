@@ -24,7 +24,8 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from actions.models import USER_MEDIA_ACTIONS, MediaAction, USER_VOICE_ACTIONS, VoiceAction
+from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from actions.models import USER_VOICE_ACTIONS, VoiceAction
 from cms.custom_pagination import FastPaginationWithoutCount
 from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, user_allowed_to_upload
 from users.models import User
