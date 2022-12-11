@@ -699,7 +699,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     if not (user or session_key):
         return False
 
-    if action in ["like", "dislike", "watch", "report"]:
+    if action in ["like", "likeundo", "watch", "report"]:
         if not pre_save_action__voice(
             media=media,
             user=user,
