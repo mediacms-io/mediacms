@@ -1609,6 +1609,8 @@ class Voice(models.Model):
         help_text="voice file",
     )
 
+    reported_times = models.IntegerField(default=0, help_text="how many times a voice is reported")
+
     start = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
 
     title = models.CharField(max_length=100, help_text="voice title", blank=True, db_index=True)

@@ -710,6 +710,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         ):
             return False
 
+    # TODO: Exactly why the previous `watch` actions are deleted?
     if action == "watch":
         if user:
             VoiceAction.objects.filter(user=user, voice=voice, action="watch").delete()
@@ -729,7 +730,25 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     )
     ma.save()
 
-    # TODO.
+    if action == "watch":
+        voice.views += 1
+        voice.save(update_fields=["views"])
+    elif action == "report":
+        voice.reported_times += 1
+        if voice.reported_times >= settings.REPORTED_TIMES_THRESHOLD:
+            # Delete voice?
+            voice.delete()
+        voice.save(update_fields=["reported_times"])
+        # TODO: notify_users
+        # There is a code for notification. That might be helpful.
+    elif action == "like":
+        voice.likes += 1
+        voice.save(update_fields=["likes"])
+    elif action == "likeundo":
+        voice.likes -= 1
+        voice.save(update_fields=["likes"])
+
+    return True
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
