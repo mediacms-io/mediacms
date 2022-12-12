@@ -716,6 +716,8 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         else:
             VoiceAction.objects.filter(session_key=session_key, voice=voice, action="watch").delete()
 
+    # There is no `rate` action for voice. So, it's skipped.
+
     # TODO.
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
