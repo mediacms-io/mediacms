@@ -710,6 +710,12 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         ):
             return False
 
+    if action == "watch":
+        if user:
+            VoiceAction.objects.filter(user=user, voice=voice, action="watch").delete()
+        else:
+            VoiceAction.objects.filter(session_key=session_key, voice=voice, action="watch").delete()
+
     # TODO.
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
