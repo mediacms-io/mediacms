@@ -128,8 +128,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         // Voices of the current media would be loaded here.
         // They would be fetched from the database table.
         voices.map((voice) => {
-          // `VoiceSerializer` provides the `voice` fields.
-          console.log('VOICE ACTIONS:', voice.voice_actions)
+          // NOTE: `VoiceSerializer` provides access to the `voice` fields.
           let is_liked = false
           // If any action is "like" and its author is logged-in user, then we know that the user likes the voice :)
           const logged_user = MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
