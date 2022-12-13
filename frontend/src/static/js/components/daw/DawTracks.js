@@ -130,19 +130,38 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         voices.map((voice) => {
           // `VoiceSerializer` provides the `voice` fields.
           console.log('VOICE ACTIONS:', voice.voice_actions)
+          let is_liked = false
+          // If any action is "like" and its author is logged-in user, then we know that the user likes the voice :)
+          const logged_user = MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
+          for (let i = 0; i < voice.voice_actions.length; i++) {
+            const action = voice.voice_actions[i].action
+            const author_profile = voice.voice_actions[i].author_profile
+            if (action === "like" && logged_user && author_profile &&
+              // Example of author profile path:
+              // "author_profile":"/user/Mike/"
+              // How to get the last path token: we need to get "Mike" out of "/user/Mike/"
+              // https://stackoverflow.com/a/16695464/3405291
+              //
+              // The objective is to check whether logged-in user is track creator.
+              logged_user === author_profile.match(/([^\/]*)\/*$/)[1]
+            ) {
+              is_liked = true;
+              break; // We found it, so get out of the loop.
+            }
+          }
           return {
             src: voice.original_voice_url,
             name: voice.title,
             start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
             friendly_token: voice.friendly_token,
             uid: voice.uid,
-            is_liked: true, // TODO: Get from database. Does user like this voice?
+            is_liked: is_liked, // Does user like this voice?
             like_count: voice.likes,
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
             // `author_profile` path is compared with `logged_user` to detect whether the voice creator is logged in.
-            logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
+            logged_user: logged_user
           };
         })
       )

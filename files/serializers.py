@@ -241,17 +241,24 @@ class CommentSerializer(serializers.ModelSerializer):
 # Required to have access to `VoiceAction` through `Voice`.
 # https://stackoverflow.com/a/39622919/3405291
 class VoiceActionSerializer(serializers.ModelSerializer):
+    author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
+    author_name = serializers.ReadOnlyField(source="user.name")
+
     class Meta:
         model = VoiceAction
         read_only_fields = ("action_date", "remote_ip")
         fields = (
-            "action_date",
-            "remote_ip",
-            "user",
+            ### "user" is just an ID. Not meaningful:
+            #"user",
+            "author_profile", # This is more constant and reliable.
+            "author_name", # This might be modified by user. So, it is unreliable.
             "action",
-            "extra_info",
-            "media",
-            "voice",
+            ### These are not needed:
+            #"action_date",
+            #"remote_ip",
+            #"extra_info",
+            #"media",
+            #"voice",
         )
 
 class VoiceSerializer(serializers.ModelSerializer):
@@ -263,7 +270,6 @@ class VoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Voice
         read_only_fields = ("add_date", "uid")
-        # TODO: Play around with the fields:
         fields = (
             "add_date",
             "friendly_token",
