@@ -860,6 +860,33 @@ class MediaPageStore extends EventEmitter {
           this.removeVoicesFail.bind(this) // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
         );
         break;
+      case 'LIKE_VOICE':
+        if (MediaPageStoreData[this.id].while.likeVoice) {
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.likeVoice = true;
+
+        // https://stackoverflow.com/a/43014086/3405291
+        formData = new FormData();
+        formData.append('type', "like");
+
+        postRequest(
+          // this.voicesAPIUrl: URL is already set when loading voices by loadVoices().
+          this.voicesAPIUrl + '/' + action.voiceUid + '/' + 'actions',
+          formData,
+          {
+            // configData:
+            headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data' },
+            crossDomain: true,
+            timeout: null,
+            maxContentLength: null,
+          },
+          false,
+          this.likeVoiceResponse,
+          this.likeVoiceFail
+        );
+        break;
       case 'CREATE_PLAYLIST':
         postRequest(
           this.mediacms_config.api.playlists,
