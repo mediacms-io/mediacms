@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
 import EventEmitter from "events";
+import { MediaPageActions } from '../../utils/actions/';
 import { MediaPageStore } from '../../utils/stores/';
 import { MemberContext } from '../../utils/contexts/';
 import { PageActions } from '../../utils/actions/';
