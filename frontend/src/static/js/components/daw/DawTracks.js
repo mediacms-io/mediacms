@@ -95,6 +95,11 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           console.log('Voice heart:', track);
           triggerVoiceLike(track.uid)
         });
+
+        ee.on('likeundoTrack', function(track){
+          console.log('Voice heart undo:', track);
+          // TODO.
+        });
       }
     },
     [ee, toneCtx] // The callback is run only when these dependencies change.
