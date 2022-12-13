@@ -1596,7 +1596,7 @@ class Voice(models.Model):
 
     friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the voice")
 
-    likes = models.IntegerField(db_index=True, default=1)
+    likes = models.IntegerField(db_index=True, default=0)
 
     md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
 
