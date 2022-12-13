@@ -826,8 +826,8 @@ class MediaPageStore extends EventEmitter {
             maxContentLength: null,
           },
           false,
-          this.submitVoiceResponse,
-          this.submitVoiceFail
+          this.submitVoiceResponse.bind(this),
+          this.submitVoiceFail.bind(this)
         );
         break;
       case 'DELETE_VOICE':
@@ -883,8 +883,8 @@ class MediaPageStore extends EventEmitter {
             maxContentLength: null,
           },
           false,
-          this.likeVoiceResponse,
-          this.likeVoiceFail
+          this.likeVoiceResponse.bind(this),
+          this.likeVoiceFail.bind(this)
         );
         break;
       case 'CREATE_PLAYLIST':
