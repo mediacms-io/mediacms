@@ -63,6 +63,10 @@ class MediaPageStore extends EventEmitter {
         deleteMedia: false,
         submitComment: false,
         deleteCommentId: null,
+        submitVoice: false,
+        deleteVoice: false,
+        deleteVoices: false,
+        likeVoice: false,
       },
     };
 
