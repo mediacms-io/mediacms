@@ -115,12 +115,14 @@ export default function Daw({ playerInstance }) {
     );
   }
 
-  function onVoiceLike() {
+  function onVoiceLike(data) {
+    console.log('LIKE_VOICE:', 'ok', 'DATA:', data);
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' liked', 'voiceLike'), 100);
   }
 
-  function onVoiceLikeFail() {
+  function onVoiceLikeFail(err) {
+    console.log('LIKE_VOICE:', 'bad', 'ERROR:', err);
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
       () => PageActions.addNotification(voicesText.ucfirstSingle + ' like failed', 'voiceLikeFail'),
