@@ -129,6 +129,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
             start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
             friendly_token: voice.friendly_token,
             uid: voice.uid,
+            like_count: voice.likes,
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
