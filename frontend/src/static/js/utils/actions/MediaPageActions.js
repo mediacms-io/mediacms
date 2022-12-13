@@ -83,6 +83,14 @@ export function deleteVoices() {
   });
 }
 
+// Like a specific voice by its UID.
+export function likeVoice(voiceUid) {
+  Dispatcher.dispatch({
+    type: 'LIKE_VOICE',
+    voiceUid,
+  });
+}
+
 export function createPlaylist(playlist_data) {
   Dispatcher.dispatch({
     type: 'CREATE_PLAYLIST',

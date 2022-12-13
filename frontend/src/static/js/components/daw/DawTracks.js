@@ -92,8 +92,8 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         ee.on('timeupdate', updateTime);
 
         ee.on('likeTrack', function(track){
-          // TODO: Database.
           console.log('Voice heart:', track);
+          MediaPageActions.likeVoice(track.uid);
         });
       }
     },
