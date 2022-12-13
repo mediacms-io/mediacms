@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { useLayout, useItemListInlineSlider } from '../../utils/hooks/';
 import { ItemListAsync } from './ItemListAsync';
@@ -37,7 +38,8 @@ export function InlineSliderItemListAsync(props) {
         props.firstItemRequestUrl,
         props.requestUrl,
         onItemsCount,
-        onItemsLoad
+        onItemsLoad,
+        props.translateCallback
       )
     );
 
@@ -74,9 +76,11 @@ export function InlineSliderItemListAsync(props) {
 
 InlineSliderItemListAsync.propTypes = {
   ...ItemListAsync.propTypes,
+  translateCallback: PropTypes.func,
 };
 
 InlineSliderItemListAsync.defaultProps = {
   ...ItemListAsync.defaultProps,
   pageItems: 12,
+  translateCallback: null,
 };

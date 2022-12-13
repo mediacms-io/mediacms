@@ -7,7 +7,8 @@ export function ItemsListHandler(
   first_item_request_url,
   request_url,
   itemsCountCallback,
-  loadItemsCallback
+  loadItemsCallback,
+  translateCallback
 ) {
   const config = {
     maxItems: maxItems || 255,
@@ -96,6 +97,10 @@ export function ItemsListHandler(
 
     function fn(response) {
       waiting.requestResponse = false;
+
+      if (translateCallback) {
+        response = translateCallback(response);
+      }
 
       if (!!!response || !!!response.data) {
         return;

@@ -33,6 +33,38 @@ interface HomePageProps {
   recommended_view_all_link: boolean;
 }
 
+interface TranslatedMediaObject {
+  friendly_token: string;
+  url: string;
+  api_url: string;
+  user: string;
+  title: string,
+  description: string;
+  add_date: string;
+  views: number;
+  media_type: string;
+  state: string;
+  duration: number;
+  thumbnail_url: string;
+  is_reviewed: boolean;
+  author_name: string;
+  author_profile: string;
+  author_thumbnail: string;
+  encoding_status: string;
+  likes: number;
+  dislikes: number;
+  featured: boolean;
+  user_featured: boolean;
+  size: string;
+}
+
+interface TranslatedResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: TranslatedMediaObject[];
+}
+
 export const HomePage: React.FC<HomePageProps> = ({
   id = 'home',
   featured_title = PageStore.get('config-options').pages.home.sections.featured.title,
@@ -45,11 +77,57 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [zeroMedia, setZeroMedia] = useState(false);
   const [visibleLatest, setVisibleLatest] = useState(false);
   const [visibleFeatured, setVisibleFeatured] = useState(false);
+  const [visibleLive, setVisibleLive] = useState(false);
   const [visibleRecommended, setVisibleRecommended] = useState(false);
 
   const onLoadLatest = (length: number) => {
     setVisibleLatest(0 < length);
     setZeroMedia(0 === length);
+  };
+  
+  const translateLive = (response: any): object => {
+    let translatedResponse:TranslatedResponse = {
+        count: 0,
+        next: null,
+        previous: null,
+        results: []
+      };
+    if (response.data.online) {
+      translatedResponse.count = 1;
+      translatedResponse.results.push({
+          "friendly_token": "*********",
+          "url": window.MediaCMS.site.livestream.uri,
+          "api_url": window.MediaCMS.site.livestream.uri,
+          "user": "live",
+          "title": (response.data.streamTitle || "Live now"),
+          "description": "Watch live now",
+          "add_date": response.data.lastConnectTime,
+          "views": response.data.viewerCount,
+          "media_type": "video",
+          "state": "public",
+          "duration": Math.floor(((new Date()).getTime() - new Date(Date.parse(response.data.lastConnectTime)).getTime()) / 1000),
+          "thumbnail_url": (window.MediaCMS.site.livestream.uri + "/thumbnail.jpg"),
+          "is_reviewed": true,
+          "author_name": "Live stream",
+          "author_profile": window.MediaCMS.site.livestream.uri,
+          "author_thumbnail": "/media/userlogos/user.jpg",
+          "encoding_status": "success",
+          "likes": 1,
+          "dislikes": 0,
+          "featured": true,
+          "user_featured": false,
+          "size": "999MB"
+        });
+    }
+    return {
+        "data": translatedResponse,
+        "status": response.status,
+        "statusText": response.statusText
+      };
+  };
+
+  const onLoadLive = (length: number) => {
+    setVisibleLive(0 < length);
   };
 
   const onLoadFeatured = (length: number) => {
@@ -67,6 +145,23 @@ export const HomePage: React.FC<HomePageProps> = ({
           <ApiUrlConsumer>
             {(apiUrl) => (
               <MediaMultiListWrapper className="items-list-ver">
+                {window.MediaCMS.site.livestream && window.MediaCMS.site.livestream.backend == "owncast" && 
+                  window.MediaCMS.site.livestream.uri && (
+                    <MediaListRow
+                      title="Live"
+                      style={!visibleLive ? { display: 'none' } : undefined}
+                    >
+                      <InlineSliderItemListAsync
+                        requestUrl={window.MediaCMS.site.livestream.uri + "/api/status"}
+                        translateCallback={translateLive}
+                        itemsCountCallback={onLoadLive}
+                        hideViews={!PageStore.get('config-media-item').displayViews}
+                        hideAuthor={!PageStore.get('config-media-item').displayAuthor}
+                        hideDate={!PageStore.get('config-media-item').displayPublishDate}
+                      />
+                    </MediaListRow>
+                  )}
+
                 {PageStore.get('config-enabled').pages.featured &&
                   PageStore.get('config-enabled').pages.featured.enabled && (
                     <MediaListRow
