@@ -53,6 +53,11 @@ export default function Daw({ playerInstance }) {
     setRecordDisabled(disabled);
   }
 
+  function onVoiceLike(voiceUid) { // This callback is passed down to child component.
+    console.log('Voice heart: UID:', voiceUid);
+    MediaPageActions.likeVoice(voiceUid);
+  }
+
   const [voices, setVoices] = useState(
     MemberContext._currentValue.can.hearVoice ? MediaPageStore.get('media-voices') : []
   );
@@ -153,6 +158,7 @@ export default function Daw({ playerInstance }) {
         <DawTracks ee={ee} voices={voices}
           onRecordDisabledChange={onRecordDisabledChange}
           onTrimDisabledChange={onTrimDisabledChange}
+          onVoiceLike={onVoiceLike}
         ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
