@@ -114,6 +114,19 @@ export default function Daw({ playerInstance }) {
     );
   }
 
+  function onVoiceLike() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' liked', 'voiceLike'), 100);
+  }
+
+  function onVoiceLikeFail() {
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' like failed', 'voiceLikeFail'),
+      100
+    );
+  }
+
   useEffect(() => {
     navigator.getUserMedia = (navigator.getUserMedia ||
       navigator.webkitGetUserMedia ||
@@ -127,6 +140,8 @@ export default function Daw({ playerInstance }) {
     MediaPageStore.on('voice_delete_fail', onVoiceDeleteFail);
     MediaPageStore.on('voices_delete', onVoicesDelete);
     MediaPageStore.on('voices_delete_fail', onVoicesDeleteFail);
+    MediaPageStore.on('voice_like', onVoiceLike);
+    MediaPageStore.on('voice_like_fail', onVoiceLikeFail);
 
     return () => {
       MediaPageStore.removeListener('voices_load', onVoicesLoad);
@@ -136,6 +151,8 @@ export default function Daw({ playerInstance }) {
       MediaPageStore.removeListener('voice_delete_fail', onVoiceDeleteFail);
       MediaPageStore.removeListener('voices_delete', onVoicesDelete);
       MediaPageStore.removeListener('voices_delete_fail', onVoicesDeleteFail);
+      MediaPageStore.removeListener('voice_like', onVoiceLike);
+      MediaPageStore.removeListener('voice_like_fail', onVoiceLikeFail);
     };
   }, []);
 
