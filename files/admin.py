@@ -14,7 +14,7 @@ from .models import (
 
 class VoiceAdmin(admin.ModelAdmin):
     search_fields = ["title"] # Some fields here cannot be searched by `icontains`
-    list_display = ["title", "add_date", "user", "media"]
+    list_display = ["title", "add_date", "user", "media", "likes"]
     ordering = ("-add_date",)
 
 class CommentAdmin(admin.ModelAdmin):
