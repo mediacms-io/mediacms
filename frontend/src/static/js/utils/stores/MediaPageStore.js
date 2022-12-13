@@ -1118,10 +1118,8 @@ class MediaPageStore extends EventEmitter {
     if (response && 201 === response.status && response.data && Object.keys(response.data)) {
       this.emit('voice_like', response.data);
 
-      // After any voice like, all the voices are loaded again.
-      // If voices are re-loaded correctly, a signal is emitted.
-      // The DAW component would handle the signal to get and display re-loaded voices.
-      this.loadVoices();
+      // TODO: What to do after voice like?
+      // Calling `this.loadVoices()` is not pleasant.
     }
     setTimeout(
       function (ins) {
