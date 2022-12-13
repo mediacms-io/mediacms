@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag, Voice
+from actions.models import VoiceAction
 
 # TODO: put them in a more DRY way
 
@@ -237,10 +238,27 @@ class CommentSerializer(serializers.ModelSerializer):
             "uid",
         )
 
+# Required to have access to `VoiceAction` through `Voice`.
+# https://stackoverflow.com/a/39622919/3405291
+class VoiceActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoiceAction
+        read_only_fields = ("action_date", "remote_ip")
+        fields = (
+            "action_date",
+            "remote_ip",
+            "user",
+            "action",
+            "extra_info",
+            "media",
+            "voice",
+        )
+
 class VoiceSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
     author_name = serializers.ReadOnlyField(source="user.name")
     author_thumbnail_url = serializers.ReadOnlyField(source="user.thumbnail_url")
+    voice_actions = VoiceActionSerializer(source="voiceactions", many=True)
 
     class Meta:
         model = Voice
@@ -259,4 +277,5 @@ class VoiceSerializer(serializers.ModelSerializer):
             "start",
             "media_url",
             "original_voice_url",
+            "voice_actions",
         )

@@ -128,6 +128,8 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         // Voices of the current media would be loaded here.
         // They would be fetched from the database table.
         voices.map((voice) => {
+          // `VoiceSerializer` provides the `voice` fields.
+          console.log('VOICE ACTIONS:', voice.voice_actions)
           return {
             src: voice.original_voice_url,
             name: voice.title,
