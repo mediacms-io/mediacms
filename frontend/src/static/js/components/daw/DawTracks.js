@@ -12,7 +12,7 @@ import './DawTracks.scss'
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
-export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange, onVoiceLike }) {
+export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange, triggerVoiceLike }) {
 
   // Playlist should be a `useState` to cause re-render.
   // Upon re-render due to playlist change, the device microphone is accessed reliably by a `useEffect`.
@@ -93,7 +93,7 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('likeTrack', function(track){
           console.log('Voice heart:', track);
-          onVoiceLike(track.uid)
+          triggerVoiceLike(track.uid)
         });
       }
     },
