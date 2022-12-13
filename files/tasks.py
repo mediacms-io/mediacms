@@ -722,6 +722,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     ma = VoiceAction(
         user=user,
         session_key=session_key,
+        media=media,
         action=action,
         extra_info=extra_info,
         remote_ip=remote_ip,

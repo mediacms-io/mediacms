@@ -83,6 +83,7 @@ class VoiceAction(models.Model):
     # keeps extra info, eg on report action, why it is reported
     extra_info = models.TextField(blank=True, null=True)
 
+    media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name="voiceactions")
     voice = models.ForeignKey(Voice, on_delete=models.CASCADE, related_name="voiceactions")
     action_date = models.DateTimeField(auto_now_add=True)
     remote_ip = models.CharField(max_length=40, blank=True, null=True)
