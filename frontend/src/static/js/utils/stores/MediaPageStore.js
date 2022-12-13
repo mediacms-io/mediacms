@@ -867,21 +867,12 @@ class MediaPageStore extends EventEmitter {
 
         MediaPageStoreData[this.id].while.likeVoice = true;
 
-        // https://stackoverflow.com/a/43014086/3405291
-        formData = new FormData();
-        formData.append('type', "like");
-
         postRequest(
-          // this.voicesAPIUrl: URL is already set when loading voices by loadVoices().
+          // `this.voicesAPIUrl`: URL is already set when loading voices by loadVoices().
           this.voicesAPIUrl + '/' + action.voiceUid + '/' + 'actions',
-          formData,
-          {
-            // configData:
-            headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'multipart/form-data' },
-            crossDomain: true,
-            timeout: null,
-            maxContentLength: null,
-          },
+          // Back-end expects the exact key & value:
+          { 'type': "like" },
+          { headers: { 'X-CSRFToken': csrfToken() } },
           false,
           this.likeVoiceResponse.bind(this),
           this.likeVoiceFail.bind(this)
