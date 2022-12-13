@@ -74,7 +74,13 @@ After pulling from upstream and getting latest updates, then, front-end redeploy
 
 ### How to build
 
-If root user creates some errors for `prepare` script, try to run as a non-root user:
+If root user creates some errors for `prepare` script, try to change folder ownership:
+
+```
+sudo chown -R m3:users wfpl
+```
+
+Then run:
 
 ```
 git clone https://github.com/Micrufun/daw.git frontend/packages/wfpl
