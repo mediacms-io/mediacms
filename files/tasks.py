@@ -699,6 +699,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     if not (user or session_key):
         return False
 
+    # Check if user has alread done like/likeundo once. Avoid spam. And more.
     if action in ["like", "likeundo", "watch", "report"]:
         if not pre_save_action__voice(
             media=media,
@@ -716,6 +717,31 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
             VoiceAction.objects.filter(user=user, voice=voice, action="watch").delete()
         else:
             VoiceAction.objects.filter(session_key=session_key, voice=voice, action="watch").delete()
+
+    # Check whether `filter` result is empty or not, by `.first()`
+    # https://stackoverflow.com/a/50453580/3405291
+
+    # In the case of `like` action, delete previous `likeundo` actions.
+    if action == "like":
+        if user:
+            va = VoiceAction.objects.filter(user=user, voice=voice, action="likeundo").first()
+            if va:
+                VoiceAction.objects.filter(user=user, voice=voice, action="likeundo").delete()
+        else:
+            va = VoiceAction.objects.filter(session_key=session_key, voice=voice, action="likeundo").first()
+            if va:
+                VoiceAction.objects.filter(session_key=session_key, voice=voice, action="likeundo").delete()
+
+    # In the case of `likeundo` action, delete previous `like` actions.
+    if action == "likeundo":
+        if user:
+            va = VoiceAction.objects.filter(user=user, voice=voice, action="like").first()
+            if va:
+                VoiceAction.objects.filter(user=user, voice=voice, action="like").delete()
+        else:
+            va = VoiceAction.objects.filter(session_key=session_key, voice=voice, action="like").first()
+            if va:
+                VoiceAction.objects.filter(session_key=session_key, voice=voice, action="like").delete()
 
     # There is no `rate` action for voice. So, it's skipped.
 
