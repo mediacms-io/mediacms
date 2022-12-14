@@ -267,7 +267,7 @@ class VoiceSerializer(serializers.ModelSerializer):
     author_thumbnail_url = serializers.ReadOnlyField(source="user.thumbnail_url")
 
     # For every voice, get only voice actions of current `user` and of type `like`.
-    # To detect if the current user has liked the voice or not.
+    # UI detects whether the current user has liked the voice or not.
     # https://stackoverflow.com/a/59952937/3405291
     voice_actions = serializers.SerializerMethodField()
     def get_voice_actions(self, obj):
