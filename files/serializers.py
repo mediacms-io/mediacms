@@ -244,8 +244,6 @@ class VoiceActionSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
     author_name = serializers.ReadOnlyField(source="user.name")
 
-    # TODO: How to filter according to `user` and `action`?
-
     class Meta:
         model = VoiceAction
         read_only_fields = ("action_date", "remote_ip")
@@ -267,7 +265,14 @@ class VoiceSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
     author_name = serializers.ReadOnlyField(source="user.name")
     author_thumbnail_url = serializers.ReadOnlyField(source="user.thumbnail_url")
-    voice_actions = VoiceActionSerializer(source="voiceactions", many=True)
+
+    # For every voice, get only voice actions of current `user` and of type `like`.
+    # To detect if the current user has liked the voice or not.
+    # https://stackoverflow.com/a/59952937/3405291
+    voice_actions = serializers.SerializerMethodField()
+    def get_voice_actions(self, obj):
+        voice_actions_objs = obj.voiceactions.filter(user=self.context["request"].user, action="like")
+        return VoiceActionSerializer(voice_actions_objs, many=True).data
 
     class Meta:
         model = Voice
