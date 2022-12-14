@@ -745,7 +745,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
 
     # There is no `rate` action for voice. So, it's skipped.
 
-    ma = VoiceAction(
+    va = VoiceAction(
         user=user,
         session_key=session_key,
         media=media,
@@ -754,7 +754,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         remote_ip=remote_ip,
         voice=voice,
     )
-    ma.save()
+    va.save()
 
     if action == "watch":
         voice.views += 1
