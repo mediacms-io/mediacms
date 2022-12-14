@@ -54,9 +54,9 @@ export default function Daw({ playerInstance }) {
     setRecordDisabled(disabled);
   }
 
-  function triggerVoiceLike(voiceUid) { // This callback is passed down to child component.
-    console.log('Voice heart: UID:', voiceUid);
-    MediaPageActions.likeVoice(voiceUid);
+  function triggerVoiceLike(voiceUid, toggle) { // This callback is passed down to child component.
+    console.log('Voice heart: UID:', voiceUid, 'TOGGLE:', toggle);
+    MediaPageActions.likeVoice(voiceUid, toggle);
   }
 
   const [voices, setVoices] = useState(

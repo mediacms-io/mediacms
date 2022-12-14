@@ -93,12 +93,12 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('likeTrack', function(track){
           console.log('Voice heart:', track);
-          triggerVoiceLike(track.uid)
+          triggerVoiceLike(track.uid, "like");
         });
 
         ee.on('likeundoTrack', function(track){
           console.log('Voice heart undo:', track);
-          // TODO.
+          triggerVoiceLike(track.uid, "likeundo");
         });
       }
     },

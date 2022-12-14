@@ -869,13 +869,18 @@ class MediaPageStore extends EventEmitter {
           return;
         }
 
+        if (action.toggle != "like" && action.toggle != "likeundo") {
+          console.error('only "like" and "likeundo" are acceptable input, but received:', action.toggle)
+          return;
+        }
+
         MediaPageStoreData[this.id].while.likeVoice = true;
 
         postRequest(
           // `this.voicesAPIUrl`: URL is already set when loading voices by loadVoices().
           this.voicesAPIUrl + '/' + action.voiceUid + '/' + 'actions',
           // Back-end expects the exact key & value:
-          { 'type': "like" },
+          { 'type': action.toggle },
           { headers: { 'X-CSRFToken': csrfToken() } },
           false,
           this.likeVoiceResponse.bind(this),

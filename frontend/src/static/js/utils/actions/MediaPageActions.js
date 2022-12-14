@@ -84,10 +84,11 @@ export function deleteVoices() {
 }
 
 // Like a specific voice by its UID.
-export function likeVoice(voiceUid) {
+export function likeVoice(voiceUid, toggle) {
   Dispatcher.dispatch({
     type: 'LIKE_VOICE',
     voiceUid,
+    toggle, // Could be "like" or "likeundo"
   });
 }
 
