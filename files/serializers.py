@@ -244,6 +244,8 @@ class VoiceActionSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
     author_name = serializers.ReadOnlyField(source="user.name")
 
+    # TODO: How to filter according to `user` and `action`?
+
     class Meta:
         model = VoiceAction
         read_only_fields = ("action_date", "remote_ip")
