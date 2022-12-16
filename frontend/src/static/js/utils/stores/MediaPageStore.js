@@ -63,6 +63,10 @@ class MediaPageStore extends EventEmitter {
         deleteMedia: false,
         submitComment: false,
         deleteCommentId: null,
+        submitVoice: false,
+        deleteVoice: false,
+        deleteVoices: false,
+        likeVoice: false,
       },
     };
 
@@ -826,8 +830,8 @@ class MediaPageStore extends EventEmitter {
             maxContentLength: null,
           },
           false,
-          this.submitVoiceResponse,
-          this.submitVoiceFail
+          this.submitVoiceResponse.bind(this),
+          this.submitVoiceFail.bind(this)
         );
         break;
       case 'DELETE_VOICE':
@@ -858,6 +862,29 @@ class MediaPageStore extends EventEmitter {
           false,
           this.removeVoicesResponse.bind(this), // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
           this.removeVoicesFail.bind(this) // Have to bind `this` to avoid axios returning `TypeError: this is undefined`
+        );
+        break;
+      case 'LIKE_VOICE':
+        if (MediaPageStoreData[this.id].while.likeVoice) {
+          return;
+        }
+
+        if (action.toggle != "like" && action.toggle != "likeundo") {
+          console.error('only "like" and "likeundo" are acceptable input, but received:', action.toggle)
+          return;
+        }
+
+        MediaPageStoreData[this.id].while.likeVoice = true;
+
+        postRequest(
+          // `this.voicesAPIUrl`: URL is already set when loading voices by loadVoices().
+          this.voicesAPIUrl + '/' + action.voiceUid + '/' + 'actions',
+          // Back-end expects the exact key & value:
+          { 'type': action.toggle },
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.likeVoiceResponse.bind(this),
+          this.likeVoiceFail.bind(this)
         );
         break;
       case 'CREATE_PLAYLIST':
@@ -1079,6 +1106,33 @@ class MediaPageStore extends EventEmitter {
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.deleteVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
+  likeVoiceFail(err) {
+    this.emit('voice_like_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.likeVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  likeVoiceResponse(response) {
+    if (response && 201 === response.status && response.data && Object.keys(response.data)) {
+      this.emit('voice_like', response.data);
+
+      // TODO: What to do after voice like?
+      // Calling `this.loadVoices()` is not pleasant.
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.likeVoice = false;
       },
       100,
       this

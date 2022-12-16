@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
 import EventEmitter from "events";
+import { MediaPageActions } from '../../utils/actions/';
 import { MediaPageStore } from '../../utils/stores/';
 import { MemberContext } from '../../utils/contexts/';
 import { PageActions } from '../../utils/actions/';
@@ -51,6 +52,11 @@ export default function Daw({ playerInstance }) {
   
   function onRecordDisabledChange(disabled) { // This callback is passed down to child component.
     setRecordDisabled(disabled);
+  }
+
+  function triggerVoiceLike(voiceUid, toggle) { // This callback is passed down to child component.
+    console.log('Voice heart: UID:', voiceUid, 'TOGGLE:', toggle);
+    MediaPageActions.likeVoice(voiceUid, toggle);
   }
 
   const [voices, setVoices] = useState(
@@ -109,6 +115,21 @@ export default function Daw({ playerInstance }) {
     );
   }
 
+  function onVoiceLike(data) {
+    console.log('LIKE_VOICE:', 'ok', 'DATA:', data);
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(() => PageActions.addNotification(voicesText.ucfirstSingle + ' liked', 'voiceLike'), 100);
+  }
+
+  function onVoiceLikeFail(err) {
+    console.log('LIKE_VOICE:', 'bad', 'ERROR:', err);
+    // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+    setTimeout(
+      () => PageActions.addNotification(voicesText.ucfirstSingle + ' like failed', 'voiceLikeFail'),
+      100
+    );
+  }
+
   useEffect(() => {
     navigator.getUserMedia = (navigator.getUserMedia ||
       navigator.webkitGetUserMedia ||
@@ -122,6 +143,8 @@ export default function Daw({ playerInstance }) {
     MediaPageStore.on('voice_delete_fail', onVoiceDeleteFail);
     MediaPageStore.on('voices_delete', onVoicesDelete);
     MediaPageStore.on('voices_delete_fail', onVoicesDeleteFail);
+    MediaPageStore.on('voice_like', onVoiceLike);
+    MediaPageStore.on('voice_like_fail', onVoiceLikeFail);
 
     return () => {
       MediaPageStore.removeListener('voices_load', onVoicesLoad);
@@ -131,6 +154,8 @@ export default function Daw({ playerInstance }) {
       MediaPageStore.removeListener('voice_delete_fail', onVoiceDeleteFail);
       MediaPageStore.removeListener('voices_delete', onVoicesDelete);
       MediaPageStore.removeListener('voices_delete_fail', onVoicesDeleteFail);
+      MediaPageStore.removeListener('voice_like', onVoiceLike);
+      MediaPageStore.removeListener('voice_like_fail', onVoiceLikeFail);
     };
   }, []);
 
@@ -153,6 +178,7 @@ export default function Daw({ playerInstance }) {
         <DawTracks ee={ee} voices={voices}
           onRecordDisabledChange={onRecordDisabledChange}
           onTrimDisabledChange={onTrimDisabledChange}
+          triggerVoiceLike={triggerVoiceLike}
         ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>

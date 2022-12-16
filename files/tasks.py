@@ -18,6 +18,7 @@ from django.core.files import File
 from django.db.models import Q
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from actions.models import USER_VOICE_ACTIONS, VoiceAction
 from users.models import User
 
 from .backends import FFmpegBackend
@@ -34,11 +35,14 @@ from .helpers import (
     run_command,
 )
 from .methods import list_tasks, notify_users, pre_save_action
+from .methods import pre_save_action__voice
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
+from .models import Voice
 
 logger = get_task_logger(__name__)
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
+VALID_VOICE_ACTIONS = [action for action, name in USER_VOICE_ACTIONS]
 
 ERRORS_LIST = [
     "Output file is empty, nothing was encoded",
@@ -665,6 +669,112 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     return True
 
+@task(name="save_voice_action", queue="short_tasks")
+def save_voice_action(user_or_session, friendly_token=None, action="watch", extra_info=None, uid=None):
+    """Short task that saves a voice action"""
+
+    if action not in VALID_VOICE_ACTIONS:
+        return False
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException:
+        return False
+
+    try:
+        voice = Voice.objects.get(uid=uid)
+    except BaseException:
+        return False
+
+    user = user_or_session.get("user_id")
+    session_key = user_or_session.get("user_session")
+    remote_ip = user_or_session.get("remote_ip_addr")
+
+    if user:
+        try:
+            user = User.objects.get(id=user)
+        except BaseException:
+            return False
+
+    if not (user or session_key):
+        return False
+
+    # Check if user has alread done like/likeundo once. Avoid spam. And more.
+    if action in ["like", "likeundo", "watch", "report"]:
+        if not pre_save_action__voice(
+            media=media,
+            user=user,
+            session_key=session_key,
+            action=action,
+            remote_ip=remote_ip,
+            voice=voice
+        ):
+            return False
+
+    # TODO: Exactly why the previous `watch` actions are deleted?
+    if action == "watch":
+        if user:
+            VoiceAction.objects.filter(user=user, voice=voice, action="watch").delete()
+        else:
+            VoiceAction.objects.filter(session_key=session_key, voice=voice, action="watch").delete()
+
+    # Check whether `filter` result is empty or not, by `.first()`
+    # https://stackoverflow.com/a/50453580/3405291
+
+    # In the case of `like` action, delete previous `likeundo` actions.
+    if action == "like":
+        if user:
+            va = VoiceAction.objects.filter(user=user, voice=voice, action="likeundo").first()
+            if va:
+                VoiceAction.objects.filter(user=user, voice=voice, action="likeundo").delete()
+        else:
+            va = VoiceAction.objects.filter(session_key=session_key, voice=voice, action="likeundo").first()
+            if va:
+                VoiceAction.objects.filter(session_key=session_key, voice=voice, action="likeundo").delete()
+
+    # In the case of `likeundo` action, delete previous `like` actions.
+    if action == "likeundo":
+        if user:
+            va = VoiceAction.objects.filter(user=user, voice=voice, action="like").first()
+            if va:
+                VoiceAction.objects.filter(user=user, voice=voice, action="like").delete()
+        else:
+            va = VoiceAction.objects.filter(session_key=session_key, voice=voice, action="like").first()
+            if va:
+                VoiceAction.objects.filter(session_key=session_key, voice=voice, action="like").delete()
+
+    # There is no `rate` action for voice. So, it's skipped.
+
+    va = VoiceAction(
+        user=user,
+        session_key=session_key,
+        media=media,
+        action=action,
+        extra_info=extra_info,
+        remote_ip=remote_ip,
+        voice=voice,
+    )
+    va.save()
+
+    if action == "watch":
+        voice.views += 1
+        voice.save(update_fields=["views"])
+    elif action == "report":
+        voice.reported_times += 1
+        if voice.reported_times >= settings.REPORTED_TIMES_THRESHOLD:
+            # Delete voice?
+            voice.delete()
+        voice.save(update_fields=["reported_times"])
+        # TODO: notify_users
+        # There is a code for notification. That might be helpful.
+    elif action == "like":
+        voice.likes += 1
+        voice.save(update_fields=["likes"])
+    elif action == "likeundo":
+        voice.likes -= 1
+        voice.save(update_fields=["likes"])
+
+    return True
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():

@@ -87,6 +87,59 @@ def pre_save_action(media, user, session_key, action, remote_ip):
     return False
 
 
+def pre_save_action__voice(media, user, session_key, action, remote_ip, voice):
+    """This will perform some checkes
+    example threshold checks, before performing an action
+    """
+
+    from actions.models import VoiceAction
+
+    if user:
+        query = VoiceAction.objects.filter(voice=voice, action=action, user=user)
+    else:
+        query = VoiceAction.objects.filter(voice=voice, action=action, session_key=session_key)
+    query = query.order_by("-action_date")
+
+    if query:
+        query = query.first()
+        if action in ["like", "likeundo", "report"]:
+            return False  # has alread done action once
+        elif action == "watch" and user:
+            # increase the number of times a voice is viewed
+            now = datetime.now(query.action_date.tzinfo)
+            # If duration is valid, duration would be the time gap between two consecuitive views.
+            if voice.duration:
+                if (now - query.action_date).seconds > voice.duration:
+                    return True
+            elif media.duration:
+                if (now - query.action_date).seconds > media.duration:
+                    return True
+    else:
+        if user:  # first time action
+            return True
+
+    if not user:
+        # perform some checking for requests where no session
+        # id is specified (and user is anonymous) to avoid spam
+        # eg allow for the same remote_ip for a specific number of actions
+        query = VoiceAction.objects.filter(voice=voice, action=action, remote_ip=remote_ip).filter(user=None).order_by("-action_date")
+        if query:
+            query = query.first()
+            now = datetime.now(query.action_date.tzinfo)
+            if action == "watch":
+                if voice.duration:
+                    if not (now - query.action_date).seconds > voice.duration:
+                        return False
+                elif media.duration:
+                    if not (now - query.action_date).seconds > media.duration:
+                        return False
+            if (now - query.action_date).seconds > settings.TIME_TO_ACTION_ANONYMOUS:
+                return True
+        else:
+            return True
+
+    return False
+
 def is_mediacms_editor(user):
     """Whether user is MediaCMS editor"""
 

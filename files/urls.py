@@ -58,6 +58,11 @@ urlpatterns = [
         r"^api/v1/media/(?P<friendly_token>[\w]*)/actions$",
         views.MediaActions.as_view(),
     ),
+    re_path(
+        # Both `media` and `voice` are needed.
+        r"^api/v1/media/(?P<friendly_token>[\w]*)/voices/(?P<uid>[\w-]*)/actions$",
+        views.VoiceActions.as_view(),
+    ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),

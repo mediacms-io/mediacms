@@ -25,6 +25,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from actions.models import USER_VOICE_ACTIONS, VoiceAction
 from cms.custom_pagination import FastPaginationWithoutCount
 from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, user_allowed_to_upload
 from users.models import User
@@ -68,7 +69,9 @@ from .serializers import (
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
+from .tasks import save_voice_action
 
+# TODO: Should we consider USER_VOICE_ACTIONS too?
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 
@@ -728,6 +731,111 @@ class MediaActions(APIView):
         else:
             return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
 
+class VoiceActions(APIView):
+    """
+    Retrieve, update or delete a voice action instance.
+    """
+
+    permission_classes = (permissions.AllowAny,)
+    parser_classes = (JSONParser,)
+
+    def get_object(self, friendly_token):
+        try:
+            media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
+            if media.state == "private" and self.request.user != media.user:
+                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            return media
+        except PermissionDenied:
+            return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        except BaseException:
+            return Response(
+                {"detail": "media file does not exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Voice Actions'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def get(self, request, friendly_token, uid=None):
+        # Show date and info for each time media was liked.
+        # Test example:
+        # curl -X GET http://127.0.0.1:80/api/v1/media/dd9TrZxDe/voices/f07f84a8-cf0a-445f-8ae7-568b16ddce55/actions
+
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        try:
+            voice = Voice.objects.get(uid=uid)
+        except BaseException:
+            return Response({"detail": "voice does not exist"}, status=status.HTTP_400_BAD_REQUEST,)
+
+        ret = {}
+
+        like = VoiceAction.objects.filter(voice=voice, action="like")
+        ret["like"] = []
+        for lk in like:
+            item = {"date": lk.action_date, "info": lk.extra_info}
+            ret["like"].append(item)
+
+        likeundo = VoiceAction.objects.filter(voice=voice, action="likeundo")
+        ret["likeundo"] = []
+        for lk in likeundo:
+            item = {"date": lk.action_date, "info": lk.extra_info}
+            ret["likeundo"].append(item)
+
+        return Response(ret, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Voice Actions'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def post(self, request, friendly_token, uid=None):
+        # perform like/dislike/report actions
+        #
+        # Test command:
+        # curl -X POST http://127.0.0.1:80/api/v1/media/dd9TrZxDe/voices/f07f84a8-cf0a-445f-8ae7-568b16ddce55/actions
+        # Response:
+        # {"detail":"action allowed on logged in users only"}
+
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        # Double-check voice existence.
+        try:
+            voice = Voice.objects.get(uid=uid)
+        except BaseException:
+            return Response({"detail": "voice does not exist"}, status=status.HTTP_400_BAD_REQUEST,)
+
+        action = request.data.get("type")
+        extra = request.data.get("extra_info")
+        if request.user.is_anonymous:
+            # there is a list of allowed actions for
+            # anonymous users, specified in settings
+            if action not in settings.ALLOW_ANONYMOUS_ACTIONS:
+                return Response(
+                    {"detail": "action allowed on logged in users only"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if action:
+            user_or_session = get_user_or_session(request)
+            save_voice_action.delay(
+                user_or_session,
+                friendly_token=media.friendly_token,
+                action=action,
+                extra_info=extra,
+                uid=voice.uid,
+            )
+
+            return Response({"detail": "action received"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
 
 class MediaSearch(APIView):
     """

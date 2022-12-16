@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag, Voice
+from actions.models import VoiceAction
 
 # TODO: put them in a more DRY way
 
@@ -237,15 +238,45 @@ class CommentSerializer(serializers.ModelSerializer):
             "uid",
         )
 
+# Required to have access to `VoiceAction` through `Voice`.
+# https://stackoverflow.com/a/39622919/3405291
+class VoiceActionSerializer(serializers.ModelSerializer):
+    author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
+    author_name = serializers.ReadOnlyField(source="user.name")
+
+    class Meta:
+        model = VoiceAction
+        read_only_fields = ("action_date", "remote_ip")
+        fields = (
+            ### "user" is just an ID. Not meaningful:
+            #"user",
+            "author_profile", # This is more constant and reliable.
+            "author_name", # This might be modified by user. So, it is unreliable.
+            "action",
+            ### These are not needed:
+            #"action_date",
+            #"remote_ip",
+            #"extra_info",
+            #"media",
+            #"voice",
+        )
+
 class VoiceSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")
     author_name = serializers.ReadOnlyField(source="user.name")
     author_thumbnail_url = serializers.ReadOnlyField(source="user.thumbnail_url")
 
+    # For every voice, get only voice actions of current `user` and of type `like`.
+    # UI detects whether the current user has liked the voice or not.
+    # https://stackoverflow.com/a/59952937/3405291
+    voice_actions = serializers.SerializerMethodField()
+    def get_voice_actions(self, obj):
+        voice_actions_objs = obj.voiceactions.filter(user=self.context["request"].user, action="like")
+        return VoiceActionSerializer(voice_actions_objs, many=True).data
+
     class Meta:
         model = Voice
         read_only_fields = ("add_date", "uid")
-        # TODO: Play around with the fields:
         fields = (
             "add_date",
             "friendly_token",
@@ -259,4 +290,5 @@ class VoiceSerializer(serializers.ModelSerializer):
             "start",
             "media_url",
             "original_voice_url",
+            "voice_actions",
         )

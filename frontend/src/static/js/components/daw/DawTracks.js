@@ -12,7 +12,7 @@ import './DawTracks.scss'
 // https://naomiaro.github.io/waveform-playlist/web-audio-editor.html
 // See this exmample:
 // https://github.com/naomiaro/waveform-playlist/blob/main/examples/basic-nextjs/pages/index.js
-export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange }) {
+export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDisabledChange, triggerVoiceLike }) {
 
   // Playlist should be a `useState` to cause re-render.
   // Upon re-render due to playlist change, the device microphone is accessed reliably by a `useEffect`.
@@ -90,6 +90,16 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
 
         ee.on('select', updateSelect);
         ee.on('timeupdate', updateTime);
+
+        ee.on('likeTrack', function(track){
+          console.log('Voice heart:', track);
+          triggerVoiceLike(track.uid, "like");
+        });
+
+        ee.on('likeundoTrack', function(track){
+          console.log('Voice heart undo:', track);
+          triggerVoiceLike(track.uid, "likeundo");
+        });
       }
     },
     [ee, toneCtx] // The callback is run only when these dependencies change.
@@ -118,17 +128,39 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
         // Voices of the current media would be loaded here.
         // They would be fetched from the database table.
         voices.map((voice) => {
+          // NOTE: `VoiceSerializer` provides access to the `voice` fields.
+          let is_liked = false
+          // If any action is "like" and its author is logged-in user, then we know that the user likes the voice :)
+          const logged_user = MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
+          for (let i = 0; i < voice.voice_actions.length; i++) {
+            const action = voice.voice_actions[i].action
+            const author_profile = voice.voice_actions[i].author_profile
+            if (action === "like" && logged_user && author_profile &&
+              // Example of author profile path:
+              // "author_profile":"/user/Mike/"
+              // How to get the last path token: we need to get "Mike" out of "/user/Mike/"
+              // https://stackoverflow.com/a/16695464/3405291
+              //
+              // The objective is to check whether logged-in user is track creator.
+              logged_user === author_profile.match(/([^\/]*)\/*$/)[1]
+            ) {
+              is_liked = true;
+              break; // We found it, so get out of the loop.
+            }
+          }
           return {
             src: voice.original_voice_url,
             name: voice.title,
             start: isNaN(parseFloat(voice.start)) ? 0.0 : voice.start,
             friendly_token: voice.friendly_token,
             uid: voice.uid,
+            is_liked: is_liked, // Does user like this voice?
+            like_count: voice.likes,
             author_name: voice.author_name, // Name may be changed by the user.
             author_thumbnail_url: voice.author_thumbnail_url,
             author_profile: voice.author_profile, // Profile is always constant.
             // `author_profile` path is compared with `logged_user` to detect whether the voice creator is logged in.
-            logged_user: MemberContext._currentValue.is.anonymous ? null : MemberContext._currentValue.name
+            logged_user: logged_user
           };
         })
       )

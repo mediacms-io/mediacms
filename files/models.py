@@ -1592,9 +1592,11 @@ class Voice(models.Model):
 
     add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
 
+    duration = models.IntegerField(default=0)
+
     friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the voice")
 
-    likes = models.IntegerField(db_index=True, default=1)
+    likes = models.IntegerField(db_index=True, default=0)
 
     md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
 
@@ -1606,6 +1608,8 @@ class Voice(models.Model):
         max_length=500,
         help_text="voice file",
     )
+
+    reported_times = models.IntegerField(default=0, help_text="how many times a voice is reported")
 
     start = models.FloatField(blank=True, null=True, help_text="Time on video that a voice will start playing")
 
