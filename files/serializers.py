@@ -271,6 +271,9 @@ class VoiceSerializer(serializers.ModelSerializer):
     # https://stackoverflow.com/a/59952937/3405291
     voice_actions = serializers.SerializerMethodField()
     def get_voice_actions(self, obj):
+        # Avoid server error, if no user is logged in:
+        if self.context["request"].user.is_anonymous:
+            return []
         voice_actions_objs = obj.voiceactions.filter(user=self.context["request"].user, action="like")
         return VoiceActionSerializer(voice_actions_objs, many=True).data
 
