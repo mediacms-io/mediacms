@@ -20,15 +20,16 @@ export function PopupContent(props) {
     // Uncaught TypeError: e.path is undefined
     // Also error:
     // Uncaught TypeError: Cannot read properties of undefined (reading 'indexOf')
-    if (typeof ev.path === 'undefined' || ev.path === null) {
-      // variable is undefined or null.
+    //
+    // https://stackoverflow.com/a/39245638/3405291
+    var path = ev.path || (ev.composedPath && ev.composedPath());
+    if (path) {
+      if (-1 === path.indexOf(domElem)) {
+        hide();
+      }
+    } else {
+      Console.log("This browser doesn't supply event path information")
       // TODO: Should call hide()?
-      hide();
-      return;
-    }
-
-    if (-1 === ev.path.indexOf(domElem)) {
-      hide();
     }
   }, []);
 
