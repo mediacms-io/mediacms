@@ -16,8 +16,23 @@ export function PopupContent(props) {
 
     const domElem = findDOMNode(wrapperRef.current);
 
-    if (-1 === ev.path.indexOf(domElem)) {
-      hide();
+    // To avoid this error on Firefox:
+    // Uncaught TypeError: e.path is undefined
+    // And this error on Chromium:
+    // Uncaught TypeError: Cannot read properties of undefined (reading 'indexOf')
+    //
+    // https://stackoverflow.com/a/39245638/3405291
+    //
+    // It allows for both the old way and the new, standard way.
+    // So will do its best cross-browser.
+    var path = ev.path || (ev.composedPath && ev.composedPath());
+    if (path) {
+      if (-1 === path.indexOf(domElem)) {
+        hide();
+      }
+    } else {
+      Console.log("This browser doesn't supply event path information")
+      // TODO: Should call hide()?
     }
   }, []);
 
