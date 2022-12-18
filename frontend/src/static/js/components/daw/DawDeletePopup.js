@@ -7,7 +7,6 @@ import { MediaPageActions } from '../../utils/actions/';
 import './DawDeletePopup.scss';
 
 export default function DawDelete({ ee }) {
-  const hiddenButtonEl = useRef(null);
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
   useEffect(() => {
@@ -23,8 +22,13 @@ export default function DawDelete({ ee }) {
       );
       // Store this track's `uid` to identify it on database when deleting it.
       MediaPageStore.set('media-voice-deletion-uid', track.uid);
-      // Simulate a click on a hidden button, to trigger pop up.
-      hiddenButtonEl.current.click();
+      
+      // Source code of `frontend/src/static/js/components/_shared/popup/PopupTrigger.jsx`
+      // indicates that click on button inside `PopupTrigger` only calls the `props.contentRef.current.toggle()`
+      // so, we just call `toggle()` here:
+      console.log('popupContentRef.current ==', popupContentRef.current);
+      popupContentRef.current.toggle();
+      console.log('Pop it up...');
     });
   }, []); // Looks like `ee` shouldn't be added to dependency list.
 
@@ -43,7 +47,7 @@ export default function DawDelete({ ee }) {
   return (
     <div className="daw-delete-popup">
       <PopupTrigger contentRef={popupContentRef}>
-        <button ref={hiddenButtonEl} style={{ display: 'none' }}></button>
+        <button style={{ display: 'none' }}></button>
       </PopupTrigger>
       <PopupContent contentRef={popupContentRef}>
         <div className="popup-fullscreen">
