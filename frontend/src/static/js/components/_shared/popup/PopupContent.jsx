@@ -16,6 +16,17 @@ export function PopupContent(props) {
 
     const domElem = findDOMNode(wrapperRef.current);
 
+    // To avoid error:
+    // Uncaught TypeError: e.path is undefined
+    // Also error:
+    // Uncaught TypeError: Cannot read properties of undefined (reading 'indexOf')
+    if (typeof ev.path === 'undefined' || ev.path === null) {
+      // variable is undefined or null.
+      // TODO: Should call hide()?
+      hide();
+      return;
+    }
+
     if (-1 === ev.path.indexOf(domElem)) {
       hide();
     }
