@@ -13,7 +13,7 @@
   max-width: 100%;
   justify-content: space-between;
   font-size: 14px;
-  z-index: +5;
+  z-index: 90; /* The same as `popup-dialog` CSS class. To avoid being under waveform-playlist. */
 }
 
 .notification-item {
