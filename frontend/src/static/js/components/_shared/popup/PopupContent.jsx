@@ -9,8 +9,9 @@ export function PopupContent(props) {
   const [isVisible, setVisibility] = useState(false);
 
   const onClickOutside = useCallback((ev) => {
-    if (hasClassname(ev.target, 'fa-trash')) {
-      // If trash/delete voice button is clicked, don't hide popup.
+    if (hasClassname(ev.target, 'fa-trash') || hasClassname(ev.target, "track-remove")) {
+      // If either child `icon` or parent `button` is clicked, don't call hide().
+      // If trash/delete voice icon or button are clicked, don't hide popup.
       return;
     }
 
