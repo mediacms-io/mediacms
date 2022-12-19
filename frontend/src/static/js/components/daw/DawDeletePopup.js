@@ -26,9 +26,7 @@ export default function DawDelete({ ee }) {
       // Source code of `frontend/src/static/js/components/_shared/popup/PopupTrigger.jsx`
       // indicates that click on button inside `PopupTrigger` only calls the `props.contentRef.current.toggle()`
       // so, we just call `toggle()` here:
-      console.log('popupContentRef.current ==', popupContentRef.current);
       popupContentRef.current.toggle();
-      console.log('Pop it up...');
     });
   }, []); // Looks like `ee` shouldn't be added to dependency list.
 
