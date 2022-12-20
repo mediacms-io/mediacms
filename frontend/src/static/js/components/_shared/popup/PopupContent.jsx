@@ -9,6 +9,12 @@ export function PopupContent(props) {
   const [isVisible, setVisibility] = useState(false);
 
   const onClickOutside = useCallback((ev) => {
+    if (hasClassname(ev.target, 'fa-trash') || hasClassname(ev.target, "track-remove")) {
+      // If either child `icon` or parent `button` is clicked, don't call hide().
+      // If trash/delete voice icon or button are clicked, don't hide popup.
+      return;
+    }
+
     if (hasClassname(ev.target, 'popup-fullscreen-overlay')) {
       hide();
       return;
@@ -16,8 +22,20 @@ export function PopupContent(props) {
 
     const domElem = findDOMNode(wrapperRef.current);
 
-    if (-1 === ev.path.indexOf(domElem)) {
-      hide();
+    // To avoid error:
+    // Uncaught TypeError: e.path is undefined
+    // Also error:
+    // Uncaught TypeError: Cannot read properties of undefined (reading 'indexOf')
+    //
+    // https://stackoverflow.com/a/39245638/3405291
+    var path = ev.path || (ev.composedPath && ev.composedPath());
+    if (path) {
+      if (-1 === path.indexOf(domElem)) {
+        hide();
+      }
+    } else {
+      Console.log("This browser doesn't supply event path information")
+      // TODO: Should call hide()?
     }
   }, []);
 
