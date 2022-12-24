@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { SiteContext } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 
+import Daw from '../daw/Daw';
+
 export default function ImageViewer(props) {
   const site = useContext(SiteContext);
 
@@ -45,8 +47,13 @@ export default function ImageViewer(props) {
   }, []);
 
   return !image ? null : (
+    <>
+    <div className='daw-container-outer' key="daw-container-outer">
+      <Daw></Daw>
+    </div>
     <div className="viewer-image-container">
       <img src={image} alt={MediaPageStore.get('media-data').title || null} />
     </div>
+    </>
   );
 }

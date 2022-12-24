@@ -13,6 +13,8 @@ import { extractAudioFileFormat } from './functions';
 
 import '../VideoViewer.scss';
 
+import Daw from '../../daw/Daw';
+
 export default class AudioViewer extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -344,6 +346,10 @@ export default class AudioViewer extends React.PureComponent {
 
   render() {
     return (
+      <>
+      <div className='daw-container-outer' key="daw-container-outer">
+        <Daw></Daw>
+      </div>
       <div className="player-container audio-player-container">
         <div className="player-container-inner">
           <div className="video-player" ref="videoPlayerWrap" onClick={this.wrapperClick}>
@@ -351,6 +357,7 @@ export default class AudioViewer extends React.PureComponent {
           </div>
         </div>
       </div>
+      </>
     );
   }
 }
