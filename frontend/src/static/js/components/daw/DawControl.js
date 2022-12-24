@@ -25,6 +25,7 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                         title="Record"
                         onClick={() => {
                             ee.emit("record");
+                            MediaPageStore.set('media-voice-recording-start', 0);
 
                             // Only `video` media passes this property.
                             // The rest of media types won't pass this property.
