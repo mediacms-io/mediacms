@@ -166,3 +166,4 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
         </div>
     )
 }
+
