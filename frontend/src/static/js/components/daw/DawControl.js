@@ -25,10 +25,16 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                         title="Record"
                         onClick={() => {
                             ee.emit("record");
-                            // Register start time.
-                            MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
-                            // Play video.
-                            playerInstance.player.play();
+                            MediaPageStore.set('media-voice-recording-start', 0);
+
+                            // Only `video` media passes this property.
+                            // The rest of media types won't pass this property.
+                            if (playerInstance) {
+                                // Register start time.
+                                MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
+                                // Play video.
+                                playerInstance.player.play();
+                            }
                         }}
                     >
                         <i className="fas fa-microphone"></i>
@@ -36,8 +42,13 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                     <button type="button" id="btn-stop" className="btn btn-outline-danger" title="Stop"
                         onClick={() => {
                             ee.emit("stop");
-                            // Pause video.
-                            playerInstance.player.pause();
+
+                            // Only `video` media passes this property.
+                            // The rest of media types won't pass this property.
+                            if (playerInstance) {
+                                // Pause video.
+                                playerInstance.player.pause();
+                            }
                         }}
                     >
                         <i className="fas fa-stop"></i>
@@ -48,12 +59,22 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                         onClick={() => {
                             if (isLooping) {
                                 ee.emit("pause");
-                                // Pause video.
-                                playerInstance.player.pause();
+
+                                // Only `video` media passes this property.
+                                // The rest of media types won't pass this property.
+                                if (playerInstance) {
+                                    // Pause video.
+                                    playerInstance.player.pause();
+                                }
                             } else {
                                 ee.emit("play");
-                                // Play video.
-                                playerInstance.player.play();
+
+                                // Only `video` media passes this property.
+                                // The rest of media types won't pass this property.
+                                if (playerInstance) {
+                                    // Play video.
+                                    playerInstance.player.play();
+                                }
                             }
 
                             // Toggle play/pause.
@@ -145,3 +166,4 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
         </div>
     )
 }
+

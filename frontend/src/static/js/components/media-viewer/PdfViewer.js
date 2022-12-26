@@ -1,7 +1,13 @@
 import React from 'react';
 
+import Daw from '../daw/Daw';
+
 export default function PdfViewer() {
   return (
+    <>
+    <div className='daw-container-outer' key="daw-container-outer">
+      <Daw></Daw>
+    </div>
     <div className="player-container viewer-pdf-container">
       <div className="player-container-inner">
         <span>
@@ -11,5 +17,6 @@ export default function PdfViewer() {
         </span>
       </div>
     </div>
+    </>
   );
 }

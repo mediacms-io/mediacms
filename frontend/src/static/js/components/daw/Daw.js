@@ -167,13 +167,25 @@ export default function Daw({ playerInstance }) {
       />
       <main className="daw-container-inner">
         <div className="daw-top-row">
+          {
+          playerInstance ?
           <DawControl playerInstance={playerInstance} ee={ee}
             trimDisabled={trimDisabled}
             recordDisabled={recordDisabled}
           ></DawControl>
+          :
+          <DawControl ee={ee}
+            trimDisabled={trimDisabled}
+            recordDisabled={recordDisabled}
+          ></DawControl>
+          }
+          {
+          playerInstance ?
           <div className="video-preview-outer">
             <DawVideoPreview playerInstance={playerInstance}></DawVideoPreview>
           </div>
+          : null
+          }
         </div>
         <DawTracks ee={ee} voices={voices}
           onRecordDisabledChange={onRecordDisabledChange}

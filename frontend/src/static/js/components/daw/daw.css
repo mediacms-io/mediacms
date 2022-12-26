@@ -11,6 +11,7 @@
     width: 100%;
   
     padding: 12px 16px 24px;
+    z-index: 1; /* Without this, click on DAW won't take effect for media types like image, PDF, ... */
 }  
 
 /* DAW controls like play, pause, record */
