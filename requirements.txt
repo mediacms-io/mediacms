@@ -31,5 +31,3 @@ django-ckeditor
 django-debug-toolbar==3.2.4
 
 django-login-required-middleware==0.6.1
-
-git+https://github.com/django-ve/django-ads@master#egg=django-ads
