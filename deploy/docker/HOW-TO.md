@@ -19,6 +19,14 @@ sudo su
 /usr/local/bin/docker-compose restart web celery_worker celery_beat
 ```
 
+Just in case, if you need to stop it, shutdown the whole thing by:
+
+```
+sudo su
+cd /home/mediacms.io/mediacms/
+/usr/local/bin/docker-compose down
+```
+
 ## Add user to admin panel:
 
 ```
