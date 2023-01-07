@@ -678,19 +678,19 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     """Short task that saves a voice action"""
 
     if action not in VALID_VOICE_ACTIONS:
-        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏ hərəkət etibarlı deyil')
+        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ action is not among valid voice actions')
         return False
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except BaseException:
-        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ medianı əldə etmək mümkün olmadı')
+        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ media cannot be fetched from database')
         return False
 
     try:
         voice = Voice.objects.get(uid=uid)
     except BaseException:
-        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ səsi qəbul etmək mümkün olmadı')
+        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ voice cannot be fetched from databse')
         return False
 
     user = user_or_session.get("user_id")
@@ -701,11 +701,11 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         try:
             user = User.objects.get(id=user)
         except BaseException:
-            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi etibarlı deyil.')
+            logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ user is not valid')
             return False
 
     if not (user or session_key):
-        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi və ya sessiya açarı etibarlı deyil')
+        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ user or session key is not valid')
         return False
 
     # Check if user has alread done like/likeundo once. Avoid spam. And more.
@@ -718,7 +718,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
             remote_ip=remote_ip,
             voice=voice
         ):
-            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ öncədən saxlama funksiyası səhvi qaytardı')
+            logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ pre_save_action__voice function returned false')
             return False
 
     # TODO: Exactly why the previous `watch` actions are deleted?
