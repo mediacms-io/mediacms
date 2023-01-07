@@ -669,21 +669,28 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     return True
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 @task(name="save_voice_action", queue="short_tasks")
 def save_voice_action(user_or_session, friendly_token=None, action="watch", extra_info=None, uid=None):
     """Short task that saves a voice action"""
 
     if action not in VALID_VOICE_ACTIONS:
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏ hərəkət etibarlı deyil')
         return False
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except BaseException:
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ medianı əldə etmək mümkün olmadı')
         return False
 
     try:
         voice = Voice.objects.get(uid=uid)
     except BaseException:
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ səsi qəbul etmək mümkün olmadı')
         return False
 
     user = user_or_session.get("user_id")
@@ -694,9 +701,11 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         try:
             user = User.objects.get(id=user)
         except BaseException:
+            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi etibarlı deyil.')
             return False
 
     if not (user or session_key):
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi və ya sessiya açarı etibarlı deyil')
         return False
 
     # Check if user has alread done like/likeundo once. Avoid spam. And more.
@@ -709,6 +718,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
             remote_ip=remote_ip,
             voice=voice
         ):
+            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ öncədən saxlama funksiyası səhvi qaytardı')
             return False
 
     # TODO: Exactly why the previous `watch` actions are deleted?
