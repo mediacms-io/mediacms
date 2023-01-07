@@ -678,19 +678,19 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
     """Short task that saves a voice action"""
 
     if action not in VALID_VOICE_ACTIONS:
-        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ action is not among valid voice actions')
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏ hərəkət etibarlı deyil')
         return False
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except BaseException:
-        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ media cannot be fetched from database')
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ medianı əldə etmək mümkün olmadı')
         return False
 
     try:
         voice = Voice.objects.get(uid=uid)
     except BaseException:
-        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ voice cannot be fetched from databse')
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ səsi qəbul etmək mümkün olmadı')
         return False
 
     user = user_or_session.get("user_id")
@@ -701,11 +701,11 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         try:
             user = User.objects.get(id=user)
         except BaseException:
-            logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ user is not valid')
+            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi etibarlı deyil.')
             return False
 
     if not (user or session_key):
-        logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ user or session key is not valid')
+        logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ istifadəçi və ya sessiya açarı etibarlı deyil')
         return False
 
     # Check if user has alread done like/likeundo once. Avoid spam. And more.
@@ -718,7 +718,7 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
             remote_ip=remote_ip,
             voice=voice
         ):
-            logger.warning('ƏƏƏƏƏƏƏƏsave_voice_actionƏƏƏƏƏƏƏƏ pre_save_action__voice function returned false')
+            logger.warning('ƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏƏ öncədən saxlama funksiyası səhvi qaytardı')
             return False
 
     # TODO: Exactly why the previous `watch` actions are deleted?
