@@ -111,6 +111,6 @@ npm install --legacy-peer-deps
    * `cd /usr/bin/`
    * `ln -sv jekyll.ruby2.5 jekyll`
    * `cd /home/mediacms.io/mediacms/frontend/packages/wfpl/`
-   * `npm run build`
+   * `npm install --legacy-peer-deps`
    * `npm run start`
 * Maybe helpful: https://github.com/naomiaro/waveform-playlist/issues/51#issuecomment-284560392
