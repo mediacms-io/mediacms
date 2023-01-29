@@ -66,6 +66,8 @@ from .serializers import (
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
 
+OR_KEYWORD = "-OR"
+
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 
@@ -744,7 +746,21 @@ class MediaSearch(APIView):
         params = self.request.query_params
         query = params.get("q", "").strip().lower()
         category = params.get("c", "").strip()
-        tag = params.get("t", "").strip()
+        tag_query = params.get("t", "").strip()
+        search_tags = []
+        flip_tag_and_to_or = False
+        if tag_query:
+            search_tags = tag_query.split(',')
+            if len(search_tags) > 0:
+                search_tags = set(search_tags)
+                search_tags.discard('')
+                if OR_KEYWORD in search_tags:
+                    flip_tag_and_to_or = True
+                    search_tags.remove(OR_KEYWORD)
+                search_tags = list(search_tags)
+        tag = False
+        if len(search_tags) > 0:
+            tag = True
 
         ordering = params.get("ordering", "").strip()
         sort_by = params.get("sort_by", "").strip()
@@ -784,7 +800,38 @@ class MediaSearch(APIView):
             media = media.filter(search=query)
 
         if tag:
-            media = media.filter(tags__title=tag)
+            if len(search_tags) > 1:
+                # multi-tag cases to handle
+                # 1. none exist http://localhost/search?t=t,g,d
+                # 2. one exists http://localhost/search?t=VALID,g,d
+                # 3. all empty http://localhost/search?t=,,,
+                # 4. some empty http://localhost/search?t=,VALID
+                #    .........  http://localhost/search?t=VALID,
+                #    .........  http://localhost/search?t=VALID,,ANOTHER
+                # 5. all exist http://localhost/search?t=VALID,ANOTHER
+                # 6. DUPES http://localhost/search?t=VALID,VALID
+                # 7. Just OR http://localhost/search?t=OR
+                #    ....... http://localhost/search?t=OR,
+                if flip_tag_and_to_or:
+                    media = media.filter(tags__title__in=search_tags).distinct()
+                else:
+                    found_tags = []
+                    for addtl_tag in search_tags:
+                        if addtl_tag:
+                            try:
+                                found = Tag.objects.get(title=addtl_tag)
+                            except Tag.DoesNotExist:
+                                found = None
+                            if found:
+                                found_tags.append(found)
+                    if len(found_tags) == 0:
+                        ret = {}
+                        return Response(ret, status=status.HTTP_200_OK)
+                    else:
+                        for found_tag in found_tags:
+                            media = media.filter(tags__title=found_tag)
+            else:
+                media = media.filter(tags__title=search_tags[0])
 
         if category:
             media = media.filter(category__title__contains=category)
