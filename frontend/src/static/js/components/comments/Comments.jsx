@@ -422,37 +422,51 @@ const CommentsListHeader = ({ commentsLength }) => {
 export default function CommentsList(props) {
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
 
-  const [comments, setComments] = useState(
-    MemberContext._currentValue.can.readComment ? MediaPageStore.get('media-comments') : []
-  );
+  const [comments, setComments] = useState([]);
 
   const [displayComments, setDisplayComments] = useState(false);
 
-  function onCommentsLoad() {
-    const retrievedComments = [...MediaPageStore.get('media-comments')];
+  function retrieveComments() {
+    const retrievedComments = MemberContext._currentValue.can.readComment ? [...MediaPageStore.get('media-comments')] : [];
     const video = videojs('vjs_video_3');
+
+    if (MediaCMS.features.media.actions.timestampTimebar)
+    {
+      video.markers.removeAll();
+    }
     
+    retrievedComments.forEach(comment => {
+      comment.sanitizedText = comment.text;
+    });
+  
+    if (MediaCMS.features.media.actions.comment_mention === true)
+    {
+      retrievedComments.forEach(comment => {
+        comment.sanitizedText = setMentions(comment.sanitizedText);
+      });
+    }
+    
+    retrievedComments.forEach(comment => {          
+      comment.sanitizedText = setTimestampAnchorsAndMarkers(comment.sanitizedText, video);
+    });
+
+    setComments(retrievedComments);
+  }
+
+  function onCommentsLoad() {
+    const video = videojs('vjs_video_3');
+
     if (MediaCMS.features.media.actions.timestampTimebar)
     {
       enableMarkers(video);
     }
 
-    if (MediaCMS.features.media.actions.comment_mention === true)
-    {
-      retrievedComments.forEach(comment => {
-        comment.text = setMentions(comment.text);
-      });
-    }
-
-    video.one('loadedmetadata', () => {       
-      retrievedComments.forEach(comment => {          
-        comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
-      });
-      
+    video.one('loadeddata', () => {
       displayCommentsRelatedAlert();
-      setComments([...retrievedComments]);
+      retrieveComments();
     });
-    setComments([...retrievedComments]);
+    
+    retrieveComments();
   }
   
   function setMentions(text)
@@ -489,7 +503,7 @@ export default function CommentsList(props) {
   }
 
   function onCommentSubmit(commentId) {
-    onCommentsLoad();
+    retrieveComments();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(commentsText.ucfirstSingle + ' added', 'commentSubmit'), 100);
   }
@@ -503,7 +517,7 @@ export default function CommentsList(props) {
   }
 
   function onCommentDelete(commentId) {
-    onCommentsLoad();
+    retrieveComments();
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification(commentsText.ucfirstSingle + ' removed', 'commentDelete'), 100);
   }
@@ -554,7 +568,7 @@ export default function CommentsList(props) {
                   key={c.uid}
                   comment_id={c.uid}
                   media_id={mediaId}
-                  text={c.text}
+                  text={c.sanitizedText}
                   author_name={c.author_name}
                   author_link={c.author_profile}
                   author_thumb={SiteContext._currentValue.url + '/' + c.author_thumbnail_url.replace(/^\//g, '')}
