@@ -1,7 +1,5 @@
 # MediaCMS
 
-[![Code Quality: Cpp](https://img.shields.io/lgtm/grade/python/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:python)
-[![Code Quality: Cpp](https://img.shields.io/lgtm/grade/javascript/g/mediacms-io/mediacms.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/mediacms-io/mediacms/context:javascript)
 <br/>
 [![GitHub license](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://raw.githubusercontent.com/mediacms-io/mediacms/main/LICENSE.txt)
 [![Releases](https://img.shields.io/github/v/release/mediacms-io/mediacms?color=green)](https://github.com/mediacms-io/mediacms/releases/)
