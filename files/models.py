@@ -314,7 +314,6 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
-
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -372,7 +371,6 @@ class Media(models.Model):
         # will run only when a poster is uploaded for the first time
         if self.uploaded_poster and self.uploaded_poster != self.__original_uploaded_poster:
             with open(self.uploaded_poster.path, "rb") as f:
-
                 # set this otherwise gets to infinite loop
                 self.__original_uploaded_poster = self.uploaded_poster
 
@@ -580,9 +578,7 @@ class Media(models.Model):
 
         # attempt to break media file in chunks
         if self.duration > settings.CHUNKIZE_VIDEO_DURATION and chunkize:
-
             for profile in profiles:
-
                 if profile.extension == "gif":
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
