@@ -71,7 +71,7 @@ git commit
 While pulling from upstream, if some deployed files like `static/js/_commons.js`, `static/js/embed.js`, `static/js/media.js` have conflict, they can be un-deployed by:
 
 ```
-git checkout upstream/main --  static/js/_commons.js static/js/embed.js static/js/media.js
+git checkout upstream/main --  static/js/_commons.js static/js/embed.js static/js/media.js static/js/playlist.js
 ```
 
 ### Re-deploy
