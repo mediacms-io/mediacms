@@ -460,7 +460,9 @@ to be written
 Through the admin section - http://your_installation/admin/
 
 ## 12. Video transcoding
-Add / remove resolutions and profiles through http://your_installation/admin/encodeprofile
+Add / remove resolutions and profiles by modifying the database table of `Encode profiles` through https://your_installation/admin/files/encodeprofile/
+
+For example, the `Active` state of any profile can be toggled to enable or disable it.
 
 ## 13. How To Add A Static Page To The Sidebar
 
