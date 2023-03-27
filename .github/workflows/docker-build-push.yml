@@ -26,7 +26,7 @@ jobs:
           # Generate Docker tags based on the following events/attributes
           # Set latest tag for default branch
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'add-dockerhub-release-with-all-tags') }}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
