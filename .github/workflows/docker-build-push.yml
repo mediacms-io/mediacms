@@ -1,15 +1,14 @@
 name: Docker build and push
 
 on:
+  workflow_call:
   push:
-    branches:
-      - main
     tags:
       - v*.*.*
 
 jobs:
-  build:
-
+  release:
+    name: Build & release to DockerHub
     runs-on: ubuntu-latest
 
     steps:
