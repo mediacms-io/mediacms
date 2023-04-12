@@ -30,8 +30,14 @@ export default function DawControl({ playerInstance, ee, trimDisabled, recordDis
                             // Only `video` media passes this property.
                             // The rest of media types won't pass this property.
                             if (playerInstance) {
-                                // Register start time.
-                                MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
+                                if (playerInstance.player.currentTime() === playerInstance.player.duration()) {
+                                    // Video is going to be replayed from start. So, set time to zero.
+                                    MediaPageStore.set('media-voice-recording-start', 0);
+                                } else {
+                                    // Video current time is start of to-be-recorded voice.
+                                    MediaPageStore.set('media-voice-recording-start', playerInstance.player.currentTime());
+                                }
+
                                 // Play video.
                                 playerInstance.player.play();
                             }
