@@ -187,17 +187,17 @@ export default function Daw({ playerInstance }) {
           : null
           }
         </div>
-        <DawTracks ee={ee} voices={voices}
-          onRecordDisabledChange={onRecordDisabledChange}
-          onTrimDisabledChange={onTrimDisabledChange}
-          triggerVoiceLike={triggerVoiceLike}
-        ></DawTracks>
         <div className="daw-bottom-row">
           <DawTrackDrop ee={ee}></DawTrackDrop>
           {/* This one deletes all owned voices, not needed now: <DawDelete></DawDelete> */}
           <DawSync ee={ee}></DawSync>
           <DawDeletePopup ee={ee}></DawDeletePopup>
         </div>
+        <DawTracks ee={ee} voices={voices}
+          onRecordDisabledChange={onRecordDisabledChange}
+          onTrimDisabledChange={onTrimDisabledChange}
+          triggerVoiceLike={triggerVoiceLike}
+        ></DawTracks>
       </main>
     </>
   );
