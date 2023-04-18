@@ -78,7 +78,7 @@ export default function DawSync({ ee }) {
               className="btn btn-outline-dark"
               title="Save displayed voices as a file"
             >
-              <i className="fas fa-download"></i>
+              <i className="fas fa-sync"></i>
             </button>
           </PopupTrigger>
         </a>
