@@ -70,13 +70,13 @@ export default function DawSync({ ee }) {
   return (
     <div className="daw-sync-outer">
       <div className="daw-sync" id="daw-sync">
-        <a href={loginUrl} rel="noffolow" className="form-textarea-wrap" title="Save the current work as a voice file">
+        <a href={loginUrl} rel="noffolow" className="form-textarea-wrap" title="Save displayed voices as a file">
           <PopupTrigger contentRef={popupContentRef}>
             <button
               type="button"
               id="btn-drop"
               className="btn btn-outline-dark"
-              title="Save the current work as a voice file"
+              title="Save displayed voices as a file"
             >
               <i className="fas fa-download"></i>
             </button>
