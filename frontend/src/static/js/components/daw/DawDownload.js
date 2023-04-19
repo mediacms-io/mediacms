@@ -2,7 +2,7 @@ import React from 'react'
 
 import './DawDownload.css';
 
-export default function DawDownload({ ee }) {
+export default function DawDownload({ ee, playerInstance }) {
     return (
         <div className="daw-download-outer">
             <div className="daw-download" id="daw-download">
