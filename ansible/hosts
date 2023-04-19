@@ -1,0 +1,17 @@
+# only one media server can be added, at the moment there is no celery queue separation at the redis level, which implies coding errors
+
+[mediacms_servers]
+testmediacms1 ansible_port=22
+
+# If postgresql_servers is declared, it must contain a single host.
+# Only Debian bullseye postgresql server allowed.
+# Remote postgresql servers must have python3-psycopg2 package installed and listen on default port 5432.
+
+[postgresql_servers]
+postgresql ansible_port=22
+
+# if redis_servers is declared, it must contain a single host.
+# settings.py is set automatically.
+
+[redis_servers]
+redis ansible_port=22
