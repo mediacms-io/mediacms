@@ -5,6 +5,7 @@ import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 import { addClassname, removeClassname } from '../../utils/helpers/';
 
+import './DawSync.css'
 import './DawSync.scss'
 
 export default function DawSync({ ee }) {
@@ -70,13 +71,13 @@ export default function DawSync({ ee }) {
   return (
     <div className="daw-sync-outer">
       <div className="daw-sync" id="daw-sync">
-        <a href={loginUrl} rel="noffolow" className="form-textarea-wrap" title="Save displayed voices as a file">
+        <a href={loginUrl} rel="noffolow" className="form-textarea-wrap" title="Store displayed voices as a file">
           <PopupTrigger contentRef={popupContentRef}>
             <button
               type="button"
               id="btn-drop"
               className="btn btn-outline-dark"
-              title="Save displayed voices as a file"
+              title="Store displayed voices as a file"
             >
               <i className="fas fa-sync"></i>
             </button>
