@@ -1,0 +1,378 @@
+- hosts: mediacms_servers
+  remote_user: root
+  gather_facts: yes
+  vars:
+    # each host in mediacms group gets a different UUID
+    # this is for postgresql db/roles separation
+    UUID: "{{ ansible_date_time.iso8601_micro | to_uuid }}"
+
+    # mediacms DATABASES in settings.py
+    # users and databases will be automatically created in postgresql
+    POSTGRESQL_USER: "mediacms_{{ UUID }}"
+    POSTGRESQL_PASSWD: "changeme"
+    POSTGRESQL_DATABASE: "mediacms_{{ UUID }}"
+
+    # do not change
+    postgresql_admin_user: "postgres"
+    postgresql_preinstalled_db: "postgres"
+
+    #############################################
+    # settings.py defaults values.
+    # For test environment it will work, for production you must edit.
+    #############################################
+
+    # at the moment only localhost allowed (SSL)
+    # playbook doesn't handle certbot with nginx for another hosts (Will be implemented soon)
+    # do not change
+    FRONTEND_HOST: "http://localhost"
+    FRONTEND_HOST_DOMAIN: "localhost"
+
+    # SECRET_KEY is generated automatically in setup
+    # SECRET_KEY = "2dii4cog7k=5n37$fz)8dst)kg(s3&10)^qa*gv(kk+nv-z&cu"
+
+    PORTAL_NAME: "MediaCMS"
+    PORTAL_DESCRIPTION: "MediaCMS test server"
+    LANGUAGE_CODE: "en-us"
+    TIME_ZONE: "Europe/London"
+
+    # who can add media
+    # valid options include 'all', 'email_verified', 'advancedUser'
+    CAN_ADD_MEDIA: "all"
+
+    # valid choices here are 'public', 'private', 'unlisted
+    PORTAL_WORKFLOW: "public"
+
+    # valid values: 'light', 'dark'.
+    DEFAULT_THEME: "light"
+
+    # These are passed on every request
+    # if set to False will not fetch external content
+    # this is only for the static files, as fonts/css/js files loaded from CDNs
+    # not for user uploaded media!
+    LOAD_FROM_CDN: False
+    LOGIN_ALLOWED: True  # whether the login button appears
+    REGISTER_ALLOWED: True  # whether the register button appears
+    UPLOAD_MEDIA_ALLOWED: True  # whether the upload media button appears
+    CAN_LIKE_MEDIA: True  # whether the like media appears
+    CAN_DISLIKE_MEDIA: True  # whether the dislike media appears
+    CAN_REPORT_MEDIA: True  # whether the report media appears
+    CAN_SHARE_MEDIA: True  # whether the share media appears
+
+    # how many times an item need be reported
+    # to get to private state automatically
+    REPORTED_TIMES_THRESHOLD: 10
+    ALLOW_ANONYMOUS_ACTIONS: ["report", "like", "dislike", "watch"]  # need be a list
+
+    # ip of the server should be part of this
+    ALLOWED_HOSTS: ["*", "mediacms.io", "127.0.0.1", "localhost", "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"]
+
+    VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE: False
+    PRE_UPLOAD_MEDIA_MESSAGE: ""
+
+    # email settings
+    DEFAULT_FROM_EMAIL: "info@mediacms.io"
+    EMAIL_HOST_PASSWORD: "xyz"
+    EMAIL_HOST_USER: "info@mediacms.io"
+    EMAIL_USE_TLS: True
+    SERVER_EMAIL: "info@mediacms.io"
+    EMAIL_HOST: "mediacms.io"
+    EMAIL_PORT: 587
+    ADMIN_EMAIL_LIST: ["info@mediacms.io"]
+
+    MEDIA_IS_REVIEWED: True  # whether an admin needs to review a media file.
+    # By default consider this is not needed.
+    # If set to False, then each new media need be reviewed otherwise
+    # it won't appear on public listings
+
+    # if set to True the url for original file is returned to the API.
+    SHOW_ORIGINAL_MEDIA: True
+    # Keep in mind that nginx will serve the file unless there's
+    # some authentication taking place. Check nginx file and setup a
+    # basic http auth user/password if you want to restrict access
+
+    MAX_MEDIA_PER_PLAYLIST: 70
+    # bytes, size of uploaded media
+    UPLOAD_MAX_SIZE:  "800 * 1024 * 1000 * 5"
+
+    MAX_CHARS_FOR_COMMENT: 10000  # so that it doesn't end up huge
+    TIMESTAMP_IN_TIMEBAR: False  # shows timestamped comments in the timebar for videos
+    ALLOW_MENTION_IN_COMMENTS: False  # allowing to mention other users with @ in the comments
+
+    # valid options: content, author
+    RELATED_MEDIA_STRATEGY: "content"
+
+    USE_I18N: True
+    USE_L10N: True
+    USE_TZ: True
+    SITE_ID: 1
+
+    # protection agains anonymous users
+    # per ip address limit, for actions as like/dislike/report
+    TIME_TO_ACTION_ANONYMOUS: 10 * 60
+
+    # django-allauth settings
+    ACCOUNT_SESSION_REMEMBER: True
+    ACCOUNT_AUTHENTICATION_METHOD: "username_email"
+    ACCOUNT_EMAIL_REQUIRED: True  # new users need to specify email
+    ACCOUNT_EMAIL_VERIFICATION: "optional"  # 'mandatory' 'none'
+    ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION: True
+    ACCOUNT_USERNAME_MIN_LENGTH: "4"
+    ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE: False
+    ACCOUNT_USERNAME_REQUIRED: True
+    ACCOUNT_LOGIN_ON_PASSWORD_RESET: True
+    ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS: 1
+    ACCOUNT_LOGIN_ATTEMPTS_LIMIT: 20
+    ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT: 5
+    # registration won't be open, might also consider to remove links for register
+    USERS_CAN_SELF_REGISTER: True
+
+    RESTRICTED_DOMAINS_FOR_USER_REGISTRATION: ["xxx.com", "emaildomainwhatever.com"]
+
+    MASK_IPS_FOR_ACTIONS: True
+    # how many seconds a process in running state without reporting progress is
+    # considered as stale...unfortunately v9 seems to not include time
+    # some times so raising this high
+    RUNNING_STATE_STALE: "60 * 60 * 2"
+
+    FRIENDLY_TOKEN_LEN: 9
+
+    # for videos, after that duration get split into chunks
+    # and encoded independently
+    CHUNKIZE_VIDEO_DURATION: "60 * 5"
+    # aparently this has to be smaller than VIDEO_CHUNKIZE_DURATION
+    VIDEO_CHUNKS_DURATION: "60 * 4"
+
+    # always get these two, even if upscaling
+    MINIMUM_RESOLUTIONS_TO_ENCODE: [240, 360]
+
+    LOCAL_INSTALL: True
+
+    # this is an option to make the whole portal available to logged in users only
+    # it is placed here so it can be overrided on local_settings.py
+    GLOBAL_LOGIN_REQUIRED: False
+
+
+  tasks:
+
+    - name: Setup
+      ansible.builtin.include_tasks:
+        file: setup.yml
+
+
+    # pass all variables directly to settings.py, local_settings.py not used
+    - name: Template settings.py
+      ansible.builtin.template:
+        src: ../templates/settings_template.yml
+        dest: /home/mediacms.io/mediacms/cms/settings.py
+        owner: root
+        group: root
+        mode: '0600'
+
+
+    - name: manage.py migrate
+      ansible.builtin.command: /home/mediacms.io/bin/python3 manage.py migrate
+      register: migrate
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "manage.py migrate output: {{ migrate.stdout }}"
+
+
+    - name: manage.py loaddata encoding_profiles.json
+      ansible.builtin.command: /home/mediacms.io/bin/python3 manage.py loaddata /home/mediacms.io/mediacms/fixtures/encoding_profiles.json
+      register: loaddata_e
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "manage.py loaddata output: {{ loaddata_e.stdout }}"
+
+
+    - name: loaddata fixtures/categories.json
+      ansible.builtin.command: /home/mediacms.io/bin/python3 manage.py loaddata /home/mediacms.io/mediacms/fixtures/categories.json
+      register: loaddata_f
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "loaddata fixtures/categories.json output: {{ loaddata_f.stdout }}"
+
+
+    - name: manage.py collectstatic
+      ansible.builtin.command: /home/mediacms.io/bin/python3 manage.py collectstatic --noinput
+      register: collectstatic
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "collectstatic output: {{ collectstatic.stdout }}"
+
+
+    - name: generate ADMIN_PASS
+      ansible.builtin.shell: /home/mediacms.io/bin/python3 -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"
+      register: admin_pass
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+    - name: Set ADMIN_PASS
+      ansible.builtin.set_fact: ADMIN_PASS="{{ admin_pass.stdout }}"
+
+
+    - debug:
+        msg: "ADMIN_PASS: {{ ADMIN_PASS }}"
+
+
+    - name: insert ADMIN_PASS on model
+      ansible.builtin.shell: echo "from users.models import User; User.objects.create_superuser('admin', 'admin@example.com', '{{ ADMIN_PASS }}')" | /home/mediacms.io/bin/python3 manage.py shell
+      register: insert_admin_pass
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "insert ADMIN_PASS output: {{ insert_admin_pass }}"
+
+
+    - name: insert FRONTEND_HOST_DOMAIN on model
+      ansible.builtin.shell: echo "from django.contrib.sites.models import Site; Site.objects.update(name='{{ FRONTEND_HOST_DOMAIN }}', domain='{{ FRONTEND_HOST_DOMAIN }}')" | /home/mediacms.io/bin/python3 manage.py shell
+      register: insert_fronted_host_domain
+      args:
+        chdir: /home/mediacms.io/mediacms/
+
+
+    - debug:
+        msg: "insert FRONTEND_HOST_DOMAIN output: {{ insert_fronted_host_domain }}"
+
+
+    - name: Recursively change ownership of /home/mediacms.io/
+      ansible.builtin.file:
+        path: /home/mediacms.io
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+
+    - name: copy celery systemd units
+      ansible.builtin.copy:
+       src: "/home/mediacms.io/mediacms/deploy/local_install/{{ item }}"
+       dest: "/etc/systemd/system/{{ item }}"
+       remote_src: true
+      with_items: [celery_long.service, celery_short.service, celery_beat.service, mediacms.service]
+
+
+    - name: Generat nginx dirs
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items: ['/etc/letsencrypt/live/mediacms.io/', '/etc/letsencrypt/live/{{ FRONTEND_HOST_DOMAIN }}', '/etc/nginx/sites-enabled', '/etc/nginx/sites-available', '/etc/nginx/dhparams/']
+
+
+    - name: delete some nginx files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      with_items: ['/etc/nginx/conf.d/default.conf', '/etc/nginx/sites-enabled/default']
+
+
+    - name: copy fullchain.pem
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/mediacms.io_fullchain.pem
+       dest: "/etc/letsencrypt/live/{{ FRONTEND_HOST_DOMAIN }}/fullchain.pem"
+       remote_src: true
+
+
+    - name: copy privkey.pem
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/mediacms.io_privkey.pem
+       dest: "/etc/letsencrypt/live/{{ FRONTEND_HOST_DOMAIN }}/privkey.pem"
+       remote_src: true
+
+
+    - name: copy dhparams.pem
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/dhparams.pem
+       dest: /etc/nginx/dhparams/dhparams.pem
+       remote_src: true
+
+
+    - name: copy mediacms.io
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/mediacms.io
+       dest: /etc/nginx/sites-available/mediacms.io
+       remote_src: true
+
+
+    - name: symbolic link to /etc/nginx/sites-enabled/mediacms.io
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/mediacms.io
+        dest: /etc/nginx/sites-enabled/mediacms.io
+        state: link
+
+
+    - name: copy uwsgi_params
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/uwsgi_params
+       dest: /etc/nginx/sites-enabled/uwsgi_params
+       remote_src: true
+
+
+    - name: copy nginx.conf
+      ansible.builtin.copy:
+       src: /home/mediacms.io/mediacms/deploy/local_install/nginx.conf
+       dest: /etc/nginx/nginx.conf
+       remote_src: true
+
+
+    - name: restart nginx
+      ansible.builtin.systemd:
+       name: nginx
+       state: restarted
+
+
+    - name: Recursively change ownership of /home/mediacms.io/
+      ansible.builtin.file:
+        path: /home/mediacms.io
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+
+
+    - name: enable and start systemd units
+      ansible.builtin.systemd:
+       name: '{{ item }}'
+       enabled: yes
+       state: restarted
+       daemon_reload: yes
+      with_items: [celery_long, celery_short, celery_beat, mediacms]
+
+
+    - name: Check install
+      uri:
+        url: "http://{{ ansible_default_ipv4.address }}"
+        method: GET
+        status_code: [200]
+      register: result
+      until: result.status == 200
+      retries: 3
+      delay: 5
+
+
+    # ugly hack in case mediacms is not up
+    # it may take a while
+    - name: restart mediacms
+      ansible.builtin.systemd:
+       name: '{{ item }}'
+       enabled: yes
+       state: restarted
+       daemon_reload: yes
+      with_items: [mediacms]
+      when: "result.status != 200"
+
+    - debug:
+        msg: "MediaCMS installation completed, open browser on http://{{ FRONTEND_HOST_DOMAIN }} and login with user admin and password {{ ADMIN_PASS }}"

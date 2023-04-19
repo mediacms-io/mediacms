@@ -1,0 +1,244 @@
+- name: Check if Debian
+  ansible.builtin.fail:
+    msg: Only Debian
+  when: ansible_distribution != 'Debian'
+
+
+- name: Check if bullseye
+  ansible.builtin.fail:
+    msg: Only Debian
+  when: ansible_distribution_release != 'bullseye'
+
+
+- name: Check postgresql_servers group
+  ansible.builtin.fail:
+    msg: Only one host in postgresql_servers
+  when:
+    - "'postgresql_servers' in groups"
+    - "groups['postgresql_servers']|length != 1"
+
+
+- name: Check redis_servers group
+  ansible.builtin.fail:
+    msg: Only one host in redis_servers
+  when:
+    - "'redis_servers' in groups"
+    - "groups['redis_servers']|length != 1"
+
+
+- name: Gather facts from postgresql servers
+  ansible.builtin.setup:
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['postgresql_servers'] }}"
+  when:
+    - "'postgresql_servers' in groups"
+
+
+- name: Check if postgresql server is Debian
+  ansible.builtin.fail:
+    msg: Only Debian
+  when:
+    - "'postgresql_servers' in groups"
+    - hostvars[groups['postgresql_servers'][0]]['ansible_distribution'] != 'Debian'
+
+
+- name: Check if postgresql server is bullseye
+  ansible.builtin.fail:
+    msg: Only Debian
+  when:
+    - "'postgresql_servers' in groups"
+    - hostvars[groups['postgresql_servers'][0]]['ansible_distribution_release'] != 'bullseye'
+
+
+- name: Gather facts from redis servers
+  ansible.builtin.setup:
+  delegate_to: "{{ item }}"
+  delegate_facts: true
+  loop: "{{ groups['redis_servers'] }}"
+  when:
+    - "'redis_servers' in groups"
+
+
+- name: Set POSTGRESQL_IP vars
+  ansible.builtin.set_fact:
+    POSTGRESQL_IP: "{{ hostvars[groups['postgresql_servers'][0]]['ansible_default_ipv4']['address'] }}"
+  when:
+    - "'postgresql_servers' in groups"
+
+
+- name: Set POSTGRESQL_IP vars
+  ansible.builtin.set_fact:
+    POSTGRESQL_IP: "127.0.0.1"
+  when:
+    - "'postgresql_servers' not in groups"
+
+
+- name: Set REDIS_IP & POSTGRESQL_IP vars
+  ansible.builtin.set_fact:
+    REDIS_IP: "{{ hostvars[groups['redis_servers'][0]]['ansible_default_ipv4']['address'] }}"
+  when:
+    - "'redis_servers' in groups"
+
+
+- name: Set REDIS_IP & POSTGRESQL_IP vars
+  ansible.builtin.set_fact:
+    REDIS_IP: "127.0.0.1"
+  when:
+    - "'redis_servers' not in groups"
+
+
+- name: test postgresql
+  community.postgresql.postgresql_query:
+    db: "{{ postgresql_preinstalled_db }}"
+    query: SELECT version()
+  become: true
+  become_user: "{{ postgresql_admin_user }}"
+  delegate_to: "{{ POSTGRESQL_IP }}"
+  register: sql_data
+  when:
+    - "'redis_servers' in groups"
+
+
+- ansible.builtin.debug:
+    var: sql_data.query_result.0.version
+  when:
+    - "'redis_servers' in groups"
+
+
+- name: Installs software-properties-common
+  ansible.builtin.apt:
+    name: [software-properties-common]
+    state: latest
+
+
+- name: Installs repos
+  ansible.builtin.command: "add-apt-repository -y {{ item }}"
+  with_items: [contrib, non-free]
+
+
+- name: Update apt-get repo and cache
+  ansible.builtin.apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+    upgrade: yes
+
+
+- name: Installs common packages
+  ansible.builtin.apt:
+    name: [python3-venv, python3-dev, virtualenv, nginx, git, gcc, vim, unzip, imagemagick, python3-certbot-nginx, certbot, wget, xz-utils]
+    state: latest
+
+
+- name: Installs redis-server if neccesary
+  ansible.builtin.apt:
+    name: [redis-server]
+    state: latest
+  when: REDIS_IP == "127.0.0.1"
+
+
+- name: Installs postgresql if neccesary
+  ansible.builtin.apt:
+    name: [postgresql]
+    state: latest
+  when: POSTGRESQL_IP == "127.0.0.1"
+
+
+- debug:
+    msg: "POSTGRESQL_IP: {{ POSTGRESQL_IP }}, REDIS_IP: {{ REDIS_IP }}, POSTGRESQL_USER: {{ POSTGRESQL_USER }}, POSTGRESQL_PASSWD: {{ POSTGRESQL_PASSWD }}, POSTGRESQL_DATABASE: {{ POSTGRESQL_DATABASE }}"
+
+
+- name: "create postgresql users"
+  become: yes
+  become_user: "{{ postgresql_admin_user }}"
+  delegate_to: "{{ POSTGRESQL_IP }}"
+  community.general.postgresql_user:
+    name: "{{ POSTGRESQL_USER }}"
+    password: "{{ POSTGRESQL_PASSWD }}"
+    encrypted: True
+    expires: "infinity"
+
+
+- name: "create postgresql dbs"
+  become: yes
+  become_user: "{{ postgresql_admin_user }}"
+  delegate_to: "{{ POSTGRESQL_IP }}"
+  community.general.postgresql_db:
+    name: "{{ POSTGRESQL_DATABASE }}"
+    owner: "{{ POSTGRESQL_USER }}"
+    template: template0
+    encoding: UTF8
+
+
+- name: Unarchive ffmpeg
+  ansible.builtin.unarchive:
+    src: https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+    creates: /usr/src/ffmpeg-6.0-amd64-static
+    dest: /usr/src
+    remote_src: yes
+
+
+- name: Install ffmpeg
+  ansible.builtin.copy:
+    src: '/usr/src/ffmpeg-6.0-amd64-static/{{ item }}'
+    dest: '/usr/local/bin/{{ item }}'
+    owner: root
+    group: root
+    mode: '0777'
+    remote_src: yes
+  with_items: [ffmpeg, ffprobe, qt-faststart]
+
+
+- name: Delete git clone if exists
+  ansible.builtin.file:
+    state: absent
+    path: /home/mediacms.io/mediacms
+
+
+- name: Clona
+  ansible.builtin.git:
+    repo: 'git@github.com:mediacms-io/mediacms.git'
+    dest: /home/mediacms.io/mediacms
+    clone: yes
+    accept_hostkey: yes
+    force: true
+
+
+- name: virtual env and libs
+  ansible.builtin.pip:
+   virtualenv: /home/mediacms.io/
+   virtualenv_command: /usr/bin/python3 -m venv
+   extra_args: --upgrade pip
+   requirements: /home/mediacms.io/mediacms/requirements.txt
+
+
+- name: SECRET_KEY
+  ansible.builtin.command: /home/mediacms.io/bin/python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+  register: SECRET_KEY
+
+
+- set_fact:
+      SECRET_KEY: '{{ SECRET_KEY.stdout }}'
+
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: '/home/mediacms.io/mediacms/{{ item }}'
+    state: directory
+    mode: '0755'
+  with_items: [logs, pids]
+
+
+- name: Unarchive Bento4
+  ansible.builtin.unarchive:
+    src: http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
+    creates: /home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux
+    dest: /home/mediacms.io/mediacms/
+    remote_src: yes
+
+
+- name: hls dir
+  ansible.builtin.file:
+    path: /home/mediacms.io/mediacms/media_files/hls
+    state: directory
