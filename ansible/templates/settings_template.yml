@@ -388,7 +388,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "{{ POSTGRESQL_DATABASE }}",
-        "HOST": "{{ POSTGRESQL_IP }}",
+        "HOST": "{{ POSTGRESQL_IP | default('127.0.0.1') }}",
         "PORT": "5432",
         "USER": "{{ POSTGRESQL_USER }}",
         "PASSWORD": "{{ POSTGRESQL_PASSWD }}",
@@ -396,7 +396,7 @@ DATABASES = {
 }
 
 
-REDIS_LOCATION = "redis://{{ REDIS_IP }}:6379/1"
+REDIS_LOCATION = "redis://{{ REDIS_IP | default('127.0.0.1') }}:6379/1"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
