@@ -64,9 +64,8 @@ urlpatterns = [
         views.VoiceActions.as_view(),
     ),
     re_path(
-        # The `media` would be combined with the `voices`.
-        # The `voices` are passed by POST request data.
         # The video `media` will be combined with `voices`.
+        # The `voices` are passed by POST request data.
         r"^api/v1/media/(?P<friendly_token>[\w]*)/videowithvoices$",
         views.VideoWithVoices.as_view(),
     ),
