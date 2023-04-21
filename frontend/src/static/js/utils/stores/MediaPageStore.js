@@ -441,6 +441,8 @@ class MediaPageStore extends EventEmitter {
         break;
       case 'media-voice-deletion-uid':
         MediaPageStoreData[this.id].voiceDeletionUid = value;
+      case 'waveform-playlist':
+        MediaPageStoreData[this.id].wfpl = value;
     }
   }
 
@@ -479,6 +481,10 @@ class MediaPageStore extends EventEmitter {
       case 'media-voice-deletion-uid':
         r =
           void 0 !== MediaPageStoreData[this.id].voiceDeletionUid ? MediaPageStoreData[this.id].voiceDeletionUid : null;
+        break;
+      case 'waveform-playlist':
+        r =
+          void 0 !== MediaPageStoreData[this.id].wfpl ? MediaPageStoreData[this.id].wfpl : null;
         break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
