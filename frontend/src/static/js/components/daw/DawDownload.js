@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { MediaPageStore } from '../../utils/stores/';
+
 import './DawDownload.css';
 
 export default function DawDownload({ ee, playerInstance }) {
@@ -14,6 +16,8 @@ export default function DawDownload({ ee, playerInstance }) {
                     onClick={(event) => {
                         console.log('event: ', event)
                         ee.emit("inforequest")
+                        const playlist = MediaPageStore.get('waveform-playlist');
+                        console.log('playlist.getInfo()', playlist.getInfo())
                     }}
                 >
                     <i className="fas fa-download"></i>
