@@ -893,6 +893,22 @@ class MediaPageStore extends EventEmitter {
           this.likeVoiceFail.bind(this)
         );
         break;
+      case 'VIDEO_WITH_VOICES':
+        if (MediaPageStoreData[this.id].while.videoWithVoices) {
+          return;
+        }
+        MediaPageStoreData[this.id].while.videoWithVoices = true;
+        postRequest(
+          // `this.voicesAPIUrl`: URL is already set when loading voices by loadVoices().
+          this.voicesAPIUrl + '/' + 'videowithvoices',
+          // Back-end expects the exact key & value:
+          { 'voicesUid': action.voicesUid, 'voicesSrc': action.voicesSrc },
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.videoWithVoicesResponse.bind(this),
+          this.videoWithVoicesFail.bind(this)
+        );
+        break;
       case 'CREATE_PLAYLIST':
         postRequest(
           this.mediacms_config.api.playlists,
@@ -1139,6 +1155,30 @@ class MediaPageStore extends EventEmitter {
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.likeVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  videoWithVoicesFail(err) {
+    this.emit('video_with_voices_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.videoWithVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
+  videoWithVoicesResponse(response) {
+    if (response && 201 === response.status && response.data && Object.keys(response.data)) {
+      this.emit('video_with_voices', response.data);
+    }
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.videoWithVoices = false;
       },
       100,
       this
