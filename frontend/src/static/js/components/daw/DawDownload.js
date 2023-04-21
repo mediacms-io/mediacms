@@ -9,7 +9,9 @@ export default function DawDownload({ ee, playerInstance }) {
     function encodeVideoWithVoices() {
         const playlist = MediaPageStore.get('waveform-playlist');
         if (playlist) {
-            console.log('playlist.getInfo()', playlist.getInfo())
+            const info = playlist.getInfo();
+            console.log('playlist.getInfo()', info);
+            const voices = info.tracks;
         }
     }
 
