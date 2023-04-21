@@ -7,7 +7,11 @@ import './DawDownload.css';
 export default function DawDownload({ ee, playerInstance }) {
 
     function encodeVideoWithVoices() {
+
+        // This value is set by a React effect after waveform-playlist is properly initialized.
+        // So, we are sure that if it's not null or undefined, it would contain the info.
         const playlist = MediaPageStore.get('waveform-playlist');
+
         if (playlist) {
             const info = playlist.getInfo();
             console.log('playlist.getInfo()', info);
