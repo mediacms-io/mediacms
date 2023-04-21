@@ -17,7 +17,9 @@ export default function DawDownload({ ee, playerInstance }) {
                         console.log('event: ', event)
                         ee.emit("inforequest")
                         const playlist = MediaPageStore.get('waveform-playlist');
-                        console.log('playlist.getInfo()', playlist.getInfo())
+                        if (playlist) {
+                            console.log('playlist.getInfo()', playlist.getInfo())
+                        }
                     }}
                 >
                     <i className="fas fa-download"></i>
