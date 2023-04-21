@@ -837,6 +837,11 @@ class VoiceActions(APIView):
         else:
             return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
 
+class VideoWithVoices(APIView):
+    """
+    Combine a video `media` with some `voices`.
+    """
+
 class MediaSearch(APIView):
     """
     Retrieve results for searc
