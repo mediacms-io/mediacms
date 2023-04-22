@@ -862,7 +862,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
         cmd.append(voice.voice_file.path)
 
     cmd.append("-map")
-    cmd.append("0")
+    cmd.append("0:v")
 
     voiceCounter = 1
     for voice in voices:
@@ -872,6 +872,8 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
 
     cmd.append("-c:v")
     cmd.append("copy")
+    cmd.append("-c:a")
+    cmd.append("aac")
     cmd.append(result_file_path)
 
     ret = run_command(cmd, cwd=cwd)
