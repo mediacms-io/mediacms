@@ -874,6 +874,9 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     cmd.append("copy")
     cmd.append("-c:a")
     cmd.append("aac")
+    # https://stackoverflow.com/a/14528482/3405291
+    cmd.append("-filter_complex")
+    cmd.append("amix=inputs={0}:duration=longest:dropout_transition=0".format(len(voices)))
     cmd.append(result_file_path)
 
     ret = run_command(cmd, cwd=cwd)
