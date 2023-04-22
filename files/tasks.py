@@ -862,7 +862,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
         cmd.append(voice.voice_file.path)
 
     cmd.append("-map")
-    cmd.append("0:v")
+    cmd.append("0:v") # Keep only the video of media, discard the audio of media.
 
     voiceCounter = 1
     for voice in voices:
