@@ -775,6 +775,45 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
 
     return True
 
+@task(name="video_with_voices", queue="short_tasks")
+def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
+    """Short task that combines a video with some voices"""
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException:
+        return False
+
+    voices = []
+
+    for uid in voicesUid:
+        # Double-check voice existence.
+        try:
+            voice = Voice.objects.get(uid=uid)
+        except BaseException:
+            return False
+        voices.append(voice)
+
+    # To download a video combined with some voices,
+    # we require a valid user or session.
+    # We have to check remote_ip to avoid spam.
+    user = user_or_session.get("user_id")
+    session_key = user_or_session.get("user_session")
+    remote_ip = user_or_session.get("remote_ip_addr")
+
+    if user:
+        try:
+            user = User.objects.get(id=user)
+        except BaseException:
+            return False
+
+    if not (user or session_key):
+        return False
+
+    # TODO: Check if media is of video type.
+    # TODO: Combine video with the voices.
+    # TODO: How to get this short task result?
+
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
     """Experimental task for preparing media listing
