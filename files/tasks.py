@@ -841,23 +841,44 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     )
     va.save()
 
-    # TODO: Combine video with the voices.
-    file_name = media.media_file.path.split("/")[-1]
+    # Combine video with the voices.
+    video_name = media.media_file.path.split("/")[-1]
     random_prefix = produce_friendly_token()
-    result_file_path = "{0}_{1}".format(random_prefix, file_name)
+    result_file_path = "{0}_{1}".format(random_prefix, video_name)
     result_file_path += ".mkv"
     result_file_path = tempfile.gettempdir() + "/" + result_file_path
     cwd = os.path.dirname(os.path.realpath(media.media_file.path))
+
+    # https://stackoverflow.com/a/70001304/3405291
     cmd = [
         settings.FFMPEG_COMMAND,
         "-i",
         media.media_file.path,
-        "-c",
-        "copy",
-        result_file_path,
     ]
 
-    return result_file_path
+    for voice in voices:
+        cmd.append("-i")
+        cmd.append(voice.voice_file.path)
+
+    cmd.append("-map")
+    cmd.append("0")
+
+    voiceCounter = 1
+    for voice in voices:
+        cmd.append("-map")
+        cmd.append("{0}:a".format(voiceCounter))
+        voiceCounter += 1
+
+    cmd.append("-c:v")
+    cmd.append("copy")
+    cmd.append(result_file_path)
+
+    ret = run_command(cmd, cwd=cwd)
+
+    # You can double-check result files by this command:
+    # /usr/local/bin/docker-compose exec web ls -lhrtc /tmp/
+
+    return {"result_file_path": result_file_path, "ffmpeg_return": ret}
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
