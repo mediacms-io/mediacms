@@ -776,9 +776,13 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
 
     return True
 
-@task(name="video_with_voices", queue="short_tasks")
+### Let's make this method a regular method, not a celery_short task.
+### Since we have to return the path of the resulted video as HTTP response.
+### Combining video with voices by FFMPEG should be quite fast. Just copy audio channels.
+###
+#@task(name="video_with_voices", queue="short_tasks")
 def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
-    """Short task that combines a video with some voices"""
+    #"""Short task that combines a video with some voices"""
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
@@ -839,6 +843,8 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
 
     # TODO: Combine video with the voices.
     # TODO: How to get this short task result?
+
+    return media.media_file.path
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():

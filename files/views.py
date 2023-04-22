@@ -885,13 +885,23 @@ class VideoWithVoices(APIView):
                 return Response({"detail": "voice does not exist"}, status=status.HTTP_400_BAD_REQUEST,)
 
         user_or_session = get_user_or_session(request)
-        video_with_voices.delay(
+
+        ### Let's make this method a regular method, not a celery_short task.
+        ### Since we have to return the path of the resulted video as HTTP response.
+        ### Combining video with voices by FFMPEG should be quite fast. Just copy audio channels.
+        ###
+        #video_with_voices.delay(
+        result = video_with_voices(
             user_or_session,
             friendly_token=media.friendly_token,
             voicesUid=voicesUid,
         )
 
-        return Response({"detail": "video is combined with voices, it's ready for download"}, status=status.HTTP_201_CREATED)
+        if result == False:
+            return Response({"detail": "video couldn't be combined with voices"}, status=status.HTTP_400_BAD_REQUEST,)
+        else:
+            return Response({"detail": "video is combined with voices, it's ready for download"
+                             ,"result": result}, status=status.HTTP_201_CREATED)
 
 class MediaSearch(APIView):
     """
