@@ -849,6 +849,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     result_file_path = tempfile.gettempdir() + "/" + result_file_path
     cwd = os.path.dirname(os.path.realpath(media.media_file.path))
 
+    # To add a new audio track into an existing video with audio, use:
     # https://stackoverflow.com/a/70001304/3405291
     cmd = [
         settings.FFMPEG_COMMAND,
