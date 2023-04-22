@@ -831,6 +831,9 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
         media=media,
         action="getvideowithvoices",
         remote_ip=remote_ip,
+        # Voice is not really needed for this action, but pass voice just to avoid this database error:
+        # ERROR:  null value in column "voice_id" of relation "actions_voiceaction" violates not-null constraint
+        voice=voice,
     )
     va.save()
 
