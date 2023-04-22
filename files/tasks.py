@@ -876,8 +876,11 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
 
     ret = run_command(cmd, cwd=cwd)
 
-    # You can double-check result files by this command:
+    # You can double-check result file by this command:
     # /usr/local/bin/docker-compose exec web ls -lhrtc /tmp/
+
+    # You can copy result file from docker container to host by a command like:
+    # docker cp <containerId>:/tmp/<result_file_name> /home/m3/Downloads/
 
     return {"result_file_path": result_file_path, "ffmpeg_return": ret}
 
