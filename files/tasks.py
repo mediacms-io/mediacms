@@ -842,8 +842,22 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     va.save()
 
     # TODO: Combine video with the voices.
+    file_name = media.media_file.path.split("/")[-1]
+    random_prefix = produce_friendly_token()
+    result_file_path = "{0}_{1}".format(random_prefix, file_name)
+    result_file_path += ".mkv"
+    result_file_path = tempfile.gettempdir() + "/" + result_file_path
+    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
+    cmd = [
+        settings.FFMPEG_COMMAND,
+        "-i",
+        media.media_file.path,
+        "-c",
+        "copy",
+        result_file_path,
+    ]
 
-    return media.media_file.path
+    return result_file_path
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
