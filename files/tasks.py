@@ -36,6 +36,7 @@ from .helpers import (
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .methods import pre_save_action__voice
+from .methods import pre_save_action__videowithvoices
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 from .models import Voice
 
@@ -810,7 +811,25 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     if not (user or session_key):
         return False
 
-    # TODO: Check spam and more.
+    # Avoid spam and more.
+    if not pre_save_action__videowithvoices(
+        media=media,
+        user=user,
+        session_key=session_key,
+        action="getvideowithvoices",
+        remote_ip=remote_ip,
+    ):
+        return False
+
+    va = VoiceAction(
+        user=user,
+        session_key=session_key,
+        media=media,
+        action="getvideowithvoices",
+        remote_ip=remote_ip,
+    )
+    va.save()
+
     # TODO: Check if media is of video type.
     # TODO: Combine video with the voices.
     # TODO: How to get this short task result?

@@ -140,6 +140,52 @@ def pre_save_action__voice(media, user, session_key, action, remote_ip, voice):
 
     return False
 
+def pre_save_action__videowithvoices(media, user, session_key, action, remote_ip):
+    """This will perform some checkes
+    example threshold checks, before performing an action of combining a video with some voices
+    """
+
+    # This method is only for a specific action type.
+    if action != "getvideowithvoices":
+        return False
+
+    from actions.models import VoiceAction
+
+    if user:
+        query = VoiceAction.objects.filter(media=media, action=action, user=user)
+    else:
+        query = VoiceAction.objects.filter(media=media, action=action, session_key=session_key)
+    query = query.order_by("-action_date")
+
+    if query:
+        query = query.first()
+        if user:
+            # The user has done the action before.
+            now = datetime.now(query.action_date.tzinfo)
+            # User has to wait for a few seconds, before repeating the same action again.
+            # Force a time gap between two consecuitive actions.
+            if (now - query.action_date).seconds > settings.TIME_TO_ACTION_ANONYMOUS:
+                return True
+    else:
+        if user: # first time action
+            # The user is doing this action for the first time.
+            return True
+
+    if not user:
+        # perform some checking for requests where no session
+        # id is specified (and user is anonymous) to avoid spam
+        # eg allow for the same remote_ip for a specific number of actions
+        query = VoiceAction.objects.filter(media=media, action=action, remote_ip=remote_ip).filter(user=None).order_by("-action_date")
+        if query:
+            query = query.first()
+            now = datetime.now(query.action_date.tzinfo)
+            if (now - query.action_date).seconds > settings.TIME_TO_ACTION_ANONYMOUS:
+                return True
+        else:
+            return True
+
+    return False
+
 def is_mediacms_editor(user):
     """Whether user is MediaCMS editor"""
 
