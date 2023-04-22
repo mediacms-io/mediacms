@@ -810,6 +810,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     if not (user or session_key):
         return False
 
+    # TODO: Check spam and more.
     # TODO: Check if media is of video type.
     # TODO: Combine video with the voices.
     # TODO: How to get this short task result?
