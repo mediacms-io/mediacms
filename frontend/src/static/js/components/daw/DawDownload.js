@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { MediaPageStore } from '../../utils/stores/';
+import { MediaPageActions } from '../../utils/actions/';
 
 import './DawDownload.css';
 
@@ -15,7 +16,15 @@ export default function DawDownload({ ee, playerInstance }) {
         if (playlist) {
             const info = playlist.getInfo();
             console.log('playlist.getInfo()', info);
-            const voices = info.tracks;
+            var voicesUid = []
+            var voicesSrc = []
+            for (let i = 0; i < info.tracks.length; i++) {
+                const uid = info.tracks[i].uid
+                const src = info.tracks[i].src
+                voicesUid.push(uid)
+                voicesSrc.push(src)
+            }
+            MediaPageActions.videoWithVoices(voicesUid, voicesSrc);
         }
     }
 
