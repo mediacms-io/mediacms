@@ -164,7 +164,7 @@ def pre_save_action__videowithvoices(media, user, session_key, action, remote_ip
             now = datetime.now(query.action_date.tzinfo)
             # User has to wait for a few seconds, before repeating the same action again.
             # Force a time gap between two consecuitive actions.
-            if (now - query.action_date).seconds > settings.TIME_TO_ACTION_ANONYMOUS:
+            if (now - query.action_date).seconds > 3:
                 return True
     else:
         if user: # first time action
