@@ -169,6 +169,7 @@ class MediaPageStore extends EventEmitter {
 
   loadVoices() {
     this.voicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/voices';
+    this.videoWithVoicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/videowithvoices';
     this.voicesResponse = this.voicesResponse.bind(this);
     getRequest(this.voicesAPIUrl, !1, this.voicesResponse);
   }
@@ -899,8 +900,8 @@ class MediaPageStore extends EventEmitter {
         }
         MediaPageStoreData[this.id].while.videoWithVoices = true;
         postRequest(
-          // `this.voicesAPIUrl`: URL is already set when loading voices by loadVoices().
-          this.voicesAPIUrl + '/' + 'videowithvoices',
+          // API URL is already set when loading voices by loadVoices().
+          this.videoWithVoicesAPIUrl,
           // Back-end expects the exact key & value:
           { 'voicesUid': action.voicesUid, 'voicesSrc': action.voicesSrc },
           { headers: { 'X-CSRFToken': csrfToken() } },
