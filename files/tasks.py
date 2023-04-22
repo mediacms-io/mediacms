@@ -785,6 +785,10 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     except BaseException:
         return False
 
+    # Only video is acceptable.
+    if media.media_type != "video":
+       return False
+
     voices = []
 
     for uid in voicesUid:
