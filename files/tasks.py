@@ -33,6 +33,7 @@ from .helpers import (
     produce_friendly_token,
     rm_file,
     run_command,
+    url_from_path, # Needed to combine video with some voices.
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .methods import pre_save_action__voice
@@ -842,12 +843,12 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     va.save()
 
     # Combine video with the voices.
+    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
     video_name = media.media_file.path.split("/")[-1]
     random_prefix = produce_friendly_token()
-    result_file_path = "{0}_{1}".format(random_prefix, video_name)
-    result_file_path += ".mkv"
-    result_file_path = tempfile.gettempdir() + "/" + result_file_path
-    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
+    result_file_name = "{0}_{1}".format(random_prefix, video_name)
+    result_file_name = "combineVideoWithVoices_{0}".format(result_file_name)
+    result_file_name += ".mkv"
 
     # To add a new audio track into an existing video with audio, use:
     # https://stackoverflow.com/a/70001304/3405291
@@ -877,7 +878,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     # https://stackoverflow.com/a/14528482/3405291
     cmd.append("-filter_complex")
     cmd.append("amix=inputs={0}:duration=longest:dropout_transition=0".format(len(voices)))
-    cmd.append(result_file_path)
+    cmd.append(result_file_name)
 
     ret = run_command(cmd, cwd=cwd)
 
@@ -887,7 +888,10 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     # You can copy result file from docker container to host by a command like:
     # docker cp <containerId>:/tmp/<result_file_name> /home/m3/Downloads/
 
-    return {"result_file_path": result_file_path, "ffmpeg_return": ret}
+    result_file_path = os.path.join(cwd, result_file_name)
+    result_file_url = url_from_path(result_file_path)
+
+    return {"result_file_url": result_file_url, "ffmpeg_return": ret}
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():
