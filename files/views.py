@@ -871,6 +871,9 @@ class VideoWithVoices(APIView):
         if isinstance(media, Response):
             return media
 
+        if media.media_type != "video":
+            return Response({"detail": "media type must be video"}, status=status.HTTP_400_BAD_REQUEST,)
+
         voicesUid = request.data.get("voicesUid")
         voicesSrc = request.data.get("voicesSrc")
 
