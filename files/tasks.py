@@ -847,7 +847,7 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     video_name = media.media_file.path.split("/")[-1]
     random_prefix = produce_friendly_token()
     result_file_name = "{0}_{1}".format(random_prefix, video_name)
-    result_file_name = "combineVideoWithVoices_{0}".format(result_file_name)
+    result_file_name = "combineVideoWithSomeVoices_{0}".format(result_file_name)
     result_file_name += ".mkv"
 
     # To add a new audio track into an existing video with audio, use:
