@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import { MediaPageStore } from '../../utils/stores/';
 import { MediaPageActions } from '../../utils/actions/';
