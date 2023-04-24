@@ -28,6 +28,31 @@ export default function DawDownload({ ee, playerInstance }) {
         }
     }
 
+    function onVideoWithVoices(data) {
+        console.log('VIDEO_WITH_VOICES:', 'ok', 'DATA:', data);
+        // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+        setTimeout(() => PageActions.addNotification('Video (+ voices) is ready for download', 'videoWithVoices'), 100);
+      }
+
+      function onVideoWithVoicesFail(err) {
+        console.log('VIDEO_WITH_VOICES:', 'bad', 'ERROR:', err);
+        // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
+        setTimeout(
+          () => PageActions.addNotification('Video could not be combined with voices', 'videoWithVoicesFail'),
+          100
+        );
+      }
+
+    useEffect(() => {
+        MediaPageStore.on('video_with_voices', onVideoWithVoices);
+        MediaPageStore.on('video_with_voices_fail', onVideoWithVoicesFail);
+
+        return () => {
+          MediaPageStore.removeListener('video_with_voices', onVideoWithVoices);
+          MediaPageStore.removeListener('video_with_voices_fail', onVideoWithVoicesFail);
+        };
+    }, []);
+
     return (
         <div className="daw-download-outer">
             <div className="daw-download" id="daw-download">
