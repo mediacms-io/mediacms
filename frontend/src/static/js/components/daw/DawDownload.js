@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 
 import { MediaPageStore } from '../../utils/stores/';
 import { MediaPageActions } from '../../utils/actions/';
+import { PageActions } from '../../utils/actions/';
 
 import './DawDownload.css';
 
