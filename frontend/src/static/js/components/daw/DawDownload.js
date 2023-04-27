@@ -18,19 +18,19 @@ export default function DawDownload({ ee, playerInstance }) {
 
   const downloadLinkRef = useRef(null);
 
-  const [isVisible, setVisibility] = useState(false);
+  const [isPopupVisible, setPopupVisibility] = useState(false);
 
   function show() {
-    setVisibility(true);
+    setPopupVisibility(true);
   }
 
   function hide() {
     disableListeners();
-    setVisibility(false);
+    setPopupVisibility(false);
   }
 
   function toggle() {
-    if (isVisible) {
+    if (isPopupVisible) {
       hide();
     } else {
       show();
@@ -104,7 +104,7 @@ export default function DawDownload({ ee, playerInstance }) {
           <i className="fas fa-download"></i>
         </button>
 
-        {isVisible ? (
+        {isPopupVisible ? (
           <div className="popup-fullscreen">
               <span className="popup-fullscreen-overlay"></span>
               <div className="popup-dialog">
