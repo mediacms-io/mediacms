@@ -11,6 +11,8 @@ import './DawDownload.css';
 import './DawDownload.scss'
 
 export default function DawDownload({ ee, playerInstance }) {
+  // We don't need PopupTrigger.
+  // Since we trigger popup by a signal handler, not just a simple click event.
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
   const downloadLinkRef = useRef(null);
@@ -70,7 +72,7 @@ export default function DawDownload({ ee, playerInstance }) {
   return (
     <div className="daw-download-outer">
       <div className="daw-download" id="daw-download">
-        <PopupTrigger contentRef={popupContentRef}>
+
           <button
             type="button"
             className="btn btn-outline-dark"
@@ -81,7 +83,6 @@ export default function DawDownload({ ee, playerInstance }) {
           >
             <i className="fas fa-download"></i>
           </button>
-        </PopupTrigger>
 
         <PopupContent contentRef={popupContentRef}>
           <div className="popup-fullscreen">
