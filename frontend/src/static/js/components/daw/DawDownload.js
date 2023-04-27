@@ -37,7 +37,6 @@ export default function DawDownload({ ee, playerInstance }) {
     }
   }
 
-
   function videoWithVoices() {
     // This value is set by a React effect after waveform-playlist is properly initialized.
     // So, we are sure that if it's not null or undefined, it would contain the info properly.
@@ -63,8 +62,10 @@ export default function DawDownload({ ee, playerInstance }) {
   }
 
   function onVideoWithVoices(data) {
-    downloadLinkRef.current.href = data.result.result_file_url;
-    toggle();
+    if (downloadLinkRef.current) {
+      downloadLinkRef.current.href = data.result.result_file_url;
+      toggle();
+    }
 
     console.log('VIDEO_WITH_VOICES:', 'ok', 'DATA:', data);
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
@@ -106,31 +107,31 @@ export default function DawDownload({ ee, playerInstance }) {
 
         {isPopupVisible ? (
           <div className="popup-fullscreen">
-              <span className="popup-fullscreen-overlay"></span>
-              <div className="popup-dialog">
-                {/* Input form is according to: */}
-                {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
-                {/* Class names are kept as before just to have the same CSS styles. */}
-                <div className="playlist-form-wrap">
-                  <div className="playlist-form-field playlist-title">
-                    <span className="playlist-form-label">Video + displayed voices</span>
-                    <a className="playlist-form-label"></a>
-                  </div>
+            <span className="popup-fullscreen-overlay"></span>
+            <div className="popup-dialog">
+              {/* Input form is according to: */}
+              {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
+              {/* Class names are kept as before just to have the same CSS styles. */}
+              <div className="playlist-form-wrap">
+                <div className="playlist-form-field playlist-title">
+                  <span className="playlist-form-label">Video + displayed voices</span>
+                  <a className="playlist-form-label"></a>
+                </div>
 
-                  <div className="playlist-form-field playlist-description">
-                    <span className="playlist-form-label">Download</span>
-                    <a ref={downloadLinkRef} href="">
-                      Link
-                    </a>
-                  </div>
+                <div className="playlist-form-field playlist-description">
+                  <span className="playlist-form-label">Download</span>
+                  <a ref={downloadLinkRef} href="">
+                    Link
+                  </a>
+                </div>
 
-                  <div className="playlist-form-actions">
-                    <button className="create-btn" onClick={onOK}>
-                      GOT IT
-                    </button>
-                  </div>
+                <div className="playlist-form-actions">
+                  <button className="create-btn" onClick={onOK}>
+                    GOT IT
+                  </button>
                 </div>
               </div>
+            </div>
           </div>
         ) : null}
       </div>
