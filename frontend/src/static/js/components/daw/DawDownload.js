@@ -8,7 +8,7 @@ import { usePopup } from '../../utils/hooks/';
 import { PopupMain } from '../_shared';
 
 import './DawDownload.css';
-import './DawDownload.scss'
+import './DawDownload.scss';
 
 export default function DawDownload({ ee, playerInstance }) {
   // We don't need PopupTrigger.
@@ -76,17 +76,16 @@ export default function DawDownload({ ee, playerInstance }) {
   return (
     <div className="daw-download-outer">
       <div className="daw-download" id="daw-download">
-
-          <button
-            type="button"
-            className="btn btn-outline-dark"
-            title="Download video + displayed voices"
-            onClick={() => {
-              videoWithVoices();
-            }}
-          >
-            <i className="fas fa-download"></i>
-          </button>
+        <button
+          type="button"
+          className="btn btn-outline-dark"
+          title="Download video + displayed voices"
+          onClick={() => {
+            videoWithVoices();
+          }}
+        >
+          <i className="fas fa-download"></i>
+        </button>
 
         <PopupContent contentRef={popupContentRef}>
           <div className="popup-fullscreen">
