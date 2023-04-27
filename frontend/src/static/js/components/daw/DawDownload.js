@@ -1,25 +1,42 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { MediaPageStore } from '../../utils/stores/';
 import { MediaPageActions } from '../../utils/actions/';
 import { PageActions } from '../../utils/actions/';
 
-import { usePopup } from '../../utils/hooks/';
-import { PopupMain } from '../_shared';
-
 import './DawDownload.css';
 import './DawDownload.scss';
 
 export default function DawDownload({ ee, playerInstance }) {
-  // We don't need PopupTrigger.
+  // We don't need this read-made popup.
   // Because PopupTrigger consumes the click (so, onClick logic is never run) and triggers the popup.
   // Our case is different. We need a custom onClick logic.
   // In our case, the click shouldn't trigger popup, but it should emit signals for HTTP request.
   // Popup is triggered when HTTP response is received.
   // Popup is triggered by a signal/slot handler.
-  const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
+  // const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
   const downloadLinkRef = useRef(null);
+
+  const [isVisible, setVisibility] = useState(false);
+
+  function show() {
+    setVisibility(true);
+  }
+
+  function hide() {
+    disableListeners();
+    setVisibility(false);
+  }
+
+  function toggle() {
+    if (isVisible) {
+      hide();
+    } else {
+      show();
+    }
+  }
+
 
   function videoWithVoices() {
     // This value is set by a React effect after waveform-playlist is properly initialized.
@@ -42,12 +59,12 @@ export default function DawDownload({ ee, playerInstance }) {
   }
 
   function onOK() {
-    popupContentRef.current.toggle();
+    toggle();
   }
 
   function onVideoWithVoices(data) {
     downloadLinkRef.current.href = data.result.result_file_url;
-    popupContentRef.current.toggle();
+    toggle();
 
     console.log('VIDEO_WITH_VOICES:', 'ok', 'DATA:', data);
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
@@ -87,9 +104,8 @@ export default function DawDownload({ ee, playerInstance }) {
           <i className="fas fa-download"></i>
         </button>
 
-        <PopupContent contentRef={popupContentRef}>
+        {isVisible ? (
           <div className="popup-fullscreen">
-            <PopupMain>
               <span className="popup-fullscreen-overlay"></span>
               <div className="popup-dialog">
                 {/* Input form is according to: */}
@@ -115,9 +131,8 @@ export default function DawDownload({ ee, playerInstance }) {
                   </div>
                 </div>
               </div>
-            </PopupMain>
           </div>
-        </PopupContent>
+        ) : null}
       </div>
     </div>
   );
