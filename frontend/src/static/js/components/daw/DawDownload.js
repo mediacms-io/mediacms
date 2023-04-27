@@ -97,40 +97,40 @@ export default function DawDownload({ ee, playerInstance }) {
 }
 
 // To have the correct styles for the popup:
-import '../../components/_shared/popup/Popup.scss'
+import '../../components/_shared/popup/Popup.scss';
 
 function DawDownloadPopup({ downloadLink, onOk }) {
   return (
     <div className="popup-fullscreen">
-        <div className="popup-main">
-      <span className="popup-fullscreen-overlay"></span>
-      <div className="popup-dialog">
-        {/* Input form is according to: */}
-        {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
-        {/* Class names are kept as before just to have the same CSS styles. */}
-        <div className="playlist-form-wrap">
-          <div className="playlist-form-field playlist-title">
-            <span className="playlist-form-label">Video + displayed voices</span>
-            <a className="playlist-form-label"></a>
-          </div>
+      <div className="popup-main">
+        <span className="popup-fullscreen-overlay"></span>
+        <div className="popup-dialog">
+          {/* Input form is according to: */}
+          {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
+          {/* Class names are kept as before just to have the same CSS styles. */}
+          <div className="playlist-form-wrap">
+            <div className="playlist-form-field playlist-title">
+              <span className="playlist-form-label">Video + displayed voices</span>
+              <a className="playlist-form-label"></a>
+            </div>
 
-          <div className="playlist-form-field playlist-description">
-            <span className="playlist-form-label">Download:</span>
-            <a href={downloadLink}>Link</a>
-          </div>
+            <div className="playlist-form-field playlist-description">
+              <span className="playlist-form-label">Download:</span>
+              <a href={downloadLink}>Link</a>
+            </div>
 
-          <div className="playlist-form-actions">
-            <button
-              className="create-btn"
-              onClick={() => {
-                onOk();
-              }}
-            >
-              GOT IT
-            </button>
+            <div className="playlist-form-actions">
+              <button
+                className="create-btn"
+                onClick={() => {
+                  onOk();
+                }}
+              >
+                GOT IT
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );
