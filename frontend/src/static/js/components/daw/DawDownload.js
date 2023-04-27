@@ -111,7 +111,7 @@ function DawDownloadPopup({ downloadLink, onOk }) {
           </div>
 
           <div className="playlist-form-field playlist-description">
-            <span className="playlist-form-label">Download</span>
+            <span className="playlist-form-label">Download:</span>
             <a href={downloadLink}>Link</a>
           </div>
 
