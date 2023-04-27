@@ -13,6 +13,7 @@ import './DawDownload.scss'
 export default function DawDownload({ ee, playerInstance }) {
   // We don't need PopupTrigger.
   // Because PopupTrigger consumes the click (so, onClick logic is never run) and triggers the popup.
+  // Our case is different. We need a custom onClick logic.
   // In our case, the click shouldn't trigger popup, but it should emit signals for HTTP request.
   // Popup is triggered when HTTP response is received.
   // Popup is triggered by a signal/slot handler.
