@@ -16,26 +16,9 @@ export default function DawDownload({ ee, playerInstance }) {
   // Popup is triggered by a signal/slot handler.
   // const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
-  const downloadLinkRef = useRef(null);
+  const downloadLinkRef = useRef('');
 
   const [isPopupVisible, setPopupVisibility] = useState(false);
-
-  function show() {
-    setPopupVisibility(true);
-  }
-
-  function hide() {
-    disableListeners();
-    setPopupVisibility(false);
-  }
-
-  function toggle() {
-    if (isPopupVisible) {
-      hide();
-    } else {
-      show();
-    }
-  }
 
   function videoWithVoices() {
     // This value is set by a React effect after waveform-playlist is properly initialized.
@@ -58,13 +41,15 @@ export default function DawDownload({ ee, playerInstance }) {
   }
 
   function onOK() {
-    toggle();
+    setPopupVisibility(false);
   }
 
   function onVideoWithVoices(data) {
-    if (downloadLinkRef.current) {
-      downloadLinkRef.current.href = data.result.result_file_url;
-      toggle();
+    if (data.result && data.result.result_file_url) {
+      downloadLinkRef.current = data.result.result_file_url;
+      setPopupVisibility(true);
+    } else {
+      console.log('Received HTTP data must have proper structure.');
     }
 
     console.log('VIDEO_WITH_VOICES:', 'ok', 'DATA:', data);
@@ -105,35 +90,42 @@ export default function DawDownload({ ee, playerInstance }) {
           <i className="fas fa-download"></i>
         </button>
 
-        {isPopupVisible ? (
-          <div className="popup-fullscreen">
-            <span className="popup-fullscreen-overlay"></span>
-            <div className="popup-dialog">
-              {/* Input form is according to: */}
-              {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
-              {/* Class names are kept as before just to have the same CSS styles. */}
-              <div className="playlist-form-wrap">
-                <div className="playlist-form-field playlist-title">
-                  <span className="playlist-form-label">Video + displayed voices</span>
-                  <a className="playlist-form-label"></a>
-                </div>
+        {isPopupVisible ? <DawDownloadPopup downloadLink={downloadLinkRef.current} onOk={onOK} /> : null}
+      </div>
+    </div>
+  );
+}
 
-                <div className="playlist-form-field playlist-description">
-                  <span className="playlist-form-label">Download</span>
-                  <a ref={downloadLinkRef} href="">
-                    Link
-                  </a>
-                </div>
-
-                <div className="playlist-form-actions">
-                  <button className="create-btn" onClick={onOK}>
-                    GOT IT
-                  </button>
-                </div>
-              </div>
-            </div>
+function DawDownloadPopup({ downloadLink, onOk }) {
+  return (
+    <div className="popup-fullscreen">
+      <span className="popup-fullscreen-overlay"></span>
+      <div className="popup-dialog">
+        {/* Input form is according to: */}
+        {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
+        {/* Class names are kept as before just to have the same CSS styles. */}
+        <div className="playlist-form-wrap">
+          <div className="playlist-form-field playlist-title">
+            <span className="playlist-form-label">Video + displayed voices</span>
+            <a className="playlist-form-label"></a>
           </div>
-        ) : null}
+
+          <div className="playlist-form-field playlist-description">
+            <span className="playlist-form-label">Download</span>
+            <a href={downloadLink}>Link</a>
+          </div>
+
+          <div className="playlist-form-actions">
+            <button
+              className="create-btn"
+              onClick={() => {
+                onOk();
+              }}
+            >
+              GOT IT
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
