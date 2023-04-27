@@ -13,6 +13,7 @@ import './DawDownload.scss'
 export default function DawDownload({ ee, playerInstance }) {
   // We don't need PopupTrigger.
   // Since we trigger popup by a signal handler, not just a simple click event.
+  // Also, PopupTrigger would consume the click on button. So, the onClick is never called.
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
   const downloadLinkRef = useRef(null);
