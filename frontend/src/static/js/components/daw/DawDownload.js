@@ -96,9 +96,13 @@ export default function DawDownload({ ee, playerInstance }) {
   );
 }
 
+// To have the correct styles for the popup:
+import '../../components/_shared/popup/Popup.scss'
+
 function DawDownloadPopup({ downloadLink, onOk }) {
   return (
     <div className="popup-fullscreen">
+        <div className="popup-main">
       <span className="popup-fullscreen-overlay"></span>
       <div className="popup-dialog">
         {/* Input form is according to: */}
@@ -126,6 +130,7 @@ function DawDownloadPopup({ downloadLink, onOk }) {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
