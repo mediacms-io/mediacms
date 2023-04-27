@@ -1,12 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { MediaPageStore } from '../../utils/stores/';
 import { MediaPageActions } from '../../utils/actions/';
 import { PageActions } from '../../utils/actions/';
 
+import { usePopup } from '../../utils/hooks/';
+import { PopupMain } from '../_shared';
+
 import './DawDownload.css';
+import './DawDownload.scss'
 
 export default function DawDownload({ ee, playerInstance }) {
+  const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
+
+  const downloadLinkRef = useRef(null);
+
   function videoWithVoices() {
     // This value is set by a React effect after waveform-playlist is properly initialized.
     // So, we are sure that if it's not null or undefined, it would contain the info properly.
@@ -27,7 +35,14 @@ export default function DawDownload({ ee, playerInstance }) {
     }
   }
 
+  function onOK() {
+    popupContentRef.current.toggle();
+  }
+
   function onVideoWithVoices(data) {
+    downloadLinkRef.current.href = data.result.result_file_url;
+    popupContentRef.current.toggle();
+
     console.log('VIDEO_WITH_VOICES:', 'ok', 'DATA:', data);
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(() => PageActions.addNotification('Video (+ voices) is ready for download', 'videoWithVoices'), 100);
@@ -60,14 +75,45 @@ export default function DawDownload({ ee, playerInstance }) {
             type="button"
             className="btn btn-outline-dark"
             title="Download video + displayed voices"
-            onClick={(event) => {
-              console.log('event: ', event);
+            onClick={() => {
               videoWithVoices();
             }}
           >
             <i className="fas fa-download"></i>
           </button>
         </PopupTrigger>
+
+        <PopupContent contentRef={popupContentRef}>
+          <div className="popup-fullscreen">
+            <PopupMain>
+              <span className="popup-fullscreen-overlay"></span>
+              <div className="popup-dialog">
+                {/* Input form is according to: */}
+                {/* `frontend/src/static/js/components/playlist-form/PlaylistCreationForm.jsx` */}
+                {/* Class names are kept as before just to have the same CSS styles. */}
+                <div className="playlist-form-wrap">
+                  <div className="playlist-form-field playlist-title">
+                    <span className="playlist-form-label">Video + displayed voices</span>
+                    <a className="playlist-form-label"></a>
+                  </div>
+
+                  <div className="playlist-form-field playlist-description">
+                    <span className="playlist-form-label">Download</span>
+                    <a ref={downloadLinkRef} href="">
+                      Link
+                    </a>
+                  </div>
+
+                  <div className="playlist-form-actions">
+                    <button className="create-btn" onClick={onOK}>
+                      GOT IT
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </PopupMain>
+          </div>
+        </PopupContent>
       </div>
     </div>
   );

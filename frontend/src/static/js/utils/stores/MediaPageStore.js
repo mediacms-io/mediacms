@@ -1176,13 +1176,7 @@ class MediaPageStore extends EventEmitter {
   videoWithVoicesResponse(response) {
     if (response && 201 === response.status && response.data && Object.keys(response.data)) {
       this.emit('video_with_voices', response.data);
-      console.log('response.data:', response.data)
-
-      getRequest(response.data.result.result_file_url, false, ()=>{
-        console.log('GOT by URL')
-      }, ()=>{
-        console.log('Could not GET by URL')
-      });
+      console.log('Download URL of video + voices:', response.data.result.result_file_url);
     }
 
     setTimeout(
