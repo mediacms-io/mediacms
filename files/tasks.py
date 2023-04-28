@@ -33,9 +33,11 @@ from .helpers import (
     produce_friendly_token,
     rm_file,
     run_command,
+    url_from_path, # Needed to combine video with some voices.
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .methods import pre_save_action__voice
+from .methods import pre_save_action__videowithvoices
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 from .models import Voice
 
@@ -774,6 +776,122 @@ def save_voice_action(user_or_session, friendly_token=None, action="watch", extr
         voice.save(update_fields=["likes"])
 
     return True
+
+### Let's make this method a regular method, not a celery_short task.
+### Since we have to return the path of the resulted video as HTTP response.
+### Combining video with voices by FFMPEG should be quite fast. Just copy audio channels.
+###
+#@task(name="video_with_voices", queue="short_tasks")
+def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
+    #"""Short task that combines a video with some voices"""
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException:
+        return False
+
+    # Only video is acceptable.
+    if media.media_type != "video":
+       return False
+
+    voices = []
+
+    for uid in voicesUid:
+        # Double-check voice existence.
+        try:
+            voice = Voice.objects.get(uid=uid)
+        except BaseException:
+            return False
+        voices.append(voice)
+
+    # To download a video combined with some voices,
+    # we require a valid user or session.
+    # We have to check remote_ip to avoid spam.
+    user = user_or_session.get("user_id")
+    session_key = user_or_session.get("user_session")
+    remote_ip = user_or_session.get("remote_ip_addr")
+
+    if user:
+        try:
+            user = User.objects.get(id=user)
+        except BaseException:
+            return False
+
+    if not (user or session_key):
+        return False
+
+    # Avoid spam and more.
+    if not pre_save_action__videowithvoices(
+        media=media,
+        user=user,
+        session_key=session_key,
+        action="getvideowithvoices",
+        remote_ip=remote_ip,
+    ):
+        return False
+
+    va = VoiceAction(
+        user=user,
+        session_key=session_key,
+        media=media,
+        action="getvideowithvoices",
+        remote_ip=remote_ip,
+        # Voice is not really needed for this action, but pass voice just to avoid this database error:
+        # ERROR:  null value in column "voice_id" of relation "actions_voiceaction" violates not-null constraint
+        voice=voice,
+    )
+    va.save()
+
+    # Combine video with the voices.
+    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
+    video_name = media.media_file.path.split("/")[-1]
+    random_prefix = produce_friendly_token()
+    result_file_name = "{0}_{1}".format(random_prefix, video_name)
+    result_file_name = "combineVideoWithSomeVoices_{0}".format(result_file_name)
+    result_file_name += ".mkv"
+
+    # To add a new audio track into an existing video with audio, use:
+    # https://stackoverflow.com/a/70001304/3405291
+    cmd = [
+        settings.FFMPEG_COMMAND,
+        "-i",
+        media.media_file.path,
+    ]
+
+    for voice in voices:
+        cmd.append("-i")
+        cmd.append(voice.voice_file.path)
+
+    cmd.append("-map")
+    cmd.append("0:v") # Keep only the video of media, discard the audio of media.
+
+    voiceCounter = 1
+    for voice in voices:
+        cmd.append("-map")
+        cmd.append("{0}:a".format(voiceCounter))
+        voiceCounter += 1
+
+    cmd.append("-c:v")
+    cmd.append("copy")
+    cmd.append("-c:a")
+    cmd.append("aac")
+    # https://stackoverflow.com/a/14528482/3405291
+    cmd.append("-filter_complex")
+    cmd.append("amix=inputs={0}:duration=longest:dropout_transition=0".format(len(voices)))
+    cmd.append(result_file_name)
+
+    ret = run_command(cmd, cwd=cwd)
+
+    # You can double-check result file by this command:
+    # /usr/local/bin/docker-compose exec web ls -lhrtc /tmp/
+
+    # You can copy result file from docker container to host by a command like:
+    # docker cp <containerId>:/tmp/<result_file_name> /home/m3/Downloads/
+
+    result_file_path = os.path.join(cwd, result_file_name)
+    result_file_url = url_from_path(result_file_path)
+
+    return {"result_file_url": result_file_url, "ffmpeg_return": ret}
 
 @task(name="get_list_of_popular_media", queue="long_tasks")
 def get_list_of_popular_media():

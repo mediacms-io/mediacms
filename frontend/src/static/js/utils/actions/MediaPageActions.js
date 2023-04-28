@@ -92,6 +92,15 @@ export function likeVoice(voiceUid, toggle) {
   });
 }
 
+// Combine a video `media` with some voices by their UID.
+export function videoWithVoices(voicesUid, voicesSrc) {
+  Dispatcher.dispatch({
+    type: 'VIDEO_WITH_VOICES',
+    voicesUid,
+    voicesSrc,
+  });
+}
+
 export function createPlaylist(playlist_data) {
   Dispatcher.dispatch({
     type: 'CREATE_PLAYLIST',

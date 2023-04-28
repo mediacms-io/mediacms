@@ -1,0 +1,11 @@
+.daw-download-outer {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}
+
+.daw-download { border: 0.08rem dotted gray; height: 5rem; width: 8.09rem; margin: 1rem 0; }
+
+.daw-download::before { content: "Get video"; }
+
+#daw-download {
+    display: flex; align-items: center; flex-direction: column; justify-content: center;
+}

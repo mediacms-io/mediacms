@@ -17,6 +17,7 @@ USER_VOICE_ACTIONS = (
     ("likeundo", "Likeundo"),
     ("watch", "Watch"),
     ("report", "Report"),
+    ("getvideowithvoices", "GetVideoWithVoices"), # Combine a video media with some voices. Downloadable by the user.
     # Rating is meaningless for voice. Maybe?
     #("rate", "Rate"),
 )

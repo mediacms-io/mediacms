@@ -169,6 +169,7 @@ class MediaPageStore extends EventEmitter {
 
   loadVoices() {
     this.voicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/voices';
+    this.videoWithVoicesAPIUrl = this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/videowithvoices';
     this.voicesResponse = this.voicesResponse.bind(this);
     getRequest(this.voicesAPIUrl, !1, this.voicesResponse);
   }
@@ -441,6 +442,8 @@ class MediaPageStore extends EventEmitter {
         break;
       case 'media-voice-deletion-uid':
         MediaPageStoreData[this.id].voiceDeletionUid = value;
+      case 'waveform-playlist':
+        MediaPageStoreData[this.id].wfpl = value;
     }
   }
 
@@ -479,6 +482,10 @@ class MediaPageStore extends EventEmitter {
       case 'media-voice-deletion-uid':
         r =
           void 0 !== MediaPageStoreData[this.id].voiceDeletionUid ? MediaPageStoreData[this.id].voiceDeletionUid : null;
+        break;
+      case 'waveform-playlist':
+        r =
+          void 0 !== MediaPageStoreData[this.id].wfpl ? MediaPageStoreData[this.id].wfpl : null;
         break;
       case 'media-comments':
         r = MediaPageStoreData[this.id].comments || [];
@@ -887,6 +894,22 @@ class MediaPageStore extends EventEmitter {
           this.likeVoiceFail.bind(this)
         );
         break;
+      case 'VIDEO_WITH_VOICES':
+        if (MediaPageStoreData[this.id].while.videoWithVoices) {
+          return;
+        }
+        MediaPageStoreData[this.id].while.videoWithVoices = true;
+        postRequest(
+          // API URL is already set when loading voices by loadVoices().
+          this.videoWithVoicesAPIUrl,
+          // Back-end expects the exact key & value:
+          { 'voicesUid': action.voicesUid, 'voicesSrc': action.voicesSrc },
+          { headers: { 'X-CSRFToken': csrfToken() } },
+          false,
+          this.videoWithVoicesResponse.bind(this),
+          this.videoWithVoicesFail.bind(this)
+        );
+        break;
       case 'CREATE_PLAYLIST':
         postRequest(
           this.mediacms_config.api.playlists,
@@ -1133,6 +1156,32 @@ class MediaPageStore extends EventEmitter {
     setTimeout(
       function (ins) {
         MediaPageStoreData[ins.id].while.likeVoice = false;
+      },
+      100,
+      this
+    );
+  }
+
+  videoWithVoicesFail(err) {
+    this.emit('video_with_voices_fail', err);
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.videoWithVoices = false;
+      },
+      100,
+      this
+    );
+  }
+
+  videoWithVoicesResponse(response) {
+    if (response && 201 === response.status && response.data && Object.keys(response.data)) {
+      this.emit('video_with_voices', response.data);
+      console.log('Download URL of video + voices:', response.data.result.result_file_url);
+    }
+
+    setTimeout(
+      function (ins) {
+        MediaPageStoreData[ins.id].while.videoWithVoices = false;
       },
       100,
       this

@@ -6,6 +6,8 @@ import { saveAs } from 'file-saver';
 import Wav2opus from './Wav2opus';
 import { MemberContext } from '../../utils/contexts/';
 
+import { MediaPageStore } from '../../utils/stores/';
+
 import './DawTracks.scss'
 
 // See source code of this example:
@@ -177,6 +179,13 @@ export default function DawTracks({ ee, voices, onRecordDisabledChange, onTrimDi
           navigator.getUserMedia(constraints, gotStream, logError);
         }
       });
+
+      // Set it here to be able to access it later.
+      // For example, to know which tracks are displayed, the getInfo() method of playlist can be called.
+      // Setting and getting values by MediaPageStore looks to be
+      // a preferred design compared to signal/slot approach.
+      MediaPageStore.set('waveform-playlist', playlist);
+
   }, [voices, playlist]); // The effect only runs when a re-render is due to these.
 
   function handleLoad() {

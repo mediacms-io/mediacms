@@ -70,6 +70,7 @@ from .serializers import (
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
 from .tasks import save_voice_action
+from .tasks import video_with_voices
 
 # TODO: Should we consider USER_VOICE_ACTIONS too?
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
@@ -836,6 +837,71 @@ class VoiceActions(APIView):
             return Response({"detail": "action received"}, status=status.HTTP_201_CREATED)
         else:
             return Response({"detail": "no action specified"}, status=status.HTTP_400_BAD_REQUEST)
+
+class VideoWithVoices(APIView):
+    """
+    Combine a video `media` with some `voices`.
+    """
+
+    permission_classes = (permissions.AllowAny,)
+    parser_classes = (JSONParser,)
+
+    def get_object(self, friendly_token):
+        try:
+            media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
+            if media.state == "private" and self.request.user != media.user:
+                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            return media
+        except PermissionDenied:
+            return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+        except BaseException:
+            return Response(
+                {"detail": "media file does not exist"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Combine a video media with some voices'],
+        operation_summary='to_be_written',
+        operation_description='to_be_written',
+    )
+    def post(self, request, friendly_token):
+        media = self.get_object(friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        if media.media_type != "video":
+            return Response({"detail": "media type must be video"}, status=status.HTTP_400_BAD_REQUEST,)
+
+        voicesUid = request.data.get("voicesUid")
+        voicesSrc = request.data.get("voicesSrc")
+
+        for uid in voicesUid:
+            # Double-check voice existence.
+            try:
+                voice = Voice.objects.get(uid=uid)
+            except BaseException:
+                return Response({"detail": "voice does not exist"}, status=status.HTTP_400_BAD_REQUEST,)
+
+        user_or_session = get_user_or_session(request)
+
+        ### Let's make this method a regular method, not a celery_short task.
+        ### Since we have to return the path of the resulted video as HTTP response.
+        ### Combining video with voices by FFMPEG should be quite fast. Just copy audio channels.
+        ###
+        #video_with_voices.delay(
+        result = video_with_voices(
+            user_or_session,
+            friendly_token=media.friendly_token,
+            voicesUid=voicesUid,
+        )
+
+        if result == False:
+            return Response({"detail": "video couldn't be combined with voices"}, status=status.HTTP_400_BAD_REQUEST,)
+        else:
+            return Response({"detail": "video is combined with voices, it's ready for download"
+                             ,"result": result}, status=status.HTTP_201_CREATED)
 
 class MediaSearch(APIView):
     """
