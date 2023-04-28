@@ -880,6 +880,8 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     # will not be included in the output file.
     # The video stream is still copied over using -c:v copy,
     # and the combined audio track is created using the amix filter as before.
+    # Note that if the input video file has multiple audio tracks,
+    # the -an option will remove all audio tracks from the output file.
     cmd.append("-an")
     cmd.append(result_file_name)
 
