@@ -862,22 +862,25 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
         cmd.append("-i")
         cmd.append(voice.voice_file.path)
 
-    cmd.append("-map")
-    cmd.append("0:v") # Keep only the video of media, discard the audio of media.
+    # To combine voices.
+    cmd.append("-filter_complex")
 
     voiceCounter = 1
+    arg = ""
     for voice in voices:
-        cmd.append("-map")
-        cmd.append("{0}:a".format(voiceCounter))
+        arg += "[{0}:a] ".format(voiceCounter)
         voiceCounter += 1
+    arg += "amix=inputs={0}:duration=longest:dropout_transition=0".format(len(voices))
 
-    # https://stackoverflow.com/a/14528482/3405291
-    cmd.append("-filter_complex")
-    cmd.append("amix=inputs={0}:duration=longest:dropout_transition=0".format(len(voices)))
+    cmd.append(arg)
     cmd.append("-c:v")
     cmd.append("copy")
-    cmd.append("-c:a")
-    cmd.append("aac")
+    # The -an option disables audio recording for the output file,
+    # which means that the original audio track from the input video
+    # will not be included in the output file.
+    # The video stream is still copied over using -c:v copy,
+    # and the combined audio track is created using the amix filter as before.
+    cmd.append("-an")
     cmd.append(result_file_name)
 
     ret = run_command(cmd, cwd=cwd)
