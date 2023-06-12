@@ -734,4 +734,4 @@ this will re-create the sprites for videos that the task failed.
 ## 17. Cookie consent code
 On file `templates/components/header.html` you can find a simple cookie consent code. It is commented, so you have to remove the `{% comment %}` and `{% endcomment %}` lines in order to enable it. Or you can replace that part with your own code that handles cookie consent banners.
 
-![Simple Cookie Consent](images/cookie-consent.png)
+![Simple Cookie Consent](images/cookie_consent.png)
