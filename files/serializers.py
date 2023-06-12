@@ -151,7 +151,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
 class MediaSearchSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
-    
+
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
