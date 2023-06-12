@@ -154,6 +154,7 @@ class MediaSearchSerializer(serializers.ModelSerializer):
     
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
     def get_api_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url(api=True))
 
@@ -170,7 +171,7 @@ class MediaSearchSerializer(serializers.ModelSerializer):
             "friendly_token",
             "duration",
             "url",
-            "api_url"
+            "api_url",
             "media_type",
             "preview_url",
             "categories_info",
