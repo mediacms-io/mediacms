@@ -80,7 +80,7 @@ function CommentForm(props) {
 
   function onChangeWithMention(event, newValue, newPlainTextValue, mentions) {
     textareaRef.current.style.height = '';
-    
+
     setValue(newValue);
     setMadeChanges(true);
 
@@ -144,8 +144,8 @@ function CommentForm(props) {
         <UserThumbnail />
         <div className="form">
           <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-            { MediaCMS.features.media.actions.comment_mention ? 
-              <MentionsInput 
+            { MediaCMS.features.media.actions.comment_mention ?
+              <MentionsInput
                 inputRef={textareaRef}
                 className="form-textarea"
                 rows="1"
@@ -430,31 +430,37 @@ export default function CommentsList(props) {
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
-    const video = videojs('vjs_video_3');
-    
-    if (MediaCMS.features.media.actions.timestampTimebar)
-    {
-      enableMarkers(video);
-    }
 
-    if (MediaCMS.features.media.actions.comment_mention === true)
-    {
-      retrievedComments.forEach(comment => {
-        comment.text = setMentions(comment.text);
-      });
-    }
-
-    video.one('loadedmetadata', () => {       
-      retrievedComments.forEach(comment => {          
-        comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
-      });
-      
-      displayCommentsRelatedAlert();
-      setComments([...retrievedComments]);
-    });
     setComments([...retrievedComments]);
+
+    // TODO: this code is breaking, beed ti debug, until then removing the extra
+    // functionality related with video/timestamp/user mentions
+    //    const video = videojs('vjs_video_3');
+
+    // if (MediaCMS.features.media.actions.timestampTimebar)
+    //{
+    //  enableMarkers(video);
+    //}
+
+    //if (MediaCMS.features.media.actions.comment_mention === true)
+    //{
+    //  retrievedComments.forEach(comment => {
+    //    comment.text = setMentions(comment.text);
+    //  });
+    //}
+
+    // TODO: this code is breaking
+    // video.one('loadedmetadata', () => {
+    //  retrievedComments.forEach(comment => {
+    //    comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
+    //  });
+
+    //  displayCommentsRelatedAlert();
+    //  setComments([...retrievedComments]);
+    //});
+    //setComments([...retrievedComments]);
   }
-  
+
   function setMentions(text)
   {
     let sanitizedComment = text.split('@(_').join("<a href=\"/user/");
@@ -464,7 +470,7 @@ export default function CommentsList(props) {
 
   function setTimestampAnchorsAndMarkers(text, videoPlayer)
   {
-    function wrapTimestampWithAnchor(match, string) 
+    function wrapTimestampWithAnchor(match, string)
     {
       let split = match.split(':'), s = 0, m = 1;
       let searchParameters = new URLSearchParams(window.location.search);
