@@ -194,7 +194,9 @@ class MediaPageStore extends EventEmitter {
     }
 
     this.loadPlaylists();
-    this.loadUsers();
+    if (MediaCMS.features.media.actions.comment_mention === true) {
+      this.loadUsers();
+    }
 
     if (this.mediacms_config.member.can.readComment) {
       this.loadComments();
