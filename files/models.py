@@ -16,7 +16,6 @@ from django.core.files import File
 from django.db import connection, models
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
-from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -1000,10 +999,8 @@ class Tag(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        self.title = slugify(self.title[:99])
-        strip_text_items = ["title"]
-        for item in strip_text_items:
-            setattr(self, item, strip_tags(getattr(self, item, None)))
+        self.title = helpers.get_alphanumeric_only(self.title)
+        self.title = self.title[:99]
         super(Tag, self).save(*args, **kwargs)
 
     @property
