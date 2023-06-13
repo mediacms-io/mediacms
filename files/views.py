@@ -182,6 +182,7 @@ def edit_media(request):
             if form.cleaned_data.get("new_tags"):
                 for tag in form.cleaned_data.get("new_tags").split(","):
                     tag = get_alphanumeric_only(tag)
+                    tag = tag[:99]
                     if tag:
                         try:
                             tag = Tag.objects.get(title=tag)
