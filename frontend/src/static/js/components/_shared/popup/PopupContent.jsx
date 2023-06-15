@@ -31,7 +31,7 @@ export function PopupContent(props) {
         hide();
       }
     } else {
-      Console.log("This browser doesn't supply event path information")
+      console.log("This browser doesn't supply event path information")
       // TODO: Should call hide()?
     }
   }, []);
