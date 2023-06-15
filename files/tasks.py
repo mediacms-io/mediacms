@@ -268,7 +268,6 @@ def encode_media(
     #    return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
-
         tf = create_temp_file(suffix=".{0}".format(profile.extension), dir=temp_dir)
         tfpass = create_temp_file(suffix=".{0}".format(profile.extension), dir=temp_dir)
         ffmpeg_commands = produce_ffmpeg_commands(

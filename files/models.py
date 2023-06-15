@@ -1,3 +1,4 @@
+import glob
 import json
 import logging
 import os
@@ -15,7 +16,6 @@ from django.core.files import File
 from django.db import connection, models
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
-from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -313,7 +313,6 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
-
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -371,7 +370,6 @@ class Media(models.Model):
         # will run only when a poster is uploaded for the first time
         if self.uploaded_poster and self.uploaded_poster != self.__original_uploaded_poster:
             with open(self.uploaded_poster.path, "rb") as f:
-
                 # set this otherwise gets to infinite loop
                 self.__original_uploaded_poster = self.uploaded_poster
 
@@ -579,9 +577,7 @@ class Media(models.Model):
 
         # attempt to break media file in chunks
         if self.duration > settings.CHUNKIZE_VIDEO_DURATION and chunkize:
-
             for profile in profiles:
-
                 if profile.extension == "gif":
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
@@ -1003,10 +999,8 @@ class Tag(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        self.title = slugify(self.title[:99])
-        strip_text_items = ["title"]
-        for item in strip_text_items:
-            setattr(self, item, strip_tags(getattr(self, item, None)))
+        self.title = helpers.get_alphanumeric_only(self.title)
+        self.title = self.title[:99]
         super(Tag, self).save(*args, **kwargs)
 
     @property
@@ -1404,6 +1398,13 @@ def media_file_delete(sender, instance, **kwargs):
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
     instance.user.update_user_media()
+
+    # remove extra zombie thumbnails
+    if instance.thumbnail:
+        thumbnails_path = os.path.dirname(instance.thumbnail.path)
+        thumbnails = glob.glob(f'{thumbnails_path}/{instance.uid.hex}.*')
+        for thumbnail in thumbnails:
+            helpers.rm_file(thumbnail)
 
 
 @receiver(m2m_changed, sender=Media.category.through)

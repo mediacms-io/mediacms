@@ -305,7 +305,6 @@ def show_related_media_author(media, request, limit):
 
 
 def show_related_media_calculated(media, request, limit):
-
     """Return a list of related media based on ML recommendations
     A big todo!
     """
