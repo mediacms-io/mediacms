@@ -1,0 +1,34 @@
+module selinux-mediacms 1.0;
+
+require {
+	type init_t;
+	type var_t;
+	type redis_port_t;
+	type postgresql_port_t;
+	type httpd_t;
+	type httpd_sys_content_t;
+	type httpd_sys_rw_content_t;
+	class file { append create execute execute_no_trans getattr ioctl lock open read rename setattr unlink write };
+	class dir { add_name remove_name rmdir };
+	class tcp_socket name_connect;
+	class lnk_file read;
+}
+
+#============= httpd_t ==============
+
+allow httpd_t var_t:file { getattr open read };
+
+#============= init_t ==============
+allow init_t postgresql_port_t:tcp_socket name_connect;
+
+allow init_t redis_port_t:tcp_socket name_connect;
+
+allow init_t httpd_sys_content_t:dir rmdir;
+
+allow init_t httpd_sys_content_t:file { append create execute execute_no_trans ioctl lock open read rename setattr unlink write };
+
+allow init_t httpd_sys_content_t:lnk_file read;
+
+allow init_t httpd_sys_rw_content_t:dir { add_name remove_name rmdir };
+
+allow init_t httpd_sys_rw_content_t:file { create ioctl lock open read setattr unlink write };
