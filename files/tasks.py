@@ -893,7 +893,22 @@ def video_with_voices(user_or_session, friendly_token=None, voicesUid=None):
     # You can copy result file from docker container to host by a command like:
     # docker cp <containerId>:/tmp/<result_file_name> /home/m3/Downloads/
 
-    result_file_path = os.path.join(cwd, result_file_name)
+    watermarked_file_name = "watermarked_{0}".format(result_file_name)
+
+    cmd = [
+        settings.FFMPEG_COMMAND,
+        "-i",
+        result_file_name,
+        "-i",
+        settings.STATIC_ROOT + "/images/logo_light.png",
+        "-filter_complex",
+        "[1][0]scale2ref=oh*mdar:ih*0.2[logo][video];[video][logo]overlay=(main_w-overlay_w):(main_h-overlay_h)",
+        watermarked_file_name,
+    ]
+
+    ret = run_command(cmd, cwd=cwd)
+
+    result_file_path = os.path.join(cwd, watermarked_file_name)
     result_file_url = url_from_path(result_file_path)
 
     return {"result_file_url": result_file_url, "ffmpeg_return": ret}
