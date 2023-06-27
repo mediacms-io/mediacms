@@ -4,7 +4,7 @@
 - [1. Welcome](#1-welcome)
 - [2. Server Installaton](#2-server-installation)
 - [3. Docker Installation](#3-docker-installation)
-- [4. Docker Deployement options](#4-docker-deployment-options)
+- [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
 - [6. Manage pages](#6-manage-pages)
 - [7. Django admin dashboard](#7-django-admin-dashboard)
