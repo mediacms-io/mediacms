@@ -16,3 +16,4 @@ jobs:
   release:
     uses: ./.github/workflows/docker-build-push.yml
     needs: [test]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
