@@ -100,12 +100,14 @@ Visit [Configuration](docs/admins_docs.md#5-configuration) page.
 
 
 ## Documentation
+
 * [Users documentation](docs/user_docs.md) page
 * [Administrators documentation](docs/admins_docs.md) page
 * [Developers documentation](docs/developers_docs.md) page
 
 
 ## Technology
+
 This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
@@ -129,4 +131,5 @@ If you like the project, here's a few things you can do
 
 
 ## Contact
+
 info@mediacms.io
