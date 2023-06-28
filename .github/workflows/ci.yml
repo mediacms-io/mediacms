@@ -10,6 +10,7 @@ on:
 jobs:
   test-login:
     uses: ./.github/workflows/login.yml
+    secrets: inherit # pass all secrets
   pre-commit:
     uses: ./.github/workflows/pre-commit.yml
   test:
