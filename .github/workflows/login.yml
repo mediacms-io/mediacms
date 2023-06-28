@@ -1,11 +1,10 @@
-name: ci
+name: test
 
 on:
-  push:
-    branches: main
+    workflow_call:
 
 jobs:
-  login:
+  test:
     runs-on: ubuntu-latest
     steps:
       -
