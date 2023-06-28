@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - '**/README.md'
 jobs:
+  test-login:
+    uses: ./.github/workflows/login.yml
   pre-commit:
     uses: ./.github/workflows/pre-commit.yml
   test:
