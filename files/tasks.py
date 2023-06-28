@@ -7,7 +7,7 @@ import tempfile
 from datetime import datetime, timedelta
 
 from celery import Task
-from celery.decorators import task
+from celery import shared_task as task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
 
