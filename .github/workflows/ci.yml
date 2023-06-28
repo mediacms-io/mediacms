@@ -15,5 +15,6 @@ jobs:
     needs: [pre-commit]
   release:
     uses: ./.github/workflows/docker-build-push.yml
+    secrets: inherit # pass all secrets
     needs: [test]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
