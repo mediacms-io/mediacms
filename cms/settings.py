@@ -485,3 +485,5 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/confirm-email/.*/$',
         r'/api/v[0-9]+/',
     ]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
