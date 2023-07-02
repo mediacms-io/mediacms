@@ -427,7 +427,6 @@ class Media(models.Model):
         Performs all related tasks, as check for media type,
         video duration, encode
         """
-
         self.set_media_type()
         if self.media_type == "video":
             self.set_thumbnail(force=True)
@@ -477,7 +476,10 @@ class Media(models.Model):
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
                 if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
-                    audio_file_with_thumb = True
+                    # best guess that this is an audio file with a thumbnail
+                    # in other cases, it is not (eg it can be an AVI file)
+                    if ret.get("video_info", {}).get("avg_frame_rate", "") == '0/0':
+                        audio_file_with_thumb = True
 
             if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
