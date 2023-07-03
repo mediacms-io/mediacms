@@ -25,12 +25,12 @@ This page is created for MediaCMS administrators that are responsible for settin
 
 ## 2. Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
+The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
 
-Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
+Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
 
-Automated script - tested on Ubuntu 18, Ubuntu 20, and Debian Buster
+Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
 
 ```bash
 mkdir /home/mediacms.io && cd /home/mediacms.io/
@@ -49,9 +49,15 @@ If you've used the above way to install MediaCMS, update with the following:
 cd /home/mediacms.io/mediacms # enter mediacms directory
 source  /home/mediacms.io/bin/activate # use virtualenv
 git pull # update code
+pip install -r requirements.txt -U # run pip install to update
 python manage.py migrate # run Django migrations
 sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
+
+### Update from version 2 to version 3
+Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
+
+
 
 ### Configuration
 Checkout the configuration section here.
@@ -66,7 +72,7 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 ## Installation
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-For Ubuntu 18/20 systems this is:
+For Ubuntu 20/22 systems this is:
 
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -111,6 +117,18 @@ docker pull mediacms/mediacms
 docker-compose down
 docker-compose up
 ```
+
+### Update from version 2 to version 3
+Version 3 is using Python 3.11 and PostgreSQL 15. If you are updating from an older version, that was using PostgreSQL 13, the automatic update will not work, as you will receive the following message when the PostgreSQL container starts:
+
+```
+db_1              | 2023-06-27 11:07:42.959 UTC [1] FATAL:  database files are incompatible with server
+db_1              | 2023-06-27 11:07:42.959 UTC [1] DETAIL:  The data directory was initialized by PostgreSQL version 13, which is not compatible with this version 15.2.
+```
+
+At this point there are two options: either edit the Docker Compose file and make use of the existing postgres:13 image, or otherwise you have to perform the migration from postgresql 13 to version 15. More notes on https://github.com/mediacms-io/mediacms/pull/749
+
+
 
 ## Configuration
 Checkout the configuration docs here.
