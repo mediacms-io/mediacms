@@ -49,9 +49,15 @@ If you've used the above way to install MediaCMS, update with the following:
 cd /home/mediacms.io/mediacms # enter mediacms directory
 source  /home/mediacms.io/bin/activate # use virtualenv
 git pull # update code
+pip install -r requirements.txt -U # run pip install to update
 python manage.py migrate # run Django migrations
 sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
+
+### Update from version 2 to version 3
+Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
+
+
 
 ### Configuration
 Checkout the configuration section here.
@@ -111,6 +117,18 @@ docker pull mediacms/mediacms
 docker-compose down
 docker-compose up
 ```
+
+### Update from version 2 to version 3
+Version 3 is using Python 3.11 and PostgreSQL 15. If you are updating from an older version, that was using PostgreSQL 13, the automatic update will not work, as you will receive the following message when the PostgreSQL container starts:
+
+```
+db_1              | 2023-06-27 11:07:42.959 UTC [1] FATAL:  database files are incompatible with server
+db_1              | 2023-06-27 11:07:42.959 UTC [1] DETAIL:  The data directory was initialized by PostgreSQL version 13, which is not compatible with this version 15.2.
+```
+
+At this point there are two options: either edit the Docker Compose file and make use of the existing postgres:13 image, or otherwise you have to perform the migration from postgresql 13 to version 15. More notes on https://github.com/mediacms-io/mediacms/pull/749
+
+
 
 ## Configuration
 Checkout the configuration docs here.
