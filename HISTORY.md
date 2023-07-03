@@ -1,23 +1,14 @@
 # History
 
-## 2.2.0
+## 3.0.0
 
 ### Features
-- Updates Python/Django requirements and Dockerfile to use latest 3.11 Python. This update requires some manual steps, for existing (not new) installations.
-For Docker installation, make sure you follow the instructions on how to update, on the admin docs page, under the Docker section.
+- Updates Python/Django requirements and Dockerfile to use latest 3.11 Python - https://github.com/mediacms-io/mediacms/pull/826/files. This update requires some manual steps, for existing (not new) installations. Check the update section under the [Admin docs](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#2-server-installation), either for single server or for Docker Compose installations
+- Upgrade postgres on Docker Compose - https://github.com/mediacms-io/mediacms/pull/749
 
-For single server installation,
-
-```bash
-cd /home/mediacms.io/mediacms # enter mediacms directory
-source  /home/mediacms.io/bin/activate # use virtualenv
-git pull # update code
-pip install -r requirements.txt # install new requirements
-python manage.py migrate # run Django migrations
-cp deploy/local_install/celery_* /etc/systemd/system/ # copy celery services
-systemctl daemon-reload # reload supervisor daemon
-systemctl restart mediacms celery_long celery_short # restart services
-```
+### Fixes
+- video player options for HLS - https://github.com/mediacms-io/mediacms/pull/832
+- AVI videos not correctly recognised as videos - https://github.com/mediacms-io/mediacms/pull/833
 
 ## 2.1.0
 
