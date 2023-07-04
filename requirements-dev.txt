@@ -12,3 +12,6 @@ pytest-cov
 pytest-django
 pytest-factoryboy
 Faker
+whitenoise
+django-cors-headers
+

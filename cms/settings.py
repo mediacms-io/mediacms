@@ -487,3 +487,14 @@ if GLOBAL_LOGIN_REQUIRED:
     ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+try:
+    # mostly used in docker-compose-dev.yaml
+    DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
+    if DEVELOPMENT_MODE:
+        # keep a dev_settings.py file for local overrides
+        from .dev_settings import *  # noqa
+except ImportError:
+    pass
+
