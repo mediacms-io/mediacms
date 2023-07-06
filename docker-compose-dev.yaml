@@ -8,23 +8,13 @@ services:
     image: mediacms/mediacms-dev:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
-    environment:
-      ENABLE_UWSGI: 'no'
-      ENABLE_NGINX: 'no'
-      ENABLE_CELERY_SHORT: 'no'
-      ENABLE_CELERY_LONG: 'no'
-      ENABLE_CELERY_BEAT: 'no'
-      ADMIN_USER: 'admin'
-      ADMIN_EMAIL: 'admin@localhost'
-      #ADMIN_PASSWORD: 'uncomment_and_set_password_here'
-    command: "./deploy/docker/prestart.sh"
+    command: "python manage.py migrate"
     restart: on-failure
     depends_on:
       redis:
         condition: service_healthy
       db:
         condition: service_healthy
-
   frontend:
     image: node:14
     volumes:
@@ -53,10 +43,7 @@ services:
     volumes:
       - ./:/home/mediacms.io/mediacms/
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      - migrations
   db:
     image: postgres:15.2-alpine
     volumes:
