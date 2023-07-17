@@ -56,6 +56,15 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 
 ### Update from version 2 to version 3
 Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
+The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
+
+```
+# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
+# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
+# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
+# systemctl daemon-reload
+# systemctl start celery_long celery_short celery_beat
+```
 
 
 
