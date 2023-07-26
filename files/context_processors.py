@@ -31,6 +31,10 @@ def stuff(request):
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE
     ret["RSS_URL"] = "/rss"
-    ret["LIVESTREAM_BACKEND"] = settings.LIVESTREAM_BACKEND
-    ret["LIVESTREAM_URI"] = settings.LIVESTREAM_URI
+    try:
+        ret["LIVESTREAM_BACKEND"] = settings.LIVESTREAM_BACKEND
+        ret["LIVESTREAM_URI"] = settings.LIVESTREAM_URI
+    except AttributeError:
+        ret["LIVESTREAM_BACKEND"] = None
+        ret["LIVESTREAM_URI"] = None
     return ret
