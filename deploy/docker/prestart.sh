@@ -7,7 +7,7 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
     echo "Running migrations service"
     python manage.py migrate
     EXISTING_INSTALLATION=`echo "from users.models import User; print(User.objects.exists())" |python manage.py shell`
-    if [ "$EXISTING_INSTALLATION" = "True" ]; then 
+    if [ "$EXISTING_INSTALLATION" = "True" ]; then
         echo "Loaddata has already run"
     else
         echo "Running loaddata and creating admin user"
@@ -67,4 +67,5 @@ fi
 if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     echo "Enabling celery-long task worker"
     cp deploy/docker/supervisord/supervisord-celery_long.conf /etc/supervisor/conf.d/supervisord-celery_long.conf
+    rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
