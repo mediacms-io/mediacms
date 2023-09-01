@@ -696,6 +696,12 @@ class Media(models.Model):
         ep = {}
         ep["title"] = encoding.profile.name
         ep["url"] = encoding.media_encoding_url
+        try:
+            if settings.FRONTEND_HOST_MEDIA is not None:
+                ep["url"] = settings.FRONTEND_HOST_MEDIA + encoding.media_encoding_url
+        except:
+            pass
+
         ep["progress"] = encoding.progress
         ep["size"] = encoding.size
         ep["encoding_id"] = encoding.id
@@ -816,23 +822,27 @@ class Media(models.Model):
         """
 
         res = {}
+        prefix = ""
+        if settings.FRONTEND_HOST_MEDIA is not None:
+            prefix = settings.FRONTEND_HOST_MEDIA
+
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
                 p = os.path.dirname(hls_file)
                 m3u8_obj = m3u8.load(hls_file)
                 if os.path.exists(hls_file):
-                    res["master_file"] = helpers.url_from_path(hls_file)
+                    res["master_file"] = prefix + helpers.url_from_path(hls_file)
                     for iframe_playlist in m3u8_obj.iframe_playlists:
                         uri = os.path.join(p, iframe_playlist.uri)
                         if os.path.exists(uri):
                             resolution = iframe_playlist.iframe_stream_info.resolution[1]
-                            res["{}_iframe".format(resolution)] = helpers.url_from_path(uri)
+                            res["{}_iframe".format(resolution)] = prefix + helpers.url_from_path(uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
                         if os.path.exists(uri):
                             resolution = playlist.stream_info.resolution[1]
-                            res["{}_playlist".format(resolution)] = helpers.url_from_path(uri)
+                            res["{}_playlist".format(resolution)] = prefix + helpers.url_from_path(uri)
         return res
 
     @property

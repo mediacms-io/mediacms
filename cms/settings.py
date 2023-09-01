@@ -469,6 +469,14 @@ if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
     FRONTEND_HOST = f"http://{FRONTEND_HOST}"
 
+try:
+    if (FRONTEND_HOST_MEDIA is not None) and ("http" not in FRONTEND_HOST_MEDIA):
+        # FRONTEND_HOST_MEDIA needs a http:// preffix
+        FRONTEND_HOST_MEDIA = f"http://{FRONTEND_HOST_MEDIA}"
+except NameError:
+    # Ignore it - FRONTEND_HOST_MEDIA is probably not defined
+    pass
+
 if LOCAL_INSTALL:
     SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
 else:

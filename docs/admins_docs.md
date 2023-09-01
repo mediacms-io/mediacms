@@ -443,6 +443,14 @@ ADMINS_NOTIFICATIONS = {
 - Make the portal workflow public, but at the same time set `GLOBAL_LOGIN_REQUIRED = True` so that only logged in users can see content.
 - You can either set `REGISTER_ALLOWED = False` if you want to add members yourself or checkout options on "django-allauth settings" that affects registration in `cms/settings.py`. Eg set the portal invite only, or set email confirmation as mandatory, so that you control who registers.
 
+### 5.24 Configure different URL for media
+
+If you want to use a different base URL for where your media is hosted (for example, if you keep your media directory synchronized to CDN servers), you can specify:
+
+- FRONTEND_HOST_MEDIA: The base URL (e.g. "https://cdn.example.com") where your media should be accessed from
+
+Please note: you will need to ensure that however you're hosting your media files, it adds an Access-Control-Allow-Origin header to allow the main MediaCMS scripts to download from it.
+
 ## 6. Manage pages
 to be written
 

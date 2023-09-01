@@ -31,4 +31,8 @@ def stuff(request):
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE
     ret["RSS_URL"] = "/rss"
+    try:
+        ret["FRONTEND_HOST_MEDIA"] = settings.FRONTEND_HOST_MEDIA.rstrip('/')
+    except AttributeError:
+        ret["FRONTEND_HOST_MEDIA"] = None
     return ret

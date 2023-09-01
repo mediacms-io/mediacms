@@ -22,7 +22,7 @@
 
 {% if media_object.media_type == "video" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+<meta property="og:image" content="{{FRONTEND_HOST_MEDIA}}{{media_object.poster_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
@@ -34,7 +34,7 @@
     "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
     "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
     "thumbnailUrl": [
-    	"{{FRONTEND_HOST}}{{media_object.poster_url}}"
+    	"{{FRONTEND_HOST_MEDIA}}{{media_object.poster_url}}"
     ],
     "uploadDate": "{{media_object.add_date}}",
     "dateModified": "{{media_object.edit_date}}",
@@ -49,7 +49,7 @@
 
 {% elif media_object.media_type == "audio" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+<meta property="og:image" content="{{FRONTEND_HOST_MEDIA}}{{media_object.poster_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
@@ -72,7 +72,7 @@
 
 {% elif media_object.media_type == "image" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.original_media_url}}">
+<meta property="og:image" content="{{FRONTEND_HOST_MEDIA}}{{media_object.original_media_url}}">
 
 <meta name="twitter:card" content="summary_large_image">
 
