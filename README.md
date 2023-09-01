@@ -92,18 +92,22 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 * [Single Server](docs/admins_docs.md#2-server-installation) page
 * [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
+  A complete guide can be found on the blog post [How to self-host and share your videos in 2021](https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b).
+
 ## Configuration
 
 Visit [Configuration](docs/admins_docs.md#5-configuration) page.
 
 
 ## Documentation
+
 * [Users documentation](docs/user_docs.md) page
 * [Administrators documentation](docs/admins_docs.md) page
 * [Developers documentation](docs/developers_docs.md) page
 
 
 ## Technology
+
 This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
@@ -127,4 +131,5 @@ If you like the project, here's a few things you can do
 
 
 ## Contact
+
 info@mediacms.io

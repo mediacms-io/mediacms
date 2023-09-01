@@ -427,7 +427,6 @@ class Media(models.Model):
         Performs all related tasks, as check for media type,
         video duration, encode
         """
-
         self.set_media_type()
         if self.media_type == "video":
             self.set_thumbnail(force=True)
@@ -477,7 +476,10 @@ class Media(models.Model):
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
                 if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
-                    audio_file_with_thumb = True
+                    # best guess that this is an audio file with a thumbnail
+                    # in other cases, it is not (eg it can be an AVI file)
+                    if ret.get("video_info", {}).get("avg_frame_rate", "") == '0/0':
+                        audio_file_with_thumb = True
 
             if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
@@ -826,6 +828,7 @@ class Media(models.Model):
         if settings.FRONTEND_HOST_MEDIA is not None:
             prefix = settings.FRONTEND_HOST_MEDIA
 
+        valid_resolutions = [240, 360, 480, 720, 1080, 1440, 2160]
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -837,11 +840,20 @@ class Media(models.Model):
                         uri = os.path.join(p, iframe_playlist.uri)
                         if os.path.exists(uri):
                             resolution = iframe_playlist.iframe_stream_info.resolution[1]
+                            # most probably video is vertical, getting the first value to
+                            # be the resolution
+                            if resolution not in valid_resolutions:
+                                resolution = iframe_playlist.iframe_stream_info.resolution[0]
+
                             res["{}_iframe".format(resolution)] = prefix + helpers.url_from_path(uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
                         if os.path.exists(uri):
                             resolution = playlist.stream_info.resolution[1]
+                            # same as above
+                            if resolution not in valid_resolutions:
+                                resolution = playlist.stream_info.resolution[0]
+
                             res["{}_playlist".format(resolution)] = prefix + helpers.url_from_path(uri)
         return res
 

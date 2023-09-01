@@ -7,10 +7,11 @@ import tempfile
 from datetime import datetime, timedelta
 
 from celery import Task
-from celery.decorators import task
+from celery import shared_task as task
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
-from celery.task.control import revoke
+
+# from celery.task.control import revoke
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
@@ -460,10 +461,11 @@ def check_running_states():
         if (now - encoding.update_date).seconds > settings.RUNNING_STATE_STALE:
             media = encoding.media
             profile = encoding.profile
-            task_id = encoding.task_id
+            # task_id = encoding.task_id
             # terminate task
-            if task_id:
-                revoke(task_id, terminate=True)
+            # TODO: not imported
+            # if task_id:
+            #    revoke(task_id, terminate=True)
             encoding.delete()
             media.encode(profiles=[profile])
             # TODO: allign with new code + chunksize...

@@ -1,5 +1,5 @@
 #!/bin/bash
-# should be run as root and only on Ubuntu 18/20, Debian 10/11 (Buster/Bullseye) versions!
+# should be run as root and only on Ubuntu 20/22, Debian 10/11 (Buster/Bullseye) versions!
 echo "Welcome to the MediacMS installation!";
 
 if [ `id -u` -ne 0 ]
@@ -22,11 +22,11 @@ done
 
 
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 18"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
+if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 else
-    echo "This script is tested for Ubuntu 18 and 20 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
+    echo "This script is tested for Ubuntu 20/22 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
     exit
 fi
 

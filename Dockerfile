@@ -1,4 +1,4 @@
-FROM python:3.8-buster AS compile-image
+FROM python:3.11.4-bookworm AS compile-image
 
 SHELL ["/bin/bash", "-c"]
 
@@ -24,7 +24,7 @@ RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-u
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
-FROM python:3.8-slim-buster as runtime-image
+FROM python:3.11.4-bookworm as runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1

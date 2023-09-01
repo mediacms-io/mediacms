@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-from celery.task.control import revoke
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -1396,5 +1395,6 @@ class TaskDetail(APIView):
     permission_classes = (permissions.IsAdminUser,)
 
     def delete(self, request, uid, format=None):
-        revoke(uid, terminate=True)
+        # This is not imported!
+        # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)

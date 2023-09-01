@@ -1,14 +1,11 @@
 name: Python Tests
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   build:
-
+    name: Build & test via docker-compose
     runs-on: ubuntu-latest
 
     steps:
