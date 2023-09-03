@@ -7,6 +7,7 @@ DEBUG = False
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
 PORTAL_NAME = "MediaCMS"
+PORTAL_DESCRIPTION = ""
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Europe/London"
 
@@ -480,4 +481,9 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/login/$',
         r'/accounts/logout/$',
         r'/accounts/signup/$',
+        r'/accounts/password/.*/$',
+        r'/accounts/confirm-email/.*/$',
+        r'/api/v[0-9]+/',
     ]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

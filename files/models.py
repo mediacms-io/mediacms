@@ -1,3 +1,4 @@
+import glob
 import json
 import logging
 import os
@@ -15,7 +16,6 @@ from django.core.files import File
 from django.db import connection, models
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
-from django.template.defaultfilters import slugify
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -315,7 +315,6 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
-
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -373,7 +372,6 @@ class Media(models.Model):
         # will run only when a poster is uploaded for the first time
         if self.uploaded_poster and self.uploaded_poster != self.__original_uploaded_poster:
             with open(self.uploaded_poster.path, "rb") as f:
-
                 # set this otherwise gets to infinite loop
                 self.__original_uploaded_poster = self.uploaded_poster
 
@@ -431,7 +429,6 @@ class Media(models.Model):
         Performs all related tasks, as check for media type,
         video duration, encode
         """
-
         self.set_media_type()
         if self.media_type == "video":
             self.set_thumbnail(force=True)
@@ -481,7 +478,10 @@ class Media(models.Model):
                 self.duration = int(round(float(ret.get("video_duration", 0))))
                 self.video_height = int(ret.get("video_height"))
                 if ret.get("video_info", {}).get("codec_name", {}) in ["mjpeg"]:
-                    audio_file_with_thumb = True
+                    # best guess that this is an audio file with a thumbnail
+                    # in other cases, it is not (eg it can be an AVI file)
+                    if ret.get("video_info", {}).get("avg_frame_rate", "") == '0/0':
+                        audio_file_with_thumb = True
 
             if ret.get("is_audio") or audio_file_with_thumb:
                 self.media_type = "audio"
@@ -581,9 +581,7 @@ class Media(models.Model):
 
         # attempt to break media file in chunks
         if self.duration > settings.CHUNKIZE_VIDEO_DURATION and chunkize:
-
             for profile in profiles:
-
                 if profile.extension == "gif":
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
@@ -850,6 +848,7 @@ class Media(models.Model):
         """
 
         res = {}
+        valid_resolutions = [240, 360, 480, 720, 1080, 1440, 2160]
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -861,11 +860,20 @@ class Media(models.Model):
                         uri = os.path.join(p, iframe_playlist.uri)
                         if os.path.exists(uri):
                             resolution = iframe_playlist.iframe_stream_info.resolution[1]
+                            # most probably video is vertical, getting the first value to
+                            # be the resolution
+                            if resolution not in valid_resolutions:
+                                resolution = iframe_playlist.iframe_stream_info.resolution[0]
+
                             res["{}_iframe".format(resolution)] = helpers.url_from_path(uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
                         if os.path.exists(uri):
                             resolution = playlist.stream_info.resolution[1]
+                            # same as above
+                            if resolution not in valid_resolutions:
+                                resolution = playlist.stream_info.resolution[0]
+
                             res["{}_playlist".format(resolution)] = helpers.url_from_path(uri)
         return res
 
@@ -1033,10 +1041,8 @@ class Tag(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        self.title = slugify(self.title[:99])
-        strip_text_items = ["title"]
-        for item in strip_text_items:
-            setattr(self, item, strip_tags(getattr(self, item, None)))
+        self.title = helpers.get_alphanumeric_only(self.title)
+        self.title = self.title[:99]
         super(Tag, self).save(*args, **kwargs)
 
     @property
@@ -1434,6 +1440,13 @@ def media_file_delete(sender, instance, **kwargs):
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
     instance.user.update_user_media()
+
+    # remove extra zombie thumbnails
+    if instance.thumbnail:
+        thumbnails_path = os.path.dirname(instance.thumbnail.path)
+        thumbnails = glob.glob(f'{thumbnails_path}/{instance.uid.hex}.*')
+        for thumbnail in thumbnails:
+            helpers.rm_file(thumbnail)
 
 
 @receiver(m2m_changed, sender=Media.category.through)

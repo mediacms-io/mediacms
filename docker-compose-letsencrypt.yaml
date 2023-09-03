@@ -90,7 +90,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres:13
+    image: postgres:15.2-alpine
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
@@ -98,8 +98,9 @@ services:
       POSTGRES_USER: mediacms
       POSTGRES_PASSWORD: mediacms
       POSTGRES_DB: mediacms
+      TZ: Europe/London
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mediacms"]
+      test: ["CMD-SHELL", "pg_isready", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
       interval: 30s
       timeout: 10s
       retries: 5

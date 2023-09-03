@@ -181,7 +181,6 @@ Sender email: %s\n
 
 
 class UserList(APIView):
-
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 

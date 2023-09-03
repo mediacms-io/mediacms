@@ -102,7 +102,7 @@ class SearchRSSFeed(Feed):
     description = "Latest Media RSS feed"
 
     def link(self, obj):
-        return f"/rss/search"
+        return "/rss/search"
 
     def get_object(self, request):
         category = request.GET.get("c", "")
