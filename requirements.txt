@@ -19,3 +19,5 @@ m3u8==3.5.0
 django-ckeditor==6.6.1
 django-debug-toolbar==4.1.0
 django-login-required-middleware==0.9.0
+django-yugabytedb==4.0.0.post1
+psycopg2==2.9.7
