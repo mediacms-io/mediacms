@@ -785,3 +785,11 @@ def clean_query(query):
         query = query.replace(char, "")
 
     return query.lower()
+
+
+def get_alphanumeric_only(string):
+    """Returns a query that contains only alphanumeric characters
+    This include characters other than the English alphabet too
+    """
+    string = "".join([char for char in string if char.isalnum()])
+    return string.lower()
