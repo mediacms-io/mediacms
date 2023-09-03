@@ -470,9 +470,9 @@ if "http" not in FRONTEND_HOST:
     FRONTEND_HOST = f"http://{FRONTEND_HOST}"
 
 try:
-    if (FRONTEND_HOST_MEDIA is not None) and ("http" not in FRONTEND_HOST_MEDIA):
+    if (FRONTEND_HOST_MEDIA is not None) and ("http" not in FRONTEND_HOST_MEDIA):  # noqa: F405
         # FRONTEND_HOST_MEDIA needs a http:// preffix
-        FRONTEND_HOST_MEDIA = f"http://{FRONTEND_HOST_MEDIA}"
+        FRONTEND_HOST_MEDIA = f"http://{FRONTEND_HOST_MEDIA}"  # noqa: F405
 except NameError:
     # Ignore it - FRONTEND_HOST_MEDIA is probably not defined
     pass

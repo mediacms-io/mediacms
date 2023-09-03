@@ -701,7 +701,7 @@ class Media(models.Model):
         try:
             if settings.FRONTEND_HOST_MEDIA is not None:
                 ep["url"] = settings.FRONTEND_HOST_MEDIA + encoding.media_encoding_url
-        except:
+        except Exception:
             pass
 
         ep["progress"] = encoding.progress
