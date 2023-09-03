@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.db.models import Q
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, permissions, status
@@ -25,7 +25,7 @@ from files.methods import is_mediacms_editor, is_mediacms_manager
 from files.models import Playlist
 
 from .forms import ChannelForm, UserForm
-from .models import Channel, User, Media
+from .models import Channel, Media, User
 from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
 
 

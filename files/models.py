@@ -8,6 +8,7 @@ import tempfile
 import uuid
 
 import m3u8
+import webvtt
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
@@ -25,8 +26,6 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from . import helpers
 from .stop_words import STOP_WORDS
-
-import webvtt
 
 logger = logging.getLogger(__name__)
 
