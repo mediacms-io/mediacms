@@ -18,7 +18,6 @@ class FastPaginationWithoutCount(PageNumberPagination):
     django_paginator_class = FasterDjangoPaginator
 
     def get_paginated_response(self, data):
-
         return Response(
             OrderedDict(
                 [
