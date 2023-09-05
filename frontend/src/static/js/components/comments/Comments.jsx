@@ -8,9 +8,10 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
 
-import './videojs-markers.js';
-import './videojs.markers.css';
-import {enableMarkers, addMarker} from './videojs-markers_config.js'
+// TODO: Marker functionality is already disabled (see comment below), and even including these breaks video viewing.  Until then, disable the imports.
+// import './videojs-markers.js';
+// import './videojs.markers.css';
+// import {enableMarkers, addMarker} from './videojs-markers_config.js'
 
 import './Comments.scss';
 
