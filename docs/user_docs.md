@@ -90,7 +90,7 @@ Click the View media button to open the media page:
 
 #### Media will be in the encoding queue
 
-The media will take some time to finish encoding (MediaCMS will transcode the file to several formats and resolutions). Meanwhile you can edit the media file to add metadata.
+The media will take some time to finish encoding (VideoCMS will transcode the file to several formats and resolutions). Meanwhile you can edit the media file to add metadata.
 
 #### Click Edit Media button
 
@@ -116,7 +116,7 @@ Make sure you fill in all the required fields, and try to complete as many of th
 
 ## Downloading media
 
-MediaCMS offers a configurable option whereby users can make their media files available for download. Downloads are available for transcoded files, and the original file.
+VideoCMS offers a configurable option whereby users can make their media files available for download. Downloads are available for transcoded files, and the original file.
 
 #### How To Enable Download
 
@@ -148,7 +148,7 @@ Choose Save File and click the OK button.
 
 ## Adding captions/subtitles
 
-With MediaCMS you can add subtitles/captions to your video by uploading a subtitles file in the popular .vtt format.
+With VideoCMS you can add subtitles/captions to your video by uploading a subtitles file in the popular .vtt format.
 
 ### Visit Media Page & Click EDIT SUBTITLE Button
 

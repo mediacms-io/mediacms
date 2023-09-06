@@ -10,7 +10,7 @@
 - [7. How video is transcoded](#7-how-video-is-transcoded)
 
 ## 1. Welcome
-This page is created for MediaCMS developers and contains related information.
+This page is created for VideoCMS developers and contains related information.
 
 ## 2. System architecture
 to be written

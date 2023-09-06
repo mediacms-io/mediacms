@@ -21,11 +21,11 @@
 
 
 ## 1. Welcome
-This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
+This page is created for VideoCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
 
 ## 2. Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
+The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run VideoCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
 
 Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
@@ -38,12 +38,12 @@ git clone https://github.com/mediacms-io/mediacms
 cd /home/mediacms.io/mediacms/ && bash ./install.sh
 ```
 
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
+The script will ask if you have a URL where you want to deploy VideoCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
 
 
 ### Update
 
-If you've used the above way to install MediaCMS, update with the following:
+If you've used the above way to install VideoCMS, update with the following:
 
 ```bash
 cd /home/mediacms.io/mediacms # enter mediacms directory
@@ -97,7 +97,7 @@ git clone https://github.com/mediacms-io/mediacms
 cd mediacms
 ```
 
-The default option is to serve MediaCMS on all ips available of the server (including localhost).
+The default option is to serve VideoCMS on all ips available of the server (including localhost).
 If you want to explore more options (including setup of https with letsencrypt certificate) checkout [Docker deployment](/docs/admins_docs.md#4-docker-deployment-options) section for different docker-compose setups to use.
 
 Run
@@ -106,7 +106,7 @@ Run
 docker-compose up
 ```
 
-This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
+This will download all VideoCMS related Docker images and start all containers. Once it finishes, VideoCMS will be installed and available on http://localhost or http://ip
 
 A user admin has been created with random password, you should be able to see it at the end of migrations container, eg
 
@@ -118,7 +118,7 @@ or if you have set the ADMIN_PASSWORD variable on docker-compose file you have u
 
 ### Update
 
-Get latest MediaCMS image and stop/start containers
+Get latest VideoCMS image and stop/start containers
 
 ```bash
 cd /path/to/mediacms/installation
@@ -199,7 +199,7 @@ The reverse proxy (`jwilder/nginx-proxy`) can be configured to provide SSL termi
 
 The architecture below generalises all the deployment scenarios above, and provides a conceptual design for other deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple mediacms_web instances and celery_workers. For large deployments, managed postgres, redis and storage may be adopted.
 
-![MediaCMS](images/architecture.png)
+![VideoCMS](images/architecture.png)
 
 
 ## 5. Configuration
@@ -211,15 +211,15 @@ In case of a the single server installation, add to `cms/local_settings.py` .
 
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
-Any change needs restart of MediaCMS in order to take effect.
+Any change needs restart of VideoCMS in order to take effect.
 
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
+Single server installation: edit `cms/local_settings.py`, make a change and restart VideoCMS
 
 ```bash
 #systemctl restart mediacms
 ```
 
-Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
+Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart VideoCMS containers
 
 ```bash
 #docker-compose restart web celery_worker celery_beat
@@ -243,7 +243,7 @@ By default `CAN_ADD_MEDIA = "all"` means that all registered users can add media
 
 - **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails.
 
-- **advancedUser**, only users that are marked as advanced users can add media. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
+- **advancedUser**, only users that are marked as advanced users can add media. Admins or VideoCMS managers can make users advanced users by editing their profile and selecting advancedUser.
 
 ### 5.4 What is the portal workflow
 
@@ -251,7 +251,7 @@ The `PORTAL_WORKFLOW` variable specifies what happens to newly uploaded media, w
 
 - **public** is the default option and means that a media can appear on listings. If media type is video, it will appear once at least a task that produces an encoded version of the file has finished succesfully. For other type of files, as image/audio they appear instantly
 
-- **private** means that newly uploaded content is private - only users can see it or MediaCMS editors, managers and admins. Those can also set the status to public or unlisted
+- **private** means that newly uploaded content is private - only users can see it or VideoCMS editors, managers and admins. Those can also set the status to public or unlisted
 
 - **unlisted** means that items are unlisted. However if a user visits the url of an unlisted media, it will be shown (as opposed to private)
 
@@ -359,7 +359,7 @@ RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
     'xxx.com', 'emaildomainwhatever.com']
 ```
 
-### 5.14 Require a review by MediaCMS editors/managers/admins
+### 5.14 Require a review by VideoCMS editors/managers/admins
 
 set value
 
@@ -368,7 +368,7 @@ MEDIA_IS_REVIEWED = False
 ```
 
 any uploaded media now needs to be reviewed before it can appear to the listings.
-MediaCMS editors/managers/admins can visit the media page and edit it, where they can see the option to mark media as reviewed. By default this is set to True, so all media don't require to be reviewed
+VideoCMS editors/managers/admins can visit the media page and edit it, where they can see the option to mark media as reviewed. By default this is set to True, so all media don't require to be reviewed
 
 ### 5.15 Specify maximum number of media for a playlist
 
@@ -479,7 +479,7 @@ to be written
 Who can publish content, how content appears on public listings.Difference between statuses (private, unlisted, public)
 
 ## 9. On user roles
-Differences over MediaCMS manager, MediaCMS editor, logged in user
+Differences over VideoCMS manager, VideoCMS editor, logged in user
 
 ## 10. Adding languages for Captions and subtitles
 to be written
@@ -686,7 +686,7 @@ Instructions contributed by @alberto98fx
 
 ## 15. Debugging email issues
 On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
-In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
+In case we are yet unable to receive email from VideoCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
 
 Enter the Django shell, example if you're using the Single Server installation:
 

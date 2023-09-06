@@ -299,7 +299,7 @@
     height: 0.18em;
     bottom: 50%;
     margin-bottom: -1em;
-    background-color: #009933; }
+    background-color: #5954ED; }
   .video-js.vjs-mediacms.vjs-subtitles-on.vjs-fullscreen .vjs-subtitles-control .vjs-icon-placeholder:after {
     width: 42%;
     left: 29%; }
@@ -952,9 +952,9 @@
   .video-js.vjs-mediacms video[poster] {
     object-fit: fill; }
   .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress {
-    background-color: #009933; }
+    background-color: #5954ED; }
     .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress:before {
-      color: #009933; }
+      color: #5954ED; }
   .video-js.vjs-mediacms .vjs-poster {
     background-size: cover; }
   .video-js.vjs-mediacms.vjs-changing-resolution .vjs-poster {
@@ -1055,7 +1055,7 @@
     opacity: 0;
     visibility: hidden; }
   .video-js.vjs-mediacms:hover .vjs-big-play-button {
-    background-color: #009933; }
+    background-color: #5954ED; }
 
 /* @-webkit-keyframes vjs-poster-reveal {
     0%{

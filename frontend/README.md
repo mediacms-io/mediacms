@@ -1,4 +1,4 @@
-# MediaCMS Web Client (demo)
+# VideoCMS Web Client (demo)
 
 ### **Requirements**
 
