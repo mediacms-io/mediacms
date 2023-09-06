@@ -12,11 +12,9 @@ module.exports = {
   },
   logo: {
     lightMode: {
-      svg: './static/images/logo_dark.svg',
       img: './static/images/logo_dark.png',
     },
     darkMode: {
-      svg: './static/images/logo_light.svg',
       img: './static/images/logo_light.png',
     },
   },
