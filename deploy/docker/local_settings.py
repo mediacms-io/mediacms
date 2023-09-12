@@ -1,5 +1,5 @@
 FRONTEND_HOST = 'http://localhost'
-PORTAL_NAME = 'MediaCMS'
+PORTAL_NAME = 'VMS'
 SECRET_KEY = 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
 POSTGRES_HOST = 'db'
 REDIS_LOCATION = "redis://redis:6379/1"
