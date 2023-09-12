@@ -7,3 +7,7 @@
 ## Links
 
 https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b
+
+## Commands As of 9/12/23
+
+aws ecr create-repository --repository-name ocano/streampod-vms --region us-east-2
