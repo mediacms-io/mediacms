@@ -1,5 +1,5 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:701273472782:task-definition/streampod-vms-task-definition:1",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:701273472782:task-definition/streampod-vms-task-definition:3",
     "containerDefinitions": [
         {
             "name": "streampod-vms",
