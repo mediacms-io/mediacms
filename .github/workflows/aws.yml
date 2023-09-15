@@ -76,7 +76,7 @@ jobs:
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
     - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
+      id: streampod-vms-task-definition:3
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: ${{ env.ECS_TASK_DEFINITION }}
