@@ -1,4 +1,5 @@
 from django import forms
+from captcha.fields import CaptchaField
 
 from .methods import get_next_state, is_mediacms_editor
 from .models import Media, Subtitle
@@ -79,6 +80,7 @@ class ContactForm(forms.Form):
     from_email = forms.EmailField(required=True)
     name = forms.CharField(required=False)
     message = forms.CharField(widget=forms.Textarea, required=True)
+    captcha = CaptchaField()
 
     def __init__(self, user, *args, **kwargs):
         super(ContactForm, self).__init__(*args, **kwargs)

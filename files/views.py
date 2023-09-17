@@ -147,6 +147,8 @@ Sender email: %s\n
             email.send(fail_silently=True)
             success_msg = "Message was sent! Thanks for contacting"
             context["success_msg"] = success_msg
+        else:
+            context["success_msg"] = "The information you entered was invalid.  Please click Back and try again."
 
     return render(request, "cms/contact.html", context)
 

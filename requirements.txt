@@ -19,3 +19,4 @@ m3u8==3.5.0
 django-ckeditor==6.6.1
 django-debug-toolbar==4.1.0
 django-login-required-middleware==0.9.0
+django-simple-captcha==0.5.18
