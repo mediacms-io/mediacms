@@ -1,5 +1,5 @@
-from django import forms
 from captcha.fields import CaptchaField
+from django import forms
 
 from .methods import get_next_state, is_mediacms_editor
 from .models import Media, Subtitle
