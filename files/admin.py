@@ -43,7 +43,7 @@ class MediaAdmin(admin.ModelAdmin):
     @admin.action(description="Generate missing encoding(s)", permissions=["change"])
     def generate_missing_encodings(modeladmin, request, queryset):
         for m in queryset:
-            m.encode()
+            m.encode(force=False)
 
     actions = [generate_missing_encodings]
     get_comments_count.short_description = "Comments count"
