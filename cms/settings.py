@@ -160,6 +160,7 @@ HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
 
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
 FFPROBE_COMMAND = "ffprobe"  # this is the path
+FFMPEG_THREADS = 0  # default - use optimal number of threads
 MP4HLS = "mp4hls"
 
 MASK_IPS_FOR_ACTIONS = True
