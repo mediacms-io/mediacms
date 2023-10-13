@@ -235,6 +235,8 @@ def encode_media(
         # -ss 5 start from 5 second. -t 25 until 25 sec
         command = [
             settings.FFMPEG_COMMAND,
+            "-threads",
+            str(settings.FFMPEG_THREADS),
             "-y",
             "-ss",
             "3",
