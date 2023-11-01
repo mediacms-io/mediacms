@@ -1,6 +1,7 @@
 import os
 
 from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
 
 DEBUG = False
 
@@ -304,6 +305,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -487,3 +489,21 @@ if GLOBAL_LOGIN_REQUIRED:
     ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+try:
+    # mostly used in docker-compose-dev.yaml
+    DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
+    if DEVELOPMENT_MODE and DEVELOPMENT_MODE == 'True':
+        # keep a dev_settings.py file for local overrides
+        from .dev_settings import *  # noqa
+except ImportError:
+    pass
+
+LANGUAGES = [
+    ('el', _('Greek')),
+    ("de", _("German")),
+    ("en", _("English")),
+    ('fr', _('French')),
+]
+
+LANGUAGE_CODE = 'en'  # default language

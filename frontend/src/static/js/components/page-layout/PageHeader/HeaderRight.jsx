@@ -4,6 +4,7 @@ import { PageStore } from '../../../utils/stores/';
 import { HeaderConsumer, MemberConsumer, LinksConsumer } from '../../../utils/contexts/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupTop, PopupMain, UserThumbnail } from '../../_shared';
 import { HeaderThemeSwitcher } from './HeaderThemeSwitcher';
+import { translate_string } from '../../../utils/helpers/';
 
 function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
   const pages = {
@@ -95,9 +96,9 @@ function LoginButton({ user, link, hasHeaderThemeSwitcher }) {
         className={
           'button-link sign-in' + (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="Sign in"
+        title={translate_string('Sign in')}
       >
-        Sign in
+        {translate_string('Sign in')}
       </a>
     </div>
   ) : null;
@@ -112,9 +113,9 @@ function RegisterButton({ user, link, hasHeaderThemeSwitcher }) {
           'button-link register-link' +
           (hasHeaderThemeSwitcher ? ' hidden-only-in-small' : ' hidden-only-in-extra-small')
         }
-        title="Register"
+        title={translate_string('Register')}
       >
-        Register
+        {translate_string('Register')}
       </a>
     </div>
   ) : null;

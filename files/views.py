@@ -74,6 +74,13 @@ def about(request):
     return render(request, "cms/about.html", context)
 
 
+def setlanguage(request):
+    """Set Language view"""
+
+    context = {}
+    return render(request, "cms/set_language.html", context)
+
+
 @login_required
 def add_subtitle(request):
     """Add subtitle view"""
@@ -287,7 +294,7 @@ def search(request):
     """Search view"""
 
     context = {}
-    RSS_URL = f"/rss{request.environ['REQUEST_URI']}"
+    RSS_URL = f"/rss{request.environ.get('REQUEST_URI')}"
     context["RSS_URL"] = RSS_URL
     return render(request, "cms/search.html", context)
 

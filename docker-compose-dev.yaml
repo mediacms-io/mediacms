@@ -1,6 +1,35 @@
 version: "3"
 
 services:
+  migrations:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev
+    image: mediacms/mediacms-dev:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      ADMIN_PASSWORD: 'admin'
+      FRONTEND_HOST: 'http://localhost'
+      PORTAL_NAME: 'MediaCMS'
+      SECRET_KEY: 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
+      POSTGRES_HOST: 'db'
+      DEVELOPMENT_MODE: "True"
+      REDIS_SSL_CERT_REQS: "none"
+    command: "./deploy/docker/prestart.sh"
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
   frontend:
     image: node:14
     volumes:
@@ -18,19 +47,23 @@ services:
       context: .
       dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
+    command: "python manage.py runserver 0.0.0.0:80"
     environment:
+      DEVELOPMENT_MODE: "True"
+      REDIS_SSL_CERT_REQS: "none"
       ADMIN_USER: 'admin'
       ADMIN_PASSWORD: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
+      FRONTEND_HOST: 'http://localhost'
+      PORTAL_NAME: 'MediaCMS'
+      SECRET_KEY: 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
+      POSTGRES_HOST: 'db'
     ports:
       - "80:80"
     volumes:
       - ./:/home/mediacms.io/mediacms/
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      - migrations
   db:
     image: postgres:15.2-alpine
     volumes:
@@ -54,3 +87,22 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  celery_worker:
+    image: mediacms/mediacms-dev:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_MIGRATIONS: 'no'
+      FRONTEND_HOST: 'http://localhost'
+      PORTAL_NAME: 'MediaCMS'
+      SECRET_KEY: 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
+      POSTGRES_HOST: 'db'
+      REDIS_SSL_CERT_REQS: "none"
+      DEVELOPMENT_MODE: "True"
+    depends_on:
+      - web

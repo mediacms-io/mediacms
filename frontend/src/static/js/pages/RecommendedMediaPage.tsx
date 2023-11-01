@@ -4,6 +4,7 @@ import { PageStore } from '../utils/stores/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { Page } from './Page';
+import { translate_string } from '../utils/helpers/';
 
 interface RecommendedMediaPageProps {
   id?: string;
@@ -12,7 +13,7 @@ interface RecommendedMediaPageProps {
 
 export const RecommendedMediaPage: React.FC<RecommendedMediaPageProps> = ({
   id = 'recommended-media',
-  title = PageStore.get('config-enabled').pages.recommended.title,
+  title = translate_string('Recommended'),
 }) => (
   <Page id={id}>
     <ApiUrlConsumer>
