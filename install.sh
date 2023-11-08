@@ -22,7 +22,7 @@ done
 
 
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
+if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]] || [[ $osVersion == *bookworm* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 else
@@ -50,6 +50,10 @@ echo 'Creating database to be used in MediaCMS'
 su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
 su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
 su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+su -c "psql -d mediacms -U postgres -c \"CREATE SCHEMA mediacms AUTHORIZATION mediacms;\"" postgres
+su -c "psql -d mediacms -U postgres -c \"ALTER ROLE mediacms SET client_encoding TO 'utf8';\"" postgres
+su -c "psql -d mediacms -U postgres -c \"ALTER ROLE mediacms SET default_transaction_isolation TO 'read committed';\"" postgres
+su -c "psql -d mediacms -U postgres -c \"ALTER ROLE mediacms SET timezone TO 'UTC';\"" postgres
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
@@ -141,6 +145,6 @@ unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 mkdir /home/mediacms.io/mediacms/media_files/hls
 
 # last, set default owner
-chown -R www-data. /home/mediacms.io/
+chown -R www-data: /home/mediacms.io/
 
 echo 'MediaCMS installation completed, open browser on http://'"$FRONTEND_HOST"' and login with user admin and password '"$ADMIN_PASS"''
