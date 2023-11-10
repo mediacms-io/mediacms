@@ -40,6 +40,12 @@ class MediaAdmin(admin.ModelAdmin):
     def get_comments_count(self, obj):
         return obj.comments.count()
 
+    @admin.action(description="Generate missing encoding(s)", permissions=["change"])
+    def generate_missing_encodings(modeladmin, request, queryset):
+        for m in queryset:
+            m.encode(force=False)
+
+    actions = [generate_missing_encodings]
     get_comments_count.short_description = "Comments count"
 
 
@@ -74,7 +80,18 @@ class SubtitleAdmin(admin.ModelAdmin):
 
 
 class EncodingAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["get_title", "chunk", "profile", "progress", "status", "has_file"]
+    list_filter = ["chunk", "profile", "status"]
+
+    def get_title(self, obj):
+        return str(obj)
+
+    get_title.short_description = "Encoding"
+
+    def has_file(self, obj):
+        return obj.media_encoding_url is not None
+
+    has_file.short_description = "Has file"
 
 
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
