@@ -73,7 +73,7 @@ def upload_media():
     if os.path.isdir(path):
         for filename in os.listdir(path):
             files = {}
-            abs = os.path.abspath("{path}/{filename}")
+            abs = os.path.abspath(f"{path}/{filename}")
             files['media_file'] = open(f'{abs}', 'rb')
             response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
             if response.status_code == 201:
