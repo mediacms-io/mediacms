@@ -59,7 +59,7 @@ def login():
             file.writelines(f'USERNAME={json.loads(response.text)["username"]}\n')
         print(f"Welcome to MediaCMS [bold blue]{username}[/bold blue]. Your auth creds have been suceesfully stored in the .env file", ":v:")
     else:
-        print(f'Error: {"non_field_errors":["User not found."]}')
+        print(f'Error: {"non_field_errors": ["User not found."]}')
 
 
 @apis.command()
