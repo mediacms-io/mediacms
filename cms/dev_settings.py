@@ -1,7 +1,6 @@
-# Development settings, mainly used in docker-compose-dev.yaml
-# Django runs in debug mode with runserver, uwsgi and nginx arenot loaded
-# Django static loads everything from static/ folder
+# Development settings, used in docker-compose-dev.yaml
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = [
@@ -28,7 +27,7 @@ INSTALLED_APPS = [
     'djcelery_email',
     'ckeditor',
     'drf_yasg',
-    'corsheaders'
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -45,7 +44,5 @@ MIDDLEWARE = [
 
 DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = True
-STATICFILES_DIRS = (
-  os.path.join(BASE_DIR, 'static/'),
-)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
 STATIC_ROOT = None

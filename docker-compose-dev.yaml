@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+      args:
+        - DEVELOPMENT_MODE=True
     image: mediacms/mediacms-dev:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/

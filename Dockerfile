@@ -7,7 +7,8 @@ ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_NO_CACHE_DIR=1
 
-ARG DEVELOPMENT_MODE=no
+ARG DEVELOPMENT_MODE
+ENV DEVELOPMENT=${DEVELOPMENT_MODE}
 
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
 
@@ -16,7 +17,7 @@ COPY requirements.txt .
 COPY requirements-dev.txt .
 
 RUN set -x \
-    && if [ "$DEVELOPMENT_MODE" = "yes" ]; then pip install -r requirements-dev.txt ; fi
+    && if [ "$DEVELOPMENT" = "True" ]; then pip install -r requirements-dev.txt ; fi
 
 RUN pip install -r requirements.txt
 
