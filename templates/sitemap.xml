@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{% load static %}
+	<url>
+		<loc>{{ FRONTEND_HOST }}</loc>
+		<changefreq>always</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/featured</loc>
+		<changefreq>daily</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/recommended</loc>
+		<changefreq>always</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/latest</loc>
+		<changefreq>hourly</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/members</loc>
+		<changefreq>daily</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/tags</loc>
+		<changefreq>daily</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/categories</loc>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/history</loc>
+		<changefreq>always</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/liked</loc>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/about</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/tos</loc>
+		<changefreq>monthly</changefreq>
+	</url>
+	<url>
+		<loc>{{ FRONTEND_HOST }}/contact</loc>
+		<changefreq>never</changefreq>
+	</url>
+	{% for media_object in media %}
+	<url>
+		<loc>{{ FRONTEND_HOST}}/view?m={{ media_object.friendly_token }}</loc>
+	</url>
+	{% endfor %}
+	{% for playlist_object in playlists %}
+	<url>
+		<loc>{{ FRONTEND_HOST}}/playlists/{{ playlist_object.friendly_token }}</loc>
+	</url>
+	{% endfor %}
+	{% for user_object in users %}
+	<url>
+		<loc>{{ FRONTEND_HOST}}/user/{{ user_object.username }}/</loc>
+	</url>
+	{% endfor %}
+</urlset>

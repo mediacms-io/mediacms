@@ -59,7 +59,7 @@ def login():
             file.writelines(f'USERNAME={json.loads(response.text)["username"]}\n')
         print(f"Welcome to MediaCMS [bold blue]{username}[/bold blue]. Your auth creds have been suceesfully stored in the .env file", ":v:")
     else:
-        print(f'Error: {"non_field_errors":["User not found."]}')
+        print(f'Error: {"non_field_errors": ["User not found."]}')
 
 
 @apis.command()
@@ -73,7 +73,7 @@ def upload_media():
     if os.path.isdir(path):
         for filename in os.listdir(path):
             files = {}
-            abs = os.path.abspath("{path}/{filename}")
+            abs = os.path.abspath(f"{path}/{filename}")
             files['media_file'] = open(f'{abs}', 'rb')
             response = requests.post(url=f'{BASE_URL}/media', headers=headers, files=files)
             if response.status_code == 201:

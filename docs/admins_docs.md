@@ -18,7 +18,7 @@
 - [15. Debugging email issues](#15-debugging-email-issues)
 - [16. Frequently Asked Questions](#16-frequently-asked-questions)
 - [17. Cookie consent code](#17-cookie-consent-code)
-
+- [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -56,6 +56,15 @@ sudo systemctl restart mediacms celery_long celery_short # restart services
 
 ### Update from version 2 to version 3
 Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
+The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
+
+```
+# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
+# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
+# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
+# systemctl daemon-reload
+# systemctl start celery_long celery_short celery_beat
+```
 
 
 
@@ -461,6 +470,14 @@ ADMINS_NOTIFICATIONS = {
 - Make the portal workflow public, but at the same time set `GLOBAL_LOGIN_REQUIRED = True` so that only logged in users can see content.
 - You can either set `REGISTER_ALLOWED = False` if you want to add members yourself or checkout options on "django-allauth settings" that affects registration in `cms/settings.py`. Eg set the portal invite only, or set email confirmation as mandatory, so that you control who registers.
 
+### 5.24 Enable the sitemap
+
+Whether or not to enable generation of a sitemap file at http://your_installation/sitemap.xml (default: False)
+
+```
+GENERATE_SITEMAP = False
+```
+
 ## 6. Manage pages
 to be written
 
@@ -753,3 +770,12 @@ this will re-create the sprites for videos that the task failed.
 On file `templates/components/header.html` you can find a simple cookie consent code. It is commented, so you have to remove the `{% comment %}` and `{% endcomment %}` lines in order to enable it. Or you can replace that part with your own code that handles cookie consent banners.
 
 ![Simple Cookie Consent](images/cookie_consent.png)
+
+## 18. Disable encoding and show only original file
+When videos are uploaded, they are getting encoded to multiple resolutions, a procedure called transcoding. Sometimes this is not needed and you only need to show the original file, eg when MediaCMS is running on a low capabilities server. To achieve this, edit settings.py and set
+
+```
+DO_NOT_TRANSCODE_VIDEO = True
+```
+
+This will disable the transcoding process and only the original file will be shown. Note that this will also disable the sprites file creation, so you will not have the preview thumbnails on the video player.
