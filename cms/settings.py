@@ -93,6 +93,9 @@ ALLOW_MENTION_IN_COMMENTS = False  # allowing to mention other users with @ in t
 # valid options: content, author
 RELATED_MEDIA_STRATEGY = "content"
 
+# Whether or not to generate a sitemap.xml listing the pages on the site (default: False)
+GENERATE_SITEMAP = False
+
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True

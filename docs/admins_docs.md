@@ -470,6 +470,14 @@ ADMINS_NOTIFICATIONS = {
 - Make the portal workflow public, but at the same time set `GLOBAL_LOGIN_REQUIRED = True` so that only logged in users can see content.
 - You can either set `REGISTER_ALLOWED = False` if you want to add members yourself or checkout options on "django-allauth settings" that affects registration in `cms/settings.py`. Eg set the portal invite only, or set email confirmation as mandatory, so that you control who registers.
 
+### 5.24 Enable the sitemap
+
+Whether or not to enable generation of a sitemap file at http://your_installation/sitemap.xml (default: False)
+
+```
+GENERATE_SITEMAP = False
+```
+
 ## 6. Manage pages
 to be written
 
