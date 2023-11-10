@@ -64,7 +64,7 @@ We have three goals for MediaCMS: a) deliver all functionality one would expect 
 ## License
 
 MediaCMS is released under [GNU Affero General Public License v3.0 license](LICENSE.txt).
-Copyright Markos Gogoulos
+Copyright Markos Gogoulos.
 
 
 ## Support and paid services
@@ -119,7 +119,7 @@ This software uses the following list of awesome technologies: Python, Django, D
 
 - **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
-- **Heritales** International Heritage Film Festival - https://stage.heritales.org
+- **American Association of Gynecologic Laparoscopists** - https://surgeryu.aagl.org/
 
 
 ## How to contribute
