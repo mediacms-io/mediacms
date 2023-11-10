@@ -18,7 +18,7 @@
 - [15. Debugging email issues](#15-debugging-email-issues)
 - [16. Frequently Asked Questions](#16-frequently-asked-questions)
 - [17. Cookie consent code](#17-cookie-consent-code)
-
+- [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -762,3 +762,12 @@ this will re-create the sprites for videos that the task failed.
 On file `templates/components/header.html` you can find a simple cookie consent code. It is commented, so you have to remove the `{% comment %}` and `{% endcomment %}` lines in order to enable it. Or you can replace that part with your own code that handles cookie consent banners.
 
 ![Simple Cookie Consent](images/cookie_consent.png)
+
+## 18. Disable encoding and show only original file
+When videos are uploaded, they are getting encoded to multiple resolutions, a procedure called transcoding. Sometimes this is not needed and you only need to show the original file, eg when MediaCMS is running on a low capabilities server. To achieve this, edit settings.py and set
+
+```
+DO_NOT_TRANSCODE_VIDEO = True
+```
+
+This will disable the transcoding process and only the original file will be shown. Note that this will also disable the sprites file creation, so you will not have the preview thumbnails on the video player.

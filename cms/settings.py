@@ -467,7 +467,7 @@ except ImportError:
 
 if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
-    FRONTEND_HOST = f"http://{FRONTEND_HOST}"
+    FRONTEND_HOST = f"http://{FRONTEND_HOST}"  # noqa
 
 if LOCAL_INSTALL:
     SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
@@ -485,5 +485,8 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/confirm-email/.*/$',
         r'/api/v[0-9]+/',
     ]
+
+# if True, only show original, don't perform any action on videos
+DO_NOT_TRANSCODE_VIDEO = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
