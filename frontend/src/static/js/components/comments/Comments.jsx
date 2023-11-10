@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { MentionsInput, Mention } from 'react-mentions';
 import PropTypes from 'prop-types';
 import { format } from 'timeago.js';
 import { usePopup } from '../../utils/hooks/';
@@ -6,6 +7,10 @@ import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
+
+import './videojs-markers.js';
+import './videojs.markers.css';
+import {enableMarkers, addMarker} from './videojs-markers_config.js'
 
 import './Comments.scss';
 
@@ -25,6 +30,7 @@ function CommentForm(props) {
   const [madeChanges, setMadeChanges] = useState(false);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const [textareaLineHeight, setTextareaLineHeight] = useState(-1);
+  const [userList, setUsersList] = useState('');
 
   const [loginUrl] = useState(
     !MemberContext._currentValue.is.anonymous
@@ -40,6 +46,17 @@ function CommentForm(props) {
 
   function onBlur() {
     setTextareaFocused(false);
+  }
+
+  function onUsersLoad()
+  {
+    const userList =[...MediaPageStore.get('users')];
+    const cleanList = []
+    userList.forEach(user => {
+      cleanList.push({id : user.username, display : user.name});
+    });
+
+    setUsersList(cleanList);
   }
 
   function onCommentSubmit() {
@@ -59,6 +76,21 @@ function CommentForm(props) {
 
   function onCommentSubmitFail() {
     setMadeChanges(false);
+  }
+
+  function onChangeWithMention(event, newValue, newPlainTextValue, mentions) {
+    textareaRef.current.style.height = '';
+
+    setValue(newValue);
+    setMadeChanges(true);
+
+    const contentHeight = textareaRef.current.scrollHeight;
+    const contentLineHeight =
+      0 < textareaLineHeight ? textareaLineHeight : parseFloat(window.getComputedStyle(textareaRef.current).lineHeight);
+    setTextareaLineHeight(contentLineHeight);
+
+    textareaRef.current.style.height =
+      Math.max(20, textareaLineHeight * Math.ceil(contentHeight / contentLineHeight)) + 'px';
   }
 
   function onChange(event) {
@@ -81,7 +113,7 @@ function CommentForm(props) {
       return;
     }
 
-    const val = textareaRef.current.value.trim();
+    const val = value.trim();
 
     if ('' !== val) {
       MediaPageActions.submitComment(val);
@@ -91,10 +123,18 @@ function CommentForm(props) {
   useEffect(() => {
     MediaPageStore.on('comment_submit', onCommentSubmit);
     MediaPageStore.on('comment_submit_fail', onCommentSubmitFail);
+    if (MediaCMS.features.media.actions.comment_mention === true)
+    {
+      MediaPageStore.on('users_load', onUsersLoad);
+    }
 
     return () => {
       MediaPageStore.removeListener('comment_submit', onCommentSubmit);
       MediaPageStore.removeListener('comment_submit_fail', onCommentSubmitFail);
+      if (MediaCMS.features.media.actions.comment_mention === true)
+      {
+        MediaPageStore.removeListener('users_load', onUsersLoad);
+      }
     };
   });
 
@@ -104,16 +144,33 @@ function CommentForm(props) {
         <UserThumbnail />
         <div className="form">
           <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
-            <textarea
-              ref={textareaRef}
-              className="form-textarea"
-              rows="1"
-              placeholder={'Add a ' + commentsText.single + '...'}
-              value={value}
-              onChange={onChange}
-              onFocus={onFocus}
-              onBlur={onBlur}
-            ></textarea>
+            { MediaCMS.features.media.actions.comment_mention ?
+              <MentionsInput
+                inputRef={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChangeWithMention}
+                onFocus={onFocus}
+                onBlur={onBlur}>
+                <Mention
+                  data={userList}
+                  markup="@(___id___)[___display___]"
+              />
+              </MentionsInput>
+            :
+              <textarea
+                ref={textareaRef}
+                className="form-textarea"
+                rows="1"
+                placeholder={'Add a ' + commentsText.single + '...'}
+                value={value}
+                onChange={onChange}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              ></textarea>
+            }
           </div>
           <div className="form-buttons">
             <button className={'' === value.trim() ? 'disabled' : ''} onClick={submitComment}>
@@ -236,6 +293,10 @@ function Comment(props) {
     };
   }, []);
 
+  function parseComment(text) {
+    return { __html: text.replace(/\n/g, `<br />`) };
+  }
+
   return (
     <div className="comment">
       <div className="comment-inner">
@@ -255,7 +316,7 @@ function Comment(props) {
             <div
               ref={commentTextInnerRef}
               className="comment-text-inner"
-              dangerouslySetInnerHTML={{ __html: props.text }}
+              dangerouslySetInnerHTML={parseComment(props.text)}
             ></div>
           </div>
           {enabledViewMoreContent ? (
@@ -368,8 +429,69 @@ export default function CommentsList(props) {
   const [displayComments, setDisplayComments] = useState(false);
 
   function onCommentsLoad() {
-    displayCommentsRelatedAlert();
-    setComments([...MediaPageStore.get('media-comments')]);
+    const retrievedComments = [...MediaPageStore.get('media-comments')];
+
+    setComments([...retrievedComments]);
+
+    // TODO: this code is breaking, beed ti debug, until then removing the extra
+    // functionality related with video/timestamp/user mentions
+    //    const video = videojs('vjs_video_3');
+
+    // if (MediaCMS.features.media.actions.timestampTimebar)
+    //{
+    //  enableMarkers(video);
+    //}
+
+    //if (MediaCMS.features.media.actions.comment_mention === true)
+    //{
+    //  retrievedComments.forEach(comment => {
+    //    comment.text = setMentions(comment.text);
+    //  });
+    //}
+
+    // TODO: this code is breaking
+    // video.one('loadedmetadata', () => {
+    //  retrievedComments.forEach(comment => {
+    //    comment.text = setTimestampAnchorsAndMarkers(comment.text, video);
+    //  });
+
+    //  displayCommentsRelatedAlert();
+    //  setComments([...retrievedComments]);
+    //});
+    //setComments([...retrievedComments]);
+  }
+
+  function setMentions(text)
+  {
+    let sanitizedComment = text.split('@(_').join("<a href=\"/user/");
+    sanitizedComment = sanitizedComment.split('_)[_').join("\">");
+    return sanitizedComment.split('_]').join("</a>");
+  }
+
+  function setTimestampAnchorsAndMarkers(text, videoPlayer)
+  {
+    function wrapTimestampWithAnchor(match, string)
+    {
+      let split = match.split(':'), s = 0, m = 1;
+      let searchParameters = new URLSearchParams(window.location.search);
+
+      while (split.length > 0)
+      {
+          s += m * parseInt(split.pop(), 10);
+          m *= 60;
+      }
+      if (MediaCMS.features.media.actions.timestampTimebar)
+      {
+        addMarker(videoPlayer, s, text);
+      }
+
+      searchParameters.set('t', s)
+      const wrapped = "<a href=\"" + MediaPageStore.get('media-url').split('?')[0] + "?" + searchParameters + "\">" + match + "</a>";
+      return wrapped;
+    }
+
+    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
+    return text.replace(timeRegex , wrapTimestampWithAnchor);
   }
 
   function onCommentSubmit(commentId) {

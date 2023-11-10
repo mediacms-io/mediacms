@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-from celery.task.control import revoke
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,7 +8,6 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.template.defaultfilters import slugify
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -30,8 +28,9 @@ from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, user_allowed_to_u
 from users.models import User
 
 from .forms import ContactForm, MediaForm, SubtitleForm
-from .helpers import clean_query, produce_ffmpeg_commands
+from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
+    check_comment_for_mention,
     get_user_or_session,
     is_mediacms_editor,
     is_mediacms_manager,
@@ -181,7 +180,8 @@ def edit_media(request):
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
                 for tag in form.cleaned_data.get("new_tags").split(","):
-                    tag = slugify(tag)
+                    tag = get_alphanumeric_only(tag)
+                    tag = tag[:99]
                     if tag:
                         try:
                             tag = Tag.objects.get(title=tag)
@@ -1277,6 +1277,9 @@ class CommentDetail(APIView):
             serializer.save(user=request.user, media=media)
             if request.user != media.user:
                 notify_user_on_comment(friendly_token=media.friendly_token)
+            # here forward the comment to check if a user was mentioned
+            if settings.ALLOW_MENTION_IN_COMMENTS:
+                check_comment_for_mention(friendly_token=media.friendly_token, comment_text=serializer.data['text'])
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1392,5 +1395,6 @@ class TaskDetail(APIView):
     permission_classes = (permissions.IsAdminUser,)
 
     def delete(self, request, uid, format=None):
-        revoke(uid, terminate=True)
+        # This is not imported!
+        # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)

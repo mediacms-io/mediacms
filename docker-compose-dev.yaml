@@ -18,6 +18,10 @@ services:
       context: .
       dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
+    environment:
+      ADMIN_USER: 'admin'
+      ADMIN_PASSWORD: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
     ports:
       - "80:80"
     volumes:
@@ -27,23 +31,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-  selenium_hub:
-    container_name: selenium_hub
-    image: selenium/hub
-    ports:
-      - "4444:4444"
-  selenium_chrome:
-    container_name: selenium_chrome
-    image: selenium/node-chrome-debug
-    environment:
-      - HUB_PORT_4444_TCP_ADDR=selenium_hub
-      - HUB_PORT_4444_TCP_PORT=4444
-    ports:
-      - "5900:5900"
-    depends_on:
-      - selenium_hub
   db:
-    image: postgres
+    image: postgres:15.2-alpine
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
@@ -51,8 +40,9 @@ services:
       POSTGRES_USER: mediacms
       POSTGRES_PASSWORD: mediacms
       POSTGRES_DB: mediacms
+      TZ: Europe/London
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mediacms"]
+      test: ["CMD-SHELL", "pg_isready", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
       interval: 10s
       timeout: 5s
       retries: 5

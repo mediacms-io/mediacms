@@ -20,11 +20,11 @@ const formatPage = (page) => {
     ? templates.renderPageContent({ page: { id: pageContentId, component: page.component } })
     : undefined;
   const headLinks = [
-    { rel: 'preload', href: './static/lib/video-js/7.7.5/video.min.js', as: 'script' },
+    { rel: 'preload', href: './static/lib/video-js/7.20.2/video.min.js', as: 'script' },
     ...(page.headLinks ? page.headLinks : []),
   ];
   const bodyScripts = [
-    { src: './static/lib/video-js/7.7.5/video.min.js' },
+    { src: './static/lib/video-js/7.20.2/video.min.js' },
     ...(page.bodyScripts ? page.bodyScripts : []),
   ];
 

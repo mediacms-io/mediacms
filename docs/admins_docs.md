@@ -4,7 +4,7 @@
 - [1. Welcome](#1-welcome)
 - [2. Server Installaton](#2-server-installation)
 - [3. Docker Installation](#3-docker-installation)
-- [4. Docker Deployement options](#4-docker-deployment-options)
+- [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
 - [6. Manage pages](#6-manage-pages)
 - [7. Django admin dashboard](#7-django-admin-dashboard)
@@ -15,19 +15,22 @@
 - [12. Video transcoding](#12-video-transcoding)
 - [13. How To Add A Static Page To The Sidebar](#13-how-to-add-a-static-page-to-the-sidebar)
 - [14. Add Google Analytics](#14-add-google-analytics)
+- [15. Debugging email issues](#15-debugging-email-issues)
+- [16. Frequently Asked Questions](#16-frequently-asked-questions)
+- [17. Cookie consent code](#17-cookie-consent-code)
 
 
 ## 1. Welcome
-This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications. 
+This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
 
 ## 2. Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu 18 or 20 versions.
+The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
 
-Installation on a Ubuntu 18 or 20 system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings. 
+Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
+Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
 
-Automated script - tested on Ubuntu 18, Ubuntu 20, and Debian Buster
+Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
 
 ```bash
 mkdir /home/mediacms.io && cd /home/mediacms.io/
@@ -35,7 +38,7 @@ git clone https://github.com/mediacms-io/mediacms
 cd /home/mediacms.io/mediacms/ && bash ./install.sh
 ```
 
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate. 
+The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
 
 
 ### Update
@@ -46,9 +49,24 @@ If you've used the above way to install MediaCMS, update with the following:
 cd /home/mediacms.io/mediacms # enter mediacms directory
 source  /home/mediacms.io/bin/activate # use virtualenv
 git pull # update code
+pip install -r requirements.txt -U # run pip install to update
 python manage.py migrate # run Django migrations
 sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
+
+### Update from version 2 to version 3
+Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
+The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
+
+```
+# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
+# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
+# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
+# systemctl daemon-reload
+# systemctl start celery_long celery_short celery_beat
+```
+
+
 
 ### Configuration
 Checkout the configuration section here.
@@ -63,7 +81,7 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 ## Installation
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-For Ubuntu 18/20 systems this is:
+For Ubuntu 20/22 systems this is:
 
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -109,6 +127,18 @@ docker-compose down
 docker-compose up
 ```
 
+### Update from version 2 to version 3
+Version 3 is using Python 3.11 and PostgreSQL 15. If you are updating from an older version, that was using PostgreSQL 13, the automatic update will not work, as you will receive the following message when the PostgreSQL container starts:
+
+```
+db_1              | 2023-06-27 11:07:42.959 UTC [1] FATAL:  database files are incompatible with server
+db_1              | 2023-06-27 11:07:42.959 UTC [1] DETAIL:  The data directory was initialized by PostgreSQL version 13, which is not compatible with this version 15.2.
+```
+
+At this point there are two options: either edit the Docker Compose file and make use of the existing postgres:13 image, or otherwise you have to perform the migration from postgresql 13 to version 15. More notes on https://github.com/mediacms-io/mediacms/pull/749
+
+
+
 ## Configuration
 Checkout the configuration docs here.
 
@@ -143,9 +173,9 @@ The main container runs migrations, mediacms_web, celery_beat, celery_workers (c
  The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://localhost, on the docker host machine.
 
 ### Server with ssl certificate through letsencrypt service, accessed as https://my_domain.com
-Before trying this out make sure the ip points to my_domain.com. 
+Before trying this out make sure the ip points to my_domain.com.
 
-With this method [this deployment](../docker-compose-letsencrypt.yaml) is used. 
+With this method [this deployment](../docker-compose-letsencrypt.yaml) is used.
 
 Edit this file and set `VIRTUAL_HOST` as my_domain.com, `LETSENCRYPT_HOST` as my_domain.com, and your email on `LETSENCRYPT_EMAIL`
 
@@ -175,15 +205,15 @@ The architecture below generalises all the deployment scenarios above, and provi
 ## 5. Configuration
 Several options are available on `cms/settings.py`, most of the things that are allowed or should be disallowed are described there.
 
-It is advisable to override any of them by adding it to `local_settings.py` . 
+It is advisable to override any of them by adding it to `local_settings.py` .
 
 In case of a the single server installation, add to `cms/local_settings.py` .
 
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
-Any change needs restart of MediaCMS in order to take effect. 
+Any change needs restart of MediaCMS in order to take effect.
 
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS 
+Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
 
 ```bash
 #systemctl restart mediacms
@@ -211,7 +241,7 @@ PORTAL_NAME = 'my awesome portal'
 
 By default `CAN_ADD_MEDIA = "all"` means that all registered users can add media. Other valid options are:
 
-- **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails. 
+- **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails.
 
 - **advancedUser**, only users that are marked as advanced users can add media. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
 
@@ -280,7 +310,7 @@ Make changes (True/False) to any of the following:
 
 ### 5.9 Show or hide the download option on a media
 
-Edit `templates/config/installation/features.html` and set 
+Edit `templates/config/installation/features.html` and set
 
 ```
 download: false
@@ -289,7 +319,7 @@ download: false
 ### 5.10 Automatically hide media upon being reported
 
 set a low number for variable `REPORTED_TIMES_THRESHOLD`
-eg 
+eg
 
 ```
 REPORTED_TIMES_THRESHOLD = 2
@@ -337,7 +367,7 @@ set value
 MEDIA_IS_REVIEWED = False
 ```
 
-any uploaded media now needs to be reviewed before it can appear to the listings. 
+any uploaded media now needs to be reviewed before it can appear to the listings.
 MediaCMS editors/managers/admins can visit the media page and edit it, where they can see the option to mark media as reviewed. By default this is set to True, so all media don't require to be reviewed
 
 ### 5.15 Specify maximum number of media for a playlist
@@ -352,7 +382,7 @@ MAX_MEDIA_PER_PLAYLIST = 14
 
 ### 5.16 Specify maximum size of a media that can be uploaded
 
-change `UPLOAD_MAX_SIZE`. 
+change `UPLOAD_MAX_SIZE`.
 
 default is 4GB
 
@@ -415,7 +445,7 @@ Global notifications that are implemented are controlled by the following option
 
 ```
 USERS_NOTIFICATIONS = {
-    'MEDIA_ADDED': True,    
+    'MEDIA_ADDED': True,
 }
 ```
 
@@ -435,7 +465,10 @@ ADMINS_NOTIFICATIONS = {
 - MEDIA_ADDED: a media is added
 - MEDIA_REPORTED: the report for a media was hit
 
+### 5.23 Configure only member access to media
 
+- Make the portal workflow public, but at the same time set `GLOBAL_LOGIN_REQUIRED = True` so that only logged in users can see content.
+- You can either set `REGISTER_ALLOWED = False` if you want to add members yourself or checkout options on "django-allauth settings" that affects registration in `cms/settings.py`. Eg set the portal invite only, or set email confirmation as mandatory, so that you control who registers.
 
 ## 6. Manage pages
 to be written
@@ -455,17 +488,19 @@ to be written
 Through the admin section - http://your_installation/admin/
 
 ## 12. Video transcoding
-Add / remove resolutions and profiles through http://your_installation/admin/encodeprofile
+Add / remove resolutions and profiles by modifying the database table of `Encode profiles` through https://your_installation/admin/files/encodeprofile/
+
+For example, the `Active` state of any profile can be toggled to enable or disable it.
 
 ## 13. How To Add A Static Page To The Sidebar
 
-### 1. Create your html page in templates/cms/ 
+### 1. Create your html page in templates/cms/
 e.g. duplicate and rename about.html
 ```
 sudo cp templates/cms/about.html templates/cms/volunteer.html
 ```
 
-### 2. Create your css file in static/css/ 
+### 2. Create your css file in static/css/
 ```
 touch static/css/volunteer.css
 ```
@@ -529,24 +564,24 @@ urlpatterns = [
 
 ### 8. Add your page to the left sidebar
 To add a link to your page as a menu item in the left sidebar,
-add the following code after the last line in _commons.js   
+add the following code after the last line in _commons.js
 ```
 /* Checks that a given selector has loaded. */
 const checkElement = async selector => {
     while ( document.querySelector(selector) === null) {
       await new Promise( resolve =>  requestAnimationFrame(resolve) )
     }
-    return document.querySelector(selector); 
+    return document.querySelector(selector);
   };
 
 /* Checks that sidebar nav menu has loaded, then adds menu item. */
 checkElement('.nav-menu')
 .then((element) => {
-     (function(){    
-        var a = document.createElement('a');        
+     (function(){
+        var a = document.createElement('a');
         a.href = "/volunteer";
         a.title = "Volunteer";
-       
+
         var s = document.createElement('span');
         s.className = "menu-item-icon";
 
@@ -556,7 +591,7 @@ checkElement('.nav-menu')
 
         s.appendChild(icon);
         a.appendChild(s);
-    
+
         var linkText = document.createTextNode("Volunteer");
         var t = document.createElement('span');
 
@@ -568,14 +603,14 @@ checkElement('.nav-menu')
         listItem.appendChild(a);
 
         //if signed out use 3rd nav-menu
-        var elem = document.querySelector(".nav-menu:nth-child(3) nav ul"); 
+        var elem = document.querySelector(".nav-menu:nth-child(3) nav ul");
         var loc = elem.innerText;
         if (loc.includes("About")){
           elem.insertBefore(listItem, elem.children[2]);
         } else { //if signed in use 4th nav-menu
           elem = document.querySelector(".nav-menu:nth-child(4) nav ul");
           elem.insertBefore(listItem, elem.children[2]);
-        }       
+        }
     })();
 });
 ```
@@ -601,7 +636,7 @@ Instructions contributed by @alberto98fx
 
 2. Add the Gtag/Analytics script
 
-3. Inside ``` $DIR/mediacms/templates/root.html``` you'll see a file like this one: 
+3. Inside ``` $DIR/mediacms/templates/root.html``` you'll see a file like this one:
 
 ```
 <head>
@@ -612,7 +647,7 @@ Instructions contributed by @alberto98fx
         {% include "common/head-meta.html" %}
 
         {% block headermeta %}
-        
+
         <meta property="og:title" content="{{PORTAL_NAME}}">
         <meta property="og:type" content="website">
 
@@ -625,17 +660,17 @@ Instructions contributed by @alberto98fx
         {% block topimports %}{%endblock topimports %}
 
         {% include "config/index.html" %}
-      
+
     {% endblock head %}
 
 </head>
 ```
 
 4. Add  ``` {% include "tracking.html" %} ``` at the end inside the section ```<head>```
-  
-5. If you are using Docker and didn't  mount the entire dir you need to bind a new volume: 
+
+5. If you are using Docker and didn't  mount the entire dir you need to bind a new volume:
 ```
-  
+
     web:
     image: mediacms/mediacms:latest
     restart: unless-stopped
@@ -646,5 +681,84 @@ Instructions contributed by @alberto98fx
     volumes:
       - ./templates/root.html:/home/mediacms.io/mediacms/templates/root.html
       - ./templates/tracking.html://home/mediacms.io/mediacms/templates/tracking.html
-  
+
  ```
+
+## 15. Debugging email issues
+On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
+In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
+
+Enter the Django shell, example if you're using the Single Server installation:
+
+```bash
+source  /home/mediacms.io/bin/activate
+python manage.py shell
+```
+
+and inside the shell
+
+```bash
+from django.core.mail import EmailMessage
+from django.conf import settings
+
+settings.EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+email = EmailMessage(
+    'title',
+    'msg',
+    settings.DEFAULT_FROM_EMAIL,
+    ['recipient@email.com'],
+)
+email.send(fail_silently=False)
+```
+
+You have the chance to either receive the email (in this case it will be sent to recipient@email.com) otherwise you will see the error.
+For example, while specifying wrong password for my Gmail account I get
+
+```
+SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. Learn more at\n5.7.8  https://support.google.com/mail/?p=BadCredentials d4sm12687785wrc.34 - gsmtp')
+```
+
+## 16. Frequently Asked Questions
+Video is playing but preview thumbnails are not showing for large video files
+
+Chances are that the sprites file was not created correctly.
+The output of files.tasks.produce_sprite_from_video() function in this case is something like this
+
+```
+convert-im6.q16: width or height exceeds limit `/tmp/img001.jpg' @ error/cache.c/OpenPixelCache/3912.
+```
+
+Solution: edit file `/etc/ImageMagick-6/policy.xml` and set bigger values for the lines that contain width and height. For example
+
+```
+  <policy domain="resource" name="height" value="16000KP"/>
+  <policy domain="resource" name="width" value="16000KP"/>
+```
+
+Newly added video files now will be able to produce the sprites file needed for thumbnail previews. To re-run that task on existing videos, enter the Django shell
+
+
+```
+root@8433f923ccf5:/home/mediacms.io/mediacms# source  /home/mediacms.io/bin/activate
+root@8433f923ccf5:/home/mediacms.io/mediacms# python manage.py shell
+Python 3.8.14 (default, Sep 13 2022, 02:23:58)
+```
+
+and run
+
+```
+In [1]: from files.models import Media
+In [2]: from files.tasks import produce_sprite_from_video
+
+In [3]: for media in Media.objects.filter(media_type='video', sprites=''):
+   ...:     produce_sprite_from_video(media.friendly_token)
+```
+
+this will re-create the sprites for videos that the task failed.
+
+
+## 17. Cookie consent code
+On file `templates/components/header.html` you can find a simple cookie consent code. It is commented, so you have to remove the `{% comment %}` and `{% endcomment %}` lines in order to enable it. Or you can replace that part with your own code that handles cookie consent banners.
+
+![Simple Cookie Consent](images/cookie_consent.png)

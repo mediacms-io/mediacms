@@ -5,6 +5,9 @@
 - [Downloading media](#downloading-media)
 - [Adding captions/subtitles](#adding-captionssubtitles)
 - [Search media](#search-media)
+- [Using Timestamps for sharing](#using-timestamps-for-sharing)
+- [Mentionning users in comments](#Mentionning-users-in-comments)
+- [Show comments in the Timebar](#Show-comments-in-the-Timebar)
 - [Share media](#share-media)
 - [Embed media](#embed-media)
 - [Customize my profile options](#customize-my-profile-options)
@@ -193,6 +196,54 @@ You can now watch the captions/subtitles play back in the video player - and tog
 
 <p align="left">
     <img src="./images/CC-display.png"/>
+</p>
+
+## Using Timestamps for sharing 
+
+### Using Timestamp in the URL
+
+An additional GET parameter 't' can be added in video URL's to start the video at the given time. The starting time has to be given in seconds.
+
+<p align="left">
+    <img src="./images/Demo1.png"/>
+</p>
+
+Additionally the share button has an option to generate the URL with the timestamp at current second the video is.
+
+<p align="left">
+    <img src="./images/Demo2.png"/>
+</p>
+
+### Using Timestamp in the comments
+
+Comments can also include timestamps. They are automatically detected upon posting the comment, and will be in the form of an hyperlink link in the comment. The timestamps in the comments have to follow the format HH:MM:SS or MM:SS
+
+<p align="left">
+    <img src="./images/Demo3.png"/>
+</p>
+
+## Mentionning users in comments
+
+Comments can also mention other users by tagging with '@'. This will open suggestion box showing usernames, and the selection will refine as the user continues typing.
+
+Comments send with mentions will contain a link to the user page, and can be setup to send a mail to the mentionned user.
+
+<p align="left">
+    <img src="./images/Mention1.png"/>
+    <img src="./images/Mention2.png"/>
+    <img src="./images/Mention3.png"/>
+    <img src="./images/Mention4.png"/>
+</p>
+
+## Show comments in the Timebar
+
+When enabled, comments including a timestamp will also be displayed in the current video Timebar as a little colorful dot. The comment can be previewed by hovering the dot (left image) and it will be displayed on top of the video when reaching the correct time (right image).
+
+Only comments with correct timestamps formats (HH:MM:SS or MM:SS) will be picked up and appear in the Timebar.
+    
+<p align="left">
+    <img src="./images/TimebarComments_Hover.png" height="180" alt="Comment preview on hover"/>
+    <img src="./images/TimebarComments_Hit.png" height="180" alt="Comment shown when the timestamp is reached "/>
 </p>
 
 ## Search media

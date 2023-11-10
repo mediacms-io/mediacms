@@ -39,9 +39,9 @@
     {% block aftercontent %}{% endblock %}
 
     {% if LOAD_FROM_CDN %}
-    <script src="https://vjs.zencdn.net/7.7.5/video.min.js"></script>
+    <script src="https://vjs.zencdn.net/7.20.2/video.min.js"></script>
     {% else %}
-    <script src="{% static "lib/video-js/7.7.5/video.min.js" %}"></script>
+    <script src="{% static "lib/video-js/7.20.2/video.min.js" %}"></script>
     {% endif %}
 
     {% block externalscripts %}{% endblock externalscripts %}

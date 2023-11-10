@@ -244,6 +244,7 @@ def media_file_info(input_file):
     - `video_bitrate`: Bitrate of the video stream in kBit/s
     - `video_width`: Width in pixels
     - `video_height`: Height in pixels
+    - `interlaced` : True if the video is interlaced
     - `video_codec`: Video codec
     - `audio_duration`: Duration of the audio in `s.msec`
     - `audio_sample_rate`: Audio sample rate in Hz
@@ -329,7 +330,7 @@ def media_file_info(input_file):
         except ValueError:
             hms, msec = duration_str.split(",")
 
-        total_dur = sum(int(x) * 60 ** i for i, x in enumerate(reversed(hms.split(":"))))
+        total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
         video_duration = total_dur + float("0." + msec)
     else:
         # fallback to format, eg for webm
@@ -374,6 +375,10 @@ def media_file_info(input_file):
         video_frame_rate_n = video_frame_rate[0]
         video_frame_rate_d = video_frame_rate[2]
 
+    interlaced = False
+    if video_info.get("field_order") in ("tt", "tb", "bt", "bb"):
+        interlaced = True
+
     ret = {
         "filename": input_file,
         "file_size": file_size,
@@ -390,7 +395,7 @@ def media_file_info(input_file):
         "color_space": video_info.get("color_space"),
         "color_transfer": video_info.get("color_space"),
         "color_primaries": video_info.get("color_primaries"),
-        "field_order": video_info.get("field_order"),
+        "interlaced": interlaced,
         "display_aspect_ratio": video_info.get("display_aspect_ratio"),
         "sample_aspect_ratio": video_info.get("sample_aspect_ratio"),
     }
@@ -404,7 +409,7 @@ def media_file_info(input_file):
                 hms, msec = duration_str.split(".")
             except ValueError:
                 hms, msec = duration_str.split(",")
-            total_dur = sum(int(x) * 60 ** i for i, x in enumerate(reversed(hms.split(":"))))
+            total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
             audio_duration = total_dur + float("0." + msec)
         else:
             # fallback to format, eg for webm
@@ -438,7 +443,8 @@ def media_file_info(input_file):
                 input_file,
             ]
             stdout = run_command(cmd).get("out")
-            stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
+            # ffprobe appends a pipe at the end of the output, thus we have to remove it
+            stream_size = sum([int(line.replace("|", "")) for line in stdout.split("\n") if line != ""])
             audio_bitrate = round((stream_size * 8 / 1024.0) / audio_duration, 2)
 
         ret.update(
@@ -490,6 +496,7 @@ def get_base_ffmpeg_command(
     encoder,
     audio_encoder,
     target_fps,
+    interlaced,
     target_height,
     target_rate,
     target_rate_audio,
@@ -508,6 +515,7 @@ def get_base_ffmpeg_command(
         encoder {str} -- video encoder
         audio_encoder {str} -- audio encoder
         target_fps {fractions.Fraction} -- target FPS
+        interlaced {bool} -- true if interlaced
         target_height {int} -- height
         target_rate {int} -- target bitrate in kbps
         target_rate_audio {int} -- audio target bitrate
@@ -523,6 +531,27 @@ def get_base_ffmpeg_command(
     if target_fps < 1:
         target_fps = 1
 
+    filters = []
+
+    if interlaced:
+        filters.append("yadif")
+
+    target_width = round(target_height * 16 / 9)
+    scale_filter_opts = [
+        f"if(lt(iw\\,ih)\\,{target_height}\\,{target_width})",
+        f"if(lt(iw\\,ih)\\,{target_width}\\,{target_height})",
+        "force_original_aspect_ratio=decrease",
+        "force_divisible_by=2",
+        "flags=lanczos",
+    ]
+    scale_filter_str = "scale=" + ":".join(scale_filter_opts)
+    filters.append(scale_filter_str)
+
+    fps_str = f"fps=fps={target_fps}"
+    filters.append(fps_str)
+
+    filters_str = ",".join(filters)
+
     base_cmd = [
         settings.FFMPEG_COMMAND,
         "-y",
@@ -531,9 +560,7 @@ def get_base_ffmpeg_command(
         "-c:v",
         encoder,
         "-filter:v",
-        "scale=-2:" + str(target_height) + ",fps=fps=" + str(target_fps),
-        # always convert to 4:2:0 -- FIXME: this could be also 4:2:2
-        # but compatibility will suffer
+        filters_str,
         "-pix_fmt",
         "yuv420p",
     ]
@@ -716,6 +743,8 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
     elif enc_type == "crf":
         passes = [2]
 
+    interlaced = media_info.get("interlaced")
+
     cmds = []
     for pass_number in passes:
         cmds.append(
@@ -727,6 +756,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
                 encoder=encoder,
                 audio_encoder=AUDIO_ENCODERS[codec],
                 target_fps=target_fps,
+                interlaced=interlaced,
                 target_height=resolution,
                 target_rate=target_rate,
                 target_rate_audio=AUDIO_BITRATES[codec],
@@ -755,3 +785,11 @@ def clean_query(query):
         query = query.replace(char, "")
 
     return query.lower()
+
+
+def get_alphanumeric_only(string):
+    """Returns a query that contains only alphanumeric characters
+    This include characters other than the English alphabet too
+    """
+    string = "".join([char for char in string if char.isalnum()])
+    return string.lower()
