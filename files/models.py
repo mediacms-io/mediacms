@@ -432,7 +432,7 @@ class Media(models.Model):
             self.set_thumbnail(force=True)
             if settings.DO_NOT_TRANSCODE_VIDEO:
                 self.encoding_status = "success"
-                self.save(update_fields=['encoding_status'])
+                self.save()
                 self.produce_sprite_from_video()
             else:
                 self.produce_sprite_from_video()
