@@ -432,9 +432,8 @@ class Media(models.Model):
             self.set_thumbnail(force=True)
             if settings.DO_NOT_TRANSCODE_VIDEO:
                 self.encoding_status = "success"
-                if self.state == "public" and self.encoding_status == "success" and self.is_reviewed is True:
-                    self.listable = True
-                self.save(update_fields=['encoding_status', 'listable'])
+                self.save(update_fields=['encoding_status'])
+                self.produce_sprite_from_video()
             else:
                 self.produce_sprite_from_video()
                 self.encode()
@@ -674,8 +673,10 @@ class Media(models.Model):
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
 
+        # if this is enabled, return original file on a way
+        # that video.js can consume
         if settings.DO_NOT_TRANSCODE_VIDEO:
-            ret['720'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
         for encoding in self.encodings.select_related("profile").filter(chunk=False):
