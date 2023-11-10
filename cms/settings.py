@@ -503,5 +503,3 @@ try:
         from .dev_settings import *  # noqa
 except ImportError:
     pass
-marok = "marok"
-asdasasd
