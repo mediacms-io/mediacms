@@ -6,7 +6,7 @@
 
 
 
-MediaCMS is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media. It can be used to build a small to medium video and media portal within minutes. 
+MediaCMS is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media. It can be used to build a small to medium video and media portal within minutes.
 
 It is built mostly using the modern stack Django + React and includes a REST API.
 
@@ -56,15 +56,15 @@ A demo is available at https://demo.mediacms.io
 
 ## Philosophy
 
-We believe there's a need for quality open source web applications that can be used to build community portals and support collaboration. 
+We believe there's a need for quality open source web applications that can be used to build community portals and support collaboration.
 
-We have three goals for MediaCMS: a) deliver all functionality one would expect from a modern system, b) allow for easy installation and maintenance, c) allow easy customization and addition of features. 
+We have three goals for MediaCMS: a) deliver all functionality one would expect from a modern system, b) allow for easy installation and maintenance, c) allow easy customization and addition of features.
 
 
 ## License
 
-MediaCMS is released under [GNU Affero General Public License v3.0 license](LICENSE.txt). 
-Copyright Markos Gogoulos and Yiannis Stergiou
+MediaCMS is released under [GNU Affero General Public License v3.0 license](LICENSE.txt).
+Copyright Markos Gogoulos.
 
 
 ## Support and paid services
@@ -75,7 +75,7 @@ We provide custom installations, development of extra functionality, migration f
 
 ## Hardware dependencies
 
-For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.    
+For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.
 
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
 
@@ -127,7 +127,7 @@ If you like the project, here's a few things you can do
 - Share on social media about the project
 - Open issues, participate on discussions, report bugs, suggest ideas
 - Star the project
-- Add functionality, work on a PR, fix an issue! 
+- Add functionality, work on a PR, fix an issue!
 
 
 ## Contact
