@@ -19,7 +19,7 @@ function downloadOptionsList() {
       if (Object.keys(encodings_info[k]).length) {
         for (g in encodings_info[k]) {
           if (encodings_info[k].hasOwnProperty(g)) {
-            if ('success' === encodings_info[k][g].status && 100 === encodings_info[k][g].progress) {
+            if ('success' === encodings_info[k][g].status && 100 === encodings_info[k][g].progress && null !== encodings_info[k][g].url) {
               optionsList[encodings_info[k][g].title] = {
                 text: k + ' - ' + g.toUpperCase() + ' (' + encodings_info[k][g].size + ')',
                 link: formatInnerLink(encodings_info[k][g].url, SiteContext._currentValue.url),
