@@ -493,3 +493,13 @@ if GLOBAL_LOGIN_REQUIRED:
 DO_NOT_TRANSCODE_VIDEO = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# the following is related to local development using docker
+# and docker-compose-dev.yaml
+try:
+    DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
+    if DEVELOPMENT_MODE:
+        # keep a dev_settings.py file for local overrides
+        from .dev_settings import *  # noqa
+except ImportError:
+    pass

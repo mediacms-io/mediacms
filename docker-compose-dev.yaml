@@ -1,6 +1,22 @@
 version: "3"
 
 services:
+  migrations:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-dev
+    image: mediacms/mediacms-dev:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    command: "python manage.py migrate"
+    environment:
+      DEVELOPMENT_MODE: "True"
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
   frontend:
     image: node:14
     volumes:
@@ -18,7 +34,9 @@ services:
       context: .
       dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
+    command: "python manage.py runserver 0.0.0.0:80"
     environment:
+      DEVELOPMENT_MODE: "True"
       ADMIN_USER: 'admin'
       ADMIN_PASSWORD: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
@@ -27,10 +45,7 @@ services:
     volumes:
       - ./:/home/mediacms.io/mediacms/
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      - migrations
   db:
     image: postgres:15.2-alpine
     volumes:
@@ -54,3 +69,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+  celery_worker:
+    image: mediacms/mediacms-dev:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_MIGRATIONS: 'no'
+    depends_on:
+      - web

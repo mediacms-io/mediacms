@@ -12,3 +12,5 @@ pytest-cov
 pytest-django
 pytest-factoryboy
 Faker
+django-cors-headers
+

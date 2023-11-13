@@ -73,7 +73,7 @@ We provide custom installations, development of extra functionality, migration f
 
 
 
-## Hardware dependencies
+## Hardware considerations
 
 For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.
 
@@ -99,6 +99,10 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 Visit [Configuration](docs/admins_docs.md#5-configuration) page.
 
 
+## Information for developers
+Check out the new section on the [Developer Experience](docs/dev_exp.md) page
+
+
 ## Documentation
 
 * [Users documentation](docs/user_docs.md) page
@@ -115,7 +119,7 @@ This software uses the following list of awesome technologies: Python, Django, D
 
 - **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
-- **Heritales** International Heritage Film Festival - https://stage.heritales.org
+- **American Association of Gynecologic Laparoscopists** - https://surgeryu.aagl.org/
 
 
 ## How to contribute
@@ -125,7 +129,8 @@ If you like the project, here's a few things you can do
 - Suggest us to others that are interested to hire us
 - Write a blog post/article about MediaCMS
 - Share on social media about the project
-- Open issues, participate on discussions, report bugs, suggest ideas
+- Open issues, participate on [discussions](https://github.com/mediacms-io/mediacms/discussions), report bugs, suggest ideas
+- [Show and tell](https://github.com/mediacms-io/mediacms/discussions/categories/show-and-tell) how you are using the project
 - Star the project
 - Add functionality, work on a PR, fix an issue!
 

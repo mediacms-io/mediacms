@@ -1,5 +1,1 @@
-Yiannis Stergiou - ys.stergiou@gmail.com
-Markos Gogoulos - mgogoulos@gmail.com
-Swift Ugandan - swiftugandan@gmail.com
-
 Please see https://github.com/mediacms-io/mediacms/graphs/contributors for complete list of contributors to this repository!

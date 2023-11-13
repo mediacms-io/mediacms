@@ -10,10 +10,12 @@ ENV PIP_NO_CACHE_DIR=1
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
 
 # Install dependencies:
-COPY requirements.txt . 
+COPY requirements.txt .
 COPY requirements-dev.txt .
-RUN pip install -r requirements-dev.txt
 
+RUN pip install -r requirements.txt
+
+RUN pip install -r requirements-dev.txt
 
 COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
