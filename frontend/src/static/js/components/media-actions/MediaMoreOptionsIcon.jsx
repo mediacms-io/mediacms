@@ -22,7 +22,7 @@ function downloadOptions(mediaData, allowDownload) {
       if (Object.keys(encodingsInfo[k]).length) {
         for (g in encodingsInfo[k]) {
           if (encodingsInfo[k].hasOwnProperty(g)) {
-            if ('success' === encodingsInfo[k][g].status && 100 === encodingsInfo[k][g].progress) {
+            if ('success' === encodingsInfo[k][g].status && 100 === encodingsInfo[k][g].progress && null !== encodingsInfo[k][g].url) {
               options[encodingsInfo[k][g].title] = {
                 text: k + ' - ' + g.toUpperCase() + ' (' + encodingsInfo[k][g].size + ')',
                 link: formatInnerLink(encodingsInfo[k][g].url, site.url),
