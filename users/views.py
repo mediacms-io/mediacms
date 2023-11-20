@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
@@ -21,9 +22,10 @@ from rest_framework.views import APIView
 
 from cms.permissions import IsUserOrManager
 from files.methods import is_mediacms_editor, is_mediacms_manager
+from files.models import Playlist
 
 from .forms import ChannelForm, UserForm
-from .models import Channel, User
+from .models import Channel, Media, User
 from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
 
 
@@ -44,6 +46,7 @@ def view_user(request, username):
     context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
     context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
+    context["media"] = list(Media.objects.filter(Q(listable=True)).filter(user__username=username))[:50]
     return render(request, "cms/user.html", context)
 
 
@@ -57,6 +60,7 @@ def view_user_media(request, username):
     context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
     context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
+    context["media"] = list(Media.objects.filter(Q(listable=True)).filter(user__username=username))[:50]
     return render(request, "cms/user_media.html", context)
 
 
@@ -70,6 +74,7 @@ def view_user_playlists(request, username):
     context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
     context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
     context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
+    context["playlists"] = Playlist.objects.filter(user__username=username)
 
     return render(request, "cms/user_playlists.html", context)
 
