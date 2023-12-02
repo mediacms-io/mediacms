@@ -197,6 +197,8 @@ export function VideoPlayer(props) {
       const paramT = Number(urlParams.get('t'));
       const timestamp = !isNaN(paramT) ? paramT : 0;
       player.player.currentTime(timestamp);
+      // This is a really hacky way to work around a race condition within Video.js where it thinks it was ready in currentTime() but it actually wasn't so it clears this value:
+      player.player.cache_.initTime = timestamp;
     });
 
     return () => {
