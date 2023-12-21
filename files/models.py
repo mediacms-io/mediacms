@@ -1478,7 +1478,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
                     break
 
             for chunk in chunks:
-                if not (chunk.media_file and chunk.media_file.path) or chunk.status != "success":
+                if not (chunk.media_file and chunk.media_file.path) or not (chunk.status in ["fail", "success"]):
                     complete = False
                     break
 
