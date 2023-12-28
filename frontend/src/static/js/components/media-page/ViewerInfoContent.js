@@ -100,6 +100,10 @@ export default function ViewerInfoContent(props) {
   const { userCan } = useUser();
 
   const description = props.description.trim();
+  const encoder = document.createElement("div");
+  encoder.appendChild(document.createTextNode(description));
+  const descriptionHTML = encoder.innerHTML;
+  const descriptionHTMLWithLinks = descriptionHTML.replace(/http(s?):\/\/[^\s]+/g, (match) => { return "<a href=\"" + encodeURI(match) + "\" target=\"_blank\" rel=\"nofollow\">" + match + "</a>" });
   const tagsContent =
     !PageStore.get('config-enabled').taxonomies.tags || PageStore.get('config-enabled').taxonomies.tags.enabled
       ? metafield(MediaPageStore.get('media-tags'))
@@ -186,7 +190,7 @@ export default function ViewerInfoContent(props) {
             PageStore.get('config-options').pages.media.htmlInDescription ? (
               <div className="media-content-description" dangerouslySetInnerHTML={{ __html: description }}></div>
             ) : (
-              <div className="media-content-description">{description}</div>
+              <div className="media-content-description" dangerouslySetInnerHTML={{ __html: descriptionHTMLWithLinks }}></div>
             )
           ) : null}
           {hasSummary ? (
