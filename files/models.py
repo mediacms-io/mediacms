@@ -465,7 +465,8 @@ class Media(models.Model):
                     self.media_info = json.dumps(ret)
                 except TypeError:
                     self.media_info = ""
-                self.md5sum = ret.get("md5sum")
+                if not self.md5sum:
+                    self.md5sum = helpers.media_file_md5sum(self.media_file.path)
                 self.size = helpers.show_file_size(ret.get("file_size"))
             else:
                 self.media_type = ""
@@ -1123,11 +1124,7 @@ class Encoding(models.Model):
                 size = int(stdout.strip())
                 self.size = helpers.show_file_size(size)
         if self.chunk_file_path and not self.md5sum:
-            cmd = ["md5sum", self.chunk_file_path]
-            stdout = helpers.run_command(cmd).get("out")
-            if stdout:
-                md5sum = stdout.strip().split()[0]
-                self.md5sum = md5sum
+            self.md5sum = helpers.media_file_md5sum(self.chunk_file_path)
 
         super(Encoding, self).save(*args, **kwargs)
 

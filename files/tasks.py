@@ -29,6 +29,7 @@ from .helpers import (
     get_file_name,
     get_file_type,
     media_file_info,
+    media_file_md5sum,
     produce_ffmpeg_commands,
     produce_friendly_token,
     rm_file,
@@ -99,10 +100,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
     chunks_dict = {}
     # calculate once md5sums
     for chunk in chunks:
-        cmd = ["md5sum", chunk]
-        stdout = run_command(cmd).get("out")
-        md5sum = stdout.strip().split()[0]
-        chunks_dict[chunk] = md5sum
+        chunks_dict[chunk] = media_file_md5sum(chunk)
 
     for profile in profiles:
         if media.video_height and media.video_height < profile.resolution:

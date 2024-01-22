@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.views import generic
 
 from cms.permissions import user_allowed_to_upload
-from files.helpers import rm_file
+from files.helpers import media_file_md5sum, rm_file
 from files.models import Media
 
 from .fineuploader import ChunkedFineUploader
@@ -63,9 +63,12 @@ class FineUploaderView(generic.FormView):
             return self.make_response({"success": True})
         # create media!
         media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
+        # Precalculate md5sum on tmp file
+        # If running on tmpfs, this should be much faster
+        md5 = media_file_md5sum(media_file)
         with open(media_file, "rb") as f:
             myfile = File(f)
-            new = Media.objects.create(media_file=myfile, user=self.request.user)
+            new = Media.objects.create(media_file=myfile, user=self.request.user, md5sum=md5)
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
         return self.make_response({"success": True, "media_url": new.get_absolute_url()})
