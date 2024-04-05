@@ -4,6 +4,7 @@
 
 ```mermaid
 sequenceDiagram
+autonumber
 
 box Local
 participant main 
@@ -20,6 +21,16 @@ end
 box Upstream
 participant umain 
 end
+
+
+umain -->> omain: Sync fork [on GitHub]
+
+main ->> stable: git checkout stable main
+stable ->> dev: git checkout dev stable
+dev -->> odev: git push origin dev
+dev -->> odev: git push origin dev
+odev -->> ostable: PR [dev -> stable] & squash merge
+ostable -->ostable: release & build docker image [ghcr]
 ```
 
 
