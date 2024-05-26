@@ -15,6 +15,10 @@ TIME_ZONE = "Europe/London"
 # valid options include 'all', 'email_verified', 'advancedUser'
 CAN_ADD_MEDIA = "all"
 
+# who can comment
+# valid options include 'all', 'email_verified', 'advancedUser'
+CAN_COMMENT = "all"
+
 # valid choices here are 'public', 'private', 'unlisted
 PORTAL_WORKFLOW = "public"
 
