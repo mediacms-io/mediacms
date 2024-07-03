@@ -1,4 +1,4 @@
-FROM python:3.11.4-bookworm AS compile-image
+FROM python:3.12.4-bookworm AS compile-image
 
 SHELL ["/bin/bash", "-c"]
 
@@ -8,10 +8,11 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_NO_CACHE_DIR=1
 
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
+RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends
 
 # Install dependencies:
 COPY requirements.txt .
-
+RUN pip install pip==24.1.1
 RUN pip install -r requirements.txt
 
 COPY . /home/mediacms.io/mediacms
@@ -25,7 +26,7 @@ RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-u
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
-FROM python:3.11.4-bookworm as runtime-image
+FROM python:3.12.4-bookworm as runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -60,11 +61,7 @@ RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-stati
     rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
 WORKDIR /home/mediacms.io/mediacms
-
 EXPOSE 9000 80
-
 RUN chmod +x ./deploy/docker/entrypoint.sh
-
 ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
-
 CMD ["./deploy/docker/start.sh"]
