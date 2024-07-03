@@ -83,8 +83,8 @@ SHOW_ORIGINAL_MEDIA = True
 # basic http auth user/password if you want to restrict access
 
 MAX_MEDIA_PER_PLAYLIST = 70
-# bytes, size of uploaded media
-UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5
+# bytes, size of uploaded media (100G)
+UPLOAD_MAX_SIZE = 800 * 1024 * 1000 * 5 * 25
 
 MAX_CHARS_FOR_COMMENT = 10000  # so that it doesn't end up huge
 TIMESTAMP_IN_TIMEBAR = False  # shows timestamped comments in the timebar for videos
