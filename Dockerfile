@@ -13,6 +13,7 @@ RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-reco
 # Install dependencies:
 COPY requirements.txt .
 RUN pip install pip==24.1.1
+RUN pip install certifi
 RUN pip install -r requirements.txt
 
 COPY . /home/mediacms.io/mediacms
