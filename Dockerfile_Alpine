@@ -6,16 +6,11 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_NO_CACHE_DIR=1
 
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python3 -m venv $VIRTUAL_ENV
-
 RUN apk update && apk upgrade
-RUN apk add --no-cache gcc libc-dev linux-headers
+RUN apk add --no-cache --virtual .build-deps gcc libc-dev linux-headers
 
 # Install dependencies:
 COPY requirements.txt .
-
-RUN pip install pip==24.1.2
-RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
 RUN pip install -r requirements.txt
 
 COPY . /home/mediacms.io/mediacms
@@ -29,8 +24,7 @@ RUN wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-641.x86_64-u
     rm Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
-#FROM python:3.13-rc-alpine AS runtime-image
-FROM python:alpine AS runtime-image
+FROM python:3.13-rc-alpine AS runtime-image
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -50,14 +44,9 @@ ENV ENABLE_MIGRATIONS='yes'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-#RUN pip install --upgrade pip
-RUN pip install pip==24.1.2
-#RUN pip uninstall pip==24.0
 RUN pip install certifi
-
 COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
-
-RUN apk update && apk upgrade && apk add --no-cache --no-interactive supervisor nginx imagemagick procps wget xz
+RUN apk update && apk upgrade && apk add --no-cache --no-interactive --virtual supervisor nginx imagemagick procps wget xz
 
 RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
     mkdir -p ffmpeg-tmp && \
