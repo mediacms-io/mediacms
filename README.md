@@ -42,6 +42,13 @@ A demo is available at https://demo.mediacms.io
 - **Chunked file uploads**: for pausable/resumable upload of content
 - **REST API**: Documented through Swagger
 
+## Self-Hosting MediaCMS
+
+### Elestio
+
+You can deploy MediaCMS on Elestio using one-click deployment. Elestio supports MediaCMS by providing revenue share so go ahead and click below to deploy and use MediaCMS.
+
+[![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/mediacms)
 
 ## Example cases
 
