@@ -29,7 +29,7 @@ fi
 
 # We should do this only for folders that have a different owner, since it is an expensive operation
 # Also ignoring .git folder to fix this issue https://github.com/mediacms-io/mediacms/issues/934
-find /home/mediacms.io/ ! \( -path "*.git*" \) -and ! \( -user www-data -group $TARGET_GID \) -exec chown www-data:$TARGET_GID {} +
+find /home/mediacms.io/mediacms ! \( -path "*.git*" \) -exec chown www-data:$TARGET_GID {} +
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
 
