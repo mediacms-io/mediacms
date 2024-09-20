@@ -1,4 +1,7 @@
+import re
 import shutil
+import os
+import uuid
 from io import StringIO
 from os.path import join
 
@@ -7,15 +10,30 @@ from django.conf import settings
 from . import utils
 
 
+def is_valid_uuid_format(uuid_string):
+    pattern = re.compile(r'^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$', re.IGNORECASE)
+    return bool(pattern.match(uuid_string))
+
+
 class BaseFineUploader(object):
     def __init__(self, data, *args, **kwargs):
         self.data = data
-        self.total_filesize = data.get("qqtotalfilesize")
         self.filename = data.get("qqfilename")
         self.uuid = data.get("qquuid")
+
+        if not is_valid_uuid_format(self.uuid):
+            # something nasty client side could be happening here
+            # generate new uuid to ensure this is uuid
+            # not sure if this will work with the chunked uploads though
+            self.uuid = uuid.uuid4()
+
+        self.filename = os.path.basename(self.filename)
+        # avoid possibility of passing a fake path here
+
         self.file = data.get("qqfile")
         self.storage_class = settings.FILE_STORAGE
         self.real_path = None
+
 
     @property
     def finished(self):
@@ -50,7 +68,11 @@ class ChunkedFineUploader(BaseFineUploader):
         self.total_parts = data.get("qqtotalparts")
         if not isinstance(self.total_parts, int):
             self.total_parts = 1
-        self.part_index = data.get("qqpartindex")
+        qqpartindex = data.get("qqpartindex")
+        if not isinstance(qqpartindex, int):
+            # something nasty client side could be happening here
+            qqpartindex = 0
+        self.part_index = qqpartindex
 
     @property
     def chunks_path(self):
@@ -75,6 +97,7 @@ class ChunkedFineUploader(BaseFineUploader):
     def combine_chunks(self):
         # implement the same behaviour.
         self.real_path = self.storage.save(self._full_file_path, StringIO())
+
         with self.storage.open(self.real_path, "wb") as final_file:
             for i in range(self.total_parts):
                 part = join(self.chunks_path, str(i))
