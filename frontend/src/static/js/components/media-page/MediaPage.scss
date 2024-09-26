@@ -531,7 +531,9 @@
 }
 
 .viewer-container .player-container {
-  border-radius: 10px;
+  @media screen and (min-width: 480px) {
+    border-radius: 10px;
+  }
 }
 
 .viewer-container .player-container.audio-player-container {

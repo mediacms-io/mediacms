@@ -13,9 +13,13 @@
 
 .item-thumb,
 a.item-thumb {
+
+  @media screen and (min-width: 480px) {
+    border-radius: 10px;
+  }
+
   position: relative;
   display: block;
-  border-radius: 10px;
   height: auto;
   padding-bottom: 56.11%;
   overflow: hidden;
