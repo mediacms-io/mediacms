@@ -1,0 +1,9 @@
+body {
+    --default-item-width: 342px !important;
+    --default-max-item-width: 342px !important;
+    --default-max-row-items: 4 !important;
+    --default-item-margin-right-width: 17px !important;
+    --default-item-margin-bottom-width: 27px !important;
+  }
+
+
