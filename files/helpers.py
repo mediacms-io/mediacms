@@ -367,7 +367,7 @@ def media_file_info(input_file):
             input_file,
         ]
         stdout = run_command(cmd).get("out")
-        stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
+        stream_size = sum([int(line.replace("|", "")) for line in stdout.split("\n") if line != ""])
         video_bitrate = round((stream_size * 8 / 1024.0) / video_duration, 2)
 
     if "r_frame_rate" in video_info.keys():
