@@ -1,6 +1,6 @@
+import os
 import re
 import shutil
-import os
 import uuid
 from io import StringIO
 from os.path import join
