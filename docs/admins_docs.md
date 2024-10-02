@@ -479,6 +479,16 @@ Whether or not to enable generation of a sitemap file at http://your_installatio
 GENERATE_SITEMAP = False
 ```
 
+
+### 5.25 Control who can add comments
+
+By default `CAN_COMMENT = "all"` means that all registered users can add comment. Other valid options are:
+
+- **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails.
+
+- **advancedUser**, only users that are marked as advanced users can add comment. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
+
+
 ## 6. Manage pages
 to be written
 
