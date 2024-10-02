@@ -24,7 +24,12 @@ from rest_framework.views import APIView
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, user_allowed_to_upload
+from cms.permissions import (
+    IsAuthorizedToAdd,
+    IsAuthorizedToAddComment,
+    IsUserOrEditor,
+    user_allowed_to_upload,
+)
 from users.models import User
 
 from .forms import ContactForm, MediaForm, SubtitleForm
@@ -1204,7 +1209,7 @@ class CommentDetail(APIView):
     Delete comment (DELETE)
     """
 
-    permission_classes = (IsAuthorizedToAdd,)
+    permission_classes = (IsAuthorizedToAddComment,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):

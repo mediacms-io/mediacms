@@ -11,6 +11,13 @@ class IsAuthorizedToAdd(permissions.BasePermission):
         return user_allowed_to_upload(request)
 
 
+class IsAuthorizedToAddComment(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return user_allowed_to_comment(request)
+
+
 class IsUserOrManager(permissions.BasePermission):
     """To be used in cases where request.user is either the
     object owner, or anyone amongst MediaCMS managers
@@ -63,6 +70,27 @@ def user_allowed_to_upload(request):
         if request.user.email_is_verified:
             return True
     elif settings.CAN_ADD_MEDIA == "advancedUser":
+        if request.user.advancedUser:
+            return True
+    return False
+
+
+def user_allowed_to_comment(request):
+    """Any custom logic for whether a user is allowed
+    to comment lives here
+    """
+    if request.user.is_anonymous:
+        return False
+    if request.user.is_superuser:
+        return True
+
+    # Default is "all"
+    if not hasattr(settings, "CAN_COMMENT") or settings.CAN_COMMENT == "all":
+        return True
+    elif settings.CAN_COMMENT == "email_verified":
+        if request.user.email_is_verified:
+            return True
+    elif settings.CAN_COMMENT == "advancedUser":
         if request.user.advancedUser:
             return True
     return False
