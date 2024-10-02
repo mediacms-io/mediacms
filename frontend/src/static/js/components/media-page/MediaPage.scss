@@ -530,7 +530,14 @@
   }
 }
 
+.viewer-container .player-container {
+  @media screen and (min-width: 480px) {
+    border-radius: 10px;
+  }
+}
+
 .viewer-container .player-container.audio-player-container {
+
   @media screen and (min-width: 480px) {
     padding-top: 0.75 * 56.25%;
   }

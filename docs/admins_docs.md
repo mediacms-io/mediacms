@@ -19,6 +19,7 @@
 - [16. Frequently Asked Questions](#16-frequently-asked-questions)
 - [17. Cookie consent code](#17-cookie-consent-code)
 - [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
+- [19. Rounded corners on videos](#19-rounded-corners)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -779,3 +780,14 @@ DO_NOT_TRANSCODE_VIDEO = True
 ```
 
 This will disable the transcoding process and only the original file will be shown. Note that this will also disable the sprites file creation, so you will not have the preview thumbnails on the video player.
+
+## 19. Rounded corners on videos
+
+By default the video player and media items are now having rounded corners, on larger screens (not in mobile). If you don't like this change, remove the `border-radius` added on the following files:
+
+```
+frontend/src/static/css/_extra.css
+frontend/src/static/js/components/list-item/Item.scss
+frontend/src/static/js/components/media-page/MediaPage.scss
+```
+you now have to re-run the frontend build in order to see the changes (check docs/dev_exp.md)
