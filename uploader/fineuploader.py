@@ -34,7 +34,6 @@ class BaseFineUploader(object):
         self.storage_class = settings.FILE_STORAGE
         self.real_path = None
 
-
     @property
     def finished(self):
         return self.real_path is not None
