@@ -7,6 +7,7 @@ import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListA
 import { SearchMediaFiltersRow } from '../components/search-filters/SearchMediaFiltersRow';
 import { SearchResultsFilters } from '../components/search-filters/SearchResultsFilters';
 import { Page } from './_Page';
+import { translateString } from '../utils/helpers/';
 
 export class SearchPage extends Page {
   constructor(props) {
@@ -114,13 +115,13 @@ export class SearchPage extends Page {
       } else {
         if (this.state.searchCategories) {
           title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
-          title += ' media in category "' + this.state.searchCategories + '"';
+          title += ' ' + translateString('media in category') + ' "' + this.state.searchCategories + '"';
         } else if (this.state.searchTags) {
           title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
-          title += ' media in tag "' + this.state.searchTags + '"';
+          title += ' ' + translateString('media in tag') + ' "' + this.state.searchTags + '"';
         } else {
           if (null === this.state.resultsCount || 0 === this.state.resultsCount) {
-            title = 'No results for "' + this.state.searchQuery + '"';
+            title = translateString('No results for') + ' "' + this.state.searchQuery + '"';
           } else {
             title =
               this.state.resultsCount +

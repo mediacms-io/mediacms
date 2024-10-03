@@ -17,12 +17,12 @@ import { translateString } from '../../utils/helpers/';
 import './Comments.scss';
 
 const commentsText = {
-  single: 'comment',
-  uppercaseSingle: 'COMMENT',
+  single: translateString('comment'),
+  uppercaseSingle: translateString('COMMENT'),
   ucfirstSingle: translateString('Comment'),
   ucfirstPlural: translateString('Comments'),
   submitCommentText: translateString('SUBMIT'),
-  disabledCommentsMsg: 'Comments are disabled',
+  disabledCommentsMsg: translateString('Comments are disabled'),
 };
 
 function CommentForm(props) {
@@ -413,7 +413,7 @@ const CommentsListHeader = ({ commentsLength }) => {
               ? commentsLength + ' ' + commentsText.ucfirstPlural
               : commentsLength + ' ' + commentsText.ucfirstSingle
             : MediaPageStore.get('media-data').enable_comments
-            ? translateString('No ' + commentsText.single + ' yet')
+            ? translateString('No') + commentsText.single + translateString('yet')
             : ''}
         </h2>
       ) : null}

@@ -11,12 +11,21 @@ translation_strings['de'] = de_translation_strings
 
 replacement_strings = {}
 replacement_strings['el'] = el_replacement_strings
+replacement_strings['de'] = de_replacement_strings
+replacement_strings['fr'] = fr_replacement_strings
 
-def get_translation(language_code):
+def check_language_code(language_code):
     if language_code not in [pair[0] for pair in settings.LANGUAGES]:
-        return {}
+        return False
 
     if language_code in ['en', 'en-us', 'en-gb']:
+        return False
+
+    return True
+
+
+def get_translation(language_code):
+    if not check_language_code(language_code):
         return {}
 
     translation = translation_strings[language_code]
@@ -25,12 +34,16 @@ def get_translation(language_code):
 
 
 def get_translation_strings(language_code):
-    if language_code not in [pair[0] for pair in settings.LANGUAGES]:
-        return {}
-
-    if language_code in ['en', 'en-us', 'en-gb']:
+    if not check_language_code(language_code):
         return {}
 
     translation = replacement_strings[language_code]
 
     return translation
+
+
+def translate_string(language_code, string):
+    if not check_language_code(language_code):
+        return string
+
+    return translation_strings[language_code].get(string, string)

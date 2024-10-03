@@ -78,8 +78,8 @@ function EditMediaButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title="Edit media" className="edit-media">
-      EDIT MEDIA
+    <a href={link} rel="nofollow" title={translateString("Edit media")} className="edit-media">
+      {translateString("EDIT MEDIA")}
     </a>
   );
 }
@@ -92,8 +92,8 @@ function EditSubtitleButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title="Edit subtitle" className="edit-subtitle">
-      EDIT SUBTITLE
+    <a href={link} rel="nofollow" title={translateString("Edit subtitle")} className="edit-subtitle">
+      {translateString("EDIT SUBTITLE")}
     </a>
   );
 }
@@ -197,12 +197,12 @@ export default function ViewerInfoContent(props) {
             </button>
           ) : null}
           {tagsContent.length ? (
-            <MediaMetaField value={tagsContent} title={1 < tagsContent.length ? 'Tags' : 'Tag'} id="tags" />
+            <MediaMetaField value={tagsContent} title={1 < tagsContent.length ? translateString('Tags') : translateString('Tag')} id="tags" />
           ) : null}
           {categoriesContent.length ? (
             <MediaMetaField
               value={categoriesContent}
-              title={1 < categoriesContent.length ? 'Categories' : 'Category'}
+              title={1 < categoriesContent.length ? translateString('Categories') : translateString('Category')}
               id="categories"
             />
           ) : null}
@@ -217,7 +217,7 @@ export default function ViewerInfoContent(props) {
               ) : null}
 
               <PopupTrigger contentRef={popupContentRef}>
-                <button className="remove-media">DELETE MEDIA</button>
+                <button className="remove-media">{translateString("DELETE MEDIA")}</button>
               </PopupTrigger>
 
               <PopupContent contentRef={popupContentRef}>

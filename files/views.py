@@ -45,6 +45,8 @@ from .methods import (
     show_related_media,
     update_user_ratings,
 )
+from .frontend_translations import translate_string
+
 from .models import (
     Category,
     Comment,
@@ -104,7 +106,8 @@ def add_subtitle(request):
         form = SubtitleForm(media, request.POST, request.FILES)
         if form.is_valid():
             subtitle = form.save()
-            messages.add_message(request, messages.INFO, "Subtitle was added!")
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Subtitle was added"))
+
             return HttpResponseRedirect(subtitle.media.get_absolute_url())
     else:
         form = SubtitleForm(media_item=media)
@@ -201,7 +204,7 @@ def edit_media(request):
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
-            messages.add_message(request, messages.INFO, "Media was edited!")
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
         form = MediaForm(request.user, instance=media)

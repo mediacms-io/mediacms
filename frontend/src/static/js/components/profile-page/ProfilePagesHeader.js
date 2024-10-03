@@ -6,6 +6,7 @@ import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
 import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
+import { translateString } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
   constructor(props) {
@@ -315,13 +316,13 @@ class NavMenuInlineTabs extends React.PureComponent {
             <InlineTab
               id="about"
               isActive={'about' === this.props.type}
-              label={'About' + (this.userIsAuthor ? ' Me' : '')}
+              label={translateString('About')}
               link={LinksContext._currentValue.profile.about}
             />
             <InlineTab
               id="media"
               isActive={'media' === this.props.type}
-              label={(this.userIsAuthor ? 'My ' : '') + 'Media'}
+              label={translateString('Media')}
               link={LinksContext._currentValue.profile.media}
             />
 
@@ -329,7 +330,7 @@ class NavMenuInlineTabs extends React.PureComponent {
               <InlineTab
                 id="playlists"
                 isActive={'playlists' === this.props.type}
-                label={(this.userIsAuthor ? 'My ' : '') + 'Playlists'}
+                label={translateString('Playlists')}
                 link={LinksContext._currentValue.profile.playlists}
               />
             ) : null}

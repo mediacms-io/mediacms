@@ -74,8 +74,8 @@ export function MediaItemEditLink(props) {
   }
 
   return !link ? null : (
-    <a href={link} title="Edit media" className="item-edit-link">
-      EDIT MEDIA
+    <a href={link} title={translateString("Edit media")} className="item-edit-link">
+      {translateString("EDIT MEDIA")}
     </a>
   );
 }

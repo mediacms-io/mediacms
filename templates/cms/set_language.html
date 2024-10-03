@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load custom_filters %}
 
 {% block headtitle %}About - {{PORTAL_NAME}}{% endblock headtitle %}
 
@@ -40,9 +41,11 @@
 
 {% block innercontent %}
 <div class="custom-page-wrapper">
-	<h1>Change Language</h1>
+	{% get_current_language as LANGUAGE_CODE %}
+
+	<h1>{{"Change Language"| custom_translate:LANGUAGE_CODE}}</h1>
 	<hr/>
-	<h2>Select</h2>
+	<h2>{{"Select"| custom_translate:LANGUAGE_CODE}}</h2>
 
     <p>
 		<form action="{% url 'set_language' %}" method="post">{% csrf_token %}
@@ -57,7 +60,7 @@
 					</option>
 				{% endfor %}
 			</select>
-			<input type="submit" value="Go">
+			<input type="submit" value={{"Go"| custom_translate:LANGUAGE_CODE}}>
 		</form>
 
 	</p>
