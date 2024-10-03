@@ -10,6 +10,7 @@ import {
   MediaItemEditLink,
 } from '../../components/list-item/includes/items';
 import { useItem } from './useItem';
+import { replaceString } from '../../utils/helpers/';
 
 export function itemClassname(defaultClassname, inheritedClassname, isActiveInPlaylistPlayback) {
   let classname = defaultClassname;
@@ -56,7 +57,7 @@ export function useMediaItem(props) {
       return null;
     }
 
-    const publishDate = format(new Date(props.publish_date));
+    const publishDate = replaceString(format(new Date(props.publish_date)));
     const publishDateTime =
       'string' === typeof props.publish_date
         ? Date.parse(props.publish_date)

@@ -1,6 +1,6 @@
 # French translation for strings in frontend app
 
-translations = {
+translation_strings = {
     "Home": "Accueil",
     "Featured": "En vedette",
     "Latest": "Dernier",
@@ -34,4 +34,8 @@ translations = {
     "Register": "S'inscrire",
     "Edit profile": "Modifier le profil",
     "Change password": "Changer le mot de passe",
+}
+
+replacement_strings = {
+    "days ago": "μέρες πρίν",
 }

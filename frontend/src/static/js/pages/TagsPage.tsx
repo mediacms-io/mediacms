@@ -3,14 +3,14 @@ import { ApiUrlConsumer } from '../utils/contexts/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { Page } from './Page';
-import { translate_string } from '../utils/helpers/';
+import { translateString } from '../utils/helpers/';
 
 interface TagsPageProps {
   id?: string;
   title?: string;
 }
 
-export const TagsPage: React.FC<TagsPageProps> = ({ id = 'tags', title = translate_string('Tags') }) => (
+export const TagsPage: React.FC<TagsPageProps> = ({ id = 'tags', title = translateString('Tags') }) => (
   <Page id={id}>
     <ApiUrlConsumer>
       {(apiUrl) => (

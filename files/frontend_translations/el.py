@@ -1,6 +1,6 @@
 # Greek translation for strings in frontend app
 
-translations = {
+translation_strings = {
     "Home": "Αρχική",
     "Featured": "Επιλεγμένα",
     "Latest": "Πρόσφατα",
@@ -34,4 +34,36 @@ translations = {
     "Register": "Εγγραφή",
     "Edit profile": "Επεξεργασία προφιλ",
     "Change password": "Αλλαγή κωδικού",
+    "SAVE": "ΑΠΟΘΗΚΕΥΣΗ",
+    "DOWNLOAD": "ΚΑΤΕΒΑΣΜΑ",
+    "SHARE": "ΚΟΙΝΟΠΟΙΗΣΗ",
+    "SUBMIT": "ΥΠΟΒΟΛΗ",
+    "No comment yet": "Δεν υπάρχει ακόμα σχόλιο",
+    "No comments yet": "Δεν υπάρχουν ακόμα σχόλια",
+    "Published on": "Δημοσιεύτηκε στις",
+    "SHOW MORE": "ΠΕΡΙΣΣΟΤΕΡΑ",
+    "Powered by": "Υποστηρίζεται από το",
+    "Add a ": "Προσθέστε ένα ",
+    "Comment": "Σχόλιο",
+    "Comments": "Σχόλια",
+}
+
+replacement_strings = {
+    "just now": "μόλις τώρα",
+    "second ago": "δευτερόλεπτο πριν",
+    "seconds ago": "δευτερόλεπτα πριν",
+    "minute ago": "λεπτό πριν",
+    "minutes ago": "λεπτά πριν",
+    "hours ago": "ώρες πριν",
+    "hour ago": "ώρα πριν",
+    "days ago": "μέρες πριν",
+    "day ago": "μέρα πριν",
+    "week ago": "εβδομάδα πριν",
+    "weeks ago": "εβδομάδες πριν",
+    "month ago": "μήνας πριν",
+    "months ago": "μήνες πριν",
+    "year ago": "χρόνος πριν",
+    "years ago": "χρόνια πριν",
+
+    "Sep": "Σεπτ"
 }

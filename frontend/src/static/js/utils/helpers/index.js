@@ -12,4 +12,5 @@ export * from './propTypeFilters';
 export { default as publishedOnDate } from './publishedOnDate';
 export * from './quickSort';
 export * from './requests';
-export { translate_string } from './translate';
+export { translateString } from './translate';
+export { replaceString } from './replacementStrings';

@@ -4,6 +4,7 @@ import { SiteContext } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 import { formatInnerLink } from '../../utils/helpers/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared/';
+import { translateString } from '../../utils/helpers/';
 
 function downloadOptionsList() {
   const media_data = MediaPageStore.get('media-data');
@@ -71,7 +72,7 @@ export function VideoMediaDownloadLink(props) {
           <CircleIconButton type="span">
             <MaterialIcon type="arrow_downward" />
           </CircleIconButton>
-          <span>DOWNLOAD</span>
+          <span>{translateString("DOWNLOAD")}</span>
         </button>
       </PopupTrigger>
 

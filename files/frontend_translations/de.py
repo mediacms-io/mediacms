@@ -1,6 +1,6 @@
 # German translation for strings in frontend app
 
-translations = {
+translation_strings = {
     "Home": "Startseite",
     "Featured": "Empfohlen",
     "Latest": "Neueste",
@@ -34,4 +34,8 @@ translations = {
     "Register": "Registrieren",
     "Edit profile": "Profil bearbeiten",
     "Change password": "Passwort ändern",
+}
+
+replacement_strings = {
+    "days ago": "μέρες πρίν",
 }

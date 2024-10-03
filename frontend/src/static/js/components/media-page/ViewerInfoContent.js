@@ -6,6 +6,8 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { formatInnerLink, publishedOnDate } from '../../utils/helpers/';
 import { PopupMain } from '../_shared/';
 import CommentsList from '../comments/Comments';
+import { replaceString } from '../../utils/helpers/';
+import { translateString } from '../../utils/helpers/';
 
 function metafield(arr) {
   let i;
@@ -48,7 +50,7 @@ function MediaAuthorBanner(props) {
           </a>
         </span>
         {PageStore.get('config-media-item').displayPublishDate && props.published ? (
-          <span className="author-banner-date">Published on {publishedOnDate(new Date(props.published))}</span>
+          <span className="author-banner-date">{translateString("Published on")} {replaceString(publishedOnDate(new Date(props.published)))}</span>
         ) : null}
       </div>
     </div>

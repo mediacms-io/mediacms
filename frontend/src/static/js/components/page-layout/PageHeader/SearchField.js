@@ -4,7 +4,7 @@ import { LinksContext } from '../../../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../../../utils/stores/';
 import { SearchFieldActions } from '../../../utils/actions/';
 import { MaterialIcon, PopupMain } from '../../_shared';
-import { translate_string } from '../../../utils/helpers/';
+import { translateString } from '../../../utils/helpers/';
 
 import './SearchField.scss';
 
@@ -297,7 +297,7 @@ export function SearchField(props) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={translate_string("Search")}
+                placeholder={translateString("Search")}
                 aria-label="Search"
                 name="q"
                 value={queryVal}

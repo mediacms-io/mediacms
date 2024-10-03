@@ -1,5 +1,5 @@
 import React from 'react';
-import { translate_string } from '../utils/helpers/';
+import { translateString } from '../utils/helpers/';
 
 interface MediaListHeaderProps {
   title?: string;
@@ -10,7 +10,7 @@ interface MediaListHeaderProps {
 }
 
 export const MediaListHeader: React.FC<MediaListHeaderProps> = (props) => {
-  const viewAllText = props.viewAllText || translate_string('VIEW ALL');
+  const viewAllText = props.viewAllText || translateString('VIEW ALL');
   return (
     <div className={(props.className ? props.className + ' ' : '') + 'media-list-header'} style={props.style}>
       <h2>{props.title}</h2>

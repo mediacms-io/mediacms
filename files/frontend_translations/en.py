@@ -1,6 +1,6 @@
 # Translations listing
 
-translations = {
+translation_strings = {
     "Home": "",
     "Featured": "",
     "Latest": "",
@@ -34,4 +34,8 @@ translations = {
     "Register": "",
     "Edit profile": "",
     "Change password": "",
+}
+
+replacement_strings = {
+    "days ago": "μέρες πρίν",
 }
