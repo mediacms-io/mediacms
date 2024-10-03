@@ -1,3 +1,4 @@
+
 // These are the translations that will be used in frontend/src using the helper function
 // translate_string (frontend/src/static/js/utils/helpers/translate.js)
 // They are fetched from the backend, and specifically files/frontend_translations
@@ -9,49 +10,7 @@
 // POINT, so there are not translations. Translations can only be available and tested on the Django app
 // and templates, that are loading React as well
 
-// TODO: pass the python dictionary on a way that can be parsed here and thus no need
-// for this duplication taking place here
+    var TRANSLATIONS = {{ FRONTEND_TRANSLATIONS|safe }};
 
-var TRANSLATIONS = {
-    "Home": "{{FRONTEND_TRANSLATIONS.Home}}",
-    "Featured": "{{FRONTEND_TRANSLATIONS.Featured}}",
-    "View all": "{{FRONTEND_TRANSLATIONS.View_all}}",
-    "VIEW ALL": "{{FRONTEND_TRANSLATIONS.VIEW_ALL}}",
-    "Latest": "{{FRONTEND_TRANSLATIONS.Latest}}",
-    "Recommended": "{{FRONTEND_TRANSLATIONS.Recommended}}",
-    "Recent uploads": "{{FRONTEND_TRANSLATIONS.Recent_uploads}}",
-    "view": "{{FRONTEND_TRANSLATIONS.view}}",
-    "views": "{{FRONTEND_TRANSLATIONS.views}}",
-    "Search": "{{FRONTEND_TRANSLATIONS.Search}}",
+    window.TRANSLATIONS = TRANSLATIONS;
 
-    "Tags": "{{FRONTEND_TRANSLATIONS.Tags}}",
-    "Categories": "{{FRONTEND_TRANSLATIONS.Categories}}",
-    "Members": "{{FRONTEND_TRANSLATIONS.Members}}",
-    "Upload": "{{FRONTEND_TRANSLATIONS.Upload}}",
-    "Upload media": "{{FRONTEND_TRANSLATIONS.Upload_media}}",
-
-    "My media": "{{FRONTEND_TRANSLATIONS.My_media}}",
-    "My playlists": "{{FRONTEND_TRANSLATIONS.My_playlists}}",
-    "History": "{{FRONTEND_TRANSLATIONS.History}}",
-    "Liked media": "{{FRONTEND_TRANSLATIONS.Liked_media}}",
-    "About": "{{FRONTEND_TRANSLATIONS.About}}",
-    "Terms": "{{FRONTEND_TRANSLATIONS.Terms}}",
-    "Contact": "{{FRONTEND_TRANSLATIONS.Contact}}",
-    "Language": "{{FRONTEND_TRANSLATIONS.Language}}",
-    "Manage media": "{{FRONTEND_TRANSLATIONS.Manage_media}}",
-    "Manage users": "{{FRONTEND_TRANSLATIONS.Manage_users}}",
-    "Manage comments": "{{FRONTEND_TRANSLATIONS.Manage_comments}}",
-
-    "Up next": "{{FRONTEND_TRANSLATIONS.Up_next}}",
-    "AUTOPLAY": "{{FRONTEND_TRANSLATIONS.AUTOPLAY}}",
-
-    "Sign out": "{{FRONTEND_TRANSLATIONS.Sign_out}}",
-    "Sign in": "{{FRONTEND_TRANSLATIONS.Sign_in}}",
-    "Register": "{{FRONTEND_TRANSLATIONS.Register}}",
-    "Edit profile": "{{FRONTEND_TRANSLATIONS.Edit_profile}}",
-    "Change password": "{{FRONTEND_TRANSLATIONS.Change_password}}",
-
-}
-
-
-window.TRANSLATIONS = TRANSLATIONS;

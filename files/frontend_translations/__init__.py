@@ -19,10 +19,4 @@ def get_frontend_translations(language_code):
 
     translation = translations[language_code]
 
-    # replace any keys from translation that contains a space with an underscore
-    # do not keep initial keys that contain a space
-    for key in list(translation.keys()):
-        if ' ' in key:
-            translation[key.replace(' ', '_')] = translation.pop(key)
-
     return translation
