@@ -644,7 +644,11 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     if action == "watch":
         media.views += 1
-        media.save(update_fields=["views"])
+        Media.objects.filter(friendly_token=friendly_token).update(views=media.views)
+
+        # update field without calling save, to avoid post_save signals being triggered
+        # same in other actions
+
     elif action == "report":
         media.reported_times += 1
 
@@ -659,10 +663,10 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
         )
     elif action == "like":
         media.likes += 1
-        media.save(update_fields=["likes"])
+        Media.objects.filter(friendly_token=friendly_token).update(likes=media.likes)
     elif action == "dislike":
         media.dislikes += 1
-        media.save(update_fields=["dislikes"])
+        Media.objects.filter(friendly_token=friendly_token).update(dislikes=media.dislikes)
 
     return True
 

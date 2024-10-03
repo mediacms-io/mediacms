@@ -24,7 +24,12 @@ from rest_framework.views import APIView
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, user_allowed_to_upload
+from cms.permissions import (
+    IsAuthorizedToAdd,
+    IsAuthorizedToAddComment,
+    IsUserOrEditor,
+    user_allowed_to_upload,
+)
 from users.models import User
 
 from .forms import ContactForm, MediaForm, SubtitleForm
@@ -297,6 +302,16 @@ def search(request):
     RSS_URL = f"/rss{request.environ.get('REQUEST_URI')}"
     context["RSS_URL"] = RSS_URL
     return render(request, "cms/search.html", context)
+
+
+def sitemap(request):
+    """Sitemap"""
+
+    context = {}
+    context["media"] = list(Media.objects.filter(Q(listable=True)).order_by("-add_date"))
+    context["playlists"] = list(Playlist.objects.filter().order_by("-add_date"))
+    context["users"] = list(User.objects.filter())
+    return render(request, "sitemap.xml", context, content_type="application/xml")
 
 
 def tags(request):
@@ -595,14 +610,15 @@ class MediaDetail(APIView):
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
-
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
-            if request.data.get('media_file'):
-                media_file = request.data["media_file"]
-                serializer.save(user=request.user, media_file=media_file)
-            else:
-                serializer.save(user=request.user)
+            serializer.save(user=request.user)
+            # no need to update the media file itself, only the metadata
+            # if request.data.get('media_file'):
+            #    media_file = request.data["media_file"]
+            #    serializer.save(user=request.user, media_file=media_file)
+            # else:
+            #    serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1200,7 +1216,7 @@ class CommentDetail(APIView):
     Delete comment (DELETE)
     """
 
-    permission_classes = (IsAuthorizedToAdd,)
+    permission_classes = (IsAuthorizedToAddComment,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):

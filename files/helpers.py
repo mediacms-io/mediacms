@@ -367,7 +367,7 @@ def media_file_info(input_file):
             input_file,
         ]
         stdout = run_command(cmd).get("out")
-        stream_size = sum([int(line) for line in stdout.split("\n") if line != ""])
+        stream_size = sum([int(line.replace("|", "")) for line in stdout.split("\n") if line != ""])
         video_bitrate = round((stream_size * 8 / 1024.0) / video_duration, 2)
 
     if "r_frame_rate" in video_info.keys():
@@ -538,8 +538,8 @@ def get_base_ffmpeg_command(
 
     target_width = round(target_height * 16 / 9)
     scale_filter_opts = [
-        f"if(lt(iw\\,ih)\\,{target_height}\\,{target_width})",
-        f"if(lt(iw\\,ih)\\,{target_width}\\,{target_height})",
+        f"if(lt(iw\\,ih)\\,{target_height}\\,{target_width})",  # noqa
+        f"if(lt(iw\\,ih)\\,{target_width}\\,{target_height})",  # noqa
         "force_original_aspect_ratio=decrease",
         "force_divisible_by=2",
         "flags=lanczos",
