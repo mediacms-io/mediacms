@@ -1,3 +1,4 @@
+import importlib
 import os
 
 from django.conf import settings
@@ -25,11 +26,11 @@ for translation_file in files:
     if not check_language_code(language_code):
         continue
 
-    exec(f'from .{language_code_file} import translation_strings as {language_code_file}_translation_strings')
-    exec(f'from .{language_code_file} import replacement_strings as {language_code_file}_replacement_strings')
+    module_name = f"files.frontend_translations.{language_code_file}"
+    tr_module = importlib.import_module(module_name)
+    translation_strings[language_code] = tr_module.translation_strings
+    replacement_strings[language_code] = tr_module.replacement_strings
 
-    translation_strings[language_code] = eval(f'{language_code_file}_translation_strings')
-    replacement_strings[language_code] = eval(f'{language_code_file}_replacement_strings')
 
 
 def get_translation(language_code):
