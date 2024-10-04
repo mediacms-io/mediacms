@@ -413,7 +413,7 @@ const CommentsListHeader = ({ commentsLength }) => {
               ? commentsLength + ' ' + commentsText.ucfirstPlural
               : commentsLength + ' ' + commentsText.ucfirstSingle
             : MediaPageStore.get('media-data').enable_comments
-            ? translateString('No') + commentsText.single + translateString('yet')
+            ? translateString('No') + ' ' + commentsText.single + ' ' + translateString('yet')
             : ''}
         </h2>
       ) : null}

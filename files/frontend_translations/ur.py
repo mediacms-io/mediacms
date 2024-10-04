@@ -1,7 +1,7 @@
 translation_strings = {
     "ABOUT": "کے بارے میں",
     "AUTOPLAY": "خودکار پلے",
-    "About": "",
+    "About": "کے بارے میں",
     "Add a ": "شامل کریں",
     "COMMENT": "تبصرہ",
     "Categories": "اقسام",

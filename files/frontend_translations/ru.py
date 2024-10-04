@@ -1,7 +1,7 @@
 translation_strings = {
     "ABOUT": "О",
     "AUTOPLAY": "Автовоспроизведение",
-    "About": "",
+    "About": "О",
     "Add a ": "Добавить ",
     "COMMENT": "КОММЕНТАРИЙ",
     "Categories": "Категории",
