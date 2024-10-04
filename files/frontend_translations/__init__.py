@@ -1,30 +1,36 @@
+import os
 from django.conf import settings
 
-from .de import translation_strings as de_translation_strings, replacement_strings as de_replacement_strings
-from .el import translation_strings as el_translation_strings, replacement_strings as el_replacement_strings
-from .fr import translation_strings as fr_translation_strings, replacement_strings as fr_replacement_strings
-
+current_dir = os.path.dirname(os.path.abspath(__file__))
+files = os.listdir(current_dir)
 translation_strings = {}
-translation_strings['el'] = el_translation_strings
-translation_strings['fr'] = fr_translation_strings
-translation_strings['de'] = de_translation_strings
-
 replacement_strings = {}
-replacement_strings['el'] = el_replacement_strings
-replacement_strings['de'] = de_replacement_strings
-replacement_strings['fr'] = fr_replacement_strings
 
 def check_language_code(language_code):
+    # helper function
     if language_code not in [pair[0] for pair in settings.LANGUAGES]:
         return False
-
     if language_code in ['en', 'en-us', 'en-gb']:
         return False
-
     return True
+
+for translation_file in files:
+    # the language code is zh-hans but the file is zh_hans.py
+
+    language_code_file = translation_file.split('.')[0]
+    language_code = language_code_file.replace('_', '-')
+    if not check_language_code(language_code):
+        continue
+
+    exec(f'from .{language_code_file} import translation_strings as {language_code_file}_translation_strings')
+    exec(f'from .{language_code_file} import replacement_strings as {language_code_file}_replacement_strings')
+
+    translation_strings[language_code] = eval(f'{language_code_file}_translation_strings')
+    replacement_strings[language_code] = eval(f'{language_code_file}_replacement_strings')
 
 
 def get_translation(language_code):
+    # get list of translations per language
     if not check_language_code(language_code):
         return {}
 
@@ -34,6 +40,7 @@ def get_translation(language_code):
 
 
 def get_translation_strings(language_code):
+    # get list of replacement strings per language
     if not check_language_code(language_code):
         return {}
 
@@ -43,6 +50,7 @@ def get_translation_strings(language_code):
 
 
 def translate_string(language_code, string):
+    # translate a string to the given language
     if not check_language_code(language_code):
         return string
 
