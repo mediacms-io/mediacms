@@ -1,10 +1,12 @@
 import os
+
 from django.conf import settings
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 files = os.listdir(current_dir)
 translation_strings = {}
 replacement_strings = {}
+
 
 def check_language_code(language_code):
     # helper function
@@ -13,6 +15,7 @@ def check_language_code(language_code):
     if language_code in ['en', 'en-us', 'en-gb']:
         return False
     return True
+
 
 for translation_file in files:
     # the language code is zh-hans but the file is zh_hans.py

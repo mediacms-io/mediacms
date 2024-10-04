@@ -1,8 +1,10 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-import os
 import importlib
+import os
 from collections import OrderedDict
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+
 
 class Command(BaseCommand):
     help = 'Process translation files to add missing keys and sort them'
@@ -16,7 +18,7 @@ class Command(BaseCommand):
         files = os.listdir(translations_dir)
         files = [f for f in files if f.endswith('.py') and f not in ('__init__.py', 'en.py')]
         # Import the original English translations
-        from files.frontend_translations.en import translation_strings, replacement_strings
+        from files.frontend_translations.en import replacement_strings, translation_strings
 
         for file in files:
             file_path = os.path.join(translations_dir, file)
