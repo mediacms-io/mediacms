@@ -20,6 +20,7 @@
 - [17. Cookie consent code](#17-cookie-consent-code)
 - [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 - [19. Rounded corners on videos](#19-rounded-corners)
+- [20. Translations](#20-translations)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -801,3 +802,24 @@ frontend/src/static/js/components/list-item/Item.scss
 frontend/src/static/js/components/media-page/MediaPage.scss
 ```
 you now have to re-run the frontend build in order to see the changes (check docs/dev_exp.md)
+
+
+## 20. Translations
+
+### 20.1 Set a default language
+
+By default MediaCMS is available in a number of languages. To set the default language, edit `settings.py` and set LANGUAGE_CODE to the code of one of the languages.
+
+### 20.2 Remove existing languages
+To limit the number of languages that are shown as available, remove them from the LANGUAGES list in `settings.py` or comment them. Only what is there is shown.
+
+### 20.3 Improve existing translation
+To make improvements in existing translated content, in a language that is already translated, check the language by the code name in `files/frontend-translations/` and edit the corresponding file.
+
+### 20.4 Add more content to existing translation
+This requires it's own section. It's possible to translate everything that appears on the app, content is mainly split in the following:
+1. the Django templates, which is found in templates/ dir. Have a look on `templates/cms/about.html` to see an example of how it is done
+2. the frontend code (React), have a look how `translateString` is used in `frontend`
+
+### 20.5 Add a new language and translate
+To add a new language: add the language in settings.py, then add the file in `files/frontend-translations/`. Make sure you copy the initial strings by copying `files/frontend-translations/en.py` to it.
