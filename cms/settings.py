@@ -511,10 +511,23 @@ except ImportError:
     pass
 
 LANGUAGES = [
-    ('el', _('Greek')),
-    ("de", _("German")),
-    ("en", _("English")),
+    ('ar', _('Arabic')),
+    ('bn', _('Bengali')),
+    ('nl', _('Dutch')),
+    ('en', _('English')),
     ('fr', _('French')),
+    ('de', _('German')),
+    ('hi', _('Hindi')),
+    ('id', _('Indonesian')),
+    ('ja', _('Japanese')),
+    ('ko', _('Korean')),
+    ('pt', _('Portuguese')),
+    ('ru', _('Russian')),
+    ('zh-hans', _('Simplified Chinese')),
+    ('es', _('Spanish')),
+    ('tr', _('Turkish')),
+    ('el', _('Greek')),
+    ('ur', _('Urdu')),
 ]
 
 LANGUAGE_CODE = 'en'  # default language

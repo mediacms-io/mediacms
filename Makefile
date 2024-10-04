@@ -1,4 +1,4 @@
-.PHONY: admin-shell
+.PHONY: admin-shell build-frontend
 
 admin-shell:
 	@container_id=$$(docker-compose ps -q web); \
@@ -8,3 +8,8 @@ admin-shell:
 	else \
 		docker exec -it $$container_id /bin/bash; \
 	fi
+
+build-frontend:
+	docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
+	cp -r frontend/dist/static/* static/
+	docker-compose -f docker-compose-dev.yaml restart web
