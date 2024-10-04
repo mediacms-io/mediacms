@@ -9,7 +9,6 @@ DEBUG = False
 # is also shown on several places as emails
 PORTAL_NAME = "MediaCMS"
 PORTAL_DESCRIPTION = ""
-LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Europe/London"
 
 # who can add media
