@@ -1,4 +1,4 @@
-# Translations listing
+# English - Base translation
 
 # Exact matches
 translation_strings = {
