@@ -7,6 +7,7 @@ translation_strings = {
     "Category": "",
     "Change Language": "",
     "Change password": "",
+    "About": "",
     "Comment": "",
     "Comments": "",
     "Comments are disabled": "",

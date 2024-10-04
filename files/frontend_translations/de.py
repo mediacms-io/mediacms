@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "Über",
     "AUTOPLAY": "Automatische Wiedergabe",
+    "About": "Über",
     "Add a ": "Hinzufügen eines ",
     "COMMENT": "KOMMENTAR",
     "Categories": "Kategorien",

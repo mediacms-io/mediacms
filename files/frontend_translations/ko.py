@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "정보",
     "AUTOPLAY": "자동 재생",
+    "About": "",
     "Add a ": "추가",
     "COMMENT": "댓글",
     "Categories": "카테고리",

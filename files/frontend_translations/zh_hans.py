@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "关于",
     "AUTOPLAY": "自动播放",
+    "About": "",
     "Add a ": "添加一个",
     "COMMENT": "评论",
     "Categories": "分类",

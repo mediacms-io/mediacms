@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "TENTANG",
     "AUTOPLAY": "PUTAR OTOMATIS",
+    "About": "Tentang",
     "Add a ": "Tambahkan ",
     "COMMENT": "KOMENTAR",
     "Categories": "Kategori",

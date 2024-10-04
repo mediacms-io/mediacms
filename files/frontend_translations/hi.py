@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "के बारे में",
     "AUTOPLAY": "स्वतः चलाएं",
+    "About": "के बारे में",
     "Add a ": "जोड़ें",
     "COMMENT": "टिप्पणी",
     "Categories": "श्रेणियाँ",

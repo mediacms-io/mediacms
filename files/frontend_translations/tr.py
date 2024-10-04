@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "HAKKINDA",
     "AUTOPLAY": "OTOMATİK OYNATMA",
+    "About": "",
     "Add a ": "Ekle ",
     "COMMENT": "YORUM",
     "Categories": "Kategoriler",

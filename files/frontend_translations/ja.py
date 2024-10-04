@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "約",
     "AUTOPLAY": "自動再生",
+    "About": "",
     "Add a ": "追加",
     "COMMENT": "コメント",
     "Categories": "カテゴリー",

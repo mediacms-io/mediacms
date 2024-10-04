@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "সম্পর্কে",
     "AUTOPLAY": "স্বয়ংক্রিয় প্লে",
+    "About": "সম্পর্কে",
     "Add a ": "যোগ করুন",
     "COMMENT": "মন্তব্য",
     "Categories": "বিভাগসমূহ",

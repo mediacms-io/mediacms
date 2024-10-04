@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "OVER",
     "AUTOPLAY": "AUTOMATISCH AFSPELEN",
+    "About": "",
     "Add a ": "Voeg een ",
     "COMMENT": "REACTIE",
     "Categories": "Categorieën",

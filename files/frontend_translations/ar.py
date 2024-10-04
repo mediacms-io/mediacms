@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "حول",
     "AUTOPLAY": "تشغيل تلقائي",
+    "About": "حول",
     "Add a ": "أضف ",
     "COMMENT": "تعليق",
     "Categories": "الفئات",

@@ -1,6 +1,7 @@
 translation_strings = {
     "ABOUT": "ΣΧΕΤΙΚΑ",
     "AUTOPLAY": "Αυτόματη αναπαραγωγή",
+    "About": "Σχετικά",
     "Add a ": "Προσθέστε ένα ",
     "COMMENT": "ΣΧΟΛΙΟ",
     "Categories": "Κατηγορίες",
