@@ -4,6 +4,7 @@ import { PageStore } from '../utils/stores/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 interface FeaturedMediaPageProps {
   id?: string;
@@ -12,7 +13,7 @@ interface FeaturedMediaPageProps {
 
 export const FeaturedMediaPage: React.FC<FeaturedMediaPageProps> = ({
   id = 'featured-media',
-  title = PageStore.get('config-enabled').pages.featured.title,
+  title = translateString('Featured'),
 }) => (
   <Page id={id}>
     <ApiUrlConsumer>

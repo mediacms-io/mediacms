@@ -13,6 +13,7 @@ schema_view = get_schema_view(
     permission_classes=(AllowAny,),
 )
 
+# refactor seriously
 
 urlpatterns = [
     re_path(r"^__debug__/", include(debug_toolbar.urls)),

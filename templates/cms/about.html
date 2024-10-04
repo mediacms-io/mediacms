@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block headtitle %}About - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block headermeta %}
-
+{% load custom_filters %}
 <meta property="og:title" content="About - {{PORTAL_NAME}}">
 <meta property="og:type" content="website">
 <meta property="og:description" content="">
@@ -38,10 +39,13 @@
 {% endblock headermeta %}
 
 {% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
+
 <div class="custom-page-wrapper">
-	<h2>About</h2>
+	<h2>{{ "About" | custom_translate:LANGUAGE_CODE}}</h2>
 	<hr/>
-	
-    <p><a href="https://mediacms.io">MediaCMS</a> is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media.</p>
+
+    <p><a href="https://mediacms.io">MediaCMS</a> {{ "is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media" | custom_translate:LANGUAGE_CODE}}.</p>
 </div>
+
 {% endblock %}

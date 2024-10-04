@@ -1,4 +1,5 @@
 import { addClassname, removeClassname } from '../helpers/';
+import { translateString } from '../../utils/helpers/';
 
 export function UpNextLoaderView(nextItemData) {
   var timerTimeout;
@@ -39,7 +40,7 @@ export function UpNextLoaderView(nextItemData) {
   domElems.nextMediaTitle.setAttribute('class', 'next-media-title');
   domElems.nextMediaAuthor.setAttribute('class', 'next-media-author');
 
-  domElems.upNextLabel.innerHTML = 'Up Next';
+  domElems.upNextLabel.innerHTML = translateString('Up Next');
   domElems.nextMediaTitle.innerHTML = nextItemData.title;
   domElems.nextMediaAuthor.innerHTML = nextItemData.author_name;
 

@@ -34,6 +34,14 @@ Check it on http://localhost:8088/
 ### How to develop in Django
 Django starts at http://localhost and is reloading automatically. Making any change to the python code should refresh Django.
 
+If Django breaks due to an error (eg SyntaxError, while editing the code), you might have to restart it
+
+```
+docker-compose -f docker-compose-dev.yaml restart web
+```
+
+
+
 ### How to develop in React
 React is started on http://localhost:8088/ , code is located in frontend/ , so making changes there should have instant effect on the page. Keep in mind that React is loading data from Django, and that it has to be built so that Django can serve it.
 
@@ -58,3 +66,24 @@ In order to make changes to React code, edit code on frontend/src and check it's
 4. Copy static files to Django static folder with`cp -r frontend/dist/static/* static/`
 5. Restart Django - `docker-compose -f docker-compose-dev.yaml restart web` so that it uses the new static files
 6. Commit the changes
+
+### Helper commands
+There is ongoing effort to provide helper commands, check the Makefile for what it supports. Eg
+
+Bash into the web container:
+
+```
+user@user:~/mediacms$ make admin-shell
+root@ca8c1096726b:/home/mediacms.io/mediacms# ./manage.py shell
+```
+
+Build the frontend:
+
+```
+user@user:~/mediacms$ make build-frontend
+docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
+
+> mediacms-frontend@0.9.1 dist /home/mediacms.io/mediacms/frontend
+> mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist
+...
+```

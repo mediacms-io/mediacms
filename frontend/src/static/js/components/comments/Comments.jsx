@@ -7,20 +7,22 @@ import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
+import { replaceString } from '../../utils/helpers/';
 
 import './videojs-markers.js';
 import './videojs.markers.css';
 import {enableMarkers, addMarker} from './videojs-markers_config.js'
+import { translateString } from '../../utils/helpers/';
 
 import './Comments.scss';
 
 const commentsText = {
-  single: 'comment',
-  uppercaseSingle: 'COMMENT',
-  ucfirstSingle: 'Comment',
-  ucfirstPlural: 'Comments',
-  submitCommentText: 'SUBMIT',
-  disabledCommentsMsg: 'Comments are disabled',
+  single: translateString('comment'),
+  uppercaseSingle: translateString('COMMENT'),
+  ucfirstSingle: translateString('Comment'),
+  ucfirstPlural: translateString('Comments'),
+  submitCommentText: translateString('SUBMIT'),
+  disabledCommentsMsg: translateString('Comments are disabled'),
 };
 
 function CommentForm(props) {
@@ -149,7 +151,7 @@ function CommentForm(props) {
                 inputRef={textareaRef}
                 className="form-textarea"
                 rows="1"
-                placeholder={'Add a ' + commentsText.single + '...'}
+                placeholder={translateString('Add a ') + commentsText.single + '...'}
                 value={value}
                 onChange={onChangeWithMention}
                 onFocus={onFocus}
@@ -164,7 +166,7 @@ function CommentForm(props) {
                 ref={textareaRef}
                 className="form-textarea"
                 rows="1"
-                placeholder={'Add a ' + commentsText.single + '...'}
+                placeholder={translateString('Add a ') + commentsText.single + '...'}
                 value={value}
                 onChange={onChange}
                 onFocus={onFocus}
@@ -189,9 +191,9 @@ function CommentForm(props) {
             href={loginUrl}
             rel="noffolow"
             className="form-textarea-wrap"
-            title={'Add a ' + commentsText.single + '...'}
+            title={translateString('Add a ') + commentsText.single + '...'}
           >
-            <span className="form-textarea">{'Add a ' + commentsText.single + '...'}</span>
+            <span className="form-textarea">{translateString('Add a ') + commentsText.single + '...'}</span>
           </a>
           <div className="form-buttons">
             <a href={loginUrl} rel="noffolow" className="disabled">
@@ -237,7 +239,7 @@ function CommentActions(props) {
       {MemberContext._currentValue.can.deleteComment ? (
         <div className="comment-action remove-comment">
           <PopupTrigger contentRef={popupContentRef}>
-            <button>DELETE {commentsText.uppercaseSingle}</button>
+            <button>{translateString('DELETE')} {commentsText.uppercaseSingle}</button>
           </PopupTrigger>
 
           <PopupContent contentRef={popupContentRef}>
@@ -310,7 +312,7 @@ function Comment(props) {
                 {props.author_name}
               </a>
             </div>
-            <div className="comment-date">{format(new Date(props.publish_date))}</div>
+            <div className="comment-date">{replaceString(format(new Date(props.publish_date)))}</div>
           </div>
           <div ref={commentTextRef} className={'comment-text' + (viewMoreContent ? ' show-all' : '')}>
             <div
@@ -411,7 +413,7 @@ const CommentsListHeader = ({ commentsLength }) => {
               ? commentsLength + ' ' + commentsText.ucfirstPlural
               : commentsLength + ' ' + commentsText.ucfirstSingle
             : MediaPageStore.get('media-data').enable_comments
-            ? 'No ' + commentsText.single + ' yet'
+            ? translateString('No') + commentsText.single + translateString('yet')
             : ''}
         </h2>
       ) : null}

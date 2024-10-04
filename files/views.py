@@ -12,27 +12,18 @@ from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import (
-    FileUploadParser,
-    FormParser,
-    JSONParser,
-    MultiPartParser,
-)
+from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import (
-    IsAuthorizedToAdd,
-    IsAuthorizedToAddComment,
-    IsUserOrEditor,
-    user_allowed_to_upload,
-)
+from cms.permissions import IsAuthorizedToAdd, IsAuthorizedToAddComment, IsUserOrEditor, user_allowed_to_upload
 from users.models import User
 
 from .forms import ContactForm, MediaForm, SubtitleForm
+from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
     check_comment_for_mention,
@@ -45,16 +36,7 @@ from .methods import (
     show_related_media,
     update_user_ratings,
 )
-from .models import (
-    Category,
-    Comment,
-    EncodeProfile,
-    Encoding,
-    Media,
-    Playlist,
-    PlaylistMedia,
-    Tag,
-)
+from .models import Category, Comment, EncodeProfile, Encoding, Media, Playlist, PlaylistMedia, Tag
 from .serializers import (
     CategorySerializer,
     CommentSerializer,
@@ -79,6 +61,13 @@ def about(request):
     return render(request, "cms/about.html", context)
 
 
+def setlanguage(request):
+    """Set Language view"""
+
+    context = {}
+    return render(request, "cms/set_language.html", context)
+
+
 @login_required
 def add_subtitle(request):
     """Add subtitle view"""
@@ -97,7 +86,8 @@ def add_subtitle(request):
         form = SubtitleForm(media, request.POST, request.FILES)
         if form.is_valid():
             subtitle = form.save()
-            messages.add_message(request, messages.INFO, "Subtitle was added!")
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Subtitle was added"))
+
             return HttpResponseRedirect(subtitle.media.get_absolute_url())
     else:
         form = SubtitleForm(media_item=media)
@@ -194,7 +184,7 @@ def edit_media(request):
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
-            messages.add_message(request, messages.INFO, "Media was edited!")
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
         form = MediaForm(request.user, instance=media)
@@ -292,7 +282,7 @@ def search(request):
     """Search view"""
 
     context = {}
-    RSS_URL = f"/rss{request.environ['REQUEST_URI']}"
+    RSS_URL = f"/rss{request.environ.get('REQUEST_URI')}"
     context["RSS_URL"] = RSS_URL
     return render(request, "cms/search.html", context)
 

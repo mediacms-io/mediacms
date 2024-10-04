@@ -23,17 +23,7 @@ from users.models import User
 
 from .backends import FFmpegBackend
 from .exceptions import VideoEncodingError
-from .helpers import (
-    calculate_seconds,
-    create_temp_file,
-    get_file_name,
-    get_file_type,
-    media_file_info,
-    produce_ffmpeg_commands,
-    produce_friendly_token,
-    rm_file,
-    run_command,
-)
+from .helpers import calculate_seconds, create_temp_file, get_file_name, get_file_type, media_file_info, produce_ffmpeg_commands, produce_friendly_token, rm_file, run_command
 from .methods import list_tasks, notify_users, pre_save_action
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 

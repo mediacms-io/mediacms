@@ -1,5 +1,6 @@
 from django.conf import settings
 
+from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
 
 
@@ -31,4 +32,7 @@ def stuff(request):
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE
     ret["RSS_URL"] = "/rss"
+    ret["TRANSLATION"] = get_translation(request.LANGUAGE_CODE)
+    ret["REPLACEMENTS"] = get_translation_strings(request.LANGUAGE_CODE)
+
     return ret

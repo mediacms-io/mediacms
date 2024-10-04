@@ -4,6 +4,7 @@ import { PageStore } from '../utils/stores/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 interface LatestMediaPageProps {
   id?: string;
@@ -12,7 +13,7 @@ interface LatestMediaPageProps {
 
 export const LatestMediaPage: React.FC<LatestMediaPageProps> = ({
   id = 'latest-media',
-  title = PageStore.get('config-enabled').pages.latest.title,
+  title = translateString('Recent uploads'),
 }) => (
   <Page id={id}>
     <ApiUrlConsumer>

@@ -20,6 +20,7 @@
 - [17. Cookie consent code](#17-cookie-consent-code)
 - [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 - [19. Rounded corners on videos](#19-rounded-corners)
+- [20. Translations](#20-translations)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -801,3 +802,41 @@ frontend/src/static/js/components/list-item/Item.scss
 frontend/src/static/js/components/media-page/MediaPage.scss
 ```
 you now have to re-run the frontend build in order to see the changes (check docs/dev_exp.md)
+
+
+## 20. Translations
+
+### 20.1 Set a default language
+
+By default MediaCMS is available in a number of languages. To set the default language, edit `settings.py` and set LANGUAGE_CODE to the code of one of the languages.
+
+### 20.2 Remove existing languages
+To limit the number of languages that are shown as available, remove them from the LANGUAGES list in `settings.py` or comment them. Only what is there is shown.
+
+### 20.3 Improve existing translation
+To make improvements in existing translated content, in a language that is already translated, check the language by the code name in `files/frontend-translations/` and edit the corresponding file.
+
+### 20.4 Add more content to existing translation
+Not all text is translated, so at any time you may find strings missing that need to be added to the translation. The idea here is that
+
+a) you made the text as translatable, in the code
+b) you add the translated string
+
+For a), you have to see if the string to be translated lives in the frontend directory (React app) or on the Django templates. There are examples for both.
+1. the Django templates, which is found in templates/ dir. Have a look on `templates/cms/about.html` to see an example of how it is done
+2. the frontend code (React), have a look how `translateString` is used in `frontend`
+
+
+After the string is marked as translatable, add the string to `files/frontend-translations/en.py` first, and then run
+
+```
+python manage.py process_translations
+```
+
+In order to populate the string in all the languages. NO PR will be accepted if this procedure is not followed. You don't have to translate the string to all supported languages, but the command has to run and populate the existing dictionaries with the new strings for all languages. This ensures that there is no missing string to be translated in any language. 
+
+After this command is run, translate the string to the language you want. If the string to be translated lives in Django templates, you don't have to re-build the frontend. If the change lives in the frontend, you will have to re-build in order to see the changes. The Makefile command `make build-frontend` can help with this.
+
+
+### 20.5 Add a new language and translate
+To add a new language: add the language in settings.py, then add the file in `files/frontend-translations/`. Make sure you copy the initial strings by copying `files/frontend-translations/en.py` to it.

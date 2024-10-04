@@ -7,6 +7,7 @@ import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
 import { ProfileLikedPage } from './ProfileLikedPage';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 declare global {
   interface Window {
@@ -21,7 +22,7 @@ interface AnonymousLikedMediaPageProps {
 
 export const AnonymousLikedMediaPage: React.FC<AnonymousLikedMediaPageProps> = ({
   id = 'liked-media',
-  title = PageStore.get('config-enabled').pages.liked.title,
+  title = translateString('Liked media'),
 }) => {
   const [resultsCount, setResultsCount] = useState<number | null>(null);
 

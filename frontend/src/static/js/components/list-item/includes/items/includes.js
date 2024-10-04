@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'timeago.js';
 import { formatViewsNumber, imageExtension } from '../../../../utils/helpers/';
 import { VideoPlayerByPageLink } from '../../../video-player/VideoPlayerByPageLink';
+import { translateString } from '../../../../utils/helpers/';
 
 export function ItemDescription(props) {
   return '' === props.description ? null : (
@@ -73,8 +74,8 @@ export function MediaItemEditLink(props) {
   }
 
   return !link ? null : (
-    <a href={link} title="Edit media" className="item-edit-link">
-      EDIT MEDIA
+    <a href={link} title={translateString("Edit media")} className="item-edit-link">
+      {translateString("EDIT MEDIA")}
     </a>
   );
 }
@@ -135,7 +136,7 @@ export function MediaItemAuthorLink(props) {
 
 export function MediaItemMetaViews(props) {
   return (
-    <span className="item-views">{formatViewsNumber(props.views) + ' ' + (1 >= props.views ? 'view' : 'views')}</span>
+    <span className="item-views">{formatViewsNumber(props.views) + ' ' + (1 >= props.views ? translateString('view') : translateString('views'))}</span>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePopup } from '../../utils/hooks/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, PopupMain } from '../_shared/';
 import { PlaylistsSelection } from '../playlists-selection/PlaylistsSelection';
+import { translateString } from '../../utils/helpers/';
 
 function mediaSavePopupPages(onTriggerPopupClose) {
   return {
@@ -39,7 +40,7 @@ export function MediaSaveButton(props) {
           <CircleIconButton type="span">
             <MaterialIcon type="playlist_add" />
           </CircleIconButton>
-          <span>SAVE</span>
+          <span>{translateString("SAVE")}</span>
         </button>
       </PopupTrigger>
 

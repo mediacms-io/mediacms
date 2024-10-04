@@ -3,13 +3,14 @@ import { ApiUrlConsumer } from '../utils/contexts/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 interface CategoriesPageProps {
   id?: string;
   title?: string;
 }
 
-export const CategoriesPage: React.FC<CategoriesPageProps> = ({ id = 'categories', title = 'Categories' }) => (
+export const CategoriesPage: React.FC<CategoriesPageProps> = ({ id = 'categories', title = translateString('Categories') }) => (
   <Page id={id}>
     <ApiUrlConsumer>
       {(apiUrl) => (

@@ -1,5 +1,6 @@
 import React, { createContext } from 'react';
 import { config as mediacmsConfig } from '../settings/config.js';
+import { translateString } from '../../utils/helpers/';
 
 const config = mediacmsConfig(window.MediaCMS);
 
@@ -17,7 +18,7 @@ function popupTopNavItems() {
       items.push({
         link: links.user.addMedia,
         icon: 'video_call',
-        text: 'Upload media',
+        text: translateString('Upload media'),
         itemAttr: {
           className: 'visible-only-in-small',
         },
@@ -27,7 +28,7 @@ function popupTopNavItems() {
         items.push({
           link: user.pages.media,
           icon: 'video_library',
-          text: 'My media',
+          text: translateString('My media'),
         });
       }
     }
@@ -35,7 +36,7 @@ function popupTopNavItems() {
     items.push({
       link: links.signout,
       icon: 'exit_to_app',
-      text: 'Sign out',
+      text: translateString('Sign out'),
     });
   }
 
@@ -64,7 +65,7 @@ function popupMiddleNavItems() {
         itemType: 'link',
         icon: 'login',
         iconPos: 'left',
-        text: 'Sign in',
+        text: translateString('Sign in'),
         link: links.signin,
         linkAttr: {
           className: hasThemeSwitcher ? 'visible-only-in-small' : 'visible-only-in-extra-small',
@@ -77,7 +78,7 @@ function popupMiddleNavItems() {
         itemType: 'link',
         icon: 'person_add',
         iconPos: 'left',
-        text: 'Register',
+        text: translateString('Register'),
         link: links.register,
         linkAttr: {
           className: hasThemeSwitcher ? 'visible-only-in-small' : 'visible-only-in-extra-small',
@@ -88,14 +89,14 @@ function popupMiddleNavItems() {
     items.push({
       link: links.user.editProfile,
       icon: 'brush',
-      text: 'Edit profile',
+      text: translateString('Edit profile'),
     });
 
     if (user.can.changePassword) {
       items.push({
         link: links.changePassword,
         icon: 'lock',
-        text: 'Change password',
+        text: translateString('Change password'),
       });
     }
   }

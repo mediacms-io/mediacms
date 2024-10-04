@@ -1,6 +1,7 @@
 import os
 
 from celery.schedules import crontab
+from django.utils.translation import gettext_lazy as _
 
 DEBUG = False
 
@@ -311,6 +312,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -507,3 +509,25 @@ try:
         from .dev_settings import *  # noqa
 except ImportError:
     pass
+
+LANGUAGES = [
+    ('ar', _('Arabic')),
+    ('bn', _('Bengali')),
+    ('nl', _('Dutch')),
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('de', _('German')),
+    ('hi', _('Hindi')),
+    ('id', _('Indonesian')),
+    ('ja', _('Japanese')),
+    ('ko', _('Korean')),
+    ('pt', _('Portuguese')),
+    ('ru', _('Russian')),
+    ('zh-hans', _('Simplified Chinese')),
+    ('es', _('Spanish')),
+    ('tr', _('Turkish')),
+    ('el', _('Greek')),
+    ('ur', _('Urdu')),
+]
+
+LANGUAGE_CODE = 'en'  # default language
