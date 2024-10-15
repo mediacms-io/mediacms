@@ -25,7 +25,16 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-about"></div>{% endif %}
+{% if user %}<div id="page-profile-about">
+        <h2>{{user.name}}</h2>
+        <ul>
+                <li><a href="/user/{{user.username}}/about">ABOUT</a></li>
+                <li><a href="/user/{{user.username}}">MEDIA</a></li>
+                <li><a href="/user/{{user.username}}/playlists">PLAYLISTS</a></li>
+        </ul>
+        <h3>Biography</h3>
+        <p>{{user.description}}</p>
+</div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}

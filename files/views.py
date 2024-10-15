@@ -216,6 +216,7 @@ def featured_media(request):
     """List featured media view"""
 
     context = {}
+    context["media"] = list(Media.objects.filter(Q(listable=True), featured=True))[:50]
     return render(request, "cms/featured-media.html", context)
 
 
@@ -223,6 +224,9 @@ def index(request):
     """Index view"""
 
     context = {}
+    context["media_featured"] = list(Media.objects.filter(Q(listable=True), featured=True))[:10]
+    context["media_recommended"] = list(show_recommended_media(request, limit=10))
+    context["media_latest"] = list(Media.objects.filter(Q(listable=True)).order_by("-add_date"))[:50]
     return render(request, "cms/index.html", context)
 
 
@@ -230,6 +234,7 @@ def latest_media(request):
     """List latest media view"""
 
     context = {}
+    context["media"] = list(Media.objects.filter(Q(listable=True)).order_by("-add_date"))[:50]
     return render(request, "cms/latest-media.html", context)
 
 
@@ -275,6 +280,7 @@ def recommended_media(request):
     """List recommended media view"""
 
     context = {}
+    context["media"] = list(show_recommended_media(request, limit=50))
     return render(request, "cms/recommended-media.html", context)
 
 
@@ -364,6 +370,7 @@ def view_playlist(request, friendly_token):
 
     context = {}
     context["playlist"] = playlist
+    context["media"] = [c.media for c in PlaylistMedia.objects.filter(playlist=playlist)]
     return render(request, "cms/playlist.html", context)
 
 

@@ -8,6 +8,7 @@ import tempfile
 import uuid
 
 import m3u8
+import webvtt
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
@@ -793,6 +794,34 @@ class Media(models.Model):
                     "src": helpers.url_from_path(subtitle.subtitle_file.path),
                     "srclang": subtitle.language.code,
                     "label": subtitle.language.title,
+                }
+            )
+        return ret
+
+    @property
+    def subtitles_info_contents(self):
+        """Property used on serializers
+        Returns subtitles info with file data
+        """
+
+        ret = []
+        for subtitle in self.subtitles.all():
+            contents = open(subtitle.subtitle_file.path, 'r').read()
+            text = ""
+            try:
+                lines = webvtt.read(subtitle.subtitle_file.path)
+                for line in lines:
+                    text += line.text + " "
+            except Exception:
+                pass
+
+            ret.append(
+                {
+                    "src": helpers.url_from_path(subtitle.subtitle_file.path),
+                    "srclang": subtitle.language.code,
+                    "label": subtitle.language.title,
+                    "contents": contents,
+                    "text": text,
                 }
             )
         return ret
