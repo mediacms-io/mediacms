@@ -354,11 +354,20 @@ ADMIN_EMAIL_LIST = ['info@mediacms.io']
 
 ### 5.13 Disallow user registrations from specific domains
 
-set domains that are not valid for registration via this variable:
+Set domains that are not valid for registration via this variable:
 
 ```
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
     'xxx.com', 'emaildomainwhatever.com']
+```
+
+Alternatively, allow only permitted domains to register.  This can be useful if you're using mediacms as a private service within an organization, and want to give free registration for those in the org, but deny registration from all other domains.  Setting this option bans all domains NOT in the list from registering.   Default is a blank list, which is ignored.   To disable, set to a blank list.
+```
+ALLOWED_DOMAINS_FOR_USER_REGISTRATION = [
+	"private.com",
+	"vod.private.com",
+	"my.favorite.domain",
+	"test.private.com"]
 ```
 
 ### 5.14 Require a review by MediaCMS editors/managers/admins
