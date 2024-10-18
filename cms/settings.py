@@ -129,7 +129,10 @@ ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 5
 USERS_CAN_SELF_REGISTER = True
 
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"]
-ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []
+
+# Comma separated list of domains:  ["organization.com", "private.organization.com", "org2.com"]
+# Empty list disables.
+ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []   
 
 # django rest settings
 REST_FRAMEWORK = {
