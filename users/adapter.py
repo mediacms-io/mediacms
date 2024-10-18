@@ -10,7 +10,6 @@ class MyAccountAdapter(DefaultAccountAdapter):
         return settings.SSL_FRONTEND_HOST + url
 
     def clean_email(self, email):
-
         if len(settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION):
             if email.split("@")[1] not in settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION:
                 raise ValidationError("Domain is not in the permitted list")
