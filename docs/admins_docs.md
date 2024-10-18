@@ -361,9 +361,7 @@ RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
     'xxx.com', 'emaildomainwhatever.com']
 ```
 
-Alternatively, allow only permitted domains to register.  This option takes precedence and will ban all domains not in the list from registering.  To disable, set it as a blank list or to False.  
-
-The default is an empty list, and it's recommended to override in local_settings.py:
+Alternatively, allow only permitted domains to register.  This can be useful if you're using mediacms as a private repo within an organization, and want to give free registration for those in the org, but deny registration from all other domains.  Setting this option bans all domains NOT in the list from registering.   Default is a blank list, which is ignored.   To disable, set to a blank list.
 ```
 ALLOWED_DOMAINS_FOR_USER_REGISTRATION = [
 	"private.com",
