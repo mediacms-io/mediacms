@@ -387,7 +387,6 @@ def produce_sprite_from_video(friendly_token):
             image_files = [f for f in os.listdir(tmpdirname) if f.startswith("img") and f.endswith(".jpg")]
             image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
             image_files = [os.path.join(tmpdirname, f) for f in image_files]
-            cmd_convert = ["convert"] + image_files + ["-append", output_name]
             cmd_convert = [
                 "convert",
                 *image_files,  # image files, unpacked into the list
