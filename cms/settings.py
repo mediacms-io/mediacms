@@ -130,6 +130,10 @@ USERS_CAN_SELF_REGISTER = True
 
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"]
 
+# Comma separated list of domains:  ["organization.com", "private.organization.com", "org2.com"]
+# Empty list disables.
+ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []   
+
 # django rest settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

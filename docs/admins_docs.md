@@ -355,11 +355,20 @@ ADMIN_EMAIL_LIST = ['info@mediacms.io']
 
 ### 5.13 Disallow user registrations from specific domains
 
-set domains that are not valid for registration via this variable:
+Set domains that are not valid for registration via this variable:
 
 ```
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = [
     'xxx.com', 'emaildomainwhatever.com']
+```
+
+Alternatively, allow only permitted domains to register.  This can be useful if you're using mediacms as a private service within an organization, and want to give free registration for those in the org, but deny registration from all other domains.  Setting this option bans all domains NOT in the list from registering.   Default is a blank list, which is ignored.   To disable, set to a blank list.
+```
+ALLOWED_DOMAINS_FOR_USER_REGISTRATION = [
+	"private.com",
+	"vod.private.com",
+	"my.favorite.domain",
+	"test.private.com"]
 ```
 
 ### 5.14 Require a review by MediaCMS editors/managers/admins
@@ -841,7 +850,6 @@ After this command is run, translate the string to the language you want. If the
 
 ### 20.5 Add a new language and translate
 To add a new language: add the language in settings.py, then add the file in `files/frontend-translations/`. Make sure you copy the initial strings by copying `files/frontend-translations/en.py` to it.
-
 
 ## 21. How to change the video frames on videos
 
