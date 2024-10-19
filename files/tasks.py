@@ -374,14 +374,28 @@ def produce_sprite_from_video(friendly_token):
         try:
             tmpdir_image_files = tmpdirname + "/img%03d.jpg"
             output_name = tmpdirname + "/sprites.jpg"
-            cmd = "{0} -i {1} -f image2 -vf 'fps=1/10, scale=160:90' {2}&&files=$(ls {3}/img*.jpg | sort -t '-' -n -k 2 | tr '\n' ' ')&&convert $files -append {4}".format(
+
+            fps = getattr(settings, 'SPRITE_NUM_SECS', 10)
+            ffmpeg_cmd = [
                 settings.FFMPEG_COMMAND,
-                media.media_file.path,
-                tmpdir_image_files,
-                tmpdirname,
-                output_name,
-            )
-            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+                "-i", media.media_file.path,
+                "-f", "image2",
+                "-vf", f"fps=1/{fps}, scale=160:90",
+                tmpdir_image_files
+            ]
+            run_command(ffmpeg_cmd)
+            image_files = [f for f in os.listdir(tmpdirname) if f.startswith("img") and f.endswith(".jpg")]
+            image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
+            image_files = [os.path.join(tmpdirname, f) for f in image_files]
+            cmd_convert = [
+                "convert",
+                *image_files,  # image files, unpacked into the list
+                "-append",
+                output_name
+            ]
+
+            run_command(cmd_convert)
+
             if os.path.exists(output_name) and get_file_type(output_name) == "image":
                 with open(output_name, "rb") as f:
                     myfile = File(f)
@@ -421,12 +435,19 @@ def create_hls(friendly_token):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
         files = " ".join([f.media_file.path for f in encodings if f.media_file])
-        cmd = "{0} --segment-duration=4 --output-dir={1} {2}".format(settings.MP4HLS_COMMAND, output_dir, files)
-        subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+        cmd = [
+            settings.MP4HLS_COMMAND,
+            '--segment-duration=4',
+            f'--output-dir={output_dir}',
+            files
+        ]
+        run_command(cmd)
+
         if existing_output_dir:
             # override content with -T !
             cmd = "cp -rT {0} {1}".format(output_dir, existing_output_dir)
-            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+            run_command(cmd)
+
             shutil.rmtree(output_dir)
             output_dir = existing_output_dir
         pp = os.path.join(output_dir, "master.m3u8")
