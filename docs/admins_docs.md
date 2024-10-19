@@ -21,6 +21,7 @@
 - [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 - [19. Rounded corners on videos](#19-rounded-corners)
 - [20. Translations](#20-translations)
+- [21. How to change the video frames on videos](#21-fames)
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -833,10 +834,22 @@ After the string is marked as translatable, add the string to `files/frontend-tr
 python manage.py process_translations
 ```
 
-In order to populate the string in all the languages. NO PR will be accepted if this procedure is not followed. You don't have to translate the string to all supported languages, but the command has to run and populate the existing dictionaries with the new strings for all languages. This ensures that there is no missing string to be translated in any language. 
+In order to populate the string in all the languages. NO PR will be accepted if this procedure is not followed. You don't have to translate the string to all supported languages, but the command has to run and populate the existing dictionaries with the new strings for all languages. This ensures that there is no missing string to be translated in any language.
 
 After this command is run, translate the string to the language you want. If the string to be translated lives in Django templates, you don't have to re-build the frontend. If the change lives in the frontend, you will have to re-build in order to see the changes. The Makefile command `make build-frontend` can help with this.
 
 
 ### 20.5 Add a new language and translate
 To add a new language: add the language in settings.py, then add the file in `files/frontend-translations/`. Make sure you copy the initial strings by copying `files/frontend-translations/en.py` to it.
+
+
+## 21. How to change the video frames on videos
+
+By default while watching a video you can hover and see the small images named sprites that are extracted every 10 seconds of a video. You can change this number to something smaller by performing the following:
+
+* edit ./frontend/src/static/js/components/media-viewer/VideoViewer/index.js and change `seconds: 10 ` to the value you prefer, eg 2.
+* edit settings.py and set the same number for value SPRITE_NUM_SECS
+* now you have to re-build the frontend: the easiest way is to run `make build-frontend`, which requires Docker
+
+After that, newly uploaded videos will have sprites generated with the new number of seconds.
+

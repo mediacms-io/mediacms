@@ -10,6 +10,11 @@ from django.conf import settings
 from . import utils
 
 
+def strip_delimiters(input_string):
+    delimiters = " \t\n\r'\"[]{}()<>\\|&;:*-=+"
+    return ''.join(char for char in input_string if char not in delimiters)
+
+
 def is_valid_uuid_format(uuid_string):
     pattern = re.compile(r'^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$', re.IGNORECASE)
     return bool(pattern.match(uuid_string))
@@ -28,6 +33,7 @@ class BaseFineUploader(object):
             self.uuid = uuid.uuid4()
 
         self.filename = os.path.basename(self.filename)
+        self.filename = strip_delimiters(self.filename)
         # avoid possibility of passing a fake path here
 
         self.file = data.get("qqfile")
