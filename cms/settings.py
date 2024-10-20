@@ -488,7 +488,7 @@ else:
 
 if GLOBAL_LOGIN_REQUIRED:
     # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(5, "login_required.middleware.LoginRequiredMiddleware")
+    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
     LOGIN_REQUIRED_IGNORE_PATHS = [
         r'/accounts/login/$',
         r'/accounts/logout/$',
