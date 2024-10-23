@@ -132,7 +132,7 @@ RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"
 
 # Comma separated list of domains:  ["organization.com", "private.organization.com", "org2.com"]
 # Empty list disables.
-ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []   
+ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []
 
 
 # django rest settings
@@ -464,7 +464,7 @@ GLOBAL_LOGIN_REQUIRED = False
 # This is useful when you want to serve content on your servers but not allow general public access.
 # You also must properly configure CORS origins for this to work.
 # Should be a comma-separated list of domains.
-GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS = [] # ['my-refering-domain.com', 'cdn.my-site.com']
+GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS = []  # ['my-refering-domain.com', 'cdn.my-site.com']
 
 # TODO: separate settings on production/development more properly, for now
 # this should be ok
@@ -506,7 +506,7 @@ if GLOBAL_LOGIN_REQUIRED:
     ]
     if (GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
         LOGIN_REQUIRED_IGNORE_PATHS += [
-            r'^/embed.*', #r'/embed\?m=.*$',
+            r'^/embed.*',  # r'/embed\?m=.*$',
             r'^/media/.*'
         ]
 
