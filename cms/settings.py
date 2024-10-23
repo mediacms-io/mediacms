@@ -134,6 +134,7 @@ RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"
 # Empty list disables.
 ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []   
 
+
 # django rest settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -459,6 +460,12 @@ LOCAL_INSTALL = False
 # it is placed here so it can be overrided on local_settings.py
 GLOBAL_LOGIN_REQUIRED = False
 
+# When GLOBAL_LOGIN_REQUIRED is True, allow certain domains to embed the content.
+# This is useful when you want to serve content on your servers but not allow general public access.
+# You also must properly configure CORS origins for this to work.
+# Should be a comma-separated list of domains.
+GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS = [] # ['my-refering-domain.com', 'cdn.my-site.com']
+
 # TODO: separate settings on production/development more properly, for now
 # this should be ok
 CELERY_TASK_ALWAYS_EAGER = False
@@ -497,6 +504,11 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/confirm-email/.*/$',
         r'/api/v[0-9]+/',
     ]
+    if (GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+        LOGIN_REQUIRED_IGNORE_PATHS += [
+            r'^/embed.*', #r'/embed\?m=.*$',
+            r'^/media/.*'
+        ]
 
 # if True, only show original, don't perform any action on videos
 DO_NOT_TRANSCODE_VIDEO = False
