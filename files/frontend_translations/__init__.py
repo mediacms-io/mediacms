@@ -32,7 +32,6 @@ for translation_file in files:
     replacement_strings[language_code] = tr_module.replacement_strings
 
 
-
 def get_translation(language_code):
     # get list of translations per language
     if not check_language_code(language_code):
