@@ -52,6 +52,8 @@ from .serializers import (
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
 
+from urllib.parse import urlparse
+
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 
