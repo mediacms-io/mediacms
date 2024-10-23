@@ -8,7 +8,6 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.core.exceptions import PermissionDenied
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -214,9 +213,9 @@ def embed_media(request):
         if request.META.get('HTTP_REFERER'):
             referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
             if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
-                raise PermissionDenied()
+                raise PermissionDenied("403 - Permission Denied")
         else:
-            raise PermissionDenied()
+            raise PermissionDenied("403 - Permission Denied")
     
     context = {}
     context["media"] = friendly_token
