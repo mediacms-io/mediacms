@@ -481,6 +481,7 @@ ADMINS_NOTIFICATIONS = {
 
 - Make the portal workflow public, but at the same time set `GLOBAL_LOGIN_REQUIRED = True` so that only logged in users can see content.
 - You can either set `REGISTER_ALLOWED = False` if you want to add members yourself or checkout options on "django-allauth settings" that affects registration in `cms/settings.py`. Eg set the portal invite only, or set email confirmation as mandatory, so that you control who registers.
+- If you wish to have private media management, but allow trusted referers to embed the media for viewing, you can over-ride the global login requirement for embedded media on some sites by setting `GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS = ['your-approved-domain.com', ...]`.   This has the effect of checking the HTTP_REFERER domain in the request against the list of approved referers, and allowing the video to stream if there is a match.   The videos you wish to embed must be set to unlisted or public in the media management, and the referring site or proxy must properly set the HTTP_REFERER header to an approved domain. You may also need to properly set or update CORS_ALLOWED_ORIGINS headers depending on your specific configuration and cross-site requirements.   Depending on your use-case, you may need to patch the default player auto-play and share links to get a suitable plain-jane video feed.
 
 ### 5.24 Enable the sitemap
 
