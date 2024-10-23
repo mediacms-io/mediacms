@@ -50,6 +50,7 @@ from .serializers import (
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
+from urllib.parse import urlparse
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
@@ -207,6 +208,21 @@ def embed_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
+    try:
+        if (settings.GLOBAL_LOGIN_REQUIRED and
+            hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and
+            settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+
+            if request.META.get('HTTP_REFERER'):
+                referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
+                if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+                    raise PermissionDenied("HTTP referer not permitted.")
+            else:
+                raise PermissionDenied("HTTP referer not set.")
+
+    except PermissionDenied:
+        return render(request,"cms/embed-403.html")
+        
     context = {}
     context["media"] = friendly_token
     return render(request, "cms/embed.html", context)
