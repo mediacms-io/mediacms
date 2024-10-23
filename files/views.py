@@ -209,13 +209,20 @@ def embed_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if (settings.GLOBAL_LOGIN_REQUIRED and hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
-        if request.META.get('HTTP_REFERER'):
-            referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
-            if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
-                raise PermissionDenied("403 - Permission Denied")
-        else:
-            raise PermissionDenied("403 - Permission Denied")
+   try:
+        if (settings.GLOBAL_LOGIN_REQUIRED and
+            hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and
+            settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+
+            if request.META.get('HTTP_REFERER'):
+                referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
+                if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+                    raise PermissionDenied("HTTP referer not permitted.")
+            else:
+                raise PermissionDenied("HTTP referer not set.")
+
+    except PermissionDenied:
+        return render(request,"cms/embed-403.html")
     
     context = {}
     context["media"] = friendly_token
