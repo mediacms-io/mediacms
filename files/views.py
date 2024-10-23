@@ -209,7 +209,10 @@ def embed_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-   try:
+    # Some media can optionally be embedded by trusted referers even if GLOBAL_LOGIN is required.
+    # On failure return a HTTP200 / render a custom 403 page to avoid hard errors
+    # in rich editors that do not set referer properly.
+    try:
         if (settings.GLOBAL_LOGIN_REQUIRED and
             hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and
             settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
