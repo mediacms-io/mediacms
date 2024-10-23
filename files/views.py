@@ -209,10 +209,7 @@ def embed_media(request):
         return HttpResponseRedirect("/")
 
     try:
-        if (settings.GLOBAL_LOGIN_REQUIRED and
-            hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and
-            settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
-
+        if (settings.GLOBAL_LOGIN_REQUIRED and hasattr(settings, 'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
             if request.META.get('HTTP_REFERER'):
                 referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
                 if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
@@ -221,7 +218,7 @@ def embed_media(request):
                 raise PermissionDenied("HTTP referer not set.")
 
     except PermissionDenied:
-        return render(request,"cms/embed-403.html")
+        return render(request, "cms/embed-403.html")
         
     context = {}
     context["media"] = friendly_token
