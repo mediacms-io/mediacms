@@ -219,7 +219,7 @@ def embed_media(request):
 
     except PermissionDenied:
         return render(request, "cms/embed-403.html")
-        
+
     context = {}
     context["media"] = friendly_token
     return render(request, "cms/embed.html", context)
