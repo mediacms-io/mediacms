@@ -213,7 +213,7 @@ def embed_media(request):
     if (settings.GLOBAL_LOGIN_REQUIRED and hasattr(settings,'GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS') and settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
         if request.META.get('HTTP_REFERER'):
             referring_domain = urlparse(request.META['HTTP_REFERER']).hostname
-            if referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS:
+            if (not referring_domain) or (referring_domain not in settings.GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
                 raise PermissionDenied()
         else:
             raise PermissionDenied()
