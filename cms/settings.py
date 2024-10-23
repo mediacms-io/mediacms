@@ -451,13 +451,17 @@ CELERY_BEAT_SCHEDULE = {
 }
 # TODO: beat, delete chunks from media root
 # chunks_dir after xx days...(also uploads_dir)
-
-
 LOCAL_INSTALL = False
 
 # this is an option to make the whole portal available to logged in users only
 # it is placed here so it can be overrided on local_settings.py
 GLOBAL_LOGIN_REQUIRED = False
+
+# When global login is True, still allow certain domains to embed the content.
+# This is useful when you want to serve content on your servers but not permit public access.
+# You also must properly configure CORS origins for this to work.
+# Should be a comma-separated list of domains: ['my-allowed-domain.com', 'cdn.my-allowed-domain.com']
+GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS = []
 
 # TODO: separate settings on production/development more properly, for now
 # this should be ok
@@ -497,6 +501,11 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/confirm-email/.*/$',
         r'/api/v[0-9]+/',
     ]
+    if (GLOBAL_LOGIN_ALLOW_EMBED_DOMAINS):
+        LOGIN_REQUIRED_IGNORE_PATHS += [
+            r'^/embed.*', #r'/embed\?m=.*$',
+            r'^/media/.*'
+        ]
 
 # if True, only show original, don't perform any action on videos
 DO_NOT_TRANSCODE_VIDEO = False
