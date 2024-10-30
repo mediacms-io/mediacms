@@ -505,7 +505,7 @@ export default function CommentsList(props) {
   function onCommentSubmitFail() {
     // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
     setTimeout(
-      () => PageActions.addNotification(commentsText.ucfirstSingle + ' submition failed', 'commentSubmitFail'),
+      () => PageActions.addNotification(commentsText.ucfirstSingle + ' submission failed', 'commentSubmitFail'),
       100
     );
   }
