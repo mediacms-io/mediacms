@@ -780,6 +780,26 @@ class Media(models.Model):
             return helpers.url_from_path(self.poster.path)
         return None
 
+
+    @property
+    def slideshow_items(self):
+        if self.media_type != "image":
+            items = []
+        else:
+            qs = Media.objects.filter(listable=True, user=self.user, media_type="image").exclude(id=self.id).order_by('id')[:20]
+
+            items = [
+                {
+                    "poster_url": item.poster_url,
+                    "url": item.get_absolute_url(),
+                    "thumbnail_url": item.thumbnail_url,
+                    "title": item.title,
+                } for item in qs
+            ]
+
+        return items
+
+
     @property
     def subtitles_info(self):
         """Property used on serializers
