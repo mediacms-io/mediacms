@@ -537,7 +537,6 @@
 }
 
 .viewer-container .player-container.audio-player-container {
-
   @media screen and (min-width: 480px) {
     padding-top: 0.75 * 56.25%;
   }
@@ -549,6 +548,15 @@
   .video-js.vjs-mediacms {
     padding-top: 0;
   }
+}
+
+.viewer-container .pdf-container {
+  width: 100%;
+  height: 900px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .viewer-container .player-container.viewer-pdf-container,
