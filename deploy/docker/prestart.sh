@@ -70,3 +70,5 @@ if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
 sed -i "s/listen \${PORT:-80}/listen $PORT/g" /etc/nginx/sites-enabled/default
+export PORT=${PORT:-8000}
+echo "Using PORT: $PORT"
