@@ -64,7 +64,7 @@ RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-stati
 
 WORKDIR /home/mediacms.io/mediacms
 
-EXPOSE 80:80
+EXPOSE 9000 80
 
 RUN chmod +x ./deploy/docker/entrypoint.sh
 
