@@ -34,12 +34,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV CELERY_APP='cms'
 
 # Use these to toggle which processes supervisord should run
-ENV ENABLE_UWSGI='yes'
-ENV ENABLE_NGINX='yes'
-ENV ENABLE_CELERY_BEAT='yes'
-ENV ENABLE_CELERY_SHORT='yes'
-ENV ENABLE_CELERY_LONG='yes'
+ENV ENABLE_UWSGI='no'
+ENV ENABLE_NGINX='no'
+ENV ENABLE_CELERY_BEAT='no'
+ENV ENABLE_CELERY_SHORT='no'
+ENV ENABLE_CELERY_LONG='no'
 ENV ENABLE_MIGRATIONS='yes'
+ENV ADMIN_USER: 'khoangpv'
+ENV ADMIN_EMAIL: 'khoangpv@gmail.com'
+ENV ADMIN_PASSWORD: 'abcd@123'
 
 # Set up virtualenv
 ENV VIRTUAL_ENV=/home/mediacms.io
