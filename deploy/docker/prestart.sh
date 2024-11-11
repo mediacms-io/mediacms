@@ -35,10 +35,10 @@ fi
 # Setting up internal nginx server
 # HTTPS setup is delegated to a reverse proxy running infront of the application
 
-cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-available/default
-cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-enabled/default
-cp deploy/docker/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
-cp deploy/docker/nginx.conf /etc/nginx/
+# cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-available/default
+# cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-enabled/default
+# cp deploy/docker/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
+# cp deploy/docker/nginx.conf /etc/nginx/
 
 #### Supervisord Configurations #####
 
