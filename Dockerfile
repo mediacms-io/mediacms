@@ -47,7 +47,7 @@ ENV ADMIN_PASSWORD: 'abcd@123'
 # Set up virtualenv
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
+ENV PORT=8000
 COPY --chown=www-data:www-data --from=compile-image /home/mediacms.io /home/mediacms.io
 
 RUN apt-get update -y && apt-get -y upgrade && apt-get install --no-install-recommends \
