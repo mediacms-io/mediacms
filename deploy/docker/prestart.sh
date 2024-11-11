@@ -1,57 +1,22 @@
 #!/bin/bash
-RANDOM_ADMIN_PASS=`python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"`
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}
+set -e
 
-if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
-    echo "Running migrations service"
-    python manage.py migrate
-    EXISTING_INSTALLATION=`echo "from users.models import User; print(User.objects.exists())" |python manage.py shell`
-    if [ "$EXISTING_INSTALLATION" = "True" ]; then
-        echo "Loaddata has already run"
-    else
-        echo "Running loaddata and creating admin user"
-        python manage.py loaddata fixtures/encoding_profiles.json
-        python manage.py loaddata fixtures/categories.json
+# Set PORT environment variable
+export PORT=${PORT:-8000}
+echo "Starting uWSGI on port: $PORT"
 
-    	# post_save, needs redis to succeed (ie. migrate depends on redis)
-        DJANGO_SUPERUSER_PASSWORD=$ADMIN_PASSWORD python manage.py createsuperuser \
-            --no-input \
-            --username="khoangpv" \
-            --email="khoangpv@gmail.com" \
-            --database=default || true
-        echo "Created admin user with password: $ADMIN_PASSWORD"
+# Copy settings
+cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
 
-    fi
-    echo "RUNNING COLLECTSTATIC"
+# Create necessary directories
+mkdir -p /home/mediacms.io/mediacms/{logs,media_files/hls}
+touch /home/mediacms.io/mediacms/logs/debug.log
 
-    python manage.py collectstatic --noinput
-
-    echo "Updating hostname ..."
-    # TODO: Get the FRONTEND_HOST from cms/local_settings.py
-    echo "from django.contrib.sites.models import Site; Site.objects.update(name='$FRONTEND_HOST', domain='$FRONTEND_HOST')" | python manage.py shell
-fi
-
-# Setting up internal nginx server
-# HTTPS setup is delegated to a reverse proxy running infront of the application
-
-# cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-available/default
-# cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-enabled/default
-# cp deploy/docker/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
-# cp deploy/docker/nginx.conf /etc/nginx/
-
-#### Supervisord Configurations #####
-
-cp deploy/docker/supervisord/supervisord-debian.conf /etc/supervisor/conf.d/supervisord-debian.conf
-
+# Enable services
 if [ X"$ENABLE_UWSGI" = X"yes" ] ; then
     echo "Enabling uwsgi app server"
     cp deploy/docker/supervisord/supervisord-uwsgi.conf /etc/supervisor/conf.d/supervisord-uwsgi.conf
 fi
-
-# if [ X"$ENABLE_NGINX" = X"yes" ] ; then
-#     echo "Enabling nginx as uwsgi app proxy and media server"
-#     cp deploy/docker/supervisord/supervisord-nginx.conf /etc/supervisor/conf.d/supervisord-nginx.conf
-# fi
 
 if [ X"$ENABLE_CELERY_BEAT" = X"yes" ] ; then
     echo "Enabling celery-beat scheduling server"
@@ -66,6 +31,5 @@ fi
 if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     echo "Enabling celery-long task worker"
     cp deploy/docker/supervisord/supervisord-celery_long.conf /etc/supervisor/conf.d/supervisord-celery_long.conf
-    rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
+    rm /var/run/mediacms/* -f
 fi
-sed -i "s/listen \${PORT:-80}/listen $PORT/g" /etc/nginx/sites-enabled/default
