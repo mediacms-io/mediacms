@@ -1,5 +1,6 @@
 #!/bin/bash
-
+export PORT=${PORT:-8000}
+echo "Using PORT: $PORT"
 RANDOM_ADMIN_PASS=`python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"`
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}
 
@@ -70,5 +71,3 @@ if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
 sed -i "s/listen \${PORT:-80}/listen $PORT/g" /etc/nginx/sites-enabled/default
-export PORT=${PORT:-8080}
-echo "Using PORT: $PORT"
