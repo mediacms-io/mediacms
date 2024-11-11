@@ -7,7 +7,7 @@
   "keywords": [],
   "main": "index.js",
   "scripts": {
-    "start": "mediacms-scripts development --config=./config/mediacms.config.js --host=0.0.0.0 --port=8088",
+    "start": "mediacms-scripts development --config=./config/mediacms.config.js --host=0.0.0.0 --port=9000",
     "dist": "mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist"
   },
   "browserslist": [
