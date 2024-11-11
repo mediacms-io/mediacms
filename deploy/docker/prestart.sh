@@ -69,3 +69,4 @@ if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     cp deploy/docker/supervisord/supervisord-celery_long.conf /etc/supervisor/conf.d/supervisord-celery_long.conf
     rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
+sed -i "s/listen 80/listen ${PORT:-80}/g" /etc/nginx/sites-enabled/default
