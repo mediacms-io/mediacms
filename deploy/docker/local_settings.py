@@ -1,4 +1,4 @@
-FRONTEND_HOST = '0.0.0.0:9000'
+FRONTEND_HOST = '0.0.0.0'
 PORTAL_NAME = 'MediaCMS'
 SECRET_KEY = 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
 POSTGRES_HOST = 'junction.proxy.rlwy.net'
