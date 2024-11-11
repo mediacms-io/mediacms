@@ -1,8 +1,8 @@
-FRONTEND_HOST = 'http://localhost'
+FRONTEND_HOST = 'https://trm-mediacms-production.up.railway.app/'
 PORTAL_NAME = 'MediaCMS'
 SECRET_KEY = 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2'
-POSTGRES_HOST = 'db'
-REDIS_LOCATION = "redis://redis:6379/1"
+POSTGRES_HOST = 'junction.proxy.rlwy.net'
+REDIS_LOCATION = "junction.proxy.rlwy.net:22595"
 
 DATABASES = {
     "default": {
