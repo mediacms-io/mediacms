@@ -17,8 +17,8 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
     	# post_save, needs redis to succeed (ie. migrate depends on redis)
         DJANGO_SUPERUSER_PASSWORD=$ADMIN_PASSWORD python manage.py createsuperuser \
             --no-input \
-            --username=$ADMIN_USER \
-            --email=$ADMIN_EMAIL \
+            --username="khoangpv" \
+            --email="khoangpv@gmail.com" \
             --database=default || true
         echo "Created admin user with password: $ADMIN_PASSWORD"
 
