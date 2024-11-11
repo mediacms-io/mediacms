@@ -62,7 +62,8 @@ cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bi
 rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
 WORKDIR /home/mediacms.io/mediacms
-
+# Thêm vào cuối file
+ENV PORT=8000
 EXPOSE $PORT
 
 RUN chmod +x ./deploy/docker/entrypoint.sh
