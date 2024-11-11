@@ -49,10 +49,10 @@ if [ X"$ENABLE_UWSGI" = X"yes" ] ; then
     cp deploy/docker/supervisord/supervisord-uwsgi.conf /etc/supervisor/conf.d/supervisord-uwsgi.conf
 fi
 
-if [ X"$ENABLE_NGINX" = X"yes" ] ; then
-    echo "Enabling nginx as uwsgi app proxy and media server"
-    cp deploy/docker/supervisord/supervisord-nginx.conf /etc/supervisor/conf.d/supervisord-nginx.conf
-fi
+# if [ X"$ENABLE_NGINX" = X"yes" ] ; then
+#     echo "Enabling nginx as uwsgi app proxy and media server"
+#     cp deploy/docker/supervisord/supervisord-nginx.conf /etc/supervisor/conf.d/supervisord-nginx.conf
+# fi
 
 if [ X"$ENABLE_CELERY_BEAT" = X"yes" ] ; then
     echo "Enabling celery-beat scheduling server"
@@ -70,5 +70,5 @@ if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
 sed -i "s/listen \${PORT:-80}/listen $PORT/g" /etc/nginx/sites-enabled/default
-export PORT=${PORT:-8000}
+export PORT=${PORT:-8080}
 echo "Using PORT: $PORT"
