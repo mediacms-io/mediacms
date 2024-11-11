@@ -7,11 +7,11 @@ REDIS_LOCATION = "redis://redis:6379/1"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mediacms",
-        "HOST": POSTGRES_HOST,
-        "PORT": "5432",
-        "USER": "mediacms",
-        "PASSWORD": "mediacms",
+        "NAME": "railway",
+        "HOST": "junction.proxy.rlwy.net",
+        "PORT": "12762",
+        "USER": "postgres",
+        "PASSWORD": "mabaOYfZjlpnUJvMnGgxTAdFgzOfuXxx",
     }
 }
 
