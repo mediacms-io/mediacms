@@ -5,6 +5,13 @@ set -e
 export PORT=${PORT:-8000}
 echo "Starting uWSGI on port: $PORT"
 
+# Copy settings
+cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
+
+# Create necessary directories
+mkdir -p /home/mediacms.io/mediacms/{logs,media_files/hls}
+touch /home/mediacms.io/mediacms/logs/debug.log
+
 # Enable services
 if [ X"$ENABLE_UWSGI" = X"yes" ] ; then
     echo "Enabling uwsgi app server"

@@ -14,4 +14,4 @@ fi
 # Start Supervisor, with Nginx and uWSGI
 echo "Starting server using supervisord..."
 
-exec /usr/bin/supervisord -n -c /home/mediacms.io/mediacms/deploy/docker/supervisord/supervisord.conf
+exec /usr/bin/supervisord
