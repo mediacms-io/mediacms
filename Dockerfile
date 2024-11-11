@@ -64,7 +64,7 @@ rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 WORKDIR /home/mediacms.io/mediacms
 
 ENV PORT=8000
-EXPOSE $PORT
+EXPOSE $PORT 9000
 
 RUN chmod +x ./deploy/docker/entrypoint.sh
 
