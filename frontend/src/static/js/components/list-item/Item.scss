@@ -69,13 +69,18 @@ a.item-thumb {
     }
   }
 
-  .item.pdf-item &,
-  .item.attachment-item & {
+  .item.pdf-item & {
     &:before {
       content: '\e415';
+    }
+  }
+  
+  .item.attachment-item & {
+    &:before {
       content: '\e24d';
     }
   }
+  
 
   .item.playlist-item & {
     &:before {
