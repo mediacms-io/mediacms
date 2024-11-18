@@ -794,6 +794,7 @@ class Media(models.Model):
                     "url": item.get_absolute_url(),
                     "thumbnail_url": item.thumbnail_url,
                     "title": item.title,
+                    "original_media_url": item.original_media_url,
                 } for item in qs
             ]
 
