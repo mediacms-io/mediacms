@@ -64,9 +64,11 @@ export default function ImageViewer() {
     setCurrentIndex(index);
   };
 
+  console.log(slideshowItems[currentIndex]?.original_media_url)
+
 
   return !image ? null : (
-    <div className={`viewer-image-container ${isModalOpen ? 'dimmed-background' : ''}`}>
+    <div className="viewer-image-container">
       <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
       {/* {slideshowItems && <div>{slideshowItems.map((i)=><li>{i.poster_url}</li>)}</div>} */}
       {isModalOpen && (
@@ -80,11 +82,11 @@ export default function ImageViewer() {
               onClick={handlePrevious}
               aria-label="Previous slide"
             >
-               &lt;
+               &#8249;
             </button>
             <div className="slideshow-image">
               <img
-                src={site.url + '/' + slideshowItems[currentIndex]?.poster_url}
+                src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url}
                 alt={`Slide ${currentIndex + 1}`}
               />
             </div>
@@ -93,7 +95,7 @@ export default function ImageViewer() {
               onClick={handleNext}
               aria-label="Next slide"
             >
-               &gt;
+               &#8250;
             </button>
             <div className="dots">
               {slideshowItems.map((_, index) => (

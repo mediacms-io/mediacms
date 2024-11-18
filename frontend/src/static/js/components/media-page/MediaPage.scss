@@ -557,53 +557,56 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 90%;
-  max-width: 900px;
+  width: auto;
+  max-width: 90%;
 }
 
 .slideshow-image img {
-  width: 100%;
-  max-height: 100vh;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%; /* Ensure image doesn't exceed container width */
+  max-height: 90vh; 
   border-radius: 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .arrow {
+  background: none;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.6);
   border: none;
-  color: black;
+  color: rgb(48, 47, 47);
   font-size: 2rem;
   cursor: pointer;
   padding: 10px;
   border-radius: 50%;
-  z-index: 1010;
+  z-index: 1000;
   transition: 0.2s ease;
 }
 
-.arrow:hover {
-  background: rgba(255, 255, 255, 0.9);
-}
+// .arrow:hover {
+//   background: #292928
+// }
 
 .arrow.left {
-  left: -50px;
+  left: 10px;
 }
 
 .arrow.right {
-  right: -50px;
+  right: 10px;
 }
 
 .dots {
   position: fixed; /* Make the dots container fixed to always be under the image */
-  bottom: 20%; /* Adjust this to control the vertical spacing */
-  left: 50%; /* Center the dots horizontally */
-  transform: translateX(-50%); /* Center the dots container */
+  bottom: 10%; 
+  left: 50%; 
+  transform: translateX(-50%); 
   display: flex;
   gap: 10px;
   justify-content: center;
-  z-index: 1000; /* Ensure it stays above the background */
+  z-index: 1000; 
 }
 
 .dot {
