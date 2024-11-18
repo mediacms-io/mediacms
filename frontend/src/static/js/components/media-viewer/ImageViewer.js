@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { SiteContext } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 
-export default function ImageViewer(props) {
+export default function ImageViewer() {
   const site = useContext(SiteContext);
 
   let initialImage = getImageUrl();
@@ -11,6 +11,9 @@ export default function ImageViewer(props) {
   initialImage = initialImage ? initialImage : '';
 
   const [image, setImage] = useState(initialImage);
+  const [slideshowItems, setSlideshowItems] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   function onImageLoad() {
     setImage(getImageUrl());
@@ -19,34 +22,91 @@ export default function ImageViewer(props) {
   function getImageUrl() {
     const media_data = MediaPageStore.get('media-data');
 
-    let imgUrl = 'string' === typeof media_data.poster_url ? media_data.poster_url.trim() : '';
-
-    if ('' === imgUrl) {
-      imgUrl = 'string' === typeof media_data.thumbnail_url ? media_data.thumbnail_url.trim() : '';
-    }
-
-    if ('' === imgUrl) {
-      imgUrl =
-        'string' === typeof MediaPageStore.get('media-original-url')
-          ? MediaPageStore.get('media-original-url').trim()
-          : '';
-    }
-
-    if ('' === imgUrl) {
-      return '#';
-    }
+    let imgUrl =
+      media_data.poster_url?.trim() ||
+      media_data.thumbnail_url?.trim() ||
+      MediaPageStore.get('media-original-url')?.trim() ||
+      '#';
 
     return site.url + '/' + imgUrl.replace(/^\//g, '');
   }
+
+  const fetchSlideShowItems = () => {
+    const media_data = MediaPageStore.get('media-data');
+    const items = media_data.slideshow_items;
+    if (Array.isArray(items)) {
+      setSlideshowItems(items);
+    }
+  };
+
+  useEffect(() => {
+    if (image) {
+      fetchSlideShowItems();
+    }
+  }, [image]);
 
   useEffect(() => {
     MediaPageStore.on('loaded_image_data', onImageLoad);
     return () => MediaPageStore.removeListener('loaded_image_data', onImageLoad);
   }, []);
 
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % slideshowItems.length);
+  };
+
+  const handlePrevious = () => {
+    setCurrentIndex((prevIndex) =>
+      (prevIndex - 1 + slideshowItems.length) % slideshowItems.length
+    );
+  };
+
+  const handleDotClick = (index) => {
+    setCurrentIndex(index);
+  };
+
+
   return !image ? null : (
-    <div className="viewer-image-container">
-      <img src={image} alt={MediaPageStore.get('media-data').title || null} />
+    <div className={`viewer-image-container ${isModalOpen ? 'dimmed-background' : ''}`}>
+      <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
+      {/* {slideshowItems && <div>{slideshowItems.map((i)=><li>{i.poster_url}</li>)}</div>} */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div
+            className="slideshow-container"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="arrow left"
+              onClick={handlePrevious}
+              aria-label="Previous slide"
+            >
+               &lt;
+            </button>
+            <div className="slideshow-image">
+              <img
+                src={site.url + '/' + slideshowItems[currentIndex]?.poster_url}
+                alt={`Slide ${currentIndex + 1}`}
+              />
+            </div>
+            <button
+              className="arrow right"
+              onClick={handleNext}
+              aria-label="Next slide"
+            >
+               &gt;
+            </button>
+            <div className="dots">
+              {slideshowItems.map((_, index) => (
+                <span
+                  key={index}
+                  className={`dot ${currentIndex === index ? 'active' : ''}`}
+                  onClick={() => handleDotClick(index)}
+                ></span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
