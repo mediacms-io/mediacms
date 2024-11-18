@@ -46,7 +46,7 @@ export default function ImageViewer() {
   }, [image]);
 
   useEffect(() => {
-    MediaPageStore.on('loaded_image_data', onImageLoad);
+    MediaPageStore.on('page_init', onImageLoad);
     return () => MediaPageStore.removeListener('loaded_image_data', onImageLoad);
   }, []);
 
@@ -55,47 +55,36 @@ export default function ImageViewer() {
   };
 
   const handlePrevious = () => {
-    setCurrentIndex((prevIndex) =>
-      (prevIndex - 1 + slideshowItems.length) % slideshowItems.length
-    );
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + slideshowItems.length) % slideshowItems.length);
   };
 
   const handleDotClick = (index) => {
     setCurrentIndex(index);
   };
-
-  console.log(slideshowItems[currentIndex]?.original_media_url)
-
+  const handleImageClick = (index) => {
+    const mediaPageUrl = site.url + slideshowItems[index]?.url;
+    window.location = mediaPageUrl;
+  };
 
   return !image ? null : (
     <div className="viewer-image-container">
       <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
       {/* {slideshowItems && <div>{slideshowItems.map((i)=><li>{i.poster_url}</li>)}</div>} */}
-      {isModalOpen && (
+      {isModalOpen && slideshowItems && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div
-            className="slideshow-container"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="arrow left"
-              onClick={handlePrevious}
-              aria-label="Previous slide"
-            >
-               &#8249;
+          <div className="slideshow-container" onClick={(e) => e.stopPropagation()}>
+            <button className="arrow left" onClick={handlePrevious} aria-label="Previous slide">
+              &#8249;
             </button>
             <div className="slideshow-image">
               <img
                 src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url}
                 alt={`Slide ${currentIndex + 1}`}
+                onClick={() => handleImageClick(currentIndex)}
               />
             </div>
-            <button
-              className="arrow right"
-              onClick={handleNext}
-              aria-label="Next slide"
-            >
-               &#8250;
+            <button className="arrow right" onClick={handleNext} aria-label="Next slide">
+              &#8250;
             </button>
             <div className="dots">
               {slideshowItems.map((_, index) => (
