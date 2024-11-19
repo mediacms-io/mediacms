@@ -51,7 +51,8 @@ export default function ImageViewer() {
   }, []);
 
   useEffect(() => {
-
+    if (!isModalOpen) return;
+    
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -59,10 +60,7 @@ export default function ImageViewer() {
     };
   }, [isModalOpen, slideshowItems]);
 
-
   const handleKeyDown = (event) => {
-    if (!isModalOpen) return; 
-
     if (event.key === 'ArrowRight') {
       handleNext();
     } else if (event.key === 'ArrowLeft') {
@@ -78,9 +76,8 @@ export default function ImageViewer() {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + slideshowItems.length) % slideshowItems.length);
   };
 
-  const handleDotClick = (index) => {
-    setCurrentIndex(index);
-  };
+  const handleDotClick = (index) => setCurrentIndex(index);
+
   const handleImageClick = (index) => {
     const mediaPageUrl = site.url + slideshowItems[index]?.url;
     window.location.href = mediaPageUrl;
