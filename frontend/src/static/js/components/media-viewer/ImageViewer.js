@@ -52,7 +52,7 @@ export default function ImageViewer() {
 
   useEffect(() => {
     if (!isModalOpen) return;
-    
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -61,12 +61,12 @@ export default function ImageViewer() {
   }, [isModalOpen, slideshowItems]);
 
   const handleKeyDown = (event) => {
-    if (event.key === 'ArrowRight') {
-      handleNext();
-    } else if (event.key === 'ArrowLeft') {
-      handlePrevious();
-    }
+    if (event.key === 'ArrowRight') handleNext();
+    if (event.key === 'ArrowLeft') handlePrevious();
+    if (event.key === 'Escape') onClose();
   };
+
+  const onClose=()=>setIsModalOpen(false)
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % slideshowItems.length);
