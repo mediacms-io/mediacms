@@ -46,7 +46,7 @@ export default function ImageViewer() {
   }, [image]);
 
   useEffect(() => {
-    MediaPageStore.on('page_init', onImageLoad);
+    MediaPageStore.on('loaded_image_data', onImageLoad);
     return () => MediaPageStore.removeListener('loaded_image_data', onImageLoad);
   }, []);
 
@@ -58,7 +58,7 @@ export default function ImageViewer() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isModalOpen, slideshowItems]);
-  
+
 
   const handleKeyDown = (event) => {
     if (!isModalOpen) return; 
