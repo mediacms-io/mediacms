@@ -50,6 +50,26 @@ export default function ImageViewer() {
     return () => MediaPageStore.removeListener('loaded_image_data', onImageLoad);
   }, []);
 
+  useEffect(() => {
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isModalOpen, slideshowItems]);
+  
+
+  const handleKeyDown = (event) => {
+    if (!isModalOpen) return; 
+
+    if (event.key === 'ArrowRight') {
+      handleNext();
+    } else if (event.key === 'ArrowLeft') {
+      handlePrevious();
+    }
+  };
+
   const handleNext = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % slideshowItems.length);
   };
@@ -63,7 +83,7 @@ export default function ImageViewer() {
   };
   const handleImageClick = (index) => {
     const mediaPageUrl = site.url + slideshowItems[index]?.url;
-    window.location = mediaPageUrl;
+    window.location.href = mediaPageUrl;
   };
 
   return !image ? null : (

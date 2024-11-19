@@ -569,6 +569,8 @@
   max-height: 90vh; 
   border-radius: 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s ease-in-out;
+
 }
 
 .arrow {
@@ -583,7 +585,7 @@
   padding: 10px;
   border-radius: 50%;
   z-index: 1000;
-  transition: 0.2s ease;
+  transition: all 0.5s ease-in-out;
 }
 
 // .arrow:hover {
@@ -615,7 +617,7 @@
   background: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.3s ease-in-out;
 }
 
 .dot.active {
