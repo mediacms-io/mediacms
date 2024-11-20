@@ -12,14 +12,24 @@ from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.parsers import FileUploadParser, FormParser, JSONParser, MultiPartParser
+from rest_framework.parsers import (
+    FileUploadParser,
+    FormParser,
+    JSONParser,
+    MultiPartParser,
+)
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import IsAuthorizedToAdd, IsAuthorizedToAddComment, IsUserOrEditor, user_allowed_to_upload
+from cms.permissions import (
+    IsAuthorizedToAdd,
+    IsAuthorizedToAddComment,
+    IsUserOrEditor,
+    user_allowed_to_upload,
+)
 from users.models import User
 
 from .forms import ContactForm, MediaForm, SubtitleForm
@@ -36,7 +46,16 @@ from .methods import (
     show_related_media,
     update_user_ratings,
 )
-from .models import Category, Comment, EncodeProfile, Encoding, Media, Playlist, PlaylistMedia, Tag
+from .models import (
+    Category,
+    Comment,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Playlist,
+    PlaylistMedia,
+    Tag,
+)
 from .serializers import (
     CategorySerializer,
     CommentSerializer,

@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Category, Comment, EncodeProfile, Encoding, Language, Media, Subtitle, Tag
+from .models import (
+    Category,
+    Comment,
+    EncodeProfile,
+    Encoding,
+    Language,
+    Media,
+    Subtitle,
+    Tag,
+)
 
 
 class CommentAdmin(admin.ModelAdmin):

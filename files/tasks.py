@@ -23,7 +23,17 @@ from users.models import User
 
 from .backends import FFmpegBackend
 from .exceptions import VideoEncodingError
-from .helpers import calculate_seconds, create_temp_file, get_file_name, get_file_type, media_file_info, produce_ffmpeg_commands, produce_friendly_token, rm_file, run_command
+from .helpers import (
+    calculate_seconds,
+    create_temp_file,
+    get_file_name,
+    get_file_type,
+    media_file_info,
+    produce_ffmpeg_commands,
+    produce_friendly_token,
+    rm_file,
+    run_command,
+)
 from .methods import list_tasks, notify_users, pre_save_action
 from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
 
@@ -376,23 +386,12 @@ def produce_sprite_from_video(friendly_token):
             output_name = tmpdirname + "/sprites.jpg"
 
             fps = getattr(settings, 'SPRITE_NUM_SECS', 10)
-            ffmpeg_cmd = [
-                settings.FFMPEG_COMMAND,
-                "-i", media.media_file.path,
-                "-f", "image2",
-                "-vf", f"fps=1/{fps}, scale=160:90",
-                tmpdir_image_files
-            ]
+            ffmpeg_cmd = [settings.FFMPEG_COMMAND, "-i", media.media_file.path, "-f", "image2", "-vf", f"fps=1/{fps}, scale=160:90", tmpdir_image_files]
             run_command(ffmpeg_cmd)
             image_files = [f for f in os.listdir(tmpdirname) if f.startswith("img") and f.endswith(".jpg")]
             image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
             image_files = [os.path.join(tmpdirname, f) for f in image_files]
-            cmd_convert = [
-                "convert",
-                *image_files,  # image files, unpacked into the list
-                "-append",
-                output_name
-            ]
+            cmd_convert = ["convert", *image_files, "-append", output_name]  # image files, unpacked into the list
 
             run_command(cmd_convert)
 
@@ -435,12 +434,7 @@ def create_hls(friendly_token):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
         files = " ".join([f.media_file.path for f in encodings if f.media_file])
-        cmd = [
-            settings.MP4HLS_COMMAND,
-            '--segment-duration=4',
-            f'--output-dir={output_dir}',
-            files
-        ]
+        cmd = [settings.MP4HLS_COMMAND, '--segment-duration=4', f'--output-dir={output_dir}', files]
         run_command(cmd)
 
         if existing_output_dir:

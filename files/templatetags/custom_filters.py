@@ -7,5 +7,4 @@ register = template.Library()
 
 @register.filter
 def custom_translate(string, lang_code):
-
     return translate_string(lang_code, string)

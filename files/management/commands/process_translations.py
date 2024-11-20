@@ -18,7 +18,10 @@ class Command(BaseCommand):
         files = os.listdir(translations_dir)
         files = [f for f in files if f.endswith('.py') and f not in ('__init__.py', 'en.py')]
         # Import the original English translations
-        from files.frontend_translations.en import replacement_strings, translation_strings
+        from files.frontend_translations.en import (
+            replacement_strings,
+            translation_strings,
+        )
 
         for file in files:
             file_path = os.path.join(translations_dir, file)

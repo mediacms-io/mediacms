@@ -145,7 +145,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "ratings_info",
             "add_subtitle_url",
             "allow_download",
-            "slideshow_items"
+            "slideshow_items",
         )
 
 
