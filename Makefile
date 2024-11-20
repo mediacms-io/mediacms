@@ -13,3 +13,7 @@ build-frontend:
 	docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
 	cp -r frontend/dist/static/* static/
 	docker-compose -f docker-compose-dev.yaml restart web
+
+test:
+	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+

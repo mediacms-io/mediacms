@@ -439,10 +439,15 @@ def create_hls(friendly_token):
 
         if existing_output_dir:
             # override content with -T !
-            cmd = "cp -rT {0} {1}".format(output_dir, existing_output_dir)
+            cmd = ["cp", "-rT", output_dir, existing_output_dir]
             run_command(cmd)
 
-            shutil.rmtree(output_dir)
+            try:
+                shutil.rmtree(output_dir)
+            except:  # noqa
+                # this was breaking in some cases where it was already deleted
+                # because create_hls was running multiple times
+                pass
             output_dir = existing_output_dir
         pp = os.path.join(output_dir, "master.m3u8")
         if os.path.exists(pp):
