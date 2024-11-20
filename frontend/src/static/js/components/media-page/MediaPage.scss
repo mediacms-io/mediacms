@@ -531,14 +531,6 @@
   }
 }
 
-// .viewer-image-container img {
-//   cursor: pointer;
-//   width: 100%;
-//   max-width: 600px;
-//   display: block;
-//   margin: 0 auto;
-// }
-
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -566,31 +558,37 @@
   width: auto;
   height: auto;
   max-width: 100%; /* Ensure image doesn't exceed container width */
-  max-height: 90vh; 
+  max-height: 90vh;
   border-radius: 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: all 0.5s ease-in-out;
-
+  transition: transform 60s ease-in-out, opacity 60 ease-in-out;
 }
 
 .arrow {
-  background: none;
   position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  color: rgb(48, 47, 47);
+  color: white;
   font-size: 2rem;
+  background-color: rgba(0, 0, 0, 0.2);
   cursor: pointer;
   padding: 10px;
   border-radius: 50%;
   z-index: 1000;
-  transition: all 0.5s ease-in-out;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-// .arrow:hover {
-//   background: #292928
-// }
+.arrow:hover {
+  background: rgba(92, 78, 78, 0.6);
+  transform: translateY(-50%) scale(1.1);
+}
 
 .arrow.left {
   left: 10px;
@@ -602,13 +600,13 @@
 
 .dots {
   position: fixed; /* Make the dots container fixed to always be under the image */
-  bottom: 10%; 
-  left: 50%; 
-  transform: translateX(-50%); 
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 10px;
   justify-content: center;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 .dot {
@@ -627,8 +625,6 @@
 .dot:hover {
   background: rgba(255, 255, 255, 0.8);
 }
-
-
 
 .viewer-container .player-container {
   @media screen and (min-width: 480px) {
