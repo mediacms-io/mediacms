@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
                 f.write("replacement_strings = {\n")
                 for key, value in replacement_strings_wip.items():
-                    f.write(f'    "{key}": "{value}",\n')
+                    f.write(f'    "{key}": "{value}",\n')  # noqa
                 f.write("}\n")
 
             self.stdout.write(self.style.SUCCESS(f'Processed {file}'))
