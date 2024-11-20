@@ -47,7 +47,7 @@ class Command(BaseCommand):
             with open(file_path, 'w') as f:
                 f.write("translation_strings = {\n")
                 for key, value in translation_strings_wip.items():
-                    f.write(f'    "{key}": "{value}",\n')
+                    f.write(f'    "{key}": "{value}",\n')  # noqa
                 f.write("}\n\n")
 
                 f.write("replacement_strings = {\n")

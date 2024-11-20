@@ -386,7 +386,7 @@ def produce_sprite_from_video(friendly_token):
             output_name = tmpdirname + "/sprites.jpg"
 
             fps = getattr(settings, 'SPRITE_NUM_SECS', 10)
-            ffmpeg_cmd = [settings.FFMPEG_COMMAND, "-i", media.media_file.path, "-f", "image2", "-vf", f"fps=1/{fps}, scale=160:90", tmpdir_image_files]
+            ffmpeg_cmd = [settings.FFMPEG_COMMAND, "-i", media.media_file.path, "-f", "image2", "-vf", f"fps=1/{fps}, scale=160:90", tmpdir_image_files]  # noqa
             run_command(ffmpeg_cmd)
             image_files = [f for f in os.listdir(tmpdirname) if f.startswith("img") and f.endswith(".jpg")]
             image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
