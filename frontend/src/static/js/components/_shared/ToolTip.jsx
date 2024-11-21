@@ -19,7 +19,7 @@ function Tooltip({ children, content, title, position = 'right', classNames = ''
   };
 
   useEffect(() => {
-    if (active && popUpRef.current) {
+    if (popUpRef.current) {
       setTooltipDimensions({
         height: popUpRef.current.clientHeight || 0,
         width: popUpRef.current.clientWidth || 0,

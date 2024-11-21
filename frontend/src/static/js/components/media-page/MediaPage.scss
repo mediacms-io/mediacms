@@ -564,6 +564,16 @@
   transition: transform 60s ease-in-out, opacity 60 ease-in-out;
 }
 
+.slideshow-title {
+  margin-top: 10px;
+  text-align: start;
+  font-size: 16px;
+  font-weight: bold;
+  color: #F0F0F0;
+  z-index: 1200;
+}
+
+
 .arrow {
   position: absolute;
   display: flex;

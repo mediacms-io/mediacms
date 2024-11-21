@@ -67,7 +67,7 @@ export default function ImageViewer() {
     if (event.key === 'Escape') onClose();
   };
 
-  const onClose=()=>setIsModalOpen(false)
+  const onClose = () => setIsModalOpen(false);
 
   const handleNext = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % slideshowItems.length);
@@ -86,11 +86,9 @@ export default function ImageViewer() {
 
   return !image ? null : (
     <div className="viewer-image-container">
-      <Tooltip content={"load full-image"} position='center'>
-
-      <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
+      <Tooltip content={'load full-image'} position="center">
+        <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
       </Tooltip>
-      {/* {slideshowItems && <div>{slideshowItems.map((i)=><li>{i.poster_url}</li>)}</div>} */}
       {isModalOpen && slideshowItems && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="slideshow-container" onClick={(e) => e.stopPropagation()}>
@@ -103,6 +101,9 @@ export default function ImageViewer() {
                 alt={`Slide ${currentIndex + 1}`}
                 onClick={() => handleImageClick(currentIndex)}
               />
+              <div className="slideshow-title">
+              {slideshowItems[currentIndex]?.title}
+            </div>
             </div>
             <button className="arrow right" onClick={handleNext} aria-label="Next slide">
               &#8250;
