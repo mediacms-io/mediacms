@@ -7,6 +7,8 @@ import ImageViewer from '../components/media-viewer/ImageViewer';
 import PdfViewer from '../components/media-viewer/PdfViewer';
 import VideoViewer from '../components/media-viewer/VideoViewer';
 import { _VideoMediaPage } from './_VideoMediaPage';
+import { formatInnerLink } from '../utils/helpers';
+import {SiteContext} from '../utils/contexts/';
 
 if (window.MediaCMS.site.devEnv) {
   const extractUrlParams = () => {
@@ -52,7 +54,8 @@ export class MediaPage extends _VideoMediaPage {
       case 'image':
         return <ImageViewer />;
       case 'pdf':
-        return <PdfViewer />;
+        const pdf_url = formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url);
+        return <PdfViewer fileUrl={pdf_url} />;
     }
 
     return <AttachmentViewer />;

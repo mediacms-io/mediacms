@@ -537,7 +537,6 @@
 }
 
 .viewer-container .player-container.audio-player-container {
-
   @media screen and (min-width: 480px) {
     padding-top: 0.75 * 56.25%;
   }
@@ -550,6 +549,26 @@
     padding-top: 0;
   }
 }
+
+.viewer-container .pdf-container {
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%; // Default width for mobile
+  height: 400px; // Default height for mobile
+
+  @media (min-width: 768px) and (max-width: 1023px) { // Tablets
+    width: 90%;
+    height: 600px;
+  }
+
+  @media (min-width: 1024px) { // Desktop
+    width: 85%;
+    height: 900px;
+  }
+}
+
 
 .viewer-container .player-container.viewer-pdf-container,
 .viewer-container .player-container.viewer-attachment-container {
