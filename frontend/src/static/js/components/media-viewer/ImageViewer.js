@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SiteContext } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
+import Tooltip from '../_shared/ToolTip';
 
 export default function ImageViewer() {
   const site = useContext(SiteContext);
@@ -85,7 +86,10 @@ export default function ImageViewer() {
 
   return !image ? null : (
     <div className="viewer-image-container">
+      <Tooltip content={"load full-image"} position='center'>
+
       <img src={image} alt={MediaPageStore.get('media-data').title || null} onClick={() => setIsModalOpen(true)} />
+      </Tooltip>
       {/* {slideshowItems && <div>{slideshowItems.map((i)=><li>{i.poster_url}</li>)}</div>} */}
       {isModalOpen && slideshowItems && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
