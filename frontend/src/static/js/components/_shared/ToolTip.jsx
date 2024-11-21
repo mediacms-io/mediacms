@@ -36,13 +36,15 @@ function Tooltip({ children, content, title, position = 'right', classNames = ''
   };
 
   return (
-    <div onMouseEnter={showTip} onMouseLeave={hideTip} className="relative inline-block cursor-pointer">
-      {active && (
-        <div ref={popUpRef} className={`tooltip-box ${classNames}`} style={tooltipPositionStyles[position]}>
-          {title && <div className="tooltip-title">{title}</div>}
-          <div className="tooltip-content">{content}</div>
-        </div>
-      )}
+    <div onMouseEnter={showTip} onMouseLeave={hideTip}>
+      <div
+        ref={popUpRef}
+        className={`tooltip-box ${active ? 'show' : 'hide'} ${classNames}`}
+        style={tooltipPositionStyles[position]}
+      >
+        {title && <div className="tooltip-title">{title}</div>}
+        <div className="tooltip-content">{content}</div>
+      </div>
       {children}
     </div>
   );
