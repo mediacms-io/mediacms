@@ -1,3 +1,5 @@
+import os
+
 FRONTEND_HOST = os.getenv('FRONTEND_HOST', 'http://localhost')
 PORTAL_NAME = os.getenv('PORTAL_NAME', 'MediaCMS')
 SECRET_KEY = os.getenv('SECRET_KEY', 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2')
