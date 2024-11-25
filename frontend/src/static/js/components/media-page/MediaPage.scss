@@ -553,9 +553,7 @@
   max-width: 90%;
 }
 
-.slideshow-image{
-  position: relative;
-}
+
 
 .slideshow-image img {
   display: block;
@@ -612,33 +610,54 @@
   right: 10px;
 }
 
-.dots {
-  position: fixed; /* Make the dots container fixed to always be under the image */
+.thumbnail-navigation {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
   bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.thumbnail-container {
   display: flex;
   gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  max-width: 80%;
+  padding: 10px 0;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.thumbnail-container.center-thumbnails {
+  display: flex;
   justify-content: center;
-  z-index: 1000;
+  overflow: visible; /* No scrollbars for fewer thumbnails */
+}
+
+.thumbnail-container::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .thumbnail {
-  width: 50px;  
-  height: 50px;
-  object-fit: cover;  
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
   border: 2px solid transparent;
   border-radius: 5px;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: transform 0.3s ease;
 }
 
 .thumbnail.active {
-  border-color: rgba(255, 255, 255, 1); 
+  border-color: white;
 }
 
 .thumbnail:hover {
-  opacity: 0.8;  
+  transform: scale(1.1);
 }
 
 .viewer-container .player-container {

@@ -18,6 +18,8 @@ export default function ImageViewer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isImgLoading, setIsImgLoading] = useState(true);
 
+  const thumbnailRef = React.useRef();
+
   function onImageLoad() {
     setImage(getImageUrl());
   }
@@ -91,6 +93,17 @@ export default function ImageViewer() {
     window.location.href = mediaPageUrl;
   };
 
+  const scrollThumbnails = (direction) => {
+    if (thumbnailRef.current) {
+      const scrollAmount = 10;
+      if (direction === 'left') {
+        thumbnailRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else if (direction === 'right') {
+        thumbnailRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }
+  };
+
   return !image ? null : (
     <div className="viewer-image-container">
       <Tooltip content={'load full-image'} position="center">
@@ -121,16 +134,31 @@ export default function ImageViewer() {
                 &#8250;
               </button>
             )}
-            <div className="dots">
-              {slideshowItems.map((item, index) => (
-                <img
-                  key={index}
-                  src={site.url + '/' + item.thumbnail_url} 
-                  alt={`Thumbnail ${index + 1}`}
-                  className={`thumbnail ${currentIndex === index ? 'active' : ''}`}
-                  onClick={() => handleDotClick(index)}
-                />
-              ))}
+            <div className="thumbnail-navigation">
+              {slideshowItems.length > 5 && (
+                <button className="arrow left" onClick={() => scrollThumbnails('left')} aria-label="Scroll left">
+                  &#8249;
+                </button>
+              )}
+              <div
+                className={`thumbnail-container ${slideshowItems.length <= 5 ? 'center-thumbnails' : ''}`}
+                ref={thumbnailRef}
+              >
+                {slideshowItems.map((item, index) => (
+                  <img
+                    key={index}
+                    src={site.url + '/' + item.thumbnail_url}
+                    alt={`Thumbnail ${index + 1}`}
+                    className={`thumbnail ${currentIndex === index ? 'active' : ''}`}
+                    onClick={() => handleDotClick(index)}
+                  />
+                ))}
+              </div>
+              {slideshowItems.length > 5 && (
+                <button className="arrow right" onClick={() => scrollThumbnails('right')} aria-label="Scroll right">
+                  &#8250;
+                </button>
+              )}
             </div>
           </div>
         </div>
