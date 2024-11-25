@@ -553,6 +553,10 @@
   max-width: 90%;
 }
 
+.slideshow-image{
+  position: relative;
+}
+
 .slideshow-image img {
   display: block;
   width: auto;
@@ -569,7 +573,7 @@
   text-align: start;
   font-size: 16px;
   font-weight: bold;
-  color: #F0F0F0;
+  color: #bdb6b6;
   z-index: 1200;
 }
 

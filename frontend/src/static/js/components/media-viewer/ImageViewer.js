@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SiteContext } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
+import { SpinnerLoader } from '../_shared';
 import Tooltip from '../_shared/ToolTip';
 
 export default function ImageViewer() {
@@ -15,6 +16,7 @@ export default function ImageViewer() {
   const [slideshowItems, setSlideshowItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isImgLoading, setIsImgLoading] = useState(true);
 
   function onImageLoad() {
     setImage(getImageUrl());
@@ -70,14 +72,19 @@ export default function ImageViewer() {
   const onClose = () => setIsModalOpen(false);
 
   const handleNext = () => {
+    setIsImgLoading(true);
     setCurrentIndex((prevIndex) => (prevIndex + 1) % slideshowItems.length);
   };
 
   const handlePrevious = () => {
+    setIsImgLoading(true);
     setCurrentIndex((prevIndex) => (prevIndex - 1 + slideshowItems.length) % slideshowItems.length);
   };
 
-  const handleDotClick = (index) => setCurrentIndex(index);
+  const handleDotClick = (index) => {
+    setIsImgLoading(true);
+    setCurrentIndex(index);
+  };
 
   const handleImageClick = (index) => {
     const mediaPageUrl = site.url + slideshowItems[index]?.url;
@@ -92,22 +99,28 @@ export default function ImageViewer() {
       {isModalOpen && slideshowItems && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="slideshow-container" onClick={(e) => e.stopPropagation()}>
-            <button className="arrow left" onClick={handlePrevious} aria-label="Previous slide">
-              &#8249;
-            </button>
+            {!isImgLoading && (
+              <button className="arrow left" onClick={handlePrevious} aria-label="Previous slide">
+                &#8249;
+              </button>
+            )}
             <div className="slideshow-image">
+              {isImgLoading && <SpinnerLoader size="large"/>}
               <img
                 src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url}
                 alt={`Slide ${currentIndex + 1}`}
                 onClick={() => handleImageClick(currentIndex)}
+                onLoad={() => setIsImgLoading(false)}
+                onError={() => setIsImgLoading(false)}
+                style={{ display: isImgLoading ? 'none' : 'block' }}
               />
-              <div className="slideshow-title">
-              {slideshowItems[currentIndex]?.title}
+              {!isImgLoading && <div className="slideshow-title">{slideshowItems[currentIndex]?.title}</div>}
             </div>
-            </div>
-            <button className="arrow right" onClick={handleNext} aria-label="Next slide">
-              &#8250;
-            </button>
+            {!isImgLoading && (
+              <button className="arrow right" onClick={handleNext} aria-label="Next slide">
+                &#8250;
+              </button>
+            )}
             <div className="dots">
               {slideshowItems.map((_, index) => (
                 <span
