@@ -623,21 +623,22 @@
   z-index: 1000;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
+.thumbnail {
+  width: 50px;  
+  height: 50px;
+  object-fit: cover;  
+  border: 2px solid transparent;
+  border-radius: 5px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
 }
 
-.dot.active {
-  background: rgba(255, 255, 255, 1);
+.thumbnail.active {
+  border-color: rgba(255, 255, 255, 1); 
 }
 
-.dot:hover {
-  background: rgba(255, 255, 255, 0.8);
+.thumbnail:hover {
+  opacity: 0.8;  
 }
 
 .viewer-container .player-container {

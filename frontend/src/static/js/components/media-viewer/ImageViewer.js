@@ -105,7 +105,7 @@ export default function ImageViewer() {
               </button>
             )}
             <div className="slideshow-image">
-              {isImgLoading && <SpinnerLoader size="large"/>}
+              {isImgLoading && <SpinnerLoader size="large" />}
               <img
                 src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url}
                 alt={`Slide ${currentIndex + 1}`}
@@ -122,12 +122,14 @@ export default function ImageViewer() {
               </button>
             )}
             <div className="dots">
-              {slideshowItems.map((_, index) => (
-                <span
+              {slideshowItems.map((item, index) => (
+                <img
                   key={index}
-                  className={`dot ${currentIndex === index ? 'active' : ''}`}
+                  src={site.url + '/' + item.thumbnail_url} 
+                  alt={`Thumbnail ${index + 1}`}
+                  className={`thumbnail ${currentIndex === index ? 'active' : ''}`}
                   onClick={() => handleDotClick(index)}
-                ></span>
+                />
               ))}
             </div>
           </div>
