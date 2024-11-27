@@ -62,6 +62,8 @@ def chunkize_media(self, friendly_token, profiles, force=True):
     chunks_file_name += ".mkv"
     cmd = [
         settings.FFMPEG_COMMAND,
+        "-threads",
+        str(settings.FFMPEG_THREADS),
         "-y",
         "-i",
         media.media_file.path,
@@ -233,6 +235,8 @@ def encode_media(
         # -ss 5 start from 5 second. -t 25 until 25 sec
         command = [
             settings.FFMPEG_COMMAND,
+            "-threads",
+            str(settings.FFMPEG_THREADS),
             "-y",
             "-ss",
             "3",
