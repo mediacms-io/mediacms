@@ -495,7 +495,7 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/signup/$',
         r'/accounts/password/.*/$',
         r'/accounts/confirm-email/.*/$',
-        r'/api/v[0-9]+/',
+        #        r'/api/v[0-9]+/',
     ]
 
 # if True, only show original, don't perform any action on videos
