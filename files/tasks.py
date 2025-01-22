@@ -48,7 +48,7 @@ ERRORS_LIST = [
 ]
 
 
-@task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30)
+@task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
 def chunkize_media(self, friendly_token, profiles, force=True):
     """Break media in chunks and start encoding tasks"""
 
