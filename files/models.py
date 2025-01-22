@@ -817,10 +817,8 @@ class Media(models.Model):
         """
 
         ret = []
-        
         # Retrieve all subtitles and sort by the first letter of their associated language's title
         sorted_subtitles = sorted(self.subtitles.all(), key=lambda s: s.language.title[0])
-        
         for subtitle in sorted_subtitles:
             ret.append(
                 {
