@@ -270,13 +270,6 @@ def media_file_info(input_file):
         ret["fail"] = True
         return ret
 
-    cmd = ["md5sum", input_file]
-    stdout = run_command(cmd).get("out")
-    if stdout:
-        md5sum = stdout.split()[0]
-    else:
-        md5sum = ""
-
     cmd = [
         settings.FFPROBE_COMMAND,
         "-loglevel",
@@ -460,8 +453,19 @@ def media_file_info(input_file):
     ret["video_info"] = video_info
     ret["audio_info"] = audio_info
     ret["is_video"] = True
-    ret["md5sum"] = md5sum
     return ret
+
+
+def media_file_md5sum(input_file):
+    """
+    Get the md5sum of a file
+    """
+    cmd = ["md5sum", input_file]
+    stdout = run_command(cmd).get("out")
+    if stdout:
+        return stdout.split()[0]
+    else:
+        return ""
 
 
 def calculate_seconds(duration):
