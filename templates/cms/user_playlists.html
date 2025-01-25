@@ -25,7 +25,25 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-playlists"></div>{% endif %}
+{% if user %}<div id="page-profile-playlists">
+        <h2>{{user.name}}</h2>
+        <ul>
+                <li><a href="/user/{{user.username}}/about">ABOUT</a></li>
+                <li><a href="/user/{{user.username}}">MEDIA</a></li>
+                <li><a href="/user/{{user.username}}/playlists">PLAYLISTS</a></li>
+        </ul>
+        <h3>Created playlists</h3>
+        <ul>
+        {% for playlist_object in playlists %}
+        <li>
+                <h4><a href="/playlists/{{playlist_object.friendly_token}}"><img src="{{playlist_object.thumbnail_url}}" alt="Thumbnail" title="{{playlist_object.title}}" loading="lazy" /><br />
+                                {{playlist_object.title}}</a></h4>
+                <p>{{playlist_object.media_count}} videos</p>
+                <p>Published {{playlist_object.add_date}}</p>
+        </li>
+        {% endfor %}
+        </ul>
+</div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}

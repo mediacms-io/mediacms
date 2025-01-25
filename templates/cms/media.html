@@ -121,7 +121,21 @@
 <link href="{% static "css/media.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
-{% block content %}<div id="page-media"></div>{% endblock content %}
+{% block content %}
+<div id="page-media">
+<div id="media-metadata">
+<h2>{{media_object.title}}</h2>
+<p>Published {{media_object.add_date}}</p>
+<p>{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}</p>
+{% for subtitle_object in media_object.subtitles_info_contents %}
+{% if subtitle_object.text != "" %}
+<h3>Transcript in {{ subtitle_object.label }}</h3>
+<p>{{ subtitle_object.text }}</p>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+{% endblock content %}
 
 {% block bottomimports %}
 <script src="{% static "js/media.js" %}"></script>
