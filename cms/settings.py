@@ -399,6 +399,9 @@ LOGGING = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
+        "OPTIONS": {
+                "options": "-c search_path=mediacms"
+        },
         "NAME": "mediacms",
         "HOST": "127.0.0.1",
         "PORT": "5432",
