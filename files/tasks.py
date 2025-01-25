@@ -427,15 +427,24 @@ def create_hls(friendly_token):
 
     p = media.uid.hex
     output_dir = os.path.join(settings.HLS_DIR, p)
-    encodings = media.encodings.filter(profile__extension="mp4", status="success", chunk=False, profile__codec="h264")
+    encodings = media.encodings.filter(profile__extension="mp4", chunk=False, profile__codec="h264")
+
+    if not all((x.status == "success" for x in encodings)):
+        logger.info('not all encodings are finished')
+        return False
+
     if encodings:
         existing_output_dir = None
         if os.path.exists(output_dir):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
-        files = " ".join([f.media_file.path for f in encodings if f.media_file])
-        cmd = [settings.MP4HLS_COMMAND, '--segment-duration=4', f'--output-dir={output_dir}', files]
+        files = [f.media_file.path for f in encodings if f.media_file]
+        cmd = [settings.MP4HLS_COMMAND, '--segment-duration=4', f'--output-dir={output_dir}', *files]
         run_command(cmd)
+
+        if 'out' not in result:
+            logger.error(f'bento failed: {result["error"]}')
+            return False
 
         if existing_output_dir:
             # override content with -T !
