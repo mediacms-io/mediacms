@@ -93,16 +93,16 @@ class LoginSerializer(serializers.Serializer):
         username = data.get('username', None)
         password = data.get('password', None)
 
-        if settings.ACCOUNT_AUTHENTICATION_METHOD == 'username' and not username:
+        if settings.ACCOUNT_LOGIN_METHODS == {"username"} and not username:
             raise serializers.ValidationError('username is required to log in.')
         else:
             username_or_email = username
-        if settings.ACCOUNT_AUTHENTICATION_METHOD == 'email' and not email:
+        if settings.ACCOUNT_LOGIN_METHODS == {"email"} and not email:
             raise serializers.ValidationError('email is required to log in.')
         else:
             username_or_email = email
 
-        if settings.ACCOUNT_AUTHENTICATION_METHOD == 'username_email' and not (username or email):
+        if settings.ACCOUNT_LOGIN_METHODS == {"username", "email"} and not (username or email):
             raise serializers.ValidationError('username or email is required to log in.')
         else:
             username_or_email = username or email

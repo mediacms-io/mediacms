@@ -70,7 +70,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres:15.2-alpine
+    image: postgres:17.2-alpine
     volumes:
       - ../postgres_data/:/var/lib/postgresql/data/
     restart: always
