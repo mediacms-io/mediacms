@@ -11,8 +11,13 @@ RUN mkdir -p /home/mediacms.io/mediacms/{logs} && cd /home/mediacms.io && python
 
 # Install dependencies:
 COPY requirements.txt .
+COPY requirements-dev.txt .
 
-RUN pip install -r requirements.txt
+ARG DEVELOPMENT_MODE="False"
+RUN pip install -r requirements.txt && \
+    if [ "$DEVELOPMENT_MODE" = "True" ]; then \
+        pip install -r requirements-dev.txt; \
+    fi
 
 COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
