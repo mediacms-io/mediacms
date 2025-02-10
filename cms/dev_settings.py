@@ -46,5 +46,5 @@ MIDDLEWARE = [
 
 DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = True
-# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_files/'),)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
