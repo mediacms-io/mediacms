@@ -15,7 +15,7 @@ class VideoEncodingError(Exception):
 
 
 RE_TIMECODE = re.compile(r"time=(\d+:\d+:\d+.\d+)")
-console_encoding = locale.getdefaultlocale()[1] or "UTF-8"
+console_encoding = locale.getlocale()[1] or "UTF-8"
 
 
 class FFmpegBackend(object):
