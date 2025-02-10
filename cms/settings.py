@@ -541,3 +541,5 @@ SPRITE_NUM_SECS = 10
 
 # how many images will be shown on the slideshow
 SLIDESHOW_ITEMS = 30
+# this calculation is redundant most probably, setting as an option
+CALCULATE_MD5SUM = False
