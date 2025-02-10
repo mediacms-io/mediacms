@@ -4,13 +4,23 @@ services:
   migrations:
     build:
       context: .
-      dockerfile: ./Dockerfile-dev
+      dockerfile: ./Dockerfile
+      args:
+        - DEVELOPMENT_MODE=True
     image: mediacms/mediacms-dev:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
-    command: "python manage.py migrate"
+    command: "./deploy/docker/prestart.sh"
     environment:
-      DEVELOPMENT_MODE: "True"
+      DEVELOPMENT_MODE: True
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      ADMIN_PASSWORD: 'admin'
     restart: on-failure
     depends_on:
       redis:
@@ -30,16 +40,10 @@ services:
     depends_on:
       - web
   web:
-    build:
-      context: .
-      dockerfile: ./Dockerfile-dev
     image: mediacms/mediacms-dev:latest
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
-      DEVELOPMENT_MODE: "True"
-      ADMIN_USER: 'admin'
-      ADMIN_PASSWORD: 'admin'
-      ADMIN_EMAIL: 'admin@localhost'
+      DEVELOPMENT_MODE: True
     ports:
       - "80:80"
     volumes:
@@ -47,7 +51,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres:15.2-alpine
+    image: postgres:17.2-alpine
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
@@ -80,5 +84,6 @@ services:
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_MIGRATIONS: 'no'
+      DEVELOPMENT_MODE: True
     depends_on:
       - web

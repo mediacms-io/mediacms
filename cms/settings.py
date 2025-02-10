@@ -111,7 +111,7 @@ TIME_TO_ACTION_ANONYMOUS = 10 * 60
 
 # django-allauth settings
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
 ACCOUNT_EMAIL_REQUIRED = True  # new users need to specify email
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # 'mandatory' 'none'
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
@@ -123,8 +123,6 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 20
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 5
 # registration won't be open, might also consider to remove links for register
 USERS_CAN_SELF_REGISTER = True
 
@@ -230,7 +228,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 
 CANNOT_ADD_MEDIA_MESSAGE = ""
 
-# mp4hls command, part of Bendo4
+# mp4hls command, part of Bento4
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
 
 # highly experimental, related with remote workers
@@ -322,6 +320,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "cms.urls"
@@ -542,3 +541,5 @@ SPRITE_NUM_SECS = 10
 
 # how many images will be shown on the slideshow
 SLIDESHOW_ITEMS = 30
+# this calculation is redundant most probably, setting as an option
+CALCULATE_MD5SUM = False

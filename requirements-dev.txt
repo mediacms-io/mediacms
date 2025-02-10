@@ -1,16 +1,15 @@
 -r requirements.txt
 
-rpdb
-tqdm
-ipython
-flake8
-pylint
-pep8
-django-silk
-pre-commit
-pytest-cov
-pytest-django
-pytest-factoryboy
-Faker
-django-cors-headers
+rpdb==0.2.0
+tqdm==4.67.1
+ipython==8.32.0
+flake8==7.1.1
+pylint==3.3.4
+pep8==1.7.1
+django-silk==5.3.2
+pytest-cov==6.0.0
+pytest-django==4.9.0
+pytest-factoryboy==2.7.0
+Faker==35.2.0
+django-cors-headers==4.7.0
 

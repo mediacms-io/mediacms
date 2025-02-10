@@ -41,9 +41,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = True
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
-STATIC_ROOT = None
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static_files/'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')

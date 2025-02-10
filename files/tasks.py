@@ -392,8 +392,7 @@ def produce_sprite_from_video(friendly_token):
             image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
             image_files = [os.path.join(tmpdirname, f) for f in image_files]
             cmd_convert = ["convert", *image_files, "-append", output_name]  # image files, unpacked into the list
-
-            run_command(cmd_convert)
+            ret = run_command(cmd_convert)  # noqa
 
             if os.path.exists(output_name) and get_file_type(output_name) == "image":
                 with open(output_name, "rb") as f:
@@ -402,8 +401,8 @@ def produce_sprite_from_video(friendly_token):
                         content=myfile,
                         name=get_file_name(media.media_file.path) + "sprites.jpg",
                     )
-        except BaseException:
-            pass
+        except Exception as e:
+            print(e)
     return True
 
 
@@ -428,13 +427,14 @@ def create_hls(friendly_token):
     p = media.uid.hex
     output_dir = os.path.join(settings.HLS_DIR, p)
     encodings = media.encodings.filter(profile__extension="mp4", status="success", chunk=False, profile__codec="h264")
+
     if encodings:
         existing_output_dir = None
         if os.path.exists(output_dir):
             existing_output_dir = output_dir
             output_dir = os.path.join(settings.HLS_DIR, p + produce_friendly_token())
-        files = " ".join([f.media_file.path for f in encodings if f.media_file])
-        cmd = [settings.MP4HLS_COMMAND, '--segment-duration=4', f'--output-dir={output_dir}', files]
+        files = [f.media_file.path for f in encodings if f.media_file]
+        cmd = [settings.MP4HLS_COMMAND, '--segment-duration=4', f'--output-dir={output_dir}', *files]
         run_command(cmd)
 
         if existing_output_dir:
