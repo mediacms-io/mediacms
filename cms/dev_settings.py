@@ -26,7 +26,6 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     'uploader.apps.UploaderConfig',
     'djcelery_email',
-    'ckeditor',
     'drf_yasg',
     'corsheaders',
 ]

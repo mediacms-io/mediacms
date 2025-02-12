@@ -675,6 +675,9 @@ class MediaActions(APIView):
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
         media = self.get_object(friendly_token)
+        if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+
         if isinstance(media, Response):
             return media
 

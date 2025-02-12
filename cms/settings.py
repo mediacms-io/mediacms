@@ -232,7 +232,7 @@ CANNOT_ADD_MEDIA_MESSAGE = ""
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
 
 # highly experimental, related with remote workers
-ADMIN_TOKEN = "c2b8e1838b6128asd333ddc5e24"
+ADMIN_TOKEN = ""
 # this is used by remote workers to push
 # encodings once they are done
 # USE_BASIC_HTTP = True
@@ -245,35 +245,6 @@ ADMIN_TOKEN = "c2b8e1838b6128asd333ddc5e24"
 # and set a password
 # edit /etc/nginx/sites-enabled/mediacms.io and
 # uncomment the two lines related to htpasswd
-
-
-CKEDITOR_CONFIGS = {
-    "default": {
-        "toolbar": "Custom",
-        "width": "100%",
-        "toolbar_Custom": [
-            ["Styles"],
-            ["Format"],
-            ["Bold", "Italic", "Underline"],
-            ["HorizontalRule"],
-            [
-                "NumberedList",
-                "BulletedList",
-                "-",
-                "Outdent",
-                "Indent",
-                "-",
-                "JustifyLeft",
-                "JustifyCenter",
-                "JustifyRight",
-                "JustifyBlock",
-            ],
-            ["Link", "Unlink"],
-            ["Image"],
-            ["RemoveFormat", "Source"],
-        ],
-    }
-}
 
 
 AUTH_USER_MODEL = "users.User"
@@ -307,7 +278,6 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     "uploader.apps.UploaderConfig",
     "djcelery_email",
-    "ckeditor",
     "drf_yasg",
 ]
 
@@ -555,3 +525,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # allow option to override the default admin url
 # keep the trailing slash
 DJANGO_ADMIN_URL = "admin/"
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
