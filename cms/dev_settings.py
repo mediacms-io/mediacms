@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'mptt',
     'crispy_forms',
+    "crispy_bootstrap5",
     'uploader.apps.UploaderConfig',
     'djcelery_email',
     'ckeditor',
