@@ -526,5 +526,5 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # keep the trailing slash
 DJANGO_ADMIN_URL = "admin/"
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
