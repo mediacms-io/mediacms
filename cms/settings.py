@@ -349,11 +349,15 @@ WSGI_APPLICATION = "cms.wsgi.application"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {
+            "user_attributes": ("username", "email", "first_name", "last_name"),
+            "max_similarity": 0.7,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {
-            "min_length": 5,
+            "min_length": 7,
         },
     },
     {
@@ -547,3 +551,7 @@ CALCULATE_MD5SUM = False
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# allow option to override the default admin url
+# keep the trailing slash
+DJANGO_ADMIN_URL = "admin/"
