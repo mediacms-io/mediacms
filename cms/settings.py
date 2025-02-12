@@ -304,6 +304,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "mptt",
     "crispy_forms",
+    "crispy_bootstrap5",
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "ckeditor",
@@ -543,3 +544,6 @@ SPRITE_NUM_SECS = 10
 SLIDESHOW_ITEMS = 30
 # this calculation is redundant most probably, setting as an option
 CALCULATE_MD5SUM = False
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
