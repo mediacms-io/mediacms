@@ -928,9 +928,10 @@ class PlaylistDetail(APIView):
 
         serializer = PlaylistDetailSerializer(playlist, context={"request": request})
 
-        playlist_media = PlaylistMedia.objects.filter(playlist=playlist).prefetch_related("media__user")
+        playlist_media = PlaylistMedia.objects.filter(playlist=playlist, media__state="public").prefetch_related("media__user")
 
         playlist_media = [c.media for c in playlist_media]
+
         playlist_media_serializer = MediaSerializer(playlist_media, many=True, context={"request": request})
         ret = serializer.data
         ret["playlist_media"] = playlist_media_serializer.data
@@ -1195,7 +1196,7 @@ class CommentList(APIView):
     def get(self, request, format=None):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
-        comments = Comment.objects.filter()
+        comments = Comment.objects.filter(media__state="public").order_by("-add_date")
         comments = comments.prefetch_related("user")
         comments = comments.prefetch_related("media")
         params = self.request.query_params
