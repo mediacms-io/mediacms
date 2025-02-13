@@ -17,26 +17,6 @@ server {
 #        rewrite  ^/(.*)$  https://localhost/$1  permanent;
 #    }
 
-    # HSTS header
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-
-    # CSP header
-    add_header Content-Security-Policy "
-        default-src 'self';
-        script-src 'self';
-        style-src 'self';
-        img-src 'self' data: blob:;
-        media-src 'self' blob:;
-        frame-src 'self';
-        font-src 'self';
-        connect-src 'self';
-        object-src 'none';
-        frame-ancestors 'self';
-        form-action 'self';
-        base-uri 'self';
-        upgrade-insecure-requests;
-    " always;
-
     location /static {
         alias /home/mediacms.io/mediacms/static ;
     }
