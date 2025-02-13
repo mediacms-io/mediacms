@@ -24,7 +24,7 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
-FROM python:3.13-bookworm as runtime-image
+FROM python:3.13-bookworm AS runtime_image
 
 SHELL ["/bin/bash", "-c"]
 
