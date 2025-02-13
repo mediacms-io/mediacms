@@ -8,7 +8,8 @@
   "main": "index.js",
   "scripts": {
     "start": "mediacms-scripts development --config=./config/mediacms.config.js --host=0.0.0.0 --port=8088",
-    "dist": "mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist"
+    "dist": "mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,css}\""
   },
   "browserslist": [
     "cover 99.5%"
@@ -52,7 +53,11 @@
     "url-parse": "^1.5.1",
     "pdfjs-dist": "^3.4.120",
     "@react-pdf-viewer/core": "^3.9.0",
-    "@react-pdf-viewer/default-layout": "^3.12.0"
-
+    "@react-pdf-viewer/default-layout": "^3.12.0",
+    "react-redux": "^8.0.0",
+    "redux": "^4.1.0",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-persist": "^6.0.0",
+    "redux-thunk": "^2.4.1"
   }
 }

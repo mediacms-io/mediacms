@@ -119,8 +119,10 @@ export function SearchResultsFilters(props) {
 
 SearchResultsFilters.propTypes = {
   hidden: PropTypes.bool,
+  onFiltersUpdate: PropTypes.func,
 };
 
 SearchResultsFilters.defaultProps = {
   hidden: false,
+  onFiltersUpdate: () => {},
 };

@@ -80,11 +80,7 @@ export function PopupContent(props) {
     }
   }, [isVisible]);
 
-  useImperativeHandle(props.contentRef, () => ({
-    toggle,
-    tryToHide,
-    tryToShow,
-  }));
+  useImperativeHandle(props.contentRef, () => ({ toggle, tryToShow, tryToHide }), [isVisible]);
 
   return isVisible ? (
     <Popup ref={wrapperRef} className={props.className} style={props.style}>

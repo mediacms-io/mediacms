@@ -1,18 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { PageHeader, PageSidebar } from '../components/page-layout';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { UserProvider } from './contexts/UserContext';
+import { Provider as ReduxProvider } from 'react-redux';
+import store from './stores/store';
 
 const AppProviders = ({ children }) => (
-  <LayoutProvider>
-    <ThemeProvider>
-      <UserProvider>{children}</UserProvider>
-    </ThemeProvider>
-  </LayoutProvider>
+  <ReduxProvider store={store}>
+    <LayoutProvider>
+      <ThemeProvider>
+        <UserProvider>{children}</UserProvider>
+      </ThemeProvider>
+    </LayoutProvider>
+  </ReduxProvider>
 );
-
-import { PageHeader, PageSidebar } from '../components/page-layout';
 
 export function renderPage(idSelector, PageComponent) {
   const appHeader = document.getElementById('app-header');
