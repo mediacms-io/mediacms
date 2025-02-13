@@ -17,6 +17,26 @@ server {
 #        rewrite  ^/(.*)$  https://localhost/$1  permanent;
 #    }
 
+    # HSTS header
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # CSP header
+    add_header Content-Security-Policy "
+        default-src 'self';
+        script-src 'self';
+        style-src 'self';
+        img-src 'self' data: blob:;
+        media-src 'self' blob:;
+        frame-src 'self';
+        font-src 'self';
+        connect-src 'self';
+        object-src 'none';
+        frame-ancestors 'self';
+        form-action 'self';
+        base-uri 'self';
+        upgrade-insecure-requests;
+    " always;
+
     location /static {
         alias /home/mediacms.io/mediacms/static ;
     }
@@ -49,7 +69,7 @@ server {
     ssl_dhparam /etc/nginx/dhparams/dhparams.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;    
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
     ssl_ecdh_curve secp521r1:secp384r1;
     ssl_prefer_server_ciphers on;
 

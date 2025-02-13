@@ -119,12 +119,16 @@ def get_next_state(user, current_state, next_state):
 
     if next_state not in ["public", "private", "unlisted"]:
         next_state = settings.PORTAL_WORKFLOW  # get default state
+
     if is_mediacms_editor(user):
         # allow any transition
         return next_state
 
     if settings.PORTAL_WORKFLOW == "private":
-        next_state = "private"
+        if next_state in ["private", "unlisted"]:
+            next_state = next_state
+        else:
+            next_state = current_state
 
     if settings.PORTAL_WORKFLOW == "unlisted":
         # don't allow to make media public in this case
