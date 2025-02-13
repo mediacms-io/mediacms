@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useImperativeHandle, useCallback } from 'react';
-import { findDOMNode } from 'react-dom';
 import { hasClassname } from '../../../utils/helpers/dom';
 import { default as Popup } from './Popup.jsx';
 
@@ -14,9 +13,9 @@ export function PopupContent(props) {
       return;
     }
 
-    const domElem = findDOMNode(wrapperRef.current);
+    const domElem = wrapperRef.current;
 
-    if (-1 === ev.path.indexOf(domElem)) {
+    if (domElem && !domElem.contains(ev.target)) {
       hide();
     }
   }, []);
@@ -26,7 +25,7 @@ export function PopupContent(props) {
     if (27 === key) {
       onClickOutside(ev);
     }
-  }, []);
+  }, [onClickOutside]);
 
   function enableListeners() {
     document.addEventListener('click', onClickOutside);
@@ -70,11 +69,11 @@ export function PopupContent(props) {
   useEffect(() => {
     if (isVisible) {
       enableListeners();
-      if ('function' === typeof props.showCallback) {
+      if (typeof props.showCallback==='function') {
         props.showCallback();
       }
     } else {
-      if ('function' === typeof props.hideCallback) {
+      if (typeof props.hideCallback==='function') {
         props.hideCallback();
       }
     }

@@ -4,10 +4,9 @@ import PropTypes from 'prop-types';
 
 export function NavigationContentApp(props) {
   const containerRef = useRef(null);
-
   const [currentPage, setCurrentPage] = useState(null);
 
-  let changePageElements = [];
+  const changePageElements = useRef([]);
 
   function initEvents() {
     let domElem = findDOMNode(containerRef.current);
