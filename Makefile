@@ -14,6 +14,9 @@ build-frontend:
 	cp -r frontend/dist/static/* static/
 	docker compose -f docker-compose-dev.yaml restart web
 
+docker:
+	docker build -t mediacms/mediacms:latest .
+
 test:
 	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
 
