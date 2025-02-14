@@ -10,6 +10,12 @@ import './SearchField.scss';
 import { AppDispatch, RootState } from '../../../utils/stores/store';
 import { requestPredictions, setPredictions, setSearchQuery } from '../../../utils/stores/actions/search';
 
+// TODO: move this to a helper function
+function getUrlQueryParam(name: string): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
 function SearchPredictionItemList({ children }: { children: React.ReactNode }) {
   const [maxHeight, setMaxHeight] = useState(window.innerHeight - 1.75 * 56);
 
@@ -46,6 +52,13 @@ export function SearchField() {
   const { visibleMobileSearch } = useLayout();
 
   const links = useContext(LinksContext) as { search: { base: string } };
+
+  useEffect(() => {
+    const queryFromUrl = getUrlQueryParam('q');
+    if (queryFromUrl) {
+      dispatch(setSearchQuery(queryFromUrl));
+    }
+  }, [dispatch]); // Only run this on mount (not on every render)
 
   useEffect(() => {
     if (predictions.length > 0) {
@@ -103,7 +116,6 @@ export function SearchField() {
                 onChange={onQueryChange}
               />
 
-              {/* {predictions.length > 0 && ( */}
               <PopupContent contentRef={popupContentRef}>
                 <PopupMain>
                   <SearchPredictionItemList>
@@ -113,7 +125,6 @@ export function SearchField() {
                   </SearchPredictionItemList>
                 </PopupMain>
               </PopupContent>
-              {/* )} */}
             </div>
             <button type="submit" aria-label="Search">
               <MaterialIcon type="search" />
