@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
 import { ThunkAction } from 'redux-thunk';
-import { RootState } from '../store'; // Ensure correct path to store
+import { RootState } from '../store';
 import { REQUEST_PREDICTIONS, SET_PREDICTIONS, SET_RESULTS_COUNT, SET_SEARCH_QUERY, SearchActionTypes } from '../types';
 import { config as mediacmsConfig } from '../../settings/config';
 import { getRequest } from '../../helpers';

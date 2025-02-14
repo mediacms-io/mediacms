@@ -16,7 +16,7 @@ export function PopupContent(props) {
 
     const domElem = findDOMNode(wrapperRef.current);
 
-    if (-1 === ev.path.indexOf(domElem)) {
+    if (domElem && !domElem.contains(ev.target)) {
       hide();
     }
   }, []);
