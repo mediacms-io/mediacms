@@ -27,9 +27,7 @@ export class ProfileHistoryPage extends ProfileMediaPage {
 
   pageContent() {
     return [
-      this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="history" />
-      ) : null,
+      this.state.author ? <ProfilePagesHeader key="ProfilePagesHeader" type="history" /> : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
           <ApiUrlConsumer>

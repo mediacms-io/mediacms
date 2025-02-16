@@ -5,6 +5,7 @@ import { PopupTrigger } from '../../components/_shared/popup/PopupTrigger';
 interface PopupRefMethods {
   tryToShow: () => void;
   tryToHide: () => void;
+  toggle: () => void;
 }
 
 export function usePopup() {

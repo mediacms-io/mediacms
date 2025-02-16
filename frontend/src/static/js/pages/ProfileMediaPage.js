@@ -140,11 +140,7 @@ export class ProfileMediaPage extends Page {
 
     return [
       this.state.author ? (
-        <ProfilePagesHeader
-          key="ProfilePagesHeader"
-          author={this.state.author}
-          onQueryChange={this.changeRequestQuery}
-        />
+        <ProfilePagesHeader key="ProfilePagesHeader" onQueryChange={this.changeRequestQuery} />
       ) : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">

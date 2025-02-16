@@ -148,7 +148,6 @@ class ChannelContactForm extends React.PureComponent {
     );
   }
 }
-
 export class ProfileAboutPage extends ProfileMediaPage {
   constructor(props) {
     super(props, 'author-about');
@@ -267,9 +266,7 @@ export class ProfileAboutPage extends ProfileMediaPage {
     }
 
     return [
-      this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="about" />
-      ) : null,
+      this.state.author ? <ProfilePagesHeader key="ProfilePagesHeader" type="about" /> : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent" enabledContactForm={this.enabledContactForm}>
           <div className="media-list-wrapper items-list-ver  profile-about-content ">

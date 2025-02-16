@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-
 import { useLayout, usePopup } from '../../../utils/hooks';
 import { LinksContext } from '../../../utils/contexts';
 import { MaterialIcon, PopupMain } from '../../_shared';
 import { translateString } from '../../../utils/helpers';
-
 import './SearchField.scss';
 import { AppDispatch, RootState } from '../../../utils/stores/store';
 import { requestPredictions, setPredictions, setSearchQuery } from '../../../utils/stores/actions/search';
 
-// TODO: move this to a helper function
+// TODO: move this to helpers file
 function getUrlQueryParam(name: string): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(name);
@@ -43,6 +41,8 @@ function SearchPredictionItem({ value, onSelect }: { value: string; onSelect: (v
 export function SearchField() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [localQuery, setLocalQuery] = useState('');
+  // const navigate = useNavigate(); // Hook for navigation
 
   const [popupContentRef, PopupContent] = usePopup();
   const dispatch = useDispatch<AppDispatch>();
@@ -57,8 +57,9 @@ export function SearchField() {
     const queryFromUrl = getUrlQueryParam('q');
     if (queryFromUrl) {
       dispatch(setSearchQuery(queryFromUrl));
+      setLocalQuery(queryFromUrl);
     }
-  }, [dispatch]); // Only run this on mount (not on every render)
+  }, [dispatch]);
 
   useEffect(() => {
     if (predictions.length > 0) {
@@ -75,11 +76,10 @@ export function SearchField() {
   }, [visibleMobileSearch]);
 
   function onQueryChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value.trim();
+    const value = event.target.value;
+    setLocalQuery(value);
 
-    dispatch(setSearchQuery(value));
-
-    if (value === '') {
+    if (value.trim() === '') {
       dispatch(setPredictions([]));
       popupContentRef.current?.tryToHide();
       return;
@@ -89,15 +89,19 @@ export function SearchField() {
   }
 
   function onPredictionSelect(value: string) {
-    dispatch(setSearchQuery(value));
-    formRef.current?.submit();
+    setLocalQuery(value);
+    popupContentRef.current?.tryToHide();
+    window.location.href = `${links.search.base}?q=${encodeURIComponent(value)}`;
   }
 
   function onFormSubmit(event: React.FormEvent) {
-    if (!searchInputRef.current?.value.trim()) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+    event.preventDefault();
+    const value = searchInputRef.current?.value.trim();
+
+    if (!value) return;
+
+    dispatch(setSearchQuery(value));
+    formRef.current?.submit();
   }
 
   return (
@@ -112,7 +116,7 @@ export function SearchField() {
                 placeholder={translateString('Search')}
                 aria-label="Search"
                 name="q"
-                value={searchQuery}
+                value={localQuery}
                 onChange={onQueryChange}
               />
 

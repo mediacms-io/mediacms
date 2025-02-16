@@ -27,9 +27,7 @@ export class ProfileLikedPage extends ProfileMediaPage {
 
   pageContent() {
     return [
-      this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="liked" />
-      ) : null,
+      this.state.author ? <ProfilePagesHeader key="ProfilePagesHeader" type="liked" /> : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
           <ApiUrlConsumer>

@@ -39,39 +39,9 @@ export function SearchPage() {
   useEffect(() => {
     const { query, categories, tags } = getUrlParams();
     if (query !== '' || categories !== '' || tags !== '') {
-      dispatch(setSearchQuery(query));
+      dispatch(setSearchQuery(query, categories, tags));
     }
   }, [dispatch]);
-
-  useEffect(() => {
-    const updateUrl = () => {
-      const queryParams = new URLSearchParams();
-
-      if (searchQuery) queryParams.set('q', searchQuery);
-      if (searchTags) queryParams.set('t', searchTags);
-      if (searchCategories) queryParams.set('c', searchCategories);
-
-      const newUrl = `${window.location.pathname}?${queryParams.toString()}`;
-      window.history.replaceState(null, '', newUrl);
-    };
-
-    updateUrl();
-  }, [searchQuery, searchTags, searchCategories]); // Runs when searchQuery changes, but doesn't trigger API calls
-
-  useEffect(() => {
-    const debouncedFetch = debounce(() => {
-      if (!searchQuery.trim()) {
-        dispatch(setResultsCount(0));
-        return;
-      }
-
-      dispatch(setSearchQuery(searchQuery));
-    }, 300);
-
-    debouncedFetch();
-
-    return () => debouncedFetch.cancel();
-  }, [searchQuery]); // Runs when the user types
 
   useEffect(() => {
     const handlePopState = () => {
