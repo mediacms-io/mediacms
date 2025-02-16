@@ -42,11 +42,10 @@ const profileReducer = (state = initialState, action: ProfileActionTypes): Profi
     case REMOVE_PROFILE_FAILURE:
       return { ...state, removingProfile: false, error: action.error };
 
-    // ✅ New case: Handle search query update
     case UPDATE_SEARCH_QUERY:
       return {
         ...state,
-        authorQuery: action.payload, // ✅ Update authorQuery in state
+        authorQuery: action.payload,
       };
 
     default:

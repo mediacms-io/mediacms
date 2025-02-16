@@ -4,8 +4,7 @@ import { CircleIconButton } from '../_shared';
 import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
 import { translateString } from '../../utils/helpers';
 import ProfileSearchBar from './ProfileSearchBar';
-import { RootState } from '../../utils/stores/store';
-import { MemberContext } from '../../utils/contexts';
+import { LinksContext, MemberContext } from '../../utils/contexts';
 
 interface InlineTabProps {
   id: string;
@@ -35,6 +34,7 @@ const FixedCircleIconButton = CircleIconButton as React.FC<{
 
 const NavMenuInlineTabs = forwardRef<HTMLDivElement, NavMenuInlineTabsProps>(({ type, onQueryChange }, ref) => {
   const memberContext = useContext(MemberContext);
+  const linksContext = useContext(LinksContext);
   const [displayNext, setDisplayNext] = useState(false);
   const [displayPrev, setDisplayPrev] = useState(false);
   const inlineSlider = useRef<ItemsInlineSlider | null>(null);
@@ -70,15 +70,25 @@ const NavMenuInlineTabs = forwardRef<HTMLDivElement, NavMenuInlineTabsProps>(({ 
         )}
 
         <ul className="items-list-wrap">
-          <InlineTab id="about" isActive={type === 'about'} label={translateString('About')} link="/profile/about" />
-          <InlineTab id="media" isActive={type === 'media'} label={translateString('Media')} link="/profile/media" />
+          <InlineTab
+            id="about"
+            isActive={type === 'about'}
+            label={translateString('About')}
+            link={linksContext.profile.about}
+          />
+          <InlineTab
+            id="media"
+            isActive={type === 'media'}
+            label={translateString('Media')}
+            link={linksContext.profile.media}
+          />
 
           {memberContext.can.saveMedia && (
             <InlineTab
               id="playlists"
               isActive={type === 'playlists'}
               label={translateString('Playlists')}
-              link="/profile/playlists"
+              link={linksContext.profile.playlists}
             />
           )}
 
