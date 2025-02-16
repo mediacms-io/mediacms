@@ -9,23 +9,44 @@ import { PopupMain } from '../_shared';
 import NavMenuInlineTabs from './NavMenuInlineTabs';
 import { loadAuthorData, removeProfile } from '../../utils/stores/actions/profile';
 
-const AddBannerButton: React.FC<{ link: string }> = ({ link }) => (
-  <a href={link} className="edit-channel" title="Add banner">
-    ADD BANNER
-  </a>
-);
+const AddBannerButton: React.FC<{ link: string }> = ({ link }) => {
+  let adjustedLink = link;
 
-const EditBannerButton: React.FC<{ link: string }> = ({ link }) => (
-  <a href={link} className="edit-channel" title="Edit banner">
-    EDIT BANNER
-  </a>
-);
+  if (window.MediaCMS.site.devEnv) {
+    adjustedLink = '/edit-channel.html';
+  }
+  return (
+    <a href={adjustedLink} className="edit-channel" title="Add banner">
+      ADD BANNER
+    </a>
+  );
+};
 
-const EditProfileButton: React.FC<{ link: string }> = ({ link }) => (
-  <a href={link} className="edit-profile" title="Edit profile">
-    EDIT PROFILE
-  </a>
-);
+const EditBannerButton: React.FC<{ link: string }> = ({ link }) => {
+  let adjustedLink = link;
+
+  if (window.MediaCMS.site.devEnv) {
+    adjustedLink = '/edit-channel.html';
+  }
+  return (
+    <a href={adjustedLink} className="edit-channel" title="Edit banner">
+      EDIT BANNER
+    </a>
+  );
+};
+
+const EditProfileButton: React.FC<{ link: string }> = ({ link }) => {
+  let adjustedLink = link;
+
+  if (window.MediaCMS.site.devEnv) {
+    adjustedLink = '/edit-channel.html';
+  }
+  return (
+    <a href={adjustedLink} className="edit-profile" title="Edit profile">
+      EDIT PROFILE
+    </a>
+  );
+};
 
 interface ProfilePagesHeaderProps {
   type: string;
@@ -90,7 +111,7 @@ const ProfilePagesHeader: React.FC<ProfilePagesHeaderProps> = ({ type = 'media',
   };
 
   return (
-    <div ref={profilePageHeaderRef} className={`profile-page-header ${fixedNav ? 'fixed-nav' : ''}`}>
+    <div ref={profilePageHeaderRef} className={`profile-page-header + ${fixedNav ? 'fixed-nav' : ''}`}>
       <span className="profile-banner-wrap">
         {author?.banner_thumbnail_url && (
           <span
@@ -144,7 +165,7 @@ const ProfilePagesHeader: React.FC<ProfilePagesHeaderProps> = ({ type = 'media',
         {(author?.thumbnail_url || author?.name) && (
           <div className="profile-info">
             <div className="profile-info-inner">
-              {author?.thumbnail_url && <img src={author.thumbnail_url} alt={author.name || 'Profile'} />}
+              <div>{author?.thumbnail_url && <img src={author.thumbnail_url} alt={author.name || 'Profile'} />}</div>
               <div>
                 {author?.name && <h1>{author.name}</h1>}
                 {userCanEditProfile && <EditProfileButton link={author.edit_url} />}
