@@ -1,10 +1,13 @@
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.signals import social_account_added, social_account_updated
 from allauth.account.utils import user_email, user_field, user_username
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.dispatch import receiver
 
 
 class MyAccountAdapter(DefaultAccountAdapter):
@@ -30,28 +33,56 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
 
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
+    def save_user(self, request, sociallogin, form=None):
+        user = super().save_user(request, sociallogin, form)
+        
+        role = sociallogin.account.extra_data.get("role", "")
+        print(role, user, "x"*200)
+        if role in ["staff"] and not user.advancedUser:
+            user.advancedUser = True
+            user.save()
+
+        return user
+    
     def pre_social_login(self, request, sociallogin):
-#        email = sociallogin.user.email
- #       if email:
-  #          try:
-   #             user = User.objects.get(email=email)
-#                sociallogin.connect(request, user)
- #           except User.DoesNotExist:
-  #              pass
-        
-   #     # Call parent class's pre_social_login
-    #    super().pre_social_login(request, sociallogin)
-#We first try to connect the social account to an existing user by email
-#Then we let the parent class handle any other default pre-login processing
-#No default functionality is lost
-
-
-        # Log the entire SAML response
-        #logger.info("SAML Response Data: %s", sociallogin.account.extra_data)
-#        import rpdb; rpdb.set_trace()
-        print(sociallogin.account.extra_data)     
-        # Log all available attributes
-        #logger.info("SAML Attributes: %s", sociallogin.account.user)
-        
+        #import rpdb; rpdb.set_trace()
+        # ACCESS to request with what to save as logs???
+#        user = sociallogin.user
+ #       if user:
+  #          social_account = SocialAccount.objects.filter(provider=sociallogin.account.provider, uid=sociallogin.account.uid).first()
+   #         if social_account:
+    #            social_account.extra_data = sociallogin.account.extra_data
+     #           social_account.save()
+      #          print("WILL SAVE LOGS ALSO?")
+                
         return super().pre_social_login(request, sociallogin)
-#
+
+    def populate_user(self, request, sociallogin, data):
+        # This is used to populate the `name`
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
+        name = data.get("name", "")
+        user = sociallogin.user
+        user.name = name
+        user.first_name = first_name
+        user.last_name = last_name
+        user.advancedUser = True
+        return user
+
+
+@receiver(social_account_updated)
+def user_updated(sociallogin, **kwargs):
+    print("I WAS CALLED")
+    from files.models import Comment
+    new_comment = Comment.objects.create(media_id=1, text="123", user_id=1)
+    social_account = sociallogin.account
+    social_account.extra_data = sociallogin.account.extra_data
+    social_account.save()
+    user = social_account.user
+    role = sociallogin.account.extra_data.get("eduPersonPrimaryAffiliation", [])
+    groups = sociallogin.account.extra_data.get("isMemberOf", [])
+    # XX: implement logs, groups
+    if role == ["staff"] and not user.advancedUser:
+        user.advancedUser = True
+        user.save()
+
