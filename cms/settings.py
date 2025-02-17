@@ -261,6 +261,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.saml",    
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
@@ -526,5 +527,30 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # keep the trailing slash
 DJANGO_ADMIN_URL = "admin/"
 
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
+
+# CONSIDER ADDING WITH a SAML = True; if SAML flag
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    "saml": {
+        "APPS": [
+            {
+                "name": "DEIC",
+                "provider_id": "wayf.wayf.dk",
+                "client_id": "wayf_dk",
+                "settings": {
+                    "sp": {
+                        "entity_id": "https://deic.mediacms.io/saml/metadata"}, 
+                        "idp": {"slo_url": "https://wayf.wayf.dk/saml2/idp/SingleLogoutService.php", "sso_url": "https://wayf.wayf.dk/saml2/idp/SSOService2.php", "x509cert": "MIIC7TCCAdWgAwIBAgIBBzANBgkqhkiG9w0BAQsFADAwMQswCQYDVQQGEwJESzENMAsGA1UEChMEV0FZRjESMBAGA1UEAxMJd2F5Zi4yMDE2MB4XDTE1MDEwMTAwMDAwMFoXDTI1MTIzMTAwMDAwMFowMDELMAkGA1UEBhMCREsxDTALBgNVBAoTBFdBWUYxEjAQBgNVBAMTCXdheWYuMjAxNjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOeCt61E+O909jreVUV1tFHQe9m3h612W38OauWftVVrwH0CJpYCFGAMUBcDFkPgocA+XpB2qadF+/dnErIDbTVgxqyewB0TOWmMoqMknrkmS0x0AiRHIBtkzIWFam+EwGtFGA5Hw3sjGPoDXg4cGT731uoCktsH5ELt+eFDXSBOUgxyKzZf8NTXRbLksIdPxNgZ04e5JawFo1cnYbTVYQcleMqOYY3rIDXxA8BTm4ZYCNkxLO0v7YK7+mfF5T1Q5C7FXivoQI+A2mi/qGlwLt+oD81jdYki/v7ApXZi0sdcRovA9H4yFCv4tT5f/Plu8YJ8aXSGpJ8gATPtkY9ul9cCAwEAAaMSMBAwDgYDVR0PAQH/BAQDAgIEMA0GCSqGSIb3DQEBCwUAA4IBAQCaDrkKvC9mc8cOmjFhPd/4UgZxol7K0U7GwBY92MXzdE/o4Dd+u3Dw0+O3UsK2kxExFlT3qXuG9XF987xUoGBy+Ip6A14nmKfW9a1hLS7zZoTVpxHebmms8n5voKLPBWowiMwb8jLdVaPzAx7bMnOfXrV3g0L8inPsqgYOgqku9//8I7YnV/r8z0V0uLgi2n9eYDyqvktsL37tIw6RTX/l9J8KQlHy0eWMs9CXDaK1gYdif1EsaHW4xLpjZsohIoovXMtQNTN+jIybXdEDScdLzwT9j9+BU9uHJRx3f3bfwX9QINsDkafDOtBNAnW762LHylOBiXgV2s954JAVY3O+", "entity_id": "https://wayf.wayf.dk"},
+                        "attribute_mapping": {"uid": "http://schemas.auth0.com/clientID", "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "email_verified": "http://schemas.auth0.com/email_verified"}
+                }
+            }
+        ]
+    }
+}
