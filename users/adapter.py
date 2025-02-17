@@ -32,7 +32,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
         msg.send(fail_silently=True)
 
 
-class MySocialAccountAdapter(DefaultSocialAccountAdapter):
+class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def save_user(self, request, sociallogin, form=None):
         user = super().save_user(request, sociallogin, form)
         

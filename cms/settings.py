@@ -519,7 +519,7 @@ DJANGO_ADMIN_URL = "admin/"
 # this is used around a number of places
 
 USE_SAML = False
-SOCIALACCOUNT_ADAPTER = 'users.adapter.MySocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'users.adapter.SAMLAccountAdapter'
 
 
 try:
