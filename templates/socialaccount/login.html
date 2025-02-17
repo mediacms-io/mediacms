@@ -1,10 +1,14 @@
-{% extends "socialaccount/base_entrance.html" %}
+{% extends "base.html" %}
 {% load i18n %}
 {% load allauth %}
 {% block head_title %}
     {% trans "Sign In" %}
 {% endblock head_title %}
-{% block content %}
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+
+
     {% if process == "connect" %}
         {% element h1 %}
             {% blocktrans with provider.name as provider %}Connect {{ provider }}{% endblocktrans %}
@@ -28,4 +32,8 @@
             {% endelement %}
         {% endslot %}
     {% endelement %}
-{% endblock content %}
+
+    </div>
+</div>
+    
+{% endblock innercontent %}

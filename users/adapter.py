@@ -30,19 +30,28 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
 
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
-    def populate_user(self, request, sociallogin, data):
-        # This is used to populate the `name`
-        username = data.get("username")
-        first_name = data.get("first_name")
-        last_name = data.get("last_name")
-        email = data.get("email")
-        name = data.get("name")
-        user = sociallogin.user
-        user_username(user, username or "")
-        user_email(user, valid_email_or_none(email) or "")
-        name_parts = (name or "").partition(" ")
-        user_field(user, "first_name", first_name or name_parts[0])
-        user_field(user, "last_name", last_name or name_parts[2])
-        user.name = name
-        return user
+    def pre_social_login(self, request, sociallogin):
+#        email = sociallogin.user.email
+ #       if email:
+  #          try:
+   #             user = User.objects.get(email=email)
+#                sociallogin.connect(request, user)
+ #           except User.DoesNotExist:
+  #              pass
+        
+   #     # Call parent class's pre_social_login
+    #    super().pre_social_login(request, sociallogin)
+#We first try to connect the social account to an existing user by email
+#Then we let the parent class handle any other default pre-login processing
+#No default functionality is lost
 
+
+        # Log the entire SAML response
+        #logger.info("SAML Response Data: %s", sociallogin.account.extra_data)
+#        import rpdb; rpdb.set_trace()
+        print(sociallogin.account.extra_data)     
+        # Log all available attributes
+        #logger.info("SAML Attributes: %s", sociallogin.account.user)
+        
+        return super().pre_social_login(request, sociallogin)
+#
