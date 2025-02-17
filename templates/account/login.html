@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load socialaccount %}
+{% provider_login_url "<provider_id>" %}
 
 {% block headtitle %} | Sign In{% endblock headtitle %}
 
@@ -18,6 +20,12 @@
 		  {% endif %}
 		  <button class="primaryAction" type="submit">Sign In</button>
 		</form>
+
+		OR 
+
+<a href="{% provider_login_url 'wayf.wayf.dk' process='login' next='/' %}" class="login-button">
+    Login with WAYF
+</a>
 
     </div>
 </div>
