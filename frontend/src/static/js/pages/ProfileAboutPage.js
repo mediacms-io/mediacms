@@ -4,7 +4,7 @@ import UrlParse from 'url-parse';
 import { ApiUrlContext, MemberContext, SiteContext } from '../utils/contexts/';
 import { formatInnerLink, csrfToken, postRequest } from '../utils/helpers/';
 import { PageActions } from '../utils/actions/';
-import { PageStore, ProfilePageStore } from '../utils/stores/';
+import { PageStore } from '../utils/stores/';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
 import { MediaListRow } from '../components/MediaListRow';
@@ -162,12 +162,17 @@ export class ProfileAboutPage extends ProfileMediaPage {
     let socialMedia = [];
 
     if (this.state.author) {
+      console.log(this.state.author);
       if (null === this.userIsAuthor) {
         if (MemberContext._currentValue.is.anonymous) {
           this.userIsAuthor = false;
           this.enabledContactForm = false;
         } else {
-          this.userIsAuthor = ProfilePageStore.get('author-data').username === MemberContext._currentValue.username;
+          this.userIsAuthor =
+            this.state.author && this.state.author.username
+              ? this.state.author.username === MemberContext._currentValue.username
+              : false;
+
           this.enabledContactForm = !this.userIsAuthor && MemberContext._currentValue.can.contactUser;
         }
       }
