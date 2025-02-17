@@ -1,4 +1,7 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.account.utils import user_email, user_field, user_username
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -24,3 +27,22 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def send_mail(self, template_prefix, email, context):
         msg = self.render_mail(template_prefix, email, context)
         msg.send(fail_silently=True)
+
+
+class MySocialAccountAdapter(DefaultSocialAccountAdapter):
+    def populate_user(self, request, sociallogin, data):
+        # This is used to populate the `name`
+        username = data.get("username")
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        email = data.get("email")
+        name = data.get("name")
+        user = sociallogin.user
+        user_username(user, username or "")
+        user_email(user, valid_email_or_none(email) or "")
+        name_parts = (name or "").partition(" ")
+        user_field(user, "first_name", first_name or name_parts[0])
+        user_field(user, "last_name", last_name or name_parts[2])
+        user.name = name
+        return user
+

@@ -134,8 +134,6 @@
 
 			{% url 'upload_media' as redirect_url %}
 
-			<p>If you have not created an account yet, then please <a href="{% url 'account_signup' %}?next={{ redirect_url }}">sign up</a> first.</p>
-
 			<form class="login" method="POST" action="{% url 'account_login' %}">
 				{% csrf_token %}
 				{{ form.as_p }}

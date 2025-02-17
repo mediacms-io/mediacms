@@ -22,7 +22,6 @@ urlpatterns = [
     re_path(r"^liked$", views.liked_media, name="liked_media"),
     re_path(r"^latest$", views.latest_media),
     re_path(r"^members", views.members, name="members"),
-    re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"),
     re_path(
         r"^playlist/(?P<friendly_token>[\w]*)$",
         views.view_playlist,
@@ -92,6 +91,9 @@ urlpatterns = [
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if hasattr(settings, "USE_SAML") and settings.USE_SAML:
+    urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

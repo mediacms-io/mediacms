@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404, render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -1428,16 +1428,18 @@ class TaskDetail(APIView):
         # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 def saml_metadata(request):
-    entity_id = "https://deic.mediacms.io/saml/metadata/"
+    if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
+        raise Http404
+
+    entity_id = f"{settings.FRONTEND_HOST}/saml/metadata/"
 
     metadata_template = f'''<?xml version="1.0"?>
 <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
                      entityID="{entity_id}">
     <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-                                    Location="https://deic.mediacms.io/accounts/saml/wayf_dk/acs/"
+                                    Location="{settings.FRONTEND_HOST}/accounts/saml/wayf_dk/acs/"
                                     index="1"/>
     </md:SPSSODescriptor>
 </md:EntityDescriptor>'''
