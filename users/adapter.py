@@ -33,56 +33,30 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
-    def save_user(self, request, sociallogin, form=None):
-        user = super().save_user(request, sociallogin, form)
-        
-        role = sociallogin.account.extra_data.get("role", "")
-        print(role, user, "x"*200)
-        if role in ["staff"] and not user.advancedUser:
-            user.advancedUser = True
-            user.save()
-
-        return user
-    
     def pre_social_login(self, request, sociallogin):
-        #import rpdb; rpdb.set_trace()
-        # ACCESS to request with what to save as logs???
-#        user = sociallogin.user
- #       if user:
-  #          social_account = SocialAccount.objects.filter(provider=sociallogin.account.provider, uid=sociallogin.account.uid).first()
-   #         if social_account:
-    #            social_account.extra_data = sociallogin.account.extra_data
-     #           social_account.save()
-      #          print("WILL SAVE LOGS ALSO?")
+        user = sociallogin.user
+        data = sociallogin.data
+
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
+        name = data.get("name", "")
+        role = data.get("role", "")
+        user.name = name
+        user.first_name = first_name
+        user.last_name = last_name
+        if role in ["staff"]:
+            user.advancedUser = True
+        # the whole list is available here. data has only the first
+        if user.id:
+            user.save()
+        social_account = sociallogin.account
+        groups = social_account.extra_data.get("isMemberOf", [])
+        print(groups)
                 
         return super().pre_social_login(request, sociallogin)
 
     def populate_user(self, request, sociallogin, data):
-        # This is used to populate the `name`
-        first_name = data.get("first_name", "")
-        last_name = data.get("last_name", "")
-        name = data.get("name", "")
-        user = sociallogin.user
-        user.name = name
-        user.first_name = first_name
-        user.last_name = last_name
-        user.advancedUser = True
+        user = super().populate_user(request, sociallogin, data)
+        sociallogin.data = data
         return user
-
-
-@receiver(social_account_updated)
-def user_updated(sociallogin, **kwargs):
-    print("I WAS CALLED")
-    from files.models import Comment
-    new_comment = Comment.objects.create(media_id=1, text="123", user_id=1)
-    social_account = sociallogin.account
-    social_account.extra_data = sociallogin.account.extra_data
-    social_account.save()
-    user = social_account.user
-    role = sociallogin.account.extra_data.get("eduPersonPrimaryAffiliation", [])
-    groups = sociallogin.account.extra_data.get("isMemberOf", [])
-    # XX: implement logs, groups
-    if role == ["staff"] and not user.advancedUser:
-        user.advancedUser = True
-        user.save()
 
