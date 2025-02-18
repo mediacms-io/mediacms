@@ -98,14 +98,18 @@ export function PlaylistsSelection(props) {
     let ret = [];
     let i = 0;
     while (i < playlists.length) {
+      const playlist = playlists[i];
+      const mediaList = playlist.media_list;
+      const isChecked = mediaList ? mediaList.indexOf(mediaId) !== -1 : false;
+
       ret.push(
-        <div key={'playlist_' + playlists[i].playlist_id}>
+        <div key={'playlist_' + playlist.playlist_id}>
           <PlaylistsSingleSelection
             renderDate={date}
-            title={playlists[i].title}
-            privacy={playlists[i].status}
-            isChecked={-1 < playlists[i].media_list.indexOf(mediaId)}
-            playlistId={playlists[i].playlist_id}
+            title={playlist.title}
+            privacy={playlist.status}
+            isChecked={isChecked}
+            playlistId={playlist.playlist_id}
           />
         </div>
       );
