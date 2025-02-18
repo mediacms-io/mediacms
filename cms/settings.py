@@ -261,7 +261,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "custom_saml",    
+    "allauth.socialaccount.providers.saml",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
