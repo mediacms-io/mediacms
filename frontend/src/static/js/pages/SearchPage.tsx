@@ -38,10 +38,11 @@ export function SearchPage() {
 
   useEffect(() => {
     const { query, categories, tags } = getUrlParams();
-    if (query !== '' || categories !== '' || tags !== '') {
+
+    if (query !== searchQuery || categories !== searchCategories || tags !== searchTags) {
       dispatch(setSearchQuery(query, categories, tags));
     }
-  }, [dispatch]);
+  }, [dispatch, searchQuery, searchCategories, searchTags]);
 
   useEffect(() => {
     const handlePopState = () => {

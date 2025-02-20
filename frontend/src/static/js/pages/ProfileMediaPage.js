@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
 import { PageStore } from '../utils/stores';
 import { loadAuthorData, updateSearchQuery } from '../utils/stores/actions/profile';
-import store from '../utils/stores/store';
+import { store } from '../utils/stores/store';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
@@ -11,6 +11,8 @@ import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListA
 import { Page } from './_Page';
 
 import '../components/profile-page/ProfilePage.scss';
+
+export const getStore = () => store;
 
 function EmptyChannelMedia({ name }) {
   return (

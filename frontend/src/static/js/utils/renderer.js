@@ -5,15 +5,18 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { UserProvider } from './contexts/UserContext';
 import { Provider as ReduxProvider } from 'react-redux';
-import store from './stores/store';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './stores/store';
 
 const AppProviders = ({ children }) => (
   <ReduxProvider store={store}>
-    <LayoutProvider>
-      <ThemeProvider>
-        <UserProvider>{children}</UserProvider>
-      </ThemeProvider>
-    </LayoutProvider>
+    <PersistGate loading={null} persistor={persistor}>
+      <LayoutProvider>
+        <ThemeProvider>
+          <UserProvider>{children}</UserProvider>
+        </ThemeProvider>
+      </LayoutProvider>
+    </PersistGate>
   </ReduxProvider>
 );
 
