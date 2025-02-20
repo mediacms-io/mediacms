@@ -96,6 +96,49 @@ interface SetResultsCountAction {
   type: typeof SET_RESULTS_COUNT;
   payload: number | null;
 }
+
+//PlaylistView types
+
+export const TOGGLE_LOOP = 'TOGGLE_LOOP';
+export const TOGGLE_SHUFFLE = 'TOGGLE_SHUFFLE';
+export const TOGGLE_SAVE = 'TOGGLE_SAVE';
+export const SET_PLAYLIST_ID = 'SET_PLAYLIST_ID';
+export const LOAD_PLAYLIST_STATE = 'LOAD_PLAYLIST_STATE';
+
+export interface ToggleLoopAction {
+  type: typeof TOGGLE_LOOP;
+}
+
+export interface ToggleShuffleAction {
+  type: typeof TOGGLE_SHUFFLE;
+}
+
+export interface ToggleSaveAction {
+  type: typeof TOGGLE_SAVE;
+}
+
+export interface SetPlaylistIdAction {
+  type: typeof SET_PLAYLIST_ID;
+  payload: string | null;
+}
+
+export interface LoadPlaylistStateAction {
+  type: typeof LOAD_PLAYLIST_STATE;
+  payload: {
+    playlistId: string;
+    loop: boolean;
+    shuffle: boolean;
+  };
+}
+
+// Combine Action Types
+export type PlaylistViewActionTypes =
+  | ToggleLoopAction
+  | ToggleShuffleAction
+  | ToggleSaveAction
+  | SetPlaylistIdAction
+  | LoadPlaylistStateAction;
+
 export type SearchActionTypes =
   | SetResultsCountAction
   | RequestPredictionsAction
