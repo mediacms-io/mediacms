@@ -52,7 +52,15 @@ const playlistPageReducer = (state = initialState, action: PlaylistPageActionTyp
       return initialState;
 
     case PLAYLIST_MEDIA_REORDERED:
-      return state.data ? { ...state, data: { ...state.data, playlist_media: action.payload } } : state;
+      return state.data
+        ? {
+            ...state,
+            data: {
+              ...state.data,
+              playlist_media: action.payload,
+            },
+          }
+        : state;
 
     case MEDIA_REMOVED_FROM_PLAYLIST:
       return state.data

@@ -26,6 +26,7 @@ export const loadPlaylistData = (playlistId: string) => (dispatch: AppDispatch) 
     false,
     (response) => {
       if (response?.data) {
+        console.log(response);
         dispatch({
           type: LOAD_PLAYLIST_SUCCESS,
           payload: response.data as PlaylistData,
@@ -55,7 +56,6 @@ export const updatePlaylist = (playlistId: string, title: string, description: s
       });
     },
     (error) => {
-      console.log('aaaaaaaaaa', csrfToken());
       console.error('Failed to update playlist:', error);
     }
   );
@@ -63,7 +63,7 @@ export const updatePlaylist = (playlistId: string, title: string, description: s
 
 export const removePlaylist = (playlistId: string) => (dispatch: AppDispatch) => {
   deleteRequest(
-    `${mediacms_api.playlists}/${playlistId}/delete`,
+    `${mediacms_api.playlists}/${playlistId}`,
     { headers: { 'X-CSRFToken': csrfToken() } },
     false,
     () => {
@@ -75,22 +75,11 @@ export const removePlaylist = (playlistId: string) => (dispatch: AppDispatch) =>
   );
 };
 
-export const reorderPlaylistMedia = (playlistId: string, playlistMedia: PlaylistMedia[]) => (dispatch: AppDispatch) => {
-  putRequest(
-    `${mediacms_api.playlists}/${playlistId}/reorder`,
-    { playlistMedia },
-    { headers: { 'X-CSRFToken': csrfToken() } },
-    false,
-    () => {
-      dispatch({
-        type: PLAYLIST_MEDIA_REORDERED,
-        payload: playlistMedia,
-      });
-    },
-    (error) => {
-      console.error('Failed to reorder playlist media:', error);
-    }
-  );
+export const reorderPlaylistMedia = (playlistMedia: []) => (dispatch: AppDispatch) => {
+  dispatch({
+    type: PLAYLIST_MEDIA_REORDERED,
+    payload: playlistMedia,
+  });
 };
 
 export const removeMediaFromPlaylist = (playlistId: string, mediaId: string) => (dispatch: AppDispatch) => {

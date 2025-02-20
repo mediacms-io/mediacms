@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { PageActions, PlaylistPageActions } from '../utils/actions/';
+import React, { useEffect } from 'react';
+import { PageActions } from '../utils/actions/';
+import { store } from '../utils/stores/store';
 import { MemberContext } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
 import { PlaylistPageStore } from '../utils/stores/';
@@ -12,10 +13,12 @@ import {
 } from '../components/_shared/';
 import { PlaylistCreationForm } from '../components/playlist-form/PlaylistCreationForm';
 import { PlaylistMediaList } from '../components/playlist-page/PlaylistMediaList';
-
+import { config as mediacmsConfig } from '../utils/settings/config';
 import { Page } from './_Page';
 
 import '../components/playlist-page/PlaylistPage.scss';
+import { loadPlaylistData, removePlaylist } from '../utils/stores/actions/playlistPage';
+import { publishedOnDate } from '../utils/helpers';
 
 if (window.MediaCMS.site.devEnv) {
   const extractUrlParams = () => {
@@ -27,9 +30,9 @@ if (window.MediaCMS.site.devEnv) {
     if (query) {
       const params = query.split('&');
       params.forEach((param) => {
-        if (0 === param.indexOf('m=')) {
+        if (param.startsWith('m=')) {
           mediaId = param.split('m=')[1];
-        } else if (0 === param.indexOf('pl=')) {
+        } else if (param.startsWith('pl=')) {
           playlistId = param.split('pl=')[1];
         }
       });
@@ -46,47 +49,35 @@ if (window.MediaCMS.site.devEnv) {
 }
 
 function PlayAllLink(props) {
-  let playAllUrl = props.media[0].url;
+  let playAllUrl = props.media[0]?.url;
 
-  if (window.MediaCMS.site.devEnv && -1 < playAllUrl.indexOf('view?')) {
+  if (window.MediaCMS.site.devEnv && playAllUrl?.includes('view?')) {
     playAllUrl = '/media.html?' + playAllUrl.split('view?')[1];
   }
 
-  playAllUrl += '&pl=' + props.id;
+  playAllUrl += `&pl=${props.id}`;
 
-  return !props.media || !props.media.length ? (
-    <span>{props.children}</span>
-  ) : (
+  return props.media?.length ? (
     <a href={playAllUrl} title="">
       {props.children}
     </a>
+  ) : (
+    <span>{props.children}</span>
   );
 }
 
 function PlaylistThumb(props) {
-  const [thumb, setThumb] = useState(null);
-
-  useEffect(() => {
-    if (!props.thumb || 'string' !== typeof props.thumb) {
-      setThumb(null);
-    } else {
-      const tb = props.thumb.trim();
-      setThumb('' !== tb ? tb : null);
-    }
-  }, [props.thumb]);
-
   return (
-    <div className={'playlist-thumb' + (thumb ? '' : ' no-thumb')} style={{ backgroundImage: 'url("' + thumb + '")' }}>
+    <div
+      className={'playlist-thumb' + (props.thumb ? '' : ' no-thumb')}
+      style={{ backgroundImage: `url("${props.thumb}")` }}
+    >
       <PlayAllLink id={props.id} media={props.media}>
         <span>
-          {thumb ? <img src={thumb} alt="" /> : null}
+          {props.thumb ? <img src={props.thumb} alt="" /> : null}
           <span className="play-all">
-            <span>
-              <span>
-                <i className="material-icons">play_arrow</i>
-                <span className="play-all-label">PLAY ALL</span>
-              </span>
-            </span>
+            <i className="material-icons">play_arrow</i>
+            <span className="play-all-label">PLAY ALL</span>
           </span>
         </span>
       </PlayAllLink>
@@ -106,14 +97,13 @@ function PlaylistMeta(props) {
   return (
     <div className="playlist-meta">
       <div className="playlist-videos-number">{props.totalItems} media</div>
-      {/*<div className="playlist-views">{ props.viewsCount } { 1 < formatViewsNumber( props.viewsCount ) ? 'views' : 'view' }</div>*/}
       {!props.dateLabel ? null : <div className="playlist-last-update">{props.dateLabel}</div>}
     </div>
   );
 }
 
 function playlistOptionsList() {
-  const items = {
+  return {
     deleteMedia: {
       itemType: 'open-subpage',
       text: 'Delete',
@@ -124,8 +114,6 @@ function playlistOptionsList() {
       },
     },
   };
-
-  return items;
 }
 
 function playlistOptionsPopupPages(proceedPlaylistRemoval, cancelPlaylistRemoval) {
@@ -156,15 +144,15 @@ function playlistOptionsPopupPages(proceedPlaylistRemoval, cancelPlaylistRemoval
     ),
   };
 }
-
-function PlaylistOptions(props) {
+function PlaylistOptions() {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
-
-  const [popupCurrentPage, setPopupCurrentPage] = useState('main');
+  const [popupCurrentPage, setPopupCurrentPage] = React.useState('main');
 
   function proceedPlaylistRemoval() {
-    PlaylistPageActions.removePlaylist();
-    popupContentRef.current.toggle();
+    if (window.MediaCMS.playlistId) {
+      store.dispatch(removePlaylist(window.MediaCMS.playlistId));
+      popupContentRef.current.toggle();
+    }
   }
 
   function cancelPlaylistRemoval() {
@@ -192,7 +180,6 @@ function PlaylistOptions(props) {
     </div>
   );
 }
-
 function PlaylistEdit(props) {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
@@ -317,130 +304,105 @@ function PlaylistAuthor(props) {
     </div>
   );
 }
-
 export class PlaylistPage extends Page {
   constructor(props) {
     super(props, 'playlist-page');
 
+    this.mediacms_config = mediacmsConfig(window.MediaCMS);
+
     this.state = {
-      thumb: PlaylistPageStore.get('thumb'),
-      media: PlaylistPageStore.get('playlist-media'),
-      savedPlaylist: PlaylistPageStore.get('saved-playlist'),
-      loggedinUserPlaylist: PlaylistPageStore.get('logged-in-user-playlist'),
-      title: PlaylistPageStore.get('title'),
-      description: PlaylistPageStore.get('description'),
+      playlistId: null,
+      title: '',
+      description: '',
+      thumb: '',
+      savedPlaylist: null,
+      publishedDateLabel: '',
+      media: [],
+      user: '',
+      user_link: '',
+      user_thumb: '',
+      loggedinUserPlaylist: false,
     };
 
-    this.onLoadPlaylistData = this.onLoadPlaylistData.bind(this);
-    PlaylistPageStore.on('loaded_playlist_data', this.onLoadPlaylistData);
-
-    /*this.onPlaylistSaveUpdate = this.onPlaylistSaveUpdate.bind(this);
-    PlaylistPageStore.on('saved-updated', this.onPlaylistSaveUpdate);*/
-
-    this.onMediaRemovedFromPlaylist = this.onMediaRemovedFromPlaylist.bind(this);
-    PlaylistPageStore.on('removed_media_from_playlist', this.onMediaRemovedFromPlaylist);
-
-    this.onMediaReorderedInPlaylist = this.onMediaReorderedInPlaylist.bind(this);
-    PlaylistPageStore.on('reordered_media_in_playlist', this.onMediaReorderedInPlaylist);
-
-    this.onCompletePlaylistUpdate = this.onCompletePlaylistUpdate.bind(this);
-    PlaylistPageStore.on('playlist_update_completed', this.onCompletePlaylistUpdate);
-  }
-
-  onCompletePlaylistUpdate() {
-    this.setState({
-      thumb: PlaylistPageStore.get('thumb'),
-      title: PlaylistPageStore.get('title'),
-      description: PlaylistPageStore.get('description'),
-    });
-  }
-
-  onLoadPlaylistData() {
-    this.setState({
-      thumb: PlaylistPageStore.get('thumb'),
-      title: PlaylistPageStore.get('title'),
-      description: PlaylistPageStore.get('description'),
-      media: PlaylistPageStore.get('playlist-media'),
-      savedPlaylist: PlaylistPageStore.get('saved-playlist'),
-      loggedinUserPlaylist: PlaylistPageStore.get('logged-in-user-playlist'),
-    });
+    this.unsubscribe = null;
   }
 
   componentDidMount() {
-    PlaylistPageActions.loadPlaylistData();
+    // Subscribe to Redux store updates
+    this.unsubscribe = store.subscribe(() => {
+      const state = store.getState().playlistPage;
+      console.log(state);
+      this.setState({
+        playlistId: state.playlistId,
+        title: state.data?.title || '',
+        description: state.data?.description || '',
+        thumb: state.data?.playlist_media[0].thumbnail_url || '',
+        media: state.data?.playlist_media || [],
+        savedPlaylist: state.data?.savedPlaylist || '',
+        user: state.data?.user || '',
+        user_link: state.data?.user ? this.mediacms_config.site.url + '/user/' + state.data.user : null,
+        user_thumb: state.data?.user_thumbnail_url
+          ? this.mediacms_config.site.url + '/' + state.data.user_thumbnail_url.replace(/^\//g, '')
+          : null,
+        publishedDateLabel:
+          state.data?.publishDateLab || 'Created on ' + publishedOnDate(new Date(state.data?.add_date), 3),
+        loggedinUserPlaylist:
+          !this.mediacms_config.member.is.anonymous && state.data?.user === this.mediacms_config.member.username,
+      });
+    });
+
+    if (window.MediaCMS.playlistId) {
+      store.dispatch(loadPlaylistData(window.MediaCMS.playlistId));
+    }
   }
 
-  /*onPlaylistSaveUpdate(){
-    this.setState({
-      savedPlaylist: PlaylistPageStore.get('saved-playlist'),
-    }, () => {
-      if( this.state.savedPlaylist ){
-        PageActions.addNotification('Added to playlists library', 'added-to-playlists-lib');
-      }
-      else{
-        PageActions.addNotification('Removed from playlists library', 'removed-from-playlists-lib');
-      }
-    });
-  }*/
-
-  onMediaRemovedFromPlaylist() {
-    this.setState({
-      media: PlaylistPageStore.get('playlist-media'),
-      thumb: PlaylistPageStore.get('thumb'),
-    });
+  componentWillUnmount() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
   }
 
-  onMediaReorderedInPlaylist() {
-    this.setState({
-      media: PlaylistPageStore.get('playlist-media'),
-      thumb: PlaylistPageStore.get('thumb'),
-    });
-  }
-
-  pageContent() {
-    const playlistId = PlaylistPageStore.get('playlistId');
+  render() {
+    const {
+      playlistId,
+      title,
+      description,
+      thumb,
+      media,
+      savedPlaylist,
+      loggedinUserPlaylist,
+      publishedDateLabel,
+      user,
+      user_link,
+      user_thumb,
+    } = this.state;
 
     if (!playlistId) {
       return null;
     }
-
-    return [
-      <div key="playlistDetails" className="playlist-details">
-        <PlaylistThumb id={playlistId} thumb={this.state.thumb} media={this.state.media} />
-        <PlaylistTitle title={this.state.title} />
-        <PlaylistMeta
-          totalItems={PlaylistPageStore.get('total-items')}
-          dateLabel={PlaylistPageStore.get('date-label')}
-          viewsCount={PlaylistPageStore.get('views-count')}
+    console.log(media);
+    return (
+      <>
+        <div className="playlist-details">
+          <PlaylistThumb id={playlistId} thumb={thumb} media={media} />
+          <PlaylistTitle title={title} />
+          <PlaylistMeta totalItems={media.length} dateLabel={publishedDateLabel} />
+          <PlaylistActions loggedinUserPlaylist={loggedinUserPlaylist} savedPlaylist={savedPlaylist} />
+          {description ? <div className="playlist-description">{description}</div> : null}
+          <PlaylistAuthor
+            name={user}
+            link={user_link}
+            thumb={user_thumb}
+            loggedinUserPlaylist={this.state.loggedinUserPlaylist}
+          />
+        </div>
+        <PlaylistMediaList
+          key={'playlistMediaList_' + media.length}
+          id={playlistId}
+          media={media}
+          loggedinUserPlaylist={loggedinUserPlaylist}
         />
-
-        {/*'public' === PlaylistPageStore.get('visibility') ? null :
-						<div className="playlist-status">
-							<span>{ PlaylistPageStore.get('visibility-icon') }</span>
-							<div>{ PlaylistPageStore.get('visibility') }</div>
-						</div>*/}
-
-        <PlaylistActions
-          loggedinUserPlaylist={this.state.loggedinUserPlaylist}
-          savedPlaylist={this.state.savedPlaylist}
-        />
-
-        {this.state.description ? <div className="playlist-description">{this.state.description}</div> : null}
-
-        <PlaylistAuthor
-          name={PlaylistPageStore.get('author-name')}
-          link={PlaylistPageStore.get('author-link')}
-          thumb={PlaylistPageStore.get('author-thumb')}
-          loggedinUserPlaylist={this.state.loggedinUserPlaylist}
-        />
-      </div>,
-
-      <PlaylistMediaList
-        key={'playlistMediaList_' + this.state.media.length}
-        id={playlistId}
-        media={this.state.media}
-        loggedinUserPlaylist={this.state.loggedinUserPlaylist}
-      />,
-    ];
+      </>
+    );
   }
 }
