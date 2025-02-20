@@ -331,24 +331,25 @@ export class PlaylistPage extends Page {
     // Subscribe to Redux store updates
     this.unsubscribe = store.subscribe(() => {
       const state = store.getState().playlistPage;
-      console.log(state);
-      this.setState({
-        playlistId: state.playlistId,
-        title: state.data?.title || '',
-        description: state.data?.description || '',
-        thumb: state.data?.playlist_media[0].thumbnail_url || '',
-        media: state.data?.playlist_media || [],
-        savedPlaylist: state.data?.savedPlaylist || '',
-        user: state.data?.user || '',
-        user_link: state.data?.user ? this.mediacms_config.site.url + '/user/' + state.data.user : null,
-        user_thumb: state.data?.user_thumbnail_url
-          ? this.mediacms_config.site.url + '/' + state.data.user_thumbnail_url.replace(/^\//g, '')
-          : null,
-        publishedDateLabel:
-          state.data?.publishDateLab || 'Created on ' + publishedOnDate(new Date(state.data?.add_date), 3),
-        loggedinUserPlaylist:
-          !this.mediacms_config.member.is.anonymous && state.data?.user === this.mediacms_config.member.username,
-      });
+      if (!state.loading) {
+        this.setState({
+          playlistId: state.playlistId,
+          title: state.data?.title || '',
+          description: state.data?.description || '',
+          thumb: state.data?.playlist_media[0].thumbnail_url || '',
+          media: state.data?.playlist_media || [],
+          savedPlaylist: state.data?.savedPlaylist || '',
+          user: state.data?.user || '',
+          user_link: state.data?.user ? this.mediacms_config.site.url + '/user/' + state.data.user : null,
+          user_thumb: state.data?.user_thumbnail_url
+            ? this.mediacms_config.site.url + '/' + state.data.user_thumbnail_url.replace(/^\//g, '')
+            : null,
+          publishedDateLabel:
+            state.data?.publishDateLab || 'Created on ' + publishedOnDate(new Date(state.data?.add_date), 3),
+          loggedinUserPlaylist:
+            !this.mediacms_config.member.is.anonymous && state.data?.user === this.mediacms_config.member.username,
+        });
+      }
     });
 
     if (window.MediaCMS.playlistId) {
@@ -380,7 +381,6 @@ export class PlaylistPage extends Page {
     if (!playlistId) {
       return null;
     }
-    console.log(media);
     return (
       <>
         <div className="playlist-details">
