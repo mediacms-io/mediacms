@@ -131,6 +131,78 @@ export interface LoadPlaylistStateAction {
   };
 }
 
+//Playlist Page types:
+export const LOAD_PLAYLIST_DATA = 'LOAD_PLAYLIST_DATA';
+export const LOAD_PLAYLIST_SUCCESS = 'LOAD_PLAYLIST_SUCCESS';
+export const LOAD_PLAYLIST_ERROR = 'LOAD_PLAYLIST_ERROR';
+export const UPDATE_PLAYLIST = 'UPDATE_PLAYLIST';
+export const REMOVE_PLAYLIST = 'REMOVE_PLAYLIST';
+export const PLAYLIST_MEDIA_REORDERED = 'PLAYLIST_MEDIA_REORDERED';
+export const MEDIA_REMOVED_FROM_PLAYLIST = 'MEDIA_REMOVED_FROM_PLAYLIST';
+
+export interface LoadPlaylistDataAction {
+  type: typeof LOAD_PLAYLIST_DATA;
+  payload: string; // Playlist ID
+}
+
+export interface LoadPlaylistSuccessAction {
+  type: typeof LOAD_PLAYLIST_SUCCESS;
+  payload: PlaylistData;
+}
+
+export interface LoadPlaylistErrorAction {
+  type: typeof LOAD_PLAYLIST_ERROR;
+}
+
+export interface ToggleSaveAction {
+  type: typeof TOGGLE_SAVE;
+}
+
+export interface UpdatePlaylistAction {
+  type: typeof UPDATE_PLAYLIST;
+  payload: { title: string; description: string };
+}
+
+export interface RemovePlaylistAction {
+  type: typeof REMOVE_PLAYLIST;
+}
+
+export interface PlaylistMediaReorderedAction {
+  type: typeof PLAYLIST_MEDIA_REORDERED;
+  payload: PlaylistMedia[];
+}
+
+export interface MediaRemovedFromPlaylistAction {
+  type: typeof MEDIA_REMOVED_FROM_PLAYLIST;
+  payload: string;
+}
+
+export interface PlaylistData {
+  id: string;
+  title: string;
+  description: string;
+  user: string;
+  visibility: string;
+  playlist_media: PlaylistMedia[];
+  user_thumbnail_url?: string;
+  add_date?: string;
+}
+
+export interface PlaylistMedia {
+  url: string;
+  thumbnail_url: string;
+}
+
+export type PlaylistPageActionTypes =
+  | LoadPlaylistDataAction
+  | LoadPlaylistSuccessAction
+  | LoadPlaylistErrorAction
+  | ToggleSaveAction
+  | UpdatePlaylistAction
+  | RemovePlaylistAction
+  | PlaylistMediaReorderedAction
+  | MediaRemovedFromPlaylistAction;
+
 // Combine Action Types
 export type PlaylistViewActionTypes =
   | ToggleLoopAction

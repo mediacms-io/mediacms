@@ -4,8 +4,9 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // Use localStorage for persistence
 import searchReducer from './reducers/search';
 import profileReducer from './reducers/profile';
-import { PlaylistViewActionTypes, ProfileActionTypes, SearchActionTypes } from './types';
+import { PlaylistPageActionTypes, PlaylistViewActionTypes, ProfileActionTypes, SearchActionTypes } from './types';
 import playlistViewReducer from './reducers/playlistView';
+import playlistPageReducer from './reducers/playlistPage';
 
 const persistConfig = {
   key: 'root',
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   search: searchReducer,
   profile: profileReducer,
   playlistView: playlistViewReducer,
+  playlistPage: playlistPageReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -26,7 +28,12 @@ export type RootState = ReturnType<typeof rootReducer>;
 
 const store = createStore(
   persistedReducer,
-  applyMiddleware(thunk as ThunkMiddleware<RootState, SearchActionTypes | ProfileActionTypes | PlaylistViewActionTypes>)
+  applyMiddleware(
+    thunk as ThunkMiddleware<
+      RootState,
+      SearchActionTypes | ProfileActionTypes | PlaylistViewActionTypes | PlaylistPageActionTypes
+    >
+  )
 );
 
 const persistor = persistStore(store);
