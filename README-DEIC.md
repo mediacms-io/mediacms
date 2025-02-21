@@ -4,6 +4,7 @@ deploy/docker/local_settings.py changes
 REGISTER_ALLOWED = False
 USERS_CAN_SELF_REGISTER = True
 
+USE_RBAC = True
 USE_SAML = True
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

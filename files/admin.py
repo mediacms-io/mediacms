@@ -51,8 +51,8 @@ class MediaAdmin(admin.ModelAdmin):
 
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["title"]
-    list_display = ["title", "user", "add_date", "is_global", "media_count"]
-    list_filter = ["is_global"]
+    list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category"]
+    list_filter = ["is_global", "is_rbac_category"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
 

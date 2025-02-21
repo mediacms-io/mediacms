@@ -12,6 +12,7 @@ from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
 from files.models import Category, Media, Tag
+from rbac.models import RBACGroup, RBACMembership
 
 
 class User(AbstractUser):
@@ -109,6 +110,18 @@ class User(AbstractUser):
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
         super(User, self).save(*args, **kwargs)
+
+    def get_user_rbac_groups(self):
+        """Get all RBAC groups the user belongs to"""
+        return RBACGroup.objects.filter(memberships__user=self)
+
+    def get_user_role_in_rbac_group(self, group):
+        """Get the user's role in a specific group"""
+        try:
+            membership = self.rbac_memberships.get(group=group)
+            return membership.role
+        except RBACMembership.DoesNotExist:
+            return None
 
 
 class Channel(models.Model):

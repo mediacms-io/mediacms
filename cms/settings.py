@@ -256,7 +256,6 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "allauth",
     "allauth.account",
@@ -266,6 +265,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "jazzmin",
+    "django.contrib.admin",
     "django.contrib.sites",
     "rest_framework",
     "rest_framework.authtoken",
@@ -273,6 +274,8 @@ INSTALLED_APPS = [
     "files.apps.FilesConfig",
     "users.apps.UsersConfig",
     "actions.apps.ActionsConfig",
+    "saml_auth.apps.SamlAuthConfig",
+    "rbac.apps.RbacConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -516,10 +519,15 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # keep the trailing slash
 DJANGO_ADMIN_URL = "admin/"
 
-# this is used around a number of places
+# this are used around a number of places and will need to be well documented!!!
 
 USE_SAML = False
+USE_RBAC = False
 SOCIALACCOUNT_ADAPTER = 'users.adapter.SAMLAccountAdapter'
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "lux",
+}
 
 
 try:

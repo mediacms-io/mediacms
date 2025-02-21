@@ -981,6 +981,11 @@ class Category(models.Model):
 
     listings_thumbnail = models.CharField(max_length=400, blank=True, null=True, help_text="Thumbnail to show on listings")
 
+    is_rbac_category = models.BooleanField(
+        default=False,
+        help_text='If Category is part of the RBAC system'
+    )
+
     def __str__(self):
         return self.title
 
