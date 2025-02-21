@@ -82,20 +82,8 @@ export const reorderPlaylistMedia = (playlistMedia: []) => (dispatch: AppDispatc
   });
 };
 
-export const removeMediaFromPlaylist = (playlistId: string, mediaId: string) => (dispatch: AppDispatch) => {
-  putRequest(
-    `${mediacms_api.playlists}/${playlistId}/remove-media`,
-    { mediaId },
-    { headers: { 'X-CSRFToken': csrfToken() } },
-    false,
-    () => {
-      dispatch({
-        type: MEDIA_REMOVED_FROM_PLAYLIST,
-        payload: mediaId,
-      });
-    },
-    (error) => {
-      console.error('Failed to remove media from playlist:', error);
-    }
-  );
-};
+export const removedMediaFromPlaylist = (media_id: string, playlist_id: string) => ({
+  type: MEDIA_REMOVED_FROM_PLAYLIST,
+  media_id,
+  playlist_id,
+});

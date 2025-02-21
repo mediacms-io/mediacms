@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { PageActions } from '../utils/actions/';
 import { store } from '../utils/stores/store';
 import { MemberContext } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
-import { PlaylistPageStore } from '../utils/stores/';
 import {
   CircleIconButton,
   MaterialIcon,
@@ -224,18 +223,18 @@ function PlaylistEdit(props) {
     }, 100);
   }
 
-  useEffect(() => {
-    PlaylistPageStore.on('playlist_update_completed', playlistUpdateCompleted);
-    PlaylistPageStore.on('playlist_update_failed', playlistUpdateFailed);
-    PlaylistPageStore.on('playlist_removal_completed', playlistRemovalCompleted);
-    PlaylistPageStore.on('playlist_removal_failed', playlistRemovalFailed);
-    return () => {
-      PlaylistPageStore.removeListener('playlist_update_completed', playlistUpdateCompleted);
-      PlaylistPageStore.removeListener('playlist_update_failed', playlistUpdateFailed);
-      PlaylistPageStore.removeListener('playlist_removal_completed', playlistRemovalCompleted);
-      PlaylistPageStore.removeListener('playlist_removal_failed', playlistRemovalFailed);
-    };
-  }, []);
+  // useEffect(() => {
+  //   PlaylistPageStore.on('playlist_update_completed', playlistUpdateCompleted);
+  //   PlaylistPageStore.on('playlist_update_failed', playlistUpdateFailed);
+  //   PlaylistPageStore.on('playlist_removal_completed', playlistRemovalCompleted);
+  //   PlaylistPageStore.on('playlist_removal_failed', playlistRemovalFailed);
+  //   return () => {
+  //     PlaylistPageStore.removeListener('playlist_update_completed', playlistUpdateCompleted);
+  //     PlaylistPageStore.removeListener('playlist_update_failed', playlistUpdateFailed);
+  //     PlaylistPageStore.removeListener('playlist_removal_completed', playlistRemovalCompleted);
+  //     PlaylistPageStore.removeListener('playlist_removal_failed', playlistRemovalFailed);
+  //   };
+  // }, []);
 
   return (
     <div className="edit-playlist">
@@ -259,7 +258,7 @@ function PlaylistEdit(props) {
               </div>
               <PlaylistCreationForm
                 date={new Date().getTime()}
-                id={PlaylistPageStore.get('playlistId')}
+                id={window.MediaCMS.playlistId}
                 onCancel={onClickExit}
                 onPlaylistSave={onPlaylistSave}
               />

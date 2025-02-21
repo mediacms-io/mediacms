@@ -174,7 +174,8 @@ export interface PlaylistMediaReorderedAction {
 
 export interface MediaRemovedFromPlaylistAction {
   type: typeof MEDIA_REMOVED_FROM_PLAYLIST;
-  payload: string;
+  media_id: string;
+  playlist_id: string;
 }
 
 export interface PlaylistData {

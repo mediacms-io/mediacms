@@ -19,7 +19,6 @@ interface PlaylistPageState {
   error: boolean;
 }
 
-// Initial State
 const initialState: PlaylistPageState = {
   playlistId: null,
   data: null,
@@ -28,7 +27,6 @@ const initialState: PlaylistPageState = {
   error: false,
 };
 
-// Reducer Function
 const playlistPageReducer = (state = initialState, action: PlaylistPageActionTypes): PlaylistPageState => {
   switch (action.type) {
     case LOAD_PLAYLIST_DATA:
@@ -62,16 +60,21 @@ const playlistPageReducer = (state = initialState, action: PlaylistPageActionTyp
           }
         : state;
 
+    // Handle media removal from playlist
     case MEDIA_REMOVED_FROM_PLAYLIST:
-      return state.data
-        ? {
-            ...state,
-            data: {
-              ...state.data,
-              playlist_media: state.data.playlist_media.filter((media) => media.url !== action.payload),
-            },
-          }
-        : state;
+      if (state.data) {
+        const new_playlist_media = state.data.playlist_media.filter(
+          (media) => media.url.split('=')[1] !== action.media_id
+        );
+        return {
+          ...state,
+          data: {
+            ...state.data,
+            playlist_media: new_playlist_media,
+          },
+        };
+      }
+      return state;
 
     default:
       return state;

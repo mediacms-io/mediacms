@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import { putRequest, csrfToken } from '../../utils/helpers/';
 import { usePopup } from '../../utils/hooks/';
 import { PageStore } from '../../utils/stores/';
-import { PageActions, PlaylistPageActions } from '../../utils/actions/';
+import { PageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared';
+import { useDispatch } from 'react-redux';
+import { removedMediaFromPlaylist } from '../../utils/stores/actions/playlistPage';
 
 function mediaPlaylistPopupPages(proceedRemoval, cancelRemoval) {
   const settingOptionsList = {
@@ -48,6 +50,7 @@ function mediaPlaylistPopupPages(proceedRemoval, cancelRemoval) {
 }
 
 export function MediaPlaylistOptions(props) {
+  const dispatch = useDispatch();
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
   const [popupCurrentPage, setPopupCurrentPage] = useState('main');
@@ -61,7 +64,7 @@ export function MediaPlaylistOptions(props) {
     setTimeout(function () {
       // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
       PageActions.addNotification('Media removed from playlist', 'mediaPlaylistRemove');
-      PlaylistPageActions.removedMediaFromPlaylist(props_media_id, props_playlist_id);
+      dispatch(removedMediaFromPlaylist(props_media_id, props_playlist_id));
     }, 100);
   }
 
