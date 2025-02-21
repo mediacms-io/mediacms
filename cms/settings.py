@@ -523,7 +523,6 @@ DJANGO_ADMIN_URL = "admin/"
 
 USE_SAML = False
 USE_RBAC = False
-SOCIALACCOUNT_ADAPTER = 'users.adapter.SAMLAccountAdapter'
 
 JAZZMIN_UI_TWEAKS = {
     "theme": "lux",

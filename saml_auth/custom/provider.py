@@ -19,14 +19,21 @@ class CustomSAMLProvider(SAMLProvider):
                 provider_keys = [provider_keys]
             for provider_key in provider_keys:
                 attribute_list = raw_attributes.get(provider_key, None)
-                if attribute_list is not None and len(attribute_list) > 0:
+                # if more than one keys, get them all comma separated
+                if attribute_list is not None and len(attribute_list) > 1:
+                    attributes[key] = ",".join(attribute_list)
+                    break
+                elif attribute_list is not None and len(attribute_list) > 0:
                     attributes[key] = attribute_list[0]
                     break
+                
         email_verified = attributes.get("email_verified")
         if email_verified:
             email_verified = email_verified.lower() in ["true", "1", "t", "y", "yes"]
             attributes["email_verified"] = email_verified
-
+        # return username as the uid value
+        if "uid" in attributes:
+            attributes["username"] = attributes["uid"]
         # If we did not find an email, check if the NameID contains the email.
         if not attributes.get("email") and (
             data.get_nameid_format()
