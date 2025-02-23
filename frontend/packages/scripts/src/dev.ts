@@ -1,15 +1,11 @@
 const isAbsolutePath = require('path').isAbsolute;
-
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 
 import { config as defaultConfig } from '../lib/config';
-
 import { DevOptionsType } from '../lib/interfaces/OptionsTypes';
-
 import { config as webpackDefaultConfig } from '../lib/.webpack/dev.config';
 import { configFunc as webpackDefaultServerConfig } from '../lib/.webpack/dev-server.config';
-
 import generateConfig from '../lib/webpack-helpers/generateConfig';
 
 const defaultOptions: DevOptionsType = {
@@ -21,7 +17,6 @@ const defaultOptions: DevOptionsType = {
 
 export function dev(devOptions: DevOptionsType = defaultOptions): void {
   const options: DevOptionsType = { ...defaultOptions, ...devOptions };
-
   options.config = { ...defaultOptions.config, ...devOptions.config };
 
   const config = generateConfig(options.env, options.config);
@@ -29,24 +24,26 @@ export function dev(devOptions: DevOptionsType = defaultOptions): void {
   if (!isAbsolutePath(options.config.src)) {
     throw Error('"src" is not an absolute path');
   }
-
   if (!isAbsolutePath(options.config.build)) {
     throw Error('"build" is not an absolute path');
   }
-
   if (!isAbsolutePath(options.config.postcssConfigFile)) {
     throw Error('"postcssConfigFile" is not an absolute path');
   }
 
   const compilerConfig = { ...webpackDefaultConfig, ...config };
-  const serverOptions = webpackDefaultServerConfig(options.config.src);
-
-  WebpackDevServer.addDevServerEntrypoints(compilerConfig, serverOptions);
+  const serverOptions = webpackDefaultServerConfig(options.config.src, options.host, options.port);
 
   const compiler = webpack(compilerConfig);
-  const server = new WebpackDevServer(compiler, serverOptions);
 
-  server.listen(options.port, options.host, (err?: Error) => {
-    if (err) throw err;
-  });
+  const server = new WebpackDevServer(serverOptions, compiler);
+
+  server
+    .start()
+    .then(() => {
+      console.log(`Dev Server running at http://${options.host}:${options.port}`);
+    })
+    .catch((err: Error) => {
+      throw err;
+    });
 }
