@@ -27,7 +27,6 @@
     "css-loader": "^5.2.6",
     "dotenv": "^10.0.0",
     "ejs": "^3.1.6",
-    "ejs-compiled-loader": "^3.1.0",
     "mediacms-scripts": "file:packages/scripts",
     "postcss-loader": "^6.1.0",
     "prettier": "^2.3.1",
@@ -53,6 +52,5 @@
     "pdfjs-dist": "^3.4.120",
     "@react-pdf-viewer/core": "^3.9.0",
     "@react-pdf-viewer/default-layout": "^3.12.0"
-
   }
 }
