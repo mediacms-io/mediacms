@@ -11,7 +11,9 @@ export default function PdfViewer({ fileUrl }) {
   return (
     <div className='pdf-container'>
         <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
-          <Viewer fileUrl={fileUrl} plugins={[defaultLayoutPluginInstance]} />
+          <Viewer fileUrl={fileUrl} plugins={[defaultLayoutPluginInstance]} options={{
+            isEvalSupported: false,
+          }} />
         </Worker>
       </div>
   );

@@ -39,7 +39,7 @@
     "webpack": "^5.38.1"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.7.0",
     "flux": "^4.0.1",
     "mediacms-player": "file:packages/player",
     "normalize.css": "^8.0.1",
