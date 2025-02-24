@@ -1,8 +1,14 @@
 import logging
 
+from django.core.files import File
 from django.dispatch import receiver
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.signals import social_account_updated, social_account_added
+
+from rbac.models import RBACGroup, RBACMembership
+from saml_auth.models import SAMLLog
+
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
@@ -27,22 +33,90 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def save_user(self, request, sociallogin, form=None):
         user = super().save_user(request, sociallogin, form)
         # Runs after new user is created
-        perform_user_actions(user)
+        perform_user_actions(user, sociallogin.account)
         return user
 
 @receiver(social_account_updated)
 def social_account_updated(sender, request, sociallogin, **kwargs):
     # Runs after existing user is updated
     user = sociallogin.user
-    perform_user_actions(user)
+    perform_user_actions(user, sociallogin.account)
 
 
-def perform_user_actions(user):
+def perform_user_actions(user, social_account):
+    extra_data = social_account.extra_data
+    # there's no FK from Social Account to Social App
+    social_app = SocialApp.objects.filter(provider_id=social_account.provider).first()
+    saml_configuration = None
+    if social_app:
+        saml_configuration = social_app.saml_configurations.first()
+
+    add_user_logo(user, extra_data)
+    handle_rbac_groups(user, extra_data, social_app, saml_configuration)
+    if saml_configuration and saml_configuration.save_saml_response_logs:
+        handle_saml_logs_save(user, extra_data, social_app)
+
+    return user
+
+def add_user_logo(user, extra_data):
     try:
-        # set logo, if not set, and it exists
-        # get groups, create + add user (based in option)
-        # remove from groups (based in option)
+        if user.logo.name == "userlogos/user.jpg" and extra_data.get("jpegPhoto"):
+            image_data = extra_data.get("jpegPhoto")[0]
+            logo = File(image_data)
+            user.logo.save(content=logo, name="jpegPhoto")
+    except Exception as e:
+        logging.error(e)
+    return True    
 
+def handle_rbac_groups(user, extra_data, social_app, saml_configuration):
+    rbac_groups = []
+    role = "member"
+    if saml_configuration:
+        # get groups key from configuration / attributes mapping
+        groups_key = saml_configuration.groups
+        groups = extra_data.get(groups_key, [])
+        
+        try:
+            # try to get the role, always use member as fallback
+            role_key = saml_configuration.role
+            role = extra_data.get(role, "student")
+            if role:
+                role = saml_configuration.role_mapping.get(role, "member")
         except Exception as e:
             logging.error(e)
-    return user
+        if saml_configuration.create_groups and groups:
+            try:
+                for group_name in groups:
+                    rbac_group, created = RBACGroup.objects.get_or_create(
+                        uid=group_name,
+                        social_app=social_app,
+                        defaults={
+                        "name": f"{group_name} Group",
+                        "description": f"Group for {group_name}",
+                        }
+                    )
+                    rbac_groups.append(rbac_group)        
+            except Exception as e:
+                logging.error(e)
+
+    for rbac_group in rbac_groups:
+        membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
+        if not membership:
+            # use role from early above
+            membership = RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=role)
+    # if remove_from_groups setting is True and user is part of groups for this
+    # social app that are not included anymore on the response, then remove user from group
+    if saml_configuration and saml_configuration.remove_from_groups:
+        for group in user.rbac_groups.filter(social_app=social_app):
+            if group not in rbac_groups:
+                group.remove(user)
+
+    return True
+
+
+def handle_saml_logs_save(user, extra_data, social_app):
+    # do not save jpegPhoto, if it exists
+    extra_data.pop("jpegPhoto", None)
+    log = SAMLLog.objects.create(user=user, social_app=social_app, logs=extra_data)
+    return True
+

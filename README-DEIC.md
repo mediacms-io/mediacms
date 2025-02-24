@@ -20,3 +20,9 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+ACCOUNT_USERNAME_VALIDATORS = "users.validators.less_restrictive_username_validators"
+
+In Saml configurations:
+ role_mapping has to be 
+{'staff': 'contributor', 'student': 'member'} . Valid roles are member, contributor, manager
+

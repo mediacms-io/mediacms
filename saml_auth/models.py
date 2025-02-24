@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from allauth.socialaccount.models import SocialApp
 
@@ -88,7 +89,7 @@ class SAMLConfiguration(models.Model):
     )
 
     def default_role_mapping():
-        return {'staff': 'advancedUser'}
+        return {'staff': 'contributor'}
 
     role_mapping = models.JSONField(
         default=default_role_mapping,
@@ -104,6 +105,20 @@ class SAMLConfiguration(models.Model):
     def __str__(self):
         return f'SAML Config for {self.social_app.name} - {self.idp_id}'
 
+    def clean(self):
+        existing_conf = SAMLConfiguration.objects.filter(
+            social_app=self.social_app
+        )
+        
+        if self.pk:
+            existing_conf = existing_conf.exclude(pk=self.pk)
+        
+        if existing_conf.exists():
+            raise ValidationError({
+                'social_app': 'Cannot create configuration for the same social app because one configuration already exists.'
+            })
+        
+        super().clean()
 
 class SAMLLog(models.Model):
     social_app = models.ForeignKey(
