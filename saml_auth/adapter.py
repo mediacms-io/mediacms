@@ -79,9 +79,15 @@ def handle_rbac_groups(user, extra_data, social_app, saml_configuration):
         try:
             # try to get the role, always use member as fallback
             role_key = saml_configuration.role
-            role = extra_data.get(role, "student")
-            if role:
-                role = saml_configuration.role_mapping.get(role, "member")
+            role = extra_data.get(role_key, "student")
+            if role and isinstance(role, list):
+                role = role[0]
+            
+            role = saml_configuration.role_mapping.get(role, "member")
+            
+            if role not in ['member', 'contributor', 'manager']:
+                role = 'member'
+            # TODO: move to helper function for consistent checking
         except Exception as e:
             logging.error(e)
         if saml_configuration.create_groups and groups:
@@ -102,14 +108,17 @@ def handle_rbac_groups(user, extra_data, social_app, saml_configuration):
     for rbac_group in rbac_groups:
         membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
         if not membership:
-            # use role from early above
-            membership = RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=role)
+            try:
+                # use role from early above
+                membership = RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=role)
+            except Exception as e:
+                logging.error(e)
     # if remove_from_groups setting is True and user is part of groups for this
     # social app that are not included anymore on the response, then remove user from group
     if saml_configuration and saml_configuration.remove_from_groups:
         for group in user.rbac_groups.filter(social_app=social_app):
             if group not in rbac_groups:
-                group.remove(user)
+                group.members.remove(user)
 
     return True
 
