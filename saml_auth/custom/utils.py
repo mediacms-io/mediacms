@@ -119,7 +119,6 @@ def build_saml_config(request, provider_config, org):
         "strict": avd.get("strict", True),
         "security": security_config,
     }
-
     contact_person = provider_config.get("contact_person")
     if contact_person:
         saml_config["contactPerson"] = contact_person
@@ -170,6 +169,11 @@ def decode_relay_state(relay_state):
 
 def build_auth(request, provider):
     req = prepare_django_request(request)
-    config = build_saml_config(request, provider.app.settings, provider.app.client_id)
+    custom_configuration = provider.app.saml_configurations.first()
+    if custom_configuration:
+        custom_settings = custom_configuration.saml_provider_settings
+        config = build_saml_config(request, custom_settings, provider.app.client_id)
+    else:
+        config = build_saml_config(request, provider.app.settings, provider.app.client_id)
     auth = OneLogin_Saml2_Auth(req, config)
     return auth

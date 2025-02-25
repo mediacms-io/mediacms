@@ -2,12 +2,24 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.http import urlencode
 
+from allauth.socialaccount.providers.base import Provider, ProviderAccount
 from allauth.socialaccount.providers.saml.provider import SAMLProvider
+from saml_auth.models import SAMLConfiguration
+from saml_auth.custom.utils import build_auth
+
+
+class SAMLAccount(ProviderAccount):
+    pass
 
 
 class CustomSAMLProvider(SAMLProvider):
     def _extract(self, data):
-        provider_config = self.app.settings
+        custom_configuration = self.app.saml_configurations.first()
+        if custom_configuration: 
+            provider_config = custom_configuration.saml_provider_settings
+        else:
+            provider_config = self.app.settings
+
         raw_attributes = data.get_attributes()
         attributes = {}
         attribute_mapping = provider_config.get(
@@ -26,10 +38,11 @@ class CustomSAMLProvider(SAMLProvider):
                 elif attribute_list is not None and len(attribute_list) > 0:
                     attributes[key] = attribute_list[0]
                     break
-                
-        email_verified = attributes.get("email_verified")
+        attributes["email_verified"] = False
+        email_verified = provider_config.get("email_verified", False)
         if email_verified:
-            email_verified = email_verified.lower() in ["true", "1", "t", "y", "yes"]
+            if isinstance(email_verified, str):
+                email_verified = email_verified.lower() in ["true", "1", "t", "y", "yes"]
             attributes["email_verified"] = email_verified
         # return username as the uid value
         if "uid" in attributes:
@@ -44,4 +57,20 @@ class CustomSAMLProvider(SAMLProvider):
             attributes["email"] = data.get_nameid()
 
         return attributes
+
+    def redirect(self, request, process, next_url=None, data=None, **kwargs):
+
+        auth = build_auth(request, self)
+        # If we pass `return_to=None` `auth.login` will use the URL of the
+        # current view.
+        redirect = auth.login(return_to="")
+        self.stash_redirect_state(
+            request,
+            process,
+            next_url,
+            data,
+            state_id=auth.get_last_request_id(),
+            **kwargs
+        )
+        return HttpResponseRedirect(redirect)
 

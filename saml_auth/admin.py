@@ -94,6 +94,12 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 'save_saml_response_logs'
             ]
         }),
+        ('Email Settings', {
+            'fields': [
+                'verified_email',
+                'email_authentication',
+            ]
+        }),
         ('Attribute Mapping', {
             'fields': [
                 'uid',

@@ -88,6 +88,16 @@ class SAMLConfiguration(models.Model):
         help_text='eduPersonPrimaryAffiliation'
     )
 
+    verified_email = models.BooleanField(
+        default=True,
+        help_text='Mark email as verified'
+    )
+
+    email_authentication = models.BooleanField(
+        default=True,
+        help_text='Use email authentication too'
+    )
+
     def default_role_mapping():
         return {'staff': 'contributor'}
 
@@ -119,6 +129,31 @@ class SAMLConfiguration(models.Model):
             })
         
         super().clean()
+
+    @property
+    def saml_provider_settings(self):
+        # provide settings in a way for Social App SAML provider
+        provider_settings = {}
+        provider_settings["sp"] = {"entity_id": self.sp_metadata_url}
+        provider_settings["idp"] = {
+            "slo_url": self.slo_url,
+            "sso_url": self.sso_url,
+            "x509cert": self.idp_cert,
+            "entity_id": self.idp_id
+        }
+
+        provider_settings["attribute_mapping"] = {
+            "uid": self.uid,
+            "name": self.name,
+            "role": self.role,
+            "email": self.email,
+            "groups": self.groups,
+            "first_name": self.first_name,
+            "last_name": self.last_name
+        }
+        provider_settings["email_verified"] = self.verified_email
+        provider_settings["email_authentication"] = self.email_authentication
+        return provider_settings
 
 class SAMLLog(models.Model):
     social_app = models.ForeignKey(
