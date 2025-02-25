@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from .models import (
@@ -11,6 +12,7 @@ from .models import (
     Tag,
 )
 
+from rbac.models import RBACGroup
 
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text"]
@@ -49,12 +51,25 @@ class MediaAdmin(admin.ModelAdmin):
     get_comments_count.short_description = "Comments count"
 
 
+class RBACGroupInline(admin.TabularInline):
+    model = RBACGroup.categories.through
+    extra = 1
+    verbose_name = "RBAC Group"
+    verbose_name_plural = "RBAC Groups"
+
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["title"]
     list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category"]
     list_filter = ["is_global", "is_rbac_category"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.inlines = []
+
+        if getattr(settings, 'USE_RBAC', False):
+            self.inlines.append(RBACGroupInline)
 
 
 class TagAdmin(admin.ModelAdmin):

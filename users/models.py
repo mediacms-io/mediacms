@@ -123,6 +123,28 @@ class User(AbstractUser):
         except RBACMembership.DoesNotExist:
             return None
 
+    def get_rbac_categories_as_member(self):
+        """
+        Get all categories related to RBAC groups the user belongs to
+        """
+        rbac_groups = RBACGroup.objects.filter(
+            memberships__user=self,
+            memberships__role__in=["member", "contributor", "manager"]
+        )
+        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        return categories
+
+    def get_rbac_categories_as_contributor(self):
+        """
+        Get all categories related to RBAC groups the user belongs to
+        """
+        rbac_groups = RBACGroup.objects.filter(
+            memberships__user=self,
+            memberships__role__in=["contributor", "manager"]
+        )
+        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        return categories
+
 
 class Channel(models.Model):
     title = models.CharField(max_length=90, db_index=True)

@@ -1359,7 +1359,17 @@ class CategoryList(APIView):
         },
     )
     def get(self, request, format=None):
-        categories = Category.objects.filter().order_by("title")
+        if is_mediacms_editor(request.user):
+            categories = Category.objects.filter()
+        else:
+            categories = Category.objects.filter(is_rbac_category=False)
+        
+            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
+                rbac_categories = request.user.get_rbac_categories_as_member()
+                categories = categories.union(rbac_categories)
+
+        categories = categories.order_by("title")
+        
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data
         return Response(ret)
