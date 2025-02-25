@@ -78,7 +78,7 @@ class RBACGroupAdmin(admin.ModelAdmin):
 
     def categories_list(self, obj):
         """Display categories as a comma-separated list"""
-        return ", ".join([c.name for c in obj.categories.all()])
+        return ", ".join([c.title for c in obj.categories.all()])
     categories_list.short_description = 'Categories'
 
 class RBACMembershipAdmin(admin.ModelAdmin):
