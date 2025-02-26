@@ -21,11 +21,46 @@ SESSION_COOKIE_SECURE = True
 SOCIALACCOUNT_ADAPTER = 'saml_auth.adapter.SAMLAccountAdapter'
 ACCOUNT_USERNAME_VALIDATORS = "users.validators.less_restrictive_username_validators"
 SOCIALACCOUNT_PROVIDERS = {
-   "saml": {
-       "provider_class": "saml_auth.custom.provider.CustomSAMLProvider",
-   }
+    "saml": {
+        "provider_class": "saml_auth.custom.provider.CustomSAMLProvider",
+    }
 }
 EXTRA_APPS = [
-   "allauth.socialaccount.providers.saml",
-   "saml_auth.apps.SamlAuthConfig",
+    "allauth.socialaccount.providers.saml",
+    "saml_auth.apps.SamlAuthConfig",
 ]
+```
+
+## SAML Configuration Steps
+
+### Step 1: Add Social Application for SAML
+1. Navigate to Admin panel
+2. Select "Social application" 
+3. Configure as follows:
+   - **Provider**: SAML
+   - **Provider ID**: `wayf.wayf.dk`
+   - **Name**: `Deic` (or preferred name)
+   - **Client ID**: `wayf_dk` (important: defines the URL, e.g., `https://deic.mediacms.io/accounts/saml/wayf_dk`)
+   - **Secret Key / Key**: Leave empty
+   - **Settings**: Leave empty (default `{}`)
+
+### Step 2: Add Social Configuration
+Can be set inline from Social Application or through its dedicated admin section (recommended):
+
+1. **Social App**: Link to the existing app created above
+2. **IDP ID**: Must be a URL, e.g., `https://wayf.wayf.dk`
+3. **IDP Certificate**: x509cert from your SAML provider
+4. **SSO URL**: `https://wayf.wayf.dk/saml2/idp/SSOService2.php`
+5. **SLO URL**: `https://wayf.wayf.dk/saml2/idp/SingleLogoutService.php`
+6. **SP Metadata URL**: The metadata URL set for the SP, e.g., `https://deic.mediacms.io/saml/metadata`
+
+### Step 3: Group Management Options
+1. **Email Settings**:
+   - `verified_email`: When enabled, emails from SAML responses will be marked as verified 
+   - `email_authentication`: When enabled, the system will use the email as an identifier
+     - Note: This is currently WIP - setting to `False` will require users to provide an email
+
+2. **Attribute Mapping**: Maps attributes from the SAML response
+
+3. **Role Configuration**: At minimum, include `{"staff": "contributor"}`
+   - Valid roles are: `member`, `contributor`, `manager`
