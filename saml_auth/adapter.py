@@ -119,6 +119,8 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     except Exception as e:
         logging.error(e)
     if saml_configuration.create_groups and groups:
+        # TODO XXX dont make tht check here. instead do a RBACGroup.objects.filter if this is false, otherwise
+        # get_or_create
         try:
             for group_id in groups:
                 group_mapping = saml_configuration.group_mapping.filter(name=group_id).first()
