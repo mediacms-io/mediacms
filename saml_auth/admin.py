@@ -28,42 +28,7 @@ class SAMLConfigurationGroupMappingInline(admin.TabularInline):
     verbose_name_plural = "Group Mappings"
     fields = ['name', 'map_to']
 
-class SAMLConfigurationInline(admin.StackedInline):
-    model = SAMLConfiguration
-    extra = 0
-    fieldsets = [
-        ('Provider Settings', {
-            'fields': [
-                'idp_id',
-                'idp_cert',
-                'sso_url',
-                'slo_url',
-                'sp_metadata_url'
-            ]
-        }),
-        ('Group Management', {
-            'fields': [
-                'create_groups',
-                'remove_from_groups',
-                'save_saml_response_logs'
-            ]
-        }),
-        ('Attribute Mapping', {
-            'fields': [
-                'uid',
-                'name',
-                'email',
-                'groups',
-                'first_name',
-                'last_name',
-                'user_logo',
-                'role'
-            ]
-        }),
-    ]
 
-class CustomSocialAppAdmin(SocialAppAdmin):
-    inlines = [SAMLConfigurationInline]
 
 class SAMLConfigurationAdmin(admin.ModelAdmin):
     list_display = [
@@ -173,8 +138,6 @@ class SAMLLogAdmin(admin.ModelAdmin):
 
 if getattr(settings, 'USE_SAML', False):
     # Unregister the default SocialAppAdmin and register our custom one
-    admin.site.unregister(SocialApp)
-    admin.site.register(SocialApp, CustomSocialAppAdmin)
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
     admin.site.register(SAMLLog,  SAMLLogAdmin)
  
