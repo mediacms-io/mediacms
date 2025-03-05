@@ -264,7 +264,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "jazzmin",
+#    "jazzmin",
     "django.contrib.admin",
     "django.contrib.sites",
     "rest_framework",

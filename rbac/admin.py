@@ -1,9 +1,12 @@
 from django.conf import settings
 
 from django.contrib import admin
+from django.contrib.auth.models import Group
 from django.utils.html import format_html
-from allauth.socialaccount.models import SocialApp
-from allauth.socialaccount.admin import SocialAppAdmin
+from allauth.socialaccount.apps import SocialAccountConfig
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
+
+
 from .models import RBACGroup, RBACMembership
 
 class RBACMembershipInline(admin.TabularInline):
@@ -127,7 +130,17 @@ class RBACMembershipAdmin(admin.ModelAdmin):
     ]
 
 if getattr(settings, 'USE_RBAC', False):
-    # Unregister the default SocialAppAdmin and register our custom one
     admin.site.register(RBACGroup, RBACGroupAdmin)
     admin.site.register(RBACMembership, RBACMembershipAdmin)
+    admin.site.unregister(Group)
+
+    admin.site.unregister(SocialToken)
+
+    SocialAccount._meta.verbose_name = "User Account"
+    SocialAccount._meta.verbose_name_plural = "User Accounts"
+   
+    SocialApp._meta.verbose_name = "ID Provider"
+    SocialApp._meta.verbose_name_plural = "ID Providers"
+
+    SocialAccount._meta.app_config.verbose_name = "Identity Providers"
 
