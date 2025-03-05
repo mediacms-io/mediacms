@@ -1,10 +1,15 @@
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
+from django.shortcuts import redirect
 from django.urls import path, re_path
 
 from . import management_views, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
+
+def redirect_to_custom_login(request):
+    # TODO: get through settings
+    return redirect('/accounts/saml/wayf_dk/login/?process=login')
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -94,6 +99,7 @@ urlpatterns = [
 
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
+    urlpatterns.append(re_path(r"^accounts/login", redirect_to_custom_login, name='login'))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

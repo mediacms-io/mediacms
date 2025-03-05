@@ -98,15 +98,6 @@ class SAMLConfiguration(models.Model):
         help_text='Use email authentication too'
     )
 
-    def default_role_mapping():
-        return {'staff': 'contributor'}
-
-    role_mapping = models.JSONField(
-        default=default_role_mapping,
-        blank=True,
-        help_text='Role mapping configuration'
-    )
-
     class Meta:
         verbose_name = 'SAML Configuration'
         verbose_name_plural = 'SAML Configurations'
@@ -179,3 +170,96 @@ class SAMLLog(models.Model):
 
     def __str__(self):
         return f'SAML Log - {self.user.username} - {self.created_at}'
+
+
+
+class SAMLConfigurationGroupRole(models.Model):
+    configuration = models.ForeignKey(
+        SAMLConfiguration,
+        on_delete=models.CASCADE,
+        related_name='group_roles'
+    )
+
+    name = models.CharField(
+        verbose_name='Group Role Mapping',
+        max_length=100,
+        help_text='SAML value'
+    )
+
+    map_to = models.CharField(
+        max_length=20,
+        choices=[
+            ('member', 'Member'),
+            ('contributor', 'Contributor'),
+            ('manager', 'Manager')
+        ],
+        help_text='MediaCMS Group Role'
+    )
+
+    class Meta:
+        verbose_name = 'SAML Group Role Mapping'
+        verbose_name_plural = 'SAML Group Role Mappings'
+        unique_together = ('configuration', 'name')
+
+    def __str__(self):
+        return f'SAML Group Role Mapping {self.name}'
+
+class SAMLConfigurationGlobalRole(models.Model):
+    configuration = models.ForeignKey(
+        SAMLConfiguration,
+        on_delete=models.CASCADE,
+        related_name='global_roles'
+    )
+
+    name = models.CharField(
+        verbose_name='Global Role Mapping',
+        max_length=100,
+        help_text='SAML value'
+    )
+
+    map_to = models.CharField(
+        max_length=20,
+        choices=[
+            ('advancedUser', 'Advanced User'),
+            ('editor', 'MediaCMS Editor'),
+            ('manager', 'MediaCMS Manager'),
+            ('admin', 'MediaCMS Administrator')
+        ],
+        help_text='MediaCMS Global Role'
+    )
+
+    class Meta:
+        verbose_name = 'SAML Global Role Mapping'
+        verbose_name_plural = 'SAML Global Role Mappings'
+        unique_together = ('configuration', 'name')
+
+    def __str__(self):
+        return f'SAML Global Role {self.name}'
+
+
+class SAMLConfigurationGroupMapping(models.Model):
+    configuration = models.ForeignKey(
+        SAMLConfiguration,
+        on_delete=models.CASCADE,
+        related_name='group_mapping'
+    )
+
+    name = models.CharField(
+        verbose_name='Group name',
+        max_length=100,
+        help_text='SAML value'
+    )
+
+    map_to = models.CharField(
+        max_length=300,
+        help_text='MediaCMS Group name'
+    )
+
+    class Meta:
+        verbose_name = 'SAML Group Mapping'
+        verbose_name_plural = 'SAML Group Mappings'
+        unique_together = ('configuration', 'name')
+
+    def __str__(self):
+        return f'SAML Group Mapping {self.name}'
+

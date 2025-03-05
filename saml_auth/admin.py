@@ -4,7 +4,29 @@ from django.contrib import admin
 from django.utils.html import format_html
 from allauth.socialaccount.models import SocialApp
 from allauth.socialaccount.admin import SocialAppAdmin
-from .models import SAMLConfiguration, SAMLLog
+from .models import SAMLConfiguration, SAMLLog, SAMLConfigurationGroupRole, SAMLConfigurationGlobalRole, SAMLConfigurationGroupMapping
+
+
+class SAMLConfigurationGroupRoleInline(admin.TabularInline):
+    model = SAMLConfigurationGroupRole
+    extra = 1
+    verbose_name = "Group Role Mapping"
+    verbose_name_plural = "Group Role Mappings"
+    fields = ['name', 'map_to']
+
+class SAMLConfigurationGlobalRoleInline(admin.TabularInline):
+    model = SAMLConfigurationGlobalRole
+    extra = 1
+    verbose_name = "Global Role Mapping"
+    verbose_name_plural = "Global Role Mappings"
+    fields = ['name', 'map_to']
+
+class SAMLConfigurationGroupMappingInline(admin.TabularInline):
+    model = SAMLConfigurationGroupMapping
+    extra = 1
+    verbose_name = "Group Mapping"
+    verbose_name_plural = "Group Mappings"
+    fields = ['name', 'map_to']
 
 class SAMLConfigurationInline(admin.StackedInline):
     model = SAMLConfiguration
@@ -38,12 +60,6 @@ class SAMLConfigurationInline(admin.StackedInline):
                 'role'
             ]
         }),
-        ('Role Configuration', {
-            'fields': [
-                'role_mapping'
-            ],
-            'classes': ['collapse']
-        })
     ]
 
 class CustomSocialAppAdmin(SocialAppAdmin):
@@ -112,14 +128,14 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 'role'
             ]
         }),
-        ('Role Configuration', {
-            'fields': [
-                'role_mapping'
-            ],
-            'classes': ['collapse']
-        })
     ]
-    
+
+    inlines = [
+        SAMLConfigurationGroupRoleInline,
+        SAMLConfigurationGlobalRoleInline,
+        SAMLConfigurationGroupMappingInline
+    ]
+
     def view_metadata_url(self, obj):
         """Display metadata URL as a clickable link"""
         return format_html(

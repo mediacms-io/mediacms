@@ -51,7 +51,6 @@ class Migration(migrations.Migration):
                 ('last_name', models.CharField(blank=True, help_text='eg sn', max_length=100, null=True)),
                 ('user_logo', models.CharField(blank=True, help_text='eg jpegPhoto', max_length=100, null=True)),
                 ('role', models.CharField(blank=True, help_text='eduPersonPrimaryAffiliation', max_length=100, null=True)),
-                ('role_mapping', models.JSONField(blank=True, default=saml_auth.models.SAMLConfiguration.default_role_mapping, help_text='Role mapping configuration')),
                 ('social_app', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saml_configurations', to='socialaccount.socialapp')),
             ],
             options={
