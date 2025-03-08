@@ -2,7 +2,7 @@ from django.conf import settings
 
 from django.contrib import admin
 from django.utils.html import format_html
-from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin
 from .models import SAMLConfiguration, SAMLLog, SAMLConfigurationGroupRole, SAMLConfigurationGlobalRole, SAMLConfigurationGroupMapping
 
@@ -96,8 +96,8 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     ]
 
     inlines = [
-        SAMLConfigurationGroupRoleInline,
         SAMLConfigurationGlobalRoleInline,
+        SAMLConfigurationGroupRoleInline,
         SAMLConfigurationGroupMappingInline
     ]
 
@@ -108,6 +108,12 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
             obj.sp_metadata_url
         )
     view_metadata_url.short_description = 'Metadata'
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'social_app':
+            field.label = 'IDP Config Name'
+        return field
 
 class SAMLLogAdmin(admin.ModelAdmin):
     list_display = [
@@ -136,8 +142,47 @@ class SAMLLogAdmin(admin.ModelAdmin):
         'logs'
     ]
 
+
+class CustomSocialAppAdmin(SocialAppAdmin):
+    list_display = ('get_config_name', 'get_protocol')
+
+    fields = ('provider', 'provider_id', 'name', 'client_id', 'sites')
+
+    def get_protocol(self, obj):
+        return obj.provider
+
+    def get_config_name(self, obj):
+        return obj.name
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'provider':
+            field.label = 'Protocol'
+        elif db_field.name == 'name':
+            field.label = 'IDP Config Name'
+        return field
+
+    get_config_name.short_description = 'IDP Config Name'
+    get_protocol.short_description = 'Protocol'
+
+
 if getattr(settings, 'USE_SAML', False):
-    # Unregister the default SocialAppAdmin and register our custom one
+    for field in SAMLConfiguration._meta.fields:
+        if field.name == 'social_app':
+            field.verbose_name = "ID Provider"
+
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
     admin.site.register(SAMLLog,  SAMLLogAdmin)
- 
+
+    admin.site.unregister(SocialToken)
+
+    # This is unregistering the default Social App and registers the custom one here, 
+    # with mostly name setting options
+    SocialAccount._meta.verbose_name = "User Account"
+    SocialAccount._meta.verbose_name_plural = "User Accounts"
+    admin.site.unregister(SocialApp)
+    admin.site.register(SocialApp, CustomSocialAppAdmin)
+    SocialApp._meta.verbose_name = "ID Provider"
+    SocialApp._meta.verbose_name_plural = "ID Providers"
+    SocialAccount._meta.app_config.verbose_name = "Identity Providers"
+

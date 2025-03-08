@@ -3,8 +3,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
-from allauth.socialaccount.apps import SocialAccountConfig
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 
 
 from .models import RBACGroup, RBACMembership
@@ -84,6 +82,12 @@ class RBACGroupAdmin(admin.ModelAdmin):
         return ", ".join([c.title for c in obj.categories.all()])
     categories_list.short_description = 'Categories'
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'social_app':
+            field.label = 'ID Provider'
+        return field
+
 class RBACMembershipAdmin(admin.ModelAdmin):
     list_display = [
         'user',
@@ -130,17 +134,11 @@ class RBACMembershipAdmin(admin.ModelAdmin):
     ]
 
 if getattr(settings, 'USE_RBAC', False):
+    for field in RBACGroup._meta.fields:
+        if field.name == 'social_app':
+            field.verbose_name = "ID Provider"
+
     admin.site.register(RBACGroup, RBACGroupAdmin)
     admin.site.register(RBACMembership, RBACMembershipAdmin)
     admin.site.unregister(Group)
-
-    admin.site.unregister(SocialToken)
-
-    SocialAccount._meta.verbose_name = "User Account"
-    SocialAccount._meta.verbose_name_plural = "User Accounts"
-   
-    SocialApp._meta.verbose_name = "ID Provider"
-    SocialApp._meta.verbose_name_plural = "ID Providers"
-
-    SocialAccount._meta.app_config.verbose_name = "Identity Providers"
 
