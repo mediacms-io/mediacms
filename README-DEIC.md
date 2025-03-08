@@ -33,21 +33,20 @@ EXTRA_APPS = [
 
 ## SAML Configuration Steps
 
-### Step 1: Add Social Application for SAML
+### Step 1: Add SAML Identity Provider
 1. Navigate to Admin panel
-2. Select "Social application" 
+2. Select "Identity Provider" 
 3. Configure as follows:
    - **Provider**: SAML
    - **Provider ID**: `wayf.wayf.dk`
-   - **Name**: `Deic` (or preferred name)
+   - **IDP Config Name**: `Deic` (or preferred name)
    - **Client ID**: `wayf_dk` (important: defines the URL, e.g., `https://deic.mediacms.io/accounts/saml/wayf_dk`)
-   - **Secret Key / Key**: Leave empty
    - **Settings**: Leave empty (default `{}`)
 
-### Step 2: Add Social Configuration
-Can be set inline from Social Application or through its dedicated admin section (recommended):
+### Step 2: Add SAML Configuration
+Can be set through the SAML Configurations section:
 
-1. **Social App**: Link to the existing app created above
+1. **IDP Config Name**: Link to the existing app created above
 2. **IDP ID**: Must be a URL, e.g., `https://wayf.wayf.dk`
 3. **IDP Certificate**: x509cert from your SAML provider
 4. **SSO URL**: `https://wayf.wayf.dk/saml2/idp/SSOService2.php`
@@ -62,5 +61,3 @@ Can be set inline from Social Application or through its dedicated admin section
 
 2. **Attribute Mapping**: Maps attributes from the SAML response
 
-3. **Role Configuration**: At minimum, include `{"staff": "contributor"}`
-   - Valid roles are: `member`, `contributor`, `manager`
