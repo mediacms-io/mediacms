@@ -28,8 +28,8 @@ class AdminCustomizationsConfig(AppConfig):
                 'files': 1,
                 'users': 2,
                 'socialaccount': 3,
-                'rbac': 4,
-                'saml_auth': 5,
+                'saml_auth': 4,
+                'rbac': 5,
             }
             
             app_list.sort(key=lambda x: app_order.get(x['app_label'], 999))
