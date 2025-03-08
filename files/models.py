@@ -984,7 +984,7 @@ class Category(models.Model):
     is_rbac_category = models.BooleanField(
         default=False,
         db_index=True,
-        help_text='If Category is part of the RBAC system'
+        help_text='If Category is part of the Role Based Access Control system'
     )
 
     def __str__(self):

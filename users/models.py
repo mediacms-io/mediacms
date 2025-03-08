@@ -145,6 +145,41 @@ class User(AbstractUser):
         categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
         return categories
 
+    def set_role_from_mapping(self, role_mapping):
+        """
+        Sets user permissions based on a role mapping string.
+        
+        Args:
+            role_mapping (str): The role identifier to map to internal permissions.
+        
+        Returns:
+            bool: True if a valid role was applied, False otherwise.
+        """
+        update_fields = []
+        
+        if role_mapping == 'advancedUser':
+            self.advancedUser = True
+            update_fields.append('advancedUser')
+        elif role_mapping == 'editor':
+            self.is_editor = True
+            update_fields.append('is_editor')
+        elif role_mapping == 'manager':
+            self.is_manager = True
+            update_fields.append('is_manager')
+        elif role_mapping == 'admin':
+            self.is_superuser = True
+            self.is_staff = True
+            update_fields.extend(['is_superuser', 'is_staff'])
+        elif role_mapping == 'user':
+            # Basic user - no special permissions needed
+            return True
+        else:
+            # Unknown role mapping
+            return False
+            
+        if update_fields:
+            self.save(update_fields=update_fields)
+        return True    
 
 class Channel(models.Model):
     title = models.CharField(max_length=90, db_index=True)

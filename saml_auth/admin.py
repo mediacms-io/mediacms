@@ -34,7 +34,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     list_display = [
         'social_app',
         'idp_id',
-        'create_groups',
         'remove_from_groups',
         'save_saml_response_logs',
         'view_metadata_url'
@@ -42,7 +41,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     
     list_filter = [
         'social_app',
-        'create_groups',
         'remove_from_groups',
         'save_saml_response_logs'
     ]
@@ -70,7 +68,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
         }),
         ('Group Management', {
             'fields': [
-                'create_groups',
                 'remove_from_groups',
                 'save_saml_response_logs'
             ]

@@ -77,66 +77,35 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     # get groups key from configuration / attributes mapping
     groups_key = saml_configuration.groups
     groups = extra_data.get(groups_key, [])
-        
+    # groups is a list of group_ids here
+
+    if groups:
+        for group_id in groups:
+            rbac_group = RBACGroup.objects.filter(social_app=social_app, uid=group_id).first()
+            if rbac_group:
+                rbac_groups.append(rbac_group)
+
     try:
         # try to get the role, always use member as fallback
         role_key = saml_configuration.role
         role = extra_data.get(role_key, "student")
         if role and isinstance(role, list):
             role = role[0]
-            
+
+        # populate global role            
         global_role = saml_configuration.global_roles.filter(name=role).first()
         if global_role:
-            # TODO: consider moving to a utils place or something
-            if global_role.map_to == 'advancedUser':
-                user.advancedUser = True
-                user.save(update_fields=['advancedUser'])
-            if global_role.map_to == 'editor':
-                user.is_editor = True
-                user.save(update_fields=['is_editor'])
-            if global_role.map_to == 'manager':
-                user.is_manager = True
-                user.save(update_fields=['is_manager'])
-            if global_role.map_to == 'admin':
-                user.is_superuser = True
-                user.is_staff = True
-                user.save(update_fields=['is_superuser', 'is_staff'])
+            user.set_role_from_mapping(global_role.map_to)
 
         group_role = saml_configuration.group_roles.filter(name=role).first()
         if group_role:
-            # TODO: consider moving to a utils place or something
-            if group_role.map_to == 'member':
-                role = 'member'
-            if group_role.map_to == 'contributor':
-                role = 'contributor'
-            if group_role.map_to == 'manager':
-                role = 'manager'
+            if group_role.map_to in ['member', 'contributor', 'manager']:
+                role = group_role.map_to
 
-        if role not in ['member', 'contributor', 'manager']:
-            role = 'member'
-        # TODO: move to helper function for consistent checking
+        role = role if role in ['member', 'contributor', 'manager'] else 'member'
 
     except Exception as e:
         logging.error(e)
-    if saml_configuration.create_groups and groups:
-        # TODO XXX dont make tht check here. instead do a RBACGroup.objects.filter if this is false, otherwise
-        # get_or_create
-        try:
-            for group_id in groups:
-                group_mapping = saml_configuration.group_mapping.filter(name=group_id).first()
-                if group_mapping:
-                    group_name = group_mapping.map_to
-                    rbac_group, created = RBACGroup.objects.get_or_create(
-                        uid=group_id,
-                        social_app=social_app,
-                        defaults={
-                        "name": group_name,
-                        "description": group_name,
-                        }
-                    )
-                    rbac_groups.append(rbac_group)        
-        except Exception as e:
-            logging.error(e)
 
     for rbac_group in rbac_groups:
         membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
@@ -148,7 +117,7 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
                 logging.error(e)
     # if remove_from_groups setting is True and user is part of groups for this
     # social app that are not included anymore on the response, then remove user from group
-    if saml_configuration and saml_configuration.remove_from_groups:
+    if saml_configuration.remove_from_groups:
         for group in user.rbac_groups.filter(social_app=social_app):
             if group not in rbac_groups:
                 group.members.remove(user)

@@ -138,6 +138,11 @@ if getattr(settings, 'USE_RBAC', False):
         if field.name == 'social_app':
             field.verbose_name = "ID Provider"
 
+    RBACGroup._meta.verbose_name_plural = "Role Based Access Control Groups"
+    RBACGroup._meta.verbose_name = "Role Based Access Control Group"
+    RBACMembership._meta.verbose_name_plural = "Role Based Access Control Membership"
+    RBACGroup._meta.app_config.verbose_name = "Role Based Access Control"
+
     admin.site.register(RBACGroup, RBACGroupAdmin)
     admin.site.register(RBACMembership, RBACMembershipAdmin)
     admin.site.unregister(Group)

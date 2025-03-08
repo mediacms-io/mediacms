@@ -10,11 +10,6 @@ class SAMLConfiguration(models.Model):
         related_name='saml_configurations'
     )
     
-    # Group Management
-    create_groups = models.BooleanField(
-        default=True,
-        help_text='Automatically create groups'
-    )
     remove_from_groups = models.BooleanField(
         default=False,
         help_text='Automatically remove from groups'
@@ -220,6 +215,7 @@ class SAMLConfigurationGlobalRole(models.Model):
     map_to = models.CharField(
         max_length=20,
         choices=[
+            ('user', 'Authenticated User'),
             ('advancedUser', 'Advanced User'),
             ('editor', 'MediaCMS Editor'),
             ('manager', 'MediaCMS Manager'),
