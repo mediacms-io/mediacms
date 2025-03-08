@@ -183,3 +183,31 @@ if getattr(settings, 'USE_SAML', False):
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
 
+    from django.contrib.admin import AdminSite
+
+    class CustomAdminSite(AdminSite):
+        # Override the get_app_list method to change the ordering
+        def get_app_list(self, request, app_label=None):
+            """
+            Return a sorted list of all the installed apps that have been
+            registered in this site.
+            """
+            app_list = super().get_app_list(request, app_label)
+
+        # Define the order you want (app_label is the name used in INSTALLED_APPS)
+            app_order = {
+            'auth': 1,
+            'users': 2,
+            'socialaccount': 3,
+            'your_custom_app': 4,
+            # Add other apps with their desired position
+            }
+
+        # Sort the app_list based on the defined order
+            app_list.sort(key=lambda x: app_order.get(x['app_label'], 999))
+
+            return app_list
+
+# Create an instance of the custom admin site
+    custom_admin_site = CustomAdminSite(name='custom_admin')
+

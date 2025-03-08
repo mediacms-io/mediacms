@@ -256,6 +256,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = [
+    "admin_customizations",
     "django.contrib.auth",
     "allauth",
     "allauth.account",
@@ -542,6 +543,5 @@ try:
 except ImportError:
     # local_settings not in use
     pass
-
 
 

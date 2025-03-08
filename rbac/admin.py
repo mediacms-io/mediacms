@@ -1,7 +1,6 @@
 from django.conf import settings
 
 from django.contrib import admin
-from django.contrib.auth.models import Group
 from django.utils.html import format_html
 
 
@@ -145,5 +144,3 @@ if getattr(settings, 'USE_RBAC', False):
 
     admin.site.register(RBACGroup, RBACGroupAdmin)
     admin.site.register(RBACMembership, RBACMembershipAdmin)
-    admin.site.unregister(Group)
-
