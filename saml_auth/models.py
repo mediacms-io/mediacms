@@ -1,3 +1,5 @@
+import logging
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from allauth.socialaccount.models import SocialApp
@@ -255,6 +257,36 @@ class SAMLConfigurationGroupMapping(models.Model):
         verbose_name = 'SAML Group Mapping'
         verbose_name_plural = 'SAML Group Mappings'
         unique_together = ('configuration', 'name')
+
+
+    def clean(self):
+        if not self._state.adding and self.pk:
+            original = SAMLConfigurationGroupMapping.objects.get(pk=self.pk)
+            if original.name != self.name:
+                raise ValidationError("Cannot change the name once it is set. First delete this entry and then create a new one instead.")
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        from rbac.models import RBACGroup
+
+        rbac_group = RBACGroup.objects.filter(social_app=self.configuration.social_app, uid=self.name).first()
+        if rbac_group: 
+            if rbac_group.name != self.map_to:
+                rbac_group.name = self.map_to
+                rbac_group.save(update_fields=['name'])
+        else:
+            try:
+                rbac_group = RBACGroup.objects.create(
+                    uid=self.name,
+                    name=self.map_to,
+                    social_app=self.configuration.social_app
+                )
+            except Exception as e:
+                logging.error(e)
+        return True
+
 
     def __str__(self):
         return f'SAML Group Mapping {self.name}'
