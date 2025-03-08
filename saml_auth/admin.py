@@ -182,4 +182,3 @@ if getattr(settings, 'USE_SAML', False):
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
-    SAMLConfiguration._meta.app_label = 'socialaccount'
