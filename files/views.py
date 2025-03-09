@@ -146,7 +146,7 @@ def edit_subtitle(request):
         if not filename.endswith(".vtt"):
             filename = f"{filename}.vtt"
 
-        response["Content-Disposition"] = f"attachment; filename={filename}"  # flake8: noqa
+        response["Content-Disposition"] = f"attachment; filename={filename}"  # noqa
 
         return response
 
