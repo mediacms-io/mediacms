@@ -113,7 +113,7 @@ def add_subtitle(request):
                 return HttpResponseRedirect(subtitle.media.get_absolute_url())
             except:  # noqa: E722
                 new_subtitle.delete()
-                error_msg = "Invalid subtitle format. Use SubRip (.srt) and WebVTT (.vtt) files."
+                error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
                 form.add_error("subtitle_file", error_msg)
 
     else:
