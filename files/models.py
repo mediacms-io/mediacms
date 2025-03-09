@@ -1312,7 +1312,7 @@ class Playlist(models.Model):
 
     @property
     def media_count(self):
-        return self.media.count()
+        return self.media.filter(listable=True).count()
 
     def get_absolute_url(self, api=False):
         if api:
@@ -1359,7 +1359,7 @@ class Playlist(models.Model):
 
     @property
     def thumbnail_url(self):
-        pm = self.playlistmedia_set.first()
+        pm = self.playlistmedia_set.filter(media__listable=True).first()
         if pm and pm.media.thumbnail:
             return helpers.url_from_path(pm.media.thumbnail.path)
         return None
