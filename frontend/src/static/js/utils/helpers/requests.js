@@ -1,4 +1,4 @@
-import axios, { get as axiosGet, post as axiosPost, put as axiosPut } from 'axios';
+import axios from 'axios';
 
 export async function getRequest(url, sync, callback, errorCallback) {
   const requestConfig = {
@@ -44,11 +44,11 @@ export async function getRequest(url, sync, callback, errorCallback) {
   }
 
   if (sync) {
-    await axiosGet(url, requestConfig)
+    await axios.get(url, requestConfig)
       .then(responseHandler)
       .catch(errorHandler || null);
   } else {
-    axiosGet(url, requestConfig)
+    axios.get(url, requestConfig)
       .then(responseHandler)
       .catch(errorHandler || null);
   }
@@ -70,11 +70,11 @@ export async function postRequest(url, postData, configData, sync, callback, err
   }
 
   if (sync) {
-    await axiosPost(url, postData, configData || null)
+    await axios.post(url, postData, configData || null)
       .then(responseHandler)
       .catch(errorHandler || null);
   } else {
-    axiosPost(url, postData, configData || null)
+    axios.post(url, postData, configData || null)
       .then(responseHandler)
       .catch(errorHandler || null);
   }
@@ -96,11 +96,11 @@ export async function putRequest(url, putData, configData, sync, callback, error
   }
 
   if (sync) {
-    await axiosPut(url, putData, configData || null)
+    await axios.put(url, putData, configData || null)
       .then(responseHandler)
       .catch(errorHandler || null);
   } else {
-    axiosPut(url, putData, configData || null)
+    axios.put(url, putData, configData || null)
       .then(responseHandler)
       .catch(errorHandler || null);
   }
