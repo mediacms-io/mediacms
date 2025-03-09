@@ -68,11 +68,21 @@ class SubtitleForm(forms.ModelForm):
     def __init__(self, media_item, *args, **kwargs):
         super(SubtitleForm, self).__init__(*args, **kwargs)
         self.instance.media = media_item
+        self.fields["subtitle_file"].help_text = "SubRip (.srt) and WebVTT (.vtt) are supported file formats."
+        self.fields["subtitle_file"].label = "Subtitle or Closed Caption File"
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user
         media = super(SubtitleForm, self).save(*args, **kwargs)
         return media
+
+
+class EditSubtitleForm(forms.Form):
+    subtitle = forms.CharField(widget=forms.Textarea, required=True)
+
+    def __init__(self, subtitle, *args, **kwargs):
+        super(EditSubtitleForm, self).__init__(*args, **kwargs)
+        self.fields["subtitle"].initial = subtitle.subtitle_file.read().decode("utf-8")
 
 
 class ContactForm(forms.Form):

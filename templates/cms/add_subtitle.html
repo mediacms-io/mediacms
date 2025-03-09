@@ -7,11 +7,23 @@
 	<div class="user-action-form-wrap">
 		<div class="user-action-form-inner">
 			<h1>Add subtitle</h1>
+			Media: <a href="{{media.get_absolute_url}}">{{media.title}}</a>
+
 			<form enctype="multipart/form-data" action="" method="post" class="post-form">
 				{% csrf_token %}
 				{{ form|crispy }}
 				<button class="primaryAction" type="submit">Add</button>
 			</form>
+
+			{% if subtitles %}
+				<h3>View/Edit Existing Subtitles</h3>
+				<ul>
+					{% for subtitle in subtitles %}
+						<li><a href="{{subtitle.url}}">{{subtitle.language.title}}</a></li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+
 		</div>
 	</div>
 {% endblock innercontent %}
