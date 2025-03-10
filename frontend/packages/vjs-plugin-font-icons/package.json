@@ -30,7 +30,7 @@
     "load-grunt-tasks": "^5.1.0",
     "lodash": "^4.17.21",
     "material-design-icons": "^3.0.1",
-    "node-sass": "^6.0.0",
+    "sass": "^1.85.1",
     "rimraf": "^3.0.2",
     "time-grunt": "^2.0.0",
     "webfonts-generator": "^0.4.0"

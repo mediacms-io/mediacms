@@ -589,27 +589,46 @@ function findGetParameter(parameterName) {
   return result;
 }
 
-function handleCanvas(canvasElem) {
-  const Player = videojs(canvasElem);
+ function handleCanvas(videoElem) { // Make sure it's a video element
+  
+  if (!videoElem || !videoElem.tagName || videoElem.tagName.toLowerCase() !== 'video') {
+    console.error('Invalid video element:', videoElem);
+    return;
+  }
+
+  const Player = videojs(videoElem);
   Player.playsinline(true);
-  // TODO: Make them work only in embedded player...?
-  if (findGetParameter('muted') == 1) {
-    Player.muted(true);
-  }
-  if (findGetParameter('time') >= 0) {
-    Player.currentTime(findGetParameter('time'));
-  }
-  if (findGetParameter('autoplay') == 1) {
-    Player.play();
-  }
+
+  Player.on('loadedmetadata', function () {
+    const muted = parseInt(findGetParameter('muted'));
+    const autoplay = parseInt(findGetParameter('autoplay'));
+    const timestamp = parseInt(findGetParameter('t'));
+
+    if (muted == 1) {
+      Player.muted(true);
+    }
+    
+    if (timestamp >= 0 && timestamp < Player.duration()) {
+      // Start the video from the given time
+      Player.currentTime(timestamp);
+    } else if (timestamp >= 0 && timestamp >= Player.duration()) {
+      // Restart the video if the given time is greater than the duration
+      Player.play();
+    }
+    if (autoplay === 1) {
+      Player.play();
+    }
+  });
 }
 
-const observer = new MutationObserver(function (mutations, me) {
-  const canvas = document.querySelector('.video-js.vjs-mediacms video');
-  if (canvas) {
-    handleCanvas(canvas);
-    me.disconnect();
-    return;
+const observer = new MutationObserver((mutations, me) => {
+  const playerContainer = document.querySelector('.video-js.vjs-mediacms');
+  if (playerContainer) {
+    const video = playerContainer.querySelector('video');
+    if (video) {
+      handleCanvas(video);
+      me.disconnect();
+    }
   }
 });
 

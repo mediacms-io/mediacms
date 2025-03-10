@@ -47,7 +47,7 @@
     "css-loader": "^5.2.6",
     "global": "^4.4.0",
     "json-loader": "^0.5.7",
-    "node-sass": "^6.0.0",
+    "sass": "^1.85.1",
     "postcss": "^8.3.2",
     "rollup": "^2.51.2",
     "rollup-plugin-babel": "^4.3.3",

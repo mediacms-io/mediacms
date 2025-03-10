@@ -14,7 +14,7 @@ function metafield(arr) {
   let sep;
   let ret = [];
 
-  if (arr.length) {
+  if (arr && arr.length) {
     i = 0;
     sep = 1 < arr.length ? ', ' : '';
     while (i < arr.length) {
@@ -50,7 +50,9 @@ function MediaAuthorBanner(props) {
           </a>
         </span>
         {PageStore.get('config-media-item').displayPublishDate && props.published ? (
-          <span className="author-banner-date">{translateString("Published on")} {replaceString(publishedOnDate(new Date(props.published)))}</span>
+          <span className="author-banner-date">
+            {translateString('Published on')} {replaceString(publishedOnDate(new Date(props.published)))}
+          </span>
         ) : null}
       </div>
     </div>
@@ -78,8 +80,8 @@ function EditMediaButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title={translateString("Edit media")} className="edit-media">
-      {translateString("EDIT MEDIA")}
+    <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media">
+      {translateString('EDIT MEDIA')}
     </a>
   );
 }
@@ -92,8 +94,8 @@ function EditSubtitleButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title={translateString("Edit subtitle")} className="edit-subtitle">
-      {translateString("EDIT SUBTITLE")}
+    <a href={link} rel="nofollow" title={translateString('Edit subtitle')} className="edit-subtitle">
+      {translateString('EDIT SUBTITLE')}
     </a>
   );
 }
@@ -173,6 +175,28 @@ export default function ViewerInfoContent(props) {
   const authorLink = formatInnerLink(props.author.url, SiteContext._currentValue.url);
   const authorThumb = formatInnerLink(props.author.thumb, SiteContext._currentValue.url);
 
+  function setTimestampAnchors(text) {
+    function wrapTimestampWithAnchor(match, string) {
+      let split = match.split(':'),
+        s = 0,
+        m = 1;
+      let searchParameters = new URLSearchParams(window.location.search);
+
+      while (split.length > 0) {
+        s += m * parseInt(split.pop(), 10);
+        m *= 60;
+      }
+      searchParameters.set('t', s);
+
+      const wrapped =
+        '<a href="' + MediaPageStore.get('media-url').split('?')[0] + '?' + searchParameters + '">' + match + '</a>';
+      return wrapped;
+    }
+
+    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
+    return text.replace(timeRegex, wrapTimestampWithAnchor);
+  }
+
   return (
     <div className="media-info-content">
       {void 0 === PageStore.get('config-media-item').displayAuthor ||
@@ -185,11 +209,10 @@ export default function ViewerInfoContent(props) {
         <div className="media-content-banner-inner">
           {hasSummary ? <div className="media-content-summary">{summary}</div> : null}
           {(!hasSummary || isContentVisible) && description ? (
-            PageStore.get('config-options').pages.media.htmlInDescription ? (
-              <div className="media-content-description" dangerouslySetInnerHTML={{ __html: description }}></div>
-            ) : (
-              <div className="media-content-description">{description}</div>
-            )
+            <div
+              className="media-content-description"
+              dangerouslySetInnerHTML={{ __html: setTimestampAnchors(description) }}
+            ></div>
           ) : null}
           {hasSummary ? (
             <button className="load-more" onClick={onClickLoadMore}>
@@ -197,7 +220,11 @@ export default function ViewerInfoContent(props) {
             </button>
           ) : null}
           {tagsContent.length ? (
-            <MediaMetaField value={tagsContent} title={1 < tagsContent.length ? translateString('Tags') : translateString('Tag')} id="tags" />
+            <MediaMetaField
+              value={tagsContent}
+              title={1 < tagsContent.length ? translateString('Tags') : translateString('Tag')}
+              id="tags"
+            />
           ) : null}
           {categoriesContent.length ? (
             <MediaMetaField
@@ -217,7 +244,7 @@ export default function ViewerInfoContent(props) {
               ) : null}
 
               <PopupTrigger contentRef={popupContentRef}>
-                <button className="remove-media">{translateString("DELETE MEDIA")}</button>
+                <button className="remove-media">{translateString('DELETE MEDIA')}</button>
               </PopupTrigger>
 
               <PopupContent contentRef={popupContentRef}>

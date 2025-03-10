@@ -192,12 +192,14 @@ export function VideoPlayer(props) {
       document.addEventListener('visibilitychange', initPlayer);
     }
 
-    player && player.player.one('loadedmetadata', () => {
+    /*
+      // We don't need this because we have a custom function in frontend/src/static/js/components/media-viewer/VideoViewer/index.js:617
+      player && player.player.one('loadedmetadata', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const paramT = Number(urlParams.get('t'));
       const timestamp = !isNaN(paramT) ? paramT : 0;
       player.player.currentTime(timestamp);
-    });
+    }); */
 
     return () => {
       unsetPlayer();
