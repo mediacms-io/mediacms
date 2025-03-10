@@ -1,6 +1,7 @@
+import base64
 import logging
 
-from django.core.files import File
+from django.core.files.base import ContentFile
 from django.dispatch import receiver
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialAccount, SocialApp
@@ -61,9 +62,10 @@ def perform_user_actions(user, social_account):
 def add_user_logo(user, extra_data):
     try:
         if user.logo.name == "userlogos/user.jpg" and extra_data.get("jpegPhoto"):
-            image_data = extra_data.get("jpegPhoto")[0]
-            logo = File(image_data)
-            user.logo.save(content=logo, name="jpegPhoto")
+            base64_string = extra_data.get("jpegPhoto")[0]
+            image_data = base64.b64decode(base64_string)
+            image_content = ContentFile(image_data)
+            user.logo.save('user.jpg', image_content, save=True)
     except Exception as e:
         logging.error(e)
     return True    
