@@ -1,6 +1,11 @@
+import csv
+import logging
 from django.conf import settings
+from django import forms
 
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+
 from django.utils.html import format_html
 from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin
@@ -28,9 +33,47 @@ class SAMLConfigurationGroupMappingInline(admin.TabularInline):
     verbose_name_plural = "Group Mappings"
     fields = ['name', 'map_to']
 
+class SAMLConfigurationForm(forms.ModelForm):
+    import_csv = forms.FileField(
+        required=False,
+        label="CSV file",
+        help_text="Make sure headers are group_id, name"
+    )
+    
+    class Meta:
+        model = SAMLConfiguration
+        fields = '__all__'
 
+    def clean_import_csv(self):
+        csv_file = self.cleaned_data.get('import_csv')
+        
+        if not csv_file:
+            return csv_file
+        
+        if not csv_file.name.endswith('.csv'):
+            raise ValidationError("Uploaded file must be a CSV file.")
+        
+        try:
+            decoded_file = csv_file.read().decode('utf-8').splitlines()
+            csv_reader = csv.reader(decoded_file)
+            headers = next(csv_reader, None)
+            if not headers or 'group_id' not in headers or 'name' not in headers:
+                raise ValidationError(
+                    "CSV file must contain 'group_id' and 'name' headers. "
+                    f"Found headers: {', '.join(headers) if headers else 'none'}"
+                )
+            csv_file.seek(0)
+            return csv_file
+            
+        except csv.Error:
+            raise ValidationError("Invalid CSV file. Please ensure the file is properly formatted.")
+        except UnicodeDecodeError:
+            raise ValidationError("Invalid file encoding. Please upload a CSV file with UTF-8 encoding.")
 
 class SAMLConfigurationAdmin(admin.ModelAdmin):
+    form = SAMLConfigurationForm
+    change_form_template = 'admin/saml_auth/samlconfiguration/change_form.html'
+
     list_display = [
         'social_app',
         'idp_id',
@@ -93,9 +136,9 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     ]
 
     inlines = [
+        SAMLConfigurationGroupMappingInline,
         SAMLConfigurationGlobalRoleInline,
         SAMLConfigurationGroupRoleInline,
-        SAMLConfigurationGroupMappingInline
     ]
 
     def view_metadata_url(self, obj):
@@ -111,6 +154,48 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
         if db_field.name == 'social_app':
             field.label = 'IDP Config Name'
         return field
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+
+        fieldsets = list(fieldsets)
+
+        fieldsets.append(
+            ('BULK GROUP MAPPINGS', {
+                'fields': ('import_csv',),
+                'description': 'Optionally upload a CSV file with group_id and name as headers to add multiple group mappings at once.'
+            })
+        )
+
+        return fieldsets
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        csv_file = form.cleaned_data.get('import_csv')
+        if csv_file:
+            from rbac.models import RBACGroup
+            
+            try:
+                csv_file.seek(0)
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                csv_reader = csv.DictReader(decoded_file)
+                for row in csv_reader:
+                    group_id = row.get('group_id')
+                    name = row.get('name')
+
+                    if group_id and name:
+                        if not RBACGroup.objects.filter(uid=group_id, social_app=obj.social_app).exists():
+                            try:
+                                rbac_group = RBACGroup.objects.create(
+                                uid=group_id,
+                                name=name,
+                                social_app=obj.social_app
+                                )
+                            except Exception as e:
+                                logging.error(e)
+            except Exception as e:
+                logging.error(e)
 
 class SAMLLogAdmin(admin.ModelAdmin):
     list_display = [
