@@ -981,11 +981,7 @@ class Category(models.Model):
 
     listings_thumbnail = models.CharField(max_length=400, blank=True, null=True, help_text="Thumbnail to show on listings")
 
-    is_rbac_category = models.BooleanField(
-        default=False,
-        db_index=True,
-        help_text='If Category is part of the Role Based Access Control system'
-    )
+    is_rbac_category = models.BooleanField(default=False, db_index=True, help_text='If Category is part of the Role Based Access Control system')
 
     def __str__(self):
         return self.title

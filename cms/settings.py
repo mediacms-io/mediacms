@@ -265,7 +265,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-#    "jazzmin",
+    #    "jazzmin",
     "django.contrib.admin",
     "django.contrib.sites",
     "rest_framework",
@@ -532,7 +532,6 @@ try:
     EXTRA_APPS = []
     # provide EXTA_APPS in local settings, optionally, to be added too
     # just setting a default value here in case they are not provided
-
 
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa

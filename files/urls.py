@@ -7,9 +7,11 @@ from django.urls import path, re_path
 from . import management_views, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
+
 def redirect_to_custom_login(request):
     # TODO: get through settings
     return redirect('/accounts/saml/wayf_dk/login/?process=login')
+
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),

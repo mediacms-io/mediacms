@@ -51,7 +51,6 @@ class MediaForm(forms.ModelForm):
                 rbac_categories = user.get_rbac_categories_as_contributor()
                 combined_category_ids = list(non_rbac_categories.values_list('id', flat=True)) + list(rbac_categories.values_list('id', flat=True))
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
-                
 
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
 

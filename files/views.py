@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -1501,6 +1501,7 @@ class TaskDetail(APIView):
         # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 def saml_metadata(request):
     if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
         raise Http404
@@ -1517,8 +1518,4 @@ def saml_metadata(request):
     </md:SPSSODescriptor>
 </md:EntityDescriptor>'''
 
-    return HttpResponse(
-        metadata_template,
-        content_type='application/xml'
-    )
-
+    return HttpResponse(metadata_template, content_type='application/xml')
