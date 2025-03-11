@@ -25,6 +25,8 @@ services:
     image: mediacms/mediacms:latest
     deploy:
       replicas: 1
+    ports:
+      - "80:80"
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
