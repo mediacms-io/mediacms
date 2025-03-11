@@ -1,11 +1,11 @@
 import base64
 import logging
 
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.signals import social_account_updated
 from django.core.files.base import ContentFile
 from django.dispatch import receiver
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.socialaccount.models import SocialAccount, SocialApp
-from allauth.socialaccount.signals import social_account_updated, social_account_added
 
 from rbac.models import RBACGroup, RBACMembership
 from saml_auth.models import SAMLLog
@@ -13,22 +13,19 @@ from saml_auth.models import SAMLLog
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
-        user = sociallogin.user
-        data = sociallogin.data
-        role = data.get("role", "")
+        # data = sociallogin.data
 
         return super().pre_social_login(request, sociallogin)
 
     def populate_user(self, request, sociallogin, data):
         user = sociallogin.user
-        uid = sociallogin.account.uid
         user.username = sociallogin.account.uid
         for item in ["name", "first_name", "last_name"]:
             if data.get(item):
                 setattr(user, item, data[item])
         sociallogin.data = data
         # User is not retrieved through DB. Id is None.
-        
+
         return user
 
     def save_user(self, request, sociallogin, form=None):
@@ -36,6 +33,7 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
         # Runs after new user is created
         perform_user_actions(user, sociallogin.account)
         return user
+
 
 @receiver(social_account_updated)
 def social_account_updated(sender, request, sociallogin, **kwargs):
@@ -59,6 +57,7 @@ def perform_user_actions(user, social_account):
 
     return user
 
+
 def add_user_logo(user, extra_data):
     try:
         if user.logo.name == "userlogos/user.jpg" and extra_data.get("jpegPhoto"):
@@ -68,7 +67,8 @@ def add_user_logo(user, extra_data):
             user.logo.save('user.jpg', image_content, save=True)
     except Exception as e:
         logging.error(e)
-    return True    
+    return True
+
 
 def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     if not saml_configuration:
@@ -94,7 +94,7 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
         if role and isinstance(role, list):
             role = role[0]
 
-        # populate global role            
+        # populate global role
         global_role = saml_configuration.global_roles.filter(name=role).first()
         if global_role:
             user.set_role_from_mapping(global_role.map_to)
@@ -130,6 +130,5 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 def handle_saml_logs_save(user, extra_data, social_app):
     # do not save jpegPhoto, if it exists
     extra_data.pop("jpegPhoto", None)
-    log = SAMLLog.objects.create(user=user, social_app=social_app, logs=extra_data)
+    log = SAMLLog.objects.create(user=user, social_app=social_app, logs=extra_data)  # noqa
     return True
-

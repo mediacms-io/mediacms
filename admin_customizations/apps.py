@@ -1,20 +1,20 @@
 from django.apps import AppConfig
 from django.conf import settings
-
 from django.contrib import admin
+
 
 class AdminCustomizationsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'admin_customizations'
-    
+
     def ready(self):
         original_get_app_list = admin.AdminSite.get_app_list
-        
+
         def get_app_list(self, request, app_label=None):
             """Custom get_app_list method with custom ordering."""
             app_list = original_get_app_list(self, request, app_label)
             # print([a.get('app_label') for a in app_list])
-            
+
             # don't include the following
             apps_to_hide = ['authtoken', 'auth']
             if not getattr(settings, 'USE_SAML', False):
@@ -31,11 +31,9 @@ class AdminCustomizationsConfig(AppConfig):
                 'saml_auth': 4,
                 'rbac': 5,
             }
-            
+
             app_list.sort(key=lambda x: app_order.get(x['app_label'], 999))
-            
+
             return app_list
-        
+
         admin.AdminSite.get_app_list = get_app_list
-
-

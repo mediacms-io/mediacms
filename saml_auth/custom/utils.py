@@ -1,26 +1,22 @@
 from urllib.parse import urlparse
 
+from allauth.socialaccount.adapter import get_adapter
+from allauth.socialaccount.models import SocialApp
+from allauth.socialaccount.providers.saml.provider import SAMLProvider
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 from django.urls import reverse
 from django.utils.http import urlencode
-
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.constants import OneLogin_Saml2_Constants
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
-
-from allauth.socialaccount.adapter import get_adapter
-from allauth.socialaccount.models import SocialApp
-from allauth.socialaccount.providers.saml.provider import SAMLProvider
 
 
 def get_app_or_404(request, organization_slug):
     adapter = get_adapter()
     try:
-        return adapter.get_app(
-            request, provider=SAMLProvider.id, client_id=organization_slug
-        )
+        return adapter.get_app(request, provider=SAMLProvider.id, client_id=organization_slug)
     except SocialApp.DoesNotExist:
         raise Http404(f"no SocialApp found with client_id={organization_slug}")
 
@@ -100,9 +96,7 @@ def build_saml_config(request, provider_config, org):
         "logoutRequestSigned": avd.get("logout_request_signed", False),
         "logoutResponseSigned": avd.get("logout_response_signed", False),
         "requestedAuthnContext": False,
-        "signatureAlgorithm": avd.get(
-            "signature_algorithm", OneLogin_Saml2_Constants.RSA_SHA256
-        ),
+        "signatureAlgorithm": avd.get("signature_algorithm", OneLogin_Saml2_Constants.RSA_SHA256),
         "signMetadata": avd.get("metadata_signed", False),
         "wantAssertionsEncrypted": avd.get("want_assertion_encrypted", False),
         "wantAssertionsSigned": avd.get("want_assertion_signed", False),

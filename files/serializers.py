@@ -16,7 +16,6 @@ class MediaSerializer(serializers.ModelSerializer):
     author_profile = serializers.SerializerMethodField()
     author_thumbnail = serializers.SerializerMethodField()
 
-
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 

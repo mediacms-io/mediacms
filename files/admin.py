@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib import admin
 
+from rbac.models import RBACGroup
+
 from .models import (
     Category,
     Comment,
@@ -12,7 +14,6 @@ from .models import (
     Tag,
 )
 
-from rbac.models import RBACGroup
 
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text"]
@@ -56,6 +57,7 @@ class RBACGroupInline(admin.TabularInline):
     extra = 1
     verbose_name = "RBAC Group"
     verbose_name_plural = "RBAC Groups"
+
 
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["title"]

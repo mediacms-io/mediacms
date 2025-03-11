@@ -1,20 +1,6 @@
 import binascii
 import logging
 
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseRedirect,
-    JsonResponse,
-)
-from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.views.decorators.csrf import csrf_exempt
-
-from onelogin.saml2.auth import OneLogin_Saml2_Settings
-from onelogin.saml2.errors import OneLogin_Saml2_Error
-
 from allauth.account.adapter import get_adapter as get_account_adapter
 from allauth.account.internal.decorators import login_not_required
 from allauth.core.internal import httpkit
@@ -22,20 +8,18 @@ from allauth.socialaccount.helpers import (
     complete_social_login,
     render_authentication_error,
 )
-from allauth.socialaccount.providers.base.constants import (
-    AuthError,
-    AuthProcess,
-)
+from allauth.socialaccount.providers.base.constants import AuthError, AuthProcess
 from allauth.socialaccount.providers.base.views import BaseLoginView
 from allauth.socialaccount.sessions import LoginSession
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from onelogin.saml2.auth import OneLogin_Saml2_Settings
+from onelogin.saml2.errors import OneLogin_Saml2_Error
 
-from .utils import (
-    build_auth,
-    build_saml_config,
-    decode_relay_state,
-    get_app_or_404,
-)
-
+from .utils import build_auth, build_saml_config, decode_relay_state, get_app_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -100,10 +84,7 @@ class FinishACSView(SAMLViewMixin, View):
         if errors:
             # e.g. ['invalid_response']
             error_reason = auth.get_last_error_reason() or error_reason
-            logger.error(
-                "Error processing SAML ACS response: %s: %s"
-                % (", ".join(errors), error_reason)
-            )
+            logger.error("Error processing SAML ACS response: %s: %s" % (", ".join(errors), error_reason))
             return render_authentication_error(
                 request,
                 provider,
@@ -113,9 +94,7 @@ class FinishACSView(SAMLViewMixin, View):
                 },
             )
         if not auth.is_authenticated():
-            return render_authentication_error(
-                request, provider, error=AuthError.CANCELLED
-            )
+            return render_authentication_error(request, provider, error=AuthError.CANCELLED)
         login = provider.sociallogin_from_response(request, auth)
         # (*) If we (the SP) initiated the login, there should be a matching
         # state.
@@ -124,9 +103,7 @@ class FinishACSView(SAMLViewMixin, View):
             login.state = provider.unstash_redirect_state(request, state_id)
         else:
             # IdP initiated SSO
-            reject = provider.app.settings.get("advanced", {}).get(
-                "reject_idp_initiated_sso", True
-            )
+            reject = provider.app.settings.get("advanced", {}).get("reject_idp_initiated_sso", True)
             if reject:
                 logger.error("IdP initiated SSO rejected")
                 return render_authentication_error(request, provider)
@@ -155,18 +132,13 @@ class SLSView(SAMLViewMixin, View):
         redirect_to = None
         error_reason = None
         try:
-            redirect_to = auth.process_slo(
-                delete_session_cb=force_logout, keep_local_session=not should_logout
-            )
+            redirect_to = auth.process_slo(delete_session_cb=force_logout, keep_local_session=not should_logout)
         except OneLogin_Saml2_Error as e:
             error_reason = str(e)
         errors = auth.get_errors()
         if errors:
             error_reason = auth.get_last_error_reason() or error_reason
-            logger.error(
-                "Error processing SAML SLS response: %s: %s"
-                % (", ".join(errors), error_reason)
-            )
+            logger.error("Error processing SAML SLS response: %s: %s" % (", ".join(errors), error_reason))
             resp = HttpResponse(error_reason, content_type="text/plain")
             resp.status_code = 400
             return resp
@@ -182,12 +154,8 @@ sls = SLSView.as_view()
 class MetadataView(SAMLViewMixin, View):
     def dispatch(self, request, organization_slug):
         provider = self.get_provider(organization_slug)
-        config = build_saml_config(
-            self.request, provider.app.settings, organization_slug
-        )
-        saml_settings = OneLogin_Saml2_Settings(
-            settings=config, sp_validation_only=True
-        )
+        config = build_saml_config(self.request, provider.app.settings, organization_slug)
+        saml_settings = OneLogin_Saml2_Settings(settings=config, sp_validation_only=True)
         metadata = saml_settings.get_sp_metadata()
         errors = saml_settings.validate_metadata(metadata)
 

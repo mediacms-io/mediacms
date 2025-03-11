@@ -1,10 +1,7 @@
 from allauth.account.adapter import DefaultAccountAdapter
-from allauth.account.utils import user_email, user_field, user_username
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from django.dispatch import receiver
 
 
 class MyAccountAdapter(DefaultAccountAdapter):
@@ -30,5 +27,3 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def send_mail(self, template_prefix, email, context):
         msg = self.render_mail(template_prefix, email, context)
         msg.send(fail_silently=True)
-
-

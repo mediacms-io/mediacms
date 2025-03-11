@@ -53,6 +53,5 @@
     "pdfjs-dist": "^3.4.120",
     "@react-pdf-viewer/core": "^3.9.0",
     "@react-pdf-viewer/default-layout": "^3.12.0"
-
   }
 }
