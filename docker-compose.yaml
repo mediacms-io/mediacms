@@ -2,7 +2,7 @@ version: "3"
 
 services:
   migrations:
-    image: mediacms/mediacms-dev:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -13,7 +13,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
-      ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+      # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
     command: "./deploy/docker/prestart.sh"
     restart: on-failure
     depends_on:
@@ -22,7 +22,7 @@ services:
       db:
         condition: service_healthy
   web:
-    image: mediacms/mediacms-dev:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
@@ -32,13 +32,10 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
-      VIRTUAL_HOST: 'deic.mediacms.io'
-      LETSENCRYPT_HOST: 'deic.mediacms.io'
-      LETSENCRYPT_EMAIL: 'info@mediacms.io'
     depends_on:
       - migrations
   celery_beat:
-    image: mediacms/mediacms-dev:latest
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -50,7 +47,7 @@ services:
     depends_on:
       - redis
   celery_worker:
-    image: mediacms/mediacms-dev:latest
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
@@ -85,10 +82,3 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-volumes:
-  conf:
-  vhost:
-  html:
-  dhparam:
-  certs:
-  acme:
