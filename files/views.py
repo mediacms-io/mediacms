@@ -478,9 +478,10 @@ class MediaDetail(APIView):
             # this need be explicitly called, and will call
             # has_object_permission() after has_permission has succeeded
             self.check_object_permissions(self.request, media)
-
             if media.state == "private" and not (self.request.user == media.user or is_mediacms_editor(self.request.user)):
-                if (not password) or (not media.password) or (password != media.password):
+                if getattr(settings, 'USE_RBAC', False) and self.request.user.is_authenticated and self.request.user.has_member_access_to_media(media):
+                    pass
+                elif (not password) or (not media.password) or (password != media.password):
                     return Response(
                         {"detail": "media is private"},
                         status=status.HTTP_401_UNAUTHORIZED,
@@ -755,7 +756,7 @@ class MediaActions(APIView):
 
 class MediaSearch(APIView):
     """
-    Retrieve results for searc
+    Retrieve results for search
     Only GET is implemented here
     """
 
@@ -815,6 +816,11 @@ class MediaSearch(APIView):
 
         if category:
             media = media.filter(category__title__contains=category)
+            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
+                c_object = Category.objects.filter(title=category, is_rbac_category=True).first()
+                if c_object and request.user.has_member_access_to_category(c_object):
+                    # show all media where user has access based on RBAC
+                    media = Media.objects.filter(category=c_object)
 
         if media_type:
             media = media.filter(media_type=media_type)
