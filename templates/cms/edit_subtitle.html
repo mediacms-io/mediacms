@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block headtitle %}Edit subtitle - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}{% endblock headermeta %}
+
+{% block innercontent %}
+
+	{% if action == 'delete' %}
+
+	<div class="user-action-form-wrap">
+		<h1>Confirm deletion</h1>
+
+		<div class="user-action-form-inner">
+			are you sure you want to delete the subtitle?
+
+			<form action="{{subtitle.url}}&action=delete&confirm=true" method="post" class="post-form">
+				{% csrf_token %}
+				<button class="secondaryAction" type="submit">DELETE SUBTITLE</button>
+			</form>
+		</div>
+
+	</div>
+
+
+
+	{% else %}
+
+	<div class="user-action-form-wrap">
+		<h1>Edit {{subtitle.language.title}} subtitle</h1>
+		<div class="user-action-form-inner">
+			Media: <a href="{{subtitle.media.get_absolute_url}}">{{subtitle.media.title}}</a>
+			<form action="" method="post" class="post-form">
+				{% csrf_token %}
+				{{ form|crispy }}
+				<button class="primaryAction" style="margin-right: 10px" type="submit">SAVE</button>
+				<button class="primaryAction" style="margin-right: 10px" type="button" onclick="window.location.href='{{subtitle.url}}&action=download';">DOWNLOAD</button>
+				<button class="primaryAction" type="button" onclick="window.location.href='{{subtitle.url}}&action=delete';">DELETE</button>
+
+			</form>
+		</div>
+
+	</div>
+
+	{% endif %}
+{% endblock innercontent %}
+
+

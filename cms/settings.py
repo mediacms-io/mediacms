@@ -545,3 +545,7 @@ except ImportError:
     pass
 
 
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+
+PYSUBS_COMMAND = "pysubs2"
