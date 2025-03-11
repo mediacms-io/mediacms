@@ -1516,6 +1516,6 @@ def saml_metadata(request):
                                     Location="{settings.FRONTEND_HOST}/accounts/saml/wayf_dk/acs/"
                                     index="1"/>
     </md:SPSSODescriptor>
-</md:EntityDescriptor>'''
+</md:EntityDescriptor>'''  # noqa
 
     return HttpResponse(metadata_template, content_type='application/xml')
