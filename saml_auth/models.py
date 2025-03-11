@@ -86,12 +86,12 @@ class SAMLConfiguration(models.Model):
     )
 
     verified_email = models.BooleanField(
-        default=True,
+        default=False,
         help_text='Mark email as verified'
     )
 
     email_authentication = models.BooleanField(
-        default=True,
+        default=False,
         help_text='Use email authentication too'
     )
 

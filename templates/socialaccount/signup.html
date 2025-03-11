@@ -1,10 +1,15 @@
-{% extends "socialaccount/base_entrance.html" %}
+{% extends "base.html" %}
+{% load socialaccount %}
 {% load i18n %}
 {% load allauth %}
 {% block head_title %}
     {% trans "Signup" %}
 {% endblock head_title %}
 {% block content %}
+
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+
     {% element h1 %}
         {% trans "Sign Up" %}
     {% endelement %}
@@ -26,4 +31,8 @@
             {% endelement %}
         {% endslot %}
     {% endelement %}
+
+    </div>
+</div>
+
 {% endblock content %}
