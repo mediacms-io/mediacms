@@ -1,7 +1,7 @@
 import csv
 import logging
 
-from allauth.socialaccount.admin import SocialAppAdmin
+from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
 from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from django import forms
 from django.conf import settings
@@ -166,6 +166,8 @@ class SAMLLogAdmin(admin.ModelAdmin):
 
 
 class CustomSocialAppAdmin(SocialAppAdmin):
+    change_form_template = 'admin/saml_auth/samlconfiguration/change_form.html'
+
     list_display = ('get_config_name', 'get_protocol')
 
     fields = ('provider', 'provider_id', 'name', 'client_id', 'sites')
@@ -187,12 +189,28 @@ class CustomSocialAppAdmin(SocialAppAdmin):
     get_config_name.short_description = 'IDP Config Name'
     get_protocol.short_description = 'Protocol'
 
+class CustomSocialAccountAdmin(SocialAccountAdmin):        
+    list_display = ('user', 'uid', 'get_provider')
+                                    
+    def get_provider(self, obj):
+        return obj.provider
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'provider':
+            field.label = 'Provider ID'
+        return field
+
+    get_provider.short_description = 'Provider ID'
+
 
 if getattr(settings, 'USE_SAML', False):
     for field in SAMLConfiguration._meta.fields:
         if field.name == 'social_app':
             field.verbose_name = "ID Provider"
 
+    # Besides registering the new models, perform changes to the Social App / Account 
+    # related ones
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
     admin.site.register(SAMLLog, SAMLLogAdmin)
 
@@ -204,6 +222,8 @@ if getattr(settings, 'USE_SAML', False):
     SocialAccount._meta.verbose_name_plural = "User Accounts"
     admin.site.unregister(SocialApp)
     admin.site.register(SocialApp, CustomSocialAppAdmin)
+    admin.site.unregister(SocialAccount)
+    admin.site.register(SocialAccount, CustomSocialAccountAdmin)
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"

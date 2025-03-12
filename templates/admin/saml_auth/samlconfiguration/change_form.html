@@ -18,6 +18,12 @@
 	      lastInlineFormset.after(targetFieldset);
       }
     }
+
+  const providerLabel = document.querySelector('label[for="id_provider"]');
+  if (providerLabel && providerLabel.textContent.includes('Provider:')) {
+    providerLabel.textContent = providerLabel.textContent.replace('Provider:', 'Protocol:');
+  }
+	  
   });
 </script>
 {% endblock %}
