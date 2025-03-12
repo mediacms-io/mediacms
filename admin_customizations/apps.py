@@ -11,12 +11,31 @@ class AdminCustomizationsConfig(AppConfig):
         original_get_app_list = admin.AdminSite.get_app_list
 
         def get_app_list(self, request, app_label=None):
-            """Custom get_app_list method with custom ordering."""
+            """Custom get_app_list"""
             app_list = original_get_app_list(self, request, app_label)
+            # To see the list: 
             # print([a.get('app_label') for a in app_list])
 
-            # don't include the following
-            apps_to_hide = ['authtoken', 'auth']
+            # 1. move Social Account EmailAddress to Users
+            email_model = None
+            auth_app = None
+            account_app = None
+
+            for app in app_list:
+                if app['app_label'] == 'users':
+                    auth_app = app
+                elif app['app_label'] == 'account':
+                    account_app = app
+                    for model in app['models']:
+                        if model['object_name'] == 'EmailAddress':
+                            email_model = model
+                            account_app['models'].remove(model)
+                            break
+            if email_model and auth_app:
+                auth_app['models'].append(email_model)
+
+            # 2. don't include the following apps
+            apps_to_hide = ['authtoken', 'auth', 'account']
             if not getattr(settings, 'USE_SAML', False):
                 apps_to_hide.append('saml_auth')
             if not getattr(settings, 'USE_RBAC', False):
@@ -24,6 +43,7 @@ class AdminCustomizationsConfig(AppConfig):
 
             app_list = [app for app in app_list if app['app_label'] not in apps_to_hide]
 
+            # 3. change the ordering 
             app_order = {
                 'files': 1,
                 'users': 2,
