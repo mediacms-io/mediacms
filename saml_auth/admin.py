@@ -18,22 +18,6 @@ from .models import (
 )
 
 
-class SAMLConfigurationGroupRoleInline(admin.TabularInline):
-    model = SAMLConfigurationGroupRole
-    extra = 1
-    verbose_name = "Group Role Mapping"
-    verbose_name_plural = "Group Role Mappings"
-    fields = ['name', 'map_to']
-
-
-class SAMLConfigurationGlobalRoleInline(admin.TabularInline):
-    model = SAMLConfigurationGlobalRole
-    extra = 1
-    verbose_name = "Global Role Mapping"
-    verbose_name_plural = "Global Role Mappings"
-    fields = ['name', 'map_to']
-
-
 class SAMLConfigurationGroupMappingInline(admin.TabularInline):
     model = SAMLConfigurationGroupMapping
     extra = 1
@@ -101,8 +85,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
 
     inlines = [
         SAMLConfigurationGroupMappingInline,
-        SAMLConfigurationGlobalRoleInline,
-        SAMLConfigurationGroupRoleInline,
     ]
 
     def view_metadata_url(self, obj):
@@ -165,6 +147,15 @@ class SAMLLogAdmin(admin.ModelAdmin):
     readonly_fields = ['social_app', 'user', 'created_at', 'logs']
 
 
+class SAMLConfigurationGlobalRoleAdmin(admin.ModelAdmin):
+    list_display = ['configuration', 'name', 'map_to']
+    fields = ['configuration', 'name', 'map_to']
+
+class SAMLConfigurationGroupRoleAdmin(admin.ModelAdmin):
+    list_display = ['configuration', 'name', 'map_to']
+    fields = ['configuration', 'name', 'map_to']
+
+
 class CustomSocialAppAdmin(SocialAppAdmin):
     change_form_template = 'admin/saml_auth/samlconfiguration/change_form.html'
 
@@ -212,6 +203,8 @@ if getattr(settings, 'USE_SAML', False):
     # Besides registering the new models, perform changes to the Social App / Account 
     # related ones
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
+    admin.site.register(SAMLConfigurationGlobalRole, SAMLConfigurationGlobalRoleAdmin)
+    admin.site.register(SAMLConfigurationGroupRole, SAMLConfigurationGroupRoleAdmin)
     admin.site.register(SAMLLog, SAMLLogAdmin)
 
     admin.site.unregister(SocialToken)
@@ -228,3 +221,8 @@ if getattr(settings, 'USE_SAML', False):
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
     SAMLConfiguration._meta.app_config.verbose_name = "SAML settings and logs"
+    SAMLConfigurationGlobalRole._meta.verbose_name = "SAML Role Mapping"
+    SAMLConfigurationGlobalRole._meta.verbose_name_plural = "SAML Role Mapping"
+    SAMLConfigurationGroupRole._meta.verbose_name_plural = "SAML Group Mapping"
+    SAMLConfiguration._meta.verbose_name_plural = "SAML Configuration"
+    

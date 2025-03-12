@@ -24,6 +24,16 @@ class AdminCustomizationsConfig(AppConfig):
             for app in app_list:
                 if app['app_label'] == 'users':
                     auth_app = app
+                elif app['app_label'] == 'saml_auth':
+                    desired_order = ['SAMLConfiguration', 'SAMLConfigurationGlobalRole', 'SAMLConfigurationGroupRole', 'SAMLLog']
+                    ordered_models = []
+                    model_dict = {model['object_name']: model for model in app['models']}
+                    for model_name in desired_order:
+                        if model_name in model_dict:
+                            ordered_models.append(model_dict[model_name])
+
+                    app['models'] = ordered_models
+                
                 elif app['app_label'] == 'account':
                     account_app = app
                     for model in app['models']:
