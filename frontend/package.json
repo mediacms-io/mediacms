@@ -50,8 +50,8 @@
     "sortablejs": "^1.13.0",
     "timeago.js": "^4.0.2",
     "url-parse": "^1.5.10",
-    "pdfjs-dist": "^4.10.38",
-    "@react-pdf-viewer/core": "^3.12.0",
-    "@react-pdf-viewer/default-layout": "^3.12.0"
+    "pdfjs-dist": "3.4.120",
+    "@react-pdf-viewer/core": "^3.9.0",
+    "@react-pdf-viewer/default-layout": "^3.9.0"
   }
 }

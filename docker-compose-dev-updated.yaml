@@ -1,6 +1,6 @@
 services:
   migrations:
-    platform: linux/arm64
+    platform: linux/amd64
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -87,7 +87,7 @@ services:
       - web
     restart: unless-stopped
   web:
-    platform: linux/arm64
+    platform: linux/amd64
     image: mediacms/mediacms:latest
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
@@ -122,7 +122,7 @@ services:
       timeout: 10s
       retries: 3
   celery_worker:
-    platform: linux/arm64
+    platform: linux/amd64
     image: mediacms/mediacms:latest
     deploy:
       replicas: 1
