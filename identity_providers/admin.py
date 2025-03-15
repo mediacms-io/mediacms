@@ -5,7 +5,7 @@ from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
 
 from saml_auth.models import SAMLConfiguration 
-from identity_providers.models import IdentityProviderUserLog, IdentityProviderRoleMappingProxy, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderGroupMapping, IdentityProviderCategoryMapping
+from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderGroupMapping, IdentityProviderCategoryMapping
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
@@ -25,20 +25,25 @@ class SAMLConfigurationInline(admin.StackedInline):
     model = SAMLConfiguration
     extra = 0
     can_delete = True
-
-
-class IdentityProviderRoleMappingProxyInline(admin.StackedInline):
-    model = IdentityProviderRoleMappingProxy
-    extra = 0
-    can_delete = True
-    show_change_link = True
+    max_num = 1
 
 class IdentityProviderCategoryMappingInline(admin.StackedInline):
     model = IdentityProviderCategoryMapping
-    extra = 0
+    extra = 1
     can_delete = True
     show_change_link = True
+    verbose_name = "Category Mapping"
+    verbose_name_plural = "Category Mappings"
 
+
+class IdentityProviderGroupMappingInline(admin.StackedInline):
+    model = IdentityProviderGroupMapping
+    extra = 1
+    can_delete = True
+    show_change_link = True
+    verbose_name = "Group Mapping"
+    verbose_name_plural = "Group Mappings"
+    
 class CustomSocialAppAdmin(SocialAppAdmin):
     change_form_template = 'admin/identity_providers/change_form.html'
     list_display = ('get_config_name', 'get_protocol')
@@ -50,7 +55,9 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
         if getattr(settings, 'USE_SAML', False):
             self.inlines.append(SAMLConfigurationInline)
-        self.inlines.append(IdentityProviderRoleMappingProxyInline)
+        self.inlines.append(IdentityProviderGroupRoleInline)
+        self.inlines.append(IdentityProviderGlobalRoleInline)
+        self.inlines.append(IdentityProviderGroupMappingInline)
         self.inlines.append(IdentityProviderCategoryMappingInline)
 
 
@@ -135,7 +142,7 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
     formset = GlobalRoleInlineFormset    
     extra = 1
     verbose_name = "Global Role Mapping"
-    verbose_name_plural = "GLOBAL ROLE MAPPINGS"
+    verbose_name_plural = "Global Role Mappings"
     fields = ('name', 'map_to')
 
     def clean(self):
@@ -156,13 +163,9 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
     formset = GroupRoleInlineFormset    
     extra = 1
     verbose_name = "Group Role Mapping"
-    verbose_name_plural = "GROUP ROLE MAPPINGS"
+    verbose_name_plural = "Group Role Mappings"
     fields = ('name', 'map_to')
     
-
-class IdentityProviderRoleMappingProxyAdmin(admin.ModelAdmin):
-    inlines = [IdentityProviderGlobalRoleInline, IdentityProviderGroupRoleInline]
-
 
 
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
@@ -185,5 +188,4 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
 
-    admin.site.register(IdentityProviderRoleMappingProxy, IdentityProviderRoleMappingProxyAdmin)
 

@@ -5,6 +5,7 @@ from django.utils.html import format_html
 from django.db import transaction
 
 from files.models import Category
+from users.models import User
 from .models import RBACGroup, RBACMembership, RBACRole
 
 class RoleFilter(admin.SimpleListFilter):
@@ -29,7 +30,7 @@ class RBACGroupAdminForm(forms.ModelForm):
     )
     
     members_field = forms.ModelMultipleChoiceField(
-        queryset=None,
+        queryset=User.objects.all(),
         required=False,
         widget=admin.widgets.FilteredSelectMultiple('Members', False),
         help_text='Users with Member role',
@@ -37,7 +38,7 @@ class RBACGroupAdminForm(forms.ModelForm):
     )
 
     contributors_field = forms.ModelMultipleChoiceField(
-        queryset=None,
+        queryset=User.objects.all(),
         required=False,
         widget=admin.widgets.FilteredSelectMultiple('Contributors', False),
         help_text='Users with Contributor role',
@@ -45,7 +46,7 @@ class RBACGroupAdminForm(forms.ModelForm):
     )
 
     managers_field = forms.ModelMultipleChoiceField(
-        queryset=None,
+        queryset=User.objects.all(),
         required=False,
         widget=admin.widgets.FilteredSelectMultiple('Managers', False),
         help_text='Users with Manager role',
@@ -59,11 +60,6 @@ class RBACGroupAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        User = RBACMembership._meta.get_field('user').remote_field.model
-
-        self.fields['members_field'].queryset = User.objects.all()
-        self.fields['contributors_field'].queryset = User.objects.all()
-        self.fields['managers_field'].queryset = User.objects.all()
 
         if self.instance.pk:
             self.fields['categories'].initial = self.instance.categories.all()
@@ -105,7 +101,6 @@ class RBACGroupAdminForm(forms.ModelForm):
             self._update_role_memberships(RBACRole.MANAGER, manager_users)
     
     def _update_role_memberships(self, role, new_users):
-        User = RBACMembership._meta.get_field('user').remote_field.model
         
         new_user_ids = User.objects.filter(pk__in=new_users).values_list('pk', flat=True)
         
@@ -120,14 +115,12 @@ class RBACGroupAdminForm(forms.ModelForm):
         users_to_remove = existing_users.exclude(pk__in=new_user_ids)
         
         for user in users_to_add:
-            print('A'*10, role, "add", user)
             RBACMembership.objects.get_or_create(
                 user=user,
                 rbac_group=self.instance,
                 role=role
             )
 
-        print('A'*10, role, "remove", users_to_remove)
         
         RBACMembership.objects.filter(
             user__in=users_to_remove,
@@ -165,10 +158,19 @@ class RBACGroupAdmin(admin.ModelAdmin):
         fieldsets = super().get_fieldsets(request, obj)
         if obj:
             fieldsets += (
-                    ('User group membership and roles (Role Based Access Control: RBAC)', {
-                    'fields': ('members_field', 'contributors_field', 'managers_field'),
-                    'description': 'Select users for each role in the group. The same user can be assigned multiple roles.'
+                ('Members', {
+                    'fields': ['members_field'],
+                    'description': 'Select users for members. The same user cannot be contributor or manager'
                 }),
+                ('Contributors', {
+                    'fields': ['contributors_field'],
+                    'description': 'Select users for contributors. The same user cannot be member or manager'
+                }),
+                ('Managers', {
+                    'fields': ['managers_field'],
+                    'description': 'Select users for managers. The same user cannot be member or contributor'
+                }),
+                
                 ('Access To Categories', {
                     'fields': ['categories'],
                     'classes': ['collapse', 'open'],

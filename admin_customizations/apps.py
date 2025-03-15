@@ -60,7 +60,7 @@ class AdminCustomizationsConfig(AppConfig):
 
             if email_model and auth_app:
                 auth_app['models'].append(email_model)
-            if rbac_group_model and rbac_app:
+            if rbac_group_model and rbac_app and auth_app:
                 auth_app['models'].append(rbac_group_model)
             if identity_providers_user_log_model and socialaccount_app:
                 socialaccount_app['models'].append(identity_providers_user_log_model)
