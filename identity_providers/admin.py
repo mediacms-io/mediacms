@@ -1,24 +1,24 @@
 from django.conf import settings
 from django.contrib import admin
-
+from django import forms
 from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
 
 from saml_auth.models import SAMLConfiguration 
-from identity_providers.models import IdentityProviderUserLog
+from identity_providers.models import IdentityProviderUserLog, IdentityProviderRoleMappingProxy, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderGroupMapping, IdentityProviderCategoryMapping
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
-        'social_app',
+        'identity_provider',
         'user',
         'created_at',
     ]
 
-    list_filter = ['social_app', 'created_at']
+    list_filter = ['identity_provider', 'created_at']
 
-    search_fields = ['social_app__name', 'user__username', 'user__email', 'logs']
+    search_fields = ['identity_provider__name', 'user__username', 'user__email', 'logs']
 
-    readonly_fields = ['social_app', 'user', 'created_at', 'logs']
+    readonly_fields = ['identity_provider', 'user', 'created_at', 'logs']
 
 
 class SAMLConfigurationInline(admin.StackedInline):
@@ -27,6 +27,18 @@ class SAMLConfigurationInline(admin.StackedInline):
     can_delete = True
     show_change_link = True
 
+
+class IdentityProviderRoleMappingProxyInline(admin.StackedInline):
+    model = IdentityProviderRoleMappingProxy
+    extra = 0
+    can_delete = True
+    show_change_link = True
+
+class IdentityProviderCategoryMappingInline(admin.StackedInline):
+    model = IdentityProviderCategoryMapping
+    extra = 0
+    can_delete = True
+    show_change_link = True
 
 class CustomSocialAppAdmin(SocialAppAdmin):
     change_form_template = 'admin/identity_providers/change_form.html'
@@ -39,6 +51,8 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
         if getattr(settings, 'USE_SAML', False):
             self.inlines.append(SAMLConfigurationInline)
+        self.inlines.append(IdentityProviderRoleMappingProxyInline)
+        self.inlines.append(IdentityProviderCategoryMappingInline)
 
 
     def get_protocol(self, obj):
@@ -73,6 +87,83 @@ class CustomSocialAccountAdmin(SocialAccountAdmin):
 
     get_provider.short_description = 'Provider ID'
 
+class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        obj = super().save_new(form, commit=False)
+        obj.role_mapping = self.instance
+        obj.identity_provider = self.instance.identity_provider
+        if commit:
+            obj.save()
+        return obj
+
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.is_valid() or not form.cleaned_data:
+                continue
+
+            name = form.cleaned_data.get('name')
+            identity_provider = form.cleaned_data.get('identity_provider')
+            if name and identity_provider:
+                if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
+                    form.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
+
+
+class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        obj = super().save_new(form, commit=False)
+        obj.role_mapping = self.instance
+        obj.identity_provider = self.instance.identity_provider
+        if commit:
+            obj.save()
+        return obj
+
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.is_valid() or not form.cleaned_data:
+                continue
+
+            name = form.cleaned_data.get('name')
+            identity_provider = form.cleaned_data.get('identity_provider')
+            if name and identity_provider:
+                if IdentityProviderGroupRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
+                    form.add_error('name', 'A group role mapping with this name already exists for this Identity provider.')
+
+
+class IdentityProviderGlobalRoleInline(admin.TabularInline):
+    model = IdentityProviderGlobalRole
+    formset = GlobalRoleInlineFormset    
+    extra = 1
+    verbose_name = "Global Role Mapping"
+    verbose_name_plural = "GLOBAL ROLE MAPPINGS"
+    fields = ('name', 'map_to')
+
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.is_valid() or not form.cleaned_data:
+                continue
+
+            name = form.cleaned_data.get('name')
+            identity_provider = form.cleaned_data.get('identity_provider')
+            if name and identity_provider:
+                if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
+                    form.add_error('name', 'A global role mapping with this Identity Provider already exists')
+
+
+class IdentityProviderGroupRoleInline(admin.TabularInline):
+    model = IdentityProviderGroupRole
+    formset = GroupRoleInlineFormset    
+    extra = 1
+    verbose_name = "Group Role Mapping"
+    verbose_name_plural = "GROUP ROLE MAPPINGS"
+    fields = ('name', 'map_to')
+    
+
+class IdentityProviderRoleMappingProxyAdmin(admin.ModelAdmin):
+    inlines = [IdentityProviderGlobalRoleInline, IdentityProviderGroupRoleInline]
+
 
 
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
@@ -94,4 +185,6 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
+
+    admin.site.register(IdentityProviderRoleMappingProxy, IdentityProviderRoleMappingProxyAdmin)
 

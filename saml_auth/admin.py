@@ -9,19 +9,7 @@ from django.utils.html import format_html
 
 from .models import (
     SAMLConfiguration,
-    SAMLConfigurationGlobalRole,
-    SAMLConfigurationGroupMapping,
-    SAMLConfigurationGroupRole,
-    SAMLRoleMapping
 )
-
-
-class SAMLConfigurationGroupMappingInline(admin.TabularInline):
-    model = SAMLConfigurationGroupMapping
-    extra = 1
-    verbose_name = "Group Mapping"
-    verbose_name_plural = "Group Mappings"
-    fields = ['name', 'map_to']
 
 
 class SAMLConfigurationForm(forms.ModelForm):
@@ -57,7 +45,6 @@ class SAMLConfigurationForm(forms.ModelForm):
 
 class SAMLConfigurationAdmin(admin.ModelAdmin):
     form = SAMLConfigurationForm
-    change_form_template = 'admin/saml_auth/samlconfiguration/change_form.html'
 
     list_display = ['social_app', 'idp_id', 'remove_from_groups', 'save_saml_response_logs', 'view_metadata_url']
 
@@ -79,10 +66,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 ]
             },
         ),
-    ]
-
-    inlines = [
-        SAMLConfigurationGroupMappingInline,
     ]
 
     def view_metadata_url(self, obj):
@@ -132,85 +115,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
 
 
 
-class SAMLConfigurationGlobalRoleAdmin(admin.ModelAdmin):
-    list_display = ['configuration', 'name', 'map_to']
-    fields = ['configuration', 'name', 'map_to']
-    list_filter = ['configuration',]
-
-
-class SAMLConfigurationGroupRoleAdmin(admin.ModelAdmin):
-    list_display = ['configuration', 'name', 'map_to']
-    fields = ['configuration', 'name', 'map_to']
-    list_filter = ['configuration']
-
-
-
-
-class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
-    def save_new(self, form, commit=True):
-        obj = super().save_new(form, commit=False)
-        obj.role_mapping = self.instance
-        obj.configuration = self.instance.configuration
-        if commit:
-            obj.save()
-        return obj
-
-
-class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
-    def save_new(self, form, commit=True):
-        obj = super().save_new(form, commit=False)
-        obj.role_mapping = self.instance
-        obj.configuration = self.instance.configuration
-        if commit:
-            obj.save()
-        return obj
-
-    def clean(self):
-        super().clean()
-        for form in self.forms:
-            if not form.is_valid() or not form.cleaned_data:
-                continue
-
-            name = form.cleaned_data.get('name')
-            configuration = form.cleaned_data.get('configuration')
-            if name and configuration:
-                if SAMLConfigurationGroupRole.objects.filter(configuration=configuration, name=name).exclude(pk=form.instance.pk).exists():
-                    form.add_error('name', 'A group role mapping with this name already exists for this configuration.')
-
-
-class SAMLConfigurationGlobalRoleInline(admin.TabularInline):
-    model = SAMLConfigurationGlobalRole
-    formset = GlobalRoleInlineFormset    
-    extra = 1
-    verbose_name = "Global Role Mapping"
-    verbose_name_plural = "GLOBAL ROLE MAPPINGS"
-    fields = ('name', 'map_to')
-
-    def clean(self):
-        super().clean()
-        for form in self.forms:
-            if not form.is_valid() or not form.cleaned_data:
-                continue
-
-            name = form.cleaned_data.get('name')
-            configuration = form.cleaned_data.get('configuration')
-            if name and configuration:
-                if SAMLConfigurationGlobalRole.objects.filter(configuration=configuration, name=name).exclude(pk=form.instance.pk).exists():
-                    form.add_error('name', 'A global role mapping with this name already exists for this configuration.')
-
-
-class SAMLConfigurationGroupRoleInline(admin.TabularInline):
-    model = SAMLConfigurationGroupRole
-    formset = GroupRoleInlineFormset    
-    extra = 1
-    verbose_name = "Group Role Mapping"
-    verbose_name_plural = "GROUP ROLE MAPPINGS"
-    fields = ('name', 'map_to')
-    
-
-class SAMLRoleMappingAdmin(admin.ModelAdmin):
-    inlines = [SAMLConfigurationGlobalRoleInline, SAMLConfigurationGroupRoleInline]
-
 
 if getattr(settings, 'USE_SAML', False):
     for field in SAMLConfiguration._meta.fields:
@@ -218,14 +122,7 @@ if getattr(settings, 'USE_SAML', False):
             field.verbose_name = "ID Provider"
 
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
-    admin.site.register(SAMLConfigurationGlobalRole, SAMLConfigurationGlobalRoleAdmin)
-    admin.site.register(SAMLConfigurationGroupRole, SAMLConfigurationGroupRoleAdmin)
-    admin.site.register(SAMLRoleMapping, SAMLRoleMappingAdmin)
-
 
     SAMLConfiguration._meta.app_config.verbose_name = "SAML settings and logs"
-#    SAMLConfigurationGlobalRole._meta.verbose_name = "SAML Role Mapping"
- #   SAMLConfigurationGlobalRole._meta.verbose_name_plural = "SAML Role Mapping"
-    SAMLRoleMapping._meta.verbose_name_plural = "SAML Role Mapping"
     SAMLConfiguration._meta.verbose_name_plural = "SAML Configuration"
     

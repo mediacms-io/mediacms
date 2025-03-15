@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db import transaction
 
+from files.models import Category
 from .models import RBACGroup, RBACMembership, RBACRole
 
 class RoleFilter(admin.SimpleListFilter):
@@ -123,15 +124,19 @@ class RBACGroupAdminForm(forms.ModelForm):
         ).delete()
 
 
+class CategoryInline(admin.StackedInline):
+    model = RBACGroup.categories.through
+    extra = 0
+    can_delete = True
+
+
 class RBACGroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'social_app', 'get_member_count', 'get_contributor_count', 'get_manager_count', 'categories_list')
+    list_display = ('name', 'identity_provider', 'get_member_count', 'get_contributor_count', 'get_manager_count', 'categories_list')
     form = RBACGroupAdminForm
-
-    list_filter = (RoleFilter, 'social_app')
-
-    search_fields = ['name', 'uid', 'description', 'social_app__name']
-
+    list_filter = (RoleFilter, 'identity_provider')
+    search_fields = ['name', 'uid', 'description', 'identity_provider__name']
     filter_horizontal = ['categories']
+    inlines = [CategoryInline]
 
     def get_member_count(self, obj):
         return obj.memberships.filter(role=RBACRole.MEMBER).count()
@@ -147,7 +152,7 @@ class RBACGroupAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('social_app', 'uid', 'name', 'description'),
+            'fields': ('identity_provider', 'uid', 'name', 'description'),
         }),
     )
 

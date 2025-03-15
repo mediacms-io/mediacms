@@ -983,6 +983,8 @@ class Category(models.Model):
 
     is_rbac_category = models.BooleanField(default=False, db_index=True, help_text='If Category is part of the Role Based Access Control system')
 
+    identity_provider = models.ForeignKey('socialaccount.SocialApp', blank=True, null=True, on_delete=models.CASCADE, related_name='categories', help_text='If category is related with a specific Identity Provider')
+
     def __str__(self):
         return self.title
 

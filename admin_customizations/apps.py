@@ -31,15 +31,6 @@ class AdminCustomizationsConfig(AppConfig):
             for app in app_list:
                 if app['app_label'] == 'users':
                     auth_app = app
-                elif app['app_label'] == 'saml_auth':
-                    desired_order = ['SAMLRoleMapping']
-                    ordered_models = []
-                    model_dict = {model['object_name']: model for model in app['models']}
-                    for model_name in desired_order:
-                        if model_name in model_dict:
-                            ordered_models.append(model_dict[model_name])
-
-                    app['models'] = ordered_models
                 
                 elif app['app_label'] == 'account':
                     account_app = app
@@ -75,9 +66,7 @@ class AdminCustomizationsConfig(AppConfig):
                 socialaccount_app['models'].append(identity_providers_user_log_model)
 
             # 2. don't include the following apps
-            apps_to_hide = ['authtoken', 'auth', 'account', 'identity_providers']
-            if not getattr(settings, 'USE_SAML', False):
-                apps_to_hide.append('saml_auth')
+            apps_to_hide = ['authtoken', 'auth', 'account', 'identity_providers', 'saml_auth', 'rbac']
             if not getattr(settings, 'USE_RBAC', False):
                 apps_to_hide.append('rbac')
             if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
@@ -90,7 +79,6 @@ class AdminCustomizationsConfig(AppConfig):
                 'files': 1,
                 'users': 2,
                 'socialaccount': 3,
-                'saml_auth': 4,
                 'rbac': 5,
             }
 

@@ -15,18 +15,18 @@ class RBACGroup(models.Model):
 
     categories = models.ManyToManyField('files.Category', related_name='rbac_groups', blank=True, help_text='Categories this RBAC group has access to')
 
-    social_app = models.ForeignKey(SocialApp, on_delete=models.SET_NULL, null=True, blank=True, related_name='rbac_groups')
+    identity_provider = models.ForeignKey(SocialApp, on_delete=models.SET_NULL, null=True, blank=True, related_name='rbac_groups')
 
     def __str__(self):
         name = f"{self.name}"
-        if self.social_app:
-            name = f"{name} for self.social_app.provider"
+        if self.identity_provider:
+            name = f"{name} for self.identity_provider.provider"
         return name
 
     class Meta:
         verbose_name = 'RBAC Group'
         verbose_name_plural = 'RBAC Groups'
-        unique_together = [['uid', 'social_app'], ['name', 'social_app']]
+        unique_together = [['uid', 'identity_provider'], ['name', 'identity_provider']]
 
 
 class RBACRole(models.TextChoices):

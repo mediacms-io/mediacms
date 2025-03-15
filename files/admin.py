@@ -54,15 +54,15 @@ class MediaAdmin(admin.ModelAdmin):
 
 class RBACGroupInline(admin.TabularInline):
     model = RBACGroup.categories.through
-    extra = 1
+    extra = 0
     verbose_name = "RBAC Group"
     verbose_name_plural = "RBAC Groups"
 
 
 class CategoryAdmin(admin.ModelAdmin):
     search_fields = ["title"]
-    list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category"]
-    list_filter = ["is_global", "is_rbac_category"]
+    list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category", "identity_provider"]
+    list_filter = ["is_global", "is_rbac_category", "identity_provider"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
 
@@ -73,6 +73,24 @@ class CategoryAdmin(admin.ModelAdmin):
         if getattr(settings, 'USE_RBAC', False):
             self.inlines.append(RBACGroupInline)
 
+    def get_fieldsets(self, request, obj=None):
+        basic_fieldset = [
+            (None, {
+                'fields': ['title', 'user', 'is_global', 'media_count']
+            }),
+        ]
+        
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_fieldset = [
+                ('RBAC Settings', {
+                    'fields': ['is_rbac_category', 'identity_provider'],
+                    'classes': ['collapse', 'open'],
+                    'description': 'Role-Based Access Control settings for this category'
+                }),
+            ]
+            return basic_fieldset + rbac_fieldset
+        else:
+            return basic_fieldset
 
 class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]
