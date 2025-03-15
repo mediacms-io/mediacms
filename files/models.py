@@ -418,8 +418,9 @@ class Media(models.Model):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(sql_code)
-        except BaseException:
-            pass  # TODO:add log
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            pass
         return True
 
     def media_init(self):
@@ -463,7 +464,8 @@ class Media(models.Model):
             elif ret.get("is_video") or ret.get("is_audio"):
                 try:
                     self.media_info = json.dumps(ret)
-                except TypeError:
+                except TypeError as e:
+                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                     self.media_info = ""
                 self.md5sum = ret.get("md5sum")
                 self.size = helpers.show_file_size(ret.get("file_size"))
@@ -1517,7 +1519,8 @@ def encoding_file_save(sender, instance, created, **kwargs):
         if instance.media_file:
             try:
                 orig_chunks = json.loads(instance.chunks_info).keys()
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 instance.delete()
                 return False
 

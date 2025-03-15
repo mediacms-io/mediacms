@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -70,6 +72,8 @@ from .serializers import (
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
+
+logger = logging.getLogger(__name__)
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
@@ -256,7 +260,8 @@ def edit_media(request):
                     if tag:
                         try:
                             tag = Tag.objects.get(title=tag)
-                        except Tag.DoesNotExist:
+                        except Tag.DoesNotExist as e:
+                            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
@@ -435,7 +440,8 @@ def view_playlist(request, friendly_token):
 
     try:
         playlist = Playlist.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         playlist = None
 
     context = {}
@@ -543,9 +549,11 @@ class MediaDetail(APIView):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
             return media
-        except PermissionDenied:
+        except PermissionDenied as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "bad permissions"}, status=status.HTTP_401_UNAUTHORIZED)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response(
                 {"detail": "media file does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -634,7 +642,8 @@ class MediaDetail(APIView):
                     try:
                         p = EncodeProfile.objects.filter(id=int(profiles_list)).first()
                         valid_profiles.append(p)
-                    except ValueError:
+                    except ValueError as e:
+                        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                         return Response(
                             {"detail": "encoding_profiles must be int or list of ints of valid encode profiles"},
                             status=status.HTTP_400_BAD_REQUEST,
@@ -715,9 +724,11 @@ class MediaActions(APIView):
             if media.state == "private" and self.request.user != media.user:
                 return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
             return media
-        except PermissionDenied:
+        except PermissionDenied as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response(
                 {"detail": "media file does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -967,9 +978,11 @@ class PlaylistDetail(APIView):
             playlist = Playlist.objects.get(friendly_token=friendly_token)
             self.check_object_permissions(self.request, playlist)
             return playlist
-        except PermissionDenied:
+        except PermissionDenied as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "not enough permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response(
                 {"detail": "Playlist does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1030,7 +1043,8 @@ class PlaylistDetail(APIView):
         if request.data.get("ordering"):
             try:
                 ordering = int(request.data.get("ordering"))
-            except ValueError:
+            except ValueError as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 pass
 
         if action in ["add", "remove", "ordering"]:
@@ -1119,7 +1133,8 @@ class EncodingDetail(APIView):
                 encoding = Encoding.objects.get(id=encoding_id)
                 media = encoding.media
                 profile = encoding.profile
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 Encoding.objects.filter(id=encoding_id).delete()
                 return Response({"status": "fail"}, status=status.HTTP_400_BAD_REQUEST)
             # TODO: break chunk True/False logic here
@@ -1185,7 +1200,8 @@ class EncodingDetail(APIView):
         elif action == "update_fields":
             try:
                 encoding = Encoding.objects.get(id=encoding_id)
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 return Response({"status": "fail"}, status=status.HTTP_400_BAD_REQUEST)
             to_update = ["size", "update_date"]
             if encoding_status:
@@ -1219,7 +1235,8 @@ class EncodingDetail(APIView):
 
             try:
                 encoding.save(update_fields=to_update)
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 return Response({"status": "fail"}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"status": "success"}, status=status.HTTP_201_CREATED)
 
@@ -1289,9 +1306,11 @@ class CommentDetail(APIView):
             if media.state == "private" and self.request.user != media.user:
                 return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
             return media
-        except PermissionDenied:
+        except PermissionDenied as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response(
                 {"detail": "media file does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1329,7 +1348,8 @@ class CommentDetail(APIView):
         if uid:
             try:
                 comment = Comment.objects.get(uid=uid)
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 return Response(
                     {"detail": "comment does not exist"},
                     status=status.HTTP_400_BAD_REQUEST,
