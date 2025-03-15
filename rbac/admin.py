@@ -157,7 +157,7 @@ class RBACGroupAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('identity_provider', 'uid', 'name', 'description'),
+            'fields': ('identity_provider', 'uid', 'name', 'description', 'created_at', 'updated_at'),
         }),
     )
 
@@ -169,8 +169,7 @@ class RBACGroupAdmin(admin.ModelAdmin):
                     'fields': ('members_field', 'contributors_field', 'managers_field'),
                     'description': 'Select users for each role in the group. The same user can be assigned multiple roles.'
                 }),
-                ('Timestamps', {'fields': ['created_at', 'updated_at'], 'classes': ['collapse']}),
-                ('Access Control', {
+                ('Access To Categories', {
                     'fields': ['categories'],
                     'classes': ['collapse', 'open'],
                     'description': 'Select which categories this RBAC group has access to'
