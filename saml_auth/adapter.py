@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.dispatch import receiver
 
 from rbac.models import RBACGroup, RBACMembership
-from saml_auth.models import SAMLLog
+from identity_providers.models import IdentityProviderUserLog
 
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
@@ -130,5 +130,5 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 def handle_saml_logs_save(user, extra_data, social_app):
     # do not save jpegPhoto, if it exists
     extra_data.pop("jpegPhoto", None)
-    log = SAMLLog.objects.create(user=user, social_app=social_app, logs=extra_data)  # noqa
+    log = IdentityProviderUserLog.objects.create(user=user, social_app=social_app, logs=extra_data)  # noqa
     return True

@@ -1,8 +1,6 @@
 import csv
 import logging
 
-from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from django import forms
 from django.conf import settings
 from django.contrib import admin
@@ -14,7 +12,7 @@ from .models import (
     SAMLConfigurationGlobalRole,
     SAMLConfigurationGroupMapping,
     SAMLConfigurationGroupRole,
-    SAMLLog,
+    SAMLRoleMapping
 )
 
 
@@ -71,6 +69,7 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
         ('Provider Settings', {'fields': ['social_app', 'idp_id', 'idp_cert']}),
         ('URLs', {'fields': ['sso_url', 'slo_url', 'sp_metadata_url']}),
         ('Group Management', {'fields': ['remove_from_groups', 'save_saml_response_logs']}),
+        ('Attribute Mapping', {'fields': ['uid', 'name', 'email', 'groups', 'first_name', 'last_name', 'user_logo', 'role']}),
         (
             'Email Settings',
             {
@@ -80,7 +79,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 ]
             },
         ),
-        ('Attribute Mapping', {'fields': ['uid', 'name', 'email', 'groups', 'first_name', 'last_name', 'user_logo', 'role']}),
     ]
 
     inlines = [
@@ -133,66 +131,85 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 logging.error(e)
 
 
-class SAMLLogAdmin(admin.ModelAdmin):
-    list_display = [
-        'social_app',
-        'user',
-        'created_at',
-    ]
-
-    list_filter = ['social_app', 'created_at', 'user']
-
-    search_fields = ['social_app__name', 'user__username', 'user__email', 'logs']
-
-    readonly_fields = ['social_app', 'user', 'created_at', 'logs']
-
 
 class SAMLConfigurationGlobalRoleAdmin(admin.ModelAdmin):
     list_display = ['configuration', 'name', 'map_to']
     fields = ['configuration', 'name', 'map_to']
+    list_filter = ['configuration',]
+
 
 class SAMLConfigurationGroupRoleAdmin(admin.ModelAdmin):
     list_display = ['configuration', 'name', 'map_to']
     fields = ['configuration', 'name', 'map_to']
+    list_filter = ['configuration']
 
 
-class CustomSocialAppAdmin(SocialAppAdmin):
-    change_form_template = 'admin/saml_auth/samlconfiguration/change_form.html'
 
-    list_display = ('get_config_name', 'get_protocol')
 
-    fields = ('provider', 'provider_id', 'name', 'client_id', 'sites')
+class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        obj = super().save_new(form, commit=False)
+        obj.role_mapping = self.instance
+        obj.configuration = self.instance.configuration
+        if commit:
+            obj.save()
+        return obj
 
-    def get_protocol(self, obj):
-        return obj.provider
 
-    def get_config_name(self, obj):
-        return obj.name
+class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
+    def save_new(self, form, commit=True):
+        obj = super().save_new(form, commit=False)
+        obj.role_mapping = self.instance
+        obj.configuration = self.instance.configuration
+        if commit:
+            obj.save()
+        return obj
 
-    def formfield_for_dbfield(self, db_field, **kwargs):
-        field = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name == 'provider':
-            field.label = 'Protocol'
-        elif db_field.name == 'name':
-            field.label = 'IDP Config Name'
-        return field
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.is_valid() or not form.cleaned_data:
+                continue
 
-    get_config_name.short_description = 'IDP Config Name'
-    get_protocol.short_description = 'Protocol'
+            name = form.cleaned_data.get('name')
+            configuration = form.cleaned_data.get('configuration')
+            if name and configuration:
+                if SAMLConfigurationGroupRole.objects.filter(configuration=configuration, name=name).exclude(pk=form.instance.pk).exists():
+                    form.add_error('name', 'A group role mapping with this name already exists for this configuration.')
 
-class CustomSocialAccountAdmin(SocialAccountAdmin):        
-    list_display = ('user', 'uid', 'get_provider')
-                                    
-    def get_provider(self, obj):
-        return obj.provider
 
-    def formfield_for_dbfield(self, db_field, **kwargs):
-        field = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name == 'provider':
-            field.label = 'Provider ID'
-        return field
+class SAMLConfigurationGlobalRoleInline(admin.TabularInline):
+    model = SAMLConfigurationGlobalRole
+    formset = GlobalRoleInlineFormset    
+    extra = 1
+    verbose_name = "Global Role Mapping"
+    verbose_name_plural = "GLOBAL ROLE MAPPINGS"
+    fields = ('name', 'map_to')
 
-    get_provider.short_description = 'Provider ID'
+    def clean(self):
+        super().clean()
+        for form in self.forms:
+            if not form.is_valid() or not form.cleaned_data:
+                continue
+
+            name = form.cleaned_data.get('name')
+            configuration = form.cleaned_data.get('configuration')
+            if name and configuration:
+                if SAMLConfigurationGlobalRole.objects.filter(configuration=configuration, name=name).exclude(pk=form.instance.pk).exists():
+                    form.add_error('name', 'A global role mapping with this name already exists for this configuration.')
+
+
+class SAMLConfigurationGroupRoleInline(admin.TabularInline):
+    model = SAMLConfigurationGroupRole
+    formset = GroupRoleInlineFormset    
+    extra = 1
+    verbose_name = "Group Role Mapping"
+    verbose_name_plural = "GROUP ROLE MAPPINGS"
+    fields = ('name', 'map_to')
+    
+
+class SAMLRoleMappingAdmin(admin.ModelAdmin):
+    inlines = [SAMLConfigurationGlobalRoleInline, SAMLConfigurationGroupRoleInline]
 
 
 if getattr(settings, 'USE_SAML', False):
@@ -200,29 +217,15 @@ if getattr(settings, 'USE_SAML', False):
         if field.name == 'social_app':
             field.verbose_name = "ID Provider"
 
-    # Besides registering the new models, perform changes to the Social App / Account 
-    # related ones
     admin.site.register(SAMLConfiguration, SAMLConfigurationAdmin)
     admin.site.register(SAMLConfigurationGlobalRole, SAMLConfigurationGlobalRoleAdmin)
     admin.site.register(SAMLConfigurationGroupRole, SAMLConfigurationGroupRoleAdmin)
-    admin.site.register(SAMLLog, SAMLLogAdmin)
+    admin.site.register(SAMLRoleMapping, SAMLRoleMappingAdmin)
 
-    admin.site.unregister(SocialToken)
 
-    # This is unregistering the default Social App and registers the custom one here,
-    # with mostly name setting options
-    SocialAccount._meta.verbose_name = "User Account"
-    SocialAccount._meta.verbose_name_plural = "User Accounts"
-    admin.site.unregister(SocialApp)
-    admin.site.register(SocialApp, CustomSocialAppAdmin)
-    admin.site.unregister(SocialAccount)
-    admin.site.register(SocialAccount, CustomSocialAccountAdmin)
-    SocialApp._meta.verbose_name = "ID Provider"
-    SocialApp._meta.verbose_name_plural = "ID Providers"
-    SocialAccount._meta.app_config.verbose_name = "Identity Providers"
     SAMLConfiguration._meta.app_config.verbose_name = "SAML settings and logs"
-    SAMLConfigurationGlobalRole._meta.verbose_name = "SAML Role Mapping"
-    SAMLConfigurationGlobalRole._meta.verbose_name_plural = "SAML Role Mapping"
-    SAMLConfigurationGroupRole._meta.verbose_name_plural = "SAML Group Mapping"
+#    SAMLConfigurationGlobalRole._meta.verbose_name = "SAML Role Mapping"
+ #   SAMLConfigurationGlobalRole._meta.verbose_name_plural = "SAML Role Mapping"
+    SAMLRoleMapping._meta.verbose_name_plural = "SAML Role Mapping"
     SAMLConfiguration._meta.verbose_name_plural = "SAML Configuration"
     

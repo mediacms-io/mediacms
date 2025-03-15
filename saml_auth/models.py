@@ -74,23 +74,36 @@ class SAMLConfiguration(models.Model):
         return provider_settings
 
 
-class SAMLLog(models.Model):
-    social_app = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='saml_logs')
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name='saml_logs')
-    created_at = models.DateTimeField(auto_now_add=True)
-    logs = models.TextField(blank=True, null=True)
+class SAMLRoleMapping(models.Model):
+    # The purpose of this model is to enable editing of Global Roles and Group Roles for a SAML Configuration
+    # through Django admin. It's not being queried elsewhere. 
+        
+    configuration = models.OneToOneField('SAMLConfiguration', on_delete=models.CASCADE, related_name='role_mapping')
 
     class Meta:
-        verbose_name = 'SAML Log'
-        verbose_name_plural = 'SAML Logs'
-        ordering = ['-created_at']
-
+        constraints = [
+            models.UniqueConstraint(fields=['configuration'], name='unique_saml_role_mapping')
+        ]
+    
+    def clean(self):
+        if not self.pk and SAMLRoleMapping.objects.filter(configuration=self.configuration).exists():
+            raise ValidationError('A role mapping already exists for this SAML configuration.')
+        
     def __str__(self):
-        return f'SAML Log - {self.user.username} - {self.created_at}'
+        return f"Role mapping for {self.configuration}"
+    
 
 
 class SAMLConfigurationGroupRole(models.Model):
     configuration = models.ForeignKey(SAMLConfiguration, on_delete=models.CASCADE, related_name='group_roles')
+
+    role_mapping = models.ForeignKey(
+        SAMLRoleMapping,
+        on_delete=models.CASCADE,
+        related_name='group_role_mapping',
+        null=True,
+        blank=True
+    )
 
     name = models.CharField(verbose_name='Group Role Mapping', max_length=100, help_text='SAML value')
 
@@ -104,9 +117,26 @@ class SAMLConfigurationGroupRole(models.Model):
     def __str__(self):
         return f'SAML Group Role Mapping {self.name}'
 
+    def save(self, *args, **kwargs):
+        if not self.configuration_id:
+            raise ValidationError({'configuration': 'Configuration is required.'})
+        
+        if SAMLConfigurationGroupRole.objects.filter(configuration=self.configuration, name=self.name).exclude(pk=self.pk).exists():
+            raise ValidationError({'name': 'A group role mapping with this configuration and name already exists.'})
+
+        super().save(*args, **kwargs)
+
 
 class SAMLConfigurationGlobalRole(models.Model):
     configuration = models.ForeignKey(SAMLConfiguration, on_delete=models.CASCADE, related_name='global_roles')
+
+    role_mapping = models.ForeignKey(
+        SAMLRoleMapping,
+        on_delete=models.CASCADE,
+        related_name='global_role_mapping',
+        null=True,
+        blank=True
+    )
 
     name = models.CharField(verbose_name='Global Role Mapping', max_length=100, help_text='SAML value')
 
@@ -123,6 +153,7 @@ class SAMLConfigurationGlobalRole(models.Model):
 
     def __str__(self):
         return f'SAML Global Role {self.name}'
+
 
 
 class SAMLConfigurationGroupMapping(models.Model):
@@ -163,3 +194,5 @@ class SAMLConfigurationGroupMapping(models.Model):
 
     def __str__(self):
         return f'SAML Group Mapping {self.name}'
+
+

@@ -265,7 +265,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    #    "jazzmin",
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.sites",
     "rest_framework",
@@ -275,6 +275,7 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
     "actions.apps.ActionsConfig",
     "rbac.apps.RbacConfig",
+    "identity_providers.apps.IdentityProvidersConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -522,9 +523,9 @@ DJANGO_ADMIN_URL = "admin/"
 
 USE_SAML = False
 USE_RBAC = False
-
+USE_IDENTITY_PROVIDERS = False
 JAZZMIN_UI_TWEAKS = {
-    "theme": "lux",
+    "theme": "flatly"
 }
 
 
@@ -548,3 +549,4 @@ except ImportError:
 # SESSION_COOKIE_SECURE = True
 
 PYSUBS_COMMAND = "pysubs2"
+

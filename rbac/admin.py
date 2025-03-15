@@ -1,47 +1,178 @@
+from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
+from django.db import transaction
 
-from .models import RBACGroup, RBACMembership
+from .models import RBACGroup, RBACMembership, RBACRole
+
+class RoleFilter(admin.SimpleListFilter):
+    title = 'Role'
+    parameter_name = 'role'
+
+    def lookups(self, request, model_admin):
+        return RBACRole.choices
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(memberships__role=self.value()).distinct()
+        return queryset
 
 
-class RBACMembershipInline(admin.TabularInline):
-    model = RBACMembership
-    extra = 1
-    raw_id_fields = ['user']
-    autocomplete_fields = ['user']
-    fields = ['user', 'role', 'joined_at', 'updated_at']
-    readonly_fields = ['joined_at', 'updated_at']
+class RBACGroupAdminForm(forms.ModelForm):
+    members_field = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=admin.widgets.FilteredSelectMultiple('Members', False),
+        help_text='Users with Member role',
+        label=''        
+    )
+
+    contributors_field = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=admin.widgets.FilteredSelectMultiple('Contributors', False),
+        help_text='Users with Contributor role',
+        label=''        
+    )
+
+    managers_field = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=admin.widgets.FilteredSelectMultiple('Managers', False),
+        help_text='Users with Manager role',
+        label=''        
+    )
+
+    class Meta:
+        model = RBACGroup
+        fields = ('name',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        User = RBACMembership._meta.get_field('user').remote_field.model
+
+        self.fields['members_field'].queryset = User.objects.all()
+        self.fields['contributors_field'].queryset = User.objects.all()
+        self.fields['managers_field'].queryset = User.objects.all()
+
+        if self.instance.pk:
+            self.fields['members_field'].initial = User.objects.filter(
+                rbac_memberships__rbac_group=self.instance,
+                rbac_memberships__role=RBACRole.MEMBER
+            )
+            self.fields['contributors_field'].initial = User.objects.filter(
+                rbac_memberships__rbac_group=self.instance,
+                rbac_memberships__role=RBACRole.CONTRIBUTOR
+            )
+            self.fields['managers_field'].initial = User.objects.filter(
+                rbac_memberships__rbac_group=self.instance,
+                rbac_memberships__role=RBACRole.MANAGER
+            )
+
+    def save(self, commit=True):
+        group = super().save(commit=True)
+
+        if commit:
+            self.save_m2m()
+
+        return group
+
+    @transaction.atomic
+    def save_m2m(self):
+        print('ENTERED SAVE m2m', self.instance)
+        if self.instance.pk:
+            member_users = self.cleaned_data['members_field']
+            contributor_users = self.cleaned_data['contributors_field']
+            manager_users = self.cleaned_data['managers_field']
+            
+            self._update_role_memberships(RBACRole.MEMBER, member_users)
+            self._update_role_memberships(RBACRole.CONTRIBUTOR, contributor_users)
+            self._update_role_memberships(RBACRole.MANAGER, manager_users)
+    
+    def _update_role_memberships(self, role, new_users):
+        User = RBACMembership._meta.get_field('user').remote_field.model
+        
+        new_user_ids = User.objects.filter(pk__in=new_users).values_list('pk', flat=True)
+        
+        existing_users = User.objects.filter(
+            rbac_memberships__rbac_group=self.instance,
+            rbac_memberships__role=role
+        )
+        
+        existing_user_ids = existing_users.values_list('pk', flat=True)
+        
+        users_to_add = User.objects.filter(pk__in=new_user_ids).exclude(pk__in=existing_user_ids)
+        users_to_remove = existing_users.exclude(pk__in=new_user_ids)
+        
+        for user in users_to_add:
+            print('A'*10, role, "add", user)
+            RBACMembership.objects.get_or_create(
+                user=user,
+                rbac_group=self.instance,
+                role=role
+            )
+
+        print('A'*10, role, "remove", users_to_remove)
+        
+        RBACMembership.objects.filter(
+            user__in=users_to_remove,
+            rbac_group=self.instance,
+            role=role
+        ).delete()
 
 
 class RBACGroupAdmin(admin.ModelAdmin):
-    list_display = ['name', 'uid', 'social_app', 'created_at', 'member_count', 'categories_list']
+    list_display = ('name', 'social_app', 'get_member_count', 'get_contributor_count', 'get_manager_count', 'categories_list')
+    form = RBACGroupAdminForm
 
-    list_filter = ['social_app', 'created_at', 'categories']
+    list_filter = (RoleFilter, 'social_app')
 
     search_fields = ['name', 'uid', 'description', 'social_app__name']
 
     filter_horizontal = ['categories']
 
-    inlines = [RBACMembershipInline]
+    def get_member_count(self, obj):
+        return obj.memberships.filter(role=RBACRole.MEMBER).count()
+    get_member_count.short_description = 'Members'
 
-    fieldsets = [
-        (None, {'fields': ['uid', 'name', 'description']}),
-        ('Associations', {'fields': ['social_app', 'categories']}),
-        ('Timestamps', {'fields': ['created_at', 'updated_at'], 'classes': ['collapse']}),
-    ]
+    def get_contributor_count(self, obj):
+        return obj.memberships.filter(role=RBACRole.CONTRIBUTOR).count()
+    get_contributor_count.short_description = 'Contributors'
+
+    def get_manager_count(self, obj):
+        return obj.memberships.filter(role=RBACRole.MANAGER).count()
+    get_manager_count.short_description = 'Managers'
+
+    fieldsets = (
+        (None, {
+            'fields': ('social_app', 'uid', 'name', 'description'),
+        }),
+    )
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj:
+            fieldsets += (
+                    ('User group membership and roles (Role Based Access Control: RBAC)', {
+                    'fields': ('members_field', 'contributors_field', 'managers_field'),
+                    'description': 'Select users for each role in the group. The same user can be assigned multiple roles.'
+                }),
+                ('Timestamps', {'fields': ['created_at', 'updated_at'], 'classes': ['collapse']}),
+            )
+        return fieldsets
 
     readonly_fields = ['created_at', 'updated_at']
 
+
     def member_count(self, obj):
-        """Display number of members in the group"""
         count = obj.memberships.count()
         return format_html('<a href="?rbac_group__id__exact={}">{} members</a>', obj.id, count)
 
     member_count.short_description = 'Members'
 
     def categories_list(self, obj):
-        """Display categories as a comma-separated list"""
         return ", ".join([c.title for c in obj.categories.all()])
 
     categories_list.short_description = 'Categories'
@@ -68,13 +199,14 @@ class RBACMembershipAdmin(admin.ModelAdmin):
     fieldsets = [(None, {'fields': ['user', 'rbac_group', 'role']}), ('Timestamps', {'fields': ['joined_at', 'updated_at'], 'classes': ['collapse']})]
 
 
+
 if getattr(settings, 'USE_RBAC', False):
     for field in RBACGroup._meta.fields:
         if field.name == 'social_app':
             field.verbose_name = "ID Provider"
 
-    RBACGroup._meta.verbose_name_plural = "Role Based Access Control Groups"
-    RBACGroup._meta.verbose_name = "Role Based Access Control Group"
+    RBACGroup._meta.verbose_name_plural = "Groups"
+    RBACGroup._meta.verbose_name = "Group"
     RBACMembership._meta.verbose_name_plural = "Role Based Access Control Membership"
     RBACGroup._meta.app_config.verbose_name = "Role Based Access Control"
 

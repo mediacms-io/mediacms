@@ -18,14 +18,21 @@ class AdminCustomizationsConfig(AppConfig):
 
             # 1. move Social Account EmailAddress to Users
             email_model = None
+            rbac_group_model = None
+            identity_providers_user_log_model = None
+
             auth_app = None
             account_app = None
+            account_app = None
+            rbac_app = None
+            socialaccount_app = None
+            identity_providers_app = None
 
             for app in app_list:
                 if app['app_label'] == 'users':
                     auth_app = app
                 elif app['app_label'] == 'saml_auth':
-                    desired_order = ['SAMLConfiguration', 'SAMLConfigurationGlobalRole', 'SAMLConfigurationGroupRole', 'SAMLLog']
+                    desired_order = ['SAMLRoleMapping']
                     ordered_models = []
                     model_dict = {model['object_name']: model for model in app['models']}
                     for model_name in desired_order:
@@ -41,15 +48,40 @@ class AdminCustomizationsConfig(AppConfig):
                             email_model = model
                             account_app['models'].remove(model)
                             break
+                elif app['app_label'] == 'rbac':
+                    if not getattr(settings, 'USE_RBAC', False):
+                        continue
+                    rbac_app = app
+                    for model in app['models']:
+                        if model['object_name'] == 'RBACGroup':
+                            rbac_group_model = model
+                            rbac_app['models'].remove(model)
+                            break
+                elif app['app_label'] == 'identity_providers':
+                    identity_providers_app = app
+                    for model in app['models']:
+                        if model['object_name'] == 'IdentityProviderUserLog':
+                            identity_providers_user_log_model = model
+                            identity_providers_app['models'].remove(model)
+                            break
+                elif app['app_label'] == 'socialaccount':
+                    socialaccount_app = app
+
             if email_model and auth_app:
                 auth_app['models'].append(email_model)
+            if rbac_group_model and rbac_app:
+                auth_app['models'].append(rbac_group_model)
+            if identity_providers_user_log_model and socialaccount_app:
+                socialaccount_app['models'].append(identity_providers_user_log_model)
 
             # 2. don't include the following apps
-            apps_to_hide = ['authtoken', 'auth', 'account']
+            apps_to_hide = ['authtoken', 'auth', 'account', 'identity_providers']
             if not getattr(settings, 'USE_SAML', False):
                 apps_to_hide.append('saml_auth')
             if not getattr(settings, 'USE_RBAC', False):
                 apps_to_hide.append('rbac')
+            if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+                apps_to_hide.append('socialaccount')
 
             app_list = [app for app in app_list if app['app_label'] not in apps_to_hide]
 
