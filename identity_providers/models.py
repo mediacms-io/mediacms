@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 import logging
 
 from allauth.socialaccount.models import SocialApp

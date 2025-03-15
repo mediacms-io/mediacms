@@ -83,7 +83,7 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 
     if groups:
         rbac_groups = RBACGroup.objects.filter(
-            social_app=social_app,
+            identity_provider=social_app,
             uid__in=groups
         )
         
@@ -130,5 +130,5 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 def handle_saml_logs_save(user, extra_data, social_app):
     # do not save jpegPhoto, if it exists
     extra_data.pop("jpegPhoto", None)
-    log = IdentityProviderUserLog.objects.create(user=user, social_app=social_app, logs=extra_data)  # noqa
+    log = IdentityProviderUserLog.objects.create(user=user, identity_provider=social_app, logs=extra_data)  # noqa
     return True

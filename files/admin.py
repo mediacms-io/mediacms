@@ -53,92 +53,88 @@ class MediaAdmin(admin.ModelAdmin):
     get_comments_count.short_description = "Comments count"
 
 
+class RBACGroupInline(admin.TabularInline):  # or admin.StackedInline if you prefer
+    model = RBACGroup.categories.through
+    extra = 1
+    verbose_name = "RBAC Group"
+    verbose_name_plural = "RBAC Groups"
+
+
 class CategoryAdminForm(forms.ModelForm):
-    rbac_groups = forms.ModelMultipleChoiceField(
-        queryset=RBACGroup.objects.all(),
-        required=False,
-        widget=admin.widgets.FilteredSelectMultiple('RBAC Groups', False),
-        help_text='Select RBAC groups that have access to this category'
-    )
-    
     class Meta:
         model = Category
         fields = '__all__'
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # If this is an existing object, initialize the field with current values
-        if self.instance and self.instance.pk:
-            self.fields['rbac_groups'].initial = self.instance.rbac_groups.all()
-   
+
     def clean(self):
         cleaned_data = super().clean()
         is_rbac_category = cleaned_data.get('is_rbac_category')
         identity_provider = cleaned_data.get('identity_provider')
-        rbac_groups = cleaned_data.get('rbac_groups')
-        
+
+        # Check if this category has any RBAC groups
+        if self.instance.pk:
+            has_rbac_groups = self.instance.rbac_groups.exists()
+        else:
+            has_rbac_groups = False
+
+        # Validation: identity_provider and rbac_groups require is_rbac_category to be True
         if not is_rbac_category:
             if identity_provider:
                 self.add_error(
-                    'identity_provider', 
+                    'identity_provider',
                     ValidationError('Identity provider can only be specified if "Is RBAC Category" is enabled.')
                 )
-            
-            if rbac_groups and rbac_groups.count() > 0:
+
+            if has_rbac_groups:
                 self.add_error(
-                    'rbac_groups', 
-                    ValidationError('RBAC Groups can only be specified if "Is RBAC Category" is enabled.')
+                    'is_rbac_category',
+                    ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.')
                 )
-        
+
         return cleaned_data
-   
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        
-        # Save the instance first if it's new
-        if commit:
-            instance.save()
-        
-        # Handle the m2m relationship manually
-        if 'rbac_groups' in self.cleaned_data:
-            # Clear existing relationships and add new ones
-            self.instance.rbac_groups.set(self.cleaned_data['rbac_groups'])
-        
-        return instance
 
 
 class CategoryAdmin(admin.ModelAdmin):
+    form = CategoryAdminForm
+
     search_fields = ["title"]
     list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category", "identity_provider"]
     list_filter = ["is_global", "is_rbac_category", "identity_provider"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
-    form = CategoryAdminForm
+    inlines = []
+    
+    def get_inlines(self, request, obj=None):
+        if getattr(settings, 'USE_RBAC', False):
+            return [RBACGroupInline]
+        return []
+
 
     def get_fieldsets(self, request, obj=None):
         basic_fieldset = [
-            (None, {
-                'fields': ['title', 'user', 'is_global', 'media_count']
+            ('Category Information', {
+                'fields': [
+                    'title', 
+                    'description',
+                    'user',
+                    'is_global', 
+                    'media_count',
+                    'thumbnail',
+                    'listings_thumbnail'
+                ],
             }),
         ]
         
         if getattr(settings, 'USE_RBAC', False):
             rbac_fieldset = [
                 ('RBAC Settings', {
-                    'fields': ['is_rbac_category', 'identity_provider', 'rbac_groups'],
-                    'classes': ['collapse', 'open'],
-                    'description': 'Role-Based Access Control settings for this category'
+                    'fields': ['is_rbac_category', 'identity_provider'],
+                    'classes': ['tab'],
+                    'description': 'Role-Based Access Control settings'
                 }),
             ]
             return basic_fieldset + rbac_fieldset
         else:
             return basic_fieldset
-    
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if not getattr(settings, 'USE_RBAC', False) and 'rbac_groups' in form.base_fields:
-            del form.base_fields['rbac_groups']
-        return form
 
 
 class TagAdmin(admin.ModelAdmin):
