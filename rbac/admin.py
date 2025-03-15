@@ -21,6 +21,13 @@ class RoleFilter(admin.SimpleListFilter):
 
 
 class RBACGroupAdminForm(forms.ModelForm):
+    categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.filter(is_rbac_category=True),
+        required=False,
+        widget=admin.widgets.FilteredSelectMultiple('Categories', False),
+        help_text='Select categories this RBAC group has access to'
+    )
+    
     members_field = forms.ModelMultipleChoiceField(
         queryset=None,
         required=False,
@@ -59,6 +66,8 @@ class RBACGroupAdminForm(forms.ModelForm):
         self.fields['managers_field'].queryset = User.objects.all()
 
         if self.instance.pk:
+            self.fields['categories'].initial = self.instance.categories.all()
+            
             self.fields['members_field'].initial = User.objects.filter(
                 rbac_memberships__rbac_group=self.instance,
                 rbac_memberships__role=RBACRole.MEMBER
@@ -77,6 +86,9 @@ class RBACGroupAdminForm(forms.ModelForm):
 
         if commit:
             self.save_m2m()
+
+        if 'categories' in self.cleaned_data:
+            self.instance.categories.set(self.cleaned_data['categories'])
 
         return group
 
@@ -124,19 +136,12 @@ class RBACGroupAdminForm(forms.ModelForm):
         ).delete()
 
 
-class CategoryInline(admin.StackedInline):
-    model = RBACGroup.categories.through
-    extra = 0
-    can_delete = True
-
-
 class RBACGroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'identity_provider', 'get_member_count', 'get_contributor_count', 'get_manager_count', 'categories_list')
     form = RBACGroupAdminForm
     list_filter = (RoleFilter, 'identity_provider')
     search_fields = ['name', 'uid', 'description', 'identity_provider__name']
     filter_horizontal = ['categories']
-    inlines = [CategoryInline]
 
     def get_member_count(self, obj):
         return obj.memberships.filter(role=RBACRole.MEMBER).count()
@@ -165,6 +170,12 @@ class RBACGroupAdmin(admin.ModelAdmin):
                     'description': 'Select users for each role in the group. The same user can be assigned multiple roles.'
                 }),
                 ('Timestamps', {'fields': ['created_at', 'updated_at'], 'classes': ['collapse']}),
+                ('Access Control', {
+                    'fields': ['categories'],
+                    'classes': ['collapse', 'open'],
+                    'description': 'Select which categories this RBAC group has access to'
+        }),
+                
             )
         return fieldsets
 

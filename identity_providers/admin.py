@@ -25,7 +25,6 @@ class SAMLConfigurationInline(admin.StackedInline):
     model = SAMLConfiguration
     extra = 0
     can_delete = True
-    show_change_link = True
 
 
 class IdentityProviderRoleMappingProxyInline(admin.StackedInline):
