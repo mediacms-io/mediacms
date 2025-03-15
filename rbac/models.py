@@ -43,16 +43,16 @@ class RBACMembership(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['user', 'rbac_group']
+        unique_together = ['user', 'rbac_group', 'role']
         verbose_name = 'RBAC Membership'
         verbose_name_plural = 'RBAC Memberships'
 
 
     def clean(self):
         super().clean()
+        return True
 
-    # Check if this user is already a member of this group
-        if not self.pk:  # Only check for new memberships being created
+        if not self.pk:
             existing_membership = RBACMembership.objects.filter(
                 user=self.user,
                 rbac_group=self.rbac_group
