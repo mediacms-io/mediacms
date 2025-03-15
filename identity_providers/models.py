@@ -19,35 +19,9 @@ class IdentityProviderUserLog(models.Model):
         return f'SAML Log - {self.user.username} - {self.created_at}'
 
 
-class IdentityProviderRoleMappingProxy(models.Model):
-    # The purpose of this model is to enable editing of Global Roles and Group Roles for an Identity Provider through Django admin. It's not being queried elsewhere. 
-
-    identity_provider = models.OneToOneField(SocialApp, on_delete=models.CASCADE, related_name='role_mapping')
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['identity_provider'], name='unique_identity_provider_role_mapping_proxy')
-        ]
-
-    def clean(self):
-        if not self.pk and IdentityProviderRoleMappingProxy.objects.filter(identity_provider=self.identity_provider).exists():
-            raise ValidationError('A role mapping already exists for this Identity Provider.')
-
-    def __str__(self):
-        return f"IdentityProviderRoleMappingProxy for {self.identity_provider}"
-
 
 class IdentityProviderGroupRole(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='group_roles')
-
-    role_mapping = models.ForeignKey(
-        IdentityProviderRoleMappingProxy,
-        on_delete=models.CASCADE,
-        related_name='group_role_mapping',
-        null=True,
-        blank=True
-    )
-
     name = models.CharField(verbose_name='Group Role Mapping', max_length=100, help_text='Identity Provider value')
 
     map_to = models.CharField(max_length=20, choices=[('member', 'Member'), ('contributor', 'Contributor'), ('manager', 'Manager')], help_text='MediaCMS Group Role')
@@ -72,17 +46,7 @@ class IdentityProviderGroupRole(models.Model):
 
 class IdentityProviderGlobalRole(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='global_roles')
-
-    role_mapping = models.ForeignKey(
-        IdentityProviderRoleMappingProxy,
-        on_delete=models.CASCADE,
-        related_name='global_role_mapping',
-        null=True,
-        blank=True
-    )
-
     name = models.CharField(verbose_name='Global Role Mapping', max_length=100, help_text='Identity Provider value')
-
 
     map_to = models.CharField(
         max_length=20,
@@ -177,16 +141,10 @@ class IdentityProviderCategoryMapping(models.Model):
 
         from files.models import Category
 
-        category = Category.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
-        if category:
-            if category.title != self.map_to:
-                category.title = self.map_to
-                category.save(update_fields=['title'])
-        else:
-            try:
-                category = Category.objects.create(uid=self.name, title=self.map_to, identity_provider=self.identity_provider, is_rbac_category=True)
-            except Exception as e:
-                logging.error(e)
+        category = Category.objects.filter(identity_provider=self.identity_provider, title=self.map_to).first()
+        group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
+        if category and group:
+            group.categfories.add(category)
         return True
 
     def __str__(self):

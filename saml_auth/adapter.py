@@ -82,11 +82,11 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     # groups is a list of group_ids here
 
     if groups:
-        for group_id in groups:
-            rbac_group = RBACGroup.objects.filter(social_app=social_app, uid=group_id).first()
-            if rbac_group:
-                rbac_groups.append(rbac_group)
-
+        rbac_groups = RBACGroup.objects.filter(
+            social_app=social_app,
+            uid__in=groups
+        )
+        
     try:
         # try to get the role, always use member as fallback
         role_key = saml_configuration.role
@@ -95,11 +95,11 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
             role = role[0]
 
         # populate global role
-        global_role = saml_configuration.global_roles.filter(name=role).first()
+        global_role = social_app.global_roles.filter(name=role).first()
         if global_role:
             user.set_role_from_mapping(global_role.map_to)
 
-        group_role = saml_configuration.group_roles.filter(name=role).first()
+        group_role = social_app.group_roles.filter(name=role).first()
         if group_role:
             if group_role.map_to in ['member', 'contributor', 'manager']:
                 role = group_role.map_to

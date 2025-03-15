@@ -96,8 +96,7 @@ class CustomSocialAccountAdmin(SocialAccountAdmin):
 class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
     def save_new(self, form, commit=True):
         obj = super().save_new(form, commit=False)
-        obj.role_mapping = self.instance
-        obj.identity_provider = self.instance.identity_provider
+        obj.identity_provider = self.instance
         if commit:
             obj.save()
         return obj
@@ -118,8 +117,7 @@ class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
 class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
     def save_new(self, form, commit=True):
         obj = super().save_new(form, commit=False)
-        obj.role_mapping = self.instance
-        obj.identity_provider = self.instance.identity_provider
+        obj.identity_provider = self.instance
         if commit:
             obj.save()
         return obj
