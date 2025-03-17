@@ -5,8 +5,8 @@ from allauth.socialaccount.models import SocialApp
 
 class ImportCSVsForm(forms.ModelForm):
 
-    groups_csv = forms.FileField(required=False, label="CSV file", help_text="Make sure headers are group_id, name")
-    categories_csv = forms.FileField(required=False, label="CSV file", help_text="Make sure headers are group_id, name")
+    groups_csv = forms.FileField(required=False, label="CSV file", help_text="Optionally add a csv file with the group_id and group name mapping. Make sure headers are group_id, name")
+    categories_csv = forms.FileField(required=False, label="CSV file", help_text="Optionally add a csv file with the group_id and the category name mapping. Make sure headers are group_id, name")
 
     class Meta:
         model = SocialApp

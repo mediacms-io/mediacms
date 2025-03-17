@@ -1,3 +1,4 @@
+import logging
 import csv
 from django.core.exceptions import ValidationError
 
@@ -87,7 +88,6 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-
         csv_file = form.cleaned_data.get('groups_csv')
         if csv_file:
             try:
@@ -101,7 +101,7 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     if group_id and name:
                         if not IdentityProviderGroupMapping.objects.filter(identity_provider=obj, name=group_id).exists():
                             try:
-                                mapping = IdentityProviderGroupMapping.objects.filter(identity_provider=obj, name=group_id, map_to=name)
+                                mapping = IdentityProviderGroupMapping.objects.create(identity_provider=obj, name=group_id, map_to=name)
                             except Exception as e:
                                 logging.error(e)
             except Exception as e:
@@ -110,7 +110,6 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
         csv_file = form.cleaned_data.get('categories_csv')
         if csv_file:
-            from files.models import Category
             try:
                 csv_file.seek(0)
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
@@ -120,11 +119,12 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     name = row.get('name')
 
                     if group_id and name:
-                        category = Category.objects.filter(identity_provider=obj, title=name).first()
-                        group = RBACGroup.objects.filter(identity_provider=obj, uid=group_id).first()
-
-                        if category and group:
-                            group.categories.append(category)
+                        if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id).exists():
+                            try:
+                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=name)
+                            except Exception as e:
+                                logging.error(e)
+                        
             except Exception as e:
                 logging.error(e)
 
