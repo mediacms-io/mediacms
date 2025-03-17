@@ -1,3 +1,6 @@
+import csv
+from django.core.exceptions import ValidationError
+
 from django.conf import settings
 from django.contrib import admin
 from django import forms
@@ -5,6 +8,8 @@ from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
 
 from saml_auth.models import SAMLConfiguration 
+from identity_providers.forms import ImportCSVsForm
+
 from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderGroupMapping, IdentityProviderCategoryMapping
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
@@ -27,7 +32,8 @@ class SAMLConfigurationInline(admin.StackedInline):
     can_delete = True
     max_num = 1
 
-class IdentityProviderCategoryMappingInline(admin.StackedInline):
+
+class IdentityProviderCategoryMappingInline(admin.TabularInline):
     model = IdentityProviderCategoryMapping
     extra = 1
     can_delete = True
@@ -36,7 +42,7 @@ class IdentityProviderCategoryMappingInline(admin.StackedInline):
     verbose_name_plural = "Category Mappings"
 
 
-class IdentityProviderGroupMappingInline(admin.StackedInline):
+class IdentityProviderGroupMappingInline(admin.TabularInline):
     model = IdentityProviderGroupMapping
     extra = 1
     can_delete = True
@@ -45,9 +51,10 @@ class IdentityProviderGroupMappingInline(admin.StackedInline):
     verbose_name_plural = "Group Mappings"
     
 class CustomSocialAppAdmin(SocialAppAdmin):
-    change_form_template = 'admin/identity_providers/change_form.html'
+    change_form_template = 'admin/socialaccount/socialapp/change_form.html'
     list_display = ('get_config_name', 'get_protocol')
-    fields = ('provider', 'provider_id', 'name', 'client_id', 'sites')
+    fields = ('provider', 'provider_id', 'name', 'client_id', 'sites', 'groups_csv', 'categories_csv')
+    form = ImportCSVsForm
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -77,6 +84,49 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
     get_config_name.short_description = 'IDP Config Name'
     get_protocol.short_description = 'Protocol'
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        csv_file = form.cleaned_data.get('groups_csv')
+        if csv_file:
+            try:
+                csv_file.seek(0)
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                csv_reader = csv.DictReader(decoded_file)
+                for row in csv_reader:
+                    group_id = row.get('group_id')
+                    name = row.get('name')
+
+                    if group_id and name:
+                        if not IdentityProviderGroupMapping.objects.filter(identity_provider=obj, name=group_id).exists():
+                            try:
+                                mapping = IdentityProviderGroupMapping.objects.filter(identity_provider=obj, name=group_id, map_to=name)
+                            except Exception as e:
+                                logging.error(e)
+            except Exception as e:
+                logging.error(e)
+
+
+        csv_file = form.cleaned_data.get('categories_csv')
+        if csv_file:
+            from files.models import Category
+            try:
+                csv_file.seek(0)
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                csv_reader = csv.DictReader(decoded_file)
+                for row in csv_reader:
+                    group_id = row.get('group_id')
+                    name = row.get('name')
+
+                    if group_id and name:
+                        category = Category.objects.filter(identity_provider=obj, title=name).first()
+                        group = RBACGroup.objects.filter(identity_provider=obj, uid=group_id).first()
+
+                        if category and group:
+                            group.categories.append(category)
+            except Exception as e:
+                logging.error(e)
 
 
 class CustomSocialAccountAdmin(SocialAccountAdmin):
