@@ -43,8 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const groupsImportCsvField = document.querySelector('.field-groups_csv');
     const categoriesImportCsvField = document.querySelector('.field-categories_csv');
     
-    const categoryMappingsTab = document.querySelector('#category-mappings-tab');
-    const groupMappingsTab = document.querySelector('#group-mappings-tab');
+    const categoryMappingsTab = document.querySelector('#category-mapping-tab');
+    const groupMappingsTab = document.querySelector('#group-mapping-tab');
     
     if (groupsImportCsvField && groupMappingsTab) {
       groupsImportCsvField.classList.add('csv-import-section');
@@ -94,15 +94,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasGroupsFieldError = document.querySelector('.field-groups_csv .errorlist');
     const hasCategoriesFieldError = document.querySelector('.field-categories_csv .errorlist');
     
-    const groupTab = document.querySelector('a[href="#group-mappings-tab"]');
-    const categoryTab = document.querySelector('a[href="#category-mappings-tab"]');
+    const groupTab = document.querySelector('a[href="#group-mapping-tab"]');
+    const categoryTab = document.querySelector('a[href="#category-mapping-tab"]');
     
     if (hasGroupsFieldError && groupTab) {
       document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active', 'show'));
       
       groupTab.classList.add('active');
-      document.querySelector('#group-mappings-tab').classList.add('active', 'show');
+      document.querySelector('#group-mapping-tab').classList.add('active', 'show');
       
       hasGroupsFieldError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } 
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active', 'show'));
       
       categoryTab.classList.add('active');
-      document.querySelector('#category-mappings-tab').classList.add('active', 'show');
+      document.querySelector('#category-mapping-tab').classList.add('active', 'show');
       
       hasCategoriesFieldError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }

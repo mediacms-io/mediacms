@@ -8,9 +8,6 @@ from django.db import models
 class SAMLConfiguration(models.Model):
     social_app = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='saml_configurations')
 
-    remove_from_groups = models.BooleanField(default=False, help_text='Automatically remove from groups')
-    save_saml_response_logs = models.BooleanField(default=True)
-
     # URLs
     sso_url = models.URLField(help_text='Sign-in URL')
     slo_url = models.URLField(help_text='Sign-out URL')
@@ -33,6 +30,9 @@ class SAMLConfiguration(models.Model):
     verified_email = models.BooleanField(default=False, help_text='Mark email as verified')
 
     email_authentication = models.BooleanField(default=False, help_text='Use email authentication too')
+
+    remove_from_groups = models.BooleanField(default=False, help_text='Automatically remove from groups')
+    save_saml_response_logs = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = 'SAML Configuration'

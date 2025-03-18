@@ -15,12 +15,12 @@ class RBACGroup(models.Model):
 
     categories = models.ManyToManyField('files.Category', related_name='rbac_groups', blank=True, help_text='Categories this RBAC group has access to')
 
-    identity_provider = models.ForeignKey(SocialApp, on_delete=models.SET_NULL, null=True, blank=True, related_name='rbac_groups')
+    identity_provider = models.ForeignKey(SocialApp, on_delete=models.SET_NULL, null=True, blank=True, related_name='rbac_groups', verbose_name='IDP Config Name')
 
     def __str__(self):
         name = f"{self.name}"
         if self.identity_provider:
-            name = f"{name} for self.identity_provider.provider"
+            name = f"{name} for {self.identity_provider}"
         return name
 
     class Meta:

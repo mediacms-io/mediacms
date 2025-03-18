@@ -23,7 +23,7 @@ class IdentityProviderUserLog(models.Model):
 
 class IdentityProviderGroupRole(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='group_roles')
-    name = models.CharField(verbose_name='Group Role Mapping', max_length=100, help_text='Identity Provider value')
+    name = models.CharField(verbose_name='Group Role Mapping', max_length=100, help_text='Identity Provider role attribute value')
 
     map_to = models.CharField(max_length=20, choices=[('member', 'Member'), ('contributor', 'Contributor'), ('manager', 'Manager')], help_text='MediaCMS Group Role')
 
@@ -47,7 +47,7 @@ class IdentityProviderGroupRole(models.Model):
 
 class IdentityProviderGlobalRole(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='global_roles')
-    name = models.CharField(verbose_name='Global Role Mapping', max_length=100, help_text='Identity Provider value')
+    name = models.CharField(verbose_name='Global Role Mapping', max_length=100, help_text='Identity Provider role attribute value')
 
     map_to = models.CharField(
         max_length=20,
@@ -78,7 +78,7 @@ class IdentityProviderGlobalRole(models.Model):
 class IdentityProviderGroupMapping(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='group_mapping')
 
-    name = models.CharField(verbose_name='Group name', max_length=100, help_text='Identity Provider value')
+    name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
 
     map_to = models.CharField(max_length=300, help_text='MediaCMS Group name')
 
@@ -120,7 +120,7 @@ class IdentityProviderGroupMapping(models.Model):
 class IdentityProviderCategoryMapping(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='category_mapping')
 
-    name = models.CharField(verbose_name='Group name', max_length=100, help_text='Identity Provider value')
+    name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
 
     map_to = models.CharField(max_length=300, help_text='Category name')
 
@@ -141,11 +141,11 @@ class IdentityProviderCategoryMapping(models.Model):
         super().save(*args, **kwargs)
 
         from files.models import Category
-
+        from rbac.models import RBACGroup
         category = Category.objects.filter(identity_provider=self.identity_provider, title=self.map_to).first()
         group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
         if category and group:
-            group.categfories.add(category)
+            group.categories.add(category)
         return True
 
     def __str__(self):

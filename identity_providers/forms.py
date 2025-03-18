@@ -2,11 +2,12 @@ import csv
 from django import  forms
 from django.core.exceptions import ValidationError
 from allauth.socialaccount.models import SocialApp
+from django.utils.safestring import mark_safe
 
 class ImportCSVsForm(forms.ModelForm):
 
-    groups_csv = forms.FileField(required=False, label="CSV file", help_text="Optionally add a csv file with the group_id and group name mapping. Make sure headers are group_id, name")
-    categories_csv = forms.FileField(required=False, label="CSV file", help_text="Optionally add a csv file with the group_id and the category name mapping. Make sure headers are group_id, name")
+    groups_csv = forms.FileField(required=False, label="CSV file", help_text=mark_safe("Optionally, upload a CSV file to add multiple group mappings at once. <a href='/static/templates/group_mapping.csv' class='download-template'>Download Template</a>"))
+    categories_csv = forms.FileField(required=False, label="CSV file", help_text=("Optionally, upload a CSV file to add multiple category mappings at once. <a href='/static/templates/category_mapping.csv' class='download-template'>Download Template</a>"))
 
     class Meta:
         model = SocialApp
