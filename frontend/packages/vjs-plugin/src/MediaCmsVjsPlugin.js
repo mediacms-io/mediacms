@@ -3024,6 +3024,12 @@ function generatePlugin() {
 	MediaCmsVjsPlugin.VERSION = VERSION;
 
 	videojs.registerPlugin('mediaCmsVjsPlugin', MediaCmsVjsPlugin);
+	
+	if (typeof videojs.registerPlugin === 'function') {
+		videojs.registerPlugin('mediaCmsVjsPlugin', MediaCmsVjsPlugin);
+	} else {
+		videojs.plugin('mediaCmsVjsPlugin', MediaCmsVjsPlugin);
+	}
 
 	return MediaCmsVjsPlugin;
 }

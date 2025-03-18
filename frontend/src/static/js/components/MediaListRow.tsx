@@ -7,9 +7,10 @@ interface MediaListRowProps {
   viewAllText?: string;
   className?: string;
   style?: { [key: string]: any };
+  children?: React.ReactNode;
 }
 
-export const MediaListRow: React.FC<MediaListRowProps> = (props) => {
+export const MediaListRow: React.FC<MediaListRowProps> = (props:any) => {
   return (
     <div className={(props.className ? props.className + ' ' : '') + 'media-list-row'} style={props.style}>
       {props.title ? (
