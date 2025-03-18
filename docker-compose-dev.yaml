@@ -28,7 +28,7 @@ services:
       db:
         condition: service_healthy
   frontend:
-    image: node:14
+    image: node:20
     volumes:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
     working_dir: /home/mediacms.io/mediacms/frontend/
