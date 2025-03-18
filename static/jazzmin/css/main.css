@@ -52,10 +52,12 @@ div.inline-related {
 }
 
 [class*=sidebar-dark-] .nav-header {
-    color: rgb(255,255,255,0.3);
     margin-top: 1rem;
 }
 
+.nav-sidebar .nav-header {
+	font-size: 1.2rem !important
+}
 /* Table styles */
 .table tr.form-row {
     display: table-row;

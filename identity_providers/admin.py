@@ -40,7 +40,7 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     can_delete = True
     show_change_link = True
     verbose_name = "Category Mapping"
-    verbose_name_plural = "Category Mappings"
+    verbose_name_plural = "Category Mapping"
 
 
 class IdentityProviderGroupMappingInline(admin.TabularInline):
@@ -49,7 +49,7 @@ class IdentityProviderGroupMappingInline(admin.TabularInline):
     can_delete = True
     show_change_link = True
     verbose_name = "Group Mapping"
-    verbose_name_plural = "Group Mappings"
+    verbose_name_plural = "Group Mapping"
     
 class CustomSocialAppAdmin(SocialAppAdmin):
     change_form_template = 'admin/socialaccount/socialapp/change_form.html'
@@ -63,8 +63,8 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
         if getattr(settings, 'USE_SAML', False):
             self.inlines.append(SAMLConfigurationInline)
-        self.inlines.append(IdentityProviderGroupRoleInline)
         self.inlines.append(IdentityProviderGlobalRoleInline)
+        self.inlines.append(IdentityProviderGroupRoleInline)
         self.inlines.append(IdentityProviderGroupMappingInline)
         self.inlines.append(IdentityProviderCategoryMappingInline)
 
@@ -190,7 +190,7 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
     formset = GlobalRoleInlineFormset    
     extra = 1
     verbose_name = "Global Role Mapping"
-    verbose_name_plural = "Global Role Mappings"
+    verbose_name_plural = "Global Role Mapping"
     fields = ('name', 'map_to')
 
     def clean(self):
@@ -211,7 +211,7 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
     formset = GroupRoleInlineFormset    
     extra = 1
     verbose_name = "Group Role Mapping"
-    verbose_name_plural = "Group Role Mappings"
+    verbose_name_plural = "Group Role Mapping"
     fields = ('name', 'map_to')
     
 
