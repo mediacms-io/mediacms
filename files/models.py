@@ -1553,6 +1553,8 @@ def encoding_file_save(sender, instance, created, **kwargs):
                             ff.write("file {}\n".format(f))
                     cmd = [
                         settings.FFMPEG_COMMAND,
+                        "-threads",
+                        str(settings.FFMPEG_THREADS),
                         "-y",
                         "-f",
                         "concat",
