@@ -1,0 +1,121 @@
+version: "3"
+
+# Uses https://github.com/nginx-proxy/acme-companion
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./deploy/docker/reverse_proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  migrations:
+    image: mediacms/mediacms:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      #ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+    command: "./deploy/docker/prestart.sh"
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+  web:
+    image: mediacms/mediacms:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_MIGRATIONS: 'no'
+      VIRTUAL_HOST: 'mediacms.52.209.5.113.nip.io'
+      LETSENCRYPT_HOST: 'mediacms.52.209.5.113.nip.io'
+      LETSENCRYPT_EMAIL: 'email@example.com'
+    depends_on:
+      - migrations
+  celery_beat:
+    image: mediacms/mediacms:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_MIGRATIONS: 'no'
+    depends_on:
+      - redis
+  celery_worker:
+    image: mediacms/mediacms:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_MIGRATIONS: 'no'
+    depends_on:
+      - migrations
+  db:
+    image: postgres:17.2-alpine
+    volumes:
+      - ../postgres_data:/var/lib/postgresql/data/
+    restart: always
+    environment:
+      POSTGRES_USER: mediacms
+      POSTGRES_PASSWORD: mediacms
+      POSTGRES_DB: mediacms
+      TZ: Europe/London
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  redis:
+    image: "redis:alpine"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+volumes:
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
+  acme:
