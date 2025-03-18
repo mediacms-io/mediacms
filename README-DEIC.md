@@ -38,9 +38,9 @@ SOCIALACCOUNT_EMAIL_REQUIRED = False
 
 ### Step 1: Add SAML Identity Provider
 1. Navigate to Admin panel
-2. Select "Identity Provider" 
+2. Select "Identity Provider"
 3. Configure as follows:
-   - **Provider**: SAML
+   - **Provider**: saml # ensure this is set with lower case!
    - **Provider ID**: `wayf.wayf.dk`
    - **IDP Config Name**: `Deic` (or preferred name)
    - **Client ID**: `wayf_dk` (important: defines the URL, e.g., `https://deic.mediacms.io/accounts/saml/wayf_dk`)
@@ -58,11 +58,11 @@ Can be set through the SAML Configurations section:
 
 ### Step 3: Group Management Options
 1. **Email Settings**:
-   - `verified_email`: When enabled, emails from SAML responses will be marked as verified 
+   - `verified_email`: When enabled, emails from SAML responses will be marked as verified
    - `email_authentication`: When enabled, the system will use the email as an identifier. False by default, since we want username to be the identifier
 
 2. **Attribute Mapping**: Maps attributes from the SAML response
 
 
 These settings have the following behavior as far as user authentication:
-SOCIALACCOUNT_AUTO_SIGNUP = True, along with Email authentication  off: if SAML user response has associated email x@y.com and system finds this email already on the system (eg an admin has registered in with this address), then the registration form prompts the user to enter another email. They cannot set this email, as it says it's already taken by someone else. But most important, we don't allow users o be authenticated using their email. 
+SOCIALACCOUNT_AUTO_SIGNUP = True, along with Email authentication  off: if SAML user response has associated email x@y.com and system finds this email already on the system (eg an admin has registered in with this address), then the registration form prompts the user to enter another email. They cannot set this email, as it says it's already taken by someone else. But most important, we don't allow users o be authenticated using their email.
