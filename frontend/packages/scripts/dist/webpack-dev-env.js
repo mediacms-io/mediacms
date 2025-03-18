@@ -3,24 +3,28 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
+  __assign = Object.assign || function __assign(t) {
+      for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+      return t;
+  };
+  return __assign.apply(this, arguments);
 };
 function __spreadArray(to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || from);
+  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+      if (ar || !(i in from)) {
+          if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+          ar[i] = from[i];
+      }
+  }
+  return to.concat(ar || Array.prototype.slice.call(from));
 }
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+  var e = new Error(message);
+  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 
 function bodySnippet(id) {
     return '<div id="' + id + '"></div>';
@@ -139,44 +143,44 @@ var config$2 = {
     optimization: {
         runtimeChunk: false,
         /*splitChunks: {
-            // minSize: 1000000,
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-        },*/
+                // minSize: 1000000,
+                chunks: 'all',
+                automaticNameDelimiter: '-',
+            },*/
         /*splitChunks: {
-            // minSize: 1000000,
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: chunksCacheGroups_0,
-        },*/
+                // minSize: 1000000,
+                chunks: 'all',
+                automaticNameDelimiter: '-',
+                cacheGroups: chunksCacheGroups_0,
+            },*/
         /*splitChunks: {
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: chunksCacheGroups_1,
-        },*/
+                chunks: 'all',
+                automaticNameDelimiter: '-',
+                cacheGroups: chunksCacheGroups_1,
+            },*/
         /*splitChunks: {
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: chunksCacheGroups_2,
-        },*/
+                chunks: 'all',
+                automaticNameDelimiter: '-',
+                cacheGroups: chunksCacheGroups_2,
+            },*/
         /*splitChunks: {
-            chunks: 'all',
-            automaticNameDelimiter: '-',
-            cacheGroups: chunksCacheGroups_3,
-        },*/
+                chunks: 'all',
+                automaticNameDelimiter: '-',
+                cacheGroups: chunksCacheGroups_3,
+            },*/
         splitChunks: {
             chunks: 'all',
             automaticNameDelimiter: '-',
             cacheGroups: {
                 vendors: {
                     test: /[\\/]node_modules[\\/]/,
-                    name: "_commons",
+                    name: '_commons',
                     priority: 1,
-                    chunks: "initial",
+                    chunks: 'initial',
                 },
             },
         },
-    }
+    },
 };
 
 /*const chunksCacheGroups_0 = {
@@ -241,13 +245,13 @@ var config$1 = {
             cacheGroups: {
                 vendors: {
                     test: /[\\/]node_modules[\\/]/,
-                    name: "_commons",
+                    name: '_commons',
                     priority: 1,
-                    chunks: "initial",
+                    chunks: 'initial',
                 },
             },
         },
-    }
+    },
 };
 
 /**
@@ -307,7 +311,7 @@ function pagesConfig(pagesKeys) {
                 head: {},
                 body: {
                     scripts: [],
-                    snippet: sitemapTemplate({ pages: __spreadArray(__spreadArray([], pagesKeys), Object.keys(pages)) }),
+                    snippet: sitemapTemplate({ pages: __spreadArray(__spreadArray([], pagesKeys, true), Object.keys(pages), true) }),
                 },
             },
             window: {},
@@ -649,7 +653,9 @@ function analyzer(analyzerOptions) {
         statsFilename: 'analyzer-stats.json',
         reportFilename: 'analyzer-report.html',
     };
-    var compiler = 'dist' === options.env ? webpack$2(__assign(__assign({}, config$1), config)) : webpack$2(__assign(__assign({}, config$2), config));
+    var compiler = 'dist' === options.env
+        ? webpack$2(__assign(__assign({}, config$1), config))
+        : webpack$2(__assign(__assign({}, config$2), config));
     var analyzer = new BundleAnalyzerPlugin(analyzerConfig);
     analyzer.apply(compiler);
     compiler.run(function (err, stats) {
@@ -697,7 +703,9 @@ function build(buildOptions) {
         throw Error('"postcssConfigFile" is not an absolute path');
     }
     var config = generateConfig(options.env, options.config);
-    var compiler = 'dist' === options.env ? webpack$1(__assign(__assign({}, config$1), config)) : webpack$1(__assign(__assign({}, config$2), config));
+    var compiler = 'dist' === options.env
+        ? webpack$1(__assign(__assign({}, config$1), config))
+        : webpack$1(__assign(__assign({}, config$2), config));
     compiler.run(function (err, stats) {
         if (err)
             throw err;
@@ -728,8 +736,8 @@ var config = {
     // devtool: 'source-map',
     // devtool: 'eval-cheap-source-map',
     optimization: {
-        minimize: false
-    }
+        minimize: false,
+    },
 };
 
 function configFunc(contentBase) {
@@ -739,7 +747,7 @@ function configFunc(contentBase) {
         },
         contentBase: contentBase,
         compress: true,
-        hot: true
+        hot: true,
     };
 }
 
