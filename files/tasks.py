@@ -147,7 +147,8 @@ class EncodingTask(Task):
                 kill_ffmpeg_process(self.encoding.temp_file)
                 if hasattr(self.encoding, "media"):
                     self.encoding.media.post_encode_actions()
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             pass
         return False
 
@@ -180,7 +181,8 @@ def encode_media(
     try:
         media = Media.objects.get(friendly_token=friendly_token)
         profile = EncodeProfile.objects.get(id=profile_id)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         Encoding.objects.filter(id=encoding_id).delete()
         return False
 
@@ -202,7 +204,8 @@ def encode_media(
                     chunk=True,
                     chunk_file_path=chunk_file_path,
                 ).exclude(id=encoding_id).delete()
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 encoding = Encoding(
                     media=media,
                     profile=profile,
@@ -219,7 +222,8 @@ def encode_media(
                 encoding = Encoding.objects.get(id=encoding_id)
                 encoding.status = "running"
                 Encoding.objects.filter(media=media, profile=profile).exclude(id=encoding_id).delete()
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 encoding = Encoding(media=media, profile=profile, status="running")
 
     if task_id:
@@ -314,19 +318,24 @@ def encode_media(
                                 try:
                                     encoding.save(update_fields=["progress", "update_date"])
                                     logger.info("Saved {0}".format(round(percent, 2)))
-                                except BaseException:
+                                except BaseException as e:
+                                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                                     pass
                             n_times += 1
-                    except StopIteration:
+                    except StopIteration as e:
+                        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                         break
-                    except VideoEncodingError:
+                    except VideoEncodingError as e:
+                        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                         # ffmpeg error, or ffmpeg was killed
                         raise
             except Exception as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 try:
                     # output is empty, fail message is on the exception
                     output = e.message
-                except AttributeError:
+                except AttributeError as e:
+                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                     output = ""
                 if isinstance(e, SoftTimeLimitExceeded):
                     kill_ffmpeg_process(encoding.temp_file)
@@ -364,7 +373,8 @@ def encode_media(
             encoding.save(update_fields=["status", "logs", "progress", "total_run_time"])
         # this will raise a django.db.utils.DatabaseError error when task is revoked,
         # since we delete the encoding at that stage
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             pass
 
         return success
@@ -376,7 +386,7 @@ def produce_sprite_from_video(friendly_token):
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
         logger.info("failed to get media with friendly_token %s" % friendly_token)
         return False
 
@@ -402,7 +412,7 @@ def produce_sprite_from_video(friendly_token):
                         name=get_file_name(media.media_file.path) + "sprites.jpg",
                     )
         except Exception as e:
-            print(e)
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     return True
 
 
@@ -420,7 +430,8 @@ def create_hls(friendly_token):
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         logger.info("failed to get media with friendly_token %s" % friendly_token)
         return False
 
@@ -573,7 +584,8 @@ def clear_sessions():
 
         engine = import_module(settings.SESSION_ENGINE)
         engine.SessionStore.clear_expired()
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         return False
     return True
 
@@ -587,7 +599,8 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         return False
 
     user = user_or_session.get("user_id")
@@ -597,7 +610,8 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
     if user:
         try:
             user = User.objects.get(id=user)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
 
     if not (user or session_key):
@@ -622,8 +636,9 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
         try:
             score = extra_info.get("score")
             rating_category = extra_info.get("category_id")
-        except BaseException:
+        except BaseException as e:
             # TODO: better error handling?
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
         try:
             rating = Rating.objects.filter(user=user, media=media, rating_category_id=rating_category).first()
@@ -637,9 +652,10 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                     rating_category_id=rating_category,
                     score=score,
                 )
-        except Exception:
+        except Exception as e:
             # TODO: more specific handling, for errors in score, or
             # rating_category?
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
 
     ma = MediaAction(
@@ -770,7 +786,8 @@ def task_sent_handler(sender=None, headers=None, body=None, **kwargs):
             if encoding.temp_file:
                 kill_ffmpeg_process(encoding.temp_file)
 
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
 
     return True

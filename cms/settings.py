@@ -1,7 +1,10 @@
 import os
+import logging
 
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
 
 DEBUG = False
 
@@ -345,11 +348,75 @@ error_filename = os.path.join(LOGS_DIR, "debug.log")
 if not os.path.exists(LOGS_DIR):
     try:
         os.mkdir(LOGS_DIR)
-    except PermissionError:
+    except PermissionError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
 
 if not os.path.isfile(error_filename):
     open(error_filename, 'a').close()
+
+# Enhanced logging configuration
+LOGLEVEL = "INFO"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "DEBUG",  # Always DEBUG for file when enabled
+            "class": "logging.FileHandler",
+            "filename": error_filename,
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # DEBUG when True, LOGLEVEL (e.g., INFO) when False
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["file", "console"] if DEBUG else ["console"],
+        "level": LOGLEVEL,  # Root logger respects LOGLEVEL (typically INFO)
+    },
+    "loggers": {
+        "celery.task": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # INFO when DEBUG=False
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # INFO when DEBUG=False
+            "propagate": False,
+        },
+        "cms": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # INFO when DEBUG=False
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "INFO" if DEBUG else "WARNING",  # INFO to file when DEBUG=True, WARN to console otherwise
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # INFO when DEBUG=False
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["file", "console"] if DEBUG else ["console"],
+            "level": "DEBUG" if DEBUG else LOGLEVEL,  # INFO when DEBUG=False
+            "propagate": False,
+        },
+    },
+}
+
 
 LOGGING = {
     "version": 1,
@@ -446,8 +513,9 @@ try:
 
     # ALLOWED_HOSTS needs a url/ip
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
-except ImportError:
+except ImportError as e:
     # local_settings not in use
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     pass
 
 
@@ -484,7 +552,8 @@ try:
     if DEVELOPMENT_MODE:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
-except ImportError:
+except ImportError as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     pass
 
 LANGUAGES = [

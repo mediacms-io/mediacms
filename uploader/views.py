@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import shutil
+import logging
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -14,6 +15,8 @@ from files.models import Media
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
+
+logger = logging.getLogger(__name__)
 
 
 class FineUploaderView(generic.FormView):
@@ -53,7 +56,8 @@ class FineUploaderView(generic.FormView):
         if self.upload.concurrent and self.chunks_done:
             try:
                 self.upload.combine_chunks()
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 data = {"success": False, "error": "Error with File Uploading"}
                 return self.make_response(data, status=400)
         elif self.upload.total_parts == 1:
