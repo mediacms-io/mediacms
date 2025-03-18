@@ -42,6 +42,20 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     verbose_name = "Category Mapping"
     verbose_name_plural = "Category Mapping"
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ('name', 'map_to') and formfield:
+            formfield.widget.attrs.update({
+                'data-help-text': db_field.help_text,
+                'class': 'with-help-text',
+            })
+        return formfield
+
+    class Media:
+        js = ('admin/js/inline_help_text.js',)
+        css = {
+            'all': ('admin/css/inline_help_text.css',)
+        }
 
 class IdentityProviderGroupMappingInline(admin.TabularInline):
     model = IdentityProviderGroupMapping
@@ -50,8 +64,29 @@ class IdentityProviderGroupMappingInline(admin.TabularInline):
     show_change_link = True
     verbose_name = "Group Mapping"
     verbose_name_plural = "Group Mapping"
-    
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ('name', 'map_to') and formfield:
+            formfield.widget.attrs.update({
+                'data-help-text': db_field.help_text,
+                'class': 'with-help-text',
+            })
+        return formfield
+
+    class Media:
+        js = ('admin/js/inline_help_text.js',)
+        css = {
+            'all': ('admin/css/inline_help_text.css',)
+        }
+
 class CustomSocialAppAdmin(SocialAppAdmin):
+    # The default SocialAppAdmin has been overriden to achieve a number of changes. 
+    # If you need to add more fields (out of those that are hidden), or remove tabs, or 
+    # change the ordering of fields, or the place where fields appear, don't forget to 
+    # check the html template!
+
+
     change_form_template = 'admin/socialaccount/socialapp/change_form.html'
     list_display = ('get_config_name', 'get_protocol')
     fields = ('provider', 'provider_id', 'name', 'client_id', 'sites', 'groups_csv', 'categories_csv')
@@ -164,6 +199,7 @@ class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
                     form.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
 
 
+
 class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
     def save_new(self, form, commit=True):
         obj = super().save_new(form, commit=False)
@@ -205,6 +241,20 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
                 if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
                     form.add_error('name', 'A global role mapping with this Identity Provider already exists')
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ('name', ) and formfield:
+            formfield.widget.attrs.update({
+                'data-help-text': db_field.help_text,
+                'class': 'with-help-text',
+            })
+        return formfield
+
+    class Media:
+        js = ('admin/js/inline_help_text.js',)
+        css = {
+            'all': ('admin/css/inline_help_text.css',)
+        }
 
 class IdentityProviderGroupRoleInline(admin.TabularInline):
     model = IdentityProviderGroupRole
@@ -214,6 +264,20 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
     verbose_name_plural = "Group Role Mapping"
     fields = ('name', 'map_to')
     
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ('name', ) and formfield:
+            formfield.widget.attrs.update({
+                'data-help-text': db_field.help_text,
+                'class': 'with-help-text',
+            })
+        return formfield
+
+    class Media:
+        js = ('admin/js/inline_help_text.js',)
+        css = {
+            'all': ('admin/css/inline_help_text.css',)
+        }
 
 
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):

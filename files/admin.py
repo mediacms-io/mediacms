@@ -56,8 +56,8 @@ class MediaAdmin(admin.ModelAdmin):
 class RBACGroupInline(admin.TabularInline):  # or admin.StackedInline if you prefer
     model = RBACGroup.categories.through
     extra = 1
-    verbose_name = "RBAC Group"
-    verbose_name_plural = "RBAC Groups"
+    verbose_name = "Group Access"
+    verbose_name_plural = "Group Access"
 
 
 class CategoryAdminForm(forms.ModelForm):
