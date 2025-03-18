@@ -7,8 +7,10 @@ from allauth.socialaccount.signals import social_account_updated
 from django.core.files.base import ContentFile
 from django.dispatch import receiver
 
+
 from rbac.models import RBACGroup, RBACMembership
 from identity_providers.models import IdentityProviderUserLog
+
 
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
