@@ -62,7 +62,12 @@ class RBACGroupAdminForm(forms.ModelForm):
 
 
         if self.instance.pk:
-            self.fields['categories'].initial = self.instance.categories.all()
+            if self.instance.identity_provider:
+                self.fields['categories'].queryset=Category.objects.filter(identity_provider=self.instance.identity_provider, is_rbac_category=True)
+            else:
+                self.fields['categories'].queryset=Category.objects.filter(identity_provider__isnull=True, is_rbac_category=True)
+                
+            self.fields['categories'].initial = self.instance.categories.filter(is_rbac_category=True)
             
             self.fields['members_field'].initial = User.objects.filter(
                 rbac_memberships__rbac_group=self.instance,
