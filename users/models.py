@@ -46,6 +46,9 @@ class User(AbstractUser):
         ordering = ["-date_added", "name"]
         indexes = [models.Index(fields=["-date_added", "name"])]
 
+    def __str__(self):
+        return f"{self.name} - {self.email}"
+
     def update_user_media(self):
         self.media_count = Media.objects.filter(listable=True, user=self).count()
         self.save(update_fields=["media_count"])
