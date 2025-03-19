@@ -387,6 +387,7 @@ def tos(request):
     return render(request, "cms/tos.html", context)
 
 
+@login_required
 def upload_media(request):
     """Upload media view"""
 
