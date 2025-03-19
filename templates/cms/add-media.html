@@ -125,25 +125,6 @@
 
 {% else %}
 
-	<div class="user-action-form-wrap">
-		<div class="user-action-form-inner">
-
-			<h1>Sign In</h1>
-
-			Please login or register before you upload a media!
-
-			{% url 'upload_media' as redirect_url %}
-
-			<form class="login" method="POST" action="{% url 'account_login' %}">
-				{% csrf_token %}
-				{{ form.as_p }}
-				<input type="hidden" name="next" value="{{ redirect_url }}" />
-				<button class="primaryAction" type="submit">Sign In</button>
-			</form>
-
-		</div>
-	</div>
-
 {% endif %}
 {% endblock innercontent %}
 

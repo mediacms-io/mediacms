@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(help_text='Identity Provider group attribute value', max_length=100, verbose_name='Group Attribute Value')),
-                ('map_to', models.CharField(help_text='Category name', max_length=300)),
+                ('map_to', models.CharField(help_text='Category id', max_length=300)),
                 ('identity_provider', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='category_mapping', to='socialaccount.socialapp')),
             ],
             options={

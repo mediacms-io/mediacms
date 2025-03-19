@@ -151,12 +151,12 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                 csv_reader = csv.DictReader(decoded_file)
                 for row in csv_reader:
                     group_id = row.get('group_id')
-                    name = row.get('name')
+                    category_id = row.get('category_id')
 
-                    if group_id and name:
+                    if group_id and category_id:
                         if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id).exists():
                             try:
-                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=name)
+                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category_id)
                             except Exception as e:
                                 logging.error(e)
                         

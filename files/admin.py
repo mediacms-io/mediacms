@@ -79,11 +79,11 @@ class CategoryAdminForm(forms.ModelForm):
 
         # Validation: identity_provider and rbac_groups require is_rbac_category to be True
         if not is_rbac_category:
-            if identity_provider:
-                self.add_error(
-                    'identity_provider',
-                    ValidationError('Identity provider can only be specified if "Is RBAC Category" is enabled.')
-                )
+            # if identity_provider:
+            #    self.add_error(
+            #        'identity_provider',
+            #        ValidationError('Identity provider can only be specified if "Is RBAC Category" is enabled.')
+            #    )
 
             if has_rbac_groups:
                 self.add_error(
@@ -112,8 +112,8 @@ class CategoryAdminForm(forms.ModelForm):
 
 
         if self.instance.pk:
-            if self.instance.identity_provider:
-                self.fields['rbac_groups'].queryset=RBACGroup.objects.filter(identity_provider=self.instance.identity_provider)
+            # if self.instance.identity_provider:
+            #    self.fields['rbac_groups'].queryset=RBACGroup.objects.filter(identity_provider=self.instance.identity_provider)
             self.fields['rbac_groups'].initial = self.instance.rbac_groups.all()
 
 
@@ -150,8 +150,8 @@ class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
     search_fields = ["title"]
-    list_display = ["title", "user", "add_date", "is_global", "media_count", "is_rbac_category", "identity_provider"]
-    list_filter = ["is_global", "is_rbac_category", "identity_provider"]
+    list_display = ["title", "user", "add_date", "media_count", "is_rbac_category", "identity_provider"]
+    list_filter = ["is_rbac_category", "identity_provider"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
     
@@ -159,10 +159,10 @@ class CategoryAdmin(admin.ModelAdmin):
         basic_fieldset = [
             ('Category Information', {
                 'fields': [
+                    'uid', 
                     'title', 
                     'description',
                     'user',
-                    'is_global', 
                     'media_count',
                     'thumbnail',
                     'listings_thumbnail'

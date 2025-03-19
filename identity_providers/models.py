@@ -122,7 +122,7 @@ class IdentityProviderCategoryMapping(models.Model):
 
     name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
 
-    map_to = models.CharField(max_length=300, help_text='Category name')
+    map_to = models.CharField(max_length=300, help_text='Category id')
 
     class Meta:
         verbose_name = 'Identity Provider Category Mapping'
@@ -142,8 +142,8 @@ class IdentityProviderCategoryMapping(models.Model):
 
         from files.models import Category
         from rbac.models import RBACGroup
-        category = Category.objects.filter(identity_provider=self.identity_provider, title=self.map_to).first()
-        group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
+        category = Category.objects.filter(uid=self.map_to).first()
+        group = RBACGroup.objects.filter(uid=self.name).first()
         if category and group:
             group.categories.add(category)
         return True

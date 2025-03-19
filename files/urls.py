@@ -101,6 +101,7 @@ urlpatterns = [
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
+    urlpatterns.append(re_path(r"^saml/wayf_dk/metadata", views.saml_metadata, name="saml-metadata"))
     urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
     urlpatterns.append(re_path(r"^accounts/login", redirect_to_custom_login, name='login'))
 

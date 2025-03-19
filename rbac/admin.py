@@ -62,12 +62,7 @@ class RBACGroupAdminForm(forms.ModelForm):
 
 
         if self.instance.pk:
-            if self.instance.identity_provider:
-                self.fields['categories'].queryset=Category.objects.filter(identity_provider=self.instance.identity_provider, is_rbac_category=True)
-            else:
-                self.fields['categories'].queryset=Category.objects.filter(identity_provider__isnull=True, is_rbac_category=True)
-                
-            self.fields['categories'].initial = self.instance.categories.filter(is_rbac_category=True)
+            self.fields['categories'].initial = self.instance.categories.all()
             
             self.fields['members_field'].initial = User.objects.filter(
                 rbac_memberships__rbac_group=self.instance,
@@ -95,7 +90,6 @@ class RBACGroupAdminForm(forms.ModelForm):
 
     @transaction.atomic
     def save_m2m(self):
-        print('ENTERED SAVE m2m', self.instance)
         if self.instance.pk:
             member_users = self.cleaned_data['members_field']
             contributor_users = self.cleaned_data['contributors_field']

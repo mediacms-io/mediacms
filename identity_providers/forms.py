@@ -50,8 +50,8 @@ class ImportCSVsForm(forms.ModelForm):
             decoded_file = categories_csv.read().decode('utf-8').splitlines()
             csv_reader = csv.reader(decoded_file)
             headers = next(csv_reader, None)
-            if not headers or 'group_id' not in headers or 'name' not in headers:
-                raise ValidationError("CSV file must contain 'group_id' and 'name' headers. " f"Found headers: {', '.join(headers) if headers else 'none'}")
+            if not headers or 'category_id' not in headers or 'group_id' not in headers:
+                raise ValidationError("CSV file must contain 'group_id' and 'category_id' headers. " f"Found headers: {', '.join(headers) if headers else 'none'}")
             categories_csv.seek(0)
             return categories_csv
 
