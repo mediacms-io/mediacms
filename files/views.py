@@ -21,7 +21,7 @@ from rest_framework.parsers import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-
+from allauth.socialaccount.models import SocialApp
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
 from cms.permissions import (
@@ -1503,7 +1503,7 @@ class TaskDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def saml_metadata(request):
+def saml_metadata_debug(request): # TOREMOVE!
     if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
         raise Http404
 
@@ -1515,6 +1515,27 @@ def saml_metadata(request):
     <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
         <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
                                     Location="{settings.FRONTEND_HOST}/accounts/saml/wayf_dk/acs/"
+                                    index="1"/>
+    </md:SPSSODescriptor>
+</md:EntityDescriptor>'''  # noqa
+
+    return HttpResponse(metadata_template, content_type='application/xml')
+
+
+def saml_metadata(request, client_id):
+    if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
+        raise Http404
+    if not SocialApp.objects.filter(client_id=client_id).exists():
+        raise Http404
+
+    entity_id = f"{settings.FRONTEND_HOST}/saml/{client_id}/metadata/"
+
+    metadata_template = f'''<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+                     entityID="{entity_id}">
+    <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                    Location="{settings.FRONTEND_HOST}/accounts/saml/{client_id}/acs/"
                                     index="1"/>
     </md:SPSSODescriptor>
 </md:EntityDescriptor>'''  # noqa
