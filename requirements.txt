@@ -23,3 +23,5 @@ django-login-required-middleware==0.9.0
 pre-commit==4.1.0
 django-jazzmin==3.0.1
 pysubs2==1.8.0
+sentry-sdk[django]==2.23.1
+
