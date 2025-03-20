@@ -5,7 +5,7 @@ from django.db import models
 
 class RBACGroup(models.Model):
     uid = models.CharField(max_length=255, help_text='Unique identifier for the RBAC group (unique per identity provider)')
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, help_text='MediaCMS Group name')
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

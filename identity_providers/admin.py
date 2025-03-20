@@ -72,6 +72,8 @@ class RBACGroupInlineForm(forms.ModelForm):
             'name': 'MediaCMS Group name',
         }
 
+from django.urls import reverse
+from django.utils.html import format_html
 
 class RBACGroupInline(admin.TabularInline):
     model = RBACGroup
@@ -80,9 +82,29 @@ class RBACGroupInline(admin.TabularInline):
     show_change_link = True
     verbose_name = "Group Mapping"
     verbose_name_plural = "Group Mapping"
-    readonly_fields = ('uid',)
+    readonly_fields = ('delete_link',)
     fields = ['uid', 'name']
     form = RBACGroupInlineForm
+
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj:
+            fields = list(fields) + ['delete_link']
+        return fields
+
+    def delete_link(self, obj):
+        if obj.id:
+            url = reverse('admin:rbac_rbacgroup_delete', args=[obj.id])
+            return format_html('<a class="deletelink" href="{}">Delete</a>', url)
+        return ""
+
+    delete_link.short_description = "Delete"
+    delete_link.allow_tags = True
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)

@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('uid', models.CharField(help_text='Unique identifier for the RBAC group (unique per identity provider)', max_length=255)),
-                ('name', models.CharField(max_length=100)),
+                ('name', models.CharField(max_length=100, help_text='MediaCMS Group name')),
                 ('description', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
