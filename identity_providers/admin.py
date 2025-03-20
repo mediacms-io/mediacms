@@ -9,9 +9,10 @@ from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
 
 from saml_auth.models import SAMLConfiguration 
+from rbac.models import RBACGroup
 from identity_providers.forms import ImportCSVsForm
 
-from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderGroupMapping, IdentityProviderCategoryMapping
+from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderCategoryMapping
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
@@ -57,28 +58,50 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
             'all': ('admin/css/inline_help_text.css',)
         }
 
-class IdentityProviderGroupMappingInline(admin.TabularInline):
-    model = IdentityProviderGroupMapping
-    extra = 1
+
+class RBACGroupInlineForm(forms.ModelForm):
+    class Meta:
+        model = RBACGroup
+        fields = ['uid', 'name']
+        labels = {
+            'uid': 'Group Attribute Value',
+            'name': 'Name',
+        }
+        help_texts = {
+            'uid': 'Identity Provider group attribute value',
+            'name': 'MediaCMS Group name',
+        }
+
+
+class RBACGroupInline(admin.TabularInline):
+    model = RBACGroup
+    extra = 0
     can_delete = True
     show_change_link = True
     verbose_name = "Group Mapping"
     verbose_name_plural = "Group Mapping"
+    readonly_fields = ('uid',)
+    fields = ['uid', 'name']
+    form = RBACGroupInlineForm
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name in ('name', 'map_to') and formfield:
+        if db_field.name in ('uid', 'name') and formfield:
             formfield.widget.attrs.update({
                 'data-help-text': db_field.help_text,
                 'class': 'with-help-text',
             })
+                
         return formfield
+
+
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
         css = {
             'all': ('admin/css/inline_help_text.css',)
         }
+
 
 class CustomSocialAppAdmin(SocialAppAdmin):
     # The default SocialAppAdmin has been overriden to achieve a number of changes. 
@@ -100,7 +123,7 @@ class CustomSocialAppAdmin(SocialAppAdmin):
             self.inlines.append(SAMLConfigurationInline)
         self.inlines.append(IdentityProviderGlobalRoleInline)
         self.inlines.append(IdentityProviderGroupRoleInline)
-        self.inlines.append(IdentityProviderGroupMappingInline)
+        self.inlines.append(RBACGroupInline)
         self.inlines.append(IdentityProviderCategoryMappingInline)
 
 
@@ -134,9 +157,9 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     name = row.get('name')
 
                     if group_id and name:
-                        if not IdentityProviderGroupMapping.objects.filter(identity_provider=obj, name=group_id).exists():
+                        if not (RBACGroup.objects.filter(identity_provider=obj, uid=group_id).exists() or RBACGroup.objects.filter(identity_provider=obj, name=name).exists()):
                             try:
-                                mapping = IdentityProviderGroupMapping.objects.create(identity_provider=obj, name=group_id, map_to=name)
+                                group = RBACGroup.objects.create(identity_provider=obj, uid=group_id, name=name)
                             except Exception as e:
                                 logging.error(e)
             except Exception as e:

@@ -283,6 +283,8 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "drf_yasg",
+    "allauth.socialaccount.providers.saml",
+    "saml_auth.apps.SamlAuthConfig",    
 ]
 
 MIDDLEWARE = [
@@ -530,16 +532,11 @@ JAZZMIN_UI_TWEAKS = {
 
 
 try:
-    EXTRA_APPS = []
-    # provide EXTA_APPS in local settings, optionally, to be added too
-    # just setting a default value here in case they are not provided
-
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
 
     # ALLOWED_HOSTS needs a url/ip
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
-    INSTALLED_APPS += EXTRA_APPS
 except ImportError:
     # local_settings not in use
     pass

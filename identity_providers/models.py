@@ -75,48 +75,6 @@ class IdentityProviderGlobalRole(models.Model):
         super().save(*args, **kwargs)
 
 
-class IdentityProviderGroupMapping(models.Model):
-    identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='group_mapping')
-
-    name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
-
-    map_to = models.CharField(max_length=300, help_text='MediaCMS Group name')
-
-    class Meta:
-        verbose_name = 'Identity Provider Group Mapping'
-        verbose_name_plural = 'Identity Provider Group Mappings'
-        unique_together = ('identity_provider', 'name')
-
-    def clean(self):
-        if not self._state.adding and self.pk:
-            original = IdentityProviderGroupMapping.objects.get(pk=self.pk)
-            if original.name != self.name:
-                raise ValidationError("Cannot change the name once it is set. First delete this entry and then create a new one instead.")
-        super().clean()
-
-
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        from rbac.models import RBACGroup
-
-        rbac_group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
-        if rbac_group:
-            if rbac_group.name != self.map_to:
-                rbac_group.name = self.map_to
-                rbac_group.save(update_fields=['name'])
-        else:
-            try:
-                rbac_group = RBACGroup.objects.create(uid=self.name, name=self.map_to, identity_provider=self.identity_provider)
-            except Exception as e:
-                logging.error(e)
-        return True
-
-    def __str__(self):
-        return f'Identity Provider Group Mapping {self.name}'
-
-
 class IdentityProviderCategoryMapping(models.Model):
     identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='category_mapping')
 

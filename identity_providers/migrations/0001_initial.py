@@ -59,20 +59,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='IdentityProviderGroupMapping',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='Identity Provider group attribute value', max_length=100, verbose_name='Group Attribute Value')),
-                ('map_to', models.CharField(help_text='MediaCMS Group name', max_length=300)),
-                ('identity_provider', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='group_mapping', to='socialaccount.socialapp')),
-            ],
-            options={
-                'verbose_name': 'Identity Provider Group Mapping',
-                'verbose_name_plural': 'Identity Provider Group Mappings',
-                'unique_together': {('identity_provider', 'name')},
-            },
-        ),
-        migrations.CreateModel(
             name='IdentityProviderGroupRole',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
