@@ -5,8 +5,12 @@ The following changes are required in `deploy/docker/local_settings.py`:
 
 ```python
 # Authentication Settings
+# these two are necessary so that users cannot register through system accounts. They can only register through identity providers
 REGISTER_ALLOWED = False
-USERS_CAN_SELF_REGISTER = True
+USERS_CAN_SELF_REGISTER = False
+
+
+
 USE_RBAC = True
 USE_SAML = True
 
