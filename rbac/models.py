@@ -4,7 +4,7 @@ from django.db import models
 
 
 class RBACGroup(models.Model):
-    uid = models.CharField(max_length=255, help_text='Unique identifier for the RBAC group (unique per social app)')
+    uid = models.CharField(max_length=255, help_text='Unique identifier for the RBAC group (unique per identity provider)')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

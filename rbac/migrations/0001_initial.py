@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='RBACGroup',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uid', models.CharField(help_text='Unique identifier for the RBAC group (unique per social app)', max_length=255)),
+                ('uid', models.CharField(help_text='Unique identifier for the RBAC group (unique per identity provider)', max_length=255)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
