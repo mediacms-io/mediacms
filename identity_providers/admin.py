@@ -12,7 +12,7 @@ from saml_auth.models import SAMLConfiguration
 from rbac.models import RBACGroup
 from identity_providers.forms import ImportCSVsForm
 
-from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderCategoryMapping
+from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderCategoryMapping, LoginOption
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
@@ -324,6 +324,12 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
             'all': ('admin/css/inline_help_text.css',)
         }
 
+class LoginOptionAdmin(admin.ModelAdmin):
+    list_display = ('title', 'url', 'ordering', 'active')
+    list_editable = ('ordering', 'active')
+    list_filter = ('active',)
+    search_fields = ('title', 'url')
+
 
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     admin.site.register(IdentityProviderUserLog, IdentityProviderUserLogAdmin)
@@ -339,6 +345,7 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialAccount._meta.verbose_name_plural = "User Accounts"
     admin.site.unregister(SocialApp)
     admin.site.register(SocialApp, CustomSocialAppAdmin)
+    admin.site.register(LoginOption, LoginOptionAdmin)
     admin.site.unregister(SocialAccount)
     admin.site.register(SocialAccount, CustomSocialAccountAdmin)
     SocialApp._meta.verbose_name = "ID Provider"

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load socialaccount %}
 
 {% block headtitle %} | Sign In{% endblock headtitle %}
 
@@ -8,15 +7,9 @@
     <div class="user-action-form-inner">
 
 		<h1>Sign In</h1>
-	
-		{% if USE_SAML %}
-                <div class="container">
-         	<a href="{% provider_login_url 'wayf.wayf.dk' process='login' next='/' %}" class="login-button">
-	            <h2 style="color: #009933 !important"> Sign In Via DEIC</h2>
-         	</a>
-        	    </div>
 
-	{% else %}
+		<p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
+
 		<form class="login" method="POST" action="{% url 'account_login' %}">
 		  {% csrf_token %}
 		  {{ form.as_p }}
@@ -26,7 +19,6 @@
 		  <button class="primaryAction" type="submit">Sign In</button>
 		</form>
 
-	{% endif %}
     </div>
 </div>
 {% endblock innercontent %}

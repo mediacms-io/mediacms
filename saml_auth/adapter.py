@@ -14,6 +14,9 @@ from identity_providers.models import IdentityProviderUserLog
 
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
+    def is_open_for_signup(self, request, socialaccount):
+        return True
+    
     def pre_social_login(self, request, sociallogin):
         # data = sociallogin.data
 

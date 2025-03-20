@@ -20,7 +20,7 @@ class AdminCustomizationsConfig(AppConfig):
             email_model = None
             rbac_group_model = None
             identity_providers_user_log_model = None
-
+            identity_providers_login_option = None
             auth_app = None
             account_app = None
             account_app = None
@@ -38,7 +38,6 @@ class AdminCustomizationsConfig(AppConfig):
                         if model['object_name'] == 'EmailAddress':
                             email_model = model
                             account_app['models'].remove(model)
-                            break
                 elif app['app_label'] == 'rbac':
                     if not getattr(settings, 'USE_RBAC', False):
                         continue
@@ -47,14 +46,17 @@ class AdminCustomizationsConfig(AppConfig):
                         if model['object_name'] == 'RBACGroup':
                             rbac_group_model = model
                             rbac_app['models'].remove(model)
-                            break
                 elif app['app_label'] == 'identity_providers':
                     identity_providers_app = app
-                    for model in app['models']:
+                    models_to_check = list(app['models'])
+                    
+                    for model in models_to_check:
                         if model['object_name'] == 'IdentityProviderUserLog':
                             identity_providers_user_log_model = model
                             identity_providers_app['models'].remove(model)
-                            break
+                        if model['object_name'] == 'LoginOption':
+                            identity_providers_login_option = model
+                            identity_providers_app['models'].remove(model)
                 elif app['app_label'] == 'socialaccount':
                     socialaccount_app = app
 
@@ -62,6 +64,8 @@ class AdminCustomizationsConfig(AppConfig):
                 auth_app['models'].append(email_model)
             if rbac_group_model and rbac_app and auth_app:
                 auth_app['models'].append(rbac_group_model)
+            if identity_providers_login_option and socialaccount_app:
+                socialaccount_app['models'].append(identity_providers_login_option)
             if identity_providers_user_log_model and socialaccount_app:
                 socialaccount_app['models'].append(identity_providers_user_log_model)
 

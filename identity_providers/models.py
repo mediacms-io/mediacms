@@ -109,3 +109,18 @@ class IdentityProviderCategoryMapping(models.Model):
     def __str__(self):
         return f'Identity Provider Category Mapping {self.name}'
 
+
+class LoginOption(models.Model):
+    title = models.CharField(max_length=100, help_text="Display name for this login option (e.g. Login through DEIC)")
+    url = models.CharField(max_length=255, help_text="URL or path for this login option")
+    ordering = models.PositiveIntegerField(default=0, help_text="Display order (smaller numbers appear first)")
+    active = models.BooleanField(default=True, help_text="Whether this login option is currently active")
+
+    class Meta:
+        ordering = ['ordering']
+        verbose_name = "Login Option"
+        verbose_name_plural = "Login Options"
+
+    def __str__(self):
+        return self.title
+

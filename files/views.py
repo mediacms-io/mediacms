@@ -1,11 +1,13 @@
-from datetime import datetime, timedelta
-
+from django.shortcuts import redirect
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
+from django.urls import reverse
+from django.contrib.auth import views as auth_views
+
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from drf_yasg import openapi as openapi
@@ -31,6 +33,7 @@ from cms.permissions import (
     user_allowed_to_upload,
 )
 from users.models import User
+from identity_providers.models import LoginOption
 
 from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
 from .frontend_translations import translate_string
@@ -1541,3 +1544,21 @@ def saml_metadata(request, client_id):
 </md:EntityDescriptor>'''  # noqa
 
     return HttpResponse(metadata_template, content_type='application/xml')
+
+
+def custom_login_view(request):
+    if not (hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS):    
+        return redirect(reverse('login_system'))
+
+    login_options = []
+    for option in LoginOption.objects.filter(active=True):
+        login_options.append({'url': option.url, 'title': option.title})
+        #{
+        #    'url': reverse('login_system'),
+        #    'title': 'System Login'
+        #},
+    return render(request, 'account/custom_login_selector.html', {
+            'login_options': login_options
+        })
+    
+
