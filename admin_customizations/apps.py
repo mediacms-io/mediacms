@@ -47,6 +47,9 @@ class AdminCustomizationsConfig(AppConfig):
                             rbac_group_model = model
                             rbac_app['models'].remove(model)
                 elif app['app_label'] == 'identity_providers':
+                    if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+                        continue
+
                     identity_providers_app = app
                     models_to_check = list(app['models'])
 
