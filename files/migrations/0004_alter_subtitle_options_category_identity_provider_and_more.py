@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('files', '0003_auto_20210927_1245'),
         ('socialaccount', '0006_alter_socialaccount_extra_data'),
@@ -19,7 +18,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='category',
             name='identity_provider',
-            field=models.ForeignKey(blank=True, help_text='If category is related with a specific Identity Provider', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='categories', to='socialaccount.socialapp', verbose_name='IDP Config Name'),
+            field=models.ForeignKey(
+                blank=True,
+                help_text='If category is related with a specific Identity Provider',
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='categories',
+                to='socialaccount.socialapp',
+                verbose_name='IDP Config Name',
+            ),
         ),
         migrations.AddField(
             model_name='category',
