@@ -1,12 +1,40 @@
 # Development settings, used in docker-compose-dev.yaml
 import os
 
-from .settings import INSTALLED_APPS
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-INSTALLED_APPS.append('corsheaders')
+INSTALLED_APPS = [
+    "admin_customizations",
+    "django.contrib.auth",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "jazzmin",
+    "django.contrib.admin",
+    "django.contrib.sites",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "imagekit",
+    "files.apps.FilesConfig",
+    "users.apps.UsersConfig",
+    "actions.apps.ActionsConfig",
+    "rbac.apps.RbacConfig",
+    "identity_providers.apps.IdentityProvidersConfig",
+    "debug_toolbar",
+    "mptt",
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "uploader.apps.UploaderConfig",
+    "djcelery_email",
+    "drf_yasg",
+    "allauth.socialaccount.providers.saml",
+    "saml_auth.apps.SamlAuthConfig",
+    "corsheaders",
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
