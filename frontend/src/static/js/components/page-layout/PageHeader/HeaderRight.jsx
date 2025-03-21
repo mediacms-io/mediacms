@@ -44,7 +44,7 @@ function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
               <UserThumbnail size="medium" />
             </span>
             <span>
-              <span className="username">{user.username}</span>
+              <span className="username">{(user?.name || user?.email || user?.username || "User")}</span>
             </span>
           </a>
         </PopupTop>

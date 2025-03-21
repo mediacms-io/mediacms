@@ -1,4 +1,7 @@
 {% load account %}
 {% load i18n %}
-{% user_display user as name %}
+{% user_display user as display_name %}
+{% with name=user.name|default:user.email|default:display_name %}
 {% blocktrans %}Successfully signed in as {{name}}.{% endblocktrans %}
+{% endwith %}
+
