@@ -137,13 +137,23 @@ class RBACGroupAdmin(admin.ModelAdmin):
         (
             None,
             {
-                'fields': ('identity_provider', 'uid', 'name', 'description', 'created_at', 'updated_at'),
+                'fields': ('uid', 'name', 'description', 'created_at', 'updated_at'),
             },
         ),
     )
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
+        if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+            fieldsets = (
+                (
+                    None,
+                    {
+                        'fields': ('identity_provider', 'uid', 'name', 'description', 'created_at', 'updated_at'),
+                    },
+                ),
+            )
+
         if obj:
             fieldsets += (
                 ('Members', {'fields': ['members_field'], 'description': 'Select users for members. The same user cannot be contributor or manager'}),
