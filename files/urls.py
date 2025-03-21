@@ -96,7 +96,6 @@ urlpatterns = [
 
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/(\w+)/metadata", views.saml_metadata, name="saml-metadata"))
-    urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata_debug, name="saml-metadata-debug"))  # TOREMOVE!!
 
 urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
 urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
