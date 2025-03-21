@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'files.apps.FilesConfig',
     'users.apps.UsersConfig',
     'actions.apps.ActionsConfig',
+    "rbac.apps.RbacConfig",
     'debug_toolbar',
     'mptt',
     'crispy_forms',
@@ -28,6 +29,8 @@ INSTALLED_APPS = [
     'djcelery_email',
     'drf_yasg',
     'corsheaders',
+    "allauth.socialaccount.providers.saml",
+    "saml_auth.apps.SamlAuthConfig",
 ]
 
 MIDDLEWARE = [

@@ -981,6 +981,10 @@ class Category(models.Model):
 
     listings_thumbnail = models.CharField(max_length=400, blank=True, null=True, help_text="Thumbnail to show on listings")
 
+    is_rbac_category = models.BooleanField(default=False, db_index=True, help_text='If access to Category is controlled by role based membership of Groups')
+
+    identity_provider = models.ForeignKey('socialaccount.SocialApp', blank=True, null=True, on_delete=models.CASCADE, related_name='categories', help_text='If category is related with a specific Identity Provider', verbose_name='IDP Config Name')
+
     def __str__(self):
         return self.title
 

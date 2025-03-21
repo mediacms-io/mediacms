@@ -3,8 +3,12 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.urls import path, re_path
 
+from django.contrib.auth import views as auth_views
+from allauth.account.views import LoginView
+
 from . import management_views, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
+
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -92,6 +96,13 @@ urlpatterns = [
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if hasattr(settings, "USE_SAML") and settings.USE_SAML:
+    urlpatterns.append(re_path(r"^saml/(\w+)/metadata", views.saml_metadata, name="saml-metadata"))
+    urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata_debug, name="saml-metadata-debug")) # TOREMOVE!!
+
+urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
+urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

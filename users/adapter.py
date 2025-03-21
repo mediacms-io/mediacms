@@ -10,6 +10,9 @@ class MyAccountAdapter(DefaultAccountAdapter):
         return settings.SSL_FRONTEND_HOST + url
 
     def clean_email(self, email):
+        if "@" not in email:
+            raise ValidationError("Email is not valid")
+
         if hasattr(settings, "ALLOWED_DOMAINS_FOR_USER_REGISTRATION") and settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION:
             if email.split("@")[1] not in settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION:
                 raise ValidationError("Domain is not in the permitted list")
@@ -24,3 +27,4 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def send_mail(self, template_prefix, email, context):
         msg = self.render_mail(template_prefix, email, context)
         msg.send(fail_silently=True)
+
