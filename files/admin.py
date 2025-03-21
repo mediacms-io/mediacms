@@ -128,9 +128,19 @@ class CategoryAdmin(admin.ModelAdmin):
 
     search_fields = ["title"]
     list_display = ["title", "user", "add_date", "media_count"]
-    list_filter = ["is_rbac_category", "identity_provider"]
+    list_filter = []
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
+
+    def get_list_filter(self, request):
+        list_filter = list(self.list_filter)
+
+        if getattr(settings, 'USE_RBAC', False):
+            list_filter.insert(0, "is_rbac_category")
+        if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+            list_filter.insert(-1, "identity_provider")
+
+        return list_filter
 
 
     def get_list_display(self, request):
@@ -154,9 +164,14 @@ class CategoryAdmin(admin.ModelAdmin):
 
         if getattr(settings, 'USE_RBAC', False):
             rbac_fieldset = [
-                ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
+                ('RBAC Settings', {'fields': ['is_rbac_category'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
                 ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
             ]
+            if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+                rbac_fieldset = [
+                    ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
+                    ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
+                ]
             return basic_fieldset + rbac_fieldset
         else:
             return basic_fieldset
