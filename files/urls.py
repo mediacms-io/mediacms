@@ -97,8 +97,11 @@ urlpatterns = [
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/(\w+)/metadata", views.saml_metadata, name="saml-metadata"))
 
-urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
-urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
+if hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS:
+    urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
+    urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
+else:
+    urlpatterns.append(path('accounts/login', LoginView.as_view(), name='login_system'))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

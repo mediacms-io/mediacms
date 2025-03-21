@@ -69,25 +69,15 @@ class CategoryAdminForm(forms.ModelForm):
 
         # Check if this category has any RBAC groups
         if self.instance.pk:
-            has_rbac_groups = self.instance.rbac_groups.exists()
+            has_rbac_groups = self.instance.rbac_groups.exists() or cleaned_data.get('rbac_groups')
         else:
             has_rbac_groups = False
 
-        # Validation: identity_provider and rbac_groups require is_rbac_category to be True
         if not is_rbac_category:
-            # if identity_provider:
-            #    self.add_error(
-            #        'identity_provider',
-            #        ValidationError('Identity provider can only be specified if "Is RBAC Category" is enabled.')
-            #    )
-
             if has_rbac_groups:
                 self.add_error('is_rbac_category', ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.'))
 
-        # TOTHINK: rbac without identity provider should be allowed!
-        if False and not identity_provider and has_rbac_groups:
-            self.add_error('identity_provider', ValidationError('Identity provider has to be specified if Groups are selected.'))
-        for rbac_group in cleaned_data['rbac_groups']:
+        for rbac_group in cleaned_data.get('rbac_groups'):
             if rbac_group.identity_provider != identity_provider:
                 self.add_error('rbac_groups', ValidationError('Chosen Groups are associated with a different Identity Provider than the one selected here.'))
 
@@ -97,8 +87,6 @@ class CategoryAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.instance.pk:
-            # if self.instance.identity_provider:
-            #    self.fields['rbac_groups'].queryset=RBACGroup.objects.filter(identity_provider=self.instance.identity_provider)
             self.fields['rbac_groups'].initial = self.instance.rbac_groups.all()
 
     def save(self, commit=True):
@@ -107,6 +95,10 @@ class CategoryAdminForm(forms.ModelForm):
         if commit:
             self.save_m2m()
 
+        if self.instance.rbac_groups.exists() or self.cleaned_data.get('rbac_groups'):
+            if not self.cleaned_data['is_rbac_category']:
+                category.is_rbac_category = True
+                category.save(update_fields=['is_rbac_category'])
         return category
 
     @transaction.atomic
@@ -135,10 +127,20 @@ class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
     search_fields = ["title"]
-    list_display = ["title", "user", "add_date", "media_count", "is_rbac_category", "identity_provider"]
+    list_display = ["title", "user", "add_date", "media_count"]
     list_filter = ["is_rbac_category", "identity_provider"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
+
+
+    def get_list_display(self, request):
+        list_display = list(self.list_display)
+        if getattr(settings, 'USE_RBAC', False):
+            list_display.insert(-1, "is_rbac_category")
+        if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+            list_display.insert(-1, "identity_provider")
+
+        return list_display
 
     def get_fieldsets(self, request, obj=None):
         basic_fieldset = [
