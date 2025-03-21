@@ -13,7 +13,7 @@ class AdminCustomizationsConfig(AppConfig):
         def get_app_list(self, request, app_label=None):
             """Custom get_app_list"""
             app_list = original_get_app_list(self, request, app_label)
-            # To see the list: 
+            # To see the list:
             # print([a.get('app_label') for a in app_list])
 
             # 1. move Social Account EmailAddress to Users
@@ -31,7 +31,7 @@ class AdminCustomizationsConfig(AppConfig):
             for app in app_list:
                 if app['app_label'] == 'users':
                     auth_app = app
-                
+
                 elif app['app_label'] == 'account':
                     account_app = app
                     for model in app['models']:
@@ -49,7 +49,7 @@ class AdminCustomizationsConfig(AppConfig):
                 elif app['app_label'] == 'identity_providers':
                     identity_providers_app = app
                     models_to_check = list(app['models'])
-                    
+
                     for model in models_to_check:
                         if model['object_name'] == 'IdentityProviderUserLog':
                             identity_providers_user_log_model = model
@@ -78,7 +78,7 @@ class AdminCustomizationsConfig(AppConfig):
 
             app_list = [app for app in app_list if app['app_label'] not in apps_to_hide]
 
-            # 3. change the ordering 
+            # 3. change the ordering
             app_order = {
                 'files': 1,
                 'users': 2,

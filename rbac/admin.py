@@ -1,12 +1,14 @@
 from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django.utils.html import format_html
 from django.db import transaction
+from django.utils.html import format_html
 
 from files.models import Category
 from users.models import User
+
 from .models import RBACGroup, RBACMembership, RBACRole
+
 
 class RoleFilter(admin.SimpleListFilter):
     title = 'Role'
@@ -26,31 +28,19 @@ class RBACGroupAdminForm(forms.ModelForm):
         queryset=Category.objects.filter(is_rbac_category=True),
         required=False,
         widget=admin.widgets.FilteredSelectMultiple('Categories', False),
-        help_text='Select categories this RBAC group has access to'
+        help_text='Select categories this RBAC group has access to',
     )
-    
+
     members_field = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
-        required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Members', False),
-        help_text='Users with Member role',
-        label=''        
+        queryset=User.objects.all(), required=False, widget=admin.widgets.FilteredSelectMultiple('Members', False), help_text='Users with Member role', label=''
     )
 
     contributors_field = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
-        required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Contributors', False),
-        help_text='Users with Contributor role',
-        label=''        
+        queryset=User.objects.all(), required=False, widget=admin.widgets.FilteredSelectMultiple('Contributors', False), help_text='Users with Contributor role', label=''
     )
 
     managers_field = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
-        required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Managers', False),
-        help_text='Users with Manager role',
-        label=''        
+        queryset=User.objects.all(), required=False, widget=admin.widgets.FilteredSelectMultiple('Managers', False), help_text='Users with Manager role', label=''
     )
 
     class Meta:
@@ -60,22 +50,12 @@ class RBACGroupAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
         if self.instance.pk:
             self.fields['categories'].initial = self.instance.categories.all()
-            
-            self.fields['members_field'].initial = User.objects.filter(
-                rbac_memberships__rbac_group=self.instance,
-                rbac_memberships__role=RBACRole.MEMBER
-            )
-            self.fields['contributors_field'].initial = User.objects.filter(
-                rbac_memberships__rbac_group=self.instance,
-                rbac_memberships__role=RBACRole.CONTRIBUTOR
-            )
-            self.fields['managers_field'].initial = User.objects.filter(
-                rbac_memberships__rbac_group=self.instance,
-                rbac_memberships__role=RBACRole.MANAGER
-            )
+
+            self.fields['members_field'].initial = User.objects.filter(rbac_memberships__rbac_group=self.instance, rbac_memberships__role=RBACRole.MEMBER)
+            self.fields['contributors_field'].initial = User.objects.filter(rbac_memberships__rbac_group=self.instance, rbac_memberships__role=RBACRole.CONTRIBUTOR)
+            self.fields['managers_field'].initial = User.objects.filter(rbac_memberships__rbac_group=self.instance, rbac_memberships__role=RBACRole.MANAGER)
 
     def save(self, commit=True):
         group = super().save(commit=True)
@@ -94,38 +74,25 @@ class RBACGroupAdminForm(forms.ModelForm):
             member_users = self.cleaned_data['members_field']
             contributor_users = self.cleaned_data['contributors_field']
             manager_users = self.cleaned_data['managers_field']
-            
+
             self._update_role_memberships(RBACRole.MEMBER, member_users)
             self._update_role_memberships(RBACRole.CONTRIBUTOR, contributor_users)
             self._update_role_memberships(RBACRole.MANAGER, manager_users)
-    
+
     def _update_role_memberships(self, role, new_users):
-        
         new_user_ids = User.objects.filter(pk__in=new_users).values_list('pk', flat=True)
-        
-        existing_users = User.objects.filter(
-            rbac_memberships__rbac_group=self.instance,
-            rbac_memberships__role=role
-        )
-        
+
+        existing_users = User.objects.filter(rbac_memberships__rbac_group=self.instance, rbac_memberships__role=role)
+
         existing_user_ids = existing_users.values_list('pk', flat=True)
-        
+
         users_to_add = User.objects.filter(pk__in=new_user_ids).exclude(pk__in=existing_user_ids)
         users_to_remove = existing_users.exclude(pk__in=new_user_ids)
-        
-        for user in users_to_add:
-            RBACMembership.objects.get_or_create(
-                user=user,
-                rbac_group=self.instance,
-                role=role
-            )
 
-        
-        RBACMembership.objects.filter(
-            user__in=users_to_remove,
-            rbac_group=self.instance,
-            role=role
-        ).delete()
+        for user in users_to_add:
+            RBACMembership.objects.get_or_create(user=user, rbac_group=self.instance, role=role)
+
+        RBACMembership.objects.filter(user__in=users_to_remove, rbac_group=self.instance, role=role).delete()
 
 
 class RBACGroupAdmin(admin.ModelAdmin):
@@ -137,50 +104,40 @@ class RBACGroupAdmin(admin.ModelAdmin):
 
     def get_member_count(self, obj):
         return obj.memberships.filter(role=RBACRole.MEMBER).count()
+
     get_member_count.short_description = 'Members'
 
     def get_contributor_count(self, obj):
         return obj.memberships.filter(role=RBACRole.CONTRIBUTOR).count()
+
     get_contributor_count.short_description = 'Contributors'
 
     def get_manager_count(self, obj):
         return obj.memberships.filter(role=RBACRole.MANAGER).count()
+
     get_manager_count.short_description = 'Managers'
 
     fieldsets = (
-        (None, {
-            'fields': ('identity_provider', 'uid', 'name', 'description', 'created_at', 'updated_at'),
-        }),
+        (
+            None,
+            {
+                'fields': ('identity_provider', 'uid', 'name', 'description', 'created_at', 'updated_at'),
+            },
+        ),
     )
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         if obj:
             fieldsets += (
-                ('Members', {
-                    'fields': ['members_field'],
-                    'description': 'Select users for members. The same user cannot be contributor or manager'
-                }),
-                ('Contributors', {
-                    'fields': ['contributors_field'],
-                    'description': 'Select users for contributors. The same user cannot be member or manager'
-                }),
-                ('Managers', {
-                    'fields': ['managers_field'],
-                    'description': 'Select users for managers. The same user cannot be member or contributor'
-                }),
-                
-                ('Access To Categories', {
-                    'fields': ['categories'],
-                    'classes': ['collapse', 'open'],
-                    'description': 'Select which categories this RBAC group has access to'
-        }),
-                
+                ('Members', {'fields': ['members_field'], 'description': 'Select users for members. The same user cannot be contributor or manager'}),
+                ('Contributors', {'fields': ['contributors_field'], 'description': 'Select users for contributors. The same user cannot be member or manager'}),
+                ('Managers', {'fields': ['managers_field'], 'description': 'Select users for managers. The same user cannot be member or contributor'}),
+                ('Access To Categories', {'fields': ['categories'], 'classes': ['collapse', 'open'], 'description': 'Select which categories this RBAC group has access to'}),
             )
         return fieldsets
 
     readonly_fields = ['created_at', 'updated_at']
-
 
     def member_count(self, obj):
         count = obj.memberships.count()
@@ -213,7 +170,6 @@ class RBACMembershipAdmin(admin.ModelAdmin):
     readonly_fields = ['joined_at', 'updated_at']
 
     fieldsets = [(None, {'fields': ['user', 'rbac_group', 'role']}), ('Timestamps', {'fields': ['joined_at', 'updated_at'], 'classes': ['collapse']})]
-
 
 
 if getattr(settings, 'USE_RBAC', False):

@@ -1,5 +1,3 @@
-import logging
-
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -72,5 +70,3 @@ class SAMLConfiguration(models.Model):
         provider_settings["email_verified"] = self.verified_email
         provider_settings["email_authentication"] = self.email_authentication
         return provider_settings
-
-

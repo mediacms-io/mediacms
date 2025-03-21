@@ -47,22 +47,15 @@ class RBACMembership(models.Model):
         verbose_name = 'RBAC Membership'
         verbose_name_plural = 'RBAC Memberships'
 
-
     def clean(self):
         super().clean()
         return True
 
         if not self.pk:
-            existing_membership = RBACMembership.objects.filter(
-                user=self.user,
-                rbac_group=self.rbac_group
-            ).exists()
+            existing_membership = RBACMembership.objects.filter(user=self.user, rbac_group=self.rbac_group).exists()
 
             if existing_membership:
-                raise ValidationError(
-                    f"User '{self.user}' is already a member of RBAC group '{self.rbac_group}'. "
-                    f"Please modify the existing membership instead of creating a new one."
-                )
+                raise ValidationError(f"User '{self.user}' is already a member of RBAC group '{self.rbac_group}'. " f"Please modify the existing membership instead of creating a new one.")
 
         if self.role not in RBACRole.values:
             raise ValidationError({'role': f'Invalid role. Must be one of {", ".join(RBACRole.values)}'})

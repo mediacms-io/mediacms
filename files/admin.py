@@ -1,9 +1,10 @@
+from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django import forms
-from rbac.models import RBACGroup
 from django.core.exceptions import ValidationError
 from django.db import transaction
+
+from rbac.models import RBACGroup
 
 from .models import (
     Category,
@@ -55,13 +56,8 @@ class MediaAdmin(admin.ModelAdmin):
 
 
 class CategoryAdminForm(forms.ModelForm):
+    rbac_groups = forms.ModelMultipleChoiceField(queryset=RBACGroup.objects.all(), required=False, widget=admin.widgets.FilteredSelectMultiple('Groups', False))
 
-    rbac_groups = forms.ModelMultipleChoiceField(
-        queryset=RBACGroup.objects.all(),
-        required=False,
-        widget=admin.widgets.FilteredSelectMultiple('Groups', False)
-    )
-    
     class Meta:
         model = Category
         fields = '__all__'
@@ -86,36 +82,24 @@ class CategoryAdminForm(forms.ModelForm):
             #    )
 
             if has_rbac_groups:
-                self.add_error(
-                    'is_rbac_category',
-                    ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.')
-                )
+                self.add_error('is_rbac_category', ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.'))
 
         # TOTHINK: rbac without identity provider should be allowed!
         if False and not identity_provider and has_rbac_groups:
-                self.add_error(
-                    'identity_provider',
-                    ValidationError('Identity provider has to be specified if Groups are selected.')
-                )
+            self.add_error('identity_provider', ValidationError('Identity provider has to be specified if Groups are selected.'))
         for rbac_group in cleaned_data['rbac_groups']:
             if rbac_group.identity_provider != identity_provider:
-                self.add_error(
-                    'rbac_groups',
-                    ValidationError('Chosen Groups are associated with a different Identity Provider than the one selected here.')
-                )
-                
-        return cleaned_data
+                self.add_error('rbac_groups', ValidationError('Chosen Groups are associated with a different Identity Provider than the one selected here.'))
 
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
         if self.instance.pk:
             # if self.instance.identity_provider:
             #    self.fields['rbac_groups'].queryset=RBACGroup.objects.filter(identity_provider=self.instance.identity_provider)
             self.fields['rbac_groups'].initial = self.instance.rbac_groups.all()
-
 
     def save(self, commit=True):
         category = super().save(commit=True)
@@ -128,7 +112,7 @@ class CategoryAdminForm(forms.ModelForm):
     @transaction.atomic
     def save_m2m(self):
         if self.instance.pk:
-            rbac_groups  = self.cleaned_data['rbac_groups']
+            rbac_groups = self.cleaned_data['rbac_groups']
             self._update_rbac_groups(rbac_groups)
 
     def _update_rbac_groups(self, rbac_groups):
@@ -146,6 +130,7 @@ class CategoryAdminForm(forms.ModelForm):
         for rbac_group in rbac_groups_to_remove:
             rbac_group.categories.remove(self.instance)
 
+
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
@@ -154,40 +139,26 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ["is_rbac_category", "identity_provider"]
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
-    
+
     def get_fieldsets(self, request, obj=None):
         basic_fieldset = [
-            ('Category Information', {
-                'fields': [
-                    'uid', 
-                    'title', 
-                    'description',
-                    'user',
-                    'media_count',
-                    'thumbnail',
-                    'listings_thumbnail'
-                ],
-            }),
+            (
+                'Category Information',
+                {
+                    'fields': ['uid', 'title', 'description', 'user', 'media_count', 'thumbnail', 'listings_thumbnail'],
+                },
+            ),
         ]
-        
+
         if getattr(settings, 'USE_RBAC', False):
             rbac_fieldset = [
-                ('RBAC Settings', {
-                    'fields': ['is_rbac_category', 'identity_provider'],
-                    'classes': ['tab'],
-                    'description': 'Role-Based Access Control settings'
-                }),
-                ('Group Access', {
-                    'fields': ['rbac_groups'],
-                    'description': 'Select the Groups that have access to category'
-                }),
-                
+                ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
+                ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
             ]
             return basic_fieldset + rbac_fieldset
         else:
             return basic_fieldset
 
-    
 
 class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]

@@ -284,7 +284,7 @@ INSTALLED_APPS = [
     "djcelery_email",
     "drf_yasg",
     "allauth.socialaccount.providers.saml",
-    "saml_auth.apps.SamlAuthConfig",    
+    "saml_auth.apps.SamlAuthConfig",
 ]
 
 MIDDLEWARE = [
@@ -526,9 +526,7 @@ DJANGO_ADMIN_URL = "admin/"
 USE_SAML = False
 USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
-JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly"
-}
+JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 
 try:
@@ -546,4 +544,3 @@ except ImportError:
 # SESSION_COOKIE_SECURE = True
 
 PYSUBS_COMMAND = "pysubs2"
-

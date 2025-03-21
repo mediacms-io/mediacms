@@ -35,4 +35,3 @@ urlpatterns = [
 admin.site.site_header = "MediaCMS Admin"
 admin.site.site_title = "MediaCMS"
 admin.site.index_title = "Admin"
-

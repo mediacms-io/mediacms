@@ -1,7 +1,5 @@
-from django.core.exceptions import ValidationError
-import logging
-
 from allauth.socialaccount.models import SocialApp
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -10,15 +8,14 @@ class IdentityProviderUserLog(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name='saml_logs')
     created_at = models.DateTimeField(auto_now_add=True)
     logs = models.TextField(blank=True, null=True)
-    
+
     class Meta:
         verbose_name = 'Identity Provider User Log'
         verbose_name_plural = 'Identity Provider User Logs'
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f'SAML Log - {self.user.username} - {self.created_at}'
-
 
 
 class IdentityProviderGroupRole(models.Model):
@@ -60,10 +57,8 @@ class IdentityProviderGlobalRole(models.Model):
         verbose_name_plural = 'Identity Provider Global Role Mappings'
         unique_together = ('identity_provider', 'name')
 
-
     def __str__(self):
         return f'Identity Provider Global Role Mapping {self.name}'
-
 
     def save(self, *args, **kwargs):
         if not self.identity_provider:
@@ -94,12 +89,12 @@ class IdentityProviderCategoryMapping(models.Model):
                 raise ValidationError("Cannot change the name once it is set. First delete this entry and then create a new one instead.")
         super().clean()
 
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
         from files.models import Category
         from rbac.models import RBACGroup
+
         category = Category.objects.filter(uid=self.map_to).first()
         group = RBACGroup.objects.filter(uid=self.name).first()
         if category and group:
@@ -123,4 +118,3 @@ class LoginOption(models.Model):
 
     def __str__(self):
         return self.title
-

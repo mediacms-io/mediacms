@@ -7,16 +7,14 @@ from allauth.socialaccount.signals import social_account_updated
 from django.core.files.base import ContentFile
 from django.dispatch import receiver
 
-
-from rbac.models import RBACGroup, RBACMembership
 from identity_providers.models import IdentityProviderUserLog
-
+from rbac.models import RBACGroup, RBACMembership
 
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, socialaccount):
         return True
-    
+
     def pre_social_login(self, request, sociallogin):
         # data = sociallogin.data
 
@@ -87,11 +85,8 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     # groups is a list of group_ids here
 
     if groups:
-        rbac_groups = RBACGroup.objects.filter(
-            identity_provider=social_app,
-            uid__in=groups
-        )
-        
+        rbac_groups = RBACGroup.objects.filter(identity_provider=social_app, uid__in=groups)
+
     try:
         # try to get the role, always use member as fallback
         role_key = saml_configuration.role

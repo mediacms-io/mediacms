@@ -1,18 +1,25 @@
-import logging
 import csv
-from django.core.exceptions import ValidationError
+import logging
 
+from allauth.socialaccount.admin import SocialAccountAdmin, SocialAppAdmin
+from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
+from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django import forms
-from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
-from allauth.socialaccount.admin import SocialAppAdmin, SocialAccountAdmin
+from django.urls import reverse
+from django.utils.html import format_html
 
-from saml_auth.models import SAMLConfiguration 
-from rbac.models import RBACGroup
 from identity_providers.forms import ImportCSVsForm
+from identity_providers.models import (
+    IdentityProviderCategoryMapping,
+    IdentityProviderGlobalRole,
+    IdentityProviderGroupRole,
+    IdentityProviderUserLog,
+    LoginOption,
+)
+from rbac.models import RBACGroup
+from saml_auth.models import SAMLConfiguration
 
-from identity_providers.models import IdentityProviderUserLog, IdentityProviderGroupRole, IdentityProviderGlobalRole, IdentityProviderCategoryMapping, LoginOption
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
@@ -46,17 +53,17 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name in ('name', 'map_to') and formfield:
-            formfield.widget.attrs.update({
-                'data-help-text': db_field.help_text,
-                'class': 'with-help-text',
-            })
+            formfield.widget.attrs.update(
+                {
+                    'data-help-text': db_field.help_text,
+                    'class': 'with-help-text',
+                }
+            )
         return formfield
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
-        css = {
-            'all': ('admin/css/inline_help_text.css',)
-        }
+        css = {'all': ('admin/css/inline_help_text.css',)}
 
 
 class RBACGroupInlineForm(forms.ModelForm):
@@ -72,8 +79,6 @@ class RBACGroupInlineForm(forms.ModelForm):
             'name': 'MediaCMS Group name',
         }
 
-from django.urls import reverse
-from django.utils.html import format_html
 
 class RBACGroupInline(admin.TabularInline):
     model = RBACGroup
@@ -85,7 +90,6 @@ class RBACGroupInline(admin.TabularInline):
     readonly_fields = ('delete_link',)
     fields = ['uid', 'name']
     form = RBACGroupInlineForm
-
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
@@ -105,32 +109,28 @@ class RBACGroupInline(admin.TabularInline):
     def has_delete_permission(self, request, obj=None):
         return False
 
-
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name in ('uid', 'name') and formfield:
-            formfield.widget.attrs.update({
-                'data-help-text': db_field.help_text,
-                'class': 'with-help-text',
-            })
-                
+            formfield.widget.attrs.update(
+                {
+                    'data-help-text': db_field.help_text,
+                    'class': 'with-help-text',
+                }
+            )
+
         return formfield
-
-
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
-        css = {
-            'all': ('admin/css/inline_help_text.css',)
-        }
+        css = {'all': ('admin/css/inline_help_text.css',)}
 
 
 class CustomSocialAppAdmin(SocialAppAdmin):
-    # The default SocialAppAdmin has been overriden to achieve a number of changes. 
-    # If you need to add more fields (out of those that are hidden), or remove tabs, or 
-    # change the ordering of fields, or the place where fields appear, don't forget to 
+    # The default SocialAppAdmin has been overriden to achieve a number of changes.
+    # If you need to add more fields (out of those that are hidden), or remove tabs, or
+    # change the ordering of fields, or the place where fields appear, don't forget to
     # check the html template!
-
 
     change_form_template = 'admin/socialaccount/socialapp/change_form.html'
     list_display = ('get_config_name', 'get_protocol')
@@ -148,13 +148,12 @@ class CustomSocialAppAdmin(SocialAppAdmin):
         self.inlines.append(RBACGroupInline)
         self.inlines.append(IdentityProviderCategoryMappingInline)
 
-
     def get_protocol(self, obj):
         return obj.provider
-    
+
     def get_config_name(self, obj):
         return obj.name
-    
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == 'provider':
@@ -181,12 +180,11 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     if group_id and name:
                         if not (RBACGroup.objects.filter(identity_provider=obj, uid=group_id).exists() or RBACGroup.objects.filter(identity_provider=obj, name=name).exists()):
                             try:
-                                group = RBACGroup.objects.create(identity_provider=obj, uid=group_id, name=name)
+                                group = RBACGroup.objects.create(identity_provider=obj, uid=group_id, name=name)  # noqa
                             except Exception as e:
                                 logging.error(e)
             except Exception as e:
                 logging.error(e)
-
 
         csv_file = form.cleaned_data.get('categories_csv')
         if csv_file:
@@ -201,10 +199,10 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     if group_id and category_id:
                         if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id).exists():
                             try:
-                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category_id)
+                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category_id)  # noqa
                             except Exception as e:
                                 logging.error(e)
-                        
+
             except Exception as e:
                 logging.error(e)
 
@@ -222,6 +220,7 @@ class CustomSocialAccountAdmin(SocialAccountAdmin):
         return field
 
     get_provider.short_description = 'Provider ID'
+
 
 class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
     def save_new(self, form, commit=True):
@@ -242,7 +241,6 @@ class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
             if name and identity_provider:
                 if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
                     form.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
-
 
 
 class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
@@ -268,7 +266,7 @@ class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
 
 class IdentityProviderGlobalRoleInline(admin.TabularInline):
     model = IdentityProviderGlobalRole
-    formset = GlobalRoleInlineFormset    
+    formset = GlobalRoleInlineFormset
     extra = 1
     verbose_name = "Global Role Mapping"
     verbose_name_plural = "Global Role Mapping"
@@ -288,41 +286,43 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name in ('name', ) and formfield:
-            formfield.widget.attrs.update({
-                'data-help-text': db_field.help_text,
-                'class': 'with-help-text',
-            })
+        if db_field.name in ('name',) and formfield:
+            formfield.widget.attrs.update(
+                {
+                    'data-help-text': db_field.help_text,
+                    'class': 'with-help-text',
+                }
+            )
         return formfield
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
-        css = {
-            'all': ('admin/css/inline_help_text.css',)
-        }
+        css = {'all': ('admin/css/inline_help_text.css',)}
+
 
 class IdentityProviderGroupRoleInline(admin.TabularInline):
     model = IdentityProviderGroupRole
-    formset = GroupRoleInlineFormset    
+    formset = GroupRoleInlineFormset
     extra = 1
     verbose_name = "Group Role Mapping"
     verbose_name_plural = "Group Role Mapping"
     fields = ('name', 'map_to')
-    
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name in ('name', ) and formfield:
-            formfield.widget.attrs.update({
-                'data-help-text': db_field.help_text,
-                'class': 'with-help-text',
-            })
+        if db_field.name in ('name',) and formfield:
+            formfield.widget.attrs.update(
+                {
+                    'data-help-text': db_field.help_text,
+                    'class': 'with-help-text',
+                }
+            )
         return formfield
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
-        css = {
-            'all': ('admin/css/inline_help_text.css',)
-        }
+        css = {'all': ('admin/css/inline_help_text.css',)}
+
 
 class LoginOptionAdmin(admin.ModelAdmin):
     list_display = ('title', 'url', 'ordering', 'active')
@@ -334,7 +334,6 @@ class LoginOptionAdmin(admin.ModelAdmin):
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     admin.site.register(IdentityProviderUserLog, IdentityProviderUserLogAdmin)
     admin.site.unregister(SocialToken)
-
 
     # This is unregistering the default Social App and registers the custom one here,
     # with mostly name setting options
@@ -351,5 +350,3 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
-
-

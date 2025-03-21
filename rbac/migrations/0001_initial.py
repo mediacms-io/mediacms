@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -26,7 +25,10 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('categories', models.ManyToManyField(blank=True, help_text='Categories this RBAC group has access to', related_name='rbac_groups', to='files.category')),
-                ('identity_provider', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rbac_groups', to='socialaccount.socialapp', verbose_name='IDP Config Name')),
+                (
+                    'identity_provider',
+                    models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rbac_groups', to='socialaccount.socialapp', verbose_name='IDP Config Name'),
+                ),
             ],
             options={
                 'verbose_name': 'RBAC Group',

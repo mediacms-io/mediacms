@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -49,7 +48,20 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(help_text='Identity Provider role attribute value', max_length=100, verbose_name='Global Role Mapping')),
-                ('map_to', models.CharField(choices=[('user', 'Authenticated User'), ('advancedUser', 'Advanced User'), ('editor', 'MediaCMS Editor'), ('manager', 'MediaCMS Manager'), ('admin', 'MediaCMS Administrator')], help_text='MediaCMS Global Role', max_length=20)),
+                (
+                    'map_to',
+                    models.CharField(
+                        choices=[
+                            ('user', 'Authenticated User'),
+                            ('advancedUser', 'Advanced User'),
+                            ('editor', 'MediaCMS Editor'),
+                            ('manager', 'MediaCMS Manager'),
+                            ('admin', 'MediaCMS Administrator'),
+                        ],
+                        help_text='MediaCMS Global Role',
+                        max_length=20,
+                    ),
+                ),
                 ('identity_provider', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='global_roles', to='socialaccount.socialapp')),
             ],
             options={

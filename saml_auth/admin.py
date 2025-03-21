@@ -7,9 +7,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
-from .models import (
-    SAMLConfiguration,
-)
+from .models import SAMLConfiguration
 
 
 class SAMLConfigurationForm(forms.ModelForm):
@@ -114,8 +112,6 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
                 logging.error(e)
 
 
-
-
 if getattr(settings, 'USE_SAML', False):
     for field in SAMLConfiguration._meta.fields:
         if field.name == 'social_app':
@@ -125,4 +121,3 @@ if getattr(settings, 'USE_SAML', False):
 
     SAMLConfiguration._meta.app_config.verbose_name = "SAML settings and logs"
     SAMLConfiguration._meta.verbose_name_plural = "SAML Configuration"
-    

@@ -1,15 +1,15 @@
-from django.shortcuts import redirect
+from datetime import datetime, timedelta
+
+from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.urls import reverse
-from django.contrib.auth import views as auth_views
-
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -23,7 +23,7 @@ from rest_framework.parsers import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-from allauth.socialaccount.models import SocialApp
+
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
 from cms.permissions import (
@@ -32,8 +32,8 @@ from cms.permissions import (
     IsUserOrEditor,
     user_allowed_to_upload,
 )
-from users.models import User
 from identity_providers.models import LoginOption
+from users.models import User
 
 from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
 from .frontend_translations import translate_string
@@ -1506,7 +1506,7 @@ class TaskDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def saml_metadata_debug(request): # TOREMOVE!
+def saml_metadata_debug(request):  # TOREMOVE!
     if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
         raise Http404
 
@@ -1547,18 +1547,14 @@ def saml_metadata(request, client_id):
 
 
 def custom_login_view(request):
-    if not (hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS):    
+    if not (hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS):
         return redirect(reverse('login_system'))
 
     login_options = []
     for option in LoginOption.objects.filter(active=True):
         login_options.append({'url': option.url, 'title': option.title})
-        #{
+        # {
         #    'url': reverse('login_system'),
         #    'title': 'System Login'
-        #},
-    return render(request, 'account/custom_login_selector.html', {
-            'login_options': login_options
-        })
-    
-
+        # },
+    return render(request, 'account/custom_login_selector.html', {'login_options': login_options})
