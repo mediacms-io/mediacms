@@ -142,7 +142,6 @@ class CategoryAdmin(admin.ModelAdmin):
 
         return list_filter
 
-
     def get_list_display(self, request):
         list_display = list(self.list_display)
         if getattr(settings, 'USE_RBAC', False):
