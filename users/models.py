@@ -118,14 +118,6 @@ class User(AbstractUser):
         """Get all RBAC groups the user belongs to"""
         return RBACGroup.objects.filter(memberships__user=self)
 
-    def get_user_role_in_rbac_group(self, group):
-        """Get the user's role in a specific group"""
-        try:
-            membership = self.rbac_memberships.get(group=group)
-            return membership.role
-        except RBACMembership.DoesNotExist:
-            return None
-
     def get_rbac_categories_as_member(self):
         """
         Get all categories related to RBAC groups the user belongs to
