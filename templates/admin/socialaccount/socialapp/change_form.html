@@ -138,6 +138,12 @@ document.addEventListener('DOMContentLoaded', function() {
     addLinks.forEach(function(link) {
         link.textContent = 'Add';
     });
+
+    const plusIcons = document.querySelectorAll('td.original i.fas.fa-plus');
+    plusIcons.forEach(function(icon) {
+        icon.remove();
+    });
+
   }
 });
 
