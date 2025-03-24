@@ -1506,25 +1506,29 @@ class TaskDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def saml_metadata(request, client_id):
+def saml_metadata(request):
     if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
         raise Http404
-    if not SocialApp.objects.filter(client_id=client_id).exists():
-        raise Http404
 
-    entity_id = f"{settings.FRONTEND_HOST}/saml/{client_id}/metadata/"
+    xml_parts = ['<?xml version="1.0"?>']
+    saml_social_apps = SocialApp.objects.filter(provider='saml')
+    entity_id = f"{settings.FRONTEND_HOST}/saml/metadata/"
+    xml_parts.append(f'<md:EntitiesDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Name="{entity_id}">')
+    xml_parts.append(f'    <md:EntityDescriptor entityID="{entity_id}">')
+    xml_parts.append('        <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">')
 
-    metadata_template = f'''<?xml version="1.0"?>
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
-                     entityID="{entity_id}">
-    <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-        <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-                                    Location="{settings.FRONTEND_HOST}/accounts/saml/{client_id}/acs/"
-                                    index="1"/>
-    </md:SPSSODescriptor>
-</md:EntityDescriptor>'''  # noqa
+    # Add multiple AssertionConsumerService elements with different indices
+    for index, app in enumerate(saml_social_apps, start=1):
+        xml_parts.append(
+            f'            <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" '
+            f'Location="{settings.FRONTEND_HOST}/accounts/saml/{app.client_id}/acs/" index="{index}"/>'
+        )
 
-    return HttpResponse(metadata_template, content_type='application/xml')
+    xml_parts.append('        </md:SPSSODescriptor>')
+    xml_parts.append('    </md:EntityDescriptor>')
+    xml_parts.append('</md:EntitiesDescriptor>')
+    metadata_xml = '\n'.join(xml_parts)
+    return HttpResponse(metadata_xml, content_type='application/xml')
 
 
 def custom_login_view(request):
@@ -1534,8 +1538,4 @@ def custom_login_view(request):
     login_options = []
     for option in LoginOption.objects.filter(active=True):
         login_options.append({'url': option.url, 'title': option.title})
-        # {
-        #    'url': reverse('login_system'),
-        #    'title': 'System Login'
-        # },
     return render(request, 'account/custom_login_selector.html', {'login_options': login_options})
