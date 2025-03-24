@@ -98,7 +98,7 @@ class RBACGroupAdminForm(forms.ModelForm):
 class RBACGroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'get_member_count', 'get_contributor_count', 'get_manager_count', 'categories_list')
     form = RBACGroupAdminForm
-    list_filter = (RoleFilter, )
+    list_filter = (RoleFilter,)
     search_fields = ['name', 'uid', 'description', 'identity_provider__name']
     filter_horizontal = ['categories']
 
@@ -131,7 +131,6 @@ class RBACGroupAdmin(admin.ModelAdmin):
         return obj.memberships.filter(role=RBACRole.MANAGER).count()
 
     get_manager_count.short_description = 'Managers'
-
 
     fieldsets = (
         (
