@@ -44,7 +44,7 @@ class SAMLConfigurationInline(admin.StackedInline):
 
 class IdentityProviderCategoryMappingInline(admin.TabularInline):
     model = IdentityProviderCategoryMapping
-    extra = 1
+    extra = 0
     can_delete = True
     show_change_link = True
     verbose_name = "Category Mapping"
@@ -100,7 +100,7 @@ class RBACGroupInline(admin.TabularInline):
     def delete_link(self, obj):
         if obj.id:
             url = reverse('admin:rbac_rbacgroup_delete', args=[obj.id])
-            return format_html('<a class="deletelink" href="{}">Delete</a>', url)
+            return format_html('<a class="deletelink" target="_blank" href="{}">Delete</a>', url)
         return ""
 
     delete_link.short_description = "Delete"
@@ -267,7 +267,7 @@ class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
 class IdentityProviderGlobalRoleInline(admin.TabularInline):
     model = IdentityProviderGlobalRole
     formset = GlobalRoleInlineFormset
-    extra = 1
+    extra = 0
     verbose_name = "Global Role Mapping"
     verbose_name_plural = "Global Role Mapping"
     fields = ('name', 'map_to')
@@ -303,7 +303,7 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
 class IdentityProviderGroupRoleInline(admin.TabularInline):
     model = IdentityProviderGroupRole
     formset = GroupRoleInlineFormset
-    extra = 1
+    extra = 0
     verbose_name = "Group Role Mapping"
     verbose_name_plural = "Group Role Mapping"
     fields = ('name', 'map_to')

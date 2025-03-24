@@ -51,9 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.head.appendChild(styleEl);
   setTimeout(function() {
     moveFieldsToTabs();
-
     handleErrorsAndActivateTabs();
-
+    performRestStuff();
   }, 500);
 
   function moveFieldsToTabs() {
@@ -134,6 +133,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function performRestStuff() {
+    const addLinks = document.querySelectorAll('.add-row a');
+    addLinks.forEach(function(link) {
+        link.textContent = 'Add';
+    });
+  }
 });
 
 </script>
