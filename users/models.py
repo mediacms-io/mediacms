@@ -12,7 +12,7 @@ from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
 from files.models import Category, Media, Tag
-from rbac.models import RBACGroup, RBACMembership
+from rbac.models import RBACGroup
 
 
 class User(AbstractUser):
