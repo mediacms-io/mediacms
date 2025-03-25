@@ -188,6 +188,7 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
         csv_file = form.cleaned_data.get('categories_csv')
         if csv_file:
+            from files.models import Category
             try:
                 csv_file.seek(0)
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
@@ -199,7 +200,9 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                     if group_id and category_id:
                         if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id).exists():
                             try:
-                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category_id)  # noqa
+                                category = Category.objects.filter(identity_provider=obj, uid=category_id).first()
+                                if category:
+                                    mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category)  # noqa
                             except Exception as e:
                                 logging.error(e)
 
