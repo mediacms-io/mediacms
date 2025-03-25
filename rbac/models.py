@@ -1,10 +1,15 @@
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.crypto import get_random_string
+
+
+def generate_uid():
+    return get_random_string(length=10)
 
 
 class RBACGroup(models.Model):
-    uid = models.CharField(max_length=255, help_text='Unique identifier for the RBAC group (unique per identity provider)')
+    uid = models.CharField(max_length=255, default=generate_uid, help_text='Unique identifier for the RBAC group (unique per identity provider)')
     name = models.CharField(max_length=100, help_text='MediaCMS Group name')
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -18,6 +18,7 @@ from django.db.models.signals import m2m_changed, post_delete, post_save, pre_de
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
@@ -81,6 +82,10 @@ CODECS = (
 
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
+
+
+def generate_uid():
+    return get_random_string(length=16)
 
 
 def original_media_file_path(instance, filename):
@@ -957,7 +962,7 @@ class License(models.Model):
 class Category(models.Model):
     """A Category base model"""
 
-    uid = models.UUIDField(unique=True, default=uuid.uuid4)
+    uid = models.CharField(unique=True, max_length=36, default=generate_uid)
 
     add_date = models.DateTimeField(auto_now_add=True)
 
