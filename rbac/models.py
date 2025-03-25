@@ -3,6 +3,10 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.crypto import get_random_string
 
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+from django.conf import settings
+
 
 def generate_uid():
     return get_random_string(length=10)
@@ -71,3 +75,43 @@ class RBACMembership(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.rbac_group.name} ({self.role})'
+
+
+@receiver(m2m_changed, sender=RBACGroup.categories.through)
+def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwargs):
+    """
+    Signal handler for when categories are added to or removed from an RBACGroup.
+    """
+    if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
+        return
+
+    from files.models import Category
+    from identity_providers.models import IdentityProviderCategoryMapping
+        
+    if action == 'post_add':
+        for category_id in pk_set:
+            category = Category.objects.get(pk=category_id)
+            
+            mapping_exists = IdentityProviderCategoryMapping.objects.filter(
+                identity_provider=instance.identity_provider,
+                name=instance.uid,
+                map_to=category
+            ).exists()
+            
+            if not mapping_exists:
+                IdentityProviderCategoryMapping.objects.create(
+                    identity_provider=instance.identity_provider,
+                    name=instance.uid,
+                    map_to=category
+                )
+                
+    elif action == 'post_remove':        
+        for category_id in pk_set:
+            category = Category.objects.get(pk=category_id)
+            
+            IdentityProviderCategoryMapping.objects.filter(
+                identity_provider=instance.identity_provider,
+                name=instance.uid,
+                map_to=category
+            ).delete()
+    
