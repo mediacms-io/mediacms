@@ -75,12 +75,15 @@ class IdentityProviderCategoryMapping(models.Model):
 
     name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
 
-    map_to = models.CharField(max_length=300, help_text='Category id')
+    map_to = models.ForeignKey(
+        'files.Category',
+        on_delete=models.CASCADE,
+        help_text='Category id'
+    )
 
     class Meta:
         verbose_name = 'Identity Provider Category Mapping'
         verbose_name_plural = 'Identity Provider Category Mappings'
-        unique_together = ('identity_provider', 'name')
 
     def clean(self):
         if not self._state.adding and self.pk:
@@ -92,17 +95,22 @@ class IdentityProviderCategoryMapping(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        from files.models import Category
         from rbac.models import RBACGroup
 
-        category = Category.objects.filter(uid=self.map_to).first()
-        group = RBACGroup.objects.filter(uid=self.name).first()
-        if category and group:
-            group.categories.add(category)
+        group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
+        if group:
+            group.categories.add(self.map_to)
         return True
 
     def __str__(self):
         return f'Identity Provider Category Mapping {self.name}'
+
+    def delete(self, *args, **kwargs):
+        from rbac.models import RBACGroup
+        group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
+        if group:
+            group.categories.remove(self.map_to)
+        super().delete(*args, **kwargs)
 
 
 class LoginOption(models.Model):
