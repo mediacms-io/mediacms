@@ -144,6 +144,31 @@ document.addEventListener('DOMContentLoaded', function() {
         icon.remove();
     });
 
+
+
+
+        const deleteCheckboxes = document.querySelectorAll('input[name$="-DELETE"]');
+        
+        deleteCheckboxes.forEach(function(checkbox) {
+            if (!checkbox.hasAttribute('data-monitored')) {
+                checkbox.setAttribute('data-monitored', 'true');
+                checkbox.addEventListener('change', function() {
+                    if (checkbox.checked) {
+                        const form = document.getElementById('changelist-form') || document.querySelector('form');
+                        const submitButton = document.querySelector('input[name="_continue"]');
+                        
+                        if (form && submitButton) {
+                            setTimeout(function() {
+                                submitButton.click();
+                            }, 50);
+                        }
+                    }
+                });
+            }
+        });
+	  
+
+
   }
 });
 
