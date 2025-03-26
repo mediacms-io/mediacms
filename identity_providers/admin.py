@@ -42,14 +42,25 @@ class SAMLConfigurationInline(admin.StackedInline):
     max_num = 1
 
 
+class IdentityProviderCategoryMappingInlineForm(forms.ModelForm):
+    class Meta:
+        model = IdentityProviderCategoryMapping
+        fields = ('name', 'map_to')
+
+    # custom field to track if the row should be deleted
+    should_delete = forms.BooleanField(required=False, widget=forms.HiddenInput())
+
+
 class IdentityProviderCategoryMappingInline(admin.TabularInline):
     model = IdentityProviderCategoryMapping
+    form = IdentityProviderCategoryMappingInlineForm
     extra = 0
     can_delete = True
-    show_change_link = True
+    show_change_link = True    
     verbose_name = "Category Mapping"
     verbose_name_plural = "Category Mapping"
-
+    template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
+        
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name in ('name', 'map_to') and formfield:
@@ -64,12 +75,19 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     class Media:
         js = ('admin/js/inline_help_text.js',)
         css = {'all': ('admin/css/inline_help_text.css',)}
+            
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
+
+    def has_delete_permission(self, request, obj=None):
+        return True
 
 
 class RBACGroupInlineForm(forms.ModelForm):
     class Meta:
         model = RBACGroup
-        fields = ['uid', 'name']
+        fields = ('uid', 'name')
         labels = {
             'uid': 'Group Attribute Value',
             'name': 'Name',
@@ -79,35 +97,19 @@ class RBACGroupInlineForm(forms.ModelForm):
             'name': 'MediaCMS Group name',
         }
 
+    # custom field to track if the row should be deleted
+    should_delete = forms.BooleanField(required=False, widget=forms.HiddenInput())
+
 
 class RBACGroupInline(admin.TabularInline):
     model = RBACGroup
+    form = RBACGroupInlineForm
     extra = 0
     can_delete = True
     show_change_link = True
     verbose_name = "Group Mapping"
     verbose_name_plural = "Group Mapping"
-    readonly_fields = ('delete_link',)
-    fields = ['uid', 'name']
-    form = RBACGroupInlineForm
-
-    def get_fields(self, request, obj=None):
-        fields = super().get_fields(request, obj)
-        if obj:
-            fields = list(fields) + ['delete_link']
-        return fields
-
-    def delete_link(self, obj):
-        if obj.id:
-            url = reverse('admin:rbac_rbacgroup_delete', args=[obj.id])
-            return format_html('<a class="deletelink" target="_blank" href="{}">Delete</a>', url)
-        return ""
-
-    delete_link.short_description = "Delete"
-    delete_link.allow_tags = True
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+    template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
@@ -118,12 +120,18 @@ class RBACGroupInline(admin.TabularInline):
                     'class': 'with-help-text',
                 }
             )
-
         return formfield
 
     class Media:
         js = ('admin/js/inline_help_text.js',)
         css = {'all': ('admin/css/inline_help_text.css',)}
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
+
+    def has_delete_permission(self, request, obj=None):
+        return True
 
 
 class CustomSocialAppAdmin(SocialAppAdmin):
@@ -210,6 +218,20 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                 logging.error(e)
 
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        deleted_pks = set()
+        
+        for form in formset.forms:
+            if form.cleaned_data.get('should_delete', False) and form.instance.pk:
+                instances.remove(form.instance)
+                form.instance.delete()
+        
+        for instance in instances:
+            instance.save()
+        formset.save_m2m()
+
+
 class CustomSocialAccountAdmin(SocialAccountAdmin):
     list_display = ('user', 'uid', 'get_provider')
 
@@ -225,91 +247,34 @@ class CustomSocialAccountAdmin(SocialAccountAdmin):
     get_provider.short_description = 'Provider ID'
 
 
-class GlobalRoleInlineFormset(forms.models.BaseInlineFormSet):
-    def save_new(self, form, commit=True):
-        obj = super().save_new(form, commit=False)
-        obj.identity_provider = self.instance
-        if commit:
-            obj.save()
-        return obj
+class IdentityProviderGroupRoleInlineForm(forms.ModelForm):
+    class Meta:
+        model = IdentityProviderGroupRole
+        fields = ('name', 'map_to')
+
+    # custom field to track if the row should be deleted
+    should_delete = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def clean(self):
-        super().clean()
-        for form in self.forms:
-            if not form.is_valid() or not form.cleaned_data:
-                continue
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        identity_provider = getattr(self.instance, 'identity_provider', None)
 
-            name = form.cleaned_data.get('name')
-            identity_provider = form.cleaned_data.get('identity_provider')
-            if name and identity_provider:
-                if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
-                    form.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
-
-
-class GroupRoleInlineFormset(forms.models.BaseInlineFormSet):
-    def save_new(self, form, commit=True):
-        obj = super().save_new(form, commit=False)
-        obj.identity_provider = self.instance
-        if commit:
-            obj.save()
-        return obj
-
-    def clean(self):
-        super().clean()
-        for form in self.forms:
-            if not form.is_valid() or not form.cleaned_data:
-                continue
-
-            name = form.cleaned_data.get('name')
-            identity_provider = form.cleaned_data.get('identity_provider')
-            if name and identity_provider:
-                if IdentityProviderGroupRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
-                    form.add_error('name', 'A group role mapping with this name already exists for this Identity provider.')
-
-
-class IdentityProviderGlobalRoleInline(admin.TabularInline):
-    model = IdentityProviderGlobalRole
-    formset = GlobalRoleInlineFormset
-    extra = 0
-    verbose_name = "Global Role Mapping"
-    verbose_name_plural = "Global Role Mapping"
-    fields = ('name', 'map_to')
-
-    def clean(self):
-        super().clean()
-        for form in self.forms:
-            if not form.is_valid() or not form.cleaned_data:
-                continue
-
-            name = form.cleaned_data.get('name')
-            identity_provider = form.cleaned_data.get('identity_provider')
-            if name and identity_provider:
-                if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=form.instance.pk).exists():
-                    form.add_error('name', 'A global role mapping with this Identity Provider already exists')
-
-    def formfield_for_dbfield(self, db_field, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, **kwargs)
-        if db_field.name in ('name',) and formfield:
-            formfield.widget.attrs.update(
-                {
-                    'data-help-text': db_field.help_text,
-                    'class': 'with-help-text',
-                }
-            )
-        return formfield
-
-    class Media:
-        js = ('admin/js/inline_help_text.js',)
-        css = {'all': ('admin/css/inline_help_text.css',)}
+        if name and identity_provider:
+            if IdentityProviderGroupRole.objects.filter(
+                identity_provider=identity_provider,
+                name=name
+            ).exclude(pk=self.instance.pk).exists():
+                self.add_error('name', 'A group role mapping with this name already exists for this Identity provider.')
 
 
 class IdentityProviderGroupRoleInline(admin.TabularInline):
     model = IdentityProviderGroupRole
-    formset = GroupRoleInlineFormset
+    form = IdentityProviderGroupRoleInlineForm
     extra = 0
     verbose_name = "Group Role Mapping"
     verbose_name_plural = "Group Role Mapping"
-    fields = ('name', 'map_to')
+    template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
@@ -325,6 +290,66 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
     class Media:
         js = ('admin/js/inline_help_text.js',)
         css = {'all': ('admin/css/inline_help_text.css',)}
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+
+
+class IdentityProviderGlobalRoleInlineForm(forms.ModelForm):
+    class Meta:
+        model = IdentityProviderGlobalRole
+        fields = ('name', 'map_to')
+
+    # custom field to track if the row should be deleted
+    should_delete = forms.BooleanField(required=False, widget=forms.HiddenInput())
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        identity_provider = getattr(self.instance, 'identity_provider', None)
+
+        if name and identity_provider:
+            if IdentityProviderGlobalRole.objects.filter(
+                identity_provider=identity_provider,
+                name=name
+            ).exclude(pk=self.instance.pk).exists():
+                self.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
+
+
+class IdentityProviderGlobalRoleInline(admin.TabularInline):
+    model = IdentityProviderGlobalRole
+    form = IdentityProviderGlobalRoleInlineForm
+    extra = 0
+    verbose_name = "Global Role Mapping"
+    verbose_name_plural = "Global Role Mapping"
+    template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ('name',) and formfield:
+            formfield.widget.attrs.update(
+                {
+                    'data-help-text': db_field.help_text,
+                    'class': 'with-help-text',
+                }
+            )
+        return formfield
+
+    class Media:
+        js = ('admin/js/inline_help_text.js',)
+        css = {'all': ('admin/css/inline_help_text.css',)}
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
+
+    def has_delete_permission(self, request, obj=None):
+        return True
 
 
 class LoginOptionAdmin(admin.ModelAdmin):
@@ -353,3 +378,4 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
+
