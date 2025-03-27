@@ -185,6 +185,15 @@ table.dataTable thead .sorting_desc_disabled::after {
     color: black;
 }
 
+.select2-container--admin-autocomplete .select2-results__option--highlighted[aria-selected] {
+    background-color: #0074f0 !important;
+    color: white !important;
+}
+
+.select2-container--default .select2-results__option--selected {
+	background-color: #ddd !important;
+}
+
 #changelist-search .form-group {
     margin-bottom: .5em;
     margin-right: .5em;

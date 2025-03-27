@@ -126,7 +126,7 @@ class CategoryAdminForm(forms.ModelForm):
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
-    search_fields = ["title"]
+    search_fields = ["title", "uid"]
     list_display = ["title", "user", "add_date", "media_count"]
     list_filter = []
     ordering = ("-add_date",)

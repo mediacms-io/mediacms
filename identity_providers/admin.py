@@ -60,7 +60,8 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     verbose_name = "Category Mapping"
     verbose_name_plural = "Category Mapping"
     template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
-        
+    autocomplete_fields = ['map_to']
+ 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name in ('name', 'map_to') and formfield:
