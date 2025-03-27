@@ -205,16 +205,11 @@ class CustomSocialAppAdmin(SocialAppAdmin):
                 for row in csv_reader:
                     group_id = row.get('group_id')
                     category_id = row.get('category_id')
-
                     if group_id and category_id:
-                        if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id).exists():
-                            try:
-                                category = Category.objects.filter(identity_provider=obj, uid=category_id).first()
-                                if category:
-                                    mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category)  # noqa
-                            except Exception as e:
-                                logging.error(e)
-
+                        category = Category.objects.filter(uid=category_id).first()
+                        if category:
+                            if not IdentityProviderCategoryMapping.objects.filter(identity_provider=obj, name=group_id, map_to=category).exists():
+                                mapping = IdentityProviderCategoryMapping.objects.create(identity_provider=obj, name=group_id, map_to=category)  # noqa
             except Exception as e:
                 logging.error(e)
 
