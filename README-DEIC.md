@@ -38,6 +38,14 @@ SOCIALACCOUNT_EMAIL_REQUIRED = False
 
 ```
 
+# if set to strict, user is created with the email from the saml provider without
+# checking if the email is already on the system
+# however if this is ommited, and user tries to login with an email that already exists on
+# the system, then they get to the ugly form where it suggests they add a username/email/name
+
+ACCOUNT_PREVENT_ENUMERATION = 'strict'
+
+
 ## SAML Configuration Steps
 
 ### Step 1: Add SAML Identity Provider
