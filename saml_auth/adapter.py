@@ -120,7 +120,7 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     # if remove_from_groups setting is True and user is part of groups for this
     # social app that are not included anymore on the response, then remove user from group
     if saml_configuration.remove_from_groups:
-        for group in user.rbac_groups.filter(social_app=social_app):
+        for group in user.rbac_groups.filter(identity_provider=social_app):        
             if group not in rbac_groups:
                 group.members.remove(user)
 
