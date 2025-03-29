@@ -6,7 +6,9 @@
         <div id="group-mapping-warning-container" style="display: block; text-align: right; margin-bottom: 8px;">
             <div id="group-mapping-warning">
                 <strong>Attention: Removing a Group Mapping will also delete the named Group!</strong>
-                <img src="{% static 'admin/img/icon-unknown.svg' %}" class="help help-tooltip" width="13" height="13" style="margin-left: 4px; vertical-align: middle;" alt="Help" title="This will permanently remove the associated groups">
+                <img src="{% static 'admin/img/icon-unknown.svg' %}" class="help help-tooltip" width="13" height="13" style="margin-left: 4px; vertical-align: middle;" alt="Help" title="Keep the group by unlinking group from IDP under Users > Groups > IDP Config Name
+
+">
             </div>
         </div>
         {{ inline_admin_formset.formset.management_form }}
