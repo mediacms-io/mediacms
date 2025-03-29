@@ -110,7 +110,7 @@ class RBACGroupInline(admin.TabularInline):
     show_change_link = True
     verbose_name = "Group Mapping"
     verbose_name_plural = "Group Mapping"
-    template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
+    template = 'admin/socialaccount/socialapp/custom_tabular_inline_for_groups.html'
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
