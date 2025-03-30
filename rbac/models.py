@@ -89,6 +89,9 @@ def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwar
     from identity_providers.models import IdentityProviderCategoryMapping
         
     if action == 'post_add':
+        if not instance.identity_provider:
+            return
+        # the following apply only if identity_provider is there
         for category_id in pk_set:
             category = Category.objects.get(pk=category_id)
             

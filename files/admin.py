@@ -66,10 +66,9 @@ class CategoryAdminForm(forms.ModelForm):
         cleaned_data = super().clean()
         is_rbac_category = cleaned_data.get('is_rbac_category')
         identity_provider = cleaned_data.get('identity_provider')
-
         # Check if this category has any RBAC groups
         if self.instance.pk:
-            has_rbac_groups = self.instance.rbac_groups.exists() or cleaned_data.get('rbac_groups')
+            has_rbac_groups = cleaned_data.get('rbac_groups')
         else:
             has_rbac_groups = False
 
