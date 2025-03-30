@@ -103,7 +103,6 @@ class RBACGroupAdmin(admin.ModelAdmin):
     filter_horizontal = ['categories']
     change_form_template = 'admin/rbac/rbacgroup/change_form.html'
 
-
     def get_list_filter(self, request):
         list_filter = list(self.list_filter)
 

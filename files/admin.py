@@ -131,6 +131,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = []
     ordering = ("-add_date",)
     readonly_fields = ("user", "media_count")
+    change_form_template = 'admin/files/category/change_form.html'
 
     def get_list_filter(self, request):
         list_filter = list(self.list_filter)
