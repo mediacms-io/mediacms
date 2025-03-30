@@ -37,7 +37,7 @@ class AdminCustomizationsConfig(AppConfig):
                     for model in app['models']:
                         if model['object_name'] == 'EmailAddress':
                             email_model = model
-                            account_app['models'].remove(model)
+#                            account_app['models'].remove(model)
                 elif app['app_label'] == 'rbac':
                     if not getattr(settings, 'USE_RBAC', False):
                         continue
@@ -45,7 +45,7 @@ class AdminCustomizationsConfig(AppConfig):
                     for model in app['models']:
                         if model['object_name'] == 'RBACGroup':
                             rbac_group_model = model
-                            rbac_app['models'].remove(model)
+#                            rbac_app['models'].remove(model)
                 elif app['app_label'] == 'identity_providers':
                     if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
                         continue
@@ -56,10 +56,10 @@ class AdminCustomizationsConfig(AppConfig):
                     for model in models_to_check:
                         if model['object_name'] == 'IdentityProviderUserLog':
                             identity_providers_user_log_model = model
-                            identity_providers_app['models'].remove(model)
+#                            identity_providers_app['models'].remove(model)
                         if model['object_name'] == 'LoginOption':
                             identity_providers_login_option = model
-                            identity_providers_app['models'].remove(model)
+#                            identity_providers_app['models'].remove(model)
                 elif app['app_label'] == 'socialaccount':
                     socialaccount_app = app
 
@@ -73,7 +73,7 @@ class AdminCustomizationsConfig(AppConfig):
                 socialaccount_app['models'].append(identity_providers_user_log_model)
 
             # 2. don't include the following apps
-            apps_to_hide = ['authtoken', 'auth', 'account', 'identity_providers', 'saml_auth', 'rbac']
+            apps_to_hide = ['authtoken', 'auth', 'account', 'saml_auth', 'rbac']
             if not getattr(settings, 'USE_RBAC', False):
                 apps_to_hide.append('rbac')
             if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
