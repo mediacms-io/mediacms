@@ -73,9 +73,6 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
             )
         return formfield
 
-    class Media:
-        js = ('admin/js/inline_help_text.js',)
-        css = {'all': ('admin/css/inline_help_text.css',)}
             
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -123,9 +120,6 @@ class RBACGroupInline(admin.TabularInline):
             )
         return formfield
 
-    class Media:
-        js = ('admin/js/inline_help_text.js',)
-        css = {'all': ('admin/css/inline_help_text.css',)}
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -283,9 +277,6 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
             )
         return formfield
 
-    class Media:
-        js = ('admin/js/inline_help_text.js',)
-        css = {'all': ('admin/css/inline_help_text.css',)}
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -336,9 +327,6 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
             )
         return formfield
 
-    class Media:
-        js = ('admin/js/inline_help_text.js',)
-        css = {'all': ('admin/css/inline_help_text.css',)}
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)

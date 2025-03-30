@@ -101,6 +101,8 @@ class RBACGroupAdmin(admin.ModelAdmin):
     list_filter = (RoleFilter,)
     search_fields = ['name', 'uid', 'description', 'identity_provider__name']
     filter_horizontal = ['categories']
+    change_form_template = 'admin/rbac/rbacgroup/change_form.html'
+
 
     def get_list_filter(self, request):
         list_filter = list(self.list_filter)
