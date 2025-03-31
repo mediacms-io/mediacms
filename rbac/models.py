@@ -1,11 +1,10 @@
 from allauth.socialaccount.models import SocialApp
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.crypto import get_random_string
-
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from django.conf import settings
+from django.utils.crypto import get_random_string
 
 
 def generate_uid():
@@ -87,36 +86,21 @@ def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwar
 
     from files.models import Category
     from identity_providers.models import IdentityProviderCategoryMapping
-        
+
     if action == 'post_add':
-
-
         if not instance.identity_provider:
             return
         # the following apply only if identity_provider is there
         for category_id in pk_set:
             category = Category.objects.get(pk=category_id)
-            
-            mapping_exists = IdentityProviderCategoryMapping.objects.filter(
-                identity_provider=instance.identity_provider,
-                name=instance.uid,
-                map_to=category
-            ).exists()
-            
+
+            mapping_exists = IdentityProviderCategoryMapping.objects.filter(identity_provider=instance.identity_provider, name=instance.uid, map_to=category).exists()
+
             if not mapping_exists:
-                IdentityProviderCategoryMapping.objects.create(
-                    identity_provider=instance.identity_provider,
-                    name=instance.uid,
-                    map_to=category
-                )
-                
-    elif action == 'post_remove':        
+                IdentityProviderCategoryMapping.objects.create(identity_provider=instance.identity_provider, name=instance.uid, map_to=category)
+
+    elif action == 'post_remove':
         for category_id in pk_set:
             category = Category.objects.get(pk=category_id)
-            
-            IdentityProviderCategoryMapping.objects.filter(
-                identity_provider=instance.identity_provider,
-                name=instance.uid,
-                map_to=category
-            ).delete()
-    
+
+            IdentityProviderCategoryMapping.objects.filter(identity_provider=instance.identity_provider, name=instance.uid, map_to=category).delete()

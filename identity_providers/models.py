@@ -75,11 +75,7 @@ class IdentityProviderCategoryMapping(models.Model):
 
     name = models.CharField(verbose_name='Group Attribute Value', max_length=100, help_text='Identity Provider group attribute value')
 
-    map_to = models.ForeignKey(
-        'files.Category',
-        on_delete=models.CASCADE,
-        help_text='Category id'
-    )
+    map_to = models.ForeignKey('files.Category', on_delete=models.CASCADE, help_text='Category id')
 
     class Meta:
         verbose_name = 'Identity Provider Category Mapping'
@@ -107,6 +103,7 @@ class IdentityProviderCategoryMapping(models.Model):
 
     def delete(self, *args, **kwargs):
         from rbac.models import RBACGroup
+
         group = RBACGroup.objects.filter(identity_provider=self.identity_provider, uid=self.name).first()
         if group:
             group.categories.remove(self.map_to)

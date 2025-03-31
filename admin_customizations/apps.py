@@ -16,28 +16,22 @@ class AdminCustomizationsConfig(AppConfig):
             # To see the list:
             # print([a.get('app_label') for a in app_list])
 
-            # 1. move Social Account EmailAddress to Users
             email_model = None
             rbac_group_model = None
             identity_providers_user_log_model = None
             identity_providers_login_option = None
             auth_app = None
-            account_app = None
-            account_app = None
             rbac_app = None
             socialaccount_app = None
-            identity_providers_app = None
 
             for app in app_list:
                 if app['app_label'] == 'users':
                     auth_app = app
 
                 elif app['app_label'] == 'account':
-                    account_app = app
                     for model in app['models']:
                         if model['object_name'] == 'EmailAddress':
                             email_model = model
-#                            account_app['models'].remove(model)
                 elif app['app_label'] == 'rbac':
                     if not getattr(settings, 'USE_RBAC', False):
                         continue
@@ -45,21 +39,17 @@ class AdminCustomizationsConfig(AppConfig):
                     for model in app['models']:
                         if model['object_name'] == 'RBACGroup':
                             rbac_group_model = model
-#                            rbac_app['models'].remove(model)
                 elif app['app_label'] == 'identity_providers':
                     if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
                         continue
 
-                    identity_providers_app = app
                     models_to_check = list(app['models'])
 
                     for model in models_to_check:
                         if model['object_name'] == 'IdentityProviderUserLog':
                             identity_providers_user_log_model = model
-#                            identity_providers_app['models'].remove(model)
                         if model['object_name'] == 'LoginOption':
                             identity_providers_login_option = model
-#                            identity_providers_app['models'].remove(model)
                 elif app['app_label'] == 'socialaccount':
                     socialaccount_app = app
 

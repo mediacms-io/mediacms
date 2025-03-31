@@ -6,8 +6,6 @@ from allauth.socialaccount.models import SocialAccount, SocialApp, SocialToken
 from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django.urls import reverse
-from django.utils.html import format_html
 
 from identity_providers.forms import ImportCSVsForm
 from identity_providers.models import (
@@ -56,12 +54,12 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
     form = IdentityProviderCategoryMappingInlineForm
     extra = 0
     can_delete = True
-    show_change_link = True    
+    show_change_link = True
     verbose_name = "Category Mapping"
     verbose_name_plural = "Category Mapping"
     template = 'admin/socialaccount/socialapp/custom_tabular_inline.html'
     autocomplete_fields = ['map_to']
- 
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name in ('name', 'map_to') and formfield:
@@ -73,7 +71,6 @@ class IdentityProviderCategoryMappingInline(admin.TabularInline):
             )
         return formfield
 
-            
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         return formset
@@ -119,7 +116,6 @@ class RBACGroupInline(admin.TabularInline):
                 }
             )
         return formfield
-
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -192,6 +188,7 @@ class CustomSocialAppAdmin(SocialAppAdmin):
         csv_file = form.cleaned_data.get('categories_csv')
         if csv_file:
             from files.models import Category
+
             try:
                 csv_file.seek(0)
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
@@ -207,16 +204,14 @@ class CustomSocialAppAdmin(SocialAppAdmin):
             except Exception as e:
                 logging.error(e)
 
-
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
-        deleted_pks = set()
-        
+
         for form in formset.forms:
             if form.cleaned_data.get('should_delete', False) and form.instance.pk:
                 instances.remove(form.instance)
                 form.instance.delete()
-        
+
         for instance in instances:
             instance.save()
         formset.save_m2m()
@@ -251,10 +246,7 @@ class IdentityProviderGroupRoleInlineForm(forms.ModelForm):
         identity_provider = getattr(self.instance, 'identity_provider', None)
 
         if name and identity_provider:
-            if IdentityProviderGroupRole.objects.filter(
-                identity_provider=identity_provider,
-                name=name
-            ).exclude(pk=self.instance.pk).exists():
+            if IdentityProviderGroupRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=self.instance.pk).exists():
                 self.add_error('name', 'A group role mapping with this name already exists for this Identity provider.')
 
 
@@ -277,14 +269,12 @@ class IdentityProviderGroupRoleInline(admin.TabularInline):
             )
         return formfield
 
-
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         return formset
 
     def has_delete_permission(self, request, obj=None):
         return True
-
 
 
 class IdentityProviderGlobalRoleInlineForm(forms.ModelForm):
@@ -301,10 +291,7 @@ class IdentityProviderGlobalRoleInlineForm(forms.ModelForm):
         identity_provider = getattr(self.instance, 'identity_provider', None)
 
         if name and identity_provider:
-            if IdentityProviderGlobalRole.objects.filter(
-                identity_provider=identity_provider,
-                name=name
-            ).exclude(pk=self.instance.pk).exists():
+            if IdentityProviderGlobalRole.objects.filter(identity_provider=identity_provider, name=name).exclude(pk=self.instance.pk).exists():
                 self.add_error('name', 'A global role mapping with this name already exists for this Identity provider.')
 
 
@@ -326,7 +313,6 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
                 }
             )
         return formfield
-
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
@@ -362,4 +348,3 @@ if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
     SocialApp._meta.verbose_name = "ID Provider"
     SocialApp._meta.verbose_name_plural = "ID Providers"
     SocialAccount._meta.app_config.verbose_name = "Identity Providers"
-
