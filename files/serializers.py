@@ -1,5 +1,7 @@
+from django.conf import settings
 from rest_framework import serializers
 
+from .methods import is_mediacms_editor
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
 # TODO: put them in a more DRY way
@@ -76,7 +78,24 @@ class MediaSerializer(serializers.ModelSerializer):
             "featured",
             "user_featured",
             "size",
+            # "category",
         )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+
+        if False and request and 'category' in self.fields:
+            # this is not working
+            user = request.user
+            if is_mediacms_editor(user):
+                pass
+            else:
+                if getattr(settings, 'USE_RBAC', False):
+                    # Filter category queryset based on user permissions
+                    non_rbac_categories = Category.objects.filter(is_rbac_category=False)
+                    rbac_categories = user.get_rbac_categories_as_contributor()
+                    self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
 class SingleMediaSerializer(serializers.ModelSerializer):
