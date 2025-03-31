@@ -74,7 +74,8 @@ class CategoryAdminForm(forms.ModelForm):
 
         if not is_rbac_category:
             if has_rbac_groups:
-                self.add_error('is_rbac_category', ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.'))
+                cleaned_data['is_rbac_category'] = True
+                #self.add_error('is_rbac_category', ValidationError('This category has RBAC groups assigned. "Is RBAC Category" must be enabled.'))
 
         for rbac_group in cleaned_data.get('rbac_groups'):
             if rbac_group.identity_provider != identity_provider:
