@@ -104,8 +104,9 @@
         <h1>Sign In</h1>
         <p>Please select your preferred login method</p>
       </div>
-      
-      <form id="loginForm" method="get" action="">
+
+      <form id="loginForm" method="post" action="">
+        {% csrf_token %}
         <div class="login-select-container">
           <select id="loginOptionSelect" class="login-select" onchange="updateFormAction()">
             <option value="" disabled selected>Select login method...</option>
@@ -115,25 +116,35 @@
           </select>
           <div class="select-arrow"></div>
         </div>
-        
-        <button type="submit" class="login-button">Continue</button>
+
+	{% comment %}        <button type="submit" class="login-button">Continue</button> {% endcomment %}
       </form>
-      
+
     </div>
   </div>
 </div>
-
 <script>
   function updateFormAction() {
     const select = document.getElementById('loginOptionSelect');
     const form = document.getElementById('loginForm');
     form.action = select.value;
+    if (select.value.includes('/accounts/login_system')) {
+      form.method = 'get';
+    } else {
+      form.method = 'post';
+    }
+	  
   }
-  
+
+  // Auto-submit form on change
   document.getElementById('loginOptionSelect').addEventListener('change', function() {
     if (this.value) {
+      // Change method to POST before submitting
+      updateFormAction(); // Update the form method based on URL
+	    
       document.getElementById('loginForm').submit();
     }
   });
 </script>
 {% endblock innercontent %}
+
