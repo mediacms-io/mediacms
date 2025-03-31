@@ -25,7 +25,7 @@ class RoleFilter(admin.SimpleListFilter):
 
 class RBACGroupAdminForm(forms.ModelForm):
     categories = forms.ModelMultipleChoiceField(
-        queryset=Category.objects.filter(),
+        queryset=Category.objects.filter(is_rbac_category=True),
         required=False,
         widget=admin.widgets.FilteredSelectMultiple('Categories', False),
         help_text='Select categories this RBAC group has access to',
