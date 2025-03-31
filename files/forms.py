@@ -42,6 +42,8 @@ class MediaForm(forms.ModelForm):
             self.fields.pop("featured")
             self.fields.pop("reported_times")
             self.fields.pop("is_reviewed")
+            if settings.PORTAL_WORKFLOW == 'private':
+                self.fields.pop("state")
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
