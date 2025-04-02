@@ -527,6 +527,19 @@ input[type="text"]
     line-height: 1;
 }
 
+select#id_rbac_groups_from,
+select#id_rbac_groups_to,
+select#id_contributors_field_to,
+select#id_contributors_field_from,
+select#id_members_field_to,
+select#id_members_field_from,
+select#id_managers_field_to,
+select#id_managers_field_from,
+select#id_categories_to,
+select#id_categories_from {
+	height: 285px !important;
+}
+
 /* Might need to import more rules from:
  * https://github.com/django/django/blob/master/django/contrib/admin/static/admin/css/responsive.css
  */
