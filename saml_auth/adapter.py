@@ -104,10 +104,10 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
             if group_role.map_to in ['member', 'contributor', 'manager']:
                 role = group_role.map_to
 
-        role = role if role in ['member', 'contributor', 'manager'] else 'member'
-
     except Exception as e:
         logging.error(e)
+
+    role = role if role in ['member', 'contributor', 'manager'] else 'member'
 
     for rbac_group in rbac_groups:
         membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()

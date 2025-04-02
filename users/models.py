@@ -167,12 +167,15 @@ class User(AbstractUser):
             self.is_superuser = True
             self.is_staff = True
             update_fields.extend(['is_superuser', 'is_staff'])
-        elif role_mapping == 'user':
-            # Basic user - no special permissions needed
-            return True
         else:
-            # Unknown role mapping
-            return False
+            self.is_superuser = False
+            self.is_staff = False
+            self.advancedUser = False
+            self.is_editor = False
+            self.is_manager = False
+            update_fields.extend(['is_superuser', 'is_staff', 'advancedUser', 'is_editor', 'is_manager'])
+            # XYZ TODO: to confirm with Thorkild
+            # return True
 
         if update_fields:
             self.save(update_fields=update_fields)
