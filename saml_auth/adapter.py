@@ -111,6 +111,9 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 
     for rbac_group in rbac_groups:
         membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
+        if membership and role != membership.role:
+            membership.role = role
+            membership.save(update_fields=["role"])
         if not membership:
             try:
                 # use role from early above
