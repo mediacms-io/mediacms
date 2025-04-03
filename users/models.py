@@ -12,6 +12,7 @@ from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
 from files.models import Category, Media, Tag
+from rbac.models import RBACGroup
 
 
 class User(AbstractUser):
@@ -44,6 +45,9 @@ class User(AbstractUser):
     class Meta:
         ordering = ["-date_added", "name"]
         indexes = [models.Index(fields=["-date_added", "name"])]
+
+    def __str__(self):
+        return f"{self.name} - {self.email}"
 
     def update_user_media(self):
         self.media_count = Media.objects.filter(listable=True, user=self).count()
@@ -109,6 +113,73 @@ class User(AbstractUser):
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
         super(User, self).save(*args, **kwargs)
+
+    def get_user_rbac_groups(self):
+        """Get all RBAC groups the user belongs to"""
+        return RBACGroup.objects.filter(memberships__user=self)
+
+    def get_rbac_categories_as_member(self):
+        """
+        Get all categories related to RBAC groups the user belongs to
+        """
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"])
+        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        return categories
+
+    def has_member_access_to_category(self, category):
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories=category)
+        return rbac_groups.exists()
+
+    def has_member_access_to_media(self, media):
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
+        return rbac_groups.exists()
+
+    def get_rbac_categories_as_contributor(self):
+        """
+        Get all categories related to RBAC groups the user belongs to
+        """
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"])
+        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        return categories
+
+    def set_role_from_mapping(self, role_mapping):
+        """
+        Sets user permissions based on a role mapping string.
+
+        Args:
+            role_mapping (str): The role identifier to map to internal permissions.
+
+        Returns:
+            bool: True if a valid role was applied, False otherwise.
+        """
+        update_fields = []
+
+        if role_mapping == 'advancedUser':
+            self.advancedUser = True
+            update_fields.append('advancedUser')
+        elif role_mapping == 'editor':
+            self.is_editor = True
+            update_fields.append('is_editor')
+        elif role_mapping == 'manager':
+            self.is_manager = True
+            update_fields.append('is_manager')
+        elif role_mapping == 'admin':
+            self.is_superuser = True
+            self.is_staff = True
+            update_fields.extend(['is_superuser', 'is_staff'])
+        else:
+            self.is_superuser = False
+            self.is_staff = False
+            self.advancedUser = False
+            self.is_editor = False
+            self.is_manager = False
+            update_fields.extend(['is_superuser', 'is_staff', 'advancedUser', 'is_editor', 'is_manager'])
+            # XYZ TODO: to confirm with Thorkild
+            # return True
+
+        if update_fields:
+            self.save(update_fields=update_fields)
+        return True
 
 
 class Channel(models.Model):

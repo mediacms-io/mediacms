@@ -1,13 +1,15 @@
 from datetime import datetime, timedelta
 
+from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -30,6 +32,8 @@ from cms.permissions import (
     IsUserOrEditor,
     user_allowed_to_upload,
 )
+from cms.version import VERSION
+from identity_providers.models import LoginOption
 from users.models import User
 
 from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
@@ -77,7 +81,7 @@ VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 def about(request):
     """About view"""
 
-    context = {}
+    context = {"VERSION": VERSION}
     return render(request, "cms/about.html", context)
 
 
@@ -387,6 +391,7 @@ def tos(request):
     return render(request, "cms/tos.html", context)
 
 
+@login_required
 def upload_media(request):
     """Upload media view"""
 
@@ -535,9 +540,10 @@ class MediaDetail(APIView):
             # this need be explicitly called, and will call
             # has_object_permission() after has_permission has succeeded
             self.check_object_permissions(self.request, media)
-
             if media.state == "private" and not (self.request.user == media.user or is_mediacms_editor(self.request.user)):
-                if (not password) or (not media.password) or (password != media.password):
+                if getattr(settings, 'USE_RBAC', False) and self.request.user.is_authenticated and self.request.user.has_member_access_to_media(media):
+                    pass
+                elif (not password) or (not media.password) or (password != media.password):
                     return Response(
                         {"detail": "media is private"},
                         status=status.HTTP_401_UNAUTHORIZED,
@@ -812,7 +818,7 @@ class MediaActions(APIView):
 
 class MediaSearch(APIView):
     """
-    Retrieve results for searc
+    Retrieve results for search
     Only GET is implemented here
     """
 
@@ -872,6 +878,11 @@ class MediaSearch(APIView):
 
         if category:
             media = media.filter(category__title__contains=category)
+            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
+                c_object = Category.objects.filter(title=category, is_rbac_category=True).first()
+                if c_object and request.user.has_member_access_to_category(c_object):
+                    # show all media where user has access based on RBAC
+                    media = Media.objects.filter(category=c_object)
 
         if media_type:
             media = media.filter(media_type=media_type)
@@ -1416,7 +1427,17 @@ class CategoryList(APIView):
         },
     )
     def get(self, request, format=None):
-        categories = Category.objects.filter().order_by("title")
+        if is_mediacms_editor(request.user):
+            categories = Category.objects.filter()
+        else:
+            categories = Category.objects.filter(is_rbac_category=False)
+
+            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
+                rbac_categories = request.user.get_rbac_categories_as_member()
+                categories = categories.union(rbac_categories)
+
+        categories = categories.order_by("title")
+
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data
         return Response(ret)
@@ -1484,3 +1505,38 @@ class TaskDetail(APIView):
         # This is not imported!
         # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def saml_metadata(request):
+    if not (hasattr(settings, "USE_SAML") and settings.USE_SAML):
+        raise Http404
+
+    xml_parts = ['<?xml version="1.0"?>']
+    saml_social_apps = SocialApp.objects.filter(provider='saml')
+    entity_id = f"{settings.FRONTEND_HOST}/saml/metadata/"
+    xml_parts.append(f'<md:EntitiesDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" Name="{entity_id}">')  # noqa
+    xml_parts.append(f'    <md:EntityDescriptor entityID="{entity_id}">')  # noqa
+    xml_parts.append('        <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">')  # noqa
+
+    # Add multiple AssertionConsumerService elements with different indices
+    for index, app in enumerate(saml_social_apps, start=1):
+        xml_parts.append(
+            f'            <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" '  # noqa
+            f'Location="{settings.FRONTEND_HOST}/accounts/saml/{app.client_id}/acs/" index="{index}"/>'  # noqa
+        )
+
+    xml_parts.append('        </md:SPSSODescriptor>')  # noqa
+    xml_parts.append('    </md:EntityDescriptor>')  # noqa
+    xml_parts.append('</md:EntitiesDescriptor>')  # noqa
+    metadata_xml = '\n'.join(xml_parts)
+    return HttpResponse(metadata_xml, content_type='application/xml')
+
+
+def custom_login_view(request):
+    if not (hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS):
+        return redirect(reverse('login_system'))
+
+    login_options = []
+    for option in LoginOption.objects.filter(active=True):
+        login_options.append({'url': option.url, 'title': option.title})
+    return render(request, 'account/custom_login_selector.html', {'login_options': login_options})

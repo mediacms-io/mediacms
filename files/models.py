@@ -18,6 +18,7 @@ from django.db.models.signals import m2m_changed, post_delete, post_save, pre_de
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
@@ -81,6 +82,10 @@ CODECS = (
 
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
+
+
+def generate_uid():
+    return get_random_string(length=16)
 
 
 def original_media_file_path(instance, filename):
@@ -957,11 +962,11 @@ class License(models.Model):
 class Category(models.Model):
     """A Category base model"""
 
-    uid = models.UUIDField(unique=True, default=uuid.uuid4)
+    uid = models.CharField(unique=True, max_length=36, default=generate_uid)
 
     add_date = models.DateTimeField(auto_now_add=True)
 
-    title = models.CharField(max_length=100, unique=True, db_index=True)
+    title = models.CharField(max_length=100, db_index=True)
 
     description = models.TextField(blank=True)
 
@@ -981,6 +986,18 @@ class Category(models.Model):
 
     listings_thumbnail = models.CharField(max_length=400, blank=True, null=True, help_text="Thumbnail to show on listings")
 
+    is_rbac_category = models.BooleanField(default=False, db_index=True, help_text='If access to Category is controlled by role based membership of Groups')
+
+    identity_provider = models.ForeignKey(
+        'socialaccount.SocialApp',
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        help_text='If category is related with a specific Identity Provider',
+        verbose_name='IDP Config Name',
+    )
+
     def __str__(self):
         return self.title
 
@@ -994,7 +1011,11 @@ class Category(models.Model):
     def update_category_media(self):
         """Set media_count"""
 
-        self.media_count = Media.objects.filter(listable=True, category=self).count()
+        if getattr(settings, 'USE_RBAC', False) and self.is_rbac_category:
+            self.media_count = Media.objects.filter(category=self).count()
+        else:
+            self.media_count = Media.objects.filter(listable=True, category=self).count()
+
         self.save(update_fields=["media_count"])
         return True
 
