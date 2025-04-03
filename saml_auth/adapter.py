@@ -42,10 +42,27 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
 def social_account_updated(sender, request, sociallogin, **kwargs):
     # Runs after existing user is updated
     user = sociallogin.user
-    perform_user_actions(user, sociallogin.account)
+    # data is there due to populate_user
+    common_fields = sociallogin.data    
+    perform_user_actions(user, sociallogin.account, common_fields)
 
 
-def perform_user_actions(user, social_account):
+def perform_user_actions(user, social_account, common_fields=None):
+    # common_fields is data already mapped to the attributes we want
+    if common_fields:
+        # check the following fields, if they are updated from the IDP side, update
+        # the user object too
+        fields_to_update = []
+        for item in ["name", "first_name", "last_name", "email"]:
+            if common_fields.get(item) and common_fields[item] != getattr(user, item):
+                setattr(user, item, common_fields[item])
+                fields_to_update.append(item)
+        if fields_to_update:
+            user.save(update_fields=fields_to_update)
+
+
+    # extra_data is the plain response from SAML provider
+
     extra_data = social_account.extra_data
     # there's no FK from Social Account to Social App
     social_app = SocialApp.objects.filter(provider_id=social_account.provider).first()
@@ -63,7 +80,7 @@ def perform_user_actions(user, social_account):
 
 def add_user_logo(user, extra_data):
     try:
-        if user.logo.name == "userlogos/user.jpg" and extra_data.get("jpegPhoto"):
+        if extra_data.get("jpegPhoto") and user.logo.name in ["userlogos/user.jpg", "", None] :
             base64_string = extra_data.get("jpegPhoto")[0]
             image_data = base64.b64decode(base64_string)
             image_content = ContentFile(image_data)

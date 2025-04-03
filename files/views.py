@@ -32,6 +32,7 @@ from cms.permissions import (
     IsUserOrEditor,
     user_allowed_to_upload,
 )
+from cms.version import VERSION
 from identity_providers.models import LoginOption
 from users.models import User
 
@@ -80,7 +81,7 @@ VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 def about(request):
     """About view"""
 
-    context = {}
+    context = {"VERSION": VERSION}
     return render(request, "cms/about.html", context)
 
 

@@ -1011,7 +1011,11 @@ class Category(models.Model):
     def update_category_media(self):
         """Set media_count"""
 
-        self.media_count = Media.objects.filter(listable=True, category=self).count()
+        if getattr(settings, 'USE_RBAC', False) and self.is_rbac_category:
+            self.media_count = Media.objects.filter(category=self).count()
+        else:
+            self.media_count = Media.objects.filter(listable=True, category=self).count()
+        
         self.save(update_fields=["media_count"])
         return True
 
