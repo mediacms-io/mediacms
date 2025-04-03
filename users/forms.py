@@ -44,6 +44,10 @@ class UserForm(forms.ModelForm):
             self.fields.pop("advancedUser")
             self.fields.pop("is_manager")
             self.fields.pop("is_editor")
+        if user.socialaccount_set.exists():
+            # for Social Accounts do not allow to edit the name
+            self.fields["name"].widget.attrs['readonly'] = True
+            self.fields["name"].widget.attrs['disabled'] = True
 
 
 class ChannelForm(forms.ModelForm):
