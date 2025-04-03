@@ -43,7 +43,7 @@ def social_account_updated(sender, request, sociallogin, **kwargs):
     # Runs after existing user is updated
     user = sociallogin.user
     # data is there due to populate_user
-    common_fields = sociallogin.data    
+    common_fields = sociallogin.data
     perform_user_actions(user, sociallogin.account, common_fields)
 
 
@@ -59,7 +59,6 @@ def perform_user_actions(user, social_account, common_fields=None):
                 fields_to_update.append(item)
         if fields_to_update:
             user.save(update_fields=fields_to_update)
-
 
     # extra_data is the plain response from SAML provider
 
@@ -80,7 +79,7 @@ def perform_user_actions(user, social_account, common_fields=None):
 
 def add_user_logo(user, extra_data):
     try:
-        if extra_data.get("jpegPhoto") and user.logo.name in ["userlogos/user.jpg", "", None] :
+        if extra_data.get("jpegPhoto") and user.logo.name in ["userlogos/user.jpg", "", None]:
             base64_string = extra_data.get("jpegPhoto")[0]
             image_data = base64.b64decode(base64_string)
             image_content = ContentFile(image_data)

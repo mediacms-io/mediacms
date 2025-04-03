@@ -42,15 +42,15 @@ class MediaForm(forms.ModelForm):
             self.fields.pop("featured")
             self.fields.pop("reported_times")
             self.fields.pop("is_reviewed")
- #           if settings.PORTAL_WORKFLOW == 'private':
-#                self.fields.pop("state")
+        #           if settings.PORTAL_WORKFLOW == 'private':
+        #                self.fields.pop("state")
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
                 pass
             else:
                 self.fields['category'].initial = self.instance.category.all()
-                
+
                 non_rbac_categories = Category.objects.filter(is_rbac_category=False)
                 rbac_categories = user.get_rbac_categories_as_contributor()
                 combined_category_ids = list(non_rbac_categories.values_list('id', flat=True)) + list(rbac_categories.values_list('id', flat=True))
@@ -60,7 +60,6 @@ class MediaForm(forms.ModelForm):
                     combined_category_ids = list(set(combined_category_ids + instance_category_ids))
 
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
-
 
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
 
