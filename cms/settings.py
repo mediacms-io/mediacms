@@ -446,15 +446,6 @@ if os.environ.get("TESTING"):
     CELERY_TASK_ALWAYS_EAGER = True
 
 
-if "http" not in FRONTEND_HOST:
-    # FRONTEND_HOST needs a http:// preffix
-    FRONTEND_HOST = f"http://{FRONTEND_HOST}"  # noqa
-
-if LOCAL_INSTALL:
-    SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
-else:
-    SSL_FRONTEND_HOST = FRONTEND_HOST
-
 if GLOBAL_LOGIN_REQUIRED:
     # this should go after the AuthenticationMiddleware middleware
     MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
@@ -528,6 +519,15 @@ try:
 except ImportError:
     # local_settings not in use
     pass
+
+if "http" not in FRONTEND_HOST:
+    # FRONTEND_HOST needs a http:// preffix
+    FRONTEND_HOST = f"http://{FRONTEND_HOST}"  # noqa
+
+if LOCAL_INSTALL:
+    SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
+else:
+    SSL_FRONTEND_HOST = FRONTEND_HOST
 
 
 # CSRF_COOKIE_SECURE = True
