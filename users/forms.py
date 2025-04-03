@@ -47,7 +47,6 @@ class UserForm(forms.ModelForm):
         if user.socialaccount_set.exists():
             # for Social Accounts do not allow to edit the name
             self.fields["name"].widget.attrs['readonly'] = True
-            self.fields["name"].widget.attrs['disabled'] = True
 
 
 class ChannelForm(forms.ModelForm):
