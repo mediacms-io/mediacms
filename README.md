@@ -28,8 +28,8 @@ A demo is available at https://demo.mediacms.io
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
-- **Role-Based Access Control (RBAC)
-- **SAML support
+- **Role-Based Access Control (RBAC)**: create RBAC categories and connect users to groups with view/edit access on their media
+- **SAML support**: with ability to add mappings to system roles and groups
 - **Easy media searching**: enriched with live search functionality
 - **Playlists for audio and video content**: create playlists, add and reorder content
 - **Responsive design**: including light and dark themes
