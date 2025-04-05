@@ -160,7 +160,7 @@ class CustomSocialAppAdmin(SocialAppAdmin):
             field.help_text = "The provider type, eg `google`. For SAML providers, make sure this is set to `saml` lowercase."
         elif db_field.name == 'name':
             field.label = 'IDP Config Name'
-            field.help_text = "This should be a unique name for the provider."            
+            field.help_text = "This should be a unique name for the provider."
         elif db_field.name == 'client_id':
             field.help_text = 'App ID, or consumer key. For SAML providers, this will be part of the default login URL /accounts/saml/{client_id}/login/'
         elif db_field.name == 'sites':
