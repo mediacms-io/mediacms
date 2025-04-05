@@ -955,3 +955,21 @@ Select the SAML Configurations tab, create a new one and set:
 4. **Group mapping**: This creates groups associated with this IDP. Group ids as they come from SAML, associated with MediaCMS groups
 5. **Category Mapping**: This maps a group id (from SAML response) with a category in MediaCMS
 
+## 24. Identity Providers setup
+
+A separate Django app identity_providers has been added in order to facilitate a number of configurations related to different identity providers. If this is enabled, it gives the following options:
+
+- allows to add an Identity Provider through Django admin, and set a number of mappings, as Group Mapping, Global Role mapping and more. While SAML is the only provider that can be added out of the box, any identity provider supported by django allauth can be added with minimal effort. If the response of the identity provider contains attributes as role, or groups, then these can be mapped to MediaCMS specific roles (advanced user, editor, manager, admin) and groups (rbac groups)
+- saves SAML response logs after user is authenticated (can be utilized for other providers too)
+- allows to specify a list of login options through the admin (eg system login, identity provider login)
+
+
+to enable the identity providers, set the following setting on `local_settings.py`:
+
+
+```
+USE_IDENTITY_PROVIDERS = True
+```
+
+Visiting the admin, you will see the Identity Providers tab and you can add one. 
+
