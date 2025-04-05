@@ -115,7 +115,7 @@ ACCOUNT_LOGIN_METHODS = {"username", "email"}
 ACCOUNT_EMAIL_REQUIRED = True  # new users need to specify email
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # 'mandatory' 'none'
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_USERNAME_MIN_LENGTH = "4"
+ACCOUNT_USERNAME_MIN_LENGTH = 4
 ACCOUNT_ADAPTER = "users.adapter.MyAccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "users.forms.SignupForm"
 ACCOUNT_USERNAME_VALIDATORS = "users.validators.custom_username_validators"
@@ -256,7 +256,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    "admin_customizations",
     "django.contrib.auth",
     "allauth",
     "allauth.account",
@@ -265,6 +265,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "jazzmin",
+    "django.contrib.admin",
     "django.contrib.sites",
     "rest_framework",
     "rest_framework.authtoken",
@@ -272,6 +274,8 @@ INSTALLED_APPS = [
     "files.apps.FilesConfig",
     "users.apps.UsersConfig",
     "actions.apps.ActionsConfig",
+    "rbac.apps.RbacConfig",
+    "identity_providers.apps.IdentityProvidersConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -279,6 +283,8 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "drf_yasg",
+    "allauth.socialaccount.providers.saml",
+    "saml_auth.apps.SamlAuthConfig",
 ]
 
 MIDDLEWARE = [
@@ -440,26 +446,6 @@ if os.environ.get("TESTING"):
     CELERY_TASK_ALWAYS_EAGER = True
 
 
-try:
-    # keep a local_settings.py file for local overrides
-    from .local_settings import *  # noqa
-
-    # ALLOWED_HOSTS needs a url/ip
-    ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
-except ImportError:
-    # local_settings not in use
-    pass
-
-
-if "http" not in FRONTEND_HOST:
-    # FRONTEND_HOST needs a http:// preffix
-    FRONTEND_HOST = f"http://{FRONTEND_HOST}"  # noqa
-
-if LOCAL_INSTALL:
-    SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
-else:
-    SSL_FRONTEND_HOST = FRONTEND_HOST
-
 if GLOBAL_LOGIN_REQUIRED:
     # this should go after the AuthenticationMiddleware middleware
     MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
@@ -476,16 +462,6 @@ if GLOBAL_LOGIN_REQUIRED:
 DO_NOT_TRANSCODE_VIDEO = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-# the following is related to local development using docker
-# and docker-compose-dev.yaml
-try:
-    DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
-    if DEVELOPMENT_MODE:
-        # keep a dev_settings.py file for local overrides
-        from .dev_settings import *  # noqa
-except ImportError:
-    pass
 
 LANGUAGES = [
     ('ar', _('Arabic')),
@@ -526,7 +502,45 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # keep the trailing slash
 DJANGO_ADMIN_URL = "admin/"
 
+# this are used around a number of places and will need to be well documented!!!
+
+USE_SAML = False
+USE_RBAC = False
+USE_IDENTITY_PROVIDERS = False
+JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
+
+
+try:
+    # keep a local_settings.py file for local overrides
+    from .local_settings import *  # noqa
+
+    # ALLOWED_HOSTS needs a url/ip
+    ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
+except ImportError:
+    # local_settings not in use
+    pass
+
+if "http" not in FRONTEND_HOST:
+    # FRONTEND_HOST needs a http:// preffix
+    FRONTEND_HOST = f"http://{FRONTEND_HOST}"  # noqa
+
+if LOCAL_INSTALL:
+    SSL_FRONTEND_HOST = FRONTEND_HOST.replace("http", "https")
+else:
+    SSL_FRONTEND_HOST = FRONTEND_HOST
+
+
 # CSRF_COOKIE_SECURE = True
 # SESSION_COOKIE_SECURE = True
 
 PYSUBS_COMMAND = "pysubs2"
+
+# the following is related to local development using docker
+# and docker-compose-dev.yaml
+try:
+    DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
+    if DEVELOPMENT_MODE:
+        # keep a dev_settings.py file for local overrides
+        from .dev_settings import *  # noqa
+except ImportError:
+    pass

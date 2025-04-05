@@ -23,11 +23,13 @@ A demo is available at https://demo.mediacms.io
 
 ## Features
 - **Complete control over your data**: host it yourself!
-- **Support for multiple publishing workflows**: public, private, unlisted and custom
 - **Modern technologies**: Django/Python/Celery, React.
+- **Support for multiple publishing workflows**: public, private, unlisted and custom
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
+- **Role-Based Access Control (RBAC)
+- **SAML support
 - **Easy media searching**: enriched with live search functionality
 - **Playlists for audio and video content**: create playlists, add and reorder content
 - **Responsive design**: including light and dark themes

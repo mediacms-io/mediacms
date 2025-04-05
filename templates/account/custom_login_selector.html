@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block headtitle %} | Sign In{% endblock headtitle %}
+
+{% block extra_head %}
+<style>
+  .login-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .login-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .login-header h1 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+  
+  .login-header p {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .login-select-container {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  
+  .login-select {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    appearance: none;
+    cursor: pointer;
+  }
+  
+  .login-select:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  }
+  
+  .select-arrow {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    border-style: solid;
+    border-width: 6px 6px 0 6px;
+    border-color: #666 transparent transparent transparent;
+  }
+  
+  .login-button {
+    display: block;
+    width: 100%;
+    padding: 12px 0;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .login-button:hover {
+    background-color: #3a7bc8;
+  }
+  
+  .login-direct-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  
+  .login-direct-link:hover {
+    text-decoration: underline;
+    color: #4a90e2;
+  }
+</style>
+{% endblock extra_head %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+  <div class="user-action-form-inner">
+    <div class="login-container">
+      <div class="login-header">
+        <h1>Sign In</h1>
+        <p>Please select your preferred login method</p>
+      </div>
+
+      <form id="loginForm" method="post" action="">
+        {% csrf_token %}
+        <div class="login-select-container">
+          <select id="loginOptionSelect" class="login-select" onchange="updateFormAction()">
+            <option value="" disabled selected>Select login method...</option>
+            {% for option in login_options %}
+              <option value="{{ option.url }}">{{ option.title }}</option>
+            {% endfor %}
+          </select>
+          <div class="select-arrow"></div>
+        </div>
+
+	{% comment %}        <button type="submit" class="login-button">Continue</button> {% endcomment %}
+      </form>
+
+    </div>
+  </div>
+</div>
+<script>
+  function updateFormAction() {
+    const select = document.getElementById('loginOptionSelect');
+    const form = document.getElementById('loginForm');
+    form.action = select.value;
+    if (select.value.includes('/accounts/login_system')) {
+      form.method = 'get';
+    } else {
+      form.method = 'post';
+    }
+	  
+  }
+
+  // Auto-submit form on change
+  document.getElementById('loginOptionSelect').addEventListener('change', function() {
+    if (this.value) {
+      // Change method to POST before submitting
+      updateFormAction(); // Update the form method based on URL
+	    
+      document.getElementById('loginForm').submit();
+    }
+  });
+</script>
+{% endblock innercontent %}
+
