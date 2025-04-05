@@ -1,0 +1,30 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const importCsvField = document.querySelector('.field-import_csv');
+    let targetFieldset = null;
+	  
+    if (importCsvField) {
+      targetFieldset = importCsvField.closest('fieldset.module.aligned');
+
+      const inlineFormsets = document.querySelectorAll('.js-inline-admin-formset');
+      const lastInlineFormset = inlineFormsets[inlineFormsets.length - 1];
+
+      if (false && targetFieldset && lastInlineFormset) {
+	      lastInlineFormset.after(targetFieldset);
+      }
+    }
+
+  const providerLabel = document.querySelector('label[for="id_provider"]');
+  if (providerLabel && providerLabel.textContent.includes('Provider:')) {
+    providerLabel.textContent = providerLabel.textContent.replace('Provider:', 'Protocol:');
+  }
+	  
+  });
+</script>
+{% endblock %}
+

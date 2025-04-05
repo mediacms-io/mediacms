@@ -1,0 +1,153 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+
+  const continueButton = document.querySelector('input[name="_continue"]');
+  const continueDiv = continueButton ? continueButton.closest('.form-group') : null;
+  const saveButton = document.querySelector('input[name="_save"]');
+  const saveDiv = saveButton ? saveButton.closest('.form-group') : null;
+
+  if (continueDiv && saveDiv) {
+    saveDiv.parentNode.insertBefore(continueDiv, saveDiv);
+  }
+
+  const addAnotherButton = document.querySelector('input[name="_addanother"]');
+  const addAnotherDiv = addAnotherButton ? addAnotherButton.closest('.form-group') : null;
+
+  if (addAnotherDiv) {
+    addAnotherDiv.parentNode.removeChild(addAnotherDiv);
+  }
+
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    .csv-import-section label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .csv-import-section .help {
+      color: #666;
+      font-style: italic;
+      margin-top: 5px;
+    }
+    .csv-import-section input[type="file"] {
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 500px;
+    }
+    .csv-import-section input[type="file"]:focus {
+      border-color: #80bdff;
+      outline: 0;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+  `;
+  document.head.appendChild(styleEl);
+  setTimeout(function() {
+    moveFieldsToTabs();
+    handleErrorsAndActivateTabs();
+    performRestStuff();
+  }, 500);
+
+  function moveFieldsToTabs() {
+    const groupsImportCsvField = document.querySelector('.field-groups_csv');
+    const categoriesImportCsvField = document.querySelector('.field-categories_csv');
+
+    const categoryMappingsTab = document.querySelector('#category-mapping-tab');
+    const groupMappingsTab = document.querySelector('#group-mapping-tab');
+
+    if (groupsImportCsvField && groupMappingsTab) {
+      groupsImportCsvField.classList.add('csv-import-section');
+
+      groupsImportCsvField.style.padding = '15px';
+      groupsImportCsvField.style.margin = '0 0 20px 0';
+      groupsImportCsvField.style.borderRadius = '5px';
+      groupsImportCsvField.style.border = '1px solid #dee2e6';
+
+      const groupFieldTitle = document.createElement('h3');
+      groupFieldTitle.style.marginTop = '0';
+      groupFieldTitle.style.fontSize = '16px';
+      groupsImportCsvField.insertBefore(groupFieldTitle, groupsImportCsvField.firstChild);
+
+      const groupCardHeader = groupMappingsTab.querySelector('.card-header');
+      if (groupCardHeader) {
+        groupCardHeader.parentNode.insertBefore(groupsImportCsvField, groupCardHeader);
+      } else {
+        groupMappingsTab.insertBefore(groupsImportCsvField, groupMappingsTab.firstChild);
+      }
+    }
+
+    if (categoriesImportCsvField && categoryMappingsTab) {
+      categoriesImportCsvField.classList.add('csv-import-section');
+
+      categoriesImportCsvField.style.padding = '15px';
+      categoriesImportCsvField.style.margin = '0 0 20px 0';
+      categoriesImportCsvField.style.borderRadius = '5px';
+      categoriesImportCsvField.style.border = '1px solid #dee2e6';
+
+      const categoryFieldTitle = document.createElement('h3');
+      categoryFieldTitle.style.marginTop = '0';
+      categoryFieldTitle.style.fontSize = '16px';
+      categoriesImportCsvField.insertBefore(categoryFieldTitle, categoriesImportCsvField.firstChild);
+
+      const categoryCardHeader = categoryMappingsTab.querySelector('.card-header');
+      if (categoryCardHeader) {
+        categoryCardHeader.parentNode.insertBefore(categoriesImportCsvField, categoryCardHeader);
+      } else {
+        categoryMappingsTab.insertBefore(categoriesImportCsvField, categoryMappingsTab.firstChild);
+      }
+    }
+  }
+
+  function handleErrorsAndActivateTabs() {
+    // Check for errors in the moved fields
+    const hasGroupsFieldError = document.querySelector('.field-groups_csv .errorlist');
+    const hasCategoriesFieldError = document.querySelector('.field-categories_csv .errorlist');
+
+    const groupTab = document.querySelector('a[href="#group-mapping-tab"]');
+    const categoryTab = document.querySelector('a[href="#category-mapping-tab"]');
+
+    if (hasGroupsFieldError && groupTab) {
+      document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active', 'show'));
+
+      groupTab.classList.add('active');
+      document.querySelector('#group-mapping-tab').classList.add('active', 'show');
+
+      hasGroupsFieldError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    else if (hasCategoriesFieldError && categoryTab) {
+      document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active', 'show'));
+
+      categoryTab.classList.add('active');
+      document.querySelector('#category-mapping-tab').classList.add('active', 'show');
+
+      hasCategoriesFieldError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  function performRestStuff() {
+    const addLinks = document.querySelectorAll('.add-row a');
+    addLinks.forEach(function(link) {
+        link.textContent = 'Add';
+    });
+
+    const plusIcons = document.querySelectorAll('td.original i.fas.fa-plus');
+    plusIcons.forEach(function(icon) {
+        icon.remove();
+    });
+
+
+  }
+});
+
+</script>
+{% endblock %}
+

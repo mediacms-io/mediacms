@@ -13,11 +13,12 @@ class TestX(TestCase):
 
     def setUp(self):
         self.password = 'this_is_a_fake_password'
+
         self.user = create_account(password=self.password)
 
     def test_file_upload(self):
         client = Client()
-        client.login(username=self.user, password=self.password)
+        client.login(username=self.user.username, password=self.password)
 
         # use both ways, form + API to upload a new media file
         # while video transcoding through ffmpeg takes place asynchronously

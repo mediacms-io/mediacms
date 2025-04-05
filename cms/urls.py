@@ -31,3 +31,7 @@ urlpatterns = [
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs/api/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+admin.site.site_header = "MediaCMS Admin"
+admin.site.site_title = "MediaCMS"
+admin.site.index_title = "Admin"
