@@ -21,7 +21,12 @@
 - [18. Disable encoding and show only original file](#18-disable-encoding-and-show-only-original-file)
 - [19. Rounded corners on videos](#19-rounded-corners)
 - [20. Translations](#20-translations)
-- [21. How to change the video frames on videos](#21-fames)
+- [21. How to change the video frames on videos](#21-how-to-change-the-video-frames-on-videos)
+- [22. Role-Based Access Control](#22-role-based-access-control)
+- [23. SAML setup](#23-saml-setup)
+- [24. Identity Providers setup](#24-identity-providers-setup)
+
+
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
@@ -860,4 +865,40 @@ By default while watching a video you can hover and see the small images named s
 * now you have to re-build the frontend: the easiest way is to run `make build-frontend`, which requires Docker
 
 After that, newly uploaded videos will have sprites generated with the new number of seconds.
+
+
+
+## 22. Role-Based Access Control
+
+By default there are 3 statuses for any Media that lives on the system, public, unlisted, private. When RBAC support is added, a user that is part of a group has access to media that are published to one or more categories that the group is associated with. The workflow is this:
+
+
+1. A Group is created
+2. A Category is associated with the Group
+3. A User is added to the Group
+
+Now user can view the Media even if it is in private state. User also sees all media in Category page
+
+When user is added to group, they can be set as Member, Contributor, Manager. 
+
+- Member: user can view media that are published on one or more categories that this group is associated with
+- Contributor: besides viewing, user can also edit the Media in a category associated with this Group. They can also publish Media to this category
+- Manager: same as Contributor for now
+
+Use cases facilitated with RBAC:
+- viewing a Media in private state: if RBAC is enabled, if user is Member on a Group that is associated with a Category, and the media is published to this Category, then user can view the media
+- editing a Media: if RBAC is enabled, and user is Contributor to one or more Categories, they can publish media to these Categories as long as they are associated with one Group
+- viewing all media of a category: if RBAC is enabled, and user visits a Category, they are able to see the listing of all media that are published in this category, independent of their state, provided that the category is associated with a group that the user is member of
+- viewing all categories associated with groups the user is member of: if RBAC is enabled, and user visits the listing of categories, they can view all categories that are associated with a group the user is member
+
+How to enable RBAC support: 
+
+```
+USE_RBAC = True
+```
+
+on `local_settings.py` and restart the instance. 
+
+
+
 
