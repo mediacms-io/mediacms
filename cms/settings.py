@@ -445,19 +445,6 @@ CELERY_TASK_ALWAYS_EAGER = False
 if os.environ.get("TESTING"):
     CELERY_TASK_ALWAYS_EAGER = True
 
-
-if GLOBAL_LOGIN_REQUIRED:
-    # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
-    LOGIN_REQUIRED_IGNORE_PATHS = [
-        r'/accounts/login/$',
-        r'/accounts/logout/$',
-        r'/accounts/signup/$',
-        r'/accounts/password/.*/$',
-        r'/accounts/confirm-email/.*/$',
-        #        r'/api/v[0-9]+/',
-    ]
-
 # if True, only show original, don't perform any action on videos
 DO_NOT_TRANSCODE_VIDEO = False
 
@@ -544,3 +531,16 @@ try:
         from .dev_settings import *  # noqa
 except ImportError:
     pass
+
+
+if GLOBAL_LOGIN_REQUIRED:
+    # this should go after the AuthenticationMiddleware middleware
+    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
+    LOGIN_REQUIRED_IGNORE_PATHS = [
+        r'/accounts/login/$',
+        r'/accounts/logout/$',
+        r'/accounts/signup/$',
+        r'/accounts/password/.*/$',
+        r'/accounts/confirm-email/.*/$',
+        #        r'/api/v[0-9]+/',
+    ]
