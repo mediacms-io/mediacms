@@ -1,15 +1,16 @@
+name: mediacms-dev
 services:
   migrations:
     platform: linux/amd64
     build:
-      context: .
-      dockerfile: ./Dockerfile
+      context: ..
+      dockerfile: Dockerfile
       args:
         - DEVELOPMENT_MODE=True
     image: mediacms/mediacms:latest
     volumes:
-      - ./:/home/mediacms.io/mediacms/
-    command: "./deploy/docker/prestart.sh"
+      - ../:/home/mediacms.io/mediacms/
+    command: "/home/mediacms.io/mediacms/deploy/docker/prestart.sh"
     environment:
       DEVELOPMENT_MODE: True
       ENABLE_UWSGI: 'no'
@@ -95,13 +96,13 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./:/home/mediacms.io/mediacms/
+      - ../:/home/mediacms.io/mediacms/
     depends_on:
       - migrations
   db:
     image: postgres:17.2-alpine
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data/
+      - ../postgres_data:/var/lib/postgresql/data/
     restart: always
     environment:
       POSTGRES_USER: mediacms
@@ -127,7 +128,7 @@ services:
     deploy:
       replicas: 1
     volumes:
-      - ./:/home/mediacms.io/mediacms/
+      - ../:/home/mediacms.io/mediacms/
     environment:
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
