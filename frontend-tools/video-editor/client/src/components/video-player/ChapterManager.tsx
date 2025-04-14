@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ReactPlayer from "react-player";
 import { Card, CardContent } from "@/components/basic/Card";
 import { Button } from "@/components/basic/Button";
@@ -20,6 +20,7 @@ export default function ChapterManager() {
   const { playing, setPlaying, progress, setProgress, duration, setDuration } = usePlayer();
   const [chapters, setChapters] = useState<Chapter[]>(window.MEDIA_DATA?.chapters || []);
   const [newChapterTitle, setNewChapterTitle] = useState("");
+  const playerRef = useRef<ReactPlayer>(null);
 
   const addChapter = () => {
     if (!newChapterTitle.trim()) {
@@ -47,14 +48,20 @@ export default function ChapterManager() {
   };
 
   const previewChapter = (timestamp: number) => {
-    // Use the global seekTo function that's exposed on the window
-    if ((window as any).seekToFunction) {
-      (window as any).seekToFunction(timestamp);
+    // Use our direct reference to the player
+    if (playerRef.current) {
+      // Seek to the chapter timestamp
+      playerRef.current.seekTo(timestamp, 'seconds');
+      console.log("Seeking to chapter timestamp:", timestamp);
+      
+      // Update the progress state
+      setProgress(timestamp);
+      
+      // Start playing from this position
+      setPlaying(true);
     } else {
-      // Fallback if the function isn't available yet
-      console.log("SeekTo function not yet initialized");
+      console.warn("Player reference not available");
     }
-    setPlaying(true);
   };
 
   const handleSubmitChapters = () => {
@@ -67,6 +74,7 @@ export default function ChapterManager() {
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
         <ReactPlayer
+          ref={playerRef}
           url={sampleVideoUrl}
           width="100%"
           height="100%"
@@ -76,6 +84,20 @@ export default function ChapterManager() {
           onProgress={(state) => setProgress(state.playedSeconds)}
           onDuration={(d) => setDuration(d)}
           controls={true}
+          config={{
+            file: {
+              attributes: {
+                controlsList: 'nodownload',
+                disablePictureInPicture: true
+              },
+              // Ensure video element responds to clicks
+              forceVideo: true
+            }
+          }}
+          onSeek={(seconds) => {
+            console.log('Chapter player - Playing from position:', seconds);
+            setProgress(seconds);
+          }}
         />
       </div>
       <div className="space-y-6">

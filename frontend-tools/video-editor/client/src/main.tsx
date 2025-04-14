@@ -6,7 +6,6 @@ import "./index.css";
 if (typeof window !== 'undefined') {
   window.MEDIA_DATA = {
     videoUrl: "",
-    predefinedRanges: [],
     chapters: []
   };
 }
@@ -20,12 +19,6 @@ declare global {
         id: string;
         title: string;
         timestamp: number;
-      }>;
-      predefinedRanges: Array<{
-        id: string;
-        start: number;
-        end: number;
-        title: string;
       }>;
     };
     seekToFunction?: (time: number) => void;
