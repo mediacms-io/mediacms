@@ -38,7 +38,7 @@ from users.models import User
 
 from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
 from .frontend_translations import translate_string
-from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
+from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands, url_from_path
 from .methods import (
     check_comment_for_mention,
     get_user_or_session,
@@ -271,7 +271,7 @@ def edit_media(request):
     return render(
         request,
         "cms/edit_media.html",
-        {"form": form, "add_subtitle_url": media.add_subtitle_url},
+        {"form": form, "add_subtitle_url": media.add_subtitle_url, "media_file_path": url_from_path(media.media_file.path)},
     )
 
 
