@@ -36,7 +36,13 @@ from cms.version import VERSION
 from identity_providers.models import LoginOption
 from users.models import User
 
-from .forms import ContactForm, EditSubtitleForm, MediaMetadataForm, MediaPublishForm, SubtitleForm
+from .forms import (
+    ContactForm,
+    EditSubtitleForm,
+    MediaMetadataForm,
+    MediaPublishForm,
+    SubtitleForm,
+)
 from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
@@ -299,13 +305,11 @@ def publish_media(request):
     else:
         form = MediaPublishForm(request.user, instance=media)
 
-
     return render(
         request,
         "cms/publish_media.html",
         {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
     )
-
 
 
 @login_required

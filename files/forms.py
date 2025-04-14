@@ -1,17 +1,20 @@
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
 from .models import Category, Media, Subtitle
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Submit
-from crispy_forms.bootstrap import FormActions
+
 
 class CustomField(Field):
     template = 'cms/crispy_custom_field.html'
 
+
 class MultipleSelect(forms.CheckboxSelectMultiple):
     input_type = "checkbox"
+
 
 class MediaMetadataForm(forms.ModelForm):
     new_tags = forms.CharField(label="Tags", help_text="a comma separated list of tags.", required=False)
@@ -72,12 +75,7 @@ class MediaMetadataForm(forms.ModelForm):
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))
 
-        self.helper.layout.append(
-            FormActions(
-                Submit('submit', 'Update Media', css_class='primaryAction')
-            )
-        )
-
+        self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
 
     def clean(self):
         title = self.cleaned_data.get("title", False)
@@ -94,14 +92,13 @@ class MediaMetadataForm(forms.ModelForm):
             return image
 
     def save(self, *args, **kwargs):
-        data = self.cleaned_data # no-qa
+        data = self.cleaned_data  # noqa
 
         media = super(MediaMetadataForm, self).save(*args, **kwargs)
         return media
 
 
 class MediaPublishForm(forms.ModelForm):
-
     class Meta:
         model = Media
         fields = (
@@ -152,11 +149,7 @@ class MediaPublishForm(forms.ModelForm):
             CustomField('allow_download'),
         )
 
-        self.helper.layout.append(
-            FormActions(
-                Submit('submit', 'Publish Media', css_class='primaryAction')
-            )
-        )
+        self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
 
     def save(self, *args, **kwargs):
         data = self.cleaned_data
@@ -168,8 +161,9 @@ class MediaPublishForm(forms.ModelForm):
         return media
 
     def clean(self):
-            self.add_error("category", "Category is required")
-            raise forms.ValidationError("dsaddsaads")
+        self.add_error("category", "Category is required")
+        raise forms.ValidationError("dsaddsaads")
+
 
 class SubtitleForm(forms.ModelForm):
     class Meta:
