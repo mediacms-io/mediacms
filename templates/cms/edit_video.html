@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block headtitle %}Edit video - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}{% endblock headermeta %}
+
+{% block innercontent %}
+        <div class="user-action-form-wrap">
+			{% include "cms/media_nav.html" with active_tab="trim" %}
+			<div class="user-action-form-inner">
+				Trim video placeholder
+			</div>
+		</div>
+{% endblock innercontent %}

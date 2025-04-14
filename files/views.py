@@ -36,7 +36,7 @@ from cms.version import VERSION
 from identity_providers.models import LoginOption
 from users.models import User
 
-from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
+from .forms import ContactForm, EditSubtitleForm, MediaMetadataForm, MediaPublishForm, SubtitleForm
 from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
@@ -248,7 +248,7 @@ def edit_media(request):
     if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
         return HttpResponseRedirect("/")
     if request.method == "POST":
-        form = MediaForm(request.user, request.POST, request.FILES, instance=media)
+        form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
             media = form.save()
             for tag in media.tags.all():
@@ -267,11 +267,88 @@ def edit_media(request):
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
-        form = MediaForm(request.user, instance=media)
+        form = MediaMetadataForm(request.user, instance=media)
     return render(
         request,
         "cms/edit_media.html",
-        {"form": form, "add_subtitle_url": media.add_subtitle_url},
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def publish_media(request):
+    """Publish media"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+
+    if request.method == "POST":
+        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
+        if form.is_valid():
+            media = form.save()
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
+            return HttpResponseRedirect(media.get_absolute_url())
+    else:
+        form = MediaPublishForm(request.user, instance=media)
+
+
+    return render(
+        request,
+        "cms/publish_media.html",
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+
+@login_required
+def edit_chapters(request):
+    """Edit chapters"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "cms/edit_chapters.html",
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def edit_video(request):
+    """Edit chapters"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "cms/edit_video.html",
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
     )
 
 

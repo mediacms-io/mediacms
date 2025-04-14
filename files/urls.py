@@ -16,7 +16,11 @@ urlpatterns = [
     re_path(r"^edit_subtitle", views.edit_subtitle, name="edit_subtitle"),
     re_path(r"^categories$", views.categories, name="categories"),
     re_path(r"^contact$", views.contact, name="contact"),
+    re_path(r"^publish", views.publish_media, name="publish_media"),
+    re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
+    re_path(r"^edit_video", views.edit_video, name="edit_video"),
     re_path(r"^edit", views.edit_media, name="edit_media"),
+
     re_path(r"^embed", views.embed_media, name="get_embed"),
     re_path(r"^featured$", views.featured_media),
     re_path(r"^fu/", include(("uploader.urls", "uploader"), namespace="uploader")),
