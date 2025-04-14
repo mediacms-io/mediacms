@@ -1,0 +1,2 @@
+/*! videojs-markers - v1.0.1 - 2018-02-03
+  * Copyright (c) 2018 ; Licensed  */
