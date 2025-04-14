@@ -5,8 +5,9 @@ import "./index.css";
 // Initialize MEDIA_DATA to ensure it's available before components render
 if (typeof window !== 'undefined') {
   window.MEDIA_DATA = {
-    videoUrl: "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
-    predefinedRanges: []
+    videoUrl: "",
+    predefinedRanges: [],
+    chapters: []
   };
 }
 
@@ -15,6 +16,11 @@ declare global {
   interface Window {
     MEDIA_DATA: {
       videoUrl: string;
+      chapters: Array<{
+        id: string;
+        title: string;
+        timestamp: number;
+      }>;
       predefinedRanges: Array<{
         id: string;
         start: number;

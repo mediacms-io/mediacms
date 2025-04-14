@@ -20,46 +20,27 @@
 			<h1>Edit Media</h1>
 
             <script>
-                const predefined_ranges = [
-                    {
-                        start: 0,
-                        end: 2,
-                        label: "Part A"
-                    },
-                    {
-                        start: 3,
-                        end: 4,
-                        label: "Part B"
-                    },
-                    {
-                        start: 6,
-                        end: 8,
-                        label: "Part C"
-                    }
-                ];
                 window.MEDIA_DATA = {
-                    videoUrl: "{{ media_file_path }}",
-                    predefinedRanges: predefined_ranges,
+                    // videoUrl: "{{ media_file_path }}",
+                    videoUrl: "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
                     chapters: [
                         {
                             id: "1",
-                            title: "Chapter 1",
+                            title: "Chapter AAA",
                             timestamp: 0
                         },
                         {
                             id: "2",
-                            title: "Chapter 2",
+                            title: "Chapter BBB",
                             timestamp: 10
                         },
                         {
                             id: "3",
-                            title: "Chapter 3",
+                            title: "Chapter CCC",
                             timestamp: 20
                         }
                     ]
                 };
-                console.log("MEDIA_DATA");
-                console.log(window.MEDIA_DATA);
             </script>
 
             <!-- Mount point for React app -->
@@ -76,4 +57,20 @@
     <!-- Add data for React components -->
     <script src="{% static 'video_editor/video-editor.js' %}"></script>
 {% endblock innercontent %}
+
+{% block extrajs %}
+    <!-- Load React app after DOM is ready -->
+    <script>
+        console.log("Loading video editor script...");
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOMContentLoaded event fired");
+            const script = document.createElement('script');
+            script.src = "{% static 'video_editor/video-editor.js' %}";
+            script.onload = function() {
+                console.log("Video editor script loaded");
+            };
+            document.body.appendChild(script);
+        });
+    </script>
+{% endblock extrajs %}
 

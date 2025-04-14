@@ -18,7 +18,7 @@ export default function ChapterManager() {
   
   // Use the shared player context
   const { playing, setPlaying, progress, setProgress, duration, setDuration } = usePlayer();
-  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>(window.MEDIA_DATA?.chapters || []);
   const [newChapterTitle, setNewChapterTitle] = useState("");
 
   const addChapter = () => {
