@@ -13,6 +13,11 @@ docker compose -f docker-compose/docker-compose-dev-updated.yaml exec frontend n
 echo "Copying static assets..."
 cp -r frontend/dist/static/* static/
 
+# Build video editor package
+echo "Building video editor package..."
+cd frontend-tools/video-editor
+yarn build
+
 # Restart the web service
 echo "Restarting web service..."
 docker compose -f docker-compose/docker-compose-dev-updated.yaml restart web
