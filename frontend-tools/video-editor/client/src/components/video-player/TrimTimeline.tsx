@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { formatTime } from '@/lib/time';
 import * as Slider from '@radix-ui/react-slider';
 import { Play, Pause, CornerUpLeft, CornerUpRight } from 'lucide-react';
+import { usePlayer } from './PlayerContext';
 
 interface TrimRange {
   id: string;
@@ -70,6 +71,12 @@ export default function TrimTimeline({
     const time = calculateTimeFromPosition(e.clientX);
     onSeek(time);
 
+    // During segment creation, don't change selection state
+    if (creatingNewSegment) {
+      console.log("Click ignored - segment creation in progress");
+      return;
+    }
+
     // Check if the click is inside any segment
     let clickedSegment = false;
     if (segments) {
@@ -77,6 +84,7 @@ export default function TrimTimeline({
         if (time >= segment.start && time <= segment.end) {
           // Click is inside a segment - select it
           if (activeSegmentId !== segment.id) {
+            console.log("Timeline click on segment:", segment.id);
             // Manually set active segment through the videoPlayer state
             const event = new CustomEvent('segmentSelected', { detail: { id: segment.id } });
             document.dispatchEvent(event);
@@ -87,8 +95,9 @@ export default function TrimTimeline({
       }
     }
 
-    // If clicked outside all segments, clear active segment
-    if (!clickedSegment && activeSegmentId) {
+    // If clicked outside all segments, clear active segment and selection
+    if (!clickedSegment) {
+      console.log("Timeline click outside segments - clearing selection");
       const event = new CustomEvent('segmentSelected', { detail: { id: null } });
       document.dispatchEvent(event);
     }
@@ -104,12 +113,15 @@ export default function TrimTimeline({
   };
 
 
+  // Use the global player context
+  const { playing: contextPlaying, setPlaying } = usePlayer();
+  
   return (
     <div className="relative w-full">
       {/* Main timeline bar */}
       <div 
         ref={timelineRef}
-        className="relative h-10 bg-[#ccc] rounded-md cursor-pointer"
+        className="relative h-10 bg-[#ccc] cursor-pointer"
         onClick={handleTimelineClick}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -146,12 +158,23 @@ export default function TrimTimeline({
           return (
             <div
               key={segment.id}
-              className={`absolute h-full ${colors[idx % colors.length]} rounded-sm
+              className={`absolute h-full ${colors[idx % colors.length]}
                 ${isPreviewMode && currentSegmentIndex === originalIndex ? 'opacity-100' : 
                  isActive ? 'opacity-100' : 
                  'opacity-60'} 
                 flex items-center justify-center cursor-pointer hover:opacity-100 transition-opacity`}
-              style={{ left: `${leftPos}%`, width: `${width}%`, zIndex: 5, borderRadius: '4px' }}
+              style={{ left: `${leftPos}%`, width: `${width}%`, zIndex: 5 }}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                // Only allow selecting real segments (not temporary ones)
+                if (!segment.id.startsWith("creating-") && segment.id !== "creating" && segment.id !== "initial") {
+                  console.log("Timeline click on segment:", segment.id);
+                  const event = new CustomEvent('segmentSelected', { 
+                    detail: { id: segment.id } 
+                  });
+                  document.dispatchEvent(event);
+                }
+              }}
             >
               <span className="text-xs font-medium text-white px-1 truncate">
                 {idx + 1} {isActive && "•"}
@@ -169,24 +192,10 @@ export default function TrimTimeline({
             zIndex: creatingNewSegment ? 8 : 6
           }}
         />
+        
+        {/* No visible markers for trim start/end positions */}
 
-        {/* Start trim position indicator - only shown when there are less than two segments */}
-        {segments.filter(s => s.id !== "initial").length < 2 && (
-          <div 
-            className="absolute top-0 h-full w-0.5 bg-gray-500 z-10"
-            style={{ left: trimStartPosition }}
-          >
-          </div>
-        )}
 
-        {/* End trim position indicator - only shown when there are less than two segments */}
-        {segments.filter(s => s.id !== "initial").length < 2 && (
-          <div 
-            className="absolute top-0 h-full w-0.5 bg-gray-500 z-10"
-            style={{ left: trimEndPosition }}
-          >
-          </div>
-        )}
 
         {/* Current time indicator - always shown during playback */}
         <div 
@@ -227,25 +236,23 @@ export default function TrimTimeline({
           }`}
           onClick={() => {
             console.log("Left hand clicked, current time:", currentTime);
-            if (!creatingNewSegment) {
-              // Check if we have a selected segment
-              if (activeSegmentId) {
-                // If we have a selected segment, update its start time instead of creating a new segment
-                // Use a custom event to notify VideoPlayer component
-                const event = new CustomEvent('updateSegmentStart', { 
-                  detail: { id: activeSegmentId, newStart: currentTime } 
-                });
-                document.dispatchEvent(event);
-              } else {
-                // Check if this time point is after any existing segment
-                const isAfterExistingSegment = segments.some(segment => 
-                  currentTime < segment.start || currentTime > segment.end
-                );
-
-                // No segment selected, so create a new one or update existing
+            
+            // ALWAYS clear selection state when left hand is clicked to force new segment creation
+            // This is key to fixing the issue
+            const clearEvent = new CustomEvent('segmentSelected', { 
+              detail: { id: null } 
+            });
+            document.dispatchEvent(clearEvent);
+            
+            // Wait a tiny bit to ensure selection is cleared
+            setTimeout(() => {
+              if (!creatingNewSegment) {
+                // No segment selected, always start a new segment creation
+                console.log("Starting new segment creation with left hand");
+                // Begin segment creation with current time
                 onTrimStartChange(currentTime);
               }
-            }
+            }, 50);
           }}
           title="Set segment start time (left hand first)"
           disabled={creatingNewSegment} // Disable the left hand when already creating a segment
@@ -258,16 +265,17 @@ export default function TrimTimeline({
         <button 
           className="flex items-center justify-center w-8 h-8 bg-gray-500 hover:bg-gray-600 rounded-full text-white transition-colors"
           onClick={() => {
-            if (playing) {
-              if (onPause) onPause();
+            // Toggle playing state using context
+            if (contextPlaying) {
+              setPlaying(false);
             } else {
               onSeek(currentTime);
-              if (onPlay) onPlay();
+              setPlaying(true);
             }
           }}
-          title={playing ? "Pause playback" : "Play from current position"}
+          title={contextPlaying ? "Pause playback" : "Play from current position"}
         >
-          {playing ? (
+          {contextPlaying ? (
             <Pause className="w-4 h-4" />
           ) : (
             <Play className="w-4 h-4" />

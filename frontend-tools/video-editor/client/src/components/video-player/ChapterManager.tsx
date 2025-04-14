@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import ReactPlayer from "react-player";
 import { Card, CardContent } from "@/components/basic/Card";
 import { Button } from "@/components/basic/Button";
 import { Input } from "@/components/basic/Input";
 import { formatTime } from "@/lib/time";
 import { Play, Pause, Plus, Trash2 } from "lucide-react";
+import { usePlayer } from "./PlayerContext";
 
 interface Chapter {
   id: string;
@@ -12,86 +13,13 @@ interface Chapter {
   timestamp: number;
 }
 
-
-// Add type definition for window
-declare global {
-  interface Window {
-    MEDIA_DATA: {
-      videoUrl: string;
-      chapters?: Chapter[];
-    }
-  }
-}
-console.log("MEDIA_DATA", window.MEDIA_DATA);
-
 export default function ChapterManager() {
   const sampleVideoUrl = window.MEDIA_DATA?.videoUrl || "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4";
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [chapters, setChapters] = useState<Chapter[]>(window.MEDIA_DATA?.chapters || [
-        {
-          id: "ajc9CJ",
-          title: "Introduction",
-          timestamp: 0
-        },
-        {
-          id: "451a",
-          title: "Main Content",
-          timestamp: 12.235
-        },
-        {
-          id: "789b",
-          title: "Conclusion",
-          timestamp: 21.135
-        },
-        {
-          id: "123d",
-          title: "Chapter 4",
-          timestamp: 37.000
-        },
-        {
-          id: "456e",
-          title: "Chapter 5",
-          timestamp: 55.000
-        },
-        {
-          id: "789g",
-          title: "Chapter 6",
-          timestamp: 60.000
-        },
-        {
-          id: "123h",
-          title: "Chapter 7",
-          timestamp: 75.000
-        },
-        {
-          id: "456i",           
-          title: "Chapter 8",
-          timestamp: 90.000
-        },
-        {
-          id: "789j",
-          title: "Chapter 9",
-          timestamp: 105.000
-        },
-        {
-          id: "123k",
-          title: "Chapter 10",
-          timestamp: 120.000
-        }
-      ]);
+  
+  // Use the shared player context
+  const { playing, setPlaying, progress, setProgress, duration, setDuration } = usePlayer();
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   const [newChapterTitle, setNewChapterTitle] = useState("");
-
-  const playerRef = useRef<ReactPlayer>(null);
-
-  const handleProgress = (state: { playedSeconds: number }) => {
-    setProgress(state.playedSeconds);
-  };
-
-  const handleDuration = (duration: number) => {
-    setDuration(duration);
-  };
 
   const addChapter = () => {
     if (!newChapterTitle.trim()) {
@@ -119,10 +47,14 @@ export default function ChapterManager() {
   };
 
   const previewChapter = (timestamp: number) => {
-    if (playerRef.current) {
-      playerRef.current.seekTo(timestamp);
-      setPlaying(true);
+    // Use the global seekTo function that's exposed on the window
+    if ((window as any).seekToFunction) {
+      (window as any).seekToFunction(timestamp);
+    } else {
+      // Fallback if the function isn't available yet
+      console.log("SeekTo function not yet initialized");
     }
+    setPlaying(true);
   };
 
   const handleSubmitChapters = () => {
@@ -135,20 +67,24 @@ export default function ChapterManager() {
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
         <ReactPlayer
-          ref={playerRef}
           url={sampleVideoUrl}
           width="100%"
           height="100%"
           playing={playing}
-          onProgress={handleProgress}
-          onDuration={handleDuration}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onProgress={(state) => setProgress(state.playedSeconds)}
+          onDuration={(d) => setDuration(d)}
           controls={true}
         />
       </div>
-
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setPlaying(!playing)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setPlaying(!playing)}
+            className="bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-900"
+          >
             {playing ? (
               <Pause className="h-4 w-4 mr-2" />
             ) : (
@@ -156,8 +92,8 @@ export default function ChapterManager() {
             )}
             {playing ? "Pause" : "Play"}
           </Button>
-          <div className="text-sm text-gray-600">
-            Current Time: {formatTime(progress)}
+          <div className="text-sm text-amber-800 font-medium">
+            Current Time: {formatTime(progress).split('.')[0]}
           </div>
         </div>
 
@@ -166,33 +102,37 @@ export default function ChapterManager() {
             placeholder="Enter chapter title"
             value={newChapterTitle}
             onChange={(e) => setNewChapterTitle(e.target.value)}
-            className="flex-1"
+            className="flex-1 border-amber-300 focus-visible:ring-amber-500"
           />
-          <Button onClick={addChapter}>
+          <Button 
+            onClick={addChapter}
+            className="bg-amber-600 hover:bg-amber-700 text-white"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Chapter
           </Button>
         </div>
 
         {chapters.length > 0 && (
-          <Card className="p-4">
-            <h3 className="font-medium mb-4">Chapters</h3>
+          <Card className="p-4 bg-amber-50 border-amber-200">
+            <h3 className="font-medium mb-4 text-amber-900">Chapters</h3>
             <div className="space-y-3">
               {chapters.map((chapter) => (
                 <div
                   key={chapter.id}
-                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                  className="flex items-center justify-between p-2 bg-amber-100 border border-amber-200 rounded"
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium">
-                      {formatTime(chapter.timestamp, true)}
+                    <span className="text-sm font-medium text-amber-900">
+                      {formatTime(chapter.timestamp).split('.')[0]}
                     </span>
-                    <span className="text-sm">{chapter.title}</span>
+                    <span className="text-sm text-amber-900">{chapter.title}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-900"
                       onClick={() => previewChapter(chapter.timestamp)}
                     >
                       Preview
@@ -200,6 +140,7 @@ export default function ChapterManager() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="bg-red-100 hover:bg-red-200 border-red-300 text-red-900"
                       onClick={() => removeChapter(chapter.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -212,7 +153,7 @@ export default function ChapterManager() {
               <Button
                 variant="default"
                 onClick={handleSubmitChapters}
-                className="w-full"
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
               >
                 Submit Chapters
               </Button>

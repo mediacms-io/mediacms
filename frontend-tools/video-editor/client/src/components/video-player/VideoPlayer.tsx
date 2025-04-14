@@ -8,6 +8,7 @@ import { Play, Pause, Trash2, Scissors, Share2, ExternalLink, Film } from "lucid
 import * as Separator from '@radix-ui/react-separator';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import TrimTimeline from './TrimTimeline';
+import { usePlayer } from "./PlayerContext";
 
 interface TrimRange {
   id: string;
@@ -26,21 +27,11 @@ function calculateFrames(duration: number): number {
   return Math.round(duration * 30);
 }
 
-// Add type definition for window
-declare global {
-  interface Window {
-    MEDIA_DATA: {
-      videoUrl: string;
-      predefinedRanges: TrimRange[];
-    }
-  }
-}
-
 export default function VideoPlayer() {
   const sampleVideoUrl = window.MEDIA_DATA?.videoUrl || "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4";
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  
+  // Use the shared player context instead of local state
+  const { playing, setPlaying, progress, setProgress, duration, setDuration, seekTo: contextSeekTo } = usePlayer();
   const [currentRange, setCurrentRange] = useState<[number, number]>([0, 0]);
   // We'll initialize with an empty array and add a full-video segment when duration is known
   const [trimRanges, setTrimRanges] = useState<TrimRange[]>([]);
@@ -119,8 +110,40 @@ export default function VideoPlayer() {
   useEffect(() => {
     const handleSegmentSelected = (e: CustomEvent) => {
       const segmentId = e.detail.id;
-      setSelectedSegmentId(segmentId);
-      setActiveSegmentId(segmentId);
+      console.log("Segment selected:", segmentId);
+      
+      // Never change selection during segment creation
+      if (creatingNewSegment) {
+        console.log("Ignoring selection change during segment creation");
+        return;
+      }
+      
+      // If segmentId is null, clear selection
+      if (segmentId === null) {
+        console.log("Clearing segment selection completely");
+        setSelectedSegmentId(null);
+        setActiveSegmentId(null);
+        // Reset any current range to avoid confusion
+        setCurrentRange([progress, progress]);
+      } else {
+        console.log("Setting segment selection to:", segmentId);
+        setSelectedSegmentId(segmentId);
+        setActiveSegmentId(segmentId);
+        
+        // If a segment is selected, update current range to match it
+        const selectedSegment = trimRanges.find(segment => segment.id === segmentId);
+        if (selectedSegment) {
+          setCurrentRange([selectedSegment.start, selectedSegment.end]);
+        }
+      }
+    };
+    
+    // Add a force reset handler that will always clear selection state
+    const handleForceResetSelection = () => {
+      console.log("Force resetting segment selection");
+      setSelectedSegmentId(null);
+      setActiveSegmentId(null);
+      setCurrentRange([progress, progress]);
     };
 
     const handleUpdateSegmentStart = (e: CustomEvent) => {
@@ -176,32 +199,65 @@ export default function VideoPlayer() {
     document.addEventListener('segmentSelected', handleSegmentSelected as EventListener);
     document.addEventListener('updateSegmentStart', handleUpdateSegmentStart as EventListener);
     document.addEventListener('updateSegmentEnd', handleUpdateSegmentEnd as EventListener);
+    document.addEventListener('forceResetSegmentSelection', handleForceResetSelection as EventListener);
 
     return () => {
       document.removeEventListener('segmentSelected', handleSegmentSelected as EventListener);
       document.removeEventListener('updateSegmentStart', handleUpdateSegmentStart as EventListener);
       document.removeEventListener('updateSegmentEnd', handleUpdateSegmentEnd as EventListener);
+      document.removeEventListener('forceResetSegmentSelection', handleForceResetSelection as EventListener);
     };
   }, []);
 
+  // Set up seekTo in the context
+  useEffect(() => {
+    if (playerRef.current) {
+      const seekToFunc = (time: number) => {
+        playerRef.current?.seekTo(time);
+      };
+      
+      // Expose the seekTo function to be used via the context
+      (window as any).seekToFunction = seekToFunc;
+    }
+  }, [playerRef.current]);
+  
   // Handle video player's play/pause state changes
   const handlePlay = () => {
     setPlaying(true);
+    console.log("Play state changed:", true);
   };
 
   const handlePause = () => {
     setPlaying(false);
+    console.log("Play state changed:", false);
   };
 
   const handleProgress = (state: { playedSeconds: number }) => {
     setProgress(state.playedSeconds);
 
-    // We'll let the mouse position control the active segment instead
-    // Only update during playback when mouse isn't over timeline
-    if (playing && activeSegmentId === null) {
-      const newActiveSegment = findActiveSegment(state.playedSeconds);
-      if (newActiveSegment !== activeSegmentId) {
-        setActiveSegmentId(newActiveSegment);
+    // When playing, check if we need to deselect a segment when playhead moves outside of it
+    if (playing) {
+      // If a segment is selected, check if playhead is still within it
+      if (selectedSegmentId && !creatingNewSegment) {
+        const selectedSegment = trimRanges.find(segment => segment.id === selectedSegmentId);
+        if (selectedSegment) {
+          // If playhead is outside the selected segment, deselect it
+          if (state.playedSeconds < selectedSegment.start || state.playedSeconds > selectedSegment.end) {
+            console.log("Playhead outside selected segment - deselecting");
+            setSelectedSegmentId(null);
+            setActiveSegmentId(null);
+            setCurrentRange([state.playedSeconds, state.playedSeconds]);
+          }
+        }
+      }
+      
+      // Only update active segment when mouse isn't controlling it
+      // And we're not creating a new segment
+      if (activeSegmentId === null && !creatingNewSegment) {
+        const newActiveSegment = findActiveSegment(state.playedSeconds);
+        if (newActiveSegment !== activeSegmentId) {
+          setActiveSegmentId(newActiveSegment);
+        }
       }
     }
 
@@ -372,9 +428,15 @@ export default function VideoPlayer() {
 
     // Create a simplified version of trimRanges with only id, start, and end properties
     const simplifiedRanges = trimRanges.map(({ id, start, end }) => ({ id, start, end }));
+    
+    // Include the action type in the JSON output
+    const outputData = {
+      action: saveType === "save_and_replace" ? "replace_video" : "create_new_video",
+      segments: simplifiedRanges
+    };
 
     alert(
-      `Preparing to export ${trimRanges.length} segments with type ${saveType}:\n${JSON.stringify(simplifiedRanges, null, 2)}`,
+      `Preparing to export ${trimRanges.length} segments with type ${saveType}:\n${JSON.stringify(outputData, null, 2)}`,
     );
   };
 
@@ -431,30 +493,53 @@ export default function VideoPlayer() {
                   console.log("onTrimStartChange called with time:", time);
                   console.log("Current creatingNewSegment flag:", creatingNewSegment);
 
-                  // Check if we should create a new segment or modify an existing one
-                  let shouldCreateNewSegment = true;
-
-                  // If there's an active segment, we're modifying its start time
-                  if (activeSegmentId) {
-                    shouldCreateNewSegment = false;
-                    const event = new CustomEvent('updateSegmentStart', { 
-                      detail: { id: activeSegmentId, newStart: time } 
-                    });
-                    document.dispatchEvent(event);
-                    // Force updating the current range to reflect the change immediately
-                    setCurrentRange([time, trimRanges.find(r => r.id === activeSegmentId)?.end || currentRange[1]]);
-                    return;
-                  }
-
-                  // Clear any selected segment when starting a new segment
+                  // Always create a new segment when using the left-hand button
+                  // This is a simpler approach that prevents confusion
+                  console.log("Left hand clicked, current time:", time);
+                  
+                  // CRITICAL: First force clear all segment selection state
+                  // This prevents modifying an existing segment when we want to create a new one
+                  console.log("Clearing segment selection completely");
                   setSelectedSegmentId(null);
+                  setActiveSegmentId(null);
 
                   // Start a new segment creation process
                   console.log("Starting new segment creation from time:", time);
+                  
+                  // Set segment creation mode to lock out other selection operations
                   setCreatingNewSegment(true);
                   setNewSegmentStartTime(time);
+                  
+                  // Immediately update the initial segment if it exists and it's the only segment
+                  if (trimRanges.length === 1 && trimRanges[0].id === "initial") {
+                    // Create a temporary segment with start at current time and end at video duration
+                    const tempSegment: TrimRange = {
+                      id: "creating-" + Math.random().toString(36).substring(7), // Add random suffix to prevent duplicate keys
+                      start: time,
+                      end: duration,
+                      title: "New Segment"
+                    };
+                    
+                    // Replace the initial segment with this temporary one
+                    setTrimRanges([tempSegment]);
+                  } else if (trimRanges.length > 0) {
+                    // When we already have segments, add a temporary one so we see the start position
+                    const tempSegment: TrimRange = {
+                      id: "creating-" + Math.random().toString(36).substring(7), // Add random suffix to prevent duplicate keys
+                      start: time,
+                      end: Math.min(time + 5, duration), // Short temporary segment
+                      title: "New Segment"
+                    };
+                    
+                    // Add to existing segments (will be filtered out when finalizing)
+                    setTrimRanges([...trimRanges, tempSegment]);
+                  }
+                  
                   setCurrentRange([time, time]); // Only show the start point, no temporary end
-
+                  
+                  // Additional cleanup operation to reset any UI state
+                  document.dispatchEvent(new CustomEvent('forceResetSegmentSelection'));
+                  
                   // Show a toast notification for step 1
                   const toast = document.createElement("div");
                   toast.className = "fixed bottom-4 right-4 p-3 rounded-md shadow-lg bg-blue-500 text-white z-50 animate-fadeIn";
@@ -526,15 +611,23 @@ export default function VideoPlayer() {
 
                       // Add segment to the list
                       setTrimRanges((prevRanges) => {
-                        // Always add to existing segments, never replace
-                        // If we have the initial segment, keep it for reference but add our new segment
+                        // Replace the initial segment when it's the only segment
                         if (prevRanges.length === 1 && prevRanges[0].id === "initial") {
-                          console.log("Adding segment alongside initial segment");
-                          return [...prevRanges, newSegment];
+                          console.log("Replacing initial segment with first user segment");
+                          return [newSegment]; // Replace initial with the first user segment
                         }
-                        // Otherwise add to existing segments
-                        console.log("Adding segment to existing segments");
-                        return [...prevRanges, newSegment];
+                        // If this is a temporary "creating" segment replacing itself with a permanent ID
+                        else if (prevRanges.length === 1 && (prevRanges[0].id === "creating" || prevRanges[0].id.startsWith("creating-"))) {
+                          console.log("Replacing temporary segment with permanent segment");
+                          return [newSegment]; // Replace temporary with permanent
+                        }
+                        // If we already have segments with real IDs, add to them
+                        else {
+                          console.log("Adding segment to existing segments");
+                          // Filter out any temporary segments before adding the new one
+                          const filteredRanges = prevRanges.filter(r => !r.id.startsWith("creating-") && r.id !== "creating" && r.id !== "initial");
+                          return [...filteredRanges, newSegment];
+                        }
                       });
 
                       // Store the last segment end time
@@ -557,9 +650,25 @@ export default function VideoPlayer() {
                       }, 3000);
                     }
 
-                    // Reset creation state
+                    // MOST IMPORTANT FIX: First reset creation state
                     setCreatingNewSegment(false);
+                    
+                    // Set the current range to the completed segment temporarily
                     setCurrentRange([segmentStart, segmentEnd]);
+                    
+                    // CRITICAL: Force clear all selection state after creating a segment
+                    // This ensures no segment remains selected when creating a new one
+                    setSelectedSegmentId(null);
+                    setActiveSegmentId(null);
+                    
+                    // After a short delay, reset cursor position to current playhead
+                    // This ensures we're ready for the next segment creation
+                    setTimeout(() => {
+                      setCurrentRange([progress, progress]);
+                      // Double-check that selection is cleared
+                      setSelectedSegmentId(null);
+                      setActiveSegmentId(null);
+                    }, 300);
 
                   } else if (activeSegmentId) {
                     // Update the end time of an existing segment
