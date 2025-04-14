@@ -77,12 +77,6 @@ class MediaMetadataForm(forms.ModelForm):
 
         self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
 
-    def clean(self):
-        title = self.cleaned_data.get("title", False)
-        if not title:
-            # add to list of errors
-            self.add_error("title", "Title is required")
-            raise forms.ValidationError("Title is required")
 
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)
@@ -159,10 +153,6 @@ class MediaPublishForm(forms.ModelForm):
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
         return media
-
-    def clean(self):
-        self.add_error("category", "Category is required")
-        raise forms.ValidationError("dsaddsaads")
 
 
 class SubtitleForm(forms.ModelForm):
