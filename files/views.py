@@ -49,7 +49,6 @@ from .methods import (
     check_comment_for_mention,
     get_user_or_session,
     is_mediacms_editor,
-    is_mediacms_manager,
     list_tasks,
     notify_user_on_comment,
     show_recommended_media,
@@ -109,7 +108,7 @@ def add_subtitle(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     if request.method == "POST":
@@ -144,7 +143,7 @@ def edit_subtitle(request):
     if not subtitle:
         return HttpResponseRedirect("/")
 
-    if not (request.user == subtitle.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == subtitle.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     context = {"subtitle": subtitle, "action": action}
@@ -251,7 +250,7 @@ def edit_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
     if request.method == "POST":
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
@@ -293,7 +292,7 @@ def publish_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     if request.method == "POST":
@@ -324,7 +323,7 @@ def edit_chapters(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     return render(
@@ -346,7 +345,7 @@ def edit_video(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     return render(
@@ -509,7 +508,7 @@ def view_media(request):
     context["CAN_DELETE_COMMENTS"] = False
 
     if request.user.is_authenticated:
-        if (media.user.id == request.user.id) or is_mediacms_editor(request.user) or is_mediacms_manager(request.user):
+        if media.user.id == request.user.id or is_mediacms_editor(request.user):
             context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
@@ -702,7 +701,7 @@ class MediaDetail(APIView):
         if isinstance(media, Response):
             return media
 
-        if not (is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        if not is_mediacms_editor(request.user):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         action = request.data.get("type")
@@ -819,7 +818,7 @@ class MediaActions(APIView):
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
         media = self.get_object(friendly_token)
-        if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        if not (request.user == media.user or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         if isinstance(media, Response):
