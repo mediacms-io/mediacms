@@ -17,7 +17,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   
-  // This function will be overridden by the VideoPlayer component
   const [seekTo, setSeekTo] = useState<(time: number) => void>(() => (time: number) => {
     console.log('SeekTo not yet initialized');
   });
@@ -51,7 +50,6 @@ export function usePlayer() {
   return context;
 }
 
-// A special hook for setting the seekTo function from the VideoPlayer
 export function useSetSeekTo() {
   const context = useContext(PlayerContext);
   if (context === undefined) {
@@ -59,7 +57,6 @@ export function useSetSeekTo() {
   }
   
   return (fn: (time: number) => void) => {
-    // Replacing the seekTo function in the context
     (context as any).seekTo = fn;
   };
 }

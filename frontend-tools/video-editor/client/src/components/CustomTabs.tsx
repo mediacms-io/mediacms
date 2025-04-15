@@ -1,4 +1,3 @@
-// Example of direct Radix UI implementation
 import * as Tabs from '@radix-ui/react-tabs';
 
 export function CustomTabs({ children, defaultValue }: { children: React.ReactNode, defaultValue: string }) {

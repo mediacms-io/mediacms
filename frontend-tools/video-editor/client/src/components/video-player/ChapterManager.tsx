@@ -34,7 +34,6 @@ export default function ChapterManager() {
       timestamp: progress,
     };
 
-    // Sort chapters by timestamp
     const updatedChapters = [...chapters, newChapter].sort(
       (a, b) => a.timestamp - b.timestamp,
     );
@@ -48,16 +47,14 @@ export default function ChapterManager() {
   };
 
   const previewChapter = (timestamp: number) => {
-    // Use our direct reference to the player
+
     if (playerRef.current) {
-      // Seek to the chapter timestamp
+
       playerRef.current.seekTo(timestamp, 'seconds');
       console.log("Seeking to chapter timestamp:", timestamp);
       
-      // Update the progress state
       setProgress(timestamp);
       
-      // Start playing from this position
       setPlaying(true);
     } else {
       console.warn("Player reference not available");
@@ -90,7 +87,6 @@ export default function ChapterManager() {
                 controlsList: 'nodownload',
                 disablePictureInPicture: true
               },
-              // Ensure video element responds to clicks
               forceVideo: true
             }
           }}
