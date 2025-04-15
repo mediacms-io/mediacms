@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
+
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
@@ -7,9 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -20,9 +22,6 @@ from rest_framework.parsers import (
     JSONParser,
     MultiPartParser,
 )
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -68,7 +67,7 @@ from .models import (
     Playlist,
     PlaylistMedia,
     Subtitle,
-    Tag
+    Tag,
 )
 from .serializers import (
     CategorySerializer,
@@ -241,6 +240,7 @@ def history(request):
     context = {}
     return render(request, "cms/history.html", context)
 
+
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
@@ -262,20 +262,18 @@ def video_chapters(request, friendly_token):
             start_time = chapter_data.get('start')
             title = chapter_data.get('title')
             if start_time and title:
-                chapters.append({
-                    'start': start_time,
-                    'title': title,
-                })
-    except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': 'Request data must be a list of video chapters with start and title'
-            }, status=400)
+                chapters.append(
+                    {
+                        'start': start_time,
+                        'title': title,
+                    }
+                )
+    except Exception as e:  # noqa
+        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with start and title'}, status=400)
 
     ret = handle_video_chapters(media, chapters)
 
     return JsonResponse(ret, safe=False)
-
 
 
 @login_required

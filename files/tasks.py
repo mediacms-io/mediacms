@@ -35,7 +35,15 @@ from .helpers import (
     run_command,
 )
 from .methods import list_tasks, notify_users, pre_save_action
-from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag, VideoChapterData
+from .models import (
+    Category,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Rating,
+    Tag,
+    VideoChapterData,
+)
 
 logger = get_task_logger(__name__)
 
@@ -820,29 +828,14 @@ def produce_video_chapters(chapter_id):
         output_filename = f"thumbnail_{i:02d}.jpg"
         output_path = os.path.join(output_folder, output_filename)
 
-        command = [
-            settings.FFMPEG_COMMAND,
-            "-y",
-            "-ss", str(timestamp),
-            "-i", video_path,
-            "-vframes", "1",
-            "-q:v", "2",
-            "-s", f"{width}x{height}",
-            output_path
-        ]
-        ret = run_command(command)
+        command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
+        ret = run_command(command)  # noqa
         if os.path.exists(output_path) and get_file_type(output_path) == "image":
-            results.append({
-                "start": timestamp,
-                "title": title,
-                "thumbnail": output_path
-            })
+            results.append({"start": timestamp, "title": title, "thumbnail": output_path})
 
     chapter_object.data = results
     chapter_object.save(update_fields=["data"])
     return True
-
-
 
 
 # TODO LIST

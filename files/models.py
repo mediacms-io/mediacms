@@ -23,6 +23,7 @@ from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 from mptt.models import MPTTModel, TreeForeignKey
+
 from . import helpers
 from .stop_words import STOP_WORDS
 
@@ -952,7 +953,6 @@ class Media(models.Model):
         custom_folder = f"{settings.THUMBNAIL_UPLOAD_DIR}{self.user.username}/{self.friendly_token}_chapters"
         return os.path.join(settings.MEDIA_ROOT, custom_folder)
 
-
     @property
     def chapter_data(self):
         data = []
@@ -1455,17 +1455,14 @@ class Comment(MPTTModel):
 
 class VideoChapterData(models.Model):
     data = models.JSONField(null=False, blank=False, help_text="Chapter data")
-    media = models.ForeignKey(
-        'Media',
-        on_delete=models.CASCADE,
-        related_name='chapters'
-    )
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='chapters')
 
     class Meta:
         unique_together = ['media']
 
     def save(self, *args, **kwargs):
         from . import tasks
+
         is_new = self.pk is None
         if is_new or (not is_new and self._check_data_changed()):
             super().save(*args, **kwargs)

@@ -69,7 +69,6 @@ urlpatterns = [
         r"^api/v1/media/(?P<friendly_token>[\w]*)/chapters$",
         views.video_chapters,
     ),
-
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),

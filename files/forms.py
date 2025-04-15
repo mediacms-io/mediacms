@@ -77,7 +77,6 @@ class MediaMetadataForm(forms.ModelForm):
 
         self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
 
-
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)
         if image:
