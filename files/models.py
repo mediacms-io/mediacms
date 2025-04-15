@@ -23,7 +23,6 @@ from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 from mptt.models import MPTTModel, TreeForeignKey
-
 from . import helpers
 from .stop_words import STOP_WORDS
 
@@ -948,6 +947,20 @@ class Media(models.Model):
             )
         return ret
 
+    @property
+    def video_chapters_folder(self):
+        custom_folder = f"{settings.THUMBNAIL_UPLOAD_DIR}{self.user.username}/{self.friendly_token}_chapters"
+        return os.path.join(settings.MEDIA_ROOT, custom_folder)
+
+
+    @property
+    def chapter_data(self):
+        data = []
+        chapter_data = self.chapters.first()
+        if chapter_data:
+            return chapter_data.chapter_data
+        return data
+
 
 class License(models.Model):
     """A Base license model to be used in Media"""
@@ -1440,6 +1453,53 @@ class Comment(MPTTModel):
         return self.get_absolute_url()
 
 
+class VideoChapterData(models.Model):
+    data = models.JSONField(null=False, blank=False, help_text="Chapter data")
+    media = models.ForeignKey(
+        'Media',
+        on_delete=models.CASCADE,
+        related_name='chapters'
+    )
+
+    class Meta:
+        unique_together = ['media']
+
+    def save(self, *args, **kwargs):
+        from . import tasks
+        is_new = self.pk is None
+        if is_new or (not is_new and self._check_data_changed()):
+            super().save(*args, **kwargs)
+            tasks.produce_video_chapters.delay(self.pk)
+        else:
+            super().save(*args, **kwargs)
+
+    def _check_data_changed(self):
+        if self.pk:
+            old_instance = VideoChapterData.objects.get(pk=self.pk)
+            return old_instance.data != self.data
+        return False
+
+    @property
+    def chapter_data(self):
+        # ensure response is consistent
+        data = []
+        for item in self.data:
+            if item.get("start") and item.get("title"):
+                thumbnail = item.get("thumbnail")
+                if thumbnail:
+                    thumbnail = helpers.url_from_path(thumbnail)
+                else:
+                    thumbnail = "static/images/chapter_default.jpg"
+                data.append(
+                    {
+                        "start": item.get("start"),
+                        "title": item.get("title"),
+                        "thumbnail": thumbnail,
+                    }
+                )
+        return data
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1479,13 +1539,17 @@ def media_file_pre_delete(sender, instance, **kwargs):
             tag.update_tag_media()
 
 
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    helpers.rm_dir(instance.media.video_chapters_folder)
+
+
 @receiver(post_delete, sender=Media)
 def media_file_delete(sender, instance, **kwargs):
     """
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
-
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1501,6 +1565,7 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.hls_file:
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
+
     instance.user.update_user_media()
 
     # remove extra zombie thumbnails

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+import json
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
@@ -20,6 +20,9 @@ from rest_framework.parsers import (
     JSONParser,
     MultiPartParser,
 )
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -48,6 +51,7 @@ from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
     check_comment_for_mention,
     get_user_or_session,
+    handle_video_chapters,
     is_mediacms_editor,
     list_tasks,
     notify_user_on_comment,
@@ -64,7 +68,7 @@ from .models import (
     Playlist,
     PlaylistMedia,
     Subtitle,
-    Tag,
+    Tag
 )
 from .serializers import (
     CategorySerializer,
@@ -236,6 +240,42 @@ def history(request):
 
     context = {}
     return render(request, "cms/history.html", context)
+
+@csrf_exempt
+@login_required
+def video_chapters(request, friendly_token):
+    if not request.method == "POST":
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    try:
+        data = json.loads(request.body)["chapters"]
+        chapters = []
+        for _, chapter_data in enumerate(data):
+            start_time = chapter_data.get('start')
+            title = chapter_data.get('title')
+            if start_time and title:
+                chapters.append({
+                    'start': start_time,
+                    'title': title,
+                })
+    except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': 'Request data must be a list of video chapters with start and title'
+            }, status=400)
+
+    ret = handle_video_chapters(media, chapters)
+
+    return JsonResponse(ret, safe=False)
+
 
 
 @login_required
