@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta
-
+from . import helpers
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
@@ -367,7 +367,7 @@ def edit_chapters(request):
     return render(
         request,
         "cms/edit_chapters.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path)},
     )
 
 
@@ -389,7 +389,7 @@ def edit_video(request):
     return render(
         request,
         "cms/edit_video.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path)},
     )
 
 
