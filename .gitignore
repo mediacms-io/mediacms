@@ -20,4 +20,4 @@ deploy/docker/local_settings.py
 yt.readme.md
 /frontend-tools/video-editor/node_modules
 /frontend-tools/video-editor/client/node_modules
-/static_collected_tmp
+/static_collected
