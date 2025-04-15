@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* React Slider custom styles */
+.thumb {
+  height: 20px !important;
+  width: 20px !important;
+  background-color: #ffffff !important;
+  border-radius: 50% !important;
+  border: 2px solid #3b82f6 !important;
+  cursor: grab !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  z-index: 10 !important;
+}
+
+.track {
+  height: 6px !important;
+  background-color: #e5e7eb !important;
+  border-radius: 3px !important;
+}
+
+.track.track-1 {
+  background-color: #3b82f6 !important;
+  opacity: 0.8 !important;
+}
+
+/* Video trimmer specific styles */
+.segment-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: white;
+}
+
+.video-trimmer-title {
+  background: linear-gradient(to right, #0ea5e9, #06b6d4);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px 4px 0 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+.timeline-segment {
+  height: 100%;
+  position: absolute;
+  border-radius: 2px;
+  border-left: 2px solid rgba(0, 0, 0, 0.3);
+  border-right: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbar for the segment list */
+.scrollbar {
+  width: 10px;
+}
+
+.scrollbar-thumb {
+  background-color: rgba(217, 217, 227, 0.3);
+  border-radius: 10px;
+}
