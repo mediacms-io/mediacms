@@ -1,58 +1,66 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from "@/components/theme-provider";
-import { CustomTabs, TabsList, TabsTrigger, TabsContent } from "@/components/CustomTabs";
 import { Card, CardContent } from "@/components/basic/Card";
 import VideoPlayer from "@/components/video-player/VideoPlayer";
 import ChapterManager from "@/components/video-player/ChapterManager";
 import { PlayerProvider } from "@/components/video-player/PlayerContext";
 import "./index.css";
 
-function VideoEditor() {
+// Component for the trim functionality
+function TrimEditor() {
   return (
     <ThemeProvider>
       <PlayerProvider>
         <div className="w-full">
-          <CustomTabs defaultValue="trim">
-            <TabsList>
-              <TabsTrigger value="trim">Trim Video</TabsTrigger>
-              <TabsTrigger value="chapters">Chapters</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="trim">
-              <Card>
-                <CardContent>
-                  <VideoPlayer />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="chapters">
-              <Card>
-                <CardContent>
-                  <ChapterManager />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </CustomTabs>
+          <Card>
+            <CardContent>
+              <VideoPlayer />
+            </CardContent>
+          </Card>
         </div>
       </PlayerProvider>
     </ThemeProvider>
   );
 }
 
-// Mount the app when the DOM is ready
-const mount = () => {
-  const container = document.getElementById('video-editor-root');
-  if (container) {
-    const root = createRoot(container);
-    root.render(<VideoEditor />);
+// Component for the chapters functionality
+function ChaptersEditor() {
+  return (
+    <ThemeProvider>
+      <PlayerProvider>
+        <div className="w-full">
+          <Card>
+            <CardContent>
+              <ChapterManager />
+            </CardContent>
+          </Card>
+        </div>
+      </PlayerProvider>
+    </ThemeProvider>
+  );
+}
+
+// Mount the components when the DOM is ready
+const mountComponents = () => {
+  // Mount the trim editor
+  const trimContainer = document.getElementById('video-editor-trim-root');
+  if (trimContainer) {
+    const trimRoot = createRoot(trimContainer);
+    trimRoot.render(<TrimEditor />);
+  }
+
+  // Mount the chapters editor
+  const chaptersContainer = document.getElementById('video-editor-chapters-root');
+  if (chaptersContainer) {
+    const chaptersRoot = createRoot(chaptersContainer);
+    chaptersRoot.render(<ChaptersEditor />);
   }
 };
 
 // Handle both cases: immediate mounting or waiting for DOM
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mount);
+  document.addEventListener('DOMContentLoaded', mountComponents);
 } else {
-  mount();
-} 
+  mountComponents();
+}
