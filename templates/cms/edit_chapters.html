@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}{% endblock headermeta %}
+
+{% block innercontent %}
+		<script>console.log('I am a placeholder too')</script>
+
+        <div class="user-action-form-wrap">
+			{% include "cms/media_nav.html" with active_tab="chapters" %}
+			<div class="user-action-form-inner">
+				Edit video chapters placeholder
+			</div>
+		</div>
+{% endblock innercontent %}

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 
 from allauth.socialaccount.models import SocialApp
@@ -7,9 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -36,14 +38,20 @@ from cms.version import VERSION
 from identity_providers.models import LoginOption
 from users.models import User
 
-from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
+from .forms import (
+    ContactForm,
+    EditSubtitleForm,
+    MediaMetadataForm,
+    MediaPublishForm,
+    SubtitleForm,
+)
 from .frontend_translations import translate_string
-from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands, url_from_path
+from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
     check_comment_for_mention,
     get_user_or_session,
+    handle_video_chapters,
     is_mediacms_editor,
-    is_mediacms_manager,
     list_tasks,
     notify_user_on_comment,
     show_recommended_media,
@@ -103,7 +111,7 @@ def add_subtitle(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     if request.method == "POST":
@@ -138,7 +146,7 @@ def edit_subtitle(request):
     if not subtitle:
         return HttpResponseRedirect("/")
 
-    if not (request.user == subtitle.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == subtitle.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     context = {"subtitle": subtitle, "action": action}
@@ -233,6 +241,41 @@ def history(request):
     return render(request, "cms/history.html", context)
 
 
+@csrf_exempt
+@login_required
+def video_chapters(request, friendly_token):
+    if not request.method == "POST":
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    try:
+        data = json.loads(request.body)["chapters"]
+        chapters = []
+        for _, chapter_data in enumerate(data):
+            start_time = chapter_data.get('start')
+            title = chapter_data.get('title')
+            if start_time and title:
+                chapters.append(
+                    {
+                        'start': start_time,
+                        'title': title,
+                    }
+                )
+    except Exception as e:  # noqa
+        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with start and title'}, status=400)
+
+    ret = handle_video_chapters(media, chapters)
+
+    return JsonResponse(ret, safe=False)
+
+
 @login_required
 def edit_media(request):
     """Edit a media view"""
@@ -245,10 +288,10 @@ def edit_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
     if request.method == "POST":
-        form = MediaForm(request.user, request.POST, request.FILES, instance=media)
+        form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
             media = form.save()
             for tag in media.tags.all():
@@ -267,11 +310,86 @@ def edit_media(request):
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
-        form = MediaForm(request.user, instance=media)
+        form = MediaMetadataForm(request.user, instance=media)
     return render(
         request,
         "cms/edit_media.html",
-        {"form": form, "add_subtitle_url": media.add_subtitle_url, "media_file_path": url_from_path(media.media_file.path)},
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def publish_media(request):
+    """Publish media"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    if request.method == "POST":
+        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
+        if form.is_valid():
+            media = form.save()
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
+            return HttpResponseRedirect(media.get_absolute_url())
+    else:
+        form = MediaPublishForm(request.user, instance=media)
+
+    return render(
+        request,
+        "cms/publish_media.html",
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def edit_chapters(request):
+    """Edit chapters"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "cms/edit_chapters.html",
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def edit_video(request):
+    """Edit chapters"""
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "cms/edit_video.html",
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url},
     )
 
 
@@ -428,7 +546,7 @@ def view_media(request):
     context["CAN_DELETE_COMMENTS"] = False
 
     if request.user.is_authenticated:
-        if (media.user.id == request.user.id) or is_mediacms_editor(request.user) or is_mediacms_manager(request.user):
+        if media.user.id == request.user.id or is_mediacms_editor(request.user):
             context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
@@ -621,7 +739,7 @@ class MediaDetail(APIView):
         if isinstance(media, Response):
             return media
 
-        if not (is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        if not is_mediacms_editor(request.user):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         action = request.data.get("type")
@@ -738,7 +856,7 @@ class MediaActions(APIView):
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
         media = self.get_object(friendly_token)
-        if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        if not (request.user == media.user or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         if isinstance(media, Response):

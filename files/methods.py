@@ -448,3 +448,14 @@ def list_tasks():
     ret["task_ids"] = task_ids
     ret["media_profile_pairs"] = media_profile_pairs
     return ret
+
+
+def handle_video_chapters(media, chapters):
+    video_chapter = models.VideoChapterData.objects.filter(media=media).first()
+    if video_chapter:
+        video_chapter.data = chapters
+        video_chapter.save()
+    else:
+        video_chapter = models.VideoChapterData.objects.create(media=media, data=chapters)
+
+    return media.chapter_data
