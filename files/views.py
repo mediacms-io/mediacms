@@ -367,7 +367,7 @@ def edit_chapters(request):
     return render(
         request,
         "cms/edit_chapters.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path)},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path), "media_id": media.friendly_token},
     )
 
 
