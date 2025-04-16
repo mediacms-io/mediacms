@@ -39,7 +39,7 @@ export default class ViewerSidebar extends React.PureComponent {
   onMediaLoad() {
     this.setState({
       mediaType: MediaPageStore.get('media-type'),
-      chapters: MediaPageStore.get('media-data')?.chapters 
+      chapters: MediaPageStore.get('media-data')?.chapter_data || []
     });
   }
 

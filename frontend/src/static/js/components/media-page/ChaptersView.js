@@ -17,53 +17,63 @@ export default class ChaptersView extends React.PureComponent {
       chapters: props.chapters || [
         {
           id: "ajc9CJ",
-          title: "Introduction",
-          timestamp: "00:00:04.000"
+          title: "Introduction1",
+          timestamp: "00:00:04.000",
+          thumbnail: "https://i.ytimg.com/vi/ajc9CJ/hqdefault.jpg"
         },
         {
           id: "451a",
           title: "Main Content",
-          timestamp: "00:00:12.235"
+          timestamp: "00:00:12.235",
+          thumbnail: "https://i.ytimg.com/vi/451a/hqdefault.jpg"
         },
         {
           id: "789b",
           title: "Conclusion",
-          timestamp: "00:00:21.135"
+          timestamp: "00:00:21.135",
+          thumbnail: "https://i.ytimg.com/vi/789b/hqdefault.jpg"
         },
         {
           id: "123d",
           title: "Chapter 4",
-          timestamp: "00:00:37.000"
+          timestamp: "00:00:37.000",
+          thumbnail: "https://i.ytimg.com/vi/123d/hqdefault.jpg"
         },
         {
           id: "456e",
           title: "Chapter 5",
-          timestamp: "00:00:55.000"
+          timestamp: "00:00:55.000",
+          thumbnail: "https://i.ytimg.com/vi/456e/hqdefault.jpg"
         },
         {
           id: "789g",
           title: "Chapter 6",
-          timestamp: "00:01:00.000"
+          timestamp: "00:01:00.000",
+          thumbnail: "https://i.ytimg.com/vi/789g/hqdefault.jpg"
         },
         {
           id: "123h",
           title: "Chapter 7",
-          timestamp: "00:01:15.000"
+          timestamp: "00:01:15.000",
+          thumbnail: "https://i.ytimg.com/vi/123h/hqdefault.jpg"
         },
         {
           id: "456i",           
           title: "Chapter 8",
-          timestamp: "00:01:30.000"
+          timestamp: "00:01:30.000",
+          thumbnail: "https://i.ytimg.com/vi/456i/hqdefault.jpg"
         },
         {
           id: "789j",
           title: "Chapter 9",
-          timestamp: "00:01:45.000"
+          timestamp: "00:01:45.000",
+          thumbnail: "https://i.ytimg.com/vi/789j/hqdefault.jpg"
         },
         {
           id: "123k",
           title: "Chapter 10",
-          timestamp: "00:02:00.000"
+          timestamp: "00:02:00.000",
+          thumbnail: "https://i.ytimg.com/vi/123k/hqdefault.jpg"
         }
       ],
     };

@@ -6,11 +6,27 @@ import { Input } from "@/components/basic/Input";
 import { formatTime } from "@/lib/time";
 import { Play, Pause, Plus, Trash2 } from "lucide-react";
 import { usePlayer } from "./PlayerContext";
+import { postRequest, csrfToken } from "@/lib/helpers";
 
 interface Chapter {
   id: string;
   title: string;
   timestamp: number;
+}
+
+interface ApiResponse {
+  data?: any;
+  status?: number;
+}
+
+declare global {
+  interface Window {
+    MEDIA_DATA: {
+      mediaId: string;
+      videoUrl: string;
+      chapters: Chapter[];
+    };
+  }
 }
 
 export default function ChapterManager() {
@@ -62,8 +78,38 @@ export default function ChapterManager() {
   };
 
   const handleSubmitChapters = () => {
-    alert(
-      `Preparing to submit chapters to backend:\n${JSON.stringify(chapters, null, 2)}`,
+    const mediaId = window.MEDIA_DATA?.mediaId;
+    if (!mediaId) {
+      alert("Media ID not found");
+      return;
+    }
+
+    const url = `/api/v1/media/${mediaId}/chapters`;
+    const data = {
+      chapters: chapters.map(chapter => ({
+        start: chapter.timestamp,
+        title: chapter.title
+      }))
+    };
+
+    postRequest(
+      url,
+      data,
+      {
+        headers: {
+          'X-CSRFToken': csrfToken(),
+        },
+      },
+      false,
+      (response: ApiResponse) => {
+        if (response) {
+          alert('Chapters saved successfully!');
+        }
+      },
+      (error: Error) => {
+        console.error('Error saving chapters:', error);
+        alert('Failed to save chapters. Please try again.');
+      }
     );
   };
 
