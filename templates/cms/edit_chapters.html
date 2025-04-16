@@ -4,9 +4,35 @@
 
 {% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
 
-{% block headermeta %}
-<link rel="stylesheet" href="{% static 'video_editor/video-editor.css' %}">
-{% endblock headermeta %}
+{% block topimports %}
+<link href="{% static "video_editor/video-editor.css" %}" rel="preload" as="style">
+<link href="{% static "video_editor/video-editor.css" %}" rel="stylesheet">
+<script>
+window.MEDIA_DATA = {
+	// videoUrl: "{{ media_file_path }}", // "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
+	videoUrl: "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
+	mediaId: "{{ media_id }}",
+	chapters: [
+		{
+			id: "1",
+			title: "Chapter AAA",
+			timestamp: 0
+		},
+		{
+			id: "2",
+			title: "Chapter BBB",
+			timestamp: 10
+		},
+		{
+			id: "3",
+			title: "Chapter CCC",
+			timestamp: 20
+		}
+	]
+};
+</script>
+<script src="{% static 'video_editor/video-editor.js' %}"></script>
+{%endblock topimports %}
 
 {% block innercontent %}
 
@@ -16,30 +42,4 @@
 				<div id="video-editor-chapters-root"></div>
 			</div>
 		</div>
-
-		<script>
-			window.MEDIA_DATA = {
-				// videoUrl: "{{ media_file_path }}", // "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
-				videoUrl: "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
-				chapters: [
-					{
-						id: "1",
-						title: "Chapter AAA",
-						timestamp: 0
-					},
-					{
-						id: "2",
-						title: "Chapter BBB",
-						timestamp: 10
-					},
-					{
-						id: "3",
-						title: "Chapter CCC",
-						timestamp: 20
-					}
-				]
-			};
-		</script>
- 		<script src="{% static 'video_editor/video-editor.js' %}"></script>
-
 {% endblock innercontent %}
