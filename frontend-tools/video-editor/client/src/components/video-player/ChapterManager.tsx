@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import ReactPlayer from "react-player";
-import { Card, CardContent } from "@/components/basic/Card";
+import { Card } from "@/components/basic/Card";
 import { Button } from "@/components/basic/Button";
 import { Input } from "@/components/basic/Input";
 import { formatTime } from "@/lib/time";

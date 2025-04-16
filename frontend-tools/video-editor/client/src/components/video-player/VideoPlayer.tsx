@@ -1,11 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import ReactPlayer from "react-player";
-import { Card, CardContent } from "@/components/basic/Card";
 import { Button } from "@/components/basic/Button";
-import ReactSlider from "react-slider";
-import { formatTime, parseTimeToSeconds } from "@/lib/time";
-import { Play, Pause, Trash2, Scissors, Share2, ExternalLink, Film } from "lucide-react";
-import * as Separator from '@radix-ui/react-separator';
+import { formatTime } from "@/lib/time";
+import { Play, Pause, Trash2, Scissors, ExternalLink, Film } from "lucide-react";
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 import TrimTimeline from './TrimTimeline';
 import { usePlayer } from "./PlayerContext";
@@ -798,23 +795,22 @@ export default function VideoPlayer() {
                               {idx + 1}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-cyan-400 flex space-x-1">
-                                <span className="bg-gray-900 rounded px-1 py-1 w-24 text-right">
+                              <div className="text-sm font-small text-cyan-400 flex space-x-1">
+                                <span className="bg-gray-900 rounded px-1 py-1 w-26 text-center">
                                   {formatTime(range.start, true)}
                                 </span>
                                 <span> - </span>
-                                <span className="bg-gray-900 rounded px-1 py-1 w-24">
+                                <span className="bg-gray-900 rounded px-1 py-1 w-26 text-center">
                                   {formatTime(range.end, true)}
                                 </span>
                               </div>
-                              {/* Removed segment description */}
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
                               className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-600"
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent triggering the parent's onClick
+                                e.stopPropagation();
                                 removeTrimRange(range.id);
                               }}
                             >

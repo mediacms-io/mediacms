@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/basic/Card";
 import VideoPlayer from "@/components/video-player/VideoPlayer";
 import ChapterManager from "@/components/video-player/ChapterManager";
 import { CustomTabs, TabsList, TabsTrigger, TabsContent } from "@/components/CustomTabs";
@@ -15,21 +14,11 @@ export default function Home() {
               <TabsTrigger value="trim">Trim the Video</TabsTrigger>
               <TabsTrigger value="chapters">Manage Chapters</TabsTrigger>
             </TabsList>
-
             <TabsContent value="trim">
-              <Card>
-                <CardContent className="mt-4">
-                  <VideoPlayer />
-                </CardContent>
-              </Card>
+              <VideoPlayer />
             </TabsContent>
-
             <TabsContent value="chapters">
-              <Card>
-                <CardContent>
-                  <ChapterManager />
-                </CardContent>
-              </Card>
+              <ChapterManager />
             </TabsContent>
           </CustomTabs>
         </PlayerProvider>

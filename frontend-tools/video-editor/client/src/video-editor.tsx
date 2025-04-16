@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from "@/components/theme-provider";
-import { Card, CardContent } from "@/components/basic/Card";
 import VideoPlayer from "@/components/video-player/VideoPlayer";
 import ChapterManager from "@/components/video-player/ChapterManager";
 import { PlayerProvider } from "@/components/video-player/PlayerContext";
@@ -12,13 +11,7 @@ function TrimEditor() {
   return (
     <ThemeProvider>
       <PlayerProvider>
-        <div className="w-full">
-          <Card>
-            <CardContent>
-              <VideoPlayer />
-            </CardContent>
-          </Card>
-        </div>
+        <VideoPlayer />
       </PlayerProvider>
     </ThemeProvider>
   );
@@ -29,13 +22,7 @@ function ChaptersEditor() {
   return (
     <ThemeProvider>
       <PlayerProvider>
-        <div className="w-full">
-          <Card>
-            <CardContent>
-              <ChapterManager />
-            </CardContent>
-          </Card>
-        </div>
+        <ChapterManager />
       </PlayerProvider>
     </ThemeProvider>
   );
