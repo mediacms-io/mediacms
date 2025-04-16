@@ -35,7 +35,15 @@ from .helpers import (
     run_command,
 )
 from .methods import list_tasks, notify_users, pre_save_action
-from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
+from .models import (
+    Category,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Rating,
+    Tag,
+    VideoChapterData,
+)
 
 logger = get_task_logger(__name__)
 
@@ -790,6 +798,43 @@ def kill_ffmpeg_process(filepath):
 @task(name="remove_media_file", base=Task, queue="long_tasks")
 def remove_media_file(media_file=None):
     rm_file(media_file)
+    return True
+
+
+@task(name="produce_video_chapters", queue="short_tasks")
+def produce_video_chapters(chapter_id):
+    chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
+    if not chapter_object:
+        return False
+
+    media = chapter_object.media
+    video_path = media.media_file.path
+    output_folder = media.video_chapters_folder
+
+    chapters = chapter_object.data
+
+    width = 336
+    height = 188
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    results = []
+
+    for i, chapter in enumerate(chapters):
+        timestamp = chapter["start"]
+        title = chapter["title"]
+
+        output_filename = f"thumbnail_{i:02d}.jpg"
+        output_path = os.path.join(output_folder, output_filename)
+
+        command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
+        ret = run_command(command)  # noqa
+        if os.path.exists(output_path) and get_file_type(output_path) == "image":
+            results.append({"start": timestamp, "title": title, "thumbnail": output_path})
+
+    chapter_object.data = results
+    chapter_object.save(update_fields=["data"])
     return True
 
 
