@@ -126,6 +126,23 @@ ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
 # registration won't be open, might also consider to remove links for register
 USERS_CAN_SELF_REGISTER = True
 
+# Uncomment and fill relevant information in this for adding social login
+# keycloak is given as example, but any OIDC provider can be added including Google, Auth0 etc.
+
+# SOCIALACCOUNT_PROVIDERS = {
+#     "openid_connect": {
+#         "APP": {
+#             "provider_id": "keycloak",
+#             "name": "Keycloak",
+#             "client_id": "xxxxx",
+#             "secret": "xxxxxx",
+#             "settings": {
+#                 "server_url": "https://keycloak.xxxxxx.com/realms/xxxxxx/.well-known/openid-configuration",
+#             },
+#         }
+#     }
+# }
+
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"]
 
 # Comma separated list of domains:  ["organization.com", "private.organization.com", "org2.com"]
@@ -261,6 +278,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.openid_connect",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",

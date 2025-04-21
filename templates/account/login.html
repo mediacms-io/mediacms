@@ -3,6 +3,9 @@
 {% block headtitle %} | Sign In{% endblock headtitle %}
 
 {% block innercontent %}
+
+{% load socialaccount %}
+
 <div class="user-action-form-wrap">
     <div class="user-action-form-inner">
 
@@ -18,6 +21,17 @@
 		  {% endif %}
 		  <button class="primaryAction" type="submit">Sign In</button>
 		</form>
+
+		{% get_providers as socialaccount_providers %}
+		{% if socialaccount_providers %}
+			<h1 style="margin-top: 5%;">Sign In with Social Accounts</h1>
+			{% for provider in socialaccount_providers %}
+				<form class="login" method="POST" action="{% provider_login_url provider %}">
+					{% csrf_token %}
+					<button class="primaryAction" type="submit">Sign In with {{provider}}</button>
+				</form>
+			{% endfor %}
+		{% endif %}
 
     </div>
 </div>
