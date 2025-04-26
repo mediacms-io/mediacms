@@ -692,7 +692,6 @@ button[disabled][data-tooltip]::after {
     margin-top: 10px;
     width: 100%;
     justify-content: flex-start;
-    margin: 140pxpx auto;
     text-align: center;
     align-items: center;
     justify-content: center;
