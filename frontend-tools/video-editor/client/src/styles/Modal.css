@@ -1,3 +1,4 @@
+#video-editor-trim-root {
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -198,4 +199,5 @@
   .modal-button {
     width: 100%;
   }
+}
 }
