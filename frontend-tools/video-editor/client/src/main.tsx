@@ -2,27 +2,32 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Initialize MEDIA_DATA to ensure it's available before components render
 if (typeof window !== 'undefined') {
   window.MEDIA_DATA = {
-    videoUrl: "",
-    chapters: []
+    videoUrl: ""
   };
 }
 
-// Type declaration for the global window object
 declare global {
   interface Window {
     MEDIA_DATA: {
       videoUrl: string;
-      chapters: Array<{
-        id: string;
-        title: string;
-        timestamp: number;
-      }>;
     };
     seekToFunction?: (time: number) => void;
   }
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Mount the components when the DOM is ready
+const mountComponents = () => {
+  const trimContainer = document.getElementById("video-editor-trim-root");
+  if (trimContainer) {
+    const trimRoot = createRoot(trimContainer);
+    trimRoot.render(<App />);
+  }
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mountComponents);
+} else {
+  mountComponents();
+}

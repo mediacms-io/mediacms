@@ -1,0 +1,219 @@
+#video-editor-trim-root {
+
+  /* Tooltip styles */
+  [data-tooltip] {
+    position: relative;
+  }
+  
+  [data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 5px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
+    pointer-events: none;
+  }
+  
+  [data-tooltip]:after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+  }
+  
+  [data-tooltip]:hover:before,
+  [data-tooltip]:hover:after {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .editing-tools-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .flex-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .button-group {
+    display: flex;
+    
+    &.preview-group {
+      gap: 1rem;
+    }
+    
+    &.center-play {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    
+    &.secondary {
+      gap: 0.75rem;
+      align-items: center;
+    }
+    
+    button {
+      display: flex;
+      align-items: center;
+      color: #333;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+      min-width: auto;
+      
+      &:hover:not(:disabled) {
+        color: #0066cc;
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      svg {
+        height: 1.25rem;
+        width: 1.25rem;
+        margin-right: 0.25rem;
+      }
+    }
+    
+    /* Styling for buttons is now moved to dedicated selectors */
+  }
+
+  .divider {
+    border-right: 1px solid #d1d5db;
+    height: 1.5rem;
+    margin: 0 0.5rem;
+  } 
+
+  /* Style for play buttons with highlight effect */
+  .play-button, .preview-button {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    /* Add transform-origin to ensure scaling from center */
+    transform-origin: center center;
+    /* Multiple transitions for smooth effect */
+    transition: 
+      transform 0.2s ease,
+      color 0.2s ease;
+    /* Set a fixed width to prevent layout shifts */
+    min-width: 80px;
+    justify-content: center;
+  }
+  
+  .play-button:hover:not(:disabled), .preview-button:hover:not(:disabled) {
+    color: #0066cc;
+    transform: scale(1.05);
+    /* Explicitly avoid changing dimensions that would affect layout */
+    font-size: inherit;
+    width: auto;
+  }
+  
+  .play-button svg, .preview-button svg {
+    height: 1.5rem;
+    width: 1.5rem;
+    /* Make sure SVG scales with the button but doesn't change layout */
+    flex-shrink: 0;
+  }
+  
+  /* Media queries for the editing tools */
+  @media (max-width: 768px) {
+    .flex-container {
+      justify-content: space-between;
+      padding-top: 10px;
+    }
+    
+    .button-group.secondary {
+      justify-content: flex-end;
+      width: auto;
+    }
+    
+    .button-group.preview-group {
+      justify-content: flex-start;
+    }
+    
+    .button-group.center-play {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .flex-container {
+      padding-top: 0;
+    }
+    
+    .button-group.center-play {
+      position: static;
+      transform: none;
+      margin-left: 20px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .flex-container {
+      flex-direction: column;
+      align-items: center; /* Center align all content on mobile */
+    }
+    
+    .button-group.secondary {
+      width: 100%;
+      justify-content: space-between;
+      margin-left: 0;
+    }
+    
+    /* Align play buttons in center on mobile */
+    .button-group.preview-group, 
+    .button-group.center-play {
+      width: auto;
+      justify-content: center;
+      margin-left: 0;
+    }
+    
+    .button-group.center-play {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .divider {
+      display: none; /* Hide divider on very small screens */
+    }
+  }
+}

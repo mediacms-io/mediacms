@@ -26,7 +26,7 @@ export default defineConfig({
     minify: true,
     sourcemap: true,
     lib: {
-      entry: path.resolve(__dirname, 'client/src/video-editor.tsx'),
+      entry: path.resolve(__dirname, 'client/src/main.tsx'),
       name: 'VideoEditor',
       formats: ['iife'],
       fileName: () => 'video-editor.js',
@@ -46,7 +46,7 @@ export default defineConfig({
       },
     },
     // Output to Django's static directory
-    outDir: '../../../static/video_editor',
+    outDir: '../../static/video_editor',
     emptyOutDir: true,
     external: ['react', 'react-dom']
   },

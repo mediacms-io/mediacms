@@ -1,48 +1,106 @@
-# Video Editor Package
+# MediaCMS Video Editor
 
-A React-based video editor component with trimming and chapter management capabilities.
+A modern browser-based video editing tool built with React and TypeScript that integrates with MediaCMS. The editor allows users to trim, split, and manage video segments with a timeline interface.
+
+## Features
+
+- ⏱️ Trim video start and end points
+- ✂️ Split videos into multiple segments
+- 👁️ Preview individual segments or the full edited video
+- 🔍 Zoom timeline for precise editing
+- 🔄 Undo/redo support for all editing operations
+- 🔊 Audio mute controls
+- 💾 Save edits directly to MediaCMS
+
+## Tech Stack
+
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Express (for development server)
+- Drizzle ORM
 
 ## Installation
 
+### Prerequisites
+
+- Node.js (v16+)
+- Yarn package manager
+
+### Setup
+
 ```bash
-npm install
+# Navigate to the video editor directory
+cd frontend-tools/video-editor
+
+# Install dependencies
+yarn install
 ```
 
 ## Development
 
-The package provides several development scripts:
+The video editor can be run in two modes:
 
-- `npm run dev` - Start the Vite development server
+### Standalone Development Mode
+
+This starts a local development server with hot reloading:
+
+```bash
+# Start the development server
+yarn dev
+```
+
+### Frontend-only Development Mode
+
+If you want to work only on the frontend with MediaCMS backend:
+
+```bash
+# Start frontend-only development
+yarn dev:frontend
+```
 
 ## Building
 
-To build the package for production:
+### For MediaCMS Integration
+
+To build the video editor for integration with MediaCMS:
 
 ```bash
-npm run build
+# Build for Django integration
+yarn build:django
 ```
 
-This will build the package and output the files to `../../../static/video_editor`.
+This will compile the editor and place the output in the MediaCMS static directory.
 
-## Available Scripts
+### Standalone Build
 
-- `dev` - Start Vite development server
-- `build` - Build the package for production
+To build the editor as a standalone application:
 
-## Dependencies
+```bash
+# Build for production
+yarn build
+```
 
-This package uses several key dependencies:
+## Deployment
 
-- React 18
-- Vite for development and building
-- Video.js for video playback
-- Radix UI components for UI elements
-- TailwindCSS for styling
-- TypeScript for type safety
+To deploy the video editor, you can use the build and deploy script (recommended)
 
-## Development Environment
+```bash
+sh deploy/scripts/build_and_deploy.sh
+```
 
-The package requires:
-- Node.js
-- npm or yarn
-- TypeScript 5.6.3 or higher
+The build script handles all necessary steps for compiling and deploying the editor to MediaCMS.
+
+## Project Structure
+
+- `/src` - Source code
+  - `/components` - React components
+  - `/hooks` - Custom React hooks
+  - `/lib` - Utility functions and helpers
+  - `/services` - API services
+  - `/styles` - CSS and style definitions
+
+## API Integration
+
+The video editor interfaces with MediaCMS through a set of API endpoints for retrieving and saving video edits.
