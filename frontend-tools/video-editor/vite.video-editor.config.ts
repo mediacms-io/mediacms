@@ -46,7 +46,7 @@ export default defineConfig({
       },
     },
     // Output to Django's static directory
-    outDir: '../../static/video_editor',
+    outDir: '../../../static/video_editor',
     emptyOutDir: true,
     external: ['react', 'react-dom']
   },
