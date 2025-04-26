@@ -25,7 +25,7 @@ body {
   background-color: var(--body-bg-color);
 
   transition-property: overflow;
-  transition-duration: 0.2s;
+  transition-duration: 0.3s;
   transition-timing-function: linear;
 
   &.overflow-hidden {
