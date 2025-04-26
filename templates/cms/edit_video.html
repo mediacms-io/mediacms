@@ -8,13 +8,14 @@
 <link href="{% static "video_editor/video-editor.css" %}" rel="preload" as="style">
 <link href="{% static "video_editor/video-editor.css" %}" rel="stylesheet">
 
+<script src="{% static 'video_editor/video-editor.js' %}"></script>
+
 <script>
 window.MEDIA_DATA = {
-	// videoUrl: "{{ media_file_path }}", // "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
-	videoUrl: "http://temp.web357.com/SampleVideo_1280x720_30mb.mp4",
+    // videoUrl: "{{ media_file_path }}" || "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
 };
 </script>
-<script src="{% static 'video_editor/video-editor.js' %}"></script>
 {%endblock topimports %}
 
 {% block innercontent %}
