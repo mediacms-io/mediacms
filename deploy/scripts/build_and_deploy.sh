@@ -8,7 +8,7 @@ echo "Starting build process..."
 # Build video editor package
 echo "Building video editor package..."
 cd frontend-tools/video-editor
-yarn build
+yarn build:django
 cd ../../
 
 # Run npm build in the frontend container
