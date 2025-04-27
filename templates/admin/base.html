@@ -422,34 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const tables = document.querySelectorAll('table.table-sm');
 
-  for (const table of tables) {
-    const userLink = table.querySelector('a[href="/admin/users/user/"]');
-    if (userLink) {
-      const tbody = table.querySelector('tbody');
-      if (tbody) {
-
-        const groupsRow = document.createElement('tr');
-        groupsRow.innerHTML = `
-          <td>
-            <a href="/admin/rbac/rbacgroup/">Groups</a>
-          </td>
-          <td>
-            <div class="btn-group float-right">
-              <a href="/admin/rbac/rbacgroup/add/" class="btn btn-xs btn-success addlink">Add</a>
-              <a href="/admin/rbac/rbacgroup/" class="btn btn-xs btn-info changelink">Change</a>
-            </div>
-          </td>
-        `;
-
-        var useRbac = {% if USE_RBAC %}true{% else %}false{% endif %};
-        if (useRbac) {
-            tbody.appendChild(groupsRow);
-        }
-
-        break;
-      }
-    }
-  }
 });
 
 </script>
