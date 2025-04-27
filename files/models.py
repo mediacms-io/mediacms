@@ -672,7 +672,7 @@ class Media(models.Model):
         if self.media_type not in ["video"]:
             return None
 
-        ret = self.encodings.filter(profile__extension='mp4').order_by("profile__resolution").first()
+        ret = self.encodings.filter(profile__extension='mp4').order_by("-profile__resolution").first()
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 
