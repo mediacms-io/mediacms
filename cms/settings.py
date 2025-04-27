@@ -496,6 +496,7 @@ USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
+USE_ROUNDED_CORNERS = True
 
 try:
     # keep a local_settings.py file for local overrides
