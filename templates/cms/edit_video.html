@@ -12,8 +12,8 @@
 
 <script>
 window.MEDIA_DATA = {
-    // videoUrl: "{{ media_file_path }}" || "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    videoUrl: "{{ media_file_path }}"
+    // videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
 };
 </script>
 {%endblock topimports %}
@@ -27,5 +27,5 @@ window.MEDIA_DATA = {
 			</div>
 		</div>
 
-		
+
 {% endblock innercontent %}

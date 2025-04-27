@@ -386,10 +386,11 @@ def edit_video(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    media_file_path = media.trim_video_url
     return render(
         request,
         "cms/edit_video.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path)},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": media_file_path},
     )
 
 
