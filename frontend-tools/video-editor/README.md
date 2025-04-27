@@ -25,8 +25,8 @@ A modern browser-based video editing tool built with React and TypeScript that i
 
 ### Prerequisites
 
-- Node.js (v16+)
-- Yarn package manager
+- Node.js (v20+) - Use `nvm use 20` if you have nvm installed
+- Yarn or npm package manager
 
 ### Setup
 
@@ -34,8 +34,11 @@ A modern browser-based video editing tool built with React and TypeScript that i
 # Navigate to the video editor directory
 cd frontend-tools/video-editor
 
-# Install dependencies
+# Install dependencies with Yarn
 yarn install
+
+# Or with npm
+npm install
 ```
 
 ## Development
@@ -47,8 +50,11 @@ The video editor can be run in two modes:
 This starts a local development server with hot reloading:
 
 ```bash
-# Start the development server
+# Start the development server with Yarn
 yarn dev
+
+# Or with npm
+npm run dev
 ```
 
 ### Frontend-only Development Mode
@@ -56,8 +62,11 @@ yarn dev
 If you want to work only on the frontend with MediaCMS backend:
 
 ```bash
-# Start frontend-only development
+# Start frontend-only development with Yarn
 yarn dev:frontend
+
+# Or with npm
+npm run dev:frontend
 ```
 
 ## Building
@@ -67,8 +76,11 @@ yarn dev:frontend
 To build the video editor for integration with MediaCMS:
 
 ```bash
-# Build for Django integration
+# Build for Django integration with Yarn
 yarn build:django
+
+# Or with npm
+npm run build:django
 ```
 
 This will compile the editor and place the output in the MediaCMS static directory.
@@ -78,19 +90,33 @@ This will compile the editor and place the output in the MediaCMS static directo
 To build the editor as a standalone application:
 
 ```bash
-# Build for production
+# Build for production with Yarn
 yarn build
+
+# Or with npm
+npm run build
 ```
 
 ## Deployment
 
-To deploy the video editor, you can use the build and deploy script (recommended)
+To deploy the video editor, you can use the build and deploy script (recommended):
 
 ```bash
+# Run the deployment script
 sh deploy/scripts/build_and_deploy.sh
 ```
 
 The build script handles all necessary steps for compiling and deploying the editor to MediaCMS.
+
+You can also deploy manually after building:
+
+```bash
+# With Yarn
+yarn deploy
+
+# Or with npm
+npm run deploy
+```
 
 ## Project Structure
 
