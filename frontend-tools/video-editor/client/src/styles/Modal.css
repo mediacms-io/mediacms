@@ -187,6 +187,18 @@
   margin-right: 8px;
 }
 
+.centered-choice {
+  margin: 0 auto;
+  width: auto;
+  min-width: 220px;
+  background-color: #0066cc;
+  color: white;
+}
+
+.centered-choice:hover {
+  background-color: #0055aa;
+}
+
 @media (max-width: 480px) {
   .modal-container {
     width: 95%;
