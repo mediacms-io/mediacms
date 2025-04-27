@@ -441,7 +441,10 @@ document.addEventListener('DOMContentLoaded', function() {
           </td>
         `;
 
-        tbody.appendChild(groupsRow);
+        var useRbac = {% if USE_RBAC %}true{% else %}false{% endif %};
+        if (useRbac) {
+            tbody.appendChild(groupsRow);
+        }
 
         break;
       }

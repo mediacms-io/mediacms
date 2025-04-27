@@ -103,13 +103,18 @@ class MediaPublishForm(forms.ModelForm):
             "allow_download",
         )
 
+        widgets = {
+            "category": MultipleSelect(),
+        }
+
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(MediaPublishForm, self).__init__(*args, **kwargs)
         if not is_mediacms_editor(user):
-            self.fields.pop("featured")
-            self.fields.pop("reported_times")
-            self.fields.pop("is_reviewed")
+            for field in ["featured", "reported_times", "is_reviewed"]:
+                self.fields[field].disabled = True
+                self.fields[field].widget.attrs['class'] = 'read-only-field'
+                self.fields[field].widget.attrs['title'] = "This field can only be modified by MediaCMS admins or editors"
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
