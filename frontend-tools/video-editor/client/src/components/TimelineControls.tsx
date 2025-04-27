@@ -49,6 +49,7 @@ const TimelineControls = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [clickedTime, setClickedTime] = useState<number>(0);
   const [isZoomDropdownOpen, setIsZoomDropdownOpen] = useState(false);
+  const [availableSegmentDuration, setAvailableSegmentDuration] = useState<number>(30); // Default 30 seconds
 
   // Reference for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -281,6 +282,26 @@ const TimelineControls = ({
     });
   };
 
+  // Helper function to calculate available space for a new segment
+  const calculateAvailableSpace = (startTime: number): number => {
+    // Determine the amount of available space:
+    // 1. Check remaining space until the end of video
+    const remainingDuration = Math.max(0, duration - startTime);
+    
+    // 2. Find the next segment (if any)
+    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    const nextSegment = sortedSegments.find(seg => seg.startTime > startTime);
+    
+    if (nextSegment) {
+      // Space available until the next segment starts
+      const spaceUntilNextSegment = Math.max(0, nextSegment.startTime - startTime);
+      return Math.min(30, spaceUntilNextSegment); // Take either 30s or available space, whichever is smaller
+    } else {
+      // No next segment, just limited by video duration
+      return Math.min(30, remainingDuration);
+    }
+  };
+
   // Handle timeline click to seek and show a tooltip
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!timelineRef.current || !scrollContainerRef.current) return;
@@ -311,6 +332,15 @@ const TimelineControls = ({
       
       // Set the clicked time for the tooltip actions
       setClickedTime(newTime);
+      
+      // Calculate the available space for a new segment
+      const availableSpace = calculateAvailableSpace(newTime);
+      setAvailableSegmentDuration(availableSpace);
+      
+      // If there's no space to create even a minimal segment (at least 0.5 seconds), don't show the tooltip
+      if (availableSpace < 0.5) {
+        return;
+      }
       
       // Calculate and set tooltip position correctly for zoomed timeline
       let xPos;
@@ -832,46 +862,56 @@ const TimelineControls = ({
             >
               <div className="tooltip-time">{formatTime(clickedTime)}</div>
               <div className="tooltip-actions">
-                <button 
-                  className="tooltip-action-btn new-segment"
-                  data-tooltip="Create new 30-second segment"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    
-                    // Create a new 30-second segment starting at clicked position
-                    const segmentStartTime = clickedTime;
-                    const segmentEndTime = Math.min(duration, clickedTime + 30); // 30 seconds or end of video
-                    
-                    // Create the new segment with a generic name
-                    // We no longer need to generate thumbnails
-                    const newSegment: Segment = {
-                      id: Date.now(),
-                      name: `segment`,
-                      startTime: segmentStartTime,
-                      endTime: segmentEndTime,
-                      thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
-                    };
-                    
-                    // Add the new segment to existing segments
-                    const updatedSegments = [...clipSegments, newSegment];
-                    
-                    // Create and dispatch the update event
-                    const updateEvent = new CustomEvent('update-segments', { 
-                      detail: { segments: updatedSegments } 
-                    });
-                    document.dispatchEvent(updateEvent);
-                    
-                    // Close the tooltip
-                    setShowEmptySpaceTooltip(false);
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                  </svg>
-                  <span className="tooltip-btn-text">New 30s Segment</span>
-                </button>
+                {availableSegmentDuration >= 0.5 && (
+                  <button 
+                    className="tooltip-action-btn new-segment"
+                    data-tooltip={`Create new segment with available space`}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      
+                      // Create a new segment with the calculated available duration
+                      const segmentStartTime = clickedTime;
+                      const segmentEndTime = segmentStartTime + availableSegmentDuration;
+                      
+                      // Only create if we have at least 0.5 seconds of space
+                      if (availableSegmentDuration < 0.5) {
+                        // Not enough space, close tooltip
+                        setShowEmptySpaceTooltip(false);
+                        return;
+                      }
+                      
+                      // Create the new segment with a generic name
+                      const newSegment: Segment = {
+                        id: Date.now(),
+                        name: `segment`,
+                        startTime: segmentStartTime,
+                        endTime: segmentEndTime,
+                        thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                      };
+                      
+                      // Add the new segment to existing segments
+                      const updatedSegments = [...clipSegments, newSegment];
+                      
+                      // Create and dispatch the update event
+                      const updateEvent = new CustomEvent('update-segments', { 
+                        detail: { segments: updatedSegments } 
+                      });
+                      document.dispatchEvent(updateEvent);
+                      
+                      // Close the tooltip
+                      setShowEmptySpaceTooltip(false);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="12" y1="8" x2="12" y2="16"></line>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    <span className="tooltip-btn-text">
+                      New {Math.round(availableSegmentDuration)}s Segment
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1001,9 +1041,20 @@ const TimelineControls = ({
                     setSelectedSegmentId(segmentAtCurrentTime.id);
                     setShowEmptySpaceTooltip(false);
                   } else {
-                    // Show empty space tooltip
-                    setSelectedSegmentId(null);
-                    setShowEmptySpaceTooltip(true);
+                    // Calculate available space for new segment before showing tooltip
+                    const availableSpace = calculateAvailableSpace(currentTime);
+                    setAvailableSegmentDuration(availableSpace);
+                    
+                    // Only show tooltip if there's enough space for a minimal segment
+                    if (availableSpace >= 0.5) {
+                      // Show empty space tooltip
+                      setSelectedSegmentId(null);
+                      setShowEmptySpaceTooltip(true);
+                    } else {
+                      // Not enough space, don't show any tooltip
+                      setSelectedSegmentId(null);
+                      setShowEmptySpaceTooltip(false);
+                    }
                   }
                 }
               };
@@ -1232,23 +1283,10 @@ const TimelineControls = ({
               {successMessage}
             </p>
             <div className="modal-choices">
-              <button 
-                className="modal-choice-button"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  window.location.reload(); // Reload the page to trim a new video
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 2v6h6"></path>
-                  <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
-                </svg>
-                Trim Another Video
-              </button>
               {redirectUrl && (
                 <a 
                   href={redirectUrl}
-                  className="modal-choice-button"
+                  className="modal-choice-button centered-choice"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
