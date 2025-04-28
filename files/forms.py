@@ -181,7 +181,7 @@ class MediaPublishForm(forms.ModelForm):
 
 
                 if not cleaned_data.get('confirm_state'):
-                    error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', `'.join(rbac_categories)}"
+                    error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', '.join(rbac_categories)}"
                     self.add_error('confirm_state', error_message)
 
         return cleaned_data
