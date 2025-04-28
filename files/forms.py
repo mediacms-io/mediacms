@@ -173,8 +173,11 @@ class MediaPublishForm(forms.ModelForm):
         if state in ['private', 'unlisted'] and has_rbac_category:
             # Make the confirm_state field visible and add it to the layout
             self.fields['confirm_state'].widget = forms.CheckboxInput()
-            self.helper.layout.append(CustomField('confirm_state'))
-
+            
+            # Insert confirm_state field before the submit button
+            layout_items = list(self.helper.layout)
+            layout_items.insert(-1, CustomField('confirm_state'))
+            self.helper.layout = Layout(*layout_items)
 
             # If confirm_state is not checked
             if not cleaned_data.get('confirm_state'):
