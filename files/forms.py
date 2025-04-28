@@ -175,18 +175,15 @@ class MediaPublishForm(forms.ModelForm):
         
         # If state is private/unlisted and has RBAC category
         if state in ['private', 'unlisted'] and has_rbac_category:
-            # If this is the initial form submission without confirmation
-            if 'confirm_state' in self.data and not cleaned_data.get('confirm_state'):
-                # Make the confirm_state field visible
-                self.fields['confirm_state'].widget = forms.CheckboxInput()
-                # Raise validation error to show the confirmation field
+            # Make the confirm_state field visible
+            self.fields['confirm_state'].widget = forms.CheckboxInput()
+            
+            # If confirm_state is not checked
+            if not cleaned_data.get('confirm_state'):
+                self.add_error('confirm_state', "You must confirm this state change for RBAC content")
                 raise forms.ValidationError(
                     "You are setting an RBAC category media to private/unlisted. Please confirm this action."
                 )
-            
-            # If confirm_state is present but not checked
-            if 'confirm_state' in self.data and not cleaned_data.get('confirm_state'):
-                self.add_error('confirm_state', "You must confirm this state change for RBAC content")
                 
         return cleaned_data
 
