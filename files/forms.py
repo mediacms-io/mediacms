@@ -139,9 +139,6 @@ class MediaPublishForm(forms.ModelForm):
 
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
 
-        # TODO: move under USE_RBAC place...
-        self.fields['confirm_state'].widget = forms.HiddenInput()
-
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -155,7 +152,6 @@ class MediaPublishForm(forms.ModelForm):
             CustomField('reported_times'),
             CustomField('is_reviewed'),
             CustomField('allow_download'),
-            CustomField('confirm_state'),
         )
 
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
