@@ -165,11 +165,18 @@ class MediaPublishForm(forms.ModelForm):
             rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
 
             if rbac_categories and state in ['private', 'unlisted']:
-                # Make the confirm_state field visible and add it to the layout
+                # Make the confirm_state field visible and add it to the layout after state field
                 self.fields['confirm_state'].widget = forms.CheckboxInput()
+                
+                # Find the index of the state field in the layout
                 layout_items = list(self.helper.layout)
-                layout_items.insert(-1, CustomField('confirm_state'))
-                self.helper.layout = Layout(*layout_items)
+                state_index = next((i for i, item in enumerate(layout_items) 
+                                   if getattr(item, 'name', '') == 'state'), -1)
+                
+                # Insert confirm_state after state field
+                if state_index != -1:
+                    layout_items.insert(state_index + 1, CustomField('confirm_state'))
+                    self.helper.layout = Layout(*layout_items)
 
                 if not cleaned_data.get('confirm_state'):
                     error_message = f"Although the state of this media is set to {state}, it is also part of the following categories: {','.join(rbac_categories)}" \
