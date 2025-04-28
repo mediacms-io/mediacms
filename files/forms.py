@@ -95,8 +95,8 @@ class MediaPublishForm(forms.ModelForm):
     confirm_state = forms.BooleanField(
         required=False,
         initial=False,
-        label="Confirm state change",
-        help_text="Confirm you want to make this RBAC content private/unlisted"
+        label="Acknowledge sharing status",
+        help_text="Confirm you understand that media is accessible to groups that have access to categories"
     )
 
     class Meta:
@@ -161,30 +161,20 @@ class MediaPublishForm(forms.ModelForm):
         state = cleaned_data.get("state")
         categories = cleaned_data.get("category")
 
-        # Check if any selected category has RBAC in its title
-        has_rbac_category = False
-        if categories:
-            for category in categories:
-                if 'RBAC' in category.title:
-                    has_rbac_category = True
-                    break
+        if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
+            rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
 
-        # If state is private/unlisted and has RBAC category
-        if state in ['private', 'unlisted'] and has_rbac_category:
-            # Make the confirm_state field visible and add it to the layout
-            self.fields['confirm_state'].widget = forms.CheckboxInput()
-            
-            # Insert confirm_state field before the submit button
-            layout_items = list(self.helper.layout)
-            layout_items.insert(-1, CustomField('confirm_state'))
-            self.helper.layout = Layout(*layout_items)
+            if rbac_categories and state in ['private', 'unlisted']:
+                # Make the confirm_state field visible and add it to the layout
+                self.fields['confirm_state'].widget = forms.CheckboxInput()
+                layout_items = list(self.helper.layout)
+                layout_items.insert(-1, CustomField('confirm_state'))
+                self.helper.layout = Layout(*layout_items)
 
-            # If confirm_state is not checked
-            if not cleaned_data.get('confirm_state'):
-                self.add_error('confirm_state', "You must confirm this state change for RBAC content")
-                raise forms.ValidationError(
-                    "You are setting an RBAC category media to private/unlisted. Please confirm this action."
-                )
+                if not cleaned_data.get('confirm_state'):
+                    error_message = f"Although the state of this media is set to {state}, it is also part of the following categories: {','.join(rbac_categories)}" \
+                                     f"Members of Groups that have access to these categories can access the media too"
+                    self.add_error('confirm_state', error_message)
 
         return cleaned_data
 
