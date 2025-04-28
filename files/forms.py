@@ -160,7 +160,7 @@ class MediaPublishForm(forms.ModelForm):
         cleaned_data = super().clean()
         state = cleaned_data.get("state")
         categories = cleaned_data.get("category")
-
+        
         # Check if any selected category has RBAC in its title
         has_rbac_category = False
         if categories:
@@ -168,12 +168,16 @@ class MediaPublishForm(forms.ModelForm):
                 if 'RBAC' in category.title:
                     has_rbac_category = True
                     break
-
+        
         # If state is private/unlisted and has RBAC category
         if state in ['private', 'unlisted'] and has_rbac_category:
-            # Make the confirm_state field visible
+            # Make the confirm_state field visible and add it to the layout
             self.fields['confirm_state'].widget = forms.CheckboxInput()
-
+            
+            # Dynamically add the confirm_state field to the layout
+            if 'confirm_state' not in [field.name for field in self.helper.layout]:
+                self.helper.layout.append(CustomField('confirm_state'))
+            
             # If confirm_state is not checked
             if not cleaned_data.get('confirm_state'):
                 self.add_error('confirm_state', "You must confirm this state change for RBAC content")
