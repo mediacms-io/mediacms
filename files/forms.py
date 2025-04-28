@@ -96,7 +96,7 @@ class MediaPublishForm(forms.ModelForm):
         required=False,
         initial=False,
         label="Acknowledge sharing status",
-        help_text="Confirm you understand that media is accessible to groups that have access to categories"
+        help_text=""
     )
 
     class Meta:
@@ -165,22 +165,23 @@ class MediaPublishForm(forms.ModelForm):
             rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
 
             if rbac_categories and state in ['private', 'unlisted']:
-                # Make the confirm_state field visible and add it to the layout after state field
+                # Make the confirm_state field visible and add it to the layout
                 self.fields['confirm_state'].widget = forms.CheckboxInput()
-                
-                # Find the index of the state field in the layout
-                layout_items = list(self.helper.layout)
-                state_index = next((i for i, item in enumerate(layout_items) 
-                                   if getattr(item, 'name', '') == 'state'), -1)
-                
-                # Insert confirm_state after state field
-                if state_index != -1:
+
+                state_index = None
+                for i, layout_item in enumerate(self.helper.layout):
+                    if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
+                        state_index = i
+                        break
+
+                if state_index:
+                    layout_items = list(self.helper.layout)
                     layout_items.insert(state_index + 1, CustomField('confirm_state'))
                     self.helper.layout = Layout(*layout_items)
 
+
                 if not cleaned_data.get('confirm_state'):
-                    error_message = f"Although the state of this media is set to {state}, it is also part of the following categories: {','.join(rbac_categories)}" \
-                                     f"Members of Groups that have access to these categories can access the media too"
+                    error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', `'.join(rbac_categories)}"
                     self.add_error('confirm_state', error_message)
 
         return cleaned_data
