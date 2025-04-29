@@ -390,7 +390,7 @@ def edit_video(request):
     return render(
         request,
         "cms/edit_video.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": media_file_path},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": media_file_path, "media_id": media.friendly_token},
     )
 
 
