@@ -4,8 +4,10 @@ interface TrimVideoRequest {
   segments: {
     startTime: string;
     endTime: string;
+    name?: string; 
   }[];
   saveAsCopy?: boolean;
+  saveIndividualSegments?: boolean; 
 }
 
 interface TrimVideoResponse {
@@ -31,7 +33,7 @@ export const trimVideo = async (
     setTimeout(() => {
       resolve({
         msg: "Video is processing for trim",
-        url_redirect: `http://localhost/api/v1/media/${mediaId}?great-job=done`
+        url_redirect: `./view?m=${mediaId}`
       });
     }, 1500); // Simulate 1.5 second server delay
   });
