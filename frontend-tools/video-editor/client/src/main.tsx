@@ -4,7 +4,8 @@ import "./index.css";
 
 if (typeof window !== 'undefined') {
   window.MEDIA_DATA = {
-    videoUrl: ""
+    videoUrl: "",
+    mediaId: ""
   };
 }
 
@@ -12,6 +13,7 @@ declare global {
   interface Window {
     MEDIA_DATA: {
       videoUrl: string;
+      mediaId: string;
     };
     seekToFunction?: (time: number) => void;
   }
