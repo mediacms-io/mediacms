@@ -425,6 +425,20 @@
   .save-copy-button:hover {
     background-color: rgba(9, 59, 109, 0.9);
   }
+  
+  .save-segments-button {
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+  }
+  
+  .save-segments-button:hover {
+    background-color: rgba(9, 59, 109, 0.9);
+  }
   /* Tooltip styles */
   [data-tooltip] {
     position: relative;

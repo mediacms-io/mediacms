@@ -538,6 +538,28 @@ const useVideoTrimmer = () => {
     console.log("Save as copy data:", saveData);
   };
   
+  // Handle save segments individually action
+  const handleSaveSegments = () => {
+    // Sort segments chronologically by start time before saving
+    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    
+    // Create the JSON data for saving individual segments
+    const saveData = {
+      type: "save_segments",
+      segments: sortedSegments.map(segment => ({
+        name: segment.name,
+        startTime: formatDetailedTime(segment.startTime),
+        endTime: formatDetailedTime(segment.endTime)
+      }))
+    };
+    
+    // Display JSON in alert (for demonstration purposes)
+    alert(JSON.stringify(saveData, null, 2));
+    
+    // In a real implementation, this would make a POST request to save each segment as a separate file
+    console.log("Save segments data:", saveData);
+  };
+  
   return {
     videoRef,
     currentTime,
@@ -567,6 +589,7 @@ const useVideoTrimmer = () => {
     toggleMute,
     handleSave,
     handleSaveACopy,
+    handleSaveSegments,
   };
 };
 

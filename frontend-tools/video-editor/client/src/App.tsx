@@ -34,6 +34,7 @@ const App = () => {
     toggleMute,
     handleSave,
     handleSaveACopy,
+    handleSaveSegments,
   } = useVideoTrimmer();
 
   return (
@@ -83,6 +84,7 @@ const App = () => {
           videoRef={videoRef}
           onSave={handleSave}
           onSaveACopy={handleSaveACopy}
+          onSaveSegments={handleSaveSegments}
         />
 
         {/* Clip Segments */}

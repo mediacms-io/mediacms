@@ -22,6 +22,7 @@ interface TimelineControlsProps {
   videoRef: React.RefObject<HTMLVideoElement>;
   onSave?: () => void;
   onSaveACopy?: () => void;
+  onSaveSegments?: () => void;
 }
 
 const TimelineControls = ({
@@ -39,7 +40,8 @@ const TimelineControls = ({
   onSeek,
   videoRef,
   onSave,
-  onSaveACopy
+  onSaveACopy,
+  onSaveSegments
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ const TimelineControls = ({
   // Modal states
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSaveAsModal, setShowSaveAsModal] = useState(false);
+  const [showSaveSegmentsModal, setShowSaveSegmentsModal] = useState(false);
   const [showProcessingModal, setShowProcessingModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -80,8 +83,7 @@ const TimelineControls = ({
         endTime: formatDetailedTime(segment.endTime)
       }));
 
-      // Mock API call with media ID (could be passed as a prop in a real app)
-      const mediaId = "YjGJafibO"; // Example media ID
+      const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: false
@@ -98,10 +100,8 @@ const TimelineControls = ({
       setShowSuccessModal(true);
 
     } catch (error) {
-      // Handle errors
       console.error("Error processing video:", error);
       setShowProcessingModal(false);
-      // Could show an error modal here
     }
   };
 
@@ -117,8 +117,8 @@ const TimelineControls = ({
         endTime: formatDetailedTime(segment.endTime)
       }));
 
-      // Mock API call with media ID (could be passed as a prop in a real app)
-      const mediaId = "YjGJafibO"; // Example media ID
+      const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
+
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: true
@@ -135,10 +135,46 @@ const TimelineControls = ({
       setShowSuccessModal(true);
 
     } catch (error) {
-      // Handle errors
       console.error("Error processing video:", error);
       setShowProcessingModal(false);
-      // Could show an error modal here
+    }
+  };
+  
+  const handleSaveSegmentsConfirm = async () => {
+    // Close confirmation modal and show processing modal
+    setShowSaveSegmentsModal(false);
+    setShowProcessingModal(true);
+
+    try {
+      // Format segments data for API request, with each segment saved as a separate file
+      const segments = clipSegments.map(segment => ({
+        startTime: formatDetailedTime(segment.startTime),
+        endTime: formatDetailedTime(segment.endTime),
+        name: segment.name // Include segment name for individual files
+      }));
+
+      const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
+
+      const response = await trimVideo(mediaId, { 
+        segments,
+        saveAsCopy: true,
+        saveIndividualSegments: true 
+      });
+
+      // Hide processing modal
+      setShowProcessingModal(false);
+      
+      // Store success message and redirect URL
+      setSuccessMessage("Segments have been saved as individual files.");
+      setRedirectUrl(response.url_redirect);
+      
+      // Show success modal
+      setShowSuccessModal(true);
+
+    } catch (error) {
+      // Handle errors
+      console.error("Error processing video segments:", error);
+      setShowProcessingModal(false);
     }
   };
   
@@ -1193,6 +1229,16 @@ const TimelineControls = ({
             </button>
           )}
           
+          {onSaveSegments && (
+            <button 
+              onClick={() => setShowSaveSegmentsModal(true)}
+              className="save-segments-button"
+              data-tooltip="Save segments as separate files"
+            >
+              Save Segments
+            </button>
+          )}
+          
           {/* Save Confirmation Modal */}
           <Modal
             isOpen={showSaveModal}
@@ -1264,6 +1310,37 @@ const TimelineControls = ({
             </div>
             <p className="modal-message text-center">
               Please wait while your video is being processed...
+            </p>
+          </Modal>
+          
+          {/* Save Segments Modal */}
+          <Modal
+            isOpen={showSaveSegmentsModal}
+            onClose={() => setShowSaveSegmentsModal(false)}
+            title="Save Segments"
+            actions={
+              <>
+                <button 
+                  className="modal-button modal-button-secondary" 
+                  onClick={() => setShowSaveSegmentsModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="modal-button modal-button-primary" 
+                  onClick={handleSaveSegmentsConfirm}
+                >
+                  Save Segments
+                </button>
+              </>
+            }
+          >
+            <p className="modal-message">
+              You're about to save each segment as a separate video file. 
+              There are {clipSegments.length} segments to be saved.
+            </p>
+            <p className="modal-message">
+              Each segment will be saved with its name as the filename.
             </p>
           </Modal>
           
