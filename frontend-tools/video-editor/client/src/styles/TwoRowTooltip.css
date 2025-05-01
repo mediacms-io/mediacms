@@ -1,0 +1,119 @@
+.two-row-tooltip {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltip-row:first-child {
+  margin-bottom: 8px;
+}
+
+.tooltip-time-btn {
+  background-color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tooltip-time-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.tooltip-time-display {
+  font-family: monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333;
+  padding: 4px 8px;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  min-width: 110px;
+  text-align: center;
+}
+
+.tooltip-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltip-action-btn {
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4b5563;
+  width: 28px;
+  height: 28px;
+}
+
+.tooltip-action-btn:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.tooltip-action-btn.delete {
+  color: #ef4444;
+}
+
+.tooltip-action-btn.delete:hover {
+  background-color: #fee2e2;
+}
+
+.tooltip-action-btn.play {
+  color: #10b981;
+}
+
+.tooltip-action-btn.play:hover {
+  background-color: #d1fae5;
+}
+
+.tooltip-action-btn.pause {
+  color: #3b82f6;
+}
+
+.tooltip-action-btn.pause:hover {
+  background-color: #dbeafe;
+}
+
+.tooltip-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Adjust the new segment button style */
+.tooltip-action-btn.new-segment {
+  width: auto;
+  height: auto;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: row;
+  color: #10b981; /* Green color like play button */
+}
+
+.tooltip-action-btn.new-segment:hover {
+  background-color: #d1fae5;
+}
+
+.tooltip-action-btn.new-segment .tooltip-btn-text {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}

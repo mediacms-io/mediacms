@@ -85,6 +85,7 @@ const App = () => {
           onSave={handleSave}
           onSaveACopy={handleSaveACopy}
           onSaveSegments={handleSaveSegments}
+          isPreviewMode={isPreviewMode}
         />
 
         {/* Clip Segments */}

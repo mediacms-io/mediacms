@@ -5,6 +5,7 @@ import { Segment } from "./ClipSegments";
 import Modal from "./Modal";
 import { trimVideo } from "../services/videoApi";
 import '../styles/TimelineControls.css';
+import '../styles/TwoRowTooltip.css';
 
 interface TimelineControlsProps {
   currentTime: number;
@@ -23,6 +24,7 @@ interface TimelineControlsProps {
   onSave?: () => void;
   onSaveACopy?: () => void;
   onSaveSegments?: () => void;
+  isPreviewMode?: boolean;
 }
 
 const TimelineControls = ({
@@ -41,7 +43,8 @@ const TimelineControls = ({
   videoRef,
   onSave,
   onSaveACopy,
-  onSaveSegments
+  onSaveSegments,
+  isPreviewMode
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -52,6 +55,9 @@ const TimelineControls = ({
   const [clickedTime, setClickedTime] = useState<number>(0);
   const [isZoomDropdownOpen, setIsZoomDropdownOpen] = useState(false);
   const [availableSegmentDuration, setAvailableSegmentDuration] = useState<number>(30); // Default 30 seconds
+  const [isPlayingSegment, setIsPlayingSegment] = useState(false);
+  const [activeSegment, setActiveSegment] = useState<Segment | null>(null);
+  const [displayTime, setDisplayTime] = useState<number>(0);
 
   // Reference for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -214,6 +220,26 @@ const TimelineControls = ({
     }
   }, [currentTime, zoomLevel, duration, selectedSegmentId, showEmptySpaceTooltip, currentTimePercent]);
   
+  // Update display time and check for segment playback bounds
+  useEffect(() => {
+    // When video is playing and we have an active segment
+    if (isPlayingSegment && activeSegment && videoRef.current) {
+      // Update display time to match current video time
+      setDisplayTime(currentTime);
+      
+      // Check if we've reached the end of the segment
+      if (currentTime >= activeSegment.endTime) {
+        // Pause the video
+        videoRef.current.pause();
+        setIsPlayingSegment(false);
+        setActiveSegment(null);
+      }
+    } else {
+      // When not playing a segment, display time should match clicked time
+      setDisplayTime(clickedTime);
+    }
+  }, [currentTime, isPlayingSegment, activeSegment, clickedTime]);
+  
   // Close zoom dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -228,6 +254,34 @@ const TimelineControls = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isZoomDropdownOpen]);
+  
+  // Global click handler to close tooltips when clicking outside
+  useEffect(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Close tooltips when clicking outside of tooltips and timeline marker head
+      if ((selectedSegmentId !== null || showEmptySpaceTooltip) && 
+          !target.closest('.empty-space-tooltip') && 
+          !target.closest('.segment-tooltip') && 
+          !target.closest('.timeline-marker-head') && 
+          !target.closest('.clip-segment') && 
+          !target.closest('.timeline-container')) {
+        // Reset play state when closing tooltip
+        if (isPlayingSegment) {
+          setIsPlayingSegment(false);
+          setActiveSegment(null);
+        }
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleGlobalClick);
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick);
+    };
+  }, [selectedSegmentId, showEmptySpaceTooltip, isPlayingSegment]);
 
   // Initialize drag handlers for trim handles
   useEffect(() => {
@@ -342,6 +396,10 @@ const TimelineControls = ({
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!timelineRef.current || !scrollContainerRef.current) return;
     
+    // If in preview mode, clicking on timeline should immediately exit preview mode
+    // Note that onSeek will handle the actual preview mode cancellation,
+    // this is just for clarity in the code
+    
     const rect = timelineRef.current.getBoundingClientRect();
     
     // Account for scroll position when calculating the click position
@@ -360,54 +418,70 @@ const TimelineControls = ({
     
     // Only process if clicked on the timeline background or thumbnails, not on existing segments
     if (e.target === timelineRef.current || (e.target as HTMLElement).classList.contains('timeline-thumbnail')) {
-      // First, close segment tooltip if open
-      setSelectedSegmentId(null);
+      // Check if there's a segment at the clicked position
+      const segmentAtClickedTime = clipSegments.find(
+        seg => newTime >= seg.startTime && newTime <= seg.endTime
+      );
       
-      // Seek to the clicked position
-      onSeek(newTime);
-      
-      // Set the clicked time for the tooltip actions
-      setClickedTime(newTime);
-      
-      // Calculate the available space for a new segment
-      const availableSpace = calculateAvailableSpace(newTime);
-      setAvailableSegmentDuration(availableSpace);
-      
-      // If there's no space to create even a minimal segment (at least 0.5 seconds), don't show the tooltip
-      if (availableSpace < 0.5) {
-        return;
-      }
-      
-      // Calculate and set tooltip position correctly for zoomed timeline
-      let xPos;
-      if (zoomLevel > 1) {
-        // For zoomed timeline, calculate the visible position
-        const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
-        const clickPosPercent = newTime / duration;
-        xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
+      // If there's a segment, show its tooltip instead of the empty space tooltip
+      if (segmentAtClickedTime) {
+        setSelectedSegmentId(segmentAtClickedTime.id);
+        setShowEmptySpaceTooltip(false);
+        
+        // Seek to the clicked position
+        onSeek(newTime);
+        
+        // Set the clicked time for the tooltip actions
+        setClickedTime(newTime);
       } else {
-        // For 1x zoom, use the client X
-        xPos = e.clientX;
-      }
-      
-      setTooltipPosition({ 
-        x: xPos, 
-        y: rect.top - 10  // Position tooltip above the timeline
-      });
-      
-      // Show the empty space tooltip
-      setShowEmptySpaceTooltip(true);
-      
-      // Close tooltip when clicking outside
-      const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.empty-space-tooltip') && !target.closest('.timeline')) {
-          setShowEmptySpaceTooltip(false);
-          document.removeEventListener('mousedown', handleClickOutside);
+        // First, close segment tooltip if open
+        setSelectedSegmentId(null);
+        
+        // Seek to the clicked position
+        onSeek(newTime);
+        
+        // Set the clicked time for the tooltip actions
+        setClickedTime(newTime);
+        
+        // Calculate the available space for a new segment
+        const availableSpace = calculateAvailableSpace(newTime);
+        setAvailableSegmentDuration(availableSpace);
+        
+        // If there's no space to create even a minimal segment (at least 0.5 seconds), don't show the tooltip
+        if (availableSpace < 0.5) {
+          return;
         }
-      };
-      
-      document.addEventListener('mousedown', handleClickOutside);
+        
+        // Calculate and set tooltip position correctly for zoomed timeline
+        let xPos;
+        if (zoomLevel > 1) {
+          // For zoomed timeline, calculate the visible position
+          const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
+          const clickPosPercent = newTime / duration;
+          xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
+        } else {
+          // For 1x zoom, use the client X
+          xPos = e.clientX;
+        }
+        
+        setTooltipPosition({ 
+          x: xPos, 
+          y: rect.top - 10  // Position tooltip above the timeline
+        });
+        
+        // Show the empty space tooltip
+        setShowEmptySpaceTooltip(true);
+        
+        // Close tooltip when clicking outside
+        const handleClickOutside = (event: MouseEvent) => {
+          const target = event.target as HTMLElement;
+          
+          // This is now handled by the global document click handler - just remove this listener
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+        
+        document.addEventListener('mousedown', handleClickOutside);
+      }
     }
   };
   
@@ -541,6 +615,15 @@ const TimelineControls = ({
     
     console.log("Segment clicked:", segmentId);
     
+    // Reset play state when selecting a new segment
+    if (isPlayingSegment) {
+      setIsPlayingSegment(false);
+      setActiveSegment(null);
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    }
+    
     // Set the current segment as selected
     setSelectedSegmentId(segmentId);
     
@@ -564,7 +647,7 @@ const TimelineControls = ({
     // Set the clicked time for UI
     setClickedTime(boundedTime);
     
-    // Seek to this position
+    // Seek to this position (this will also exit preview mode if active)
     onSeek(boundedTime);
     
     // Calculate tooltip position directly above click point
@@ -610,16 +693,8 @@ const TimelineControls = ({
       }, 300); // Wait for smooth scrolling to complete
     }
     
-    // Close tooltip when clicking outside
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.segment-tooltip') && !target.closest('.clip-segment')) {
-        setSelectedSegmentId(null);
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
+    // We no longer need a local click handler as we have a global one
+    // that handles closing tooltips when clicking outside
   };
   
   // Show tooltip for the segment
@@ -689,10 +764,10 @@ const TimelineControls = ({
         <div className="timeline-title">
           <span className="timeline-title-text">Timeline</span>
         </div>
-        <div className="current-time">
-          Current: <span className="time-code">{formatDetailedTime(currentTime)}</span>
+        {/* Current time display removed as requested */}
+        <div className="duration-time">
+          Total Segments: <span>{formatDetailedTime(clipSegments.reduce((sum, segment) => sum + (segment.endTime - segment.startTime), 0))}</span>
         </div>
-        <div className="duration-time">Total: <span>{formatTime(duration)}</span></div>
       </div>
       
       {/* Timeline Container with Scrollable Wrapper */}
@@ -714,7 +789,77 @@ const TimelineControls = ({
           <div 
             className="timeline-marker"
             style={{ left: `${currentTimePercent}%` }}
-          ></div>
+          >
+            <div 
+              className="timeline-marker-head"
+              onClick={(e) => {
+                // Prevent event propagation to avoid triggering the timeline container click
+                e.stopPropagation();
+                
+                // For ensuring accurate segment detection, refresh clipSegments first
+                // This helps when clicking right after creating a new segment
+                const refreshedSegmentAtCurrentTime = clipSegments.find(
+                  seg => currentTime >= seg.startTime && currentTime <= seg.endTime
+                );
+                
+                // Toggle tooltip visibility with a single click
+                if (selectedSegmentId || showEmptySpaceTooltip) {
+                  // Close the tooltips
+                  setSelectedSegmentId(null);
+                  setShowEmptySpaceTooltip(false);
+                  // Add a small delay before checking for segments again to ensure clean state
+                  setTimeout(() => {
+                    // Check for segment at current marker position after closing tooltip
+                    // Use the same improved matching as elsewhere
+                    const segmentAtCurrentTime = clipSegments.find(seg => {
+                      const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
+                      const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
+                      const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
+                      return isWithinSegment || isAtExactStart || isAtExactEnd;
+                    });
+                    
+                    // If there's a segment, show its tooltip (helps with newly created segments)
+                    if (segmentAtCurrentTime) {
+                      setSelectedSegmentId(segmentAtCurrentTime.id);
+                    }
+                  }, 50); // Small delay to ensure state is updated
+                } else {
+                  // Get segment at current time - ensure precise matching within segment boundaries
+                  // We need to be extra careful with floating point comparisons
+                  const segmentAtCurrentTime = clipSegments.find(seg => {
+                    const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
+                    const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
+                    const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
+                    return isWithinSegment || isAtExactStart || isAtExactEnd;
+                  });
+                  
+                  // Log detection of segments at marker (for debugging)
+                  console.log("Checking for segment at marker:", segmentAtCurrentTime ? 
+                    `Found segment ${segmentAtCurrentTime.id}` : "No segment found");
+                  
+                  // Show the appropriate tooltip
+                  if (segmentAtCurrentTime) {
+                    // Show segment tooltip
+                    setSelectedSegmentId(segmentAtCurrentTime.id);
+                  } else {
+                    // Calculate available space for new segment before showing tooltip
+                    const availableSpace = calculateAvailableSpace(currentTime);
+                    setAvailableSegmentDuration(availableSpace);
+                    
+                    // Only show tooltip if there's enough space for a minimal segment
+                    if (availableSpace >= 0.5) {
+                      // Show empty space tooltip
+                      setShowEmptySpaceTooltip(true);
+                    }
+                  }
+                }
+              }}
+            >
+              <span className="timeline-marker-head-icon">
+                {selectedSegmentId || showEmptySpaceTooltip ? '-' : '+'}
+              </span>
+            </div>
+          </div>
           
           {/* Trim Line Markers - hidden when segments exist */}
           {clipSegments.length === 0 && (
@@ -746,17 +891,74 @@ const TimelineControls = ({
           {/* Segment Tooltip */}
           {selectedSegmentId !== null && (
             <div 
-              className="segment-tooltip"
+              className="segment-tooltip two-row-tooltip"
               style={{
-                position: 'fixed',
-                left: `${tooltipPosition.x}px`,
-                top: `${tooltipPosition.y}px`,
-                transform: 'translate(-50%, -100%)'
+                position: 'absolute',
+                left: `${currentTimePercent}%`,
+                transform: 'translateX(-50%)'
               }}
             >
-              <div className="tooltip-time">{formatTime(clickedTime)}</div>
-              <div className="tooltip-actions">
+              {/* First row with time adjustment buttons */}
+              <div className="tooltip-row">
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Decrease by 100ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time back by 100ms
+                    const newTime = Math.max(0, clickedTime - 0.1);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                    console.log("-100ms clicked");
+                  }}
+                >
+                  -100ms
+                </button>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Decrease by 50ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time back by 50ms
+                    const newTime = Math.max(0, clickedTime - 0.05);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  -50ms
+                </button>
+                <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Increase by 50ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time forward by 50ms
+                    const newTime = Math.min(duration, clickedTime + 0.05);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  +50ms
+                </button>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Increase by 100ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time forward by 100ms
+                    const newTime = Math.min(duration, clickedTime + 0.1);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                    console.log("+100ms clicked");
+                  }}
+                >
+                  +100ms
+                </button>
+              </div>
               
+              {/* Second row with action buttons */}
+              <div className="tooltip-row tooltip-actions">
                 <button 
                   className="tooltip-action-btn delete"
                   data-tooltip="Delete segment"
@@ -806,6 +1008,51 @@ const TimelineControls = ({
                   </svg>
                 </button>
                 <button 
+                  className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
+                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play segment from start"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    // Find the selected segment
+                    const segment = clipSegments.find(seg => seg.id === selectedSegmentId);
+                    if (segment && videoRef.current) {
+                      if (isPlayingSegment) {
+                        // If already playing, pause the video
+                        videoRef.current.pause();
+                        setIsPlayingSegment(false);
+                        console.log("Pause clicked");
+                      } else {
+                        // If not playing, start segment playback
+                        // Seek to the start of the segment
+                        onSeek(segment.startTime);
+                        
+                        // Set active segment for boundary checking
+                        setActiveSegment(segment);
+                        
+                        // Play the video
+                        videoRef.current.play();
+                        setIsPlayingSegment(true);
+                        console.log("Play clicked");
+                      }
+                    }
+                    
+                    // Don't close the tooltip, keep it visible while playing
+                  }}
+                >
+                  {isPlayingSegment ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="10" y1="15" x2="10" y2="9"></line>
+                      <line x1="14" y1="15" x2="14" y2="9"></line>
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                    </svg>
+                  )}
+                </button>
+                <button 
                   className="tooltip-action-btn set-in"
                   data-tooltip="Set start point at current position"
                   onClick={(e) => {
@@ -830,6 +1077,7 @@ const TimelineControls = ({
                         detail: { segments: updatedSegments } 
                       });
                       document.dispatchEvent(updateEvent);
+                      console.log("Set in clicked");
                     }
                     
                     // Close the tooltip
@@ -868,6 +1116,7 @@ const TimelineControls = ({
                         detail: { segments: updatedSegments } 
                       });
                       document.dispatchEvent(updateEvent);
+                      console.log("Set out clicked");
                     }
                     
                     // Close the tooltip
@@ -885,19 +1134,75 @@ const TimelineControls = ({
             </div>
           )}
           
-          {/* Empty space tooltip */}
-          {showEmptySpaceTooltip && (
+          {/* Empty space tooltip - positioned absolutely within timeline container */}
+          {showEmptySpaceTooltip && selectedSegmentId === null && (
             <div 
-              className="empty-space-tooltip"
+              className="empty-space-tooltip two-row-tooltip"
               style={{
-                position: 'fixed',
-                left: `${tooltipPosition.x}px`,
-                top: `${tooltipPosition.y}px`,
-                transform: 'translate(-50%, -100%)'
+                position: 'absolute',
+                left: `${currentTimePercent}%`,
+                transform: 'translateX(-50%)'
               }}
             >
-              <div className="tooltip-time">{formatTime(clickedTime)}</div>
-              <div className="tooltip-actions">
+              {/* First row with time adjustment buttons - same as segment tooltip */}
+              <div className="tooltip-row">
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Decrease by 100ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time back by 100ms
+                    const newTime = Math.max(0, clickedTime - 0.1);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  -100ms
+                </button>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Decrease by 50ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time back by 50ms
+                    const newTime = Math.max(0, clickedTime - 0.05);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  -50ms
+                </button>
+                <div className="tooltip-time-display">{formatDetailedTime(clickedTime)}</div>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Increase by 50ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time forward by 50ms
+                    const newTime = Math.min(duration, clickedTime + 0.05);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  +50ms
+                </button>
+                <button 
+                  className="tooltip-time-btn"
+                  data-tooltip="Increase by 100ms"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Set the current time forward by 100ms
+                    const newTime = Math.min(duration, clickedTime + 0.1);
+                    onSeek(newTime);
+                    setClickedTime(newTime);
+                  }}
+                >
+                  +100ms
+                </button>
+              </div>
+              
+              {/* Second row with New Segment button */}
+              <div className="tooltip-row tooltip-actions">
                 {availableSegmentDuration >= 0.5 && (
                   <button 
                     className="tooltip-action-btn new-segment"
@@ -934,8 +1239,20 @@ const TimelineControls = ({
                       });
                       document.dispatchEvent(updateEvent);
                       
-                      // Close the tooltip
+                      // Close empty space tooltip
                       setShowEmptySpaceTooltip(false);
+                      
+                      // After creating the segment, wait a short time for the state to update
+                      setTimeout(() => {
+                        // The newly created segment is the last one in the array with the ID we just assigned
+                        const createdSegment = updatedSegments[updatedSegments.length - 1];
+                        
+                        if (createdSegment) {
+                          // Set this segment as selected to show its tooltip
+                          setSelectedSegmentId(createdSegment.id);
+                          console.log("Created and selected new segment:", createdSegment.id);
+                        }
+                      }, 100); // Small delay to ensure state is updated
                     }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -993,10 +1310,13 @@ const TimelineControls = ({
                     
                     // Create a helper function to show tooltip that uses the same logic as the millisecond buttons
                     const showTooltipAtTime = (timeInSeconds: number) => {
-                      // Find the segment at the given time
-                      const segmentAtTime = clipSegments.find(
-                        seg => timeInSeconds >= seg.startTime && timeInSeconds <= seg.endTime
-                      );
+                      // Find the segment at the given time using improved matching
+                      const segmentAtTime = clipSegments.find(seg => {
+                        const isWithinSegment = timeInSeconds >= seg.startTime && timeInSeconds <= seg.endTime;
+                        const isAtExactStart = Math.abs(timeInSeconds - seg.startTime) < 0.001; // Within 1ms of start
+                        const isAtExactEnd = Math.abs(timeInSeconds - seg.endTime) < 0.001; // Within 1ms of end
+                        return isWithinSegment || isAtExactStart || isAtExactEnd;
+                      });
                       
                       // Calculate position for tooltip
                       if (timelineRef.current && scrollContainerRef.current) {
@@ -1046,10 +1366,13 @@ const TimelineControls = ({
             {(() => {
               // Helper function to show the appropriate tooltip at the current time position
               const showTooltipAtCurrentTime = () => {
-                // Find the segment at the current time (after seeking)
-                const segmentAtCurrentTime = clipSegments.find(
-                  seg => currentTime >= seg.startTime && currentTime <= seg.endTime
-                );
+                // Find the segment at the current time (after seeking) - using improved matching for better precision
+                const segmentAtCurrentTime = clipSegments.find(seg => {
+                  const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
+                  const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
+                  const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
+                  return isWithinSegment || isAtExactStart || isAtExactEnd;
+                });
                 
                 // Calculate position for tooltip (above the timeline where the marker is)
                 if (timelineRef.current && scrollContainerRef.current) {

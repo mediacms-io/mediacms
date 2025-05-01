@@ -150,6 +150,15 @@ const useVideoTrimmer = () => {
     const video = videoRef.current;
     if (!video) return;
     
+    // If in preview mode, exit preview mode when user seeks and stop playback
+    if (isPreviewMode) {
+      setIsPreviewMode(false);
+      setPreviewSegmentIndex(0);
+      // Stop playback when exiting preview mode
+      video.pause();
+      setIsPlaying(false);
+    }
+    
     video.currentTime = time;
     setCurrentTime(time);
   };
