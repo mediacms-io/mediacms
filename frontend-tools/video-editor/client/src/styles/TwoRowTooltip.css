@@ -16,31 +16,31 @@
 }
 
 .tooltip-time-btn {
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #333;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background-color: #f0f0f0 !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
 }
 
 .tooltip-time-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #e0e0e0 !important;
 }
 
 .tooltip-time-display {
-  font-family: monospace;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #333;
-  padding: 4px 8px;
-  background-color: #f7f7f7;
-  border-radius: 4px;
-  min-width: 110px;
-  text-align: center;
+  font-family: monospace !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+  padding: 4px 8px !important;
+  background-color: #f7f7f7 !important;
+  border-radius: 4px !important;
+  min-width: 110px !important;
+  text-align: center !important;
 }
 
 .tooltip-actions {
