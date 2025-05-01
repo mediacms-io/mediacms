@@ -229,7 +229,7 @@
     text-align: center;
     pointer-events: auto;
     /* Make sure tooltip is visible above timeline */
-    top: -80px !important;
+    top: -90px !important;
   }
 
   .segment-tooltip:after,
