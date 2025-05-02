@@ -672,10 +672,11 @@ class Media(models.Model):
         if self.media_type not in ["video"]:
             return None
 
-        ret = self.encodings.filter(profile__extension='mp4').order_by("-profile__resolution").first()
+        ret = self.encodings.filter(status="success", profile__extension='mp4').order_by("-profile__resolution").first()
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 
+        return None
 
     @property
     def encodings_info(self, full=False):
@@ -1507,6 +1508,38 @@ class VideoChapterData(models.Model):
         return data
 
 
+class VideoTrimRequest(models.Model):
+    """Model to handle video trimming requests"""
+
+    VIDEO_TRIM_STATUS = (
+        ("initial", "Initial"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("fail", "Fail"),
+    )
+
+    VIDEO_ACTION_CHOICES = (
+        ("replace", "Replace Original"),
+        ("save_new", "Save as New"),
+        ("create_segments", "Create Segments"),
+    )
+
+    TRIM_STYLE_CHOICES = (
+        ("no_encoding", "No Encoding"),
+        ("precise", "Precise"),
+    )
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='trim_requests')
+    status = models.CharField(max_length=20, choices=VIDEO_TRIM_STATUS, default="initial")
+    add_date = models.DateTimeField(auto_now_add=True)
+    video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
+    media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
+    timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+
+    def __str__(self):
+        return f"Trim request for {self.media.title} ({self.status})"
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1757,3 +1790,4 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
+
