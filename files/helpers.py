@@ -787,6 +787,83 @@ def clean_query(query):
     return query.lower()
 
 
+def get_trim_timestamps(media_file_path, timestamps_list):
+    """Process a list of timestamps to align start times with I-frames for better video trimming
+    
+    Args:
+        media_file_path (str): Path to the media file
+        timestamps_list (list): List of dictionaries with startTime and endTime
+        
+    Returns:
+        list: Processed timestamps with adjusted startTime values
+    """
+    SEC_TO_SUBTRACT = 10
+    
+    # Validate input
+    if not isinstance(timestamps_list, list):
+        return []
+    
+    timestamps_results = []
+    timestamps_to_process = []
+    
+    # Validate each timestamp entry
+    for item in timestamps_list:
+        if isinstance(item, dict) and 'startTime' in item and 'endTime' in item:
+            timestamps_to_process.append(item)
+    
+    if not timestamps_to_process:
+        return []
+    
+    # Special case: if only one segment starting at 00:00:00.000, return as is
+    if len(timestamps_to_process) == 1 and timestamps_to_process[0]['startTime'] == "00:00:00.000":
+        return timestamps_list
+    
+    # Process each timestamp
+    for item in timestamps_to_process:
+        startTime = item['startTime']
+        endTime = item['endTime']
+        
+        # Convert startTime to seconds
+        h, m, s = startTime.split(':')
+        s, ms = s.split('.')
+        start_seconds = int(h) * 3600 + int(m) * 60 + int(s) + float('0.' + ms)
+        
+        # Subtract seconds for seeking
+        search_start = max(0, start_seconds - SEC_TO_SUBTRACT)
+        
+        # Create ffprobe command to find nearest I-frame
+        cmd = [
+            settings.FFPROBE_COMMAND,
+            "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "frame=pts_time,pict_type",
+            "-of", "csv=p=0",
+            "-read_intervals", f"{search_start}%{startTime}",
+            media_file_path
+        ]
+        cmd = [str(s) for s in cmd]
+        
+        # Run command
+        stdout = run_command(cmd).get("out")
+        
+        # Process output to find the last I-frame
+        i_frames = []
+        if stdout:
+            for line in stdout.strip().split('\n'):
+                if line and line.endswith(',I'):
+                    i_frames.append(line.replace(',I', ''))
+        
+        # Use the last I-frame if found, otherwise keep original startTime
+        adjusted_startTime = i_frames[-1] if i_frames else startTime
+        
+        timestamps_results.append({
+            'startTime': adjusted_startTime,
+            'endTime': endTime
+        })
+    
+    return timestamps_results
+
+
 def get_alphanumeric_only(string):
     """Returns a query that contains only alphanumeric characters
     This include characters other than the English alphabet too
