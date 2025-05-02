@@ -787,6 +787,20 @@ def clean_query(query):
     return query.lower()
 
 
+def timestamp_to_seconds(timestamp):
+    """Convert a timestamp in format HH:MM:SS.mmm to seconds
+    
+    Args:
+        timestamp (str): Timestamp in format HH:MM:SS.mmm
+        
+    Returns:
+        float: Timestamp in seconds
+    """
+    h, m, s = timestamp.split(':')
+    s, ms = s.split('.')
+    return int(h) * 3600 + int(m) * 60 + int(s) + float('0.' + ms)
+
+
 def get_trim_timestamps(media_file_path, timestamps_list):
     """Process a list of timestamps to align start times with I-frames for better video trimming
 
@@ -821,9 +835,7 @@ def get_trim_timestamps(media_file_path, timestamps_list):
         endTime = item['endTime']
 
         # Convert startTime to seconds
-        h, m, s = startTime.split(':')
-        s, ms = s.split('.')
-        start_seconds = int(h) * 3600 + int(m) * 60 + int(s) + float('0.' + ms)
+        start_seconds = timestamp_to_seconds(startTime)
 
         # Subtract seconds for seeking
         search_start = max(0, start_seconds - SEC_TO_SUBTRACT)
