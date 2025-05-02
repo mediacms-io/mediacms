@@ -291,8 +291,32 @@ def trim_video(request, friendly_token):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    # Check if there are any existing trim requests in initial or running state
+    existing_requests = VideoTrimRequest.objects.filter(
+        media=media, 
+        status__in=["initial", "running"]
+    ).exists()
+    
+    if existing_requests:
+        return JsonResponse({"success": False, "error": "A trim request is already in progress for this video"}, status=400)
 
-    ret = {}
+    try:
+        data = json.loads(request.body)
+        video_trim_request = VideoTrimRequest.objects.create(
+            media=media,
+            status="initial",
+            video_action=data.get('video_action', 'replace'),
+            media_trim_style=data.get('media_trim_style', 'no_encoding'),
+            timestamps=data.get('timestamps', {})
+        )
+        
+        # Start the trim task
+        from .tasks import video_trim_task
+        video_trim_task.delay(video_trim_request.id)
+        
+        ret = {"success": True, "request_id": video_trim_request.id}
+    except Exception as e:
+        ret = {"success": False, "error": str(e)}
 
     return JsonResponse(ret, safe=False)
 
@@ -394,7 +418,7 @@ def edit_chapters(request):
 
 @login_required
 def edit_video(request):
-    """Edit chapters"""
+    """Edit video"""
 
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
@@ -405,6 +429,16 @@ def edit_video(request):
         return HttpResponseRedirect("/")
 
     if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    # Check if there's a running trim request
+    running_trim_request = VideoTrimRequest.objects.filter(
+        media=media, 
+        status__in=["initial", "running"]
+    ).exists()
+    
+    if running_trim_request:
+        messages.add_message(request, messages.INFO, "Video trim request is already running")
         return HttpResponseRedirect("/")
 
     media_file_path = media.trim_video_url
