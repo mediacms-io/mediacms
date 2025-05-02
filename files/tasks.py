@@ -43,6 +43,7 @@ from .models import (
     Rating,
     Tag,
     VideoChapterData,
+    VideoTrimRequest,
 )
 
 logger = get_task_logger(__name__)

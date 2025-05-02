@@ -68,6 +68,7 @@ from .models import (
     PlaylistMedia,
     Subtitle,
     Tag,
+    VideoTrimRequest,
 )
 from .serializers import (
     CategorySerializer,
