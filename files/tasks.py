@@ -841,23 +841,17 @@ def produce_video_chapters(chapter_id):
 
 @task(name="video_trim_task", bind=True, queue="long_tasks")
 def video_trim_task(self, trim_request_id):
-    """Process a video trim request"""
-    
     try:
         trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
     except VideoTrimRequest.DoesNotExist:
         logger.error(f"VideoTrimRequest with ID {trim_request_id} not found")
         return False
-    
-    # Update status to running
+
     trim_request.status = "running"
     trim_request.save(update_fields=["status"])
-    
-    # For now, just update the status - actual implementation will be added later
+
     logger.info(f"Started processing video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
-    
-    # TODO: Implement the actual video trimming logic here
-    
+
     return True
 
 
