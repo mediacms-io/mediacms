@@ -276,6 +276,27 @@ def video_chapters(request, friendly_token):
     return JsonResponse(ret, safe=False)
 
 
+
+@csrf_exempt
+@login_required
+def trim_video(request, friendly_token):
+    if not request.method == "POST":
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+
+    ret = {}
+
+    return JsonResponse(ret, safe=False)
+
+
 @login_required
 def edit_media(request):
     """Edit a media view"""
@@ -387,6 +408,11 @@ def edit_video(request):
         return HttpResponseRedirect("/")
 
     media_file_path = media.trim_video_url
+
+    if not media_file_path:
+        messages.add_message(request, messages.INFO, "Media is not video or has not finished processing yet")
+        return HttpResponseRedirect("/")
+
     return render(
         request,
         "cms/edit_video.html",
