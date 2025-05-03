@@ -1,0 +1,15 @@
+body {
+  /* THIS is not a good way to handle this, and a proper refactoring needs to be performed
+    This allows bigger images of media on listings for large screens
+    It would be great to adapt to other sizes, but this requires a good refaftoring
+     */
+
+  @media screen and (min-width: 2200px) {
+      --default-item-width: 342px !important;
+      --default-max-item-width: 342px !important;
+      --default-item-margin-right-width: 17px !important;
+      --default-item-margin-bottom-width: 27px !important;
+  }
+}
+
+
