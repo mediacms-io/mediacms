@@ -348,14 +348,14 @@ PRE_UPLOAD_MEDIA_MESSAGE = 'custom message'
 Set correct settings per provider
 
 ```
-DEFAULT_FROM_EMAIL = 'info@mediacms.io'
+DEFAULT_FROM_EMAIL = 'uet_mediacms@outlook.com'
 EMAIL_HOST_PASSWORD = 'xyz'
-EMAIL_HOST_USER = 'info@mediacms.io'
+EMAIL_HOST_USER = 'uet_mediacms@outlook.com'
 EMAIL_USE_TLS = True
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_HOST = 'mediacms.io'
 EMAIL_PORT = 587
-ADMIN_EMAIL_LIST = ['info@mediacms.io']
+ADMIN_EMAIL_LIST = ['uet_mediacms@outlook.com']
 ```
 
 ### 5.13 Disallow user registrations from specific domains

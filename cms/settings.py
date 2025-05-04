@@ -65,14 +65,14 @@ VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE = False
 PRE_UPLOAD_MEDIA_MESSAGE = ""
 
 # email settings
-DEFAULT_FROM_EMAIL = "info@mediacms.io"
-EMAIL_HOST_PASSWORD = "xyz"
-EMAIL_HOST_USER = "info@mediacms.io"
+DEFAULT_FROM_EMAIL = "uet_mediacms@outlook.com"
+EMAIL_HOST_PASSWORD = "ikkqrjahichgplyg"
+EMAIL_HOST_USER = "uet_mediacms@outlook.com"
 EMAIL_USE_TLS = True
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_HOST = "mediacms.io"
+EMAIL_HOST = "smtp-mail.outlook.com"
 EMAIL_PORT = 587
-ADMIN_EMAIL_LIST = ["info@mediacms.io"]
+ADMIN_EMAIL_LIST = ["uet_mediacms@outlook.com"]
 
 
 MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.
