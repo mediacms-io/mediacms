@@ -63,10 +63,10 @@
     z-index: 30;
     pointer-events: none;
   }
-  
+
   .timeline-marker-head {
     position: absolute;
-    top: -4px;
+    top: -11px;
     left: 50%;
     transform: translateX(-50%);
     width: 20px;
@@ -80,7 +80,7 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   .timeline-marker-head-icon {
     color: white;
     font-size: 14px;
@@ -228,7 +228,6 @@
     min-width: 150px;
     text-align: center;
     pointer-events: auto;
-    /* Make sure tooltip is visible above timeline */
     top: -90px !important;
   }
 
@@ -306,7 +305,7 @@
   }
 
   .time-navigation {
-    display: none; /* Hide the entire time navigation section */
+    display: none;
     align-items: center;
     gap: 0.5rem;
   }
@@ -356,14 +355,13 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-left: auto; /* Push the controls to the right */
+    margin-left: auto;
   }
 
   .zoom-dropdown-container {
     position: relative;
     z-index: 100;
     display: none;
-    /* Temporarily hidden */
   }
 
   .zoom-button {

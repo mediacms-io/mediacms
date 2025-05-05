@@ -28,6 +28,17 @@ const VideoPlayer = ({
     (window as any).MEDIA_DATA?.videoUrl || 
     "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   
+  // Add iOS-specific attributes to prevent fullscreen playback
+  useEffect(() => {
+    if (videoRef.current) {
+      // These attributes need to be set directly on the DOM element
+      // for iOS Safari to respect inline playback
+      videoRef.current.setAttribute('playsinline', 'true');
+      videoRef.current.setAttribute('webkit-playsinline', 'true');
+      videoRef.current.setAttribute('x-webkit-airplay', 'allow');
+    }
+  }, [videoRef]);
+  
   // Jump 10 seconds forward
   const handleForward = () => {
     onSeek(Math.min(currentTime + 10, duration));
@@ -68,6 +79,9 @@ const VideoPlayer = ({
         preload="auto"
         crossOrigin="anonymous"
         onClick={onPlayPause}
+        playsInline
+        controls={false}
+        muted={isMuted}
       >
         <source src={sampleVideoUrl} type="video/mp4" />
         <p>Your browser doesn't support HTML5 video.</p>

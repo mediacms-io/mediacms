@@ -9,6 +9,7 @@ interface EditorState {
   trimEnd: number;
   splitPoints: number[];
   clipSegments: Segment[];
+  action?: string; 
 }
 
 const useVideoTrimmer = () => {
@@ -141,7 +142,14 @@ const useVideoTrimmer = () => {
       if (video.currentTime >= trimEnd) {
         video.currentTime = trimStart;
       }
-      video.play();
+      video.play()
+        .then(() => {
+          // Play started successfully
+        })
+        .catch(err => {
+          console.error("Error starting playback:", err);
+          setIsPlaying(false); // Reset state if play failed
+        });
     }
   };
   
@@ -150,45 +158,200 @@ const useVideoTrimmer = () => {
     const video = videoRef.current;
     if (!video) return;
     
-    // If in preview mode, exit preview mode when user seeks and stop playback
-    if (isPreviewMode) {
-      setIsPreviewMode(false);
-      setPreviewSegmentIndex(0);
-      // Stop playback when exiting preview mode
-      video.pause();
-      setIsPlaying(false);
-    }
+    // Track if the video was playing before seeking
+    const wasPlaying = !video.paused;
     
+    // Store current preview mode state to preserve it
+    const wasInPreviewMode = isPreviewMode;
+    
+    // Update the video position
     video.currentTime = time;
     setCurrentTime(time);
+    
+    // Find segment at this position for preview mode playback
+    if (wasInPreviewMode) {
+      const segmentAtPosition = clipSegments.find(
+        seg => time >= seg.startTime && time <= seg.endTime
+      );
+      
+      if (segmentAtPosition) {
+        // Update the active segment index in preview mode
+        const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        const newSegmentIndex = orderedSegments.findIndex(seg => seg.id === segmentAtPosition.id);
+        if (newSegmentIndex !== -1) {
+          setPreviewSegmentIndex(newSegmentIndex);
+        }
+      }
+    }
+    
+    // Resume playback in two scenarios:
+    // 1. If it was playing before (regular mode)
+    // 2. If we're in preview mode (regardless of previous state)
+    if (wasPlaying || wasInPreviewMode) {
+      // Ensure preview mode stays on if it was on before
+      if (wasInPreviewMode) {
+        setIsPreviewMode(true);
+      }
+      
+      // Play immediately without delay
+      video.play()
+        .then(() => {
+          setIsPlaying(true); // Update state to reflect we're playing
+          // "Resumed playback after seeking in " + (wasInPreviewMode ? "preview" : "regular") + " mode"
+        })
+        .catch(err => {
+          console.error("Error resuming playback:", err);
+          setIsPlaying(false);
+        });
+    }
   };
   
-  // Save the current state to history
-  const saveState = () => {
+  // Save the current state to history with a debounce buffer
+  // This helps prevent multiple rapid saves for small adjustments
+  const saveState = (action?: string) => {
+    // Deep clone to ensure state is captured correctly
     const newState: EditorState = {
       trimStart,
       trimEnd,
       splitPoints: [...splitPoints],
-      clipSegments: [...clipSegments]
+      clipSegments: JSON.parse(JSON.stringify(clipSegments)), // Deep clone to avoid reference issues
+      action: action || 'manual_save' // Track the action that triggered this save
     };
     
-    // If we're not at the end of the history, truncate
-    if (historyPosition < history.length - 1) {
-      const newHistory = history.slice(0, historyPosition + 1);
-      setHistory([...newHistory, newState]);
-    } else {
-      setHistory([...history, newState]);
-    }
+    // Check if state is significantly different from last saved state
+    const lastState = history[historyPosition];
     
-    setHistoryPosition(historyPosition + 1);
+    // Helper function to compare segments deeply
+    const haveSegmentsChanged = () => {
+      if (!lastState || lastState.clipSegments.length !== newState.clipSegments.length) {
+        return true; // Different length means significant change
+      }
+      
+      // Compare each segment's start and end times
+      for (let i = 0; i < newState.clipSegments.length; i++) {
+        const oldSeg = lastState.clipSegments[i];
+        const newSeg = newState.clipSegments[i];
+        
+        if (!oldSeg || !newSeg) return true;
+        
+        // Check if any time values changed by more than 0.001 seconds (1ms)
+        if (Math.abs(oldSeg.startTime - newSeg.startTime) > 0.001 ||
+            Math.abs(oldSeg.endTime - newSeg.endTime) > 0.001) {
+          return true;
+        }
+      }
+      
+      return false; // No significant changes found
+    };
+    
+    const isSignificantChange = !lastState || 
+      lastState.trimStart !== newState.trimStart || 
+      lastState.trimEnd !== newState.trimEnd ||
+      lastState.splitPoints.length !== newState.splitPoints.length ||
+      haveSegmentsChanged();
+      
+    // Additionally, check if there's an explicit action from a UI event
+    const hasExplicitActionFlag = newState.action !== undefined;
+    
+    // Only proceed if this is a significant change or if explicitly requested
+    if (isSignificantChange || hasExplicitActionFlag) {
+      // Get the current position to avoid closure issues
+      const currentPosition = historyPosition;
+      
+      // Use functional updates to ensure we're working with the latest state
+      setHistory(prevHistory => {
+        // If we're not at the end of history, truncate
+        if (currentPosition < prevHistory.length - 1) {
+          const newHistory = prevHistory.slice(0, currentPosition + 1);
+          return [...newHistory, newState];
+        } else {
+          // Just append to current history
+          return [...prevHistory, newState];
+        }
+      });
+      
+      // Update position using functional update
+      setHistoryPosition(prev => {
+        const newPosition = prev + 1;
+        // "Saved state to history position", newPosition)
+        return newPosition;
+      });
+    } else {
+      // console.log("Skipped non-significant state save");
+    }
   };
+  
+  // Listen for trim handle update events
+  useEffect(() => {
+    const handleTrimUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        const { time, isStart, recordHistory, action } = e.detail;
+        
+        if (isStart) {
+          setTrimStart(time);
+        } else {
+          setTrimEnd(time);
+        }
+        
+        // Only record in history if explicitly requested
+        if (recordHistory) {
+          // Use a small timeout to ensure the state is updated
+          setTimeout(() => {
+            saveState(action || (isStart ? 'adjust_trim_start' : 'adjust_trim_end'));
+          }, 10);
+        }
+      }
+    };
+    
+    document.addEventListener('update-trim', handleTrimUpdate as EventListener);
+    
+    return () => {
+      document.removeEventListener('update-trim', handleTrimUpdate as EventListener);
+    };
+  }, []);
   
   // Listen for segment update events and split-at-time events
   useEffect(() => {
     const handleUpdateSegments = (e: CustomEvent) => {
       if (e.detail && e.detail.segments) {
+        // Check if this is a significant change that should be recorded in history
+        const isSignificantChange = e.detail.recordHistory !== false;
+        // Get the action type if provided
+        const actionType = e.detail.action || 'update_segments';
+        
+        // Update segment state
         setClipSegments(e.detail.segments);
-        saveState();
+        
+        // Only save state to history if it's a significant change or explicitly requested
+        if (isSignificantChange) {
+          // Use a setTimeout to avoid multiple rapid saves
+          setTimeout(() => {
+            // Deep clone to ensure state is captured correctly
+            const stateWithAction: EditorState = {
+              trimStart,
+              trimEnd,
+              splitPoints: [...splitPoints],
+              clipSegments: JSON.parse(JSON.stringify(e.detail.segments)), // Use the segments from the event
+              action: actionType // Store the action type in the state
+            };
+            
+            // Get the current history position to ensure we're using the latest value
+            const currentHistoryPosition = historyPosition;
+            
+            // If we're not at the end of the history, truncate
+            if (currentHistoryPosition < history.length - 1) {
+              const newHistory = history.slice(0, currentHistoryPosition + 1);
+              setHistory([...newHistory, stateWithAction]);
+            } else {
+              setHistory(prevHistory => [...prevHistory, stateWithAction]);
+            }
+            
+            // Ensure the historyPosition is updated to the correct position
+            const newPosition = currentHistoryPosition + 1;
+            setHistoryPosition(newPosition);
+            // console.log(`Saved state with action: ${actionType} to history position`, newPosition);
+          }, 10);
+        }
       }
     };
     
@@ -249,7 +412,7 @@ const useVideoTrimmer = () => {
         
         // Update state
         setClipSegments(newSegments);
-        saveState();
+        saveState('split_segment');
       }
     };
     
@@ -284,7 +447,7 @@ const useVideoTrimmer = () => {
             // Just update the segments normally
             setClipSegments(newSegments);
           }
-          saveState();
+          saveState('delete_segment');
         }
       }
     };
@@ -304,6 +467,8 @@ const useVideoTrimmer = () => {
   useEffect(() => {
     if (!isPreviewMode || !videoRef.current) return;
     
+    // console.log("Preview mode effect running, previewSegmentIndex:", previewSegmentIndex);
+    
     // Sort segments by start time
     const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
     
@@ -314,17 +479,38 @@ const useVideoTrimmer = () => {
       const currentSegment = orderedSegments[previewSegmentIndex];
       if (!currentSegment) return;
       
+      // Make sure we're inside the current segment
+      const currentTime = videoRef.current.currentTime;
+      
+      // If the current time is before the segment start, move to the segment start
+      if (currentTime < currentSegment.startTime) {
+        videoRef.current.currentTime = currentSegment.startTime;
+        return;
+      }
+      
       // If we've reached the end of the current segment
-      if (videoRef.current.currentTime >= currentSegment.endTime) {
+      if (currentTime >= currentSegment.endTime) {
         // Move to the next segment if available
         if (previewSegmentIndex < orderedSegments.length - 1) {
           const nextSegment = orderedSegments[previewSegmentIndex + 1];
           videoRef.current.currentTime = nextSegment.startTime;
           setPreviewSegmentIndex(previewSegmentIndex + 1);
+          // console.log("Moving to next segment in preview", previewSegmentIndex + 1);
+          
+          // Ensure playback continues
+          videoRef.current.play().catch(err => {
+            console.error("Error continuing preview playback:", err);
+          });
         } else {
-          // End of all segments, stop preview mode
-          setIsPreviewMode(false);
-          videoRef.current.pause();
+          // End of all segments, loop back to the first segment
+          // console.log("End of all segments in preview, looping back to first");
+          videoRef.current.currentTime = orderedSegments[0].startTime;
+          setPreviewSegmentIndex(0);
+          
+          // Ensure playback continues
+          videoRef.current.play().catch(err => {
+            console.error("Error restarting preview playback:", err);
+          });
         }
       }
     };
@@ -342,13 +528,13 @@ const useVideoTrimmer = () => {
   // Handle trim start change
   const handleTrimStartChange = (time: number) => {
     setTrimStart(time);
-    saveState();
+    saveState('adjust_trim_start');
   };
   
   // Handle trim end change
   const handleTrimEndChange = (time: number) => {
     setTrimEnd(time);
-    saveState();
+    saveState('adjust_trim_end');
   };
   
   // Handle split at current position
@@ -382,7 +568,7 @@ const useVideoTrimmer = () => {
       }
       
       setClipSegments(newSegments);
-      saveState();
+      saveState('create_split_points');
     }
   };
   
@@ -405,7 +591,7 @@ const useVideoTrimmer = () => {
     };
     
     setClipSegments([defaultSegment]);
-    saveState();
+    saveState('reset_all');
   };
   
   // Handle undo
@@ -457,12 +643,33 @@ const useVideoTrimmer = () => {
     
     // Sort segments by start time to ensure proper playback order
     const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    if (orderedSegments.length === 0) return;
+    
+    // Set the preview mode flag before starting playback
+    setIsPreviewMode(true);
+    // console.log("Entering preview mode");
+    
+    // Set the first segment as the current one in the preview sequence
     setPreviewSegmentIndex(0);
     
     // Start preview mode by playing the first segment
-    setIsPreviewMode(true);
     video.currentTime = orderedSegments[0].startTime;
-    video.play();
+    
+    // Force a small delay before playing to ensure the preview mode state is set
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play()
+          .then(() => {
+            // console.log("Preview started successfully");
+            setIsPlaying(true);
+          })
+          .catch(err => {
+            console.error("Error starting preview:", err);
+            setIsPreviewMode(false); // Reset preview mode if play fails
+            setIsPlaying(false);
+          });
+      }
+    }, 50); // Short delay to ensure state updates have processed
   };
   
   // Handle zoom level change
@@ -490,9 +697,15 @@ const useVideoTrimmer = () => {
       video.pause();
       setIsPlaying(false);
     } else {
-      // Play the video from current position
-      video.play().catch(error => console.error("Error playing video:", error));
-      setIsPlaying(true);
+      // Play the video from current position with proper promise handling
+      video.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(err => {
+          console.error("Error playing video:", err);
+          setIsPlaying(false); // Reset state if play failed
+        });
     }
   };
   
@@ -523,7 +736,7 @@ const useVideoTrimmer = () => {
     alert(JSON.stringify(saveData, null, 2));
     
     // In a real implementation, this would make a POST request to save the data
-    console.log("Save data:", saveData);
+    // console.log("Save data:", saveData);
   };
   
   // Handle save a copy action
@@ -543,8 +756,6 @@ const useVideoTrimmer = () => {
     // Display JSON in alert (for demonstration purposes)
     alert(JSON.stringify(saveData, null, 2));
     
-    // In a real implementation, this would make a POST request to save the data as a copy
-    console.log("Save as copy data:", saveData);
   };
   
   // Handle save segments individually action
@@ -565,8 +776,6 @@ const useVideoTrimmer = () => {
     // Display JSON in alert (for demonstration purposes)
     alert(JSON.stringify(saveData, null, 2));
     
-    // In a real implementation, this would make a POST request to save each segment as a separate file
-    console.log("Save segments data:", saveData);
   };
   
   return {
