@@ -34,6 +34,7 @@
   color: #333 !important;
   cursor: pointer !important;
   transition: background-color 0.2s !important;
+  min-width: 20px !important;
 }
 
 .tooltip-time-btn:hover {
@@ -72,6 +73,7 @@
   color: #4b5563;
   width: 26px; 
   height: 26px;
+  min-width: 20px !important;
 }
 
 .tooltip-action-btn:hover {
@@ -147,6 +149,7 @@
   }
   
   .tooltip-time-btn {
+    min-width: 20px !important;
     font-size: 0.7rem !important;
     padding: 3px 6px !important;
   }

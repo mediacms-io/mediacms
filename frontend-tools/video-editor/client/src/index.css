@@ -485,6 +485,7 @@ button[disabled][data-tooltip]::after {
   cursor: pointer;
   padding: 6px;
   transition: background-color 0.2s;
+  min-width: 20px !important;
 }
 
 .tooltip-action-btn:hover {
