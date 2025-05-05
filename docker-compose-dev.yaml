@@ -45,7 +45,7 @@ services:
     environment:
       DEVELOPMENT_MODE: True
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./:/home/mediacms.io/mediacms/
     depends_on:
