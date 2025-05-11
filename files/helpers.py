@@ -524,9 +524,7 @@ def get_base_ffmpeg_command(
         enc_type {str} -- encoding type (twopass or crf)
     """
 
-    # avoid very high frame rates
-    while target_fps > 60:
-        target_fps = target_fps / 2
+    target_fps = min(target_fps, 40 if target_height > 1440 else 50 if target_height > 1080 else 60)
 
     if target_fps < 1:
         target_fps = 1
