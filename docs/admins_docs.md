@@ -51,8 +51,13 @@ The script will ask if you have a URL where you want to deploy MediaCMS, otherwi
 ### Ubuntu 24 Install
 Ubuntu 24 brings Postgresql 16 and updated libraries.  To install on a fresh 24.x Ubuntu lite server do the following:
 
+First change to the root user
 ```bash
 sudo su -
+```
+
+Next, run the below script:
+```bash
 apt update && apt upgrade && apt install git -y 
 mkdir -p /home/mediacms.io && cd /home/mediacms.io/
 git clone https://github.com/mediacms-io/mediacms
