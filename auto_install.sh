@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #### Single-command install:  
-### sudo su -c "bash <(wget -qO- https://github.com/yatesdr/mediacms/raw/refs/heads/latest-local-install/install.sh)" root
+### sudo su -c "bash <(wget -qO- https://github.com/yatesdr/mediacms/raw/refs/heads/latest-local-install/auto_install.sh)" root
 
 echo "MediaCMS Auto Installation";
 
