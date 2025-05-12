@@ -7,7 +7,6 @@ if [ `id -u` -ne 0 ]
   exit
 fi
 
-
 while true; do
     read -p "
 This script will attempt to perform a system update, install required dependencies, install and configure PostgreSQL, NGINX, Redis and a few other utilities.
@@ -25,10 +24,19 @@ osVersion=$(lsb_release -d)
 if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
     echo 'Performing system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
+
+elif [[ $osVersion==*"Ubuntu 24"* ]]; then
+    echo 'Performing system update and installing Ubuntu 24 dependencies - this may take a few minutes'
+    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev pkg-config libxmlsec1-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y    
+
 else
-    echo "This script is tested for Ubuntu 20/22 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
+    echo "This script is tested for Ubuntu 20/22/24 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
     exit
 fi
+
+# Generate the directory
+mkdir -p /home/mediacms.io
+cd /home/mediacms.io/
 
 # install ffmpeg
 echo "Downloading and installing ffmpeg"
@@ -46,10 +54,9 @@ read -p "Enter portal name, or press enter for 'MediaCMS : " PORTAL_NAME
 [ -z "$FRONTEND_HOST" ] && FRONTEND_HOST='localhost'
 
 echo 'Creating database to be used in MediaCMS'
-
-su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
-su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
-su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+su - postgres -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\""
+su - postgres -c "psql -c \"CREATE DATABASE mediacms WITH OWNER mediacms\""
+su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\""
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
@@ -57,7 +64,15 @@ cd /home/mediacms.io
 virtualenv . --python=python3
 source  /home/mediacms.io/bin/activate
 cd mediacms
-pip install -r requirements.txt
+
+## Ubuntu 24 specific dependencies 
+if [[ $osVersion == *"Ubuntu 24"* ]]; then 
+    pip install --no-binary lxml lxml==5.4.0
+    pip install --no-binary xmlsec xmlsec==1.3.15 
+    pip install -r requirements-ubuntu-24.txt
+else
+    pip install -r requirements.txt
+fi
 
 SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 
