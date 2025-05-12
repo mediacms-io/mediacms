@@ -3,9 +3,13 @@
 echo "Welcome to the MediacMS installation!";
 
 if [ `id -u` -ne 0 ]
-  then echo "Please run as root or using sudo:  sudo bash install-ubuntu-24.sh"
+  then echo "Please run as root."
   exit
 fi
+
+# Generate the directory
+mkdir -p /home/mediacms.io
+cd /home/mediacms.io/
 
 while true; do
     read -p "
@@ -18,7 +22,6 @@ It is expected to run on a new system **with no running instances of any these s
         * ) echo "Please answer yes or no.";;
     esac
 done
-
 
 osVersion=$(lsb_release -d)
 if [[ $osVersion == *"Ubuntu 24"* ]]; then 
@@ -46,9 +49,14 @@ read -p "Enter portal name, or press enter for 'MediaCMS : " PORTAL_NAME
 
 echo 'Creating database to be used in MediaCMS'
 
-su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
-su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
-su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+#su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
+#su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
+#su -c "psql -c \"GRANT ALL PRIVILEGES ON 'mediacms.*' TO 'mediacms' WITH GRANT OPTION\"" postgres
+
+su - postgres -c "psql -c \"CREATE DATABASE mediacms\""
+su - postgres -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\""
+su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\""
+su - postgres -c "psql -d mediacms -c \"ALTER SCHEMA public OWNER TO mediacms\""
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
