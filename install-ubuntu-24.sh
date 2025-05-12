@@ -1,12 +1,11 @@
 #!/bin/bash
-# should be run as root and only on Ubuntu 20/22, Debian 10/11 (Buster/Bullseye) versions!
+# should be run as root and only on Ubuntu 24
 echo "Welcome to the MediacMS installation!";
 
 if [ `id -u` -ne 0 ]
   then echo "Please run as root or using sudo:  sudo bash install-ubuntu-24.sh"
   exit
 fi
-
 
 while true; do
     read -p "
@@ -53,10 +52,11 @@ su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgr
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
-# cd /home/mediacms.io
+cd /home/mediacms.io
 virtualenv . --python=python3
 source  ./bin/activate
-#cd mediacms
+cd mediacms
+
 pip install --no-binary lxml lxml
 pip install --no-binary xmlsec xmlsec 
 pip install -r requirements-ubuntu-24.txt
