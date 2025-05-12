@@ -35,6 +35,24 @@ This page is created for MediaCMS administrators that are responsible for settin
 
 The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
 
+## Easy Install
+Easy install is intended for fresh Ubuntu Server 20/22/24 installations, and requires just a single command:
+```bash
+sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+```
+If you wish to view or modify the script before running it:
+```bash
+wget -O "easy-install.sh" https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh
+cat easy-install.sh | less
+```
+
+Once you're satisfied, run it:
+```bash
+sudo su -c "easy-install.sh" root
+```
+
+## Traditional Install
+
 Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
 
