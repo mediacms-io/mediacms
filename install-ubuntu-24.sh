@@ -57,7 +57,8 @@ echo 'Creating python virtualenv on /home/mediacms.io'
 virtualenv . --python=python3
 source  ./bin/activate
 #cd mediacms
-pip install lxml --no-binary
+pip install --no-binary lxml lxml
+pip install --no-binary xmlsec xmlsec 
 pip install -r requirements-ubuntu-24.txt
 
 SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
