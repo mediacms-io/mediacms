@@ -48,6 +48,24 @@ cd /home/mediacms.io/mediacms/ && bash ./install.sh
 
 The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
 
+### Ubuntu 24 Install
+Ubuntu 24 brings Postgresql 16 and updated libraries.  To install on 24.x do the following:
+
+```bash
+sudo su - 
+mkdir -p /home/mediacms.io && cd /home/mediacms.io/
+git clone https://github.com/mediacms-io/mediacms
+cd /home/mediacms.io/mediacms/ && bash install-ubuntu-24.sh
+```
+
+During the course of the install this script will add a few packages and re-build some to achieve compatibility with 24.x:   
+ - build lxml from scratch
+ - build xmlsec from scratch
+ - grant mediacms ownership of the public schema on PG16
+ - install pkg-config package via apt
+ - install libxmlsec1-dev package via apt
+
+It will take longer to run than an all-binary installation, so please be patient.
 
 ### Update
 
