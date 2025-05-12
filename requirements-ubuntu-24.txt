@@ -1,6 +1,5 @@
 Django
 djangorestframework
-lxml
 python3-saml
 django-allauth
 psycopg
