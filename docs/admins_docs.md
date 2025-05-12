@@ -49,10 +49,11 @@ cd /home/mediacms.io/mediacms/ && bash ./install.sh
 The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
 
 ### Ubuntu 24 Install
-Ubuntu 24 brings Postgresql 16 and updated libraries.  To install on 24.x do the following:
+Ubuntu 24 brings Postgresql 16 and updated libraries.  To install on a fresh 24.x Ubuntu lite server do the following:
 
 ```bash
-sudo su - 
+sudo su -
+apt update && apt upgrade && apt install git -y 
 mkdir -p /home/mediacms.io && cd /home/mediacms.io/
 git clone https://github.com/mediacms-io/mediacms
 cd /home/mediacms.io/mediacms/ && bash install-ubuntu-24.sh
