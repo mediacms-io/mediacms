@@ -370,10 +370,25 @@ input[type="range"]::-webkit-slider-thumb {
   pointer-events: none;
 }
 
-[data-tooltip]:hover::before,
-[data-tooltip]:hover::after {
-  opacity: 1;
-  visibility: visible;
+/* Only show tooltips on devices with mouse hover capability */
+@media (hover: hover) and (pointer: fine) {
+  [data-tooltip]:hover::before,
+  [data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Hide button tooltips (simple hover labels) on touch devices */
+@media (pointer: coarse) {
+  [data-tooltip]::before,
+  [data-tooltip]::after {
+    display: none !important;
+    content: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 
 /* Fix for buttons with disabled state */
@@ -426,10 +441,13 @@ button[disabled][data-tooltip]::after {
   z-index: 9999;
 }
 
-.tooltip-action-btn:hover[data-tooltip]::before,
-.tooltip-action-btn:hover[data-tooltip]::after {
-  opacity: 1;
-  visibility: visible;
+/* Only show tooltips on devices with mouse hover capability */
+@media (hover: hover) and (pointer: fine) {
+  .tooltip-action-btn:hover[data-tooltip]::before,
+  .tooltip-action-btn:hover[data-tooltip]::after {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 /* Ensure tooltip container has proper space */

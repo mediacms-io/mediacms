@@ -1,4 +1,64 @@
 #video-editor-trim-root {
+  /* Tooltip styles - only on desktop where hover is available */
+  @media (hover: hover) and (pointer: fine) {
+    [data-tooltip] {
+      position: relative;
+    }
+    
+    [data-tooltip]:before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:hover:before,
+    [data-tooltip]:hover:after {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+  
+  /* Hide button tooltips on touch devices */
+  @media (pointer: coarse) {
+    [data-tooltip]:before,
+    [data-tooltip]:after {
+      display: none !important;
+      content: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  }
   .clip-segments-container {
     margin-top: 1rem;
     background-color: white;

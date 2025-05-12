@@ -6,6 +6,9 @@ import Modal from "./Modal";
 import { trimVideo } from "../services/videoApi";
 import '../styles/TimelineControls.css';
 import '../styles/TwoRowTooltip.css';
+import playIcon from '../assets/play-icon.svg';
+import pauseIcon from '../assets/pause-icon.svg';
+import playFromBeginningIcon from '../assets/play-from-beginning-icon.svg';
 
 interface TimelineControlsProps {
   currentTime: number;
@@ -98,13 +101,101 @@ const TimelineControls = ({
     
     // Seek to the new time
     onSeek(newTime);
+    
+    // Update both clicked time and display time
     setClickedTime(newTime);
+    setDisplayTime(newTime);
     
     // Resume playback if it was playing before
     if (wasPlaying && videoRef.current) {
       videoRef.current.play();
       setIsPlayingSegment(true);
     }
+  };
+  
+  // Enhanced helper for continuous time adjustment when button is held down
+  const handleContinuousTimeAdjustment = (offsetSeconds: number) => {
+    // Fixed adjustment amount - exactly 50ms each time
+    const adjustmentValue = offsetSeconds;
+    // Hold timer
+    let holdTimer: number | null = null;
+    // Store the last time value to correctly calculate the next increment
+    let lastTimeValue = clickedTime;
+    
+    // Function to perform time adjustment
+    const adjustTime = () => {
+      // Always use the last time value for calculations to prevent stalling
+      const currentTime = lastTimeValue;
+      
+      // Calculate new time based on fixed offset (positive or negative)
+      const newTime = adjustmentValue < 0
+        ? Math.max(0, currentTime + adjustmentValue) // For negative offsets (going back)
+        : Math.min(duration, currentTime + adjustmentValue); // For positive offsets (going forward)
+      
+      // Check if we've reached a boundary
+      if ((adjustmentValue < 0 && newTime <= 0) || 
+          (adjustmentValue > 0 && newTime >= duration)) {
+        // If we hit a boundary, we'll still update the display but keep the same value
+        // Don't clear the timer - it allows for adjusting back from the boundary
+      }
+      
+      // Update our last time value
+      lastTimeValue = newTime;
+      
+      // Save the current playing state before seeking
+      const wasPlaying = isPlayingSegment;
+      
+      // Seek to the new time
+      onSeek(newTime);
+      
+      // Update both clicked time and display time
+      setClickedTime(newTime);
+      setDisplayTime(newTime);
+      
+      // Resume playback if it was playing before
+      if (wasPlaying && videoRef.current) {
+        videoRef.current.play();
+        setIsPlayingSegment(true);
+      }
+    };
+    
+    // Return mouse event handlers
+    return {
+      onMouseDown: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Update the initial last time value
+        lastTimeValue = clickedTime;
+        
+        // Perform initial adjustment
+        adjustTime();
+        
+        // Start continuous adjustment after a short delay
+        holdTimer = window.setTimeout(() => {
+          // Start consistent intervals at a moderate pace (exactly 8 adjustments per second)
+          // This ensures it adds/subtracts exactly 50ms at a steady, countable pace
+          holdTimer = window.setInterval(adjustTime, 125);
+        }, 250);
+        
+        // Add mouse up and leave handlers to document to ensure we catch the release
+        const clearTimers = () => {
+          if (holdTimer) {
+            clearInterval(holdTimer);
+            holdTimer = null;
+          }
+          document.removeEventListener('mouseup', clearTimers);
+          document.removeEventListener('mouseleave', clearTimers);
+        };
+        
+        document.addEventListener('mouseup', clearTimers);
+        document.addEventListener('mouseleave', clearTimers);
+      },
+      onClick: (e: React.MouseEvent) => {
+        // This prevents the click event from firing twice
+        e.stopPropagation();
+      }
+    };
   };
   
   // Modal states
@@ -267,33 +358,84 @@ const TimelineControls = ({
     }
   }, [currentTime, zoomLevel, duration, selectedSegmentId, showEmptySpaceTooltip, currentTimePercent]);
   
-  // Update display time and check for segment playback bounds
+  // Update display time and check for transitions between segments and empty spaces
   useEffect(() => {
     // Always update display time to match current video time when playing
     if (videoRef.current) {
-      // Keep isPlayingSegment in sync with actual video playback state
-      if (!videoRef.current.paused && selectedSegmentId !== null) {
-        setIsPlayingSegment(true);
+      // If video is playing, always update the displayed time in the tooltip
+      if (!videoRef.current.paused) {
         setDisplayTime(currentTime);
-      } else if (videoRef.current.paused && isPlayingSegment) {
-        setIsPlayingSegment(false);
-      }
-      
-      // Check for segment bounds when playing a specific segment
-      if (isPlayingSegment && activeSegment) {
-        // Check if we've reached the end of the segment
-        if (currentTime >= activeSegment.endTime) {
-          // Pause the video
-          videoRef.current.pause();
-          setIsPlayingSegment(false);
-          setActiveSegment(null);
+        
+        // Also update clickedTime to keep them in sync when playing
+        // This ensures correct time is shown when pausing
+        setClickedTime(currentTime);
+        
+        if (selectedSegmentId !== null) {
+          setIsPlayingSegment(true);
         }
-      } else if (videoRef.current.paused) {
-        // When not playing, display time should match clicked time
-        setDisplayTime(clickedTime);
+        
+        // While playing, continuously check if we're in a segment or empty space
+        // to update the tooltip accordingly, regardless of where we started playing
+        
+        // Check if we're in any segment at current time
+        const segmentAtCurrentTime = clipSegments.find(
+          seg => currentTime >= seg.startTime && currentTime <= seg.endTime
+        );
+        
+        // Update tooltip position based on current time percentage
+        const newTimePercent = (currentTime / duration) * 100;
+        if (timelineRef.current) {
+          const timelineWidth = timelineRef.current.offsetWidth;
+          const markerX = (newTimePercent / 100) * timelineWidth;
+          setTooltipPosition({
+            x: markerX,
+            y: timelineRef.current.getBoundingClientRect().top - 10
+          });
+        }
+        
+        // If we're in a segment now
+        if (segmentAtCurrentTime) {
+          // Check if we need to change the tooltip (we weren't in this segment before)
+          if (activeSegment?.id !== segmentAtCurrentTime.id || showEmptySpaceTooltip) {
+            console.log("Playback moved into segment:", segmentAtCurrentTime.id);
+            setSelectedSegmentId(segmentAtCurrentTime.id);
+            setActiveSegment(segmentAtCurrentTime);
+            setShowEmptySpaceTooltip(false);
+          }
+        } 
+        // If we're in empty space now
+        else {
+          // Check if we need to change the tooltip (we were in a segment before)
+          if (activeSegment !== null || !showEmptySpaceTooltip) {
+            console.log("Playback moved to empty space");
+            setSelectedSegmentId(null);
+            setActiveSegment(null);
+            
+            // Calculate available space for new segment before showing tooltip
+            const availableSpace = calculateAvailableSpace(currentTime);
+            setAvailableSegmentDuration(availableSpace);
+            
+            // Show empty space tooltip if there's enough space
+            if (availableSpace >= 0.5) {
+              setShowEmptySpaceTooltip(true);
+              console.log("Empty space with available duration:", availableSpace);
+            } else {
+              setShowEmptySpaceTooltip(false);
+            }
+          }
+        }
+      } else if (videoRef.current.paused && isPlayingSegment) {
+        // When just paused from playing state, update display time to show the actual stopped position
+        setDisplayTime(currentTime);
+        setClickedTime(currentTime);
+        setIsPlayingSegment(false);
+        
+        // Log the stopping point
+        console.log("Video paused at:", formatDetailedTime(currentTime));
       }
     }
-  }, [currentTime, isPlayingSegment, activeSegment, clickedTime, selectedSegmentId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTime, isPlayingSegment, activeSegment, selectedSegmentId, clipSegments]);
   
   // Close zoom dropdown when clicking outside
   useEffect(() => {
@@ -522,8 +664,9 @@ const TimelineControls = ({
     // Seek to the clicked position immediately for all clicks
     onSeek(newTime);
     
-    // Always update the clicked time for tooltip actions
+    // Always update both clicked time and display time for tooltip actions
     setClickedTime(newTime);
+    setDisplayTime(newTime);
     
     // Find if we clicked in a segment
     const segmentAtClickedTime = clipSegments.find(
@@ -538,7 +681,8 @@ const TimelineControls = ({
     // Resume playback in two cases:
     // 1. If it was playing before (regular playback)
     // 2. If we're in preview mode (regardless of previous playing state)
-    if ((wasPlaying || isPreviewMode) && videoRef.current) {      
+    if ((wasPlaying || isPreviewMode) && videoRef.current) {
+      console.log("Resuming playback after timeline click");
       videoRef.current.play()
         .then(() => {
           setIsPlayingSegment(true);
@@ -548,7 +692,6 @@ const TimelineControls = ({
           console.error("Error resuming playback:", err);
           setIsPlayingSegment(false);
         });
-      console.log("Resuming playback after timeline click");
     }
     
     // Only process tooltip display if clicked on the timeline background or thumbnails, not on other UI elements
@@ -807,20 +950,22 @@ const TimelineControls = ({
     // Ensure time is within segment bounds
     const boundedTime = Math.max(segment.startTime, Math.min(segment.endTime, clickTime));
     
-    // Set the clicked time for UI
+    // Set both clicked time and display time for UI
     setClickedTime(boundedTime);
+    setDisplayTime(boundedTime);
     
     // Seek to this position (this will update the video's current time)
     onSeek(boundedTime);
     
-    // If video was playing before or we're in preview mode, ensure it continues playing
-    if (wasPlaying && videoRef.current) {
+    // If video was playing before OR we're in preview mode, ensure it continues playing
+    if ((wasPlaying || isPreviewMode) && videoRef.current) {
       // Set current segment as active segment for boundary checking
       setActiveSegment(segment);
       // Continue playing from the new position
       videoRef.current.play()
         .then(() => {
           setIsPlayingSegment(true);
+          console.log("Continued preview playback after segment click");
         })
         .catch(err => {
           console.error("Error resuming playback after segment click:", err);
@@ -971,6 +1116,7 @@ const TimelineControls = ({
           ref={timelineRef}
           className="timeline-container"
           onClick={handleTimelineClick}
+
           style={{ 
             width: `${zoomLevel === 1 ? '100%' : `${zoomLevel * 100}%`}`
           }}
@@ -1078,32 +1224,18 @@ const TimelineControls = ({
               <div className="tooltip-row">
                 <button 
                   className="tooltip-time-btn"
-                  data-tooltip="Decrease by 100ms"
-                  onClick={handleTimeAdjustment(-0.1)}
-                >
-                  -100ms
-                </button>
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Decrease by 50ms"
-                  onClick={handleTimeAdjustment(-0.05)}
+                  data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
+                  {...handleContinuousTimeAdjustment(-0.05)}
                 >
                   -50ms
                 </button>
                 <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
                 <button 
                   className="tooltip-time-btn"
-                  data-tooltip="Increase by 50ms"
-                  onClick={handleTimeAdjustment(0.05)}
+                  data-tooltip="Increase by 50ms (hold for continuous adjustment)"
+                  {...handleContinuousTimeAdjustment(0.05)}
                 >
                   +50ms
-                </button>
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Increase by 100ms"
-                  onClick={handleTimeAdjustment(0.1)}
-                >
-                  +100ms
                 </button>
               </div>
               
@@ -1187,7 +1319,7 @@ const TimelineControls = ({
                     // Don't close the tooltip
                   }}
                 >
-                  <span style={{fontSize: '18px', lineHeight: '1'}}>⏮</span>
+                  <img src={playFromBeginningIcon} alt="Play from beginning" style={{width: '24px', height: '24px'}} />
                 </button>
                 <button 
                   className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
@@ -1223,9 +1355,11 @@ const TimelineControls = ({
                     // Don't close the tooltip, keep it visible while playing
                   }}
                 >
-                  <span style={{fontSize: '18px', lineHeight: '1'}}>
-                    {isPlayingSegment ? '⏸' : '▶'}
-                  </span>
+                  {isPlayingSegment ? (
+                    <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
+                  ) : (
+                    <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
+                  )}
                 </button>
                 <button 
                   className="tooltip-action-btn set-in"
@@ -1263,10 +1397,9 @@ const TimelineControls = ({
                     // setSelectedSegmentId(null);
                   }}
                 >
-                  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                    {/* Hand pointing right for setting start point */}
-                    <g transform="translate(50, 80) scale(0.95) rotate(35, 192, 256)">
-                      <path d="M91.826 467.2V317.966c-8.248 5.841-16.558 10.57-24.918 14.153C35.098 345.752-.014 322.222 0 288c.008-18.616 10.897-32.203 29.092-40 28.286-12.122 64.329-78.648 77.323-107.534 7.956-17.857 25.479-28.453 43.845-28.464l.001-.002h171.526c11.812 0 21.897 8.596 23.703 20.269 7.25 46.837 38.483 61.76 38.315 123.731-.007 2.724.195 13.254.195 16 0 50.654-22.122 81.574-71.263 72.6-9.297 18.597-39.486 30.738-62.315 16.45-21.177 24.645-53.896 22.639-70.944 6.299V467.2c0 24.15-20.201 44.8-43.826 44.8-23.283 0-43.826-21.35-43.826-44.8zM112 72V24c0-13.255 10.745-24 24-24h192c13.255 0 24 10.745 24 24v48c0 13.255-10.745 24-24 24H136c-13.255 0-24-10.745-24-24zm212-24c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20z"/>
+                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+                    <g data-name="1" id="_1">
+                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM12.29,20.29l1.42,1.42,5-5a1,1,0,0,0,0-1.42l-5-5-1.42,1.42L15.59,15H5v2H15.59Z" id="login_account_enter_door"/>
                     </g>
                   </svg>
                 </button>
@@ -1306,10 +1439,9 @@ const TimelineControls = ({
                     // setSelectedSegmentId(null);
                   }}
                 >
-                  <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                    {/* Hand pointing left for setting end point */}
-                    <g transform="translate(50, 80) scale(0.95) rotate(-45,172, 256)">
-                      <path d="M91.826 467.2V317.966c-8.248 5.841-16.558 10.57-24.918 14.153C35.098 345.752-.014 322.222 0 288c.008-18.616 10.897-32.203 29.092-40 28.286-12.122 64.329-78.648 77.323-107.534 7.956-17.857 25.479-28.453 43.845-28.464l.001-.002h171.526c11.812 0 21.897 8.596 23.703 20.269 7.25 46.837 38.483 61.76 38.315 123.731-.007 2.724.195 13.254.195 16 0 50.654-22.122 81.574-71.263 72.6-9.297 18.597-39.486 30.738-62.315 16.45-21.177 24.645-53.896 22.639-70.944 6.299V467.2c0 24.15-20.201 44.8-43.826 44.8-23.283 0-43.826-21.35-43.826-44.8zM112 72V24c0-13.255 10.745-24 24-24h192c13.255 0 24 10.745 24 24v48c0 13.255-10.745 24-24 24H136c-13.255 0-24-10.745-24-24zm212-24c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20z"/>
+                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+                    <g data-name="1" id="_1">
+                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM10.71,20.29,7.41,17H18V15H7.41l3.3-3.29L9.29,10.29l-5,5a1,1,0,0,0,0,1.42l5,5Z" id="logout_account_exit_door"/>
                     </g>
                   </svg>
                 </button>
@@ -1330,41 +1462,28 @@ const TimelineControls = ({
               <div className="tooltip-row">
                 <button 
                   className="tooltip-time-btn"
-                  data-tooltip="Decrease by 100ms"
-                  onClick={handleTimeAdjustment(-0.1)}
-                >
-                  -100ms
-                </button>
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Decrease by 50ms"
-                  onClick={handleTimeAdjustment(-0.05)}
+                  data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
+                  {...handleContinuousTimeAdjustment(-0.05)}
                 >
                   -50ms
                 </button>
                 <div className="tooltip-time-display">{formatDetailedTime(clickedTime)}</div>
                 <button 
                   className="tooltip-time-btn"
-                  data-tooltip="Increase by 50ms"
-                  onClick={handleTimeAdjustment(0.05)}
+                  data-tooltip="Increase by 50ms (hold for continuous adjustment)"
+                  {...handleContinuousTimeAdjustment(0.05)}
                 >
                   +50ms
                 </button>
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Increase by 100ms"
-                  onClick={handleTimeAdjustment(0.1)}
-                >
-                  +100ms
-                </button>
               </div>
               
-              {/* Second row with New Segment button */}
+              {/* Second row with action buttons similar to segment tooltip */}
               <div className="tooltip-row tooltip-actions">
+                {/* New segment button - Moved to first position */}
                 {availableSegmentDuration >= 0.5 && (
                   <button 
                     className="tooltip-action-btn new-segment"
-                    data-tooltip={`Create new segment with available space`}
+                    data-tooltip={`Create new segment`}
                     onClick={async (e) => {
                       e.stopPropagation();
                       
@@ -1423,10 +1542,454 @@ const TimelineControls = ({
                       <line x1="8" y1="12" x2="16" y2="12"></line>
                     </svg>
                     <span className="tooltip-btn-text">
-                      New {Math.round(availableSegmentDuration)}s Segment
+                      New
                     </span>
                   </button>
                 )}
+                
+                {/* Go to start button - jump to beginning of timeline */}
+                <button 
+                  className="tooltip-action-btn play-from-start"
+                  data-tooltip="Go to beginning"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    if (videoRef.current) {
+                      // Seek to the start of the video
+                      onSeek(0);
+                      setClickedTime(0);
+                      console.log("Go to start clicked in empty space");
+                    }
+                  }}
+                >
+                  <img src={playFromBeginningIcon} alt="Go to beginning" style={{width: '24px', height: '24px'}} />
+                </button>
+                
+                {/* Play/Pause button for empty space */}
+                <button 
+                  className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
+                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play from current position"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    if (videoRef.current) {
+                      if (isPlayingSegment) {
+                        // If already playing, pause the video
+                        videoRef.current.pause();
+                        setIsPlayingSegment(false);
+                        console.log("Pause clicked in empty space");
+                      } else {
+                        // Start playing from current position
+                        videoRef.current.play()
+                          .then(() => {
+                            setIsPlayingSegment(true);
+                            console.log("Play clicked in empty space");
+                          })
+                          .catch(err => {
+                            console.error("Error starting playback:", err);
+                          });
+                      }
+                    }
+                  }}
+                >
+                  {isPlayingSegment ? (
+                    <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
+                  ) : (
+                    <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
+                  )}
+                </button>
+                
+                {/* Segment end adjustment button (always shown) */}
+                <button 
+                  className="tooltip-action-btn segment-end"
+                  data-tooltip="Adjust end of previous segment or create segment from start"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    // Find the previous segment (one that ends before the current time)
+                    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                    const prevSegment = sortedSegments.filter(seg => seg.endTime <= clickedTime)
+                      .sort((a, b) => b.endTime - a.endTime)[0]; // Get the closest one before
+                    
+                    if (prevSegment) {
+                      // Regular case: adjust end of previous segment
+                      const updatedSegments = clipSegments.map(seg => {
+                        if (seg.id === prevSegment.id) {
+                          return {
+                            ...seg,
+                            endTime: clickedTime
+                          };
+                        }
+                        return seg;
+                      });
+                      
+                      // Create and dispatch the update event
+                      const updateEvent = new CustomEvent('update-segments', { 
+                        detail: { 
+                          segments: updatedSegments,
+                          recordHistory: true,
+                          action: 'adjust_previous_end_time'
+                        } 
+                      });
+                      document.dispatchEvent(updateEvent);
+                      console.log("Adjusted end of previous segment to:", formatDetailedTime(clickedTime));
+                      
+                      // Show the previous segment's tooltip
+                      setSelectedSegmentId(prevSegment.id);
+                      setShowEmptySpaceTooltip(false);
+                    } else if (clipSegments.length > 0) {
+                      // No previous segment at cursor position, but segments exist elsewhere
+                      
+                      // First, check if we're in a gap between segments - if so, create a new segment for the gap
+                      const sortedByStart = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                      let inGap = false;
+                      let gapStart = 0;
+                      
+                      // Check if we're in a gap between segments
+                      for (let i = 0; i < sortedByStart.length - 1; i++) {
+                        const currentSegEnd = sortedByStart[i].endTime;
+                        const nextSegStart = sortedByStart[i + 1].startTime;
+                        
+                        if (clickedTime > currentSegEnd && clickedTime < nextSegStart) {
+                          inGap = true;
+                          gapStart = currentSegEnd;
+                          break;
+                        }
+                      }
+                      
+                      if (inGap) {
+                        // We're in a gap, create a new segment from gap start to clicked time
+                        const newSegment: Segment = {
+                          id: Date.now(),
+                          name: 'segment',
+                          startTime: gapStart,
+                          endTime: clickedTime,
+                          thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                        };
+                        
+                        // Add the new segment to existing segments
+                        const updatedSegments = [...clipSegments, newSegment];
+                        
+                        // Create and dispatch the update event
+                        const updateEvent = new CustomEvent('update-segments', { 
+                          detail: { 
+                            segments: updatedSegments,
+                            recordHistory: true,
+                            action: 'create_segment_in_gap'
+                          } 
+                        });
+                        document.dispatchEvent(updateEvent);
+                        console.log("Created new segment in gap from", formatDetailedTime(gapStart), "to", formatDetailedTime(clickedTime));
+                        
+                        // Show the new segment's tooltip
+                        setSelectedSegmentId(newSegment.id);
+                        setShowEmptySpaceTooltip(false);
+                      } 
+                      // Check if we're before all segments and should create a segment from start
+                      else if (clickedTime < sortedByStart[0].startTime) {
+                        // Create a new segment from start of video to clicked time
+                        const newSegment: Segment = {
+                          id: Date.now(),
+                          name: 'segment',
+                          startTime: 0,
+                          endTime: clickedTime,
+                          thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                        };
+                        
+                        // Add the new segment to existing segments
+                        const updatedSegments = [...clipSegments, newSegment];
+                        
+                        // Create and dispatch the update event
+                        const updateEvent = new CustomEvent('update-segments', { 
+                          detail: { 
+                            segments: updatedSegments,
+                            recordHistory: true,
+                            action: 'create_segment_from_start'
+                          } 
+                        });
+                        document.dispatchEvent(updateEvent);
+                        console.log("Created new segment from start to:", formatDetailedTime(clickedTime));
+                        
+                        // Show the new segment's tooltip
+                        setSelectedSegmentId(newSegment.id);
+                        setShowEmptySpaceTooltip(false);
+                      }
+                      else {
+                        // Not in a gap, check if we can extend the last segment to end of video
+                        const lastSegment = [...clipSegments].sort((a, b) => b.endTime - a.endTime)[0];
+                        
+                        if (lastSegment && lastSegment.endTime < duration) {
+                          // Extend the last segment to end of video
+                          const updatedSegments = clipSegments.map(seg => {
+                            if (seg.id === lastSegment.id) {
+                              return {
+                                ...seg,
+                                endTime: duration
+                              };
+                            }
+                            return seg;
+                          });
+                          
+                          // Create and dispatch the update event
+                          const updateEvent = new CustomEvent('update-segments', { 
+                            detail: { 
+                              segments: updatedSegments,
+                              recordHistory: true,
+                              action: 'extend_last_segment'
+                            } 
+                          });
+                          document.dispatchEvent(updateEvent);
+                          console.log("Extended last segment to end of video");
+                          
+                          // Show the last segment's tooltip
+                          setSelectedSegmentId(lastSegment.id);
+                          setShowEmptySpaceTooltip(false);
+                        }
+                      }
+                    } else if (clickedTime > 0) {
+                      // No segments exist; create a new segment from start to clicked time
+                      const newSegment: Segment = {
+                        id: Date.now(),
+                        name: 'segment',
+                        startTime: 0,
+                        endTime: clickedTime,
+                        thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                      };
+                      
+                      // Create and dispatch the update event
+                      const updateEvent = new CustomEvent('update-segments', { 
+                        detail: { 
+                          segments: [newSegment],
+                          recordHistory: true,
+                          action: 'create_segment_from_start'
+                        } 
+                      });
+                      document.dispatchEvent(updateEvent);
+                      console.log("Created new segment from start to:", formatDetailedTime(clickedTime));
+                      
+                      // Show the new segment's tooltip
+                      setSelectedSegmentId(newSegment.id);
+                      setShowEmptySpaceTooltip(false);
+                    }
+                  }}
+                >
+                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+                    <g data-name="1" id="_1">
+                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM10.71,20.29L7.41,17H18V15H7.41l3.3-3.29L9.29,10.29l-5,5a1,1,0,0,0,0,1.42l5,5Z" id="logout_account_exit_door"/>
+                    </g>
+                  </svg>
+                </button>
+                
+                {/* Segment start adjustment button (always shown) */}
+                <button 
+                  className="tooltip-action-btn segment-start"
+                  data-tooltip="Adjust start of next segment or create segment to end"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    
+                    // Find the next segment (one that starts after the current time)
+                    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                    const nextSegment = sortedSegments.filter(seg => seg.startTime >= clickedTime)
+                      .sort((a, b) => a.startTime - b.startTime)[0]; // Get the closest one after
+                    
+                    if (nextSegment) {
+                      // Regular case: adjust start of next segment
+                      const updatedSegments = clipSegments.map(seg => {
+                        if (seg.id === nextSegment.id) {
+                          return {
+                            ...seg,
+                            startTime: clickedTime
+                          };
+                        }
+                        return seg;
+                      });
+                      
+                      // Create and dispatch the update event
+                      const updateEvent = new CustomEvent('update-segments', { 
+                        detail: { 
+                          segments: updatedSegments,
+                          recordHistory: true,
+                          action: 'adjust_next_start_time'
+                        } 
+                      });
+                      document.dispatchEvent(updateEvent);
+                      console.log("Adjusted start of next segment to:", formatDetailedTime(clickedTime));
+                      
+                      // Show the next segment's tooltip
+                      setSelectedSegmentId(nextSegment.id);
+                      setShowEmptySpaceTooltip(false);
+                    } else if (clipSegments.length > 0) {
+                      // No next segment at cursor position, but segments exist elsewhere
+                      
+                      // First, check if we're in a gap between segments - if so, create a new segment for the gap
+                      const sortedByStart = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                      let inGap = false;
+                      let gapEnd = 0;
+                      
+                      // Check if we're in a gap between segments
+                      for (let i = 0; i < sortedByStart.length - 1; i++) {
+                        const currentSegEnd = sortedByStart[i].endTime;
+                        const nextSegStart = sortedByStart[i + 1].startTime;
+                        
+                        if (clickedTime > currentSegEnd && clickedTime < nextSegStart) {
+                          inGap = true;
+                          gapEnd = nextSegStart;
+                          break;
+                        }
+                      }
+                      
+                      if (inGap) {
+                        // We're in a gap, create a new segment from clicked time to gap end
+                        const newSegment: Segment = {
+                          id: Date.now(),
+                          name: 'segment',
+                          startTime: clickedTime,
+                          endTime: gapEnd,
+                          thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                        };
+                        
+                        // Add the new segment to existing segments
+                        const updatedSegments = [...clipSegments, newSegment];
+                        
+                        // Create and dispatch the update event
+                        const updateEvent = new CustomEvent('update-segments', { 
+                          detail: { 
+                            segments: updatedSegments,
+                            recordHistory: true,
+                            action: 'create_segment_in_gap'
+                          } 
+                        });
+                        document.dispatchEvent(updateEvent);
+                        console.log("Created new segment in gap from", formatDetailedTime(clickedTime), "to", formatDetailedTime(gapEnd));
+                        
+                        // Show the new segment's tooltip
+                        setSelectedSegmentId(newSegment.id);
+                        setShowEmptySpaceTooltip(false);
+                      } else {
+                        // Check if we're at the start of the video with segments ahead
+                        if (clickedTime < sortedByStart[0].startTime) {
+                          // Create a new segment from clicked time to first segment start
+                          const newSegment: Segment = {
+                            id: Date.now(),
+                            name: 'segment',
+                            startTime: clickedTime,
+                            endTime: sortedByStart[0].startTime,
+                            thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                          };
+                          
+                          // Add the new segment to existing segments
+                          const updatedSegments = [...clipSegments, newSegment];
+                          
+                          // Create and dispatch the update event
+                          const updateEvent = new CustomEvent('update-segments', { 
+                            detail: { 
+                              segments: updatedSegments,
+                              recordHistory: true,
+                              action: 'create_segment_before_first'
+                            } 
+                          });
+                          document.dispatchEvent(updateEvent);
+                          console.log("Created new segment from", formatDetailedTime(clickedTime), "to first segment");
+                          
+                          // Show the new segment's tooltip
+                          setSelectedSegmentId(newSegment.id);
+                          setShowEmptySpaceTooltip(false);
+                        } 
+                        // Check if we're after all segments and should create a segment to the end
+                        else if (clickedTime > sortedByStart[sortedByStart.length - 1].endTime) {
+                          // Create a new segment from clicked time to end of video
+                          const newSegment: Segment = {
+                            id: Date.now(),
+                            name: 'segment',
+                            startTime: clickedTime,
+                            endTime: duration,
+                            thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                          };
+                          
+                          // Add the new segment to existing segments
+                          const updatedSegments = [...clipSegments, newSegment];
+                          
+                          // Create and dispatch the update event
+                          const updateEvent = new CustomEvent('update-segments', { 
+                            detail: { 
+                              segments: updatedSegments,
+                              recordHistory: true,
+                              action: 'create_segment_to_end'
+                            } 
+                          });
+                          document.dispatchEvent(updateEvent);
+                          console.log("Created new segment from", formatDetailedTime(clickedTime), "to end");
+                          
+                          // Show the new segment's tooltip
+                          setSelectedSegmentId(newSegment.id);
+                          setShowEmptySpaceTooltip(false);
+                        }
+                        else {
+                          // Not in a gap, check if we can extend the first segment to start of video
+                          const firstSegment = sortedByStart[0];
+                          
+                          if (firstSegment && firstSegment.startTime > 0) {
+                            // Extend the first segment to start of video
+                            const updatedSegments = clipSegments.map(seg => {
+                              if (seg.id === firstSegment.id) {
+                                return {
+                                  ...seg,
+                                  startTime: 0
+                                };
+                              }
+                              return seg;
+                            });
+                            
+                            // Create and dispatch the update event
+                            const updateEvent = new CustomEvent('update-segments', { 
+                              detail: { 
+                                segments: updatedSegments,
+                                recordHistory: true,
+                                action: 'extend_first_segment'
+                              } 
+                            });
+                            document.dispatchEvent(updateEvent);
+                            console.log("Extended first segment to start of video");
+                            
+                            // Show the first segment's tooltip
+                            setSelectedSegmentId(firstSegment.id);
+                            setShowEmptySpaceTooltip(false);
+                          }
+                        }
+                      }
+                    } else if (clickedTime < duration) {
+                      // No segments exist; create a new segment from clicked time to end
+                      const newSegment: Segment = {
+                        id: Date.now(),
+                        name: 'segment',
+                        startTime: clickedTime,
+                        endTime: duration,
+                        thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                      };
+                      
+                      // Create and dispatch the update event
+                      const updateEvent = new CustomEvent('update-segments', { 
+                        detail: { 
+                          segments: [newSegment],
+                          recordHistory: true,
+                          action: 'create_segment_to_end'
+                        } 
+                      });
+                      document.dispatchEvent(updateEvent);
+                      console.log("Created new segment from", formatDetailedTime(clickedTime), "to end");
+                      
+                      // Show the new segment's tooltip
+                      setSelectedSegmentId(newSegment.id);
+                      setShowEmptySpaceTooltip(false);
+                    }
+                  }}
+                >
+                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+                    <g data-name="1" id="_1">
+                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM12.29,20.29l1.42,1.42,5-5a1,1,0,0,0,0-1.42l-5-5-1.42,1.42L15.59,15H5v2H15.59Z" id="login_account_enter_door"/>
+                    </g>
+                  </svg>
+                </button>
               </div>
             </div>
           )}
@@ -1693,36 +2256,38 @@ const TimelineControls = ({
             )}
           </div>
           
-          {/* Save Buttons */}
-          {onSave && (
-            <button 
-              onClick={() => setShowSaveModal(true)}
-              className="save-button"
-              data-tooltip="Save changes"
-            >
-              Save
-            </button>
-          )}
-          
-          {onSaveACopy && (
-            <button 
-              onClick={() => setShowSaveAsModal(true)}
-              className="save-copy-button"
-              data-tooltip="Save as a new copy"
-            >
-              Save as Copy
-            </button>
-          )}
-          
-          {onSaveSegments && (
-            <button 
-              onClick={() => setShowSaveSegmentsModal(true)}
-              className="save-segments-button"
-              data-tooltip="Save segments as separate files"
-            >
-              Save Segments
-            </button>
-          )}
+          {/* Save Buttons Row */}
+          <div className="save-buttons-row">
+            {onSave && (
+              <button 
+                onClick={() => setShowSaveModal(true)}
+                className="save-button"
+                data-tooltip="Save changes"
+              >
+                Save
+              </button>
+            )}
+            
+            {onSaveACopy && (
+              <button 
+                onClick={() => setShowSaveAsModal(true)}
+                className="save-copy-button"
+                data-tooltip="Save as a new copy"
+              >
+                Save as Copy
+              </button>
+            )}
+            
+            {onSaveSegments && (
+              <button 
+                onClick={() => setShowSaveSegmentsModal(true)}
+                className="save-segments-button"
+                data-tooltip="Save segments as separate files"
+              >
+                Save Segments
+              </button>
+            )}
+          </div>
           
           {/* Save Confirmation Modal */}
           <Modal

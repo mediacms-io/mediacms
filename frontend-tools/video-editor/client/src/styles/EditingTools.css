@@ -1,50 +1,64 @@
 #video-editor-trim-root {
 
-  /* Tooltip styles */
-  [data-tooltip] {
-    position: relative;
+  /* Tooltip styles - only on desktop where hover is available */
+  @media (hover: hover) and (pointer: fine) {
+    [data-tooltip] {
+      position: relative;
+    }
+    
+    [data-tooltip]:before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:hover:before,
+    [data-tooltip]:hover:after {
+      opacity: 1;
+      visibility: visible;
+    }
   }
   
-  [data-tooltip]:before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 5px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    text-align: center;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-    z-index: 1000;
-    pointer-events: none;
-  }
-  
-  [data-tooltip]:after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-    pointer-events: none;
-  }
-  
-  [data-tooltip]:hover:before,
-  [data-tooltip]:hover:after {
-    opacity: 1;
-    visibility: visible;
+  /* Hide button tooltips on touch devices */
+  @media (pointer: coarse) {
+    [data-tooltip]:before,
+    [data-tooltip]:after {
+      display: none !important;
+      content: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
   }
 
   .editing-tools-container {
@@ -60,27 +74,43 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
-    flex-wrap: wrap;
     gap: 15px;
+    width: 100%;
+  }
+
+  .flex-container.single-row {
+    flex-wrap: nowrap;
+  }
+
+  /* Show full text on larger screens, hide short text */
+  .full-text {
+    display: inline;
+  }
+  
+  .short-text {
+    display: none;
+  }
+
+  /* Reset text always visible by default */
+  .reset-text {
+    display: inline;
   }
 
   .button-group {
     display: flex;
+    align-items: center;
     
-    &.preview-group {
-      gap: 1rem;
-    }
-    
-    &.center-play {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
+    &.play-buttons-group {
+      gap: 0.75rem;
+      justify-content: flex-start;
+      flex: 0 0 auto; /* Don't expand to fill space */
     }
     
     &.secondary {
       gap: 0.75rem;
       align-items: center;
+      justify-content: flex-end;
+      margin-left: auto; /* Push to right edge */
     }
     
     button {
@@ -90,11 +120,11 @@
       background: none;
       border: none;
       cursor: pointer;
-      transition: color 0.2s;
       min-width: auto;
       
+      /* Disabled hover effect as requested */
       &:hover:not(:disabled) {
-        color: #0066cc;
+        color: inherit;
       }
       
       &:disabled {
@@ -108,8 +138,6 @@
         margin-right: 0.25rem;
       }
     }
-    
-    /* Styling for buttons is now moved to dedicated selectors */
   }
 
   .divider {
@@ -125,23 +153,19 @@
     align-items: center;
     position: relative;
     overflow: hidden;
-    /* Add transform-origin to ensure scaling from center */
-    transform-origin: center center;
-    /* Multiple transitions for smooth effect */
-    transition: 
-      transform 0.2s ease,
-      color 0.2s ease;
-    /* Set a fixed width to prevent layout shifts */
     min-width: 80px;
     justify-content: center;
+    font-size: 0.875rem !important;
   }
   
+  /* Completely disable ALL hover effects for play buttons */
   .play-button:hover:not(:disabled), .preview-button:hover:not(:disabled) {
-    color: #0066cc;
-    transform: scale(1.05);
-    /* Explicitly avoid changing dimensions that would affect layout */
-    font-size: inherit;
-    width: auto;
+    /* Reset everything to prevent any changes */
+    color: inherit !important;
+    transform: none !important;
+    font-size: 0.875rem !important;
+    width: auto !important;
+    background: none !important;
   }
   
   .play-button svg, .preview-button svg {
@@ -151,65 +175,139 @@
     flex-shrink: 0;
   }
   
+  /* Style for the preview mode message that replaces the play button */
+  .preview-mode-message {
+    display: flex;
+    align-items: center;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.8;
+    }
+  }
+  
+  .preview-mode-message svg {
+    height: 1.25rem;
+    width: 1.25rem;
+    margin-right: 0.5rem;
+    color: #3b82f6;
+  }
+  
+  /* Add responsive button text class */
+  .button-text {
+    margin-left: 0.25rem;
+  }
+  
   /* Media queries for the editing tools */
+  @media (max-width: 992px) {
+    /* Hide text for undo/redo buttons on medium screens */
+    .button-group.secondary .button-text {
+      display: none;
+    }
+  }
+  
   @media (max-width: 768px) {
-    .flex-container {
+    /* Keep all buttons in a single row, make them more compact */
+    .flex-container.single-row {
       justify-content: space-between;
-      padding-top: 10px;
     }
     
-    .button-group.secondary {
-      justify-content: flex-end;
-      width: auto;
+    .button-group {
+      gap: 0.5rem;
     }
     
-    .button-group.preview-group {
-      justify-content: flex-start;
-    }
-    
-    .button-group.center-play {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      top: 0;
+    /* Keep font size consistent regardless of screen size */
+    .preview-button, .play-button {
+      font-size: 0.875rem !important;
     }
   }
   
   @media (max-width: 640px) {
-    .flex-container {
-      padding-top: 0;
+    /* At this breakpoint, make preview button text shorter */
+    .preview-button {
+      min-width: auto;
     }
     
-    .button-group.center-play {
-      position: static;
-      transform: none;
-      margin-left: 20px;
+    /* Switch to short text versions */
+    .full-text {
+      display: none;
     }
-  }
-  
-  @media (max-width: 480px) {
-    .flex-container {
-      flex-direction: column;
-      align-items: center; /* Center align all content on mobile */
+    
+    .short-text {
+      display: inline;
+    }
+    
+    /* Hide reset text */
+    .reset-text {
+      display: none;
+    }
+    
+    /* Ensure buttons stay in correct position */
+    .button-group.play-buttons-group {
+      flex: initial;
+      justify-content: flex-start;
     }
     
     .button-group.secondary {
-      width: 100%;
+      flex: initial;
+      justify-content: flex-end;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    /* Keep single row, left-align play buttons, right-align controls */
+    .flex-container.single-row {
       justify-content: space-between;
-      margin-left: 0;
+      flex-wrap: nowrap;
     }
     
-    /* Align play buttons in center on mobile */
-    .button-group.preview-group, 
-    .button-group.center-play {
-      width: auto;
-      justify-content: center;
-      margin-left: 0;
+    /* Fix left-align for play buttons */
+    .button-group.play-buttons-group {
+      justify-content: flex-start;
+      flex: 0 0 auto;
     }
     
-    .button-group.center-play {
-      margin-top: 10px;
-      margin-bottom: 10px;
+    /* Fix right-align for editing controls */
+    .button-group.secondary {
+      justify-content: flex-end;
+      margin-left: auto;
+    }
+    
+    /* Reduce button padding to fit more easily */
+    .button-group button {
+      padding: 0.25rem;
+    }
+    
+    /* Smaller preview mode message */
+    .preview-mode-message {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+    }
+    
+    .divider {
+      margin: 0 0.25rem;
+    }
+  }
+  
+  /* Very small screens - maintain layout but reduce further */
+  @media (max-width: 480px) {
+    .button-group.play-buttons-group,
+    .button-group.secondary {
+      gap: 0.25rem;
     }
     
     .divider {

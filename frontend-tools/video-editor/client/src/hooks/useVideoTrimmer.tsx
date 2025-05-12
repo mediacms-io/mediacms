@@ -38,6 +38,18 @@ const useVideoTrimmer = () => {
   const [history, setHistory] = useState<EditorState[]>([]);
   const [historyPosition, setHistoryPosition] = useState(-1);
   
+  // Debug monitor for history changes
+  useEffect(() => {
+    if (history.length > 0) {
+      console.log(`History state updated: ${history.length} entries, position: ${historyPosition}`);
+      // Log actions in history to help debug undo/redo
+      const actions = history.map((state, idx) => 
+        `${idx}: ${state.action || 'unknown'} (segments: ${state.clipSegments.length})`
+      );
+      console.log('History actions:', actions);
+    }
+  }, [history, historyPosition]);
+  
   // Initialize video event listeners
   useEffect(() => {
     const video = videoRef.current;
@@ -315,42 +327,58 @@ const useVideoTrimmer = () => {
     const handleUpdateSegments = (e: CustomEvent) => {
       if (e.detail && e.detail.segments) {
         // Check if this is a significant change that should be recorded in history
+        // Default to true to ensure all segment changes are recorded
         const isSignificantChange = e.detail.recordHistory !== false;
         // Get the action type if provided
         const actionType = e.detail.action || 'update_segments';
         
-        // Update segment state
+        // Log the update details
+        console.log(`Updating segments with action: ${actionType}, recordHistory: ${isSignificantChange ? "true" : "false"}`);
+        
+        // Update segment state immediately for UI feedback
         setClipSegments(e.detail.segments);
         
-        // Only save state to history if it's a significant change or explicitly requested
+        // Always save state to history for non-intermediate actions
         if (isSignificantChange) {
-          // Use a setTimeout to avoid multiple rapid saves
+          // A slight delay helps avoid race conditions but we need to
+          // ensure we capture the state properly
           setTimeout(() => {
             // Deep clone to ensure state is captured correctly
+            const segmentsClone = JSON.parse(JSON.stringify(e.detail.segments));
+            
+            // Create a complete state snapshot
             const stateWithAction: EditorState = {
               trimStart,
               trimEnd,
               splitPoints: [...splitPoints],
-              clipSegments: JSON.parse(JSON.stringify(e.detail.segments)), // Use the segments from the event
+              clipSegments: segmentsClone,
               action: actionType // Store the action type in the state
             };
             
             // Get the current history position to ensure we're using the latest value
             const currentHistoryPosition = historyPosition;
             
-            // If we're not at the end of the history, truncate
-            if (currentHistoryPosition < history.length - 1) {
-              const newHistory = history.slice(0, currentHistoryPosition + 1);
-              setHistory([...newHistory, stateWithAction]);
-            } else {
-              setHistory(prevHistory => [...prevHistory, stateWithAction]);
-            }
+            // Update history with the functional pattern to avoid stale closure issues
+            setHistory(prevHistory => {
+              // If we're not at the end of the history, truncate
+              if (currentHistoryPosition < prevHistory.length - 1) {
+                const newHistory = prevHistory.slice(0, currentHistoryPosition + 1);
+                return [...newHistory, stateWithAction];
+              } else {
+                // Just append to current history
+                return [...prevHistory, stateWithAction];
+              }
+            });
             
             // Ensure the historyPosition is updated to the correct position
-            const newPosition = currentHistoryPosition + 1;
-            setHistoryPosition(newPosition);
-            // console.log(`Saved state with action: ${actionType} to history position`, newPosition);
-          }, 10);
+            setHistoryPosition(prev => {
+              const newPosition = prev + 1;
+              console.log(`Saved state with action: ${actionType} to history position ${newPosition}`);
+              return newPosition;
+            });
+          }, 20); // Slightly increased delay to ensure state updates are complete
+        } else {
+          console.log(`Skipped saving state to history for action: ${actionType} (recordHistory=false)`);
         }
       }
     };
@@ -489,13 +517,17 @@ const useVideoTrimmer = () => {
       }
       
       // If we've reached the end of the current segment
-      if (currentTime >= currentSegment.endTime) {
+      if (currentTime >= currentSegment.endTime - 0.05) { // Slightly before the end to ensure smooth transition
         // Move to the next segment if available
         if (previewSegmentIndex < orderedSegments.length - 1) {
           const nextSegment = orderedSegments[previewSegmentIndex + 1];
+          
+          // Play through the next segment immediately
           videoRef.current.currentTime = nextSegment.startTime;
           setPreviewSegmentIndex(previewSegmentIndex + 1);
-          // console.log("Moving to next segment in preview", previewSegmentIndex + 1);
+          console.log("Moving to next segment in preview:", nextSegment.name, 
+                      "from", formatDetailedTime(currentSegment.endTime), 
+                      "to", formatDetailedTime(nextSegment.startTime));
           
           // Ensure playback continues
           videoRef.current.play().catch(err => {
@@ -503,7 +535,7 @@ const useVideoTrimmer = () => {
           });
         } else {
           // End of all segments, loop back to the first segment
-          // console.log("End of all segments in preview, looping back to first");
+          console.log("End of all segments in preview, looping back to first");
           videoRef.current.currentTime = orderedSegments[0].startTime;
           setPreviewSegmentIndex(0);
           
@@ -598,11 +630,21 @@ const useVideoTrimmer = () => {
   const handleUndo = () => {
     if (historyPosition > 0) {
       const previousState = history[historyPosition - 1];
+      console.log(`** UNDO ** to position ${historyPosition - 1}, action: ${previousState.action}, segments: ${previousState.clipSegments.length}`);
+      
+      // Log segment details to help debug
+      console.log("Segment details after undo:", previousState.clipSegments.map(seg => 
+        `ID: ${seg.id}, Time: ${formatDetailedTime(seg.startTime)} - ${formatDetailedTime(seg.endTime)}`
+      ));
+      
+      // Apply the previous state with deep cloning to avoid reference issues
       setTrimStart(previousState.trimStart);
       setTrimEnd(previousState.trimEnd);
-      setSplitPoints(previousState.splitPoints);
-      setClipSegments(previousState.clipSegments);
+      setSplitPoints([...previousState.splitPoints]);
+      setClipSegments(JSON.parse(JSON.stringify(previousState.clipSegments)));
       setHistoryPosition(historyPosition - 1);
+    } else {
+      console.log("Cannot undo: at earliest history position");
     }
   };
   
@@ -610,11 +652,21 @@ const useVideoTrimmer = () => {
   const handleRedo = () => {
     if (historyPosition < history.length - 1) {
       const nextState = history[historyPosition + 1];
+      console.log(`** REDO ** to position ${historyPosition + 1}, action: ${nextState.action}, segments: ${nextState.clipSegments.length}`);
+      
+      // Log segment details to help debug
+      console.log("Segment details after redo:", nextState.clipSegments.map(seg => 
+        `ID: ${seg.id}, Time: ${formatDetailedTime(seg.startTime)} - ${formatDetailedTime(seg.endTime)}`
+      ));
+      
+      // Apply the next state with deep cloning to avoid reference issues
       setTrimStart(nextState.trimStart);
       setTrimEnd(nextState.trimEnd);
-      setSplitPoints(nextState.splitPoints);
-      setClipSegments(nextState.clipSegments);
+      setSplitPoints([...nextState.splitPoints]);
+      setClipSegments(JSON.parse(JSON.stringify(nextState.clipSegments)));
       setHistoryPosition(historyPosition + 1);
+    } else {
+      console.log("Cannot redo: at latest history position");
     }
   };
   
@@ -627,11 +679,11 @@ const useVideoTrimmer = () => {
     if (isPreviewMode) {
       setIsPreviewMode(false);
       
-      // If we were previously in normal play mode before entering preview, 
-      // restore that state instead of pausing
-      if (!isPlaying) {
-        video.pause();
-      }
+      // Always pause the video when exiting preview mode
+      video.pause();
+      setIsPlaying(false);
+      
+      console.log("Exiting preview mode - video paused");
       return;
     }
     
@@ -647,7 +699,7 @@ const useVideoTrimmer = () => {
     
     // Set the preview mode flag before starting playback
     setIsPreviewMode(true);
-    // console.log("Entering preview mode");
+    console.log("Entering preview mode");
     
     // Set the first segment as the current one in the preview sequence
     setPreviewSegmentIndex(0);
@@ -660,7 +712,7 @@ const useVideoTrimmer = () => {
       if (videoRef.current) {
         videoRef.current.play()
           .then(() => {
-            // console.log("Preview started successfully");
+            console.log("Preview started successfully");
             setIsPlaying(true);
           })
           .catch(err => {

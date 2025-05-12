@@ -419,92 +419,132 @@
     margin-right: 0.25rem;
   }
 
-  .save-button {
+  /* Save buttons container */
+  .save-buttons-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+
+  /* General styles for all save buttons */
+  .save-button, 
+  .save-copy-button, 
+  .save-segments-button {
     color: #ffffff;
     background: #0066cc;
     border-radius: 0.25rem;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
     cursor: pointer;
     border: none;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+    min-width: fit-content;
   }
 
-  .save-button:hover {
-    background-color: rgba(9, 59, 109, 0.9);
-  }
-
-  .save-copy-button {
-    background: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-  }
-
-  .save-copy-button:hover {
-    background-color: rgba(9, 59, 109, 0.9);
-  }
-
-  .save-segments-button {
-    background: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
-    cursor: pointer;
-  }
-
+  /* Shared hover effect */
+  .save-button:hover, 
+  .save-copy-button:hover, 
   .save-segments-button:hover {
     background-color: rgba(9, 59, 109, 0.9);
   }
 
-  /* Tooltip styles */
-  [data-tooltip] {
-    position: relative;
+  /* Media query for smaller screens */
+  @media (max-width: 576px) {
+    .save-buttons-row {
+      width: 100%;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    
+    .save-button, 
+    .save-copy-button, 
+    .save-segments-button {
+      flex: 1;
+      font-size: 0.7rem;
+      padding: 0.25rem 0.35rem;
+    }
+  }
+  
+  /* Very small screens - adjust save buttons */
+  @media (max-width: 480px) {
+    .save-button, 
+    .save-copy-button, 
+    .save-segments-button {
+      font-size: 0.675rem;
+      padding: 0.25rem;
+    }
+    
+    /* Remove margins for controls-right buttons */
+    .controls-right {
+      margin: 0;
+    }
+    
+    .controls-right button {
+      margin: 0;
+    }
   }
 
-  [data-tooltip]:before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 5px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    text-align: center;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-    z-index: 1000;
-    pointer-events: none;
+  /* Tooltip styles - only on desktop where hover is available */
+  @media (hover: hover) and (pointer: fine) {
+    [data-tooltip] {
+      position: relative;
+    }
+  
+    [data-tooltip]:before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  
+    [data-tooltip]:after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+  
+    [data-tooltip]:hover:before,
+    [data-tooltip]:hover:after {
+      opacity: 1;
+      visibility: visible;
+    }
   }
-
-  [data-tooltip]:after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.2s, visibility 0.2s;
-    pointer-events: none;
-  }
-
-  [data-tooltip]:hover:before,
-  [data-tooltip]:hover:after {
-    opacity: 1;
-    visibility: visible;
+  
+  /* Hide button tooltips on touch devices */
+  @media (pointer: coarse) {
+    [data-tooltip]:before,
+    [data-tooltip]:after {
+      display: none !important;
+      content: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
   }
 }

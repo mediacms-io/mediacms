@@ -80,6 +80,8 @@ const VideoPlayer = ({
         crossOrigin="anonymous"
         onClick={onPlayPause}
         playsInline
+        webkit-playsinline="true"
+        x-webkit-airplay="allow"
         controls={false}
         muted={isMuted}
       >
