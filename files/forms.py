@@ -134,7 +134,7 @@ class MediaPublishForm(forms.ModelForm):
             if settings.PORTAL_WORKFLOW not in ["public"]:
                 # Only show unlisted, private, and current state as options
                 valid_states = ["unlisted", "private"]
-                if self.instance.state:
+                if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = valid_states
 
