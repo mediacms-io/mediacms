@@ -98,6 +98,13 @@ class MediaPublishForm(forms.ModelForm):
         label="Acknowledge sharing status",
         help_text=""
     )
+    
+    create_segments = forms.BooleanField(
+        required=False,
+        initial=False,
+        label="Create segments from video chapters",
+        help_text="If checked, separate media files will be created for each chapter"
+    )
 
     class Meta:
         model = Media
@@ -158,6 +165,16 @@ class MediaPublishForm(forms.ModelForm):
             CustomField('is_reviewed'),
             CustomField('allow_download'),
         )
+        
+        # Only add create_segments field if the media has chapters
+        if self.instance.media_type == 'video' and self.instance.chapters.exists():
+            self.fields['create_segments'] = forms.BooleanField(
+                required=False,
+                initial=False,
+                label="Create segments from video chapters",
+                help_text="If checked, separate media files will be created for each chapter"
+            )
+            self.helper.layout.append(CustomField('create_segments'))
 
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
 
@@ -198,6 +215,44 @@ class MediaPublishForm(forms.ModelForm):
             self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
+        
+        # Handle segment creation if requested
+        if data.get('create_segments') and media.chapters.exists():
+            from .models import VideoTrimRequest
+            
+            chapter_data = media.chapter_data
+            timestamps = []
+            segment_titles = []
+            
+            for i, chapter in enumerate(chapter_data):
+                start_time = helpers.timestamp_to_seconds(chapter['start'])
+                
+                # Get end time from next chapter or use video duration for last chapter
+                if i < len(chapter_data) - 1:
+                    end_time = helpers.timestamp_to_seconds(chapter_data[i+1]['start'])
+                else:
+                    end_time = media.duration
+                
+                timestamps.append({
+                    'start': start_time,
+                    'end': end_time
+                })
+                
+                segment_titles.append(chapter['title'])
+            
+            # Create trim request for segments
+            VideoTrimRequest.objects.create(
+                media=media,
+                status='initial',
+                video_action='create_segments',
+                media_trim_style='no_encoding',
+                timestamps=timestamps,
+                segment_titles=segment_titles,
+                segment_categories=[list(media.category.values_list('id', flat=True))] * len(timestamps),
+                segment_tags=[list(media.tags.values_list('title', flat=True))] * len(timestamps),
+                segment_descriptions=[media.description] * len(timestamps)
+            )
+            
         return media
 
 

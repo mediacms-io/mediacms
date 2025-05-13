@@ -1547,6 +1547,10 @@ class VideoTrimRequest(models.Model):
     video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
     media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
     timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+    segment_titles = models.JSONField(null=True, blank=True, help_text="Titles for each segment when creating multiple segments")
+    segment_descriptions = models.JSONField(null=True, blank=True, help_text="Descriptions for each segment when creating multiple segments")
+    segment_categories = models.JSONField(null=True, blank=True, help_text="Categories for each segment when creating multiple segments")
+    segment_tags = models.JSONField(null=True, blank=True, help_text="Tags for each segment when creating multiple segments")
 
     def __str__(self):
         return f"Trim request for {self.media.title} ({self.status})"
