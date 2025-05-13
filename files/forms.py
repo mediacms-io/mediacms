@@ -131,7 +131,11 @@ class MediaPublishForm(forms.ModelForm):
                 self.fields[field].widget.attrs['title'] = "This field can only be modified by MediaCMS admins or editors"
 
             if settings.PORTAL_WORKFLOW not in ["public"]:
-                self.fields["state"].queryset = Media.STATES.exclude(state__in=["public", "unlisted"])
+                # Only show unlisted, private, and current state as options
+                valid_states = ["unlisted", "private"]
+                if self.instance.state:
+                    valid_states.append(self.instance.state)
+                self.fields["state"].choices = [choice for choice in Media.MEDIA_STATES if choice[0] in valid_states]
 
 
 
