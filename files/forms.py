@@ -123,6 +123,11 @@ class MediaPublishForm(forms.ModelForm):
                 self.fields[field].widget.attrs['class'] = 'read-only-field'
                 self.fields[field].widget.attrs['title'] = "This field can only be modified by MediaCMS admins or editors"
 
+            # self.fields["state"] queryset should only show private and unlisted
+            self.fields["state"].queryset = Media.STATES.exclude(state__in=["public", "unlisted"])
+
+
+
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
                 pass
