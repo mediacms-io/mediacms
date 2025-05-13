@@ -6,7 +6,7 @@ from django.conf import settings
 
 from . import helpers
 from .methods import get_next_state, is_mediacms_editor
-from .models import Category, Media, Subtitle
+from .models import Category, Media, MEDIA_STATES, Subtitle
 
 
 class CustomField(Field):
@@ -137,7 +137,7 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 # Convert valid_states to list of tuples for choices field
-                self.fields["state"].choices = [(state, dict(Media.MEDIA_STATES).get(state, state)) for state in valid_states]
+                self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
 
 
 
