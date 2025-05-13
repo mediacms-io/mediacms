@@ -398,6 +398,34 @@ def clean_comment(raw_comment):
     return cleaned_comment
 
 
+def create_video_trim_request(media, data):
+    """Create a video trim request for a media
+
+    Args:
+        media: Media object
+        data: Dictionary with trim request data
+
+    Returns:
+        VideoTrimRequest object
+    """
+
+    video_action = "replace"
+    if data.get('saveIndividualSegments'):
+        video_action = "create_segments"
+    elif data.get('saveAsCopy'):
+        video_action = "save_new"
+
+    video_trim_request = models.VideoTrimRequest.objects.create(
+        media=media,
+        status="initial",
+        video_action=video_action,
+        media_trim_style='no_encoding',
+        timestamps=data.get('segments', {})
+    )
+
+    return video_trim_request
+
+
 def list_tasks():
     """Lists celery tasks
     To be used in an admin dashboard

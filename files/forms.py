@@ -4,7 +4,6 @@ from crispy_forms.layout import Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
-from . import helpers
 from .methods import get_next_state, is_mediacms_editor
 from .models import Category, Media, MEDIA_STATES, Subtitle
 
@@ -132,13 +131,10 @@ class MediaPublishForm(forms.ModelForm):
                 self.fields[field].widget.attrs['title'] = "This field can only be modified by MediaCMS admins or editors"
 
             if settings.PORTAL_WORKFLOW not in ["public"]:
-                # Only show unlisted, private, and current state as options
                 valid_states = ["unlisted", "private"]
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
-                # Convert valid_states to list of tuples for choices field
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
-
 
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
@@ -221,43 +217,6 @@ class MediaPublishForm(forms.ModelForm):
             self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
-
-        # Handle segment creation if requested
-        if data.get('create_segments') and media.chapters.exists():
-            from .models import VideoTrimRequest
-
-            chapter_data = media.chapter_data
-            timestamps = []
-            segment_titles = []
-
-            for i, chapter in enumerate(chapter_data):
-                start_time = helpers.timestamp_to_seconds(chapter['start'])
-
-                # Get end time from next chapter or use video duration for last chapter
-                if i < len(chapter_data) - 1:
-                    end_time = helpers.timestamp_to_seconds(chapter_data[i+1]['start'])
-                else:
-                    end_time = media.duration
-
-                timestamps.append({
-                    'start': start_time,
-                    'end': end_time
-                })
-
-                segment_titles.append(chapter['title'])
-
-            # Create trim request for segments
-            VideoTrimRequest.objects.create(
-                media=media,
-                status='initial',
-                video_action='create_segments',
-                media_trim_style='no_encoding',
-                timestamps=timestamps,
-                segment_titles=segment_titles,
-                segment_categories=[list(media.category.values_list('id', flat=True))] * len(timestamps),
-                segment_tags=[list(media.tags.values_list('title', flat=True))] * len(timestamps),
-                segment_descriptions=[media.description] * len(timestamps)
-            )
 
         return media
 

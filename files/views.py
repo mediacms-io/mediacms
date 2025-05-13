@@ -49,6 +49,7 @@ from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
     check_comment_for_mention,
+    create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
     is_mediacms_editor,
@@ -302,22 +303,8 @@ def trim_video(request, friendly_token):
 
     try:
         data = json.loads(request.body)
-        video_action = "replace"
-        if data.get('saveIndividualSegments'):
-            video_action = "create_segments"
-        elif data.get('saveAsCopy'):
-            video_action = "save_new"
-
-        video_trim_request = VideoTrimRequest.objects.create(
-            media=media,
-            status="initial",
-            video_action=video_action,
-            media_trim_style='no_encoding',
-            timestamps=data.get('segments', {})
-        )
-
+        video_trim_request = create_video_trim_request(media, data)
         video_trim_task.delay(video_trim_request.id)
-
         ret = {"success": True, "request_id": video_trim_request.id}
     except Exception as e:
         ret = {"success": False, "error": "Incorrect request data"}

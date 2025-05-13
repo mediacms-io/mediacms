@@ -855,7 +855,7 @@ def video_trim_task(self, trim_request_id):
     timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
     timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
 
-    logger.info(f"timestamps_encodings: {trim_request_id}")
+    logger.info(f"timestamps_encodings: {timestamps_encodings}")
     logger.info(f"timestamps_original: {timestamps_original}")
 
     if not timestamps_encodings:
@@ -873,7 +873,7 @@ def video_trim_task(self, trim_request_id):
     trim_request.status = "success"
     trim_request.save(update_fields=["status"])
     logger.info(f"Successfully processed video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
-    
+
     return True
 
 

@@ -3,6 +3,7 @@
 
 import hashlib
 import json
+import logging
 import os
 import random
 import shutil
@@ -14,6 +15,9 @@ import filetype
 from django.conf import settings
 
 CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+logger = logging.getLogger(__name__)
+
 
 CRF_ENCODING_NUM_SECONDS = 2  # 0 * 60 # videos with greater duration will get
 # CRF encoding and not two-pass
@@ -826,6 +830,7 @@ def get_trim_timestamps(media_file_path, timestamps_list):
     if not timestamps_to_process:
         return []
 
+    # just a single timestamp with no startTime, no need to process
     if len(timestamps_to_process) == 1 and timestamps_to_process[0]['startTime'] == "00:00:00.000":
         return timestamps_list
 
@@ -851,6 +856,7 @@ def get_trim_timestamps(media_file_path, timestamps_list):
             media_file_path
         ]
         cmd = [str(s) for s in cmd]
+        logger.info(f"trim cmd: {cmd}")
 
         stdout = run_command(cmd).get("out")
 
