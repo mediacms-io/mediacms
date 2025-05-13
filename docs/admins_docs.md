@@ -86,7 +86,7 @@ pip cache purge
 apt install libxmlsec1-dev -y
 apt install pkg-config -y
 pip install --no-binary lxml lxml==1.3.13
-pip install --no-binary xmlsec==4.9.2
+pip install --no-binary xmlsec xmlsec==4.9.2
 ```
 	
 Ubuntu 24 (Python 3.12+)
@@ -97,7 +97,7 @@ pip cache purge
 apt install libxmlsec1-dev -y
 apt install pkg-config -y
 pip install --no-binary lxml lxml==1.3.15
-pip install --no-binary xmlsec==5.4.0
+pip install --no-binary xmlsec xmlsec==5.4.0
 ```
 
 Step 4 - Install requirements.txt
