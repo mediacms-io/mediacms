@@ -58,8 +58,8 @@ COPY requirements.txt requirements-dev.txt ./
 
 ARG DEVELOPMENT_MODE=False
 
-RUN pip install --no-binary lxml lxml==1.3.15
-RUN pip install --no-binary xmlsec xmlsec==5.4.0
+RUN pip install --no-binary lxml lxml==5.4.0
+RUN pip install --no-binary xmlsec xmlsec==1.3.15
 
 RUN pip install --no-cache-dir -r requirements.txt && \
     if [ "$DEVELOPMENT_MODE" = "True" ]; then \
