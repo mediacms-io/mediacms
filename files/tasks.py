@@ -28,6 +28,7 @@ from .helpers import (
     create_temp_file,
     get_file_name,
     get_file_type,
+    get_trim_timestamps,
     media_file_info,
     produce_ffmpeg_commands,
     produce_friendly_token,
@@ -849,9 +850,30 @@ def video_trim_task(self, trim_request_id):
 
     trim_request.status = "running"
     trim_request.save(update_fields=["status"])
-
     logger.info(f"Started processing video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
 
+    timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
+    timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
+
+    logger.info(f"timestamps_encodings: {trim_request_id}")
+    logger.info(f"timestamps_original: {timestamps_original}")
+
+    if not timestamps_encodings:
+        trim_request.status = "fail"
+        trim_request.save(update_fields=["status"])
+        logger.error(f"Failed to get timestamps for trim request {trim_request_id}")
+        return False
+
+    # TODO1: for each encoding, run function that does the trim
+    # TODO2: for original file, run function that does the trim
+    # TODO3: run create_hls task
+    # TODO4: call media_info or something to set duration
+
+    # set status to success and exit
+    trim_request.status = "success"
+    trim_request.save(update_fields=["status"])
+    logger.info(f"Successfully processed video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
+    
     return True
 
 

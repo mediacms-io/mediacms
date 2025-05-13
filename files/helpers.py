@@ -789,10 +789,10 @@ def clean_query(query):
 
 def timestamp_to_seconds(timestamp):
     """Convert a timestamp in format HH:MM:SS.mmm to seconds
-    
+
     Args:
         timestamp (str): Timestamp in format HH:MM:SS.mmm
-        
+
     Returns:
         float: Timestamp in seconds
     """
@@ -852,17 +852,14 @@ def get_trim_timestamps(media_file_path, timestamps_list):
         ]
         cmd = [str(s) for s in cmd]
 
-        # Run command
         stdout = run_command(cmd).get("out")
 
-        # Process output to find the last I-frame
         i_frames = []
         if stdout:
             for line in stdout.strip().split('\n'):
                 if line and line.endswith(',I'):
                     i_frames.append(line.replace(',I', ''))
 
-        # Use the last I-frame if found, otherwise keep original startTime
         adjusted_startTime = i_frames[-1] if i_frames else startTime
 
         timestamps_results.append({

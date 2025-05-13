@@ -678,6 +678,18 @@ class Media(models.Model):
 
         return None
 
+
+    @property
+    def trim_video_path(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4').order_by("-profile__resolution").first()
+        if ret:
+            return ret.media_file.path
+
+        return None
+
     @property
     def encodings_info(self, full=False):
         """Property used on serializers"""
