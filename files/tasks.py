@@ -844,6 +844,8 @@ def produce_video_chapters(chapter_id):
 
 @task(name="video_trim_task", bind=True, queue="short_tasks")
 def video_trim_task(self, trim_request_id):
+    # SOS: if at some point we move from ffmpeg copy, then this need be changed
+    # to long_tasks
     try:
         trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
     except VideoTrimRequest.DoesNotExist:
