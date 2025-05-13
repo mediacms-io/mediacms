@@ -38,11 +38,12 @@ The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg
 ## Easy Install
 Easy install is the recommended way to do a new installation, and is intended for fresh Ubuntu Server 20/22/24 installations.
 
-It requires just a single command:
+For the trusting folks, it requires just a single command:
 ```bash
 sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
-If you wish to view or modify the script before running it:
+
+For those less trusting, you can download the script and view or modify it before executing:
 ```bash
 wget -O "easy-install.sh" https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh
 cat easy-install.sh | less
