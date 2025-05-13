@@ -1,6 +1,5 @@
 Django==5.1.6
 djangorestframework==3.15.2
-lxml==5.0.0 # dont use later version, as theres a strange error "lxml & xmlsec libxml2 library version mismatch"
 python3-saml==1.16.0
 django-allauth==65.4.1
 psycopg==3.2.4
