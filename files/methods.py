@@ -2,19 +2,25 @@
 # related content
 
 import itertools
+import json
 import logging
+import os
 import random
 import re
+import tempfile
 from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files import File
 from django.core.mail import EmailMessage
 from django.db.models import Q
+from django.utils import timezone
 
 from cms import celery_app
 
-from . import models
+from . import helpers, models
+from .models import Encoding
 from .helpers import mask_ip
 
 logger = logging.getLogger(__name__)
@@ -396,6 +402,71 @@ def clean_comment(raw_comment):
     cleaned_comment = cleaned_comment.replace("_]", '')
 
     return cleaned_comment
+
+
+def copy_video(original_media, copy_encodings=True):
+    """Create a copy of a media object
+
+    Args:
+        original_media: Original Media object to copy
+        copy_video: Whether to copy the actual video file or create an empty file
+
+    Returns:
+        New Media object
+    """
+    title_suffix="(Trimmed)"
+    # Create a new Media object as a copy
+    with open(original_media.media_file.path, "rb") as f:
+        myfile = File(f)
+        new_media = models.Media.objects.create(
+            media_file=myfile,
+            title=f"{original_media.title} {title_suffix}",
+            description=original_media.description,
+            user=original_media.user,
+            media_type="video",
+            enable_comments=original_media.enable_comments,
+            allow_download=original_media.allow_download,
+            state=original_media.state,
+            is_reviewed=original_media.is_reviewed,
+            add_date=timezone.now()
+        )
+
+    if copy_encodings:
+        # Copy encodings
+        for encoding in original_media.encodings.filter(status="success", chunk=False):
+            if encoding.media_file:
+                with open(encoding.media_file.path, "rb") as f:
+                    myfile = File(f)
+
+                    new_encoding = Encoding.objects.create(
+                        media_file=myfile,
+                        media=new_media,
+                        profile=encoding.profile,
+                        status="success",
+                        progress=100,
+                        worker=encoding.worker,
+                        logs=f"Copied from encoding {encoding.id}"
+                    )
+
+    # Copy categories and tags
+    for category in original_media.category.all():
+        new_media.category.add(category)
+
+    for tag in original_media.tags.all():
+        new_media.tags.add(tag)
+
+    # Copy thumbnails if they exist
+    if original_media.thumbnail:
+        with open(original_media.thumbnail.path, 'rb') as f:
+            thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
+            new_media.thumbnail.save(thumbnail_name, File(f))
+
+    if original_media.poster:
+        with open(original_media.poster.path, 'rb') as f:
+            poster_name = helpers.get_file_name(original_media.poster.path)
+            new_media.poster.save(poster_name, File(f))
+
+    return new_media
 
 
 def create_video_trim_request(media, data):
