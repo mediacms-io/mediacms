@@ -842,7 +842,7 @@ def produce_video_chapters(chapter_id):
     return True
 
 
-@task(name="video_trim_task", bind=True, queue="long_tasks")
+@task(name="video_trim_task", bind=True, queue="short_tasks")
 def video_trim_task(self, trim_request_id):
     try:
         trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
