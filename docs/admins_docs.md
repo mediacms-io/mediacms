@@ -81,7 +81,7 @@ These problems come from the distro and Python, not from MediaCMS.   The known w
 Ubuntu 20 & 22 (Python 3.10)
 ```bash
 pip uninstall lxml
-pip uninstall lxmlsec
+pip uninstall xmlsec
 pip cache purge
 apt install libxmlsec1-dev -y
 apt install pkg-config -y
@@ -92,7 +92,7 @@ pip install --no-binary xmlsec xmlsec==4.9.2
 Ubuntu 24 (Python 3.12+)
 ```bash
 pip uninstall lxml
-pip uninstall lxmlsec
+pip uninstall xmlsec
 pip cache purge
 apt install libxmlsec1-dev -y
 apt install pkg-config -y
