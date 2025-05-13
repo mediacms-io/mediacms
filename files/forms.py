@@ -137,6 +137,7 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = valid_states
+                print(valid_states)
 
 
 
