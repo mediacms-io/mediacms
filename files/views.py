@@ -430,7 +430,7 @@ def edit_video(request):
 
     if running_trim_request:
         messages.add_message(request, messages.INFO, "Video trim request is already running")
-        return HttpResponseRedirect("/")
+        return HttpResponseRedirect(media.get_absolute_url())
 
     media_file_path = media.trim_video_url
 
