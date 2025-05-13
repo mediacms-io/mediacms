@@ -42,8 +42,6 @@ if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"bullseye"* ]]; then
       libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
       lzma lzma-dev tk-dev uuid-dev zlib1g-dev
 
-    mkdir -P /tmp/python310
-    cd /tmp/python310
     wget https://www.python.org/ftp/python/3.10.17/Python-3.10.17.tar.xz
     tar -xf Python-3.10.17.tar.xz
     cd Python-3.10.17
