@@ -31,12 +31,14 @@
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
 
-## 2. Server Installation
+## 2. Single-Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
+The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But it's strongly suggested to Linux Ubuntu (tested on versions 20, 22, and 24).
 
 ## Easy Install
-Easy install is intended for fresh Ubuntu Server 20/22/24 installations, and requires just a single command:
+Easy install is the recommended way to do a new installation, and is intended for fresh Ubuntu Server 20/22/24 installations.
+
+It requires just a single command:
 ```bash
 sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
@@ -51,20 +53,16 @@ Once you're satisfied, run it:
 sudo su -c "easy-install.sh" root
 ```
 
+Easy Install will create a new folder for the installation, located at /home/mediacms.io/, and clone the latest source into a sub-folder 'mediacms'.   If you wish to use an older release, review the installation instructions that come with that release (MediaCMS 4, for example).
+
+Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql will be upgraded to version 13.   These are the minimum requirements to run MediaCMS 5.   If you need to retain Python 3.8 or Postgresql 12 for whatever reason, please use a MediaCMS 4 release.
+
 ## Traditional Install
+The move to Django 5 in MediaCMS 5.x has some new requirements:
+ 1) You must use Python 3.10+
+ 2) You may need to build Python modules for xmlsec and lxml on some systems due to system library / Python library conflicts.
 
-Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
-
-Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
-
-```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
-```
-
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
+For non-standard system installations, it's best to walk through the install.sh or easy-install.sh scripts and duplicate for your specific system.   If you must run on a non-Debian based system you will need to find the specific packages and solve the dependency issues around them.
 
 
 ### Update
@@ -91,7 +89,6 @@ The syntax for starting Celery has also changed, so you have to copy the celery 
 # systemctl daemon-reload
 # systemctl start celery_long celery_short celery_beat
 ```
-
 
 
 ### Configuration
