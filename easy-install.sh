@@ -2,6 +2,7 @@
 
 #### Single-command install:
 ### sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+#!/bin/bash
 
 echo "MediaCMS Easy Installation";
 
@@ -24,18 +25,50 @@ done
 
 
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
+if [[ $osVersion == *"Ubuntu 20"* ]]; then
+    echo 'Ubuntu 20 Detected.... system update and dependency installation, this will take a few minutes'
+    apt-get update && apt-get -y upgrade 
+    
+    ### Ubuntu 20 requires Python 3.10 upgrade to work with Django 5.1.
+    echo 'Upgrading to Python 3.10...   This may take a while.'
+    sudo apt-get install -y build-essential gdb lcov pkg-config \
+      libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
+      libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
+      lzma lzma-dev tk-dev uuid-dev zlib1g-dev
+
+    mkdir -P /tmp/python310
+    cd /tmp/python310
+    wget https://www.python.org/ftp/python/3.10.17/Python-3.10.17.tar.xz
+    tar -xf Python-3.10.17.tar.xz
+    cd Python-3.10.17
+    ./configure --enable-optimizations
+    make -j4
+    make install
+
+    # Install Postgresql 13 repos, required for Django 5.x
+    echo "Installing PostgreSQL 13..."
+    sudo apt install curl gpg gnupg2 software-properties-common apt-transport-https lsb-release ca-certificates
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc|sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |sudo tee  /etc/apt/sources.list.d/pgdg.list
+    apt update
+    apt install -y postgresql-13 postgresql-client-13
+    
+    echo 'Installing other dependencies....'
+    apt-get install redis-server pkg-config libxmlsec1-dev nginx git gcc vim unzip imagemagick certbot wget xz-utils -y
+
+elif [[ $osVersion == *"Ubuntu 22"* ]]; then
+    echo 'Ubuntu 22 detected - system update and dependency installation, this will take a few minutes'
+    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev libxmlsec1-dev pkg-config virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
 elif [[ $osVersion==*"Ubuntu 24"* ]]; then
-    echo 'Performing system update and installing Ubuntu 24 dependencies - this may take a few minutes'
+    echo 'Ubuntu 24 detected - system update and installing Ubuntu 24 dependencies - this may take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev pkg-config libxmlsec1-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
 else
     echo "This script is tested for Ubuntu 20/22/24 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
     exit
 fi
+
 
 # Generate the directory
 mkdir -p /home/mediacms.io
@@ -64,7 +97,7 @@ su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacm
 echo 'Creating python virtualenv on /home/mediacms.io'
 
 cd /home/mediacms.io
-virtualenv . --python=python3
+python3 -mvenv .
 source  /home/mediacms.io/bin/activate
 
 echo "Cloning latest into mediacms"
@@ -77,6 +110,8 @@ if [[ $osVersion == *"Ubuntu 24"* ]]; then
     pip install --no-binary xmlsec xmlsec==1.3.15
     pip install -r requirements-ubuntu-24.txt
 else
+    pip install --no-binary lxml lxml==4.9.2
+    pip install --no-binary xmlsec xmlsec==1.3.13
     pip install -r requirements.txt
 fi
 
