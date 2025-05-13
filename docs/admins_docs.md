@@ -62,6 +62,61 @@ The move to Django 5 in MediaCMS 5.x has some new requirements:
  1) You must use Python 3.10+
  2) You may need to build Python modules for xmlsec and lxml on some systems due to system library / Python library conflicts.
 
+A summary walkthrough is below, but is likely incomplete.   If possible use the auto installer, or at least review the script to understand the necessary details for a long-install process.
+
+Step 1 - Create an installation folder and download the source code
+```
+mkdir -p /home/mediacms.io
+cd /home/mediacms.io
+git clone https://github.com/mediacms-io/mediacms --branch <your preferred branch>
+```
+
+Step 2 - Install requirements for your system.
+- See the easy-install.sh script for the full list of needed dependencies
+
+Step 3 - Install lxml and xmlsec, if needed.
+These problems come from the distro and Python, not from MediaCMS.   The known workaround to getting them installed if it's not working is below:
+
+	Ubuntu 20 & 22 (Python 3.10)
+	```
+	pip uninstall lxml
+	pip uninstall lxmlsec
+	pip cache purge
+	apt install libxmlsec1-dev -y
+	apt install pkg-config -y
+	pip install --no-binary lxml lxml==1.3.13
+	pip install --no-binary xmlsec==4.9.2
+	```
+	
+	Ubuntu 24 (Python 3.12+)
+	```
+	pip uninstall lxml
+	pip uninstall lxmlsec
+	pip cache purge
+	apt install libxmlsec1-dev -y
+	apt install pkg-config -y
+	pip install --no-binary lxml lxml==1.3.15
+	pip install --no-binary xmlsec==5.4.0
+	```
+
+Step 4 - Install requirements.txt
+```
+pip install -r requirements.txt
+```
+
+Step 5 - Configure Database & Install System Services
+Look through easy-install.sh to pull the commands for this.
+
+Step 6 - Install migrations
+```
+python manage.py migrate
+```
+
+Step 7 - Start services
+```
+systemctl start mediacms celery_long celery_short
+```
+
 For non-standard system installations, it's best to walk through the install.sh or easy-install.sh scripts and duplicate for your specific system.   If you must run on a non-Debian based system you will need to find the specific packages and solve the dependency issues around them.
 
 
