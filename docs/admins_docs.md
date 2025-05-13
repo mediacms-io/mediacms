@@ -219,8 +219,8 @@ Get latest MediaCMS image and stop/start containers
 ```bash
 cd /path/to/mediacms/installation
 docker pull mediacms/mediacms
-docker-compose down
-docker-compose up
+docker compose down
+docker compose up
 ```
 
 ### Update from version 2 to version 3
@@ -258,9 +258,9 @@ By default, all these services are enabled, but in order to create a scaleable d
 
 Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
 
-See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
+See example deployments in the sections below. These example deployments have been tested on `docker compose version 1.27.4` running on `Docker version 19.03.13`
 
-To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
+To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
 
@@ -318,7 +318,7 @@ Single server installation: edit `cms/local_settings.py`, make a change and rest
 Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
 
 ```bash
-#docker-compose restart web celery_worker celery_beat
+#docker compose restart web celery_worker celery_beat
 ```
 
 ### 5.1 Change portal logo
