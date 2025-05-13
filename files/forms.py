@@ -136,7 +136,7 @@ class MediaPublishForm(forms.ModelForm):
                 valid_states = ["unlisted", "private"]
                 if self.instance.state:
                     valid_states.append(self.instance.state)
-                self.fields["state"].choices = [choice for choice in Media.MEDIA_STATES if choice[0] in valid_states]
+                self.fields["state"].choices = valid_states
 
 
 
