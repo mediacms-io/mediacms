@@ -78,7 +78,7 @@ Step 2 - Install requirements for your system.
 Step 3 - Install lxml and xmlsec, if needed.
 These problems come from the distro and Python, not from MediaCMS.   The known workaround to getting them installed if it's not working is below:
 
-	Ubuntu 20 & 22 (Python 3.10)
+Ubuntu 20 & 22 (Python 3.10)
 	```
 	pip uninstall lxml
 	pip uninstall lxmlsec
@@ -89,7 +89,7 @@ These problems come from the distro and Python, not from MediaCMS.   The known w
 	pip install --no-binary xmlsec==4.9.2
 	```
 	
-	Ubuntu 24 (Python 3.12+)
+Ubuntu 24 (Python 3.12+)
 	```
 	pip uninstall lxml
 	pip uninstall lxmlsec
