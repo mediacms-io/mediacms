@@ -34,6 +34,7 @@ from .helpers import (
     produce_friendly_token,
     rm_file,
     run_command,
+    trim_video_method,
 )
 from .methods import list_tasks, notify_users, pre_save_action
 from .models import (
@@ -433,6 +434,7 @@ def create_hls(friendly_token):
     except BaseException:
         logger.info("failed to get media with friendly_token %s" % friendly_token)
         return False
+    logger.info("EIMAI EDW KAI TREXW GIA SENA MORO MOU")
 
     p = media.uid.hex
     output_dir = os.path.join(settings.HLS_DIR, p)
@@ -845,12 +847,12 @@ def video_trim_task(self, trim_request_id):
     try:
         trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
     except VideoTrimRequest.DoesNotExist:
-        logger.error(f"VideoTrimRequest with ID {trim_request_id} not found")
+        logger.info(f"VideoTrimRequest with ID {trim_request_id} not found")
         return False
 
     trim_request.status = "running"
     trim_request.save(update_fields=["status"])
-    logger.info(f"Started processing video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
+    #logger.info(f"Started processing video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
 
     timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
     timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
@@ -858,21 +860,48 @@ def video_trim_task(self, trim_request_id):
     logger.info(f"timestamps_encodings: {timestamps_encodings}")
     logger.info(f"timestamps_original: {timestamps_original}")
 
+    # processing timestamps differently on encodings and original file, since they have different I-frames
+    # the cut is made based on the I-frames
+
     if not timestamps_encodings:
         trim_request.status = "fail"
         trim_request.save(update_fields=["status"])
-        logger.error(f"Failed to get timestamps for trim request {trim_request_id}")
+        #logger.info(f"Failed to get timestamps for trim request {trim_request_id}")
         return False
 
-    # TODO1: for each encoding, run function that does the trim
-    # TODO2: for original file, run function that does the trim
-    # TODO3: run create_hls task
-    # TODO4: call media_info or something to set duration
+    # Process each encoding
+    encodings = trim_request.media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+    for encoding in encodings:
+        trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
+   #     if not trim_result:
+     #       logger.info(f"Failed to trim encoding {encoding.id} for media {trim_request.media.friendly_token}")
+      #  else:
+       #     logger.info(f"Success in trimming encoding {encoding.id} for media {trim_request.media.friendly_token}")
+
+    # Process original file
+    original_trim_result = trim_video_method(trim_request.media.media_file.path, timestamps_original)
+ #   if not original_trim_result:
+   #     logger.info(f"Failed to trim original file for media {trim_request.media.friendly_token}")
+   # else:
+    #    logger.info(f"Success in trimming original file for media {trim_request.media.friendly_token}")
+
+    logger.info(f"Start running HLS task")
+    create_hls(trim_request.media.friendly_token)
+    logger.info("END running HLS task")
+
+   # logger.info(f"Start set_media_type")
+    trim_request.media.set_media_type()
+   # logger.info(f"End set_media_type")
 
     # set status to success and exit
     trim_request.status = "success"
     trim_request.save(update_fields=["status"])
     logger.info(f"Successfully processed video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
+
+
+    # TODO1: implement copy media
+    # TODO2: implement create segments
+    # TODO3: make working with concat / multiple timestamps
 
     return True
 

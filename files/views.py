@@ -436,7 +436,7 @@ def edit_video(request):
 
     if not media_file_path:
         messages.add_message(request, messages.INFO, "Media is not video or has not finished processing yet")
-        return HttpResponseRedirect("/")
+        return HttpResponseRedirect(media.get_absolute_url())
 
     return render(
         request,

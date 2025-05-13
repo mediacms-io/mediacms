@@ -876,6 +876,63 @@ def get_trim_timestamps(media_file_path, timestamps_list):
     return timestamps_results
 
 
+def trim_video_method(media_file_path, timestamps_list):
+    """Trim a video file based on a list of timestamps
+
+    Args:
+        media_file_path (str): Path to the media file
+        timestamps_list (list): List of dictionaries with startTime and endTime
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not isinstance(timestamps_list, list) or not timestamps_list:
+        return False
+
+    if not os.path.exists(media_file_path):
+        return False
+
+    # Create a temporary directory for output files
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
+        output_file = os.path.join(temp_dir, "output.mp4")
+
+        # Process the first timestamp (or only one if there's just one)
+        item = timestamps_list[0]
+        if not (isinstance(item, dict) and 'startTime' in item and 'endTime' in item):
+            return False
+
+        # Run ffmpeg command to trim the video
+        cmd = [
+            settings.FFMPEG_COMMAND,
+            "-y",
+            "-ss", str(item['startTime']),
+            "-i", media_file_path,
+            "-to", str(item['endTime']),
+            "-c", "copy",
+            output_file
+        ]
+
+        result = run_command(cmd)
+        logger.info(f"JUST run command: {' '.join(cmd)}")
+
+        # Check if the output file was created successfully
+        if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+            logger.info(f"Failed to trim video: {result.get('error', '')}")
+            return False
+
+        # Replace the original file with the trimmed version
+        try:
+        #    logger.info(f"Running command copy {output_file} to {media_file_path}")
+            rm_file(media_file_path)
+            shutil.copy2(output_file, media_file_path)
+        #    logger.info(f"END Running command copy {output_file} to {media_file_path}")
+
+            return True
+        except Exception as e:
+            logger.info(f"Failed to replace original file: {str(e)}")
+            return False
+
+
 def get_alphanumeric_only(string):
     """Returns a query that contains only alphanumeric characters
     This include characters other than the English alphabet too

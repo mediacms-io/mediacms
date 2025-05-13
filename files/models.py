@@ -641,7 +641,7 @@ class Media(models.Model):
 
         self.save(update_fields=["encoding_status", "listable"])
 
-        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add":
+        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
 
             tasks.create_hls(self.friendly_token)
