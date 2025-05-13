@@ -23,15 +23,16 @@ It is expected to run on a new system **with no running instances of any these s
     esac
 done
 
+apt install -y lsb-release
 
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]]; then
-    echo 'Ubuntu 20 Detected.... system update and dependency installation, this will take a few minutes'
+if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"bullseye"* ]]; then
+    echo 'Ubuntu 20 / Debian Bullseye Detected.... system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade 
     
     ### Ubuntu 20 requires Python 3.10 upgrade to work with Django 5.1.
     echo 'Upgrading to Python 3.10...   This may take a while.'
-    sudo apt-get install -y build-essential gdb lcov pkg-config \
+    apt-get install -y build-essential gdb lcov pkg-config \
       libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
       libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
       lzma lzma-dev tk-dev uuid-dev zlib1g-dev
@@ -56,12 +57,12 @@ if [[ $osVersion == *"Ubuntu 20"* ]]; then
     echo 'Installing other dependencies....'
     apt-get install redis-server pkg-config libxmlsec1-dev nginx git gcc vim unzip imagemagick certbot wget xz-utils -y
 
-elif [[ $osVersion == *"Ubuntu 22"* ]]; then
-    echo 'Ubuntu 22 detected - system update and dependency installation, this will take a few minutes'
+elif [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
+    echo 'Ubuntu 22 / Debian Bookworm detected - system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev libxmlsec1-dev pkg-config virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
-elif [[ $osVersion==*"Ubuntu 24"* ]]; then
-    echo 'Ubuntu 24 detected - system update and installing Ubuntu 24 dependencies - this may take a few minutes'
+elif [[ $osVersion == *"Ubuntu 24"* ]] || [[ $osVersion == *"trixie"* ]]; then
+    echo 'Ubuntu 24 / Debian Trixie detected - system update and installing Ubuntu 24 dependencies - this may take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev pkg-config libxmlsec1-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
 else
@@ -105,7 +106,7 @@ git clone https://github.com/mediacms-io/mediacms
 cd mediacms
 
 ## Ubuntu 24 specific dependencies
-if [[ $osVersion == *"Ubuntu 24"* ]]; then
+if [[ $osVersion == *"Ubuntu 24"* ]] || [[ $osVersion == *"trixie"* ]]; then
     pip install --no-binary lxml lxml==5.4.0
     pip install --no-binary xmlsec xmlsec==1.3.15
     pip install -r requirements-ubuntu-24.txt
