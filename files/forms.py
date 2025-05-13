@@ -136,8 +136,8 @@ class MediaPublishForm(forms.ModelForm):
                 valid_states = ["unlisted", "private"]
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
-                self.fields["state"].choices = valid_states
-                print(valid_states)
+                # Convert valid_states to list of tuples for choices field
+                self.fields["state"].choices = [(state, dict(Media.MEDIA_STATES).get(state, state)) for state in valid_states]
 
 
 
