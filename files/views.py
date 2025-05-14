@@ -278,40 +278,6 @@ def video_chapters(request, friendly_token):
     return JsonResponse(ret, safe=False)
 
 
-
-@csrf_exempt
-@login_required
-def trim_video(request, friendly_token):
-    if not request.method == "POST":
-        return HttpResponseRedirect("/")
-
-    media = Media.objects.filter(friendly_token=friendly_token).first()
-
-    if not media:
-        return HttpResponseRedirect("/")
-
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
-        return HttpResponseRedirect("/")
-
-    existing_requests = VideoTrimRequest.objects.filter(
-        media=media,
-        status__in=["initial", "running"]
-    ).exists()
-
-    if existing_requests:
-        return JsonResponse({"success": False, "error": "A trim request is already in progress for this video"}, status=400)
-
-    try:
-        data = json.loads(request.body)
-        video_trim_request = create_video_trim_request(media, data)
-        video_trim_task.delay(video_trim_request.id)
-        ret = {"success": True, "request_id": video_trim_request.id}
-    except Exception as e:
-        ret = {"success": False, "error": "Incorrect request data"}
-
-    return JsonResponse(ret, safe=False)
-
-
 @login_required
 def edit_media(request):
     """Edit a media view"""
@@ -407,6 +373,39 @@ def edit_chapters(request):
     )
 
 
+@csrf_exempt
+@login_required
+def trim_video(request, friendly_token):
+    if not request.method == "POST":
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    existing_requests = VideoTrimRequest.objects.filter(
+        media=media,
+        status__in=["initial", "running"]
+    ).exists()
+
+    if existing_requests:
+        return JsonResponse({"success": False, "error": "A trim request is already in progress for this video"}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        video_trim_request = create_video_trim_request(media, data)
+        video_trim_task.delay(video_trim_request.id)
+        ret = {"success": True, "request_id": video_trim_request.id}
+        return JsonResponse(ret, safe=False, status=200)
+    except Exception as e:
+        ret = {"success": False, "error": "Incorrect request data"}
+        return JsonResponse(ret, safe=False, status=400)
+
+
 @login_required
 def edit_video(request):
     """Edit video"""
@@ -446,7 +445,7 @@ def edit_video(request):
     return render(
         request,
         "cms/edit_video.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": media_file_path, "media_id": media.friendly_token},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": media_file_path},
     )
 
 

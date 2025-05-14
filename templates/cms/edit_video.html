@@ -13,8 +13,9 @@
 <script>
 window.MEDIA_DATA = {
     videoUrl: "{{ media_file_path }}",
-	mediaId: "{{ media_id }}"
-    // videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+	mediaId: "{{ media_object.friendly_token }}",
+	redirectURL: "{{ media_object.get_absolute_url }}",
+	redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}"
 };
 </script>
 {%endblock topimports %}
