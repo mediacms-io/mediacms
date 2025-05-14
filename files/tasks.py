@@ -923,9 +923,9 @@ def video_trim_task(self, trim_request_id):
         target_media.update_search_vector()
 
     else:
-        for timestamp in timestamps_encodings:
+        for i, timestamp in enumerate(timestamps_encodings, start=1):
             with disable_signal(post_save, media_save, Media):
-                new_media = copy_video(original_media, copy_encodings=True)
+                new_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
 
             original_trim_result = trim_video_method(new_media.media_file.path, [timestamp])
             encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)

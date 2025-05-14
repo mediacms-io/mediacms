@@ -404,7 +404,7 @@ def clean_comment(raw_comment):
     return cleaned_comment
 
 
-def copy_video(original_media, copy_encodings=True):
+def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     """Create a copy of a media object
 
     Args:
@@ -414,7 +414,7 @@ def copy_video(original_media, copy_encodings=True):
     Returns:
         New Media object
     """
-    title_suffix="(Trimmed)"
+
     with open(original_media.media_file.path, "rb") as f:
         myfile = File(f)
         new_media = models.Media.objects.create(
