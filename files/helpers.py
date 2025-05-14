@@ -819,10 +819,10 @@ def seconds_to_timestamp(seconds):
     seconds_remainder = seconds % 60
     seconds_int = int(seconds_remainder)
     milliseconds = int((seconds_remainder - seconds_int) * 1000)
-    
+
     return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
 
-def get_trim_timestamps(media_file_path, timestamps_list):
+def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
     """Process a list of timestamps to align start times with I-frames for better video trimming
 
     Args:
@@ -856,38 +856,40 @@ def get_trim_timestamps(media_file_path, timestamps_list):
         startTime = item['startTime']
         endTime = item['endTime']
 
-        # Convert startTime to seconds
-        start_seconds = timestamp_to_seconds(startTime)
-
-        # Subtract seconds for seeking
-        search_start = max(0, start_seconds - SEC_TO_SUBTRACT)
-
-        # Create ffprobe command to find nearest I-frame
-        cmd = [
-            settings.FFPROBE_COMMAND,
-            "-v", "error",
-            "-select_streams", "v:0",
-            "-show_entries", "frame=pts_time,pict_type",
-            "-of", "csv=p=0",
-            "-read_intervals", f"{search_start}%{startTime}",
-            media_file_path
-        ]
-        cmd = [str(s) for s in cmd]
-        logger.info(f"trim cmd: {cmd}")
-
-        stdout = run_command(cmd).get("out")
-
         i_frames = []
-        if stdout:
-            for line in stdout.strip().split('\n'):
-                if line and line.endswith(',I'):
-                    i_frames.append(line.replace(',I', ''))
+        if run_ffprobe:
+            # Convert startTime to seconds
+            start_seconds = timestamp_to_seconds(startTime)
 
-        if i_frames:
-            # Convert the I-frame timestamp (which is in seconds) to HH:MM:SS.mmm format
-            adjusted_startTime = seconds_to_timestamp(float(i_frames[-1]))
-        else:
-            adjusted_startTime = startTime
+            # Subtract seconds for seeking
+            search_start = max(0, start_seconds - SEC_TO_SUBTRACT)
+
+            # Create ffprobe command to find nearest I-frame
+            cmd = [
+                settings.FFPROBE_COMMAND,
+                "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "frame=pts_time,pict_type",
+                "-of", "csv=p=0",
+                "-read_intervals", f"{search_start}%{startTime}",
+                media_file_path
+            ]
+            cmd = [str(s) for s in cmd]
+            logger.info(f"trim cmd: {cmd}")
+
+            stdout = run_command(cmd).get("out")
+
+            if stdout:
+                for line in stdout.strip().split('\n'):
+                    if line and line.endswith(',I'):
+                        i_frames.append(line.replace(',I', ''))
+
+            if i_frames:
+                # Convert the I-frame timestamp (which is in seconds) to HH:MM:SS.mmm format
+                adjusted_startTime = seconds_to_timestamp(float(i_frames[-1]))
+
+        if not i_frames:
+                adjusted_startTime = startTime
 
         timestamps_results.append({
             'startTime': adjusted_startTime,
@@ -916,7 +918,7 @@ def trim_video_method(media_file_path, timestamps_list):
     # Create a temporary directory for output files
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
         output_file = os.path.join(temp_dir, "output.mp4")
-        
+
         # Process timestamps and create segments
         segment_files = []
         for i, item in enumerate(timestamps_list):
@@ -931,7 +933,7 @@ def trim_video_method(media_file_path, timestamps_list):
             # For single timestamp, we can use the output file directly
             # For multiple timestamps, we need to create segment files
             segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{i}.mp4")
-            
+
             cmd = [
                 settings.FFMPEG_COMMAND,
                 "-y",

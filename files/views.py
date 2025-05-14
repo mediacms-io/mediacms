@@ -422,6 +422,11 @@ def edit_video(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    if not media.media_type == "video":
+        messages.add_message(request, messages.INFO, "Media is not video")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+
     # Check if there's a running trim request
     running_trim_request = VideoTrimRequest.objects.filter(
         media=media,
@@ -435,7 +440,7 @@ def edit_video(request):
     media_file_path = media.trim_video_url
 
     if not media_file_path:
-        messages.add_message(request, messages.INFO, "Media is not video or has not finished processing yet")
+        messages.add_message(request, messages.INFO, "Media processing has not finished yet")
         return HttpResponseRedirect(media.get_absolute_url())
 
     return render(
