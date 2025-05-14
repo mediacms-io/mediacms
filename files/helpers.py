@@ -941,6 +941,7 @@ def trim_video_method(media_file_path, timestamps_list):
                 "-i", media_file_path,
                 "-t", str(duration),
                 "-c", "copy",
+                "-avoid_negative_ts", "1",
                 segment_file
             ]
 
