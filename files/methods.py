@@ -409,13 +409,12 @@ def copy_video(original_media, copy_encodings=True):
 
     Args:
         original_media: Original Media object to copy
-        copy_video: Whether to copy the actual video file or create an empty file
+        copy_encodings: Whether to copy the encodings too
 
     Returns:
         New Media object
     """
     title_suffix="(Trimmed)"
-    # Create a new Media object as a copy
     with open(original_media.media_file.path, "rb") as f:
         myfile = File(f)
         new_media = models.Media.objects.create(
@@ -432,7 +431,6 @@ def copy_video(original_media, copy_encodings=True):
         )
 
     if copy_encodings:
-        # Copy encodings
         for encoding in original_media.encodings.filter(status="success", chunk=False):
             if encoding.media_file:
                 with open(encoding.media_file.path, "rb") as f:
@@ -444,9 +442,10 @@ def copy_video(original_media, copy_encodings=True):
                         profile=encoding.profile,
                         status="success",
                         progress=100,
-                        worker=encoding.worker,
+                        chunk=False,
                         logs=f"Copied from encoding {encoding.id}"
                     )
+                    new_encoding.save()
 
     # Copy categories and tags
     for category in original_media.category.all():

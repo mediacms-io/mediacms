@@ -866,13 +866,9 @@ def video_trim_task(self, trim_request_id):
 
     trim_request.status = "running"
     trim_request.save(update_fields=["status"])
-    #logger.info(f"Started processing video trim request {trim_request_id} for media {trim_request.media.friendly_token}")
 
     timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
     timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
-
-    # processing timestamps differently on encodings and original file, since they have different I-frames
-    # the cut is made based on the I-frames
 
     if not timestamps_encodings:
         trim_request.status = "fail"
@@ -882,42 +878,38 @@ def video_trim_task(self, trim_request_id):
     target_media = trim_request.media
 
     if trim_request.video_action == "save_new":
-        # Create a copy of the media
         original_media = trim_request.media
 
         with disable_signal(post_save, media_save, Media):
             new_media = copy_video(original_media, copy_encodings=True)
 
-        # Update the target media to be the new one
         target_media = new_media
         trim_request.media = new_media
         trim_request.save(update_fields=["media"])
 
-    # Process each encoding
+    # processing timestamps differently on encodings and original file, since they have different I-frames
+    # the cut is made based on the I-frames
+
     encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
     for encoding in encodings:
         trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
         if not trim_result:
             logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
 
-    # Process original file
     original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
     if not original_trim_result:
         logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
-    create_hls(target_media.friendly_token)
-
     target_media.set_media_type()
-
-    # Generate thumbnails and sprites for the trimmed video
-    target_media.produce_thumbnails_from_video()
-    target_media.produce_sprite_from_video()
+    create_hls(target_media.friendly_token)
 
     trim_request.status = "success"
     trim_request.save(update_fields=["status"])
     logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
 
-    # TODO2: implement create segments
+    target_media.produce_thumbnails_from_video()
+    target_media.produce_sprite_from_video()
+    target_media.update_search_vector()
 
     return True
 
