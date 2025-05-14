@@ -832,8 +832,6 @@ def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
     Returns:
         list: Processed timestamps with adjusted startTime values
     """
-    SEC_TO_SUBTRACT = 10
-
     if not isinstance(timestamps_list, list):
         return []
 
@@ -856,12 +854,13 @@ def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
         startTime = item['startTime']
         endTime = item['endTime']
 
+        # with ffmpeg -ss -i that is getting run, there is no need to call ffprobe to find the I-frame,
+        # as ffmpeg will do that. Keeping this for now in case it is needed
+
         i_frames = []
         if run_ffprobe:
-            # Convert startTime to seconds
+            SEC_TO_SUBTRACT = 10
             start_seconds = timestamp_to_seconds(startTime)
-
-            # Subtract seconds for seeking
             search_start = max(0, start_seconds - SEC_TO_SUBTRACT)
 
             # Create ffprobe command to find nearest I-frame
@@ -885,7 +884,6 @@ def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
                         i_frames.append(line.replace(',I', ''))
 
             if i_frames:
-                # Convert the I-frame timestamp (which is in seconds) to HH:MM:SS.mmm format
                 adjusted_startTime = seconds_to_timestamp(float(i_frames[-1]))
 
         if not i_frames:
@@ -915,17 +913,11 @@ def trim_video_method(media_file_path, timestamps_list):
     if not os.path.exists(media_file_path):
         return False
 
-    # Create a temporary directory for output files
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
         output_file = os.path.join(temp_dir, "output.mp4")
 
-        # Process timestamps and create segments
         segment_files = []
         for i, item in enumerate(timestamps_list):
-            if not (isinstance(item, dict) and 'startTime' in item and 'endTime' in item):
-                continue
-
-            # Calculate duration instead of using -to
             start_time = timestamp_to_seconds(item['startTime'])
             end_time = timestamp_to_seconds(item['endTime'])
             duration = end_time - start_time
@@ -946,28 +938,21 @@ def trim_video_method(media_file_path, timestamps_list):
             ]
 
             result = run_command(cmd)
-            logger.info(f"Running trim command for {'segment' if len(timestamps_list) > 1 else 'file'} {i}: {' '.join(cmd)}")
 
             if os.path.exists(segment_file) and os.path.getsize(segment_file) > 0:
                 if len(timestamps_list) > 1:
                     segment_files.append(segment_file)
             else:
-                logger.info(f"Failed to create {'segment' if len(timestamps_list) > 1 else 'output file'}: {result.get('error', '')}")
                 return False
 
-        # If we have multiple segments, concatenate them
         if len(timestamps_list) > 1:
             if not segment_files:
-                logger.info("No valid segments were created")
                 return False
 
-            # Create a file list for concatenation
             concat_list_path = os.path.join(temp_dir, "concat_list.txt")
             with open(concat_list_path, "w") as f:
                 for segment in segment_files:
                     f.write(f"file '{segment}'\n")
-
-            # Concatenate all segments
             concat_cmd = [
                 settings.FFMPEG_COMMAND,
                 "-y",
@@ -979,10 +964,8 @@ def trim_video_method(media_file_path, timestamps_list):
             ]
 
             concat_result = run_command(concat_cmd)
-            logger.info(f"Running concat command: {' '.join(concat_cmd)}")
 
             if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
-                logger.info(f"Failed to concatenate segments: {concat_result.get('error', '')}")
                 return False
 
         # Replace the original file with the trimmed version

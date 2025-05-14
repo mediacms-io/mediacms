@@ -268,7 +268,7 @@ def show_related_media_content(media, request, limit):
         "user_featured",
         "-user_featured",
     ]
-    # TODO: MAke this mess more readable, and add TAGS support - aka related
+    # TODO: Make this mess more readable, and add TAGS support - aka related
     # tags rather than random media
     if len(m) < limit:
         category = media.category.first()
@@ -435,7 +435,6 @@ def copy_video(original_media, copy_encodings=True):
             if encoding.media_file:
                 with open(encoding.media_file.path, "rb") as f:
                     myfile = File(f)
-
                     new_encoding = Encoding.objects.create(
                         media_file=myfile,
                         media=new_media,

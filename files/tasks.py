@@ -876,40 +876,72 @@ def video_trim_task(self, trim_request_id):
         return False
 
     target_media = trim_request.media
+    original_media = trim_request.media
 
-    if trim_request.video_action == "save_new":
-        original_media = trim_request.media
+    # splitting the logic for single file and multiple files
+    if trim_request.video_action in ["save_new", "replace"]:
+        proceed_with_single_file = True
+    if trim_request.video_action == "create_segments":
+        if len(timestamps_encodings) == 1:
+            proceed_with_single_file = True
+        else:
+            proceed_with_single_file = False
 
-        with disable_signal(post_save, media_save, Media):
-            new_media = copy_video(original_media, copy_encodings=True)
 
-        target_media = new_media
-        trim_request.media = new_media
-        trim_request.save(update_fields=["media"])
+    if proceed_with_single_file:
 
-    # processing timestamps differently on encodings and original file, since they have different I-frames
-    # the cut is made based on the I-frames
+        if trim_request.video_action == "save_new" or trim_request.video_action == "create_segments" and len(timestamps_encodings) == 1:
+            with disable_signal(post_save, media_save, Media):
+                new_media = copy_video(original_media, copy_encodings=True)
 
-    encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
-    for encoding in encodings:
-        trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
-        if not trim_result:
-            logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+            target_media = new_media
+            trim_request.media = new_media
+            trim_request.save(update_fields=["media"])
 
-    original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
-    if not original_trim_result:
-        logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
+        # processing timestamps differently on encodings and original file, since they have different I-frames
+        # the cut is made based on the I-frames
 
-    target_media.set_media_type()
-    create_hls(target_media.friendly_token)
+        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+        for encoding in encodings:
+            trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
+            if not trim_result:
+                logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
 
-    trim_request.status = "success"
-    trim_request.save(update_fields=["status"])
-    logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
+        original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
+        if not original_trim_result:
+            logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
-    target_media.produce_thumbnails_from_video()
-    target_media.produce_sprite_from_video()
-    target_media.update_search_vector()
+        target_media.set_media_type()
+        create_hls(target_media.friendly_token)
+
+        trim_request.status = "success"
+        trim_request.save(update_fields=["status"])
+        logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
+
+        target_media.produce_thumbnails_from_video()
+        target_media.produce_sprite_from_video()
+        target_media.update_search_vector()
+
+    else:
+        for timestamp in timestamps_encodings:
+            with disable_signal(post_save, media_save, Media):
+                new_media = copy_video(original_media, copy_encodings=True)
+
+            original_trim_result = trim_video_method(new_media.media_file.path, [timestamp])
+            encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+            for encoding in encodings:
+                trim_result = trim_video_method(encoding.media_file.path, [timestamp])
+
+            new_media.set_media_type()
+            create_hls(new_media.friendly_token)
+
+            new_media.produce_thumbnails_from_video()
+            new_media.produce_sprite_from_video()
+            new_media.update_search_vector()
+
+        trim_request.status = "success"
+        trim_request.save(update_fields=["status"])
+        logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
 
     return True
 
