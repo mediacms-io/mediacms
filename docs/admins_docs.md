@@ -48,7 +48,6 @@ sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/he
   <summary>Easy Install - Details</summary>
 
 
-
 For those less trusting, you can download the script and view or modify it before executing:
 ```bash
 wget -O "easy-install.sh" https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh
@@ -65,13 +64,14 @@ Easy Install will create a new folder for the installation, located at /home/med
 Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql will be upgraded to version 13.   These are the minimum requirements to run MediaCMS 5.   If you need to retain Python 3.8 or Postgresql 12 for whatever reason, please use a MediaCMS 4 release.
  </details>
  
-## Traditional Install
+### Traditional Install - Single Server
 
 Traditional install is fairly involved but can be completed on any system which meets the base requirements.
 
 <details>
   <summary>Traditional Install</summary>
-	
+
+
 The move to Django 5 in MediaCMS 5.x has some new requirements:
  1) You must use Python 3.10+
  2) You may need to build Python modules for xmlsec and lxml on some systems due to system library / Python library conflicts.
