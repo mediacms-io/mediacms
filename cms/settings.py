@@ -459,6 +459,7 @@ LANGUAGES = [
     ('de', _('German')),
     ('hi', _('Hindi')),
     ('id', _('Indonesian')),
+    ('it', _('Italian')),
     ('ja', _('Japanese')),
     ('ko', _('Korean')),
     ('pt', _('Portuguese')),
