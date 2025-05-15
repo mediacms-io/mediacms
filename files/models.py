@@ -644,8 +644,9 @@ class Media(models.Model):
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
-
+            logger.info('ti simbainei edw')
             tasks.create_hls(self.friendly_token)
+            print('ti simbainei edw2')
 
         return True
 
@@ -1221,17 +1222,17 @@ class Encoding(models.Model):
 
         super(Encoding, self).save(*args, **kwargs)
 
-    def update_size(self):
-        """Update the size of the encoding file"""
-        if self.media_file:
-            cmd = ["stat", "-c", "%s", self.media_file.path]
-            stdout = helpers.run_command(cmd).get("out")
-            if stdout:
-                size = int(stdout.strip())
-                self.size = helpers.show_file_size(size)
-                self.save(update_fields=["size"])
-                return True
-        return False
+        def update_size_without_save(self):
+            """Update the size of an encoding without saving to avoid calling signals"""
+            if self.media_file:
+                cmd = ["stat", "-c", "%s", self.media_file.path]
+                stdout = helpers.run_command(cmd).get("out")
+                if stdout:
+                    size = int(stdout.strip())
+                    size = helpers.show_file_size(size)
+                    Encoding.objects.filter(pk=self.pk).update(size=size)
+                    return True
+            return False
 
     def set_progress(self, progress, commit=True):
         if isinstance(progress, int):

@@ -810,14 +810,12 @@ def remove_media_file(media_file=None):
 
 @task(name="update_encoding_size", queue="short_tasks")
 def update_encoding_size(encoding_id):
-    """Update the size of an encoding"""
-    try:
-        encoding = Encoding.objects.get(id=encoding_id)
-        encoding.update_size()
+    """Update the size of an encoding without saving to avoid calling signals"""
+    encoding = Encoding.objects.filter(id=encoding_id).first()
+    if encoding:
+        encoding.update_size_without_save()
         return True
-    except Encoding.DoesNotExist:
-        logger.info(f"Encoding with ID {encoding_id} not found")
-        return False
+    return False
 
 
 @task(name="produce_video_chapters", queue="short_tasks")

@@ -423,7 +423,6 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     Returns:
         New Media object
     """
-    from .tasks import update_encoding_size
 
     with open(original_media.media_file.path, "rb") as f:
         myfile = File(f)
