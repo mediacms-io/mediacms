@@ -33,11 +33,14 @@ This page is created for MediaCMS administrators that are responsible for settin
 
 ## 2. Single-Server Installation
 
-The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But it's strongly suggested to Linux Ubuntu (tested on versions 20, 22, and 24).
+Single-server installation is supported on Ubuntu 22+ or Debian 11+
+
+<details>
+  <summary>More... </summary>
 
 ### Easy Install
 
-Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.   It should only be used on a system which has no MediaCMS services running - i.e. a fresh installation.   For upgrades, see  "Upgrades" further down in this section.
+Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 22/24 or Debian Bookworm/Trixie installations.   It should only be used on a system which has no MediaCMS services running - i.e. a fresh installation.   For upgrades, see  "Upgrades" further down in this section.
 
 Ubuntu (using sudo):
 ```bash
@@ -48,9 +51,6 @@ Debian (not using sudo):
 ```bash
 su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
-
-<details>
-  <summary>More... </summary>
 
 
 Alternatively, you can download the script and view or modify it before executing:
@@ -73,81 +73,11 @@ su -c "easy-install.sh" root
 
 Easy Install will create a new folder for the installation, located at /home/mediacms.io/, and clone the latest source into a sub-folder 'mediacms'.   If you wish to use an older release, review the installation instructions that come with that release (MediaCMS 4, for example), or modify the ```git clone ...``` line in easy-install to pull the specific branch you prefer to use:  ```git clone https://github.com/mediacms.io/mediacms --branch <your branch>```
 
-Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql will be upgraded to version 13.   These are the minimum requirements to run MediaCMS 5.   If you need to retain Python 3.8 or Postgresql 12 for whatever reason, please use a MediaCMS 4 release.
  
-### Traditional Install
-
-Traditional install is more involved but can be completed on any system which meets the base requirements.   Ubuntu 24.04 or Debian 12 / Bookworm are recommended.
-
-The move to Django 5 in MediaCMS 5.x has some new requirements:
- 1) You must use Python 3.10+
- 2) You may need to build Python modules for xmlsec and lxml on some systems due to system library / Python library conflicts.
-
-A summary walkthrough is below, but is likely incomplete.   If possible use the auto installer, or at least review the script to understand the necessary details for a long-install process.
-
-Step 1 - Create an installation folder and download the source code
-```
-mkdir -p /home/mediacms.io
-cd /home/mediacms.io
-git clone https://github.com/mediacms-io/mediacms --branch <your preferred branch>
-```
-
-Step 2 - Install requirements for your system.
-- See the easy-install.sh script for the full list of needed dependencies
-
-Step 3 - Install lxml and xmlsec, if needed.
-These problems come from the distro and Python, not from MediaCMS.   The known workaround to getting them installed if it's not working is below:
-
-Ubuntu 20 & 22 (Python 3.10)
-```bash
-pip uninstall lxml
-pip uninstall xmlsec
-pip cache purge
-apt install libxmlsec1-dev -y
-apt install pkg-config -y
-pip install --no-binary lxml lxml==1.3.13
-pip install --no-binary xmlsec xmlsec==4.9.2
-```
-	
-Ubuntu 24 (Python 3.12+)
-```bash
-pip uninstall lxml
-pip uninstall xmlsec
-pip cache purge
-apt install libxmlsec1-dev -y
-apt install pkg-config -y
-pip install --no-binary lxml lxml==1.3.15
-pip install --no-binary xmlsec xmlsec==5.4.0
-```
-
-Step 4 - Install requirements.txt
-```
-pip install -r requirements.txt
-```
-
-Step 5 - Configure Database & Install System Services
-Look through easy-install.sh to pull the commands for this.
-
-Step 6 - Install migrations
-```
-python manage.py migrate
-```
-
-Step 7 - Start services
-```
-systemctl start mediacms celery_long celery_short
-```
-
-For non-standard system installations, it's best to walk through the install.sh or easy-install.sh scripts and duplicate for your specific system.   If you must run on a non-Debian based system you will need to find the specific packages and solve the dependency issues around them.
-
-</details>
-
 ### Updates
 
 For single-server installs, updates are performed using git.  If you've used the single-server install to install MediaCMS, update as below:
 
-<details>
-<summary>More...</summary>
 ```bash
 cd /home/mediacms.io/mediacms # enter mediacms directory
 source  /home/mediacms.io/bin/activate # use virtualenv
@@ -157,20 +87,6 @@ python manage.py migrate # run Django migrations
 sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
 
-### Update from version 2 to version 3
-Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
-The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
-
-```
-# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
-# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
-# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
-# systemctl daemon-reload
-# systemctl start celery_long celery_short celery_beat
-```
-
-</details>
-
 ### Configuration
 Checkout the configuration section here.
 
@@ -178,6 +94,7 @@ Checkout the configuration section here.
 ### Maintenance
 Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
 
+</details>
 
 ## 3. Docker Installation
 
