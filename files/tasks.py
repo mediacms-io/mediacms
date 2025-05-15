@@ -17,6 +17,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
 from django.db.models import Q
+from django.db.models.signals import post_save
+from contextlib import contextmanager
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
@@ -28,14 +30,27 @@ from .helpers import (
     create_temp_file,
     get_file_name,
     get_file_type,
+    get_trim_timestamps,
     media_file_info,
     produce_ffmpeg_commands,
     produce_friendly_token,
     rm_file,
     run_command,
+    trim_video_method,
 )
-from .methods import list_tasks, notify_users, pre_save_action
-from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
+from . import helpers
+from .methods import list_tasks, notify_users, pre_save_action, copy_video
+from .models import (
+    Category,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Rating,
+    Tag,
+    VideoChapterData,
+    VideoTrimRequest,
+    media_save
+)
 
 logger = get_task_logger(__name__)
 
@@ -46,6 +61,15 @@ ERRORS_LIST = [
     "Invalid data found when processing input",
     "Unable to find a suitable output format for",
 ]
+
+
+@contextmanager
+def disable_signal(signal, receiver, sender):
+    signal.disconnect(receiver, sender=sender)
+    try:
+        yield
+    finally:
+        signal.connect(receiver, sender=sender)
 
 
 @task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
@@ -790,6 +814,135 @@ def kill_ffmpeg_process(filepath):
 @task(name="remove_media_file", base=Task, queue="long_tasks")
 def remove_media_file(media_file=None):
     rm_file(media_file)
+    return True
+
+
+@task(name="produce_video_chapters", queue="short_tasks")
+def produce_video_chapters(chapter_id):
+    chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
+    if not chapter_object:
+        return False
+
+    media = chapter_object.media
+    video_path = media.media_file.path
+    output_folder = media.video_chapters_folder
+
+    chapters = chapter_object.data
+
+    width = 336
+    height = 188
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    results = []
+
+    for i, chapter in enumerate(chapters):
+        timestamp = chapter["start"]
+        title = chapter["title"]
+
+        output_filename = f"thumbnail_{i:02d}.jpg"
+        output_path = os.path.join(output_folder, output_filename)
+
+        command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
+        ret = run_command(command)  # noqa
+        if os.path.exists(output_path) and get_file_type(output_path) == "image":
+            results.append({"start": timestamp, "title": title, "thumbnail": output_path})
+
+    chapter_object.data = results
+    chapter_object.save(update_fields=["data"])
+    return True
+
+
+@task(name="video_trim_task", bind=True, queue="short_tasks")
+def video_trim_task(self, trim_request_id):
+    # SOS: if at some point we move from ffmpeg copy, then this need be changed
+    # to long_tasks
+    try:
+        trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
+    except VideoTrimRequest.DoesNotExist:
+        logger.info(f"VideoTrimRequest with ID {trim_request_id} not found")
+        return False
+
+    trim_request.status = "running"
+    trim_request.save(update_fields=["status"])
+
+    timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
+    timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
+
+    if not timestamps_encodings:
+        trim_request.status = "fail"
+        trim_request.save(update_fields=["status"])
+        return False
+
+    target_media = trim_request.media
+    original_media = trim_request.media
+
+    # splitting the logic for single file and multiple files
+    if trim_request.video_action in ["save_new", "replace"]:
+        proceed_with_single_file = True
+    if trim_request.video_action == "create_segments":
+        if len(timestamps_encodings) == 1:
+            proceed_with_single_file = True
+        else:
+            proceed_with_single_file = False
+
+
+    if proceed_with_single_file:
+
+        if trim_request.video_action == "save_new" or trim_request.video_action == "create_segments" and len(timestamps_encodings) == 1:
+            with disable_signal(post_save, media_save, Media):
+                new_media = copy_video(original_media, copy_encodings=True)
+
+            target_media = new_media
+            trim_request.media = new_media
+            trim_request.save(update_fields=["media"])
+
+        # processing timestamps differently on encodings and original file, since they have different I-frames
+        # the cut is made based on the I-frames
+
+        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+        for encoding in encodings:
+            trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
+            if not trim_result:
+                logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+
+        original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
+        if not original_trim_result:
+            logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
+
+        target_media.set_media_type()
+        create_hls(target_media.friendly_token)
+
+        trim_request.status = "success"
+        trim_request.save(update_fields=["status"])
+        logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
+
+        target_media.produce_thumbnails_from_video()
+        target_media.produce_sprite_from_video()
+        target_media.update_search_vector()
+
+    else:
+        for i, timestamp in enumerate(timestamps_encodings, start=1):
+            with disable_signal(post_save, media_save, Media):
+                new_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
+
+            original_trim_result = trim_video_method(new_media.media_file.path, [timestamp])
+            encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+            for encoding in encodings:
+                trim_result = trim_video_method(encoding.media_file.path, [timestamp])
+
+            new_media.set_media_type()
+            create_hls(new_media.friendly_token)
+
+            new_media.produce_thumbnails_from_video()
+            new_media.produce_sprite_from_video()
+            new_media.update_search_vector()
+
+        trim_request.status = "success"
+        trim_request.save(update_fields=["status"])
+        logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
+
     return True
 
 

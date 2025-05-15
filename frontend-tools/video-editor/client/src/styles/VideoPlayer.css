@@ -1,0 +1,219 @@
+#video-editor-trim-root {
+  /* Tooltip styles - only on desktop where hover is available */
+  @media (hover: hover) and (pointer: fine) {
+    [data-tooltip] {
+      position: relative;
+    }
+    
+    [data-tooltip]:before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 5px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 3px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 5px;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+    
+    [data-tooltip]:hover:before,
+    [data-tooltip]:hover:after {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+  
+  /* Hide button tooltips on touch devices */
+  @media (pointer: coarse) {
+    [data-tooltip]:before,
+    [data-tooltip]:after {
+      display: none !important;
+      content: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  }
+  .video-player-container {
+    position: relative;
+    background-color: black;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    aspect-ratio: 16/9;
+  }
+  
+  .video-player-container video {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  
+  .play-pause-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    &.play-icon::before {
+      width: 0;
+      height: 0;
+      border-top: 15px solid transparent;
+      border-bottom: 15px solid transparent;
+      border-left: 25px solid white;
+      margin-left: 3px;
+    }
+    
+    &.pause-icon::before {
+      width: 20px;
+      height: 25px;
+      border-left: 6px solid white;
+      border-right: 6px solid white;
+    }
+  }
+  
+  .video-player-container:hover .play-pause-indicator {
+    opacity: 1;
+  }
+  
+  .video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .video-player-container:hover .video-controls {
+    opacity: 1;
+  }
+  
+  .video-current-time {
+    color: white;
+    font-size: 0.875rem;
+  }
+  
+  .video-duration {
+    color: white;
+    font-size: 0.875rem;
+  }
+  
+  .video-time-display {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    color: white;
+    font-size: 0.875rem;
+  }
+  
+  .video-progress {
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+    
+    &:hover {
+      height: 6px;
+      
+      .video-scrubber {
+        transform: translate(-50%, -50%) scale(1.2);
+      }
+    }
+  }
+  
+  .video-progress-fill {
+    height: 100%;
+    background-color: #ef4444;
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  
+  .video-scrubber {
+    width: 12px;
+    height: 12px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 0; /* This will be overridden by inline style */
+    /* Fix vertical centering by adjusting transform */
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s;
+    /* Add a small border to make it more visible */
+    border: 1px solid rgba(255, 255, 255, 0.7);
+  }
+  
+  .video-controls-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+  
+  .mute-button,
+  .fullscreen-button {
+    min-width: auto;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: transform 0.2s;
+    
+    &:hover {
+      transform: scale(1.1);
+    }
+    
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+} 

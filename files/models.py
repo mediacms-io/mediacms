@@ -641,7 +641,7 @@ class Media(models.Model):
 
         self.save(update_fields=["encoding_status", "listable"])
 
-        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add":
+        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
 
             tasks.create_hls(self.friendly_token)
@@ -666,6 +666,29 @@ class Media(models.Model):
         self.encoding_status = encoding_status
 
         return True
+
+    @property
+    def trim_video_url(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        if ret:
+            return helpers.url_from_path(ret.media_file.path)
+
+        return None
+
+
+    @property
+    def trim_video_path(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4').order_by("-profile__resolution").first()
+        if ret:
+            return ret.media_file.path
+
+        return None
 
     @property
     def encodings_info(self, full=False):
@@ -947,6 +970,19 @@ class Media(models.Model):
                 }
             )
         return ret
+
+    @property
+    def video_chapters_folder(self):
+        custom_folder = f"{settings.THUMBNAIL_UPLOAD_DIR}{self.user.username}/{self.friendly_token}_chapters"
+        return os.path.join(settings.MEDIA_ROOT, custom_folder)
+
+    @property
+    def chapter_data(self):
+        data = []
+        chapter_data = self.chapters.first()
+        if chapter_data:
+            return chapter_data.chapter_data
+        return data
 
 
 class License(models.Model):
@@ -1440,6 +1476,82 @@ class Comment(MPTTModel):
         return self.get_absolute_url()
 
 
+class VideoChapterData(models.Model):
+    data = models.JSONField(null=False, blank=False, help_text="Chapter data")
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='chapters')
+
+    class Meta:
+        unique_together = ['media']
+
+    def save(self, *args, **kwargs):
+        from . import tasks
+
+        is_new = self.pk is None
+        if is_new or (not is_new and self._check_data_changed()):
+            super().save(*args, **kwargs)
+            tasks.produce_video_chapters.delay(self.pk)
+        else:
+            super().save(*args, **kwargs)
+
+    def _check_data_changed(self):
+        if self.pk:
+            old_instance = VideoChapterData.objects.get(pk=self.pk)
+            return old_instance.data != self.data
+        return False
+
+    @property
+    def chapter_data(self):
+        # ensure response is consistent
+        data = []
+        for item in self.data:
+            if item.get("start") and item.get("title"):
+                thumbnail = item.get("thumbnail")
+                if thumbnail:
+                    thumbnail = helpers.url_from_path(thumbnail)
+                else:
+                    thumbnail = "static/images/chapter_default.jpg"
+                data.append(
+                    {
+                        "start": item.get("start"),
+                        "title": item.get("title"),
+                        "thumbnail": thumbnail,
+                    }
+                )
+        return data
+
+
+class VideoTrimRequest(models.Model):
+    """Model to handle video trimming requests"""
+
+    VIDEO_TRIM_STATUS = (
+        ("initial", "Initial"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("fail", "Fail"),
+    )
+
+    VIDEO_ACTION_CHOICES = (
+        ("replace", "Replace Original"),
+        ("save_new", "Save as New"),
+        ("create_segments", "Create Segments"),
+    )
+
+    TRIM_STYLE_CHOICES = (
+        ("no_encoding", "No Encoding"),
+        ("precise", "Precise"),
+    )
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='trim_requests')
+    status = models.CharField(max_length=20, choices=VIDEO_TRIM_STATUS, default="initial")
+    add_date = models.DateTimeField(auto_now_add=True)
+    video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
+    media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
+    timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+
+    def __str__(self):
+        return f"Trim request for {self.media.title} ({self.status})"
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1479,13 +1591,17 @@ def media_file_pre_delete(sender, instance, **kwargs):
             tag.update_tag_media()
 
 
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    helpers.rm_dir(instance.media.video_chapters_folder)
+
+
 @receiver(post_delete, sender=Media)
 def media_file_delete(sender, instance, **kwargs):
     """
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
-
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1501,6 +1617,7 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.hls_file:
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
+
     instance.user.update_user_media()
 
     # remove extra zombie thumbnails
@@ -1685,3 +1802,4 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
+
