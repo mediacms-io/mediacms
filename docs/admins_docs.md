@@ -64,6 +64,12 @@ Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql w
  </details>
  
 ## Traditional Install
+
+Traditional install is fairly involved but can be completed on any system which meets the base requirements.
+
+<details>
+  <summary>Traditional Install</summary>
+	
 The move to Django 5 in MediaCMS 5.x has some new requirements:
  1) You must use Python 3.10+
  2) You may need to build Python modules for xmlsec and lxml on some systems due to system library / Python library conflicts.
@@ -125,6 +131,7 @@ systemctl start mediacms celery_long celery_short
 
 For non-standard system installations, it's best to walk through the install.sh or easy-install.sh scripts and duplicate for your specific system.   If you must run on a non-Debian based system you will need to find the specific packages and solve the dependency issues around them.
 
+</details>
 
 ### Update
 
