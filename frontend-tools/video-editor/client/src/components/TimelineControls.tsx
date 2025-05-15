@@ -4,11 +4,14 @@ import { generateThumbnail, generateSolidColor } from "../lib/videoUtils";
 import { Segment } from "./ClipSegments";
 import Modal from "./Modal";
 import { trimVideo } from "../services/videoApi";
+import logger from "../lib/logger";
 import '../styles/TimelineControls.css';
 import '../styles/TwoRowTooltip.css';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
 import playFromBeginningIcon from '../assets/play-from-beginning-icon.svg';
+import segmentEndIcon from '../assets/segment-end-new.svg';
+import segmentStartIcon from '../assets/segment-start-new.svg';
 
 interface TimelineControlsProps {
   currentTime: number;
@@ -28,6 +31,7 @@ interface TimelineControlsProps {
   onSaveACopy?: () => void;
   onSaveSegments?: () => void;
   isPreviewMode?: boolean;
+  hasUnsavedChanges?: boolean;
 }
 
 // Function to calculate and constrain tooltip position to keep it on screen
@@ -69,7 +73,8 @@ const TimelineControls = ({
   onSave,
   onSaveACopy,
   onSaveSegments,
-  isPreviewMode
+  isPreviewMode,
+  hasUnsavedChanges = false
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -83,6 +88,8 @@ const TimelineControls = ({
   const [isPlayingSegment, setIsPlayingSegment] = useState(false);
   const [activeSegment, setActiveSegment] = useState<Segment | null>(null);
   const [displayTime, setDisplayTime] = useState<number>(0);
+  // Track when we should continue playing (clicking play after boundary stop)
+  const [continuePastBoundary, setContinuePastBoundary] = useState<boolean>(false);
 
   // Reference for the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -204,8 +211,11 @@ const TimelineControls = ({
   const [showSaveSegmentsModal, setShowSaveSegmentsModal] = useState(false);
   const [showProcessingModal, setShowProcessingModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [redirectUrl, setRedirectUrl] = useState("");
+  const [saveType, setSaveType] = useState<"save" | "copy" | "segments">("save");
   
   // Calculate positions as percentages
   const currentTimePercent = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -219,6 +229,7 @@ const TimelineControls = ({
     // Close confirmation modal and show processing modal
     setShowSaveModal(false);
     setShowProcessingModal(true);
+    setSaveType("save");
 
     try {
       // Format segments data for API request
@@ -228,6 +239,8 @@ const TimelineControls = ({
       }));
 
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
+      const redirectURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectURL || null;
+      
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: false
@@ -236,16 +249,29 @@ const TimelineControls = ({
       // Hide processing modal
       setShowProcessingModal(false);
       
-      // Store success message and redirect URL
-      setSuccessMessage(response.msg);
-      setRedirectUrl(response.url_redirect);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-
+      // Check if response indicates success (200 OK)
+      if (response.status === 200) {
+        // For "Save", use the redirectURL from the window or response
+        setRedirectUrl(redirectURL || response.url_redirect);
+        
+        // Show success modal
+        setShowSuccessModal(true);
+      } else if (response.status === 400) {
+        // Set error message from response and show error modal
+        setErrorMessage(response.error || "An error occurred during processing");
+        setShowErrorModal(true);
+      } else {
+        // Handle other status codes as needed
+        setErrorMessage("An unexpected error occurred");
+        setShowErrorModal(true);
+      }
     } catch (error) {
-      console.error("Error processing video:", error);
+      logger.error("Error processing video:", error);
       setShowProcessingModal(false);
+      
+      // Set error message and show error modal
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      setShowErrorModal(true);
     }
   };
 
@@ -253,6 +279,7 @@ const TimelineControls = ({
     // Close confirmation modal and show processing modal
     setShowSaveAsModal(false);
     setShowProcessingModal(true);
+    setSaveType("copy");
 
     try {
       // Format segments data for API request
@@ -262,6 +289,7 @@ const TimelineControls = ({
       }));
 
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
+      const redirectUserMediaURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL || null;
 
       const response = await trimVideo(mediaId, { 
         segments,
@@ -271,16 +299,29 @@ const TimelineControls = ({
       // Hide processing modal
       setShowProcessingModal(false);
       
-      // Store success message and redirect URL
-      setSuccessMessage(response.msg);
-      setRedirectUrl(response.url_redirect);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-
+      // Check if response indicates success (200 OK)
+      if (response.status === 200) {
+        // For "Save As Copy", use the redirectUserMediaURL from the window
+        setRedirectUrl(redirectUserMediaURL || response.url_redirect);
+        
+        // Show success modal
+        setShowSuccessModal(true);
+      } else if (response.status === 400) {
+        // Set error message from response and show error modal
+        setErrorMessage(response.error || "An error occurred during processing");
+        setShowErrorModal(true);
+      } else {
+        // Handle other status codes as needed
+        setErrorMessage("An unexpected error occurred");
+        setShowErrorModal(true);
+      }
     } catch (error) {
-      console.error("Error processing video:", error);
+      logger.error("Error processing video:", error);
       setShowProcessingModal(false);
+      
+      // Set error message and show error modal
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      setShowErrorModal(true);
     }
   };
   
@@ -288,6 +329,7 @@ const TimelineControls = ({
     // Close confirmation modal and show processing modal
     setShowSaveSegmentsModal(false);
     setShowProcessingModal(true);
+    setSaveType("segments");
 
     try {
       // Format segments data for API request, with each segment saved as a separate file
@@ -298,6 +340,7 @@ const TimelineControls = ({
       }));
 
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
+      const redirectUserMediaURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL || null;
 
       const response = await trimVideo(mediaId, { 
         segments,
@@ -308,17 +351,30 @@ const TimelineControls = ({
       // Hide processing modal
       setShowProcessingModal(false);
       
-      // Store success message and redirect URL
-      setSuccessMessage("Segments have been saved as individual files.");
-      setRedirectUrl(response.url_redirect);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-
+      // Check if response indicates success (200 OK)
+      if (response.status === 200) {
+        // For "Save Segments", use the redirectUserMediaURL from the window
+        setRedirectUrl(redirectUserMediaURL || response.url_redirect);
+        
+        // Show success modal
+        setShowSuccessModal(true);
+      } else if (response.status === 400) {
+        // Set error message from response and show error modal
+        setErrorMessage(response.error || "An error occurred during processing");
+        setShowErrorModal(true);
+      } else {
+        // Handle other status codes as needed
+        setErrorMessage("An unexpected error occurred");
+        setShowErrorModal(true);
+      }
     } catch (error) {
       // Handle errors
-      console.error("Error processing video segments:", error);
+      logger.error("Error processing video segments:", error);
       setShowProcessingModal(false);
+      
+      // Set error message and show error modal
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      setShowErrorModal(true);
     }
   };
   
@@ -358,6 +414,72 @@ const TimelineControls = ({
     }
   }, [currentTime, zoomLevel, duration, selectedSegmentId, showEmptySpaceTooltip, currentTimePercent]);
   
+  // Effect to check active segment boundaries during playback
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !activeSegment || !isPlayingSegment) {
+      logger.debug("Segment boundary check not active:", {
+        hasVideo: !!video,
+        hasActiveSegment: !!activeSegment,
+        isPlaying: isPlayingSegment
+      });
+      return;
+    }
+    
+    // Skip segment boundary checking in preview mode (it has its own handler)
+    if (isPreviewMode) {
+      logger.debug("Skipping segment boundary check in preview mode");
+      return;
+    }
+    
+    logger.debug("Segment boundary check ACTIVATED for segment:", 
+      activeSegment.id, 
+      "Start:", formatDetailedTime(activeSegment.startTime), 
+      "End:", formatDetailedTime(activeSegment.endTime)
+    );
+    
+    const handleTimeUpdate = () => {
+      const timeLeft = activeSegment.endTime - video.currentTime;
+      
+      // Log every second to show we're actually checking
+      if (Math.round(timeLeft * 10) % 10 === 0) {
+        logger.debug("Segment playback - time remaining:", 
+          formatDetailedTime(timeLeft), 
+          "Current:", formatDetailedTime(video.currentTime),
+          "End:", formatDetailedTime(activeSegment.endTime)
+        );
+      }
+      
+      // If we've already passed the segment end, stop immediately
+      if (video.currentTime > activeSegment.endTime) {
+        video.pause();
+        video.currentTime = activeSegment.endTime;
+        setIsPlayingSegment(false);
+        logger.debug("Passed segment end - setting back to exact boundary:", formatDetailedTime(activeSegment.endTime));
+        return;
+      }
+      
+      // If we've reached very close to the end of the active segment
+      // Use a small tolerance to ensure we stop as close as possible to boundary
+      // But not exactly at the boundary to avoid rounding errors
+      if (activeSegment.endTime - video.currentTime < 0.05) {
+        // Pause playback and set the time exactly at the end boundary
+        video.pause();
+        video.currentTime = activeSegment.endTime;
+        setIsPlayingSegment(false);
+        logger.debug("Paused at segment end boundary:", formatDetailedTime(activeSegment.endTime));
+      }
+    };
+    
+    // Add event listener for timeupdate to check segment boundaries
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      logger.debug("Segment boundary check DEACTIVATED");
+    };
+  }, [activeSegment, isPlayingSegment, isPreviewMode]);
+
   // Update display time and check for transitions between segments and empty spaces
   useEffect(() => {
     // Always update display time to match current video time when playing
@@ -393,21 +515,123 @@ const TimelineControls = ({
           });
         }
         
+        // Check for the special "continue past segment" state in sessionStorage
+        const isContinuingPastSegment = sessionStorage.getItem('continuingPastSegment') === 'true';
+        
         // If we're in a segment now
         if (segmentAtCurrentTime) {
-          // Check if we need to change the tooltip (we weren't in this segment before)
-          if (activeSegment?.id !== segmentAtCurrentTime.id || showEmptySpaceTooltip) {
-            console.log("Playback moved into segment:", segmentAtCurrentTime.id);
-            setSelectedSegmentId(segmentAtCurrentTime.id);
-            setActiveSegment(segmentAtCurrentTime);
-            setShowEmptySpaceTooltip(false);
+          // Get video element reference for boundary checks
+          const video = videoRef.current;
+          
+          // Special check for virtual segments (cutaway playback)
+          // If we have an active virtual segment (negative ID) and we're in a regular segment now,
+          // we need to STOP at the start of this segment - that's the boundary of our cutaway
+          const isPlayingVirtualSegment = activeSegment && activeSegment.id < 0 && isPlayingSegment;
+          
+          // If we're playing a virtual segment and enter a real segment, we've reached our boundary
+          // We should stop playback
+          if (isPlayingVirtualSegment && video && segmentAtCurrentTime) {
+            logger.debug(`CUTAWAY BOUNDARY REACHED: Current position ${formatDetailedTime(video.currentTime)} at segment ${segmentAtCurrentTime.id} - STOPPING at boundary ${formatDetailedTime(segmentAtCurrentTime.startTime)}`);
+            video.pause();
+            // Force exact time position with high precision and multiple attempts
+            setTimeout(() => {
+              if (videoRef.current) {
+                // First seek directly to exact start time, no offset
+                videoRef.current.currentTime = segmentAtCurrentTime.startTime;
+                // Update UI immediately to match video position
+                onSeek(segmentAtCurrentTime.startTime);
+                // Also update tooltip time displays
+                setDisplayTime(segmentAtCurrentTime.startTime);
+                setClickedTime(segmentAtCurrentTime.startTime);
+                
+                // Force multiple adjustments to ensure exact precision
+                const verifyPosition = () => {
+                  if (videoRef.current) {
+                    // Always force the exact time in every verification
+                    videoRef.current.currentTime = segmentAtCurrentTime.startTime;
+                    
+                    // Make sure we update the UI to reflect the corrected position
+                    onSeek(segmentAtCurrentTime.startTime);
+                    
+                    // Update the displayTime and clickedTime state to match exact position
+                    setDisplayTime(segmentAtCurrentTime.startTime);
+                    setClickedTime(segmentAtCurrentTime.startTime);
+                    
+                    logger.debug(`Position corrected to exact segment boundary: ${formatDetailedTime(videoRef.current.currentTime)} (target: ${formatDetailedTime(segmentAtCurrentTime.startTime)})`);
+                  }
+                };
+                
+                // Apply multiple correction attempts with increasing delays
+                setTimeout(verifyPosition, 10);  // Immediate correction
+                setTimeout(verifyPosition, 20);  // First correction
+                setTimeout(verifyPosition, 50);  // Second correction
+                setTimeout(verifyPosition, 100);  // Third correction
+                setTimeout(verifyPosition, 200);  // Final correction
+                
+                // Also add event listeners to ensure position is corrected whenever video state changes
+                videoRef.current.addEventListener('seeked', verifyPosition);
+                videoRef.current.addEventListener('canplay', verifyPosition);
+                videoRef.current.addEventListener('waiting', verifyPosition);
+                
+                // Remove these event listeners after a short time
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.removeEventListener('seeked', verifyPosition);
+                    videoRef.current.removeEventListener('canplay', verifyPosition);
+                    videoRef.current.removeEventListener('waiting', verifyPosition);
+                  }
+                }, 300);
+              }
+            }, 10);
+            setIsPlayingSegment(false);
+            setActiveSegment(null);
+            return; // Exit early, we've handled this case
+          }
+          
+          // Only update active segment if we're not in "continue past segment" mode
+          // or if we're in a virtual cutaway segment
+          const continuingPastSegment = 
+            (activeSegment === null && isPlayingSegment === true) || 
+            isContinuingPastSegment || 
+            isPlayingVirtualSegment;
+          
+          if (continuingPastSegment) {
+            // We're in the special case where we're continuing past a segment boundary
+            // or playing a cutaway area
+            // Just update the tooltip, but don't reactivate boundary checking
+            if (selectedSegmentId !== segmentAtCurrentTime.id || showEmptySpaceTooltip) {
+              logger.debug("Tooltip updated for segment during continued playback:", segmentAtCurrentTime.id, 
+                isPlayingVirtualSegment ? "(cutaway playback - keeping virtual segment)" : "");
+              setSelectedSegmentId(segmentAtCurrentTime.id);
+              setShowEmptySpaceTooltip(false);
+              
+              // If we're in a different segment now, clear the continuation flag
+              // but only if it's not the same segment we were in before
+              // AND we're not playing a cutaway area
+              if (!isPlayingVirtualSegment && 
+                  sessionStorage.getItem('lastSegmentId') !== segmentAtCurrentTime.id.toString()) {
+                logger.debug("Moved to a different segment - ending continuation mode");
+                sessionStorage.removeItem('continuingPastSegment');
+              }
+            }
+          } else {
+            // Normal case - update both tooltip and active segment
+            if (activeSegment?.id !== segmentAtCurrentTime.id || showEmptySpaceTooltip) {
+              logger.debug("Playback moved into segment:", segmentAtCurrentTime.id);
+              setSelectedSegmentId(segmentAtCurrentTime.id);
+              setActiveSegment(segmentAtCurrentTime);
+              setShowEmptySpaceTooltip(false);
+              
+              // Store the current segment ID for comparison later
+              sessionStorage.setItem('lastSegmentId', segmentAtCurrentTime.id.toString());
+            }
           }
         } 
         // If we're in empty space now
         else {
           // Check if we need to change the tooltip (we were in a segment before)
           if (activeSegment !== null || !showEmptySpaceTooltip) {
-            console.log("Playback moved to empty space");
+            logger.debug("Playback moved to empty space");
             setSelectedSegmentId(null);
             setActiveSegment(null);
             
@@ -418,7 +642,7 @@ const TimelineControls = ({
             // Show empty space tooltip if there's enough space
             if (availableSpace >= 0.5) {
               setShowEmptySpaceTooltip(true);
-              console.log("Empty space with available duration:", availableSpace);
+              logger.debug("Empty space with available duration:", availableSpace);
             } else {
               setShowEmptySpaceTooltip(false);
             }
@@ -431,7 +655,7 @@ const TimelineControls = ({
         setIsPlayingSegment(false);
         
         // Log the stopping point
-        console.log("Video paused at:", formatDetailedTime(currentTime));
+        logger.debug("Video paused at:", formatDetailedTime(currentTime));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -469,6 +693,10 @@ const TimelineControls = ({
           setIsPlayingSegment(false);
           setActiveSegment(null);
         }
+        // Also reset continuePastBoundary flag when closing tooltips
+        setContinuePastBoundary(false);
+        logger.debug("Closing tooltip - resetting continuePastBoundary flag");
+        
         setSelectedSegmentId(null);
         setShowEmptySpaceTooltip(false);
       }
@@ -643,7 +871,10 @@ const TimelineControls = ({
     
     // Check if video is globally playing before the click
     const wasPlaying = videoRef.current && !videoRef.current.paused;
-    console.log("Video was playing before timeline click:", wasPlaying);
+    logger.debug("Video was playing before timeline click:", wasPlaying);
+    
+    // Reset continuation flag when clicking on timeline - ensures proper boundary detection
+    setContinuePastBoundary(false);
     
     const rect = timelineRef.current.getBoundingClientRect();
     
@@ -682,11 +913,11 @@ const TimelineControls = ({
     // 1. If it was playing before (regular playback)
     // 2. If we're in preview mode (regardless of previous playing state)
     if ((wasPlaying || isPreviewMode) && videoRef.current) {
-      console.log("Resuming playback after timeline click");
+      logger.debug("Resuming playback after timeline click");
       videoRef.current.play()
         .then(() => {
           setIsPlayingSegment(true);
-          console.log("Resumed playback after seeking");
+          logger.debug("Resumed playback after seeking");
         })
         .catch(err => {
           console.error("Error resuming playback:", err);
@@ -752,10 +983,10 @@ const TimelineControls = ({
     }
   };
   
-  // Handle segment resize
-  const handleSegmentResize = (segmentId: number, isLeft: boolean) => (e: React.MouseEvent) => {
+  // Handle segment resize - works with both mouse and touch events
+  const handleSegmentResize = (segmentId: number, isLeft: boolean) => (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Prevent triggering parent's onMouseDown
+    e.stopPropagation(); // Prevent triggering parent's events
     
     if (!timelineRef.current) return;
     
@@ -769,7 +1000,10 @@ const TimelineControls = ({
     const originalStartTime = segment.startTime;
     const originalEndTime = segment.endTime;
     
-    // Add a visual indicator that we're in resize mode
+    // Store the original segment state to compare after dragging
+    const segmentBeforeDrag = {...segment};
+    
+    // Add a visual indicator that we're in resize mode (for mouse devices)
     document.body.style.cursor = 'ew-resize';
     
     // Add a temporary overlay to help with dragging outside the element
@@ -793,10 +1027,12 @@ const TimelineControls = ({
       detail: { segmentId }
     }));
     
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDragging) return;
+    // Function to handle both mouse and touch movements
+    const handleDragMove = (clientX: number) => {
+      if (!isDragging || !timelineRef.current) return;
       
-      const position = Math.max(0, Math.min(1, (moveEvent.clientX - timelineRect.left) / timelineWidth));
+      const updatedTimelineRect = timelineRef.current.getBoundingClientRect();
+      const position = Math.max(0, Math.min(1, (clientX - updatedTimelineRect.left) / updatedTimelineRect.width));
       const newTime = position * duration;
       
       // Find neighboring segments (exclude the current one)
@@ -878,14 +1114,63 @@ const TimelineControls = ({
         } 
       });
       document.dispatchEvent(updateEvent);
+      
+      // During dragging, check if the current tooltip needs to be updated based on segment position
+      if (selectedSegmentId === segmentId && videoRef.current) {
+        const currentTime = videoRef.current.currentTime;
+        const segment = updatedSegments.find(seg => seg.id === segmentId);
+        
+        if (segment) {
+          // Check if playhead position is now outside the segment after dragging
+          const isInsideSegment = currentTime >= segment.startTime && currentTime <= segment.endTime;
+          
+          // Log the current position information for debugging
+          logger.debug(`During drag - playhead at ${formatDetailedTime(currentTime)} is ${isInsideSegment ? 'inside' : 'outside'} segment (${formatDetailedTime(segment.startTime)} - ${formatDetailedTime(segment.endTime)})`);
+          
+          if (!isInsideSegment && isPlayingSegment) {
+            logger.debug("Playhead position is outside segment after dragging - updating tooltip");
+            // Stop playback if we were playing and dragged the segment away from playhead
+            videoRef.current.pause();
+            setIsPlayingSegment(false);
+            setActiveSegment(null);
+          }
+          
+          // Update display time to stay in bounds of the segment
+          if (currentTime < segment.startTime) {
+            logger.debug(`Adjusting display time to segment start: ${formatDetailedTime(segment.startTime)}`);
+            setDisplayTime(segment.startTime);
+            
+            // Update UI state to reflect that playback will be from segment start
+            setClickedTime(segment.startTime);
+          } else if (currentTime > segment.endTime) {
+            logger.debug(`Adjusting display time to segment end: ${formatDetailedTime(segment.endTime)}`);
+            setDisplayTime(segment.endTime);
+            
+            // Update UI state to reflect that playback will be from segment end
+            setClickedTime(segment.endTime);
+          }
+        }
+      }
     };
     
-    const handleMouseUp = () => {
+    // Function to handle the end of dragging (for both mouse and touch)
+    const handleDragEnd = () => {
+      if (!isDragging) return;
+      
       isDragging = false;
+      
+      // Clean up event listeners for both mouse and touch
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
+      
+      // Reset styles
       document.body.style.cursor = '';
-      document.body.removeChild(overlay);
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
       
       // Record the final position in history as a single action
       const finalSegments = clipSegments.map(seg => {
@@ -908,10 +1193,98 @@ const TimelineControls = ({
           action: actionType
         } 
       }));
+      
+      // After drag is complete, do a final check to see if playhead is inside the segment
+      if (selectedSegmentId === segmentId && videoRef.current) {
+        const currentTime = videoRef.current.currentTime;
+        const segment = finalSegments.find(seg => seg.id === segmentId);
+        
+        if (segment) {
+          const isInsideSegment = currentTime >= segment.startTime && currentTime <= segment.endTime;
+          
+          logger.debug(`Drag complete - playhead at ${formatDetailedTime(currentTime)} is ${isInsideSegment ? 'inside' : 'outside'} segment (${formatDetailedTime(segment.startTime)} - ${formatDetailedTime(segment.endTime)})`);
+          
+          // Check if playhead status changed during drag
+          const wasInsideSegmentBefore = currentTime >= segmentBeforeDrag.startTime && currentTime <= segmentBeforeDrag.endTime;
+          
+          logger.debug(`Playhead was ${wasInsideSegmentBefore ? 'inside' : 'outside'} segment before drag, now ${isInsideSegment ? 'inside' : 'outside'}`);
+          
+          // Update UI elements based on segment position
+          if (!isInsideSegment) {
+            // If we were playing and the playhead is now outside the segment, stop playback
+            if (isPlayingSegment) {
+              videoRef.current.pause();
+              setIsPlayingSegment(false);
+              setActiveSegment(null);
+              setContinuePastBoundary(false);
+              logger.debug("Stopped playback because playhead is outside segment after drag completion");
+            }
+            
+            // Update display time to be within the segment's bounds
+            if (currentTime < segment.startTime) {
+              logger.debug(`Final adjustment - setting display time to segment start: ${formatDetailedTime(segment.startTime)}`);
+              setDisplayTime(segment.startTime);
+              setClickedTime(segment.startTime);
+            } else if (currentTime > segment.endTime) {
+              logger.debug(`Final adjustment - setting display time to segment end: ${formatDetailedTime(segment.endTime)}`);
+              setDisplayTime(segment.endTime);
+              setClickedTime(segment.endTime);
+            }
+          } 
+          // Special case: playhead was outside segment before, but now it's inside - can start playback
+          else if (!wasInsideSegmentBefore && isInsideSegment) {
+            logger.debug("Playhead moved INTO segment during drag - can start playback");
+            setActiveSegment(segment);
+            // In preview mode, we automatically start playing when playhead enters segment
+            if (isPreviewMode) {
+              videoRef.current.play()
+                .then(() => {
+                  setIsPlayingSegment(true);
+                  logger.debug("Started playback after dragging segment to include playhead");
+                })
+                .catch(err => {
+                  console.error("Error starting playback:", err);
+                });
+            }
+          }
+          // Another special case: playhead was inside segment before, but now is also inside but at a different position
+          else if (wasInsideSegmentBefore && isInsideSegment && 
+                  (segment.startTime !== segmentBeforeDrag.startTime || segment.endTime !== segmentBeforeDrag.endTime)) {
+            logger.debug("Segment boundaries changed while playhead remained inside - updating activeSegment");
+            // Update the active segment reference to ensure boundary detection works with new bounds
+            setActiveSegment(segment);
+          }
+        }
+      }
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
+    // Mouse-specific event handlers
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      handleDragMove(moveEvent.clientX);
+    };
+    
+    const handleMouseUp = () => {
+      handleDragEnd();
+    };
+    
+    // Touch-specific event handlers
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length > 0) {
+        moveEvent.preventDefault(); // Prevent scrolling while dragging
+        handleDragMove(moveEvent.touches[0].clientX);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      handleDragEnd();
+    };
+    
+    // Register event listeners for both mouse and touch
+    document.addEventListener('mousemove', handleMouseMove, { passive: false });
     document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchEnd);
   };
   
   // Handle segment click to show the tooltip
@@ -924,11 +1297,14 @@ const TimelineControls = ({
     e.preventDefault();
     e.stopPropagation();
     
-    console.log("Segment clicked:", segmentId);
+    logger.debug("Segment clicked:", segmentId);
+    
+    // Reset continuation flag when selecting a segment - ensures proper boundary detection
+    setContinuePastBoundary(false);
     
     // Check if video is currently playing before clicking
     const wasPlaying = videoRef.current && !videoRef.current.paused;
-    console.log("seekVideo: Was playing before:", wasPlaying);
+    logger.debug("seekVideo: Was playing before:", wasPlaying);
     
     // Set the current segment as selected
     setSelectedSegmentId(segmentId);
@@ -954,6 +1330,33 @@ const TimelineControls = ({
     setClickedTime(boundedTime);
     setDisplayTime(boundedTime);
     
+    // Check if the video's current time is inside or outside the segment
+    // This helps with updating the tooltip correctly after dragging operations
+    if (videoRef.current) {
+      const currentVideoTime = videoRef.current.currentTime;
+      const isPlayheadInsideSegment = 
+        currentVideoTime >= segment.startTime && 
+        currentVideoTime <= segment.endTime;
+      
+      logger.debug(`Segment click - playhead at ${formatDetailedTime(currentVideoTime)} is ${isPlayheadInsideSegment ? 'inside' : 'outside'} segment (${formatDetailedTime(segment.startTime)} - ${formatDetailedTime(segment.endTime)})`);
+      
+      // If playhead is outside the segment, update the display time to segment boundary
+      if (!isPlayheadInsideSegment) {
+        // Adjust the display time based on which end is closer to the playhead
+        if (Math.abs(currentVideoTime - segment.startTime) < Math.abs(currentVideoTime - segment.endTime)) {
+          // Playhead is closer to segment start
+          logger.debug(`Playhead outside segment - adjusting to segment start: ${formatDetailedTime(segment.startTime)}`);
+          setDisplayTime(segment.startTime);
+          // Don't update clickedTime here since we already set it to the clicked position
+        } else {
+          // Playhead is closer to segment end
+          logger.debug(`Playhead outside segment - adjusting to segment end: ${formatDetailedTime(segment.endTime)}`);
+          setDisplayTime(segment.endTime);
+          // Don't update clickedTime here since we already set it to the clicked position
+        }
+      }
+    }
+    
     // Seek to this position (this will update the video's current time)
     onSeek(boundedTime);
     
@@ -965,7 +1368,7 @@ const TimelineControls = ({
       videoRef.current.play()
         .then(() => {
           setIsPlayingSegment(true);
-          console.log("Continued preview playback after segment click");
+          logger.debug("Continued preview playback after segment click");
         })
         .catch(err => {
           console.error("Error resuming playback after segment click:", err);
@@ -978,7 +1381,7 @@ const TimelineControls = ({
       videoRef.current.play()
         .then(() => {
           setIsPlayingSegment(true);
-          console.log("Continued preview playback after segment click");
+          logger.debug("Continued preview playback after segment click");
         })
         .catch(err => {
           console.error("Error continuing preview playback:", err);
@@ -1070,11 +1473,15 @@ const TimelineControls = ({
             <div className="clip-segment-duration">Duration: {formatTime(segment.endTime - segment.startTime)}</div>
           </div>
           
-          {/* Resize handles */}
+          {/* Resize handles with both mouse and touch support */}
           <div 
             className="clip-segment-handle left"
             title="Resize segment start"
             onMouseDown={(e) => {
+              e.stopPropagation();
+              handleSegmentResize(segment.id, true)(e);
+            }}
+            onTouchStart={(e) => {
               e.stopPropagation();
               handleSegmentResize(segment.id, true)(e);
             }}
@@ -1083,6 +1490,10 @@ const TimelineControls = ({
             className="clip-segment-handle right"
             title="Resize segment end"
             onMouseDown={(e) => {
+              e.stopPropagation();
+              handleSegmentResize(segment.id, false)(e);
+            }}
+            onTouchStart={(e) => {
               e.stopPropagation();
               handleSegmentResize(segment.id, false)(e);
             }}
@@ -1141,7 +1552,7 @@ const TimelineControls = ({
                 // Toggle tooltip visibility with a single click
                 if (selectedSegmentId || showEmptySpaceTooltip) {
                   // When tooltip is open and - icon is clicked, simply close the tooltips
-                  console.log("Closing tooltip");
+                  logger.debug("Closing tooltip");
                   setSelectedSegmentId(null);
                   setShowEmptySpaceTooltip(false);
                   // Don't reopen the tooltip - just leave it closed
@@ -1157,7 +1568,7 @@ const TimelineControls = ({
                   });
                   
                   // Log detection of segments at marker (for debugging)
-                  console.log("Checking for segment at marker:", segmentAtCurrentTime ? 
+                  logger.debug("Checking for segment at marker:", segmentAtCurrentTime ? 
                     `Found segment ${segmentAtCurrentTime.id}` : "No segment found");
                   
                   // Show the appropriate tooltip
@@ -1298,9 +1709,25 @@ const TimelineControls = ({
                     // Find the selected segment
                     const segment = clipSegments.find(seg => seg.id === selectedSegmentId);
                     if (segment && videoRef.current) {
-                      // Seek to the start of the segment
-                      onSeek(segment.startTime);
-                      setClickedTime(segment.startTime);
+                      // Enable continuePastBoundary flag when user explicitly clicks play
+                      // This will allow playback to continue even if we're at segment boundary
+                      setContinuePastBoundary(true);
+                      logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
+                      
+                      // Special handling for when we're at the end of the segment already
+                      // Check if we're at or extremely close to the end boundary
+                      if (Math.abs(videoRef.current.currentTime - segment.endTime) < 0.05) {
+                        logger.debug(`Already at end boundary (${formatDetailedTime(videoRef.current.currentTime)}), nudging position back slightly`);
+                        const newPosition = Math.max(segment.startTime, segment.endTime - 0.1); // Move 100ms back from end
+                        videoRef.current.currentTime = newPosition;
+                        onSeek(newPosition);
+                        setClickedTime(newPosition);
+                        logger.debug(`Position adjusted to ${formatDetailedTime(newPosition)}`);
+                      } else {
+                        // Normal case - just seek to the start of the segment
+                        onSeek(segment.startTime);
+                        setClickedTime(segment.startTime);
+                      }
                       
                       // Set active segment for boundary checking before playing
                       setActiveSegment(segment);
@@ -1309,7 +1736,7 @@ const TimelineControls = ({
                       videoRef.current.play()
                         .then(() => {
                           setIsPlayingSegment(true);
-                          console.log("Playing from beginning of segment");
+                          logger.debug("Playing from beginning of segment");
                         })
                         .catch(err => {
                           console.error("Error playing from beginning:", err);
@@ -1334,17 +1761,82 @@ const TimelineControls = ({
                         // If already playing, pause the video
                         videoRef.current.pause();
                         setIsPlayingSegment(false);
-                        console.log("Pause clicked");
+                        // Reset continuePastBoundary when stopping playback
+                        setContinuePastBoundary(false);
+                        logger.debug("Pause clicked - resetting continuePastBoundary flag");
                       } else {
-                        // Keep current position (red line) and just start playing
-                        // Set active segment for boundary checking
-                        setActiveSegment(segment);
+                        // Enable continuePastBoundary flag when user explicitly clicks play
+                        // This will allow playback to continue even if we're at segment boundary
+                        setContinuePastBoundary(true);
+                        logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
+                        
+                        // Keep current position (use the current time marker) and just start playing
+                        // Don't seek to segment start - this allows continuing from where the marker is
+                        logger.debug("Play from current position - initial time:", formatDetailedTime(videoRef.current.currentTime));
+                        
+                        // Determine if we're at the segment end
+                        // Exact check - we want to be very precise here
+                        const isExactlyAtEnd = Math.abs(videoRef.current.currentTime - segment.endTime) < 0.001;
+                        // Near check - for cases where we're very close but not exactly at the end
+                        const isNearEnd = Math.abs(videoRef.current.currentTime - segment.endTime) < 0.05;
+                        
+                        if (isExactlyAtEnd || isNearEnd) {
+                          // If we're at or near the segment end, move significantly past it
+                          // This ensures we completely bypass the end boundary
+                          const newPosition = segment.endTime + 0.5; // Move half a second past end
+                          
+                          logger.debug("At segment end - repositioning to continue beyond segment boundary:", 
+                            formatDetailedTime(videoRef.current.currentTime), 
+                            "->", formatDetailedTime(newPosition)
+                          );
+                          
+                          videoRef.current.currentTime = newPosition;
+                          
+                          // Don't set active segment for boundary checking
+                          // to allow playback to continue past the segment
+                          setActiveSegment(null);
+                          
+                          // Set a flag in sessionStorage to remember we're in "continue past segment" mode
+                          // This is an extra safeguard against reactivation of boundary checking
+                          sessionStorage.setItem('continuingPastSegment', 'true');
+                          sessionStorage.setItem('lastSegmentId', segment.id.toString());
+                          logger.debug("Continuing past segment boundary mode activated");
+                          
+                        } else {
+                          // Normal case - not at segment end
+                          // Make sure we're within the segment's bounds
+                          const isWithinSegment = 
+                            videoRef.current.currentTime >= segment.startTime && 
+                            videoRef.current.currentTime <= segment.endTime;
+                          
+                          logger.debug("Current position check:", {
+                            currentTime: formatDetailedTime(videoRef.current.currentTime),
+                            segmentStart: formatDetailedTime(segment.startTime),
+                            segmentEnd: formatDetailedTime(segment.endTime),
+                            isWithinSegment: isWithinSegment
+                          });
+                            
+                          // Only adjust position if we're outside the segment bounds
+                          if (!isWithinSegment) {
+                            // If outside segment bounds, move to current marker position
+                            // or to segment start if marker is before segment
+                            const newPosition = Math.max(segment.startTime, Math.min(segment.endTime, currentTime));
+                            logger.debug("Adjusting position to be within segment:", formatDetailedTime(newPosition));
+                            videoRef.current.currentTime = newPosition;
+                          } else {
+                            logger.debug("Keeping current position for playback");
+                          }
+                            
+                          // Set active segment for boundary checking
+                          setActiveSegment(segment);
+                          logger.debug("Set active segment for boundary checking:", segment.id);
+                        }
                         
                         // Play the video from the current position
                         videoRef.current.play()
                           .then(() => {
                             setIsPlayingSegment(true);
-                            console.log("Play clicked");
+                            logger.debug("Play clicked - continuing from current position:", formatDetailedTime(videoRef.current?.currentTime || 0));
                           })
                           .catch(err => {
                             console.error("Error starting playback:", err);
@@ -1390,18 +1882,14 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Set in clicked");
+                      logger.debug("Set in clicked");
                     }
                     
                     // Keep tooltip open
                     // setSelectedSegmentId(null);
                   }}
                 >
-                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
-                    <g data-name="1" id="_1">
-                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM12.29,20.29l1.42,1.42,5-5a1,1,0,0,0,0-1.42l-5-5-1.42,1.42L15.59,15H5v2H15.59Z" id="login_account_enter_door"/>
-                    </g>
-                  </svg>
+                  <img src={segmentStartIcon} alt="Set start point" style={{width: '24px', height: '24px'}} />
                 </button>
                 <button 
                   className="tooltip-action-btn set-out"
@@ -1432,18 +1920,14 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Set out clicked");
+                      logger.debug("Set out clicked");
                     }
                     
                     // Keep the tooltip open
                     // setSelectedSegmentId(null);
                   }}
                 >
-                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
-                    <g data-name="1" id="_1">
-                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM10.71,20.29,7.41,17H18V15H7.41l3.3-3.29L9.29,10.29l-5,5a1,1,0,0,0,0,1.42l5,5Z" id="logout_account_exit_door"/>
-                    </g>
-                  </svg>
+                  <img src={segmentEndIcon} alt="Set end point" style={{width: '24px', height: '24px'}} />
                 </button>
               </div>
             </div>
@@ -1531,7 +2015,7 @@ const TimelineControls = ({
                         if (createdSegment) {
                           // Set this segment as selected to show its tooltip
                           setSelectedSegmentId(createdSegment.id);
-                          console.log("Created and selected new segment:", createdSegment.id);
+                          logger.debug("Created and selected new segment:", createdSegment.id);
                         }
                       }, 100); // Small delay to ensure state is updated
                     }}
@@ -1547,28 +2031,189 @@ const TimelineControls = ({
                   </button>
                 )}
                 
-                {/* Go to start button - jump to beginning of timeline */}
+                {/* Go to start button - play from beginning of cutaway (until next segment) */}
                 <button 
                   className="tooltip-action-btn play-from-start"
-                  data-tooltip="Go to beginning"
+                  data-tooltip="Play from beginning of cutaway"
                   onClick={(e) => {
                     e.stopPropagation();
                     
                     if (videoRef.current) {
-                      // Seek to the start of the video
-                      onSeek(0);
-                      setClickedTime(0);
-                      console.log("Go to start clicked in empty space");
+                      // Find cutaway boundaries (current position is somewhere in the cutaway)
+                      const currentTime = clickedTime;
+                      
+                      // Enable continuePastBoundary flag when user explicitly clicks play
+                      // This will allow playback to continue even if we're at segment boundary
+                      setContinuePastBoundary(true);
+                      logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
+                      
+                      // For start, find the previous segment's end or use video start (0)
+                      const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                      
+                      // Find the previous segment (one that ends before the current time)
+                      const previousSegment = [...sortedSegments].reverse().find(seg => seg.endTime < currentTime);
+                      
+                      // Start from either previous segment end or beginning of video
+                      // Add a small offset (0.025 second = 25ms) to ensure we're definitely past the segment boundary
+                      const startTime = previousSegment ? (previousSegment.endTime + 0.025) : 0;
+                      
+                      // For end, find the next segment after the current position
+                      // Since we're looking for the boundary of this empty space, we need to find the
+                      // segment that starts after our current position
+                      const nextSegment = sortedSegments.find(seg => seg.startTime > currentTime);
+                      
+                      // Define end boundary (either next segment start or video end)
+                      const endTime = nextSegment ? nextSegment.startTime : duration;
+                      
+                      // Create a virtual "segment" for the cutaway area
+                      const cutawaySegment: Segment = {
+                        id: -999, // Use a unique negative ID to indicate a virtual segment
+                        name: "Cutaway",
+                        startTime: startTime,
+                        endTime: endTime,
+                        thumbnail: ""
+                      };
+                      
+                      // Seek to the start of the cutaway (true beginning of this cutaway area)
+                      onSeek(startTime);
+                      setClickedTime(startTime);
+                      
+                      // IMPORTANT: First reset isPlayingSegment to false to ensure clean state
+                      setIsPlayingSegment(false);
+                      
+                      // Then set active segment for boundary checking
+                      // We use setTimeout to ensure this happens in the next tick
+                      // after the isPlayingSegment value is updated
+                      setTimeout(() => {
+                        setActiveSegment(cutawaySegment);
+                      }, 0);
+                      
+                      // Add a manual boundary check specifically for cutaway playback
+                      // This ensures we detect when we reach the next segment's start
+                      const checkCutawayBoundary = () => {
+                        if (!videoRef.current) return;
+                        
+                        // Check if we've entered a segment (i.e., reached a boundary)
+                        const currentPosition = videoRef.current.currentTime;
+                        const segments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                        
+                        // Find the next segment we're approaching - use a wider detection range
+                        // to catch the boundary earlier
+                        const nextSegment = segments.find(seg => seg.startTime > currentPosition - 0.3);
+                        
+                        // We need to detect boundaries much earlier to allow for time to react
+                        // This is a key fix - we need to detect the boundary BEFORE we reach it
+                        // But don't stop if we're in continuePastBoundary mode
+                        const shouldStop = nextSegment && 
+                          (currentPosition >= nextSegment.startTime - 0.25) && 
+                          (currentPosition <= nextSegment.startTime + 0.1) &&
+                          !continuePastBoundary;
+                          
+                        // Add logging to show boundary check decisions
+                        if (nextSegment && (currentPosition >= nextSegment.startTime - 0.25) && 
+                            (currentPosition <= nextSegment.startTime + 0.1)) {
+                          logger.debug(`Approaching boundary at ${formatDetailedTime(nextSegment.startTime)}, continuePastBoundary=${continuePastBoundary}, willStop=${shouldStop}`);
+                        }
+                        
+                        // If we've entered a segment, stop at its boundary
+                        if (shouldStop && nextSegment) {
+                          logger.debug(`CUTAWAY MANUAL BOUNDARY CHECK: Current position ${formatDetailedTime(currentPosition)} approaching segment at ${formatDetailedTime(nextSegment.startTime)} (distance: ${Math.abs(currentPosition - nextSegment.startTime).toFixed(3)}s) - STOPPING`);
+                          
+                          videoRef.current.pause();
+                          // Force exact time position with high precision and multiple attempts
+                          setTimeout(() => {
+                            if (videoRef.current) {
+                              // First seek directly to exact start time, no offset
+                              videoRef.current.currentTime = nextSegment.startTime;
+                              // Update UI immediately to match video position
+                              onSeek(nextSegment.startTime);
+                              // Also update tooltip time displays
+                              setDisplayTime(nextSegment.startTime);
+                              setClickedTime(nextSegment.startTime);
+                              
+                              // Force multiple adjustments to ensure exact precision
+                              const verifyPosition = () => {
+                                if (videoRef.current) {
+                                  // Always force the exact time in every verification
+                                  videoRef.current.currentTime = nextSegment.startTime;
+                                  
+                                  // Make sure we update the UI to reflect the corrected position
+                                  onSeek(nextSegment.startTime);
+                                  
+                                  // Update the displayTime and clickedTime state to match exact position
+                                  setDisplayTime(nextSegment.startTime);
+                                  setClickedTime(nextSegment.startTime);
+                                  
+                                  logger.debug(`Position corrected to exact segment boundary: ${formatDetailedTime(videoRef.current.currentTime)} (target: ${formatDetailedTime(nextSegment.startTime)})`);
+                                }
+                              };
+                              
+                              // Apply multiple correction attempts with increasing delays
+                              setTimeout(verifyPosition, 10);  // Immediate correction
+                              setTimeout(verifyPosition, 20);  // First correction
+                              setTimeout(verifyPosition, 50);  // Second correction
+                              setTimeout(verifyPosition, 100);  // Third correction
+                              setTimeout(verifyPosition, 200);  // Final correction
+                              
+                              // Also add event listeners to ensure position is corrected whenever video state changes
+                              videoRef.current.addEventListener('seeked', verifyPosition);
+                              videoRef.current.addEventListener('canplay', verifyPosition);
+                              videoRef.current.addEventListener('waiting', verifyPosition);
+                              
+                              // Remove these event listeners after a short time
+                              setTimeout(() => {
+                                if (videoRef.current) {
+                                  videoRef.current.removeEventListener('seeked', verifyPosition);
+                                  videoRef.current.removeEventListener('canplay', verifyPosition);
+                                  videoRef.current.removeEventListener('waiting', verifyPosition);
+                                }
+                              }, 300);
+                            }
+                          }, 10);
+                          setIsPlayingSegment(false);
+                          setActiveSegment(null);
+                          
+                          // Remove our boundary checker
+                          videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
+                          return;
+                        }
+                      };
+                      
+                      // Start our manual boundary checker
+                      videoRef.current.addEventListener('timeupdate', checkCutawayBoundary);
+                      
+                      // Start playing with proper promise handling - use setTimeout to ensure
+                      // that our activeSegment setting has had time to take effect
+                      setTimeout(() => {
+                        if (videoRef.current) {
+                          // Now start playback
+                          videoRef.current.play()
+                            .then(() => {
+                              setIsPlayingSegment(true);
+                              logger.debug("CUTAWAY PLAYBACK STARTED:", 
+                                formatDetailedTime(startTime), 
+                                "to", formatDetailedTime(endTime),
+                                previousSegment ? 
+                                  `(after segment ${previousSegment.id}, offset +25ms from ${formatDetailedTime(previousSegment.endTime)})` :
+                                  "(from video start)",
+                                nextSegment ? `(will stop at segment ${nextSegment.id})` : "(will play to end)"
+                              );
+                            })
+                            .catch(err => {
+                              console.error("Error playing cutaway:", err);
+                            });
+                        }
+                      }, 50);
                     }
                   }}
                 >
-                  <img src={playFromBeginningIcon} alt="Go to beginning" style={{width: '24px', height: '24px'}} />
+                  <img src={playFromBeginningIcon} alt="Play from beginning" style={{width: '24px', height: '24px'}} />
                 </button>
                 
                 {/* Play/Pause button for empty space */}
                 <button 
                   className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
-                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play from current position"}
+                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play from here until next segment"}
                   onClick={(e) => {
                     e.stopPropagation();
                     
@@ -1577,17 +2222,170 @@ const TimelineControls = ({
                         // If already playing, pause the video
                         videoRef.current.pause();
                         setIsPlayingSegment(false);
-                        console.log("Pause clicked in empty space");
+                        // Reset continuePastBoundary when stopping playback
+                        setContinuePastBoundary(false);
+                        logger.debug("Pause clicked in empty space - resetting continuePastBoundary flag");
                       } else {
-                        // Start playing from current position
-                        videoRef.current.play()
-                          .then(() => {
-                            setIsPlayingSegment(true);
-                            console.log("Play clicked in empty space");
-                          })
-                          .catch(err => {
-                            console.error("Error starting playback:", err);
-                          });
+                        // Enable continuePastBoundary flag when user explicitly clicks play
+                        // This will allow playback to continue even if we're at segment boundary
+                        setContinuePastBoundary(true);
+                        logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
+                        
+                        // Find the current time and determine cutaway boundaries
+                        // For end, find the next segment after current position
+                        // Make sure we look for any segment that starts after our current position,
+                        // including the first segment if we're before it
+                        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                        const currentTime = videoRef.current.currentTime;
+                        const nextSegment = sortedSegments.find(seg => seg.startTime > currentTime);
+                        
+                        // Define end boundary (either next segment start or video end)
+                        const endTime = nextSegment ? nextSegment.startTime : duration;
+                        
+                        // Special handling for when we're already at a segment boundary
+                        // If we're at or extremely close to the segment boundary already,
+                        // we need to nudge the position slightly back to allow playback
+                        let adjustedCurrentTime = currentTime;
+                        
+                        if (nextSegment && Math.abs(currentTime - nextSegment.startTime) < 0.05) {
+                          logger.debug(`Already at boundary (${formatDetailedTime(currentTime)}), nudging position back slightly`);
+                          adjustedCurrentTime = Math.max(0, currentTime - 0.1); // Move 100ms back
+                          videoRef.current.currentTime = adjustedCurrentTime;
+                          onSeek(adjustedCurrentTime);
+                          logger.debug(`Position adjusted to ${formatDetailedTime(adjustedCurrentTime)}`);
+                        }
+                        
+                        // Create a virtual "segment" for the cutaway area
+                        const cutawaySegment: Segment = {
+                          id: -999, // Use a consistent negative ID for virtual segments
+                          name: "Cutaway",
+                          startTime: adjustedCurrentTime, // Use the potentially adjusted time
+                          endTime: endTime,
+                          thumbnail: ""
+                        };
+                        
+                        // IMPORTANT: First reset isPlayingSegment to false to ensure clean state
+                        setIsPlayingSegment(false);
+                        
+                        // Then set active segment for boundary checking
+                        // We use setTimeout to ensure this happens in the next tick
+                        // after the isPlayingSegment value is updated
+                        setTimeout(() => {
+                          setActiveSegment(cutawaySegment);
+                        }, 0);
+                        
+                        // Add a manual boundary check specifically for cutaway playback
+                        // This ensures we detect when we reach the next segment's start
+                        const checkCutawayBoundary = () => {
+                          if (!videoRef.current) return;
+                          
+                          // Check if we've entered a segment (i.e., reached a boundary)
+                          const currentPosition = videoRef.current.currentTime;
+                          const segments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                          
+                          // Find the next segment we're approaching - use a wider detection range
+                          // to catch the boundary earlier
+                          const nextSegment = segments.find(seg => seg.startTime > currentPosition - 0.3);
+                          
+                          // We need to detect boundaries much earlier to allow for time to react
+                          // This is a key fix - we need to detect the boundary BEFORE we reach it
+                          // But don't stop if we're in continuePastBoundary mode
+                          const shouldStop = nextSegment && 
+                            (currentPosition >= nextSegment.startTime - 0.25) && 
+                            (currentPosition <= nextSegment.startTime + 0.1) &&
+                            !continuePastBoundary;
+                            
+                          // Add logging to show boundary check decisions
+                          if (nextSegment && (currentPosition >= nextSegment.startTime - 0.25) && 
+                              (currentPosition <= nextSegment.startTime + 0.1)) {
+                            logger.debug(`Approaching boundary at ${formatDetailedTime(nextSegment.startTime)}, continuePastBoundary=${continuePastBoundary}, willStop=${shouldStop}`);
+                          }
+                          
+                          // If we've entered a segment, stop at its boundary
+                          if (shouldStop && nextSegment) {
+                            logger.debug(`CUTAWAY MANUAL BOUNDARY CHECK: Current position ${formatDetailedTime(currentPosition)} approaching segment at ${formatDetailedTime(nextSegment.startTime)} (distance: ${Math.abs(currentPosition - nextSegment.startTime).toFixed(3)}s) - STOPPING`);
+                            
+                            videoRef.current.pause();
+                            // Force exact time position with high precision
+                            setTimeout(() => {
+                              if (videoRef.current) {
+                                // First seek directly to exact start time, no offset
+                                videoRef.current.currentTime = nextSegment.startTime;
+                                // Update UI immediately to match video position
+                                onSeek(nextSegment.startTime);
+                                // Also update tooltip time displays
+                                setDisplayTime(nextSegment.startTime);
+                                setClickedTime(nextSegment.startTime);
+                                
+                                // Force multiple adjustments to ensure exact precision
+                                const verifyPosition = () => {
+                                  if (videoRef.current) {
+                                    // Always force the exact time in every verification
+                                    videoRef.current.currentTime = nextSegment.startTime;
+                                    
+                                    // Make sure we update the UI to reflect the corrected position
+                                    onSeek(nextSegment.startTime);
+                                    
+                                    // Update the displayTime and clickedTime state to match exact position
+                                    setDisplayTime(nextSegment.startTime);
+                                    setClickedTime(nextSegment.startTime);
+                                    
+                                    logger.debug(`Position corrected to exact segment boundary: ${formatDetailedTime(videoRef.current.currentTime)} (target: ${formatDetailedTime(nextSegment.startTime)})`);
+                                  }
+                                };
+                                
+                                // Apply multiple correction attempts with increasing delays
+                                setTimeout(verifyPosition, 10);  // Immediate correction
+                                setTimeout(verifyPosition, 20);  // First correction
+                                setTimeout(verifyPosition, 50);  // Second correction
+                                setTimeout(verifyPosition, 100);  // Third correction
+                                setTimeout(verifyPosition, 200);  // Final correction
+                                
+                                // Also add event listeners to ensure position is corrected whenever video state changes
+                                videoRef.current.addEventListener('seeked', verifyPosition);
+                                videoRef.current.addEventListener('canplay', verifyPosition);
+                                videoRef.current.addEventListener('waiting', verifyPosition);
+                                
+                                // Remove these event listeners after a short time
+                                setTimeout(() => {
+                                  if (videoRef.current) {
+                                    videoRef.current.removeEventListener('seeked', verifyPosition);
+                                    videoRef.current.removeEventListener('canplay', verifyPosition);
+                                    videoRef.current.removeEventListener('waiting', verifyPosition);
+                                  }
+                                }, 300);
+                              }
+                            }, 10);
+                            setIsPlayingSegment(false);
+                            setActiveSegment(null);
+                            
+                            // Remove our boundary checker
+                            videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
+                            return;
+                          }
+                        };
+                        
+                        // Start our manual boundary checker
+                        videoRef.current.addEventListener('timeupdate', checkCutawayBoundary);
+                        
+                        // Start playing from current position with boundary restrictions
+                        // Use a timeout to ensure active segment is set before playback starts
+                        setTimeout(() => {
+                          if (videoRef.current) {
+                            videoRef.current.play()
+                              .then(() => {
+                                setIsPlayingSegment(true);
+                                logger.debug("Play clicked in empty space - position:", 
+                                  formatDetailedTime(currentTime), 
+                                  "will stop at:", formatDetailedTime(endTime),
+                                  nextSegment ? `(start of segment ${nextSegment.id})` : "(end of video)"
+                                );
+                              })
+                              .catch(err => {
+                                console.error("Error starting playback:", err);
+                              });
+                          }
+                        }, 50);
                       }
                     }
                   }}
@@ -1632,7 +2430,7 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Adjusted end of previous segment to:", formatDetailedTime(clickedTime));
+                      logger.debug("Adjusted end of previous segment to:", formatDetailedTime(clickedTime));
                       
                       // Show the previous segment's tooltip
                       setSelectedSegmentId(prevSegment.id);
@@ -1679,7 +2477,7 @@ const TimelineControls = ({
                           } 
                         });
                         document.dispatchEvent(updateEvent);
-                        console.log("Created new segment in gap from", formatDetailedTime(gapStart), "to", formatDetailedTime(clickedTime));
+                        logger.debug("Created new segment in gap from", formatDetailedTime(gapStart), "to", formatDetailedTime(clickedTime));
                         
                         // Show the new segment's tooltip
                         setSelectedSegmentId(newSegment.id);
@@ -1708,7 +2506,7 @@ const TimelineControls = ({
                           } 
                         });
                         document.dispatchEvent(updateEvent);
-                        console.log("Created new segment from start to:", formatDetailedTime(clickedTime));
+                        logger.debug("Created new segment from start to:", formatDetailedTime(clickedTime));
                         
                         // Show the new segment's tooltip
                         setSelectedSegmentId(newSegment.id);
@@ -1739,7 +2537,7 @@ const TimelineControls = ({
                             } 
                           });
                           document.dispatchEvent(updateEvent);
-                          console.log("Extended last segment to end of video");
+                          logger.debug("Extended last segment to end of video");
                           
                           // Show the last segment's tooltip
                           setSelectedSegmentId(lastSegment.id);
@@ -1765,7 +2563,7 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Created new segment from start to:", formatDetailedTime(clickedTime));
+                      logger.debug("Created new segment from start to:", formatDetailedTime(clickedTime));
                       
                       // Show the new segment's tooltip
                       setSelectedSegmentId(newSegment.id);
@@ -1773,11 +2571,7 @@ const TimelineControls = ({
                     }
                   }}
                 >
-                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
-                    <g data-name="1" id="_1">
-                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM10.71,20.29L7.41,17H18V15H7.41l3.3-3.29L9.29,10.29l-5,5a1,1,0,0,0,0,1.42l5,5Z" id="logout_account_exit_door"/>
-                    </g>
-                  </svg>
+                  <img src={segmentEndIcon} alt="Set end point" style={{width: '24px', height: '24px'}} />
                 </button>
                 
                 {/* Segment start adjustment button (always shown) */}
@@ -1813,7 +2607,7 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Adjusted start of next segment to:", formatDetailedTime(clickedTime));
+                      logger.debug("Adjusted start of next segment to:", formatDetailedTime(clickedTime));
                       
                       // Show the next segment's tooltip
                       setSelectedSegmentId(nextSegment.id);
@@ -1860,7 +2654,7 @@ const TimelineControls = ({
                           } 
                         });
                         document.dispatchEvent(updateEvent);
-                        console.log("Created new segment in gap from", formatDetailedTime(clickedTime), "to", formatDetailedTime(gapEnd));
+                        logger.debug("Created new segment in gap from", formatDetailedTime(clickedTime), "to", formatDetailedTime(gapEnd));
                         
                         // Show the new segment's tooltip
                         setSelectedSegmentId(newSegment.id);
@@ -1889,7 +2683,7 @@ const TimelineControls = ({
                             } 
                           });
                           document.dispatchEvent(updateEvent);
-                          console.log("Created new segment from", formatDetailedTime(clickedTime), "to first segment");
+                          logger.debug("Created new segment from", formatDetailedTime(clickedTime), "to first segment");
                           
                           // Show the new segment's tooltip
                           setSelectedSegmentId(newSegment.id);
@@ -1918,7 +2712,7 @@ const TimelineControls = ({
                             } 
                           });
                           document.dispatchEvent(updateEvent);
-                          console.log("Created new segment from", formatDetailedTime(clickedTime), "to end");
+                          logger.debug("Created new segment from", formatDetailedTime(clickedTime), "to end");
                           
                           // Show the new segment's tooltip
                           setSelectedSegmentId(newSegment.id);
@@ -1949,7 +2743,7 @@ const TimelineControls = ({
                               } 
                             });
                             document.dispatchEvent(updateEvent);
-                            console.log("Extended first segment to start of video");
+                            logger.debug("Extended first segment to start of video");
                             
                             // Show the first segment's tooltip
                             setSelectedSegmentId(firstSegment.id);
@@ -1976,7 +2770,7 @@ const TimelineControls = ({
                         } 
                       });
                       document.dispatchEvent(updateEvent);
-                      console.log("Created new segment from", formatDetailedTime(clickedTime), "to end");
+                      logger.debug("Created new segment from", formatDetailedTime(clickedTime), "to end");
                       
                       // Show the new segment's tooltip
                       setSelectedSegmentId(newSegment.id);
@@ -2400,15 +3194,6 @@ const TimelineControls = ({
             onClose={() => setShowSuccessModal(false)}
             title="Video Processed Successfully"
           >
-            <div className="modal-success-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <p className="modal-message text-center">
-              {successMessage}
-            </p>
             <div className="modal-choices">
               {redirectUrl && (
                 <a 
@@ -2418,9 +3203,41 @@ const TimelineControls = ({
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                   </svg>
-                  View Processed Video
+                  {saveType === "save" ? "Go to media page" : 
+                   saveType === "copy" ? "Go to the media page, the new video will soon be there" : 
+                   "Go to the media page, the new video(s) will soon be there"}
                 </a>
               )}
+            </div>
+          </Modal>
+          
+          {/* Error Modal */}
+          <Modal
+            isOpen={showErrorModal}
+            onClose={() => setShowErrorModal(false)}
+            title="Video Processing Error"
+          >
+            <div className="modal-error-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <p className="modal-message text-center">
+              {errorMessage}
+            </p>
+            <div className="modal-choices">
+              <button 
+                onClick={() => setShowErrorModal(false)}
+                className="modal-choice-button centered-choice"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+                Close
+              </button>
             </div>
           </Modal>
           

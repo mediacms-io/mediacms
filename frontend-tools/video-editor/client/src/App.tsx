@@ -20,6 +20,7 @@ const App = () => {
     clipSegments,
     historyPosition,
     history,
+    hasUnsavedChanges,
     playPauseVideo,
     seekVideo,
     handleTrimStartChange,
@@ -86,6 +87,7 @@ const App = () => {
           onSaveACopy={handleSaveACopy}
           onSaveSegments={handleSaveSegments}
           isPreviewMode={isPreviewMode}
+          hasUnsavedChanges={hasUnsavedChanges}
         />
 
         {/* Clip Segments */}

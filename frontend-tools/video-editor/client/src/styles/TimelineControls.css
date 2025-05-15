@@ -216,6 +216,39 @@
     right: 0;
     border-radius: 0 2px 2px 0;
   }
+  
+  /* Enhanced handles for touch devices */
+  @media (pointer: coarse) {
+    .clip-segment-handle {
+      width: 14px; /* Wider target for touch devices */
+      background-color: rgba(0, 0, 0, 0.4); /* Darker by default for better visibility */
+    }
+    
+    .clip-segment-handle:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 20px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 1px;
+    }
+    
+    .clip-segment-handle.left:after {
+      box-shadow: -2px 0 0 rgba(0, 0, 0, 0.5);
+    }
+    
+    .clip-segment-handle.right:after {
+      box-shadow: 2px 0 0 rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Active state for touch feedback */
+    .clip-segment-handle:active {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+  }
 
   .segment-tooltip,
   .empty-space-tooltip {

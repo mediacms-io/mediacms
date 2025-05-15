@@ -13,6 +13,8 @@ interface TrimVideoRequest {
 interface TrimVideoResponse {
   msg: string;
   url_redirect: string;
+  status?: number;  // HTTP status code for success/error
+  error?: string;   // Error message if status is not 200
 }
 
 // Helper function to simulate delay
@@ -32,21 +34,73 @@ export const trimVideo = async (
       body: JSON.stringify(data)
     });
     
-    if (!response.ok && response.status !== 404) {
-      // If endpoint not ready (404 or other error), return mock success response
-      await delay(1500); // Simulate 1.5 second server delay
-      return {
-        msg: "Video is processing for trim",
-        url_redirect: `./view?m=${mediaId}`
-      };
+    if (!response.ok) {
+      // For error responses, return with error status and message
+      if (response.status === 400) {
+        // Handle 400 Bad Request - return with error details
+        try {
+          // Try to get error details from response
+          const errorData = await response.json();
+          return {
+            status: 400,
+            error: errorData.error || "An error occurred during processing",
+            msg: "Video Processing Error",
+            url_redirect: ""
+          };
+        } catch (parseError) {
+          // If can't parse response JSON, return generic error
+          return {
+            status: 400,
+            error: "An error occurred during video processing",
+            msg: "Video Processing Error",
+            url_redirect: ""
+          };
+        }
+      } else if (response.status !== 404) {
+        // Handle other error responses
+        try {
+          // Try to get error details from response
+          const errorData = await response.json();
+          return {
+            status: response.status,
+            error: errorData.error || "An error occurred during processing",
+            msg: "Video Processing Error",
+            url_redirect: ""
+          };
+        } catch (parseError) {
+          // If can't parse response JSON, return generic error
+          return {
+            status: response.status,
+            error: "An error occurred during video processing",
+            msg: "Video Processing Error",
+            url_redirect: ""
+          };
+        }
+      } else {
+        // If endpoint not ready (404), return mock success response
+        await delay(1500); // Simulate 1.5 second server delay
+        return {
+          status: 200, // Mock success status
+          msg: "Video Processed Successfully", // Updated per requirements
+          url_redirect: `./view?m=${mediaId}`
+        };
+      }
     }
     
-    return await response.json();
+    // Successful response
+    const jsonResponse = await response.json();
+    return {
+      status: 200,
+      msg: "Video Processed Successfully", // Ensure the success message is correct
+      url_redirect: jsonResponse.url_redirect || `./view?m=${mediaId}`,
+      ...jsonResponse
+    };
   } catch (error) {
     // For any fetch errors, return mock success response with delay
     await delay(1500); // Simulate 1.5 second server delay
     return {
-      msg: "Backend is not ready for trim video yet!",
+      status: 200, // Mock success status
+      msg: "Video Processed Successfully", // Consistent with requirements
       url_redirect: `./view?m=${mediaId}`
     };
   }

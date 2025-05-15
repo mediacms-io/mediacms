@@ -155,6 +155,14 @@
   font-size: 2rem;
 }
 
+.modal-error-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: #dc3545;
+  font-size: 2rem;
+}
+
 .modal-choices {
   display: flex;
   flex-direction: column;

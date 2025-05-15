@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { generateThumbnail } from "@/lib/videoUtils";
 import { formatDetailedTime } from "@/lib/timeUtils";
+import logger from "@/lib/logger";
 import type { Segment } from "@/components/ClipSegments";
 
 // Represents a state of the editor for undo/redo
@@ -38,17 +39,51 @@ const useVideoTrimmer = () => {
   const [history, setHistory] = useState<EditorState[]>([]);
   const [historyPosition, setHistoryPosition] = useState(-1);
   
-  // Debug monitor for history changes
+  // Track unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Monitor for history changes
   useEffect(() => {
     if (history.length > 0) {
-      console.log(`History state updated: ${history.length} entries, position: ${historyPosition}`);
-      // Log actions in history to help debug undo/redo
-      const actions = history.map((state, idx) => 
-        `${idx}: ${state.action || 'unknown'} (segments: ${state.clipSegments.length})`
-      );
-      console.log('History actions:', actions);
+      // For debugging - moved to console.debug
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`History state updated: ${history.length} entries, position: ${historyPosition}`);
+        // Log actions in history to help debug undo/redo
+        const actions = history.map((state, idx) => 
+          `${idx}: ${state.action || 'unknown'} (segments: ${state.clipSegments.length})`
+        );
+        console.debug('History actions:', actions);
+      }
+      
+      // If there's at least one history entry and it wasn't a save operation, mark as having unsaved changes
+      const lastAction = history[historyPosition]?.action || '';
+      if (lastAction !== 'save' && lastAction !== 'save_copy' && lastAction !== 'save_segments') {
+        setHasUnsavedChanges(true);
+      }
     }
   }, [history, historyPosition]);
+  
+  // Set up page unload warning
+  useEffect(() => {
+    // Event handler for beforeunload
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        // Standard way of showing a confirmation dialog before leaving
+        const message = 'Your edits will get lost if you leave the page. Do you want to continue?';
+        e.preventDefault();
+        e.returnValue = message; // Chrome requires returnValue to be set
+        return message; // For other browsers
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
   
   // Initialize video event listeners
   useEffect(() => {
@@ -289,7 +324,7 @@ const useVideoTrimmer = () => {
         return newPosition;
       });
     } else {
-      // console.log("Skipped non-significant state save");
+      // logger.debug("Skipped non-significant state save");
     }
   };
   
@@ -333,7 +368,7 @@ const useVideoTrimmer = () => {
         const actionType = e.detail.action || 'update_segments';
         
         // Log the update details
-        console.log(`Updating segments with action: ${actionType}, recordHistory: ${isSignificantChange ? "true" : "false"}`);
+        logger.debug(`Updating segments with action: ${actionType}, recordHistory: ${isSignificantChange ? "true" : "false"}`);
         
         // Update segment state immediately for UI feedback
         setClipSegments(e.detail.segments);
@@ -373,12 +408,12 @@ const useVideoTrimmer = () => {
             // Ensure the historyPosition is updated to the correct position
             setHistoryPosition(prev => {
               const newPosition = prev + 1;
-              console.log(`Saved state with action: ${actionType} to history position ${newPosition}`);
+              logger.debug(`Saved state with action: ${actionType} to history position ${newPosition}`);
               return newPosition;
             });
           }, 20); // Slightly increased delay to ensure state updates are complete
         } else {
-          console.log(`Skipped saving state to history for action: ${actionType} (recordHistory=false)`);
+          logger.debug(`Skipped saving state to history for action: ${actionType} (recordHistory=false)`);
         }
       }
     };
@@ -495,7 +530,7 @@ const useVideoTrimmer = () => {
   useEffect(() => {
     if (!isPreviewMode || !videoRef.current) return;
     
-    // console.log("Preview mode effect running, previewSegmentIndex:", previewSegmentIndex);
+    // logger.debug("Preview mode effect running, previewSegmentIndex:", previewSegmentIndex);
     
     // Sort segments by start time
     const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
@@ -525,7 +560,7 @@ const useVideoTrimmer = () => {
           // Play through the next segment immediately
           videoRef.current.currentTime = nextSegment.startTime;
           setPreviewSegmentIndex(previewSegmentIndex + 1);
-          console.log("Moving to next segment in preview:", nextSegment.name, 
+          logger.debug("Moving to next segment in preview:", nextSegment.name, 
                       "from", formatDetailedTime(currentSegment.endTime), 
                       "to", formatDetailedTime(nextSegment.startTime));
           
@@ -535,7 +570,7 @@ const useVideoTrimmer = () => {
           });
         } else {
           // End of all segments, loop back to the first segment
-          console.log("End of all segments in preview, looping back to first");
+          logger.debug("End of all segments in preview, looping back to first");
           videoRef.current.currentTime = orderedSegments[0].startTime;
           setPreviewSegmentIndex(0);
           
@@ -630,10 +665,10 @@ const useVideoTrimmer = () => {
   const handleUndo = () => {
     if (historyPosition > 0) {
       const previousState = history[historyPosition - 1];
-      console.log(`** UNDO ** to position ${historyPosition - 1}, action: ${previousState.action}, segments: ${previousState.clipSegments.length}`);
+      logger.debug(`** UNDO ** to position ${historyPosition - 1}, action: ${previousState.action}, segments: ${previousState.clipSegments.length}`);
       
       // Log segment details to help debug
-      console.log("Segment details after undo:", previousState.clipSegments.map(seg => 
+      logger.debug("Segment details after undo:", previousState.clipSegments.map(seg => 
         `ID: ${seg.id}, Time: ${formatDetailedTime(seg.startTime)} - ${formatDetailedTime(seg.endTime)}`
       ));
       
@@ -644,7 +679,7 @@ const useVideoTrimmer = () => {
       setClipSegments(JSON.parse(JSON.stringify(previousState.clipSegments)));
       setHistoryPosition(historyPosition - 1);
     } else {
-      console.log("Cannot undo: at earliest history position");
+      logger.debug("Cannot undo: at earliest history position");
     }
   };
   
@@ -652,10 +687,10 @@ const useVideoTrimmer = () => {
   const handleRedo = () => {
     if (historyPosition < history.length - 1) {
       const nextState = history[historyPosition + 1];
-      console.log(`** REDO ** to position ${historyPosition + 1}, action: ${nextState.action}, segments: ${nextState.clipSegments.length}`);
+      logger.debug(`** REDO ** to position ${historyPosition + 1}, action: ${nextState.action}, segments: ${nextState.clipSegments.length}`);
       
       // Log segment details to help debug
-      console.log("Segment details after redo:", nextState.clipSegments.map(seg => 
+      logger.debug("Segment details after redo:", nextState.clipSegments.map(seg => 
         `ID: ${seg.id}, Time: ${formatDetailedTime(seg.startTime)} - ${formatDetailedTime(seg.endTime)}`
       ));
       
@@ -666,7 +701,7 @@ const useVideoTrimmer = () => {
       setClipSegments(JSON.parse(JSON.stringify(nextState.clipSegments)));
       setHistoryPosition(historyPosition + 1);
     } else {
-      console.log("Cannot redo: at latest history position");
+      logger.debug("Cannot redo: at latest history position");
     }
   };
   
@@ -683,7 +718,7 @@ const useVideoTrimmer = () => {
       video.pause();
       setIsPlaying(false);
       
-      console.log("Exiting preview mode - video paused");
+      logger.debug("Exiting preview mode - video paused");
       return;
     }
     
@@ -699,7 +734,7 @@ const useVideoTrimmer = () => {
     
     // Set the preview mode flag before starting playback
     setIsPreviewMode(true);
-    console.log("Entering preview mode");
+    logger.debug("Entering preview mode");
     
     // Set the first segment as the current one in the preview sequence
     setPreviewSegmentIndex(0);
@@ -712,7 +747,7 @@ const useVideoTrimmer = () => {
       if (videoRef.current) {
         videoRef.current.play()
           .then(() => {
-            console.log("Preview started successfully");
+            logger.debug("Preview started successfully");
             setIsPlaying(true);
           })
           .catch(err => {
@@ -787,8 +822,19 @@ const useVideoTrimmer = () => {
     // Display JSON in alert (for demonstration purposes)
     alert(JSON.stringify(saveData, null, 2));
     
+    // Mark as saved - no unsaved changes
+    setHasUnsavedChanges(false);
+    
+    // Debug message
+    if (process.env.NODE_ENV === 'development') {
+      console.debug("Changes saved - reset unsaved changes flag");
+    }
+    
+    // Save to history with special "save" action to mark saved state
+    saveState('save');
+    
     // In a real implementation, this would make a POST request to save the data
-    // console.log("Save data:", saveData);
+    // logger.debug("Save data:", saveData);
   };
   
   // Handle save a copy action
@@ -808,6 +854,16 @@ const useVideoTrimmer = () => {
     // Display JSON in alert (for demonstration purposes)
     alert(JSON.stringify(saveData, null, 2));
     
+    // Mark as saved - no unsaved changes
+    setHasUnsavedChanges(false);
+    
+    // Debug message
+    if (process.env.NODE_ENV === 'development') {
+      console.debug("Changes saved as copy - reset unsaved changes flag");
+    }
+    
+    // Save to history with special "save_copy" action to mark saved state
+    saveState('save_copy');
   };
   
   // Handle save segments individually action
@@ -828,6 +884,14 @@ const useVideoTrimmer = () => {
     // Display JSON in alert (for demonstration purposes)
     alert(JSON.stringify(saveData, null, 2));
     
+    // Mark as saved - no unsaved changes
+    setHasUnsavedChanges(false);
+    
+    // Debug message
+    logger.debug("All segments saved individually - reset unsaved changes flag");
+    
+    // Save to history with special "save_segments" action to mark saved state
+    saveState('save_segments');
   };
   
   return {
@@ -845,6 +909,7 @@ const useVideoTrimmer = () => {
     historyPosition,
     history,
     isMuted,
+    hasUnsavedChanges, // Add unsaved changes flag to the return object
     playPauseVideo,
     seekVideo,
     handleTrimStartChange,
