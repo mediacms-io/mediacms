@@ -69,7 +69,7 @@ Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql w
 Traditional install is fairly involved but can be completed on any system which meets the base requirements.
 
 <details>
-  <summary>Traditional Install</summary>
+  <summary>More... </summary>
 
 
 The move to Django 5 in MediaCMS 5.x has some new requirements:
