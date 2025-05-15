@@ -184,6 +184,9 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 ## Installation
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
+<details>
+	<summary>Instructions ...</summary>
+
 For Ubuntu 20/22/24 systems you can add the docker repo:
 
 ```bash
@@ -209,6 +212,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 
 For full instructions on how to install docker, see docker's website: https://docs.docker.com/engine/install/ubuntu/
 
+</details>
 
 Then run as root
 
