@@ -468,7 +468,9 @@ def create_hls(friendly_token):
             if media.hls_file != pp:
                 media.hls_file = pp
                 media.save(update_fields=["hls_file"])
-                logger.info(f"All good / exiting for {friendly_token}")
+                hlsfile = Media.objects.filter(friendly_token=friendly_token).first().hls_file
+                # print file and size
+                logger.info(f"HLS file created: {hlsfile} size {os.path.getsize(hlsfile)}")
     return True
 
 

@@ -644,9 +644,7 @@ class Media(models.Model):
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
-            logger.info('ti simbainei edw')
-            tasks.create_hls(self.friendly_token)
-            print('ti simbainei edw2')
+            tasks.create_hls.delay(self.friendly_token)
 
         return True
 
