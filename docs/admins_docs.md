@@ -102,7 +102,7 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
 <details>
-	<summary>Instructions ...</summary>
+	<summary>More... </summary>
 
 For Ubuntu 20/22/24 systems you can add the docker repo:
 
