@@ -906,21 +906,22 @@ def video_trim_task(self, trim_request_id):
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
             if not trim_result:
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
-
+            else:
+                update_encoding_size.delay(encoding.id)
         original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
         if not original_trim_result:
             logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
         target_media.set_media_type()
+
+        target_media.produce_thumbnails_from_video()
+        target_media.produce_sprite_from_video()
+        target_media.update_search_vector()
         create_hls.delay(target_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])
         logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
-
-        target_media.produce_thumbnails_from_video()
-        target_media.produce_sprite_from_video()
-        target_media.update_search_vector()
 
     else:
         for i, timestamp in enumerate(timestamps_encodings, start=1):
@@ -933,11 +934,11 @@ def video_trim_task(self, trim_request_id):
                 update_encoding_size.delay(encoding.id)
 
             new_media.set_media_type()
-            create_hls.delay(new_media.friendly_token)
 
             new_media.produce_thumbnails_from_video()
             new_media.produce_sprite_from_video()
             new_media.update_search_vector()
+            create_hls.delay(new_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])
