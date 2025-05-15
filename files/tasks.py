@@ -17,8 +17,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
 from django.db.models import Q
-from django.db.models.signals import post_save
-from contextlib import contextmanager
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
@@ -48,8 +46,7 @@ from .models import (
     Rating,
     Tag,
     VideoChapterData,
-    VideoTrimRequest,
-    media_save
+    VideoTrimRequest
 )
 
 logger = get_task_logger(__name__)
@@ -62,14 +59,6 @@ ERRORS_LIST = [
     "Unable to find a suitable output format for",
 ]
 
-
-@contextmanager
-def disable_signal(signal, receiver, sender):
-    signal.disconnect(receiver, sender=sender)
-    try:
-        yield
-    finally:
-        signal.connect(receiver, sender=sender)
 
 
 @task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
@@ -854,7 +843,7 @@ def produce_video_chapters(chapter_id):
     return True
 
 
-@task(name="video_trim_task", bind=True, queue="short_tasks")
+@task(name="video_trim_task", bind=True, queue="short_tasks", soft_time_limit=600)
 def video_trim_task(self, trim_request_id):
     # SOS: if at some point we move from ffmpeg copy, then this need be changed
     # to long_tasks
@@ -891,8 +880,7 @@ def video_trim_task(self, trim_request_id):
     if proceed_with_single_file:
 
         if trim_request.video_action == "save_new" or trim_request.video_action == "create_segments" and len(timestamps_encodings) == 1:
-            with disable_signal(post_save, media_save, Media):
-                new_media = copy_video(original_media, copy_encodings=True)
+            new_media = copy_video(original_media, copy_encodings=True)
 
             target_media = new_media
             trim_request.media = new_media
@@ -924,8 +912,7 @@ def video_trim_task(self, trim_request_id):
 
     else:
         for i, timestamp in enumerate(timestamps_encodings, start=1):
-            with disable_signal(post_save, media_save, Media):
-                new_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
+            new_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
 
             original_trim_result = trim_video_method(new_media.media_file.path, [timestamp])
             encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)

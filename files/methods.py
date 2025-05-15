@@ -16,14 +16,23 @@ from django.core.files import File
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.utils import timezone
+from contextlib import contextmanager
+from django.db.models.signals import post_save
 
 from cms import celery_app
 
 from . import helpers, models
-from .models import Encoding
 from .helpers import mask_ip
 
 logger = logging.getLogger(__name__)
+
+@contextmanager
+def disable_signal(signal, receiver, sender):
+    signal.disconnect(receiver, sender=sender)
+    try:
+        yield
+    finally:
+        signal.connect(receiver, sender=sender)
 
 
 def get_user_or_session(request):
@@ -415,36 +424,38 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
         New Media object
     """
 
-    with open(original_media.media_file.path, "rb") as f:
-        myfile = File(f)
-        new_media = models.Media.objects.create(
-            media_file=myfile,
-            title=f"{original_media.title} {title_suffix}",
-            description=original_media.description,
-            user=original_media.user,
-            media_type="video",
-            enable_comments=original_media.enable_comments,
-            allow_download=original_media.allow_download,
-            state=original_media.state,
-            is_reviewed=original_media.is_reviewed,
-            add_date=timezone.now()
-        )
+    with disable_signal(post_save, models.media_save, models.Media):
+        with open(original_media.media_file.path, "rb") as f:
+            myfile = File(f)
+            new_media = models.Media.objects.create(
+                media_file=myfile,
+                title=f"{original_media.title} {title_suffix}",
+                description=original_media.description,
+                user=original_media.user,
+                media_type="video",
+                enable_comments=original_media.enable_comments,
+                allow_download=original_media.allow_download,
+                state=original_media.state,
+                is_reviewed=original_media.is_reviewed,
+                add_date=timezone.now()
+            )
 
     if copy_encodings:
         for encoding in original_media.encodings.filter(status="success", chunk=False):
             if encoding.media_file:
-                with open(encoding.media_file.path, "rb") as f:
-                    myfile = File(f)
-                    new_encoding = Encoding.objects.create(
-                        media_file=myfile,
-                        media=new_media,
-                        profile=encoding.profile,
-                        status="success",
-                        progress=100,
-                        chunk=False,
-                        logs=f"Copied from encoding {encoding.id}"
-                    )
-                    new_encoding.save()
+                with disable_signal(post_save, models.encoding_file_save, models.Encoding):
+                    with open(encoding.media_file.path, "rb") as f:
+                        myfile = File(f)
+                        new_encoding = models.Encoding.objects.create(
+                            media_file=myfile,
+                            media=new_media,
+                            profile=encoding.profile,
+                            status="success",
+                            progress=100,
+                            chunk=False,
+                            logs=f"Copied from encoding {encoding.id}"
+                        )
+                        new_encoding.save()
 
     # Copy categories and tags
     for category in original_media.category.all():
