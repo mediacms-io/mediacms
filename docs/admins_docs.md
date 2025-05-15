@@ -34,9 +34,14 @@ This page is created for MediaCMS administrators that are responsible for settin
 ## 2. Single-Server Installation
 
 The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But it's strongly suggested to Linux Ubuntu (tested on versions 20, 22, and 24).
+<details>
+  <summary>Easy Install</summary>
 
-## Easy Install
-Easy install is the recommended way to do a new installation, and is intended for fresh Ubuntu Server 20/22/24 installations.
+
+ 
+### Easy Install
+
+Easy install is the recommended way to do a new installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.
 
 For the trusting folks, it requires just a single command:
 ```bash
@@ -57,7 +62,8 @@ sudo su -c "easy-install.sh" root
 Easy Install will create a new folder for the installation, located at /home/mediacms.io/, and clone the latest source into a sub-folder 'mediacms'.   If you wish to use an older release, review the installation instructions that come with that release (MediaCMS 4, for example), or modify the ```git clone ...``` line in easy-install to pull the specific branch you prefer to use:  ```git clone https://github.com/mediacms.io/mediacms --branch <your branch>```
 
 Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql will be upgraded to version 13.   These are the minimum requirements to run MediaCMS 5.   If you need to retain Python 3.8 or Postgresql 12 for whatever reason, please use a MediaCMS 4 release.
-
+ </details>
+ 
 ## Traditional Install
 The move to Django 5 in MediaCMS 5.x has some new requirements:
  1) You must use Python 3.10+
