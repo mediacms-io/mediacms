@@ -45,7 +45,7 @@ sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/he
 ```
 
 <details>
-  <summary>Easy Install - Details</summary>
+  <summary>More Details..</summary>
 
 
 For those less trusting, you can download the script and view or modify it before executing:
