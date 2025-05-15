@@ -423,6 +423,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     Returns:
         New Media object
     """
+    from .tasks import update_encoding_size
 
     with open(original_media.media_file.path, "rb") as f:
         myfile = File(f)
@@ -460,8 +461,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                     )
                     models.Encoding.objects.bulk_create([new_encoding])
                     # avoids calling signals
-
-                    new_encoding.update_size()
+                    update_encoding_size.delay(new_encoding.id)
 
     # Copy categories and tags
     for category in original_media.category.all():

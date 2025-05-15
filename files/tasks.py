@@ -808,6 +808,19 @@ def remove_media_file(media_file=None):
     return True
 
 
+@task(name="update_encoding_size", queue="short_tasks")
+def update_encoding_size(encoding_id):
+    """Update the size of an encoding"""
+    logger.info(f"Updating size for encoding {encoding_id}")
+    try:
+        encoding = Encoding.objects.get(id=encoding_id)
+        encoding.update_size()
+        return True
+    except Encoding.DoesNotExist:
+        logger.info(f"Encoding with ID {encoding_id} not found")
+        return False
+
+
 @task(name="produce_video_chapters", queue="short_tasks")
 def produce_video_chapters(chapter_id):
     chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
@@ -902,7 +915,7 @@ def video_trim_task(self, trim_request_id):
             logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
         target_media.set_media_type()
-        create_hls(target_media.friendly_token)
+        create_hls.delay(target_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])
@@ -922,7 +935,7 @@ def video_trim_task(self, trim_request_id):
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
 
             new_media.set_media_type()
-            create_hls(new_media.friendly_token)
+            create_hls.delay(new_media.friendly_token)
 
             new_media.produce_thumbnails_from_video()
             new_media.produce_sprite_from_video()
