@@ -138,9 +138,10 @@ For non-standard system installations, it's best to walk through the install.sh 
 
 ### Updates
 
-For single-server installs, updates are performed using git.  If you've used the single-server install to install MediaCMS, update as below
+For single-server installs, updates are performed using git.  If you've used the single-server install to install MediaCMS, update as below:
 
-
+<details>
+<summary>More...</summary>
 ```bash
 cd /home/mediacms.io/mediacms # enter mediacms directory
 source  /home/mediacms.io/bin/activate # use virtualenv
