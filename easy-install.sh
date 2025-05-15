@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#### Single-command install (Ubuntu)
+#### Ubuntu (using sudo):
 ### sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ###
-### Debian Bullseye, Bookworm, Trixie
+### Debian (not using sudo):
 ### su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ###
 
@@ -31,34 +31,6 @@ done
 apt install -y lsb-release
 
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"bullseye"* ]]; then
-    echo 'Ubuntu 20 / Debian Bullseye Detected.... system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade 
-    
-    ### Ubuntu 20 requires Python 3.10 upgrade to work with Django 5.1.
-    echo 'Upgrading to Python 3.10...   This may take a while.'
-    apt-get install -y build-essential gdb lcov pkg-config \
-      libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
-      libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
-      lzma lzma-dev tk-dev uuid-dev zlib1g-dev
-
-    wget https://www.python.org/ftp/python/3.10.17/Python-3.10.17.tar.xz
-    tar -xf Python-3.10.17.tar.xz
-    cd Python-3.10.17
-    ./configure --enable-optimizations
-    make -j4
-    make install
-
-    # Install Postgresql 13 repos, required for Django 5.x
-    echo "Installing PostgreSQL 13..."
-    apt install curl gpg gnupg2 software-properties-common apt-transport-https lsb-release ca-certificates -y
-    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc| gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" | tee  /etc/apt/sources.list.d/pgdg.list
-    apt update
-    apt install -y postgresql-13 postgresql-client-13
-    
-    echo 'Installing other dependencies....'
-    apt-get install redis-server pkg-config libxmlsec1-dev nginx git gcc vim unzip imagemagick certbot wget xz-utils -y
 
 elif [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
     echo 'Ubuntu 22 / Debian Bookworm detected - system update and dependency installation, this will take a few minutes'
@@ -69,10 +41,9 @@ elif [[ $osVersion == *"Ubuntu 24"* ]] || [[ $osVersion == *"trixie"* ]]; then
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev pkg-config libxmlsec1-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
 else
-    echo "This script is tested for Ubuntu 20/22/24 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
+    echo "This script is tested for Ubuntu 22/24 versions only, if you want to try MediaCMS on another system you have to perform a manual installation."
     exit
 fi
-
 
 # Generate the directory
 mkdir -p /home/mediacms.io
