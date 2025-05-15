@@ -639,9 +639,8 @@ class Media(models.Model):
                     self.preview_file_path = ""
                 else:
                     self.preview_file_path = encoding.media_file.path
-                self.save(update_fields=["listable", "preview_file_path"])
 
-        self.save(update_fields=["encoding_status", "listable"])
+        self.save(update_fields=["encoding_status", "listable", "listable", "preview_file_path"])
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
@@ -1237,7 +1236,9 @@ class Encoding(models.Model):
         if isinstance(progress, int):
             if 0 <= progress <= 100:
                 self.progress = progress
-                self.save(update_fields=["progress"])
+                # save object with filter update
+                # to avoid calling signals
+                Encoding.objects.filter(pk=self.pk).update(progress=progress)
                 return True
         return False
 

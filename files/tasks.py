@@ -466,10 +466,8 @@ def create_hls(friendly_token):
         pp = os.path.join(output_dir, "master.m3u8")
         if os.path.exists(pp):
             if media.hls_file != pp:
-                media.hls_file = pp
-                media.save(update_fields=["hls_file"])
-                hlsfile = Media.objects.filter(friendly_token=friendly_token).first().hls_file
-                # print file and size
+                Media.objects.filter(pk=media.pk).update(hls_file=pp)
+                hlsfile = Media.objects.filter(pk=media.pk).first().hls_file
                 logger.info(f"HLS file created: {hlsfile} size {os.path.getsize(hlsfile)}")
     return True
 
