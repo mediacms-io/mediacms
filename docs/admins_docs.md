@@ -37,9 +37,8 @@ The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg
 
 ### Easy Install
 
-Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.   It should only be used on a system which has none of MediaCMS services running.   For upgrades, see the "Upgrades" section below.
+Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.   It should only be used on a system which has no MediaCMS services running - i.e. a fresh installation.   For upgrades, see the "Upgrades" section below.
 
-For the trusting folks, it requires just a single command:
 ```bash
 sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
@@ -48,25 +47,33 @@ sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/he
   <summary>More... </summary>
 
 
-For those less trusting, you can download the script and view or modify it before executing:
+Alternatively, you can download the script and view or modify it before executing:
 ```bash
 wget -O "easy-install.sh" https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh
 cat easy-install.sh | less
 ```
 
-Once you're satisfied, run it:
+Once satisfied, run it:
+
+Ubuntu (using sudo):
 ```bash
 sudo su -c "easy-install.sh" root
+```
+
+Debian (not using sudo):
+```bash
+su -c "easy-install.sh" root
 ```
 
 Easy Install will create a new folder for the installation, located at /home/mediacms.io/, and clone the latest source into a sub-folder 'mediacms'.   If you wish to use an older release, review the installation instructions that come with that release (MediaCMS 4, for example), or modify the ```git clone ...``` line in easy-install to pull the specific branch you prefer to use:  ```git clone https://github.com/mediacms.io/mediacms --branch <your branch>```
 
 Notes:  On Ubuntu 20.x systems, Python will be upgraded to 3.10 and Postgresql will be upgraded to version 13.   These are the minimum requirements to run MediaCMS 5.   If you need to retain Python 3.8 or Postgresql 12 for whatever reason, please use a MediaCMS 4 release.
+
  </details>
  
 ### Traditional Install
 
-Traditional install is fairly involved but can be completed on any system which meets the base requirements.
+Traditional install is more involved but can be completed on any system which meets the base requirements.   Ubuntu 24.04 or Debian 12 / Bookworm are recommended.
 
 <details>
   <summary>More... </summary>
@@ -137,7 +144,11 @@ For non-standard system installations, it's best to walk through the install.sh 
 
 ### Update
 
-If you've used the above way to install MediaCMS, update with the following:
+For single-server installs, updates are performed using git.  If you've used the single-server install to install MediaCMS, update as below
+
+<details>
+<summary>Update Instructions... </summary>
+ 
 
 ```bash
 cd /home/mediacms.io/mediacms # enter mediacms directory
@@ -160,6 +171,7 @@ The syntax for starting Celery has also changed, so you have to copy the celery 
 # systemctl start celery_long celery_short celery_beat
 ```
 
+</details>
 
 ### Configuration
 Checkout the configuration section here.
