@@ -1222,17 +1222,17 @@ class Encoding(models.Model):
 
         super(Encoding, self).save(*args, **kwargs)
 
-        def update_size_without_save(self):
-            """Update the size of an encoding without saving to avoid calling signals"""
-            if self.media_file:
-                cmd = ["stat", "-c", "%s", self.media_file.path]
-                stdout = helpers.run_command(cmd).get("out")
-                if stdout:
-                    size = int(stdout.strip())
-                    size = helpers.show_file_size(size)
-                    Encoding.objects.filter(pk=self.pk).update(size=size)
-                    return True
-            return False
+    def update_size_without_save(self):
+        """Update the size of an encoding without saving to avoid calling signals"""
+        if self.media_file:
+            cmd = ["stat", "-c", "%s", self.media_file.path]
+            stdout = helpers.run_command(cmd).get("out")
+            if stdout:
+                size = int(stdout.strip())
+                size = helpers.show_file_size(size)
+                Encoding.objects.filter(pk=self.pk).update(size=size)
+                return True
+        return False
 
     def set_progress(self, progress, commit=True):
         if isinstance(progress, int):
