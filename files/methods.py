@@ -461,7 +461,6 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                     )
                     models.Encoding.objects.bulk_create([new_encoding])
                     # avoids calling signals
-                    update_encoding_size.delay(new_encoding.id)
 
     # Copy categories and tags
     for category in original_media.category.all():

@@ -811,7 +811,6 @@ def remove_media_file(media_file=None):
 @task(name="update_encoding_size", queue="short_tasks")
 def update_encoding_size(encoding_id):
     """Update the size of an encoding"""
-    logger.info(f"Updating size for encoding {encoding_id}")
     try:
         encoding = Encoding.objects.get(id=encoding_id)
         encoding.update_size()
@@ -933,6 +932,7 @@ def video_trim_task(self, trim_request_id):
             encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
+                update_encoding_size.delay(encoding.id)
 
             new_media.set_media_type()
             create_hls.delay(new_media.friendly_token)
