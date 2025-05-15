@@ -39,8 +39,14 @@ The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg
 
 Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.   It should only be used on a system which has no MediaCMS services running - i.e. a fresh installation.   For upgrades, see  "Upgrades" further down in this section.
 
+Ubuntu (using sudo):
 ```bash
 sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+```
+
+Debian (not using sudo):
+```bash
+su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
 
 <details>
