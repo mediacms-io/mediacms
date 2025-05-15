@@ -424,38 +424,41 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
         New Media object
     """
 
-    with disable_signal(post_save, models.media_save, models.Media):
-        with open(original_media.media_file.path, "rb") as f:
-            myfile = File(f)
-            new_media = models.Media.objects.create(
-                media_file=myfile,
-                title=f"{original_media.title} {title_suffix}",
-                description=original_media.description,
-                user=original_media.user,
-                media_type="video",
-                enable_comments=original_media.enable_comments,
-                allow_download=original_media.allow_download,
-                state=original_media.state,
-                is_reviewed=original_media.is_reviewed,
-                add_date=timezone.now()
-            )
+    with open(original_media.media_file.path, "rb") as f:
+        myfile = File(f)
+        new_media = models.Media(
+            media_file=myfile,
+            title=f"{original_media.title} {title_suffix}",
+            description=original_media.description,
+            user=original_media.user,
+            media_type="video",
+            enable_comments=original_media.enable_comments,
+            allow_download=original_media.allow_download,
+            state=original_media.state,
+            is_reviewed=original_media.is_reviewed,
+            add_date=timezone.now()
+        )
+        models.Media.objects.bulk_create([new_media])
+        # avoids calling signals
+
 
     if copy_encodings:
         for encoding in original_media.encodings.filter(status="success", chunk=False):
             if encoding.media_file:
-                with disable_signal(post_save, models.encoding_file_save, models.Encoding):
-                    with open(encoding.media_file.path, "rb") as f:
-                        myfile = File(f)
-                        new_encoding = models.Encoding.objects.create(
-                            media_file=myfile,
-                            media=new_media,
-                            profile=encoding.profile,
-                            status="success",
-                            progress=100,
-                            chunk=False,
-                            logs=f"Copied from encoding {encoding.id}"
-                        )
-                        new_encoding.save()
+                with open(encoding.media_file.path, "rb") as f:
+                    myfile = File(f)
+                    new_encoding = models.Encoding(
+                        media_file=myfile,
+                        media=new_media,
+                        profile=encoding.profile,
+                        status="success",
+                        progress=100,
+                        chunk=False,
+                        logs=f"Copied from encoding {encoding.id}"
+                    )
+                    models.Encoding.objects.bulk_create([new_encoding])
+                    # avoids calling signals
+                    # TODO: check size
 
     # Copy categories and tags
     for category in original_media.category.all():
