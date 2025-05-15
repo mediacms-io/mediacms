@@ -319,6 +319,7 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
+        print(f"saomeone called save for {self.friendly_token}")
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
