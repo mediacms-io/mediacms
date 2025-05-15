@@ -181,7 +181,7 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 
 ## 3. Docker Installation
 
-## Installation
+### Install Docker
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
 <details>
