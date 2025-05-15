@@ -39,13 +39,15 @@ The core dependencies are Python3, Django, Celery, PostgreSQL, Redis, and ffmpeg
 
 Easy install is the recommended way to do a new installation, and is intended for fresh Ubuntu Server 20/22/24 or Debian Bullseye/Bookworm/Trixie installations.
 
-<details>
-  <summary>Easy Install</summary>
-
 For the trusting folks, it requires just a single command:
 ```bash
 sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
+
+<details>
+  <summary>Easy Install - Details</summary>
+
+
 
 For those less trusting, you can download the script and view or modify it before executing:
 ```bash
