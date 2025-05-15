@@ -436,6 +436,8 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             allow_download=original_media.allow_download,
             state=original_media.state,
             is_reviewed=original_media.is_reviewed,
+            encoding_status=original_media.encoding_status,
+            listable=original_media.listable,
             add_date=timezone.now()
         )
         models.Media.objects.bulk_create([new_media])
@@ -458,7 +460,8 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                     )
                     models.Encoding.objects.bulk_create([new_encoding])
                     # avoids calling signals
-                    # TODO: check size
+
+                    new_encoding.update_size()
 
     # Copy categories and tags
     for category in original_media.category.all():

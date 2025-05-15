@@ -1221,6 +1221,18 @@ class Encoding(models.Model):
 
         super(Encoding, self).save(*args, **kwargs)
 
+    def update_size(self):
+        """Update the size of the encoding file"""
+        if self.media_file:
+            cmd = ["stat", "-c", "%s", self.media_file.path]
+            stdout = helpers.run_command(cmd).get("out")
+            if stdout:
+                size = int(stdout.strip())
+                self.size = helpers.show_file_size(size)
+                self.save(update_fields=["size"])
+                return True
+        return False
+
     def set_progress(self, progress, commit=True):
         if isinstance(progress, int):
             if 0 <= progress <= 100:

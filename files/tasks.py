@@ -423,6 +423,7 @@ def produce_sprite_from_video(friendly_token):
 def create_hls(friendly_token):
     """Creates HLS file for media, uses Bento4 mp4hls command"""
 
+    logger.info(f"Entering for {friendly_token}")
     if not hasattr(settings, "MP4HLS_COMMAND"):
         logger.info("Bento4 mp4hls command is missing from configuration")
         return False
@@ -467,6 +468,7 @@ def create_hls(friendly_token):
             if media.hls_file != pp:
                 media.hls_file = pp
                 media.save(update_fields=["hls_file"])
+                logger.info(f"All good / exiting for {friendly_token}")
     return True
 
 
