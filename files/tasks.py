@@ -36,7 +36,6 @@ from .helpers import (
     run_command,
     trim_video_method,
 )
-from . import helpers
 from .methods import list_tasks, notify_users, pre_save_action, copy_video
 from .models import (
     Category,
