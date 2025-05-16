@@ -410,10 +410,14 @@ def produce_sprite_from_video(friendly_token):
             if os.path.exists(output_name) and get_file_type(output_name) == "image":
                 with open(output_name, "rb") as f:
                     myfile = File(f)
+                    # SOS: avoid race condition, since this runs for a long time and will replace any other media changes on the meanwhile!!!
                     media.sprites.save(
                         content=myfile,
                         name=get_file_name(media.media_file.path) + "sprites.jpg",
+                        save=False
                     )
+                    media.save(update_fields=["sprites"])
+
         except Exception as e:
             print(e)
     return True

@@ -469,17 +469,21 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     for tag in original_media.tags.all():
         new_media.tags.add(tag)
 
-    # Copy thumbnails if they exist
+    update_fields = []
     if original_media.thumbnail:
         with open(original_media.thumbnail.path, 'rb') as f:
             thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
-            new_media.thumbnail.save(thumbnail_name, File(f))
+            new_media.thumbnail.save(thumbnail_name, File(f), save=False)
+            update_fields.append("thumbnail")
 
     if original_media.poster:
         with open(original_media.poster.path, 'rb') as f:
             poster_name = helpers.get_file_name(original_media.poster.path)
-            new_media.poster.save(poster_name, File(f))
+            new_media.poster.save(poster_name, File(f), save=False)
+            update_fields.append("poster")
 
+    if update_fields:
+        new_media.save(update_fields=update_fields)
     return new_media
 
 
