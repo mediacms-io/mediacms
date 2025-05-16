@@ -855,6 +855,35 @@ def produce_video_chapters(chapter_id):
     return True
 
 
+@task(name="post_trim_action", queue="short_tasks", soft_time_limit=600)
+def post_trim_action(friendly_token):
+    """Perform post-processing actions after video trimming
+
+    Args:
+        friendly_token: The friendly token of the media
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    logger.info(f"Post trim action for {friendly_token}")
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        logger.info(f"Media with friendly token {friendly_token} not found")
+        return False
+
+    media.set_media_type()
+    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+    for encoding in encodings:
+        update_encoding_size(encoding.id)
+
+    media.produce_thumbnails_from_video()
+    produce_sprite_from_video.delay(friendly_token)
+    create_hls.delay(friendly_token)
+
+    return True
+
+
 @task(name="video_trim_task", bind=True, queue="short_tasks", soft_time_limit=600)
 def video_trim_task(self, trim_request_id):
     # SOS: if at some point we move from ffmpeg copy, then this need be changed
@@ -906,17 +935,13 @@ def video_trim_task(self, trim_request_id):
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
             if not trim_result:
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
-            else:
-                update_encoding_size.delay(encoding.id)
+
         original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
         if not original_trim_result:
             logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
-        target_media.set_media_type()
-
-        target_media.produce_thumbnails_from_video()
-        target_media.produce_sprite_from_video()
-        create_hls.delay(target_media.friendly_token)
+        # Schedule post-processing
+        post_trim_action.delay(target_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])
@@ -930,13 +955,9 @@ def video_trim_task(self, trim_request_id):
             encodings = new_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
-                update_encoding_size.delay(encoding.id)
 
-            new_media.set_media_type()
-
-            new_media.produce_thumbnails_from_video()
-            new_media.produce_sprite_from_video()
-            create_hls.delay(new_media.friendly_token)
+            # Schedule post-processing
+            post_trim_action.delay(new_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])

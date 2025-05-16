@@ -319,7 +319,7 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
-        print(f"saomeone called save for {self.friendly_token} so will print {self.hls_file}")
+        print(f"SAVE called for {self.friendly_token}")
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -1574,6 +1574,7 @@ def media_save(sender, instance, created, **kwargs):
     # once model is saved
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
+    print(f'mpainei media_save gia {instance.friendly_token}')
     if not instance.friendly_token:
         return False
 
@@ -1595,7 +1596,7 @@ def media_save(sender, instance, created, **kwargs):
             tag.update_tag_media()
 
     instance.update_search_vector()
-    print(f'kanei exit i media_save')
+    print(f'EXIT media_save gia {instance.friendly_token}')
 
 
 @receiver(pre_delete, sender=Media)
