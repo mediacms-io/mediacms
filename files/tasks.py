@@ -916,7 +916,6 @@ def video_trim_task(self, trim_request_id):
 
         target_media.produce_thumbnails_from_video()
         target_media.produce_sprite_from_video()
-        target_media.update_search_vector()
         create_hls.delay(target_media.friendly_token)
 
         trim_request.status = "success"
@@ -937,7 +936,6 @@ def video_trim_task(self, trim_request_id):
 
             new_media.produce_thumbnails_from_video()
             new_media.produce_sprite_from_video()
-            new_media.update_search_vector()
             create_hls.delay(new_media.friendly_token)
 
         trim_request.status = "success"
