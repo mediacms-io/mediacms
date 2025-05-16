@@ -603,6 +603,20 @@ function findGetParameter(parameterName) {
     const muted = parseInt(findGetParameter('muted'));
     const autoplay = parseInt(findGetParameter('autoplay'));
     const timestamp = parseInt(findGetParameter('t'));
+    
+    // Handle timestamp clicks
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('video-timestamp')) {
+        e.preventDefault();
+        const timestamp = parseInt(e.target.dataset.timestamp, 10);
+
+        if (timestamp >= 0 && timestamp < Player.duration()) {
+          Player.currentTime(timestamp);
+        } else if (timestamp >= 0) {
+          Player.play();
+        }
+      }
+    });
 
     if (muted == 1) {
       Player.muted(true);
