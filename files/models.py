@@ -389,6 +389,7 @@ class Media(models.Model):
         Update SearchVector field of SearchModel using raw SQL
         search field is used to store SearchVector
         """
+
         db_table = self._meta.db_table
 
         # first get anything interesting out of the media
@@ -640,7 +641,7 @@ class Media(models.Model):
                 else:
                     self.preview_file_path = encoding.media_file.path
 
-        self.save(update_fields=["encoding_status", "listable", "listable", "preview_file_path"])
+        self.save(update_fields=["encoding_status", "listable", "preview_file_path"])
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
@@ -1573,7 +1574,9 @@ def media_save(sender, instance, created, **kwargs):
     # once model is saved
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
-    print(f'kalesate {media_save}')
+    if not instance.friendly_token:
+        return False
+
     if created:
         from .methods import notify_users
 
@@ -1592,7 +1595,7 @@ def media_save(sender, instance, created, **kwargs):
             tag.update_tag_media()
 
     instance.update_search_vector()
-    print(f'kanei exit i kalesate {media_save}')
+    print(f'kanei exit i media_save')
 
 
 @receiver(pre_delete, sender=Media)

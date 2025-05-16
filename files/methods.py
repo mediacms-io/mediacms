@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def disable_signal(signal, receiver, sender):
+    """Context manager to temporarily disable a signal"""
     signal.disconnect(receiver, sender=sender)
     try:
         yield
