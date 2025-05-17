@@ -87,7 +87,11 @@ else
     pip install --no-binary lxml lxml==4.9.2
     pip install --no-binary xmlsec xmlsec==1.3.13
 fi
-    
+
+# Remove lxml pin from requirements.txt if exists
+sed -i '/lxml==5/d' requirements.txt  # Delete lxml==5.0.0 line
+echo "lxml>=4.9.2" >> requirements.txt # Add lxml>=4.9.2 requirement
+
 # Install other pip requirements.
 pip install -r requirements.txt
 
