@@ -32,7 +32,7 @@ apt install -y lsb-release
 
 osVersion=$(lsb_release -d)
 
-elif [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
+if [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
     echo 'Ubuntu 22 / Debian Bookworm detected - system update and dependency installation, this will take a few minutes'
     apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev libxmlsec1-dev pkg-config virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
 
