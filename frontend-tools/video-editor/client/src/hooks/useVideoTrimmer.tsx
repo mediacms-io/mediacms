@@ -185,13 +185,26 @@ const useVideoTrimmer = () => {
     if (isPlaying) {
       video.pause();
     } else {
+      // iOS Safari fix: Use the last seeked position if available
+      if (!isPlaying && typeof window !== 'undefined' && window.lastSeekedPosition > 0) {
+        // Only apply this if the video is not at the same position already
+        // This avoids unnecessary seeking which might cause playback issues
+        if (Math.abs(video.currentTime - window.lastSeekedPosition) > 0.1) {
+          video.currentTime = window.lastSeekedPosition;
+        }
+      }
       // If at the end of the trim range, reset to the beginning
-      if (video.currentTime >= trimEnd) {
+      else if (video.currentTime >= trimEnd) {
         video.currentTime = trimStart;
       }
+      
       video.play()
         .then(() => {
           // Play started successfully
+          // Reset the last seeked position after successfully starting playback
+          if (typeof window !== 'undefined') {
+            window.lastSeekedPosition = 0;
+          }
         })
         .catch(err => {
           console.error("Error starting playback:", err);
@@ -214,6 +227,12 @@ const useVideoTrimmer = () => {
     // Update the video position
     video.currentTime = time;
     setCurrentTime(time);
+    
+    // Store the position in a global state accessible to iOS Safari
+    // This ensures when play is pressed later, it remembers the position
+    if (typeof window !== 'undefined') {
+      window.lastSeekedPosition = time;
+    }
     
     // Find segment at this position for preview mode playback
     if (wasInPreviewMode) {
@@ -784,10 +803,23 @@ const useVideoTrimmer = () => {
       video.pause();
       setIsPlaying(false);
     } else {
+      // iOS Safari fix: Check for lastSeekedPosition
+      if (typeof window !== 'undefined' && window.lastSeekedPosition > 0) {
+        // Only seek if the position is significantly different
+        if (Math.abs(video.currentTime - window.lastSeekedPosition) > 0.1) {
+          console.log("handlePlay: Using lastSeekedPosition", window.lastSeekedPosition);
+          video.currentTime = window.lastSeekedPosition;
+        }
+      }
+      
       // Play the video from current position with proper promise handling
       video.play()
         .then(() => {
           setIsPlaying(true);
+          // Reset lastSeekedPosition after successful play
+          if (typeof window !== 'undefined') {
+            window.lastSeekedPosition = 0;
+          }
         })
         .catch(err => {
           console.error("Error playing video:", err);
@@ -820,7 +852,9 @@ const useVideoTrimmer = () => {
     };
     
     // Display JSON in alert (for demonstration purposes)
-    alert(JSON.stringify(saveData, null, 2));
+    if (process.env.NODE_ENV === 'development') {
+      console.debug("Saving data:", saveData);
+    }
     
     // Mark as saved - no unsaved changes
     setHasUnsavedChanges(false);
@@ -852,7 +886,9 @@ const useVideoTrimmer = () => {
     };
     
     // Display JSON in alert (for demonstration purposes)
-    alert(JSON.stringify(saveData, null, 2));
+    if (process.env.NODE_ENV === 'development') {
+      console.debug("Saving data as copy:", saveData);
+    }
     
     // Mark as saved - no unsaved changes
     setHasUnsavedChanges(false);
@@ -882,7 +918,9 @@ const useVideoTrimmer = () => {
     };
     
     // Display JSON in alert (for demonstration purposes)
-    alert(JSON.stringify(saveData, null, 2));
+    if (process.env.NODE_ENV === 'development') {
+      console.debug("Saving data as segments:", saveData);
+    }
     
     // Mark as saved - no unsaved changes
     setHasUnsavedChanges(false);

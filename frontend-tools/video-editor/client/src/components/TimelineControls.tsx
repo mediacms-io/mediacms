@@ -12,7 +12,8 @@ import pauseIcon from '../assets/pause-icon.svg';
 import playFromBeginningIcon from '../assets/play-from-beginning-icon.svg';
 import segmentEndIcon from '../assets/segment-end-new.svg';
 import segmentStartIcon from '../assets/segment-start-new.svg';
-
+import segmentNewStartIcon from '../assets/segment-start-new-cutaway.svg';
+import segmentNewEndIcon from '../assets/segment-end-new-cutaway.svg';
 interface TimelineControlsProps {
   currentTime: number;
   duration: number;
@@ -32,6 +33,7 @@ interface TimelineControlsProps {
   onSaveSegments?: () => void;
   isPreviewMode?: boolean;
   hasUnsavedChanges?: boolean;
+  isIOSUninitialized?: boolean;
 }
 
 // Function to calculate and constrain tooltip position to keep it on screen
@@ -74,7 +76,8 @@ const TimelineControls = ({
   onSaveACopy,
   onSaveSegments,
   isPreviewMode,
-  hasUnsavedChanges = false
+  hasUnsavedChanges = false,
+  isIOSUninitialized = false
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -241,10 +244,16 @@ const TimelineControls = ({
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
       const redirectURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectURL || null;
       
+      // Log the request details for debugging
+      logger.debug("Save request:", { mediaId, segments, saveAsCopy: false, redirectURL });
+      
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: false
       });
+
+      // Log the response for debugging
+      logger.debug("Save response:", response);
 
       // Hide processing modal
       setShowProcessingModal(false);
@@ -252,16 +261,23 @@ const TimelineControls = ({
       // Check if response indicates success (200 OK)
       if (response.status === 200) {
         // For "Save", use the redirectURL from the window or response
-        setRedirectUrl(redirectURL || response.url_redirect);
+        const finalRedirectUrl = redirectURL || response.url_redirect;
+        logger.debug("Using redirect URL:", finalRedirectUrl);
+        
+        setRedirectUrl(finalRedirectUrl);
+        setSuccessMessage("Video saved successfully!");
         
         // Show success modal
         setShowSuccessModal(true);
       } else if (response.status === 400) {
         // Set error message from response and show error modal
-        setErrorMessage(response.error || "An error occurred during processing");
+        const errorMsg = response.error || "An error occurred during processing";
+        logger.debug("Save error (400):", errorMsg);
+        setErrorMessage(errorMsg);
         setShowErrorModal(true);
       } else {
         // Handle other status codes as needed
+        logger.debug("Save error (unknown status):", response);
         setErrorMessage("An unexpected error occurred");
         setShowErrorModal(true);
       }
@@ -270,7 +286,9 @@ const TimelineControls = ({
       setShowProcessingModal(false);
       
       // Set error message and show error modal
-      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during processing";
+      logger.debug("Save error (exception):", errorMsg);
+      setErrorMessage(errorMsg);
       setShowErrorModal(true);
     }
   };
@@ -290,11 +308,17 @@ const TimelineControls = ({
 
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
       const redirectUserMediaURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL || null;
+      
+      // Log the request details for debugging
+      logger.debug("Save as copy request:", { mediaId, segments, saveAsCopy: true, redirectUserMediaURL });
 
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: true
       });
+      
+      // Log the response for debugging
+      logger.debug("Save as copy response:", response);
 
       // Hide processing modal
       setShowProcessingModal(false);
@@ -302,16 +326,23 @@ const TimelineControls = ({
       // Check if response indicates success (200 OK)
       if (response.status === 200) {
         // For "Save As Copy", use the redirectUserMediaURL from the window
-        setRedirectUrl(redirectUserMediaURL || response.url_redirect);
+        const finalRedirectUrl = redirectUserMediaURL || response.url_redirect;
+        logger.debug("Using redirect user media URL:", finalRedirectUrl);
+        
+        setRedirectUrl(finalRedirectUrl);
+        setSuccessMessage("Video saved as a new copy!");
         
         // Show success modal
         setShowSuccessModal(true);
       } else if (response.status === 400) {
         // Set error message from response and show error modal
-        setErrorMessage(response.error || "An error occurred during processing");
+        const errorMsg = response.error || "An error occurred during processing";
+        logger.debug("Save as copy error (400):", errorMsg);
+        setErrorMessage(errorMsg);
         setShowErrorModal(true);
       } else {
         // Handle other status codes as needed
+        logger.debug("Save as copy error (unknown status):", response);
         setErrorMessage("An unexpected error occurred");
         setShowErrorModal(true);
       }
@@ -320,7 +351,9 @@ const TimelineControls = ({
       setShowProcessingModal(false);
       
       // Set error message and show error modal
-      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during processing";
+      logger.debug("Save as copy error (exception):", errorMsg);
+      setErrorMessage(errorMsg);
       setShowErrorModal(true);
     }
   };
@@ -341,12 +374,24 @@ const TimelineControls = ({
 
       const mediaId = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId || null;
       const redirectUserMediaURL = typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL || null;
+      
+      // Log the request details for debugging
+      logger.debug("Save segments request:", { 
+        mediaId, 
+        segments, 
+        saveAsCopy: true, 
+        saveIndividualSegments: true,
+        redirectUserMediaURL 
+      });
 
       const response = await trimVideo(mediaId, { 
         segments,
         saveAsCopy: true,
         saveIndividualSegments: true 
       });
+      
+      // Log the response for debugging
+      logger.debug("Save segments response:", response);
 
       // Hide processing modal
       setShowProcessingModal(false);
@@ -354,16 +399,23 @@ const TimelineControls = ({
       // Check if response indicates success (200 OK)
       if (response.status === 200) {
         // For "Save Segments", use the redirectUserMediaURL from the window
-        setRedirectUrl(redirectUserMediaURL || response.url_redirect);
+        const finalRedirectUrl = redirectUserMediaURL || response.url_redirect;
+        logger.debug("Using redirect user media URL for segments:", finalRedirectUrl);
+        
+        setRedirectUrl(finalRedirectUrl);
+        setSuccessMessage(`${segments.length} segments saved successfully!`);
         
         // Show success modal
         setShowSuccessModal(true);
       } else if (response.status === 400) {
         // Set error message from response and show error modal
-        setErrorMessage(response.error || "An error occurred during processing");
+        const errorMsg = response.error || "An error occurred during processing";
+        logger.debug("Save segments error (400):", errorMsg);
+        setErrorMessage(errorMsg);
         setShowErrorModal(true);
       } else {
         // Handle other status codes as needed
+        logger.debug("Save segments error (unknown status):", response);
         setErrorMessage("An unexpected error occurred");
         setShowErrorModal(true);
       }
@@ -373,7 +425,9 @@ const TimelineControls = ({
       setShowProcessingModal(false);
       
       // Set error message and show error modal
-      setErrorMessage(error instanceof Error ? error.message : "An error occurred during processing");
+      const errorMsg = error instanceof Error ? error.message : "An error occurred during processing";
+      logger.debug("Save segments error (exception):", errorMsg);
+      setErrorMessage(errorMsg);
       setShowErrorModal(true);
     }
   };
@@ -446,7 +500,8 @@ const TimelineControls = ({
         logger.debug("Segment playback - time remaining:", 
           formatDetailedTime(timeLeft), 
           "Current:", formatDetailedTime(video.currentTime),
-          "End:", formatDetailedTime(activeSegment.endTime)
+          "End:", formatDetailedTime(activeSegment.endTime),
+          "ContinuePastBoundary:", continuePastBoundary
         );
       }
       
@@ -455,6 +510,8 @@ const TimelineControls = ({
         video.pause();
         video.currentTime = activeSegment.endTime;
         setIsPlayingSegment(false);
+        // Reset continuePastBoundary when stopping at boundary
+        setContinuePastBoundary(false);
         logger.debug("Passed segment end - setting back to exact boundary:", formatDetailedTime(activeSegment.endTime));
         return;
       }
@@ -463,11 +520,39 @@ const TimelineControls = ({
       // Use a small tolerance to ensure we stop as close as possible to boundary
       // But not exactly at the boundary to avoid rounding errors
       if (activeSegment.endTime - video.currentTime < 0.05) {
-        // Pause playback and set the time exactly at the end boundary
-        video.pause();
-        video.currentTime = activeSegment.endTime;
-        setIsPlayingSegment(false);
-        logger.debug("Paused at segment end boundary:", formatDetailedTime(activeSegment.endTime));
+        if (!continuePastBoundary) {
+          // Pause playback and set the time exactly at the end boundary
+          video.pause();
+          video.currentTime = activeSegment.endTime;
+          setIsPlayingSegment(false);
+          logger.debug("Paused at segment end boundary:", formatDetailedTime(activeSegment.endTime));
+          
+          // Look for the next segment after this one (for potential continuation)
+          const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+          const nextSegment = sortedSegments.find(seg => seg.startTime > activeSegment.endTime);
+          
+          // If there's a next segment immediately after this one, update the tooltip to show that segment
+          if (nextSegment && Math.abs(nextSegment.startTime - activeSegment.endTime) < 0.1) {
+            logger.debug("Found adjacent next segment:", nextSegment.id);
+            setSelectedSegmentId(nextSegment.id);
+            setActiveSegment(nextSegment);
+            setDisplayTime(nextSegment.startTime);
+            setClickedTime(nextSegment.startTime);
+            video.currentTime = nextSegment.startTime;
+          }
+        } else {
+          // We're continuing past the boundary
+          logger.debug("Continuing past segment boundary:", formatDetailedTime(activeSegment.endTime));
+          
+          // Reset the flag after we've passed the boundary to ensure we stop at the next boundary
+          if (video.currentTime > activeSegment.endTime) {
+            setContinuePastBoundary(false);
+            logger.debug("Past segment boundary - resetting continuePastBoundary flag");
+            // Remove the active segment to avoid boundary checking until next segment is activated
+            setActiveSegment(null);
+            sessionStorage.removeItem('continuingPastSegment');
+          }
+        }
       }
     };
     
@@ -478,7 +563,7 @@ const TimelineControls = ({
       video.removeEventListener('timeupdate', handleTimeUpdate);
       logger.debug("Segment boundary check DEACTIVATED");
     };
-  }, [activeSegment, isPlayingSegment, isPreviewMode]);
+  }, [activeSegment, isPlayingSegment, isPreviewMode, continuePastBoundary, clipSegments]);
 
   // Update display time and check for transitions between segments and empty spaces
   useEffect(() => {
@@ -488,7 +573,7 @@ const TimelineControls = ({
       if (!videoRef.current.paused) {
         setDisplayTime(currentTime);
         
-        // Also update clickedTime to keep them in sync when playing
+        // Also update clicked time to keep them in sync when playing
         // This ensures correct time is shown when pausing
         setClickedTime(currentTime);
         
@@ -528,6 +613,22 @@ const TimelineControls = ({
           // we need to STOP at the start of this segment - that's the boundary of our cutaway
           const isPlayingVirtualSegment = activeSegment && activeSegment.id < 0 && isPlayingSegment;
           
+          // If the active segment is different from the current segment and it's not a virtual segment
+          // and we're not in "continue past boundary" mode, set this segment as the active segment
+          if (activeSegment?.id !== segmentAtCurrentTime.id && 
+              !isPlayingVirtualSegment && 
+              !isContinuingPastSegment &&
+              !continuePastBoundary) {
+            // We've entered a new segment during normal playback
+            logger.debug(`Entered a new segment during playback: ${segmentAtCurrentTime.id}, setting as active`);
+            setActiveSegment(segmentAtCurrentTime);
+            setSelectedSegmentId(segmentAtCurrentTime.id);
+            setShowEmptySpaceTooltip(false);
+            // Reset continuation flags to ensure boundary detection works for this new segment
+            setContinuePastBoundary(false);
+            sessionStorage.removeItem('continuingPastSegment');
+          }
+          
           // If we're playing a virtual segment and enter a real segment, we've reached our boundary
           // We should stop playback
           if (isPlayingVirtualSegment && video && segmentAtCurrentTime) {
@@ -543,6 +644,13 @@ const TimelineControls = ({
                 // Also update tooltip time displays
                 setDisplayTime(segmentAtCurrentTime.startTime);
                 setClickedTime(segmentAtCurrentTime.startTime);
+                
+                // Reset continuePastBoundary when reaching a segment boundary
+                setContinuePastBoundary(false);
+                
+                // Update tooltip to show segment tooltip at boundary
+                setSelectedSegmentId(segmentAtCurrentTime.id);
+                setShowEmptySpaceTooltip(false);
                 
                 // Force multiple adjustments to ensure exact precision
                 const verifyPosition = () => {
@@ -740,6 +848,11 @@ const TimelineControls = ({
         const position = Math.max(0, Math.min(1, (moveEvent.clientX - timelineRect.left) / timelineWidth));
         const newTime = position * duration;
         
+        // Store position globally for iOS Safari
+        if (typeof window !== 'undefined') {
+          window.lastSeekedPosition = newTime;
+        }
+        
         if (isLeft) {
           if (newTime < trimEnd) {
             // Don't record in history during drag - this avoids multiple history entries
@@ -851,8 +964,29 @@ const TimelineControls = ({
     // 1. Check remaining space until the end of video
     const remainingDuration = Math.max(0, duration - startTime);
     
+    // Special case: If we're very close to the end of the video (within 300ms)
+    // return a small value to ensure the tooltip can still be shown
+    if (duration - startTime < 0.3) {
+      logger.debug("Very close to end of video, ensuring tooltip can show:", 
+                   formatDetailedTime(startTime), "video end:", formatDetailedTime(duration));
+      return 0.5; // Minimum value to show tooltip
+    }
+    
     // 2. Find the next segment (if any)
     const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    
+    // Check if we're exactly at a segment boundary (start or end of any segment)
+    // Use a small tolerance for floating point comparison
+    const isAtSegmentBoundary = sortedSegments.some(seg => 
+      Math.abs(startTime - seg.startTime) < 0.01 || 
+      Math.abs(startTime - seg.endTime) < 0.01
+    );
+    
+    // If we're exactly at a segment boundary, return a small non-zero value to ensure tooltip shows
+    if (isAtSegmentBoundary) {
+      return 0.5; // Minimum value to show tooltip
+    }
+    
     const nextSegment = sortedSegments.find(seg => seg.startTime > startTime);
     
     if (nextSegment) {
@@ -868,6 +1002,12 @@ const TimelineControls = ({
   // Handle timeline click to seek and show a tooltip
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!timelineRef.current || !scrollContainerRef.current) return;
+    
+    // If on mobile device and video hasn't been initialized, don't handle timeline clicks
+    if (isIOSUninitialized) {
+      // Don't do anything on timeline click if mobile device hasn't been initialized
+      return;
+    }
     
     // Check if video is globally playing before the click
     const wasPlaying = videoRef.current && !videoRef.current.paused;
@@ -892,6 +1032,15 @@ const TimelineControls = ({
     
     const newTime = position * duration;
     
+    // Log the position for debugging
+    logger.debug("Timeline clicked at:", formatDetailedTime(newTime), 
+                "distance from end:", formatDetailedTime(duration - newTime));
+    
+    // Store position globally for iOS Safari (this is critical for first-time visits)
+    if (typeof window !== 'undefined') {
+      window.lastSeekedPosition = newTime;
+    }
+    
     // Seek to the clicked position immediately for all clicks
     onSeek(newTime);
     
@@ -899,10 +1048,19 @@ const TimelineControls = ({
     setClickedTime(newTime);
     setDisplayTime(newTime);
     
-    // Find if we clicked in a segment
-    const segmentAtClickedTime = clipSegments.find(
-      seg => newTime >= seg.startTime && newTime <= seg.endTime
-    );
+    // Special case: when clicking very close to the end of the video
+    const isNearVideoEnd = duration - newTime < 0.3; // Within 300ms of the end
+    
+    // Find if we clicked in a segment with a small tolerance for boundaries
+    const segmentAtClickedTime = clipSegments.find(seg => {
+      // Standard check for being inside a segment
+      const isInside = newTime >= seg.startTime && newTime <= seg.endTime;
+      // Additional checks for being exactly at the start or end boundary (with small tolerance)
+      const isAtStart = Math.abs(newTime - seg.startTime) < 0.01;
+      const isAtEnd = Math.abs(newTime - seg.endTime) < 0.01;
+      
+      return isInside || isAtStart || isAtEnd;
+    });
     
     // Handle active segment assignment for boundary checking
     if (segmentAtClickedTime) {
@@ -927,12 +1085,78 @@ const TimelineControls = ({
     
     // Only process tooltip display if clicked on the timeline background or thumbnails, not on other UI elements
     if (e.target === timelineRef.current || (e.target as HTMLElement).classList.contains('timeline-thumbnail')) {
-      // Check if there's a segment at the clicked position
-      const segmentAtClickedTime = clipSegments.find(
-        seg => newTime >= seg.startTime && newTime <= seg.endTime
+      // Special handling for near-end-of-video clicks
+      if (isNearVideoEnd) {
+        logger.debug("Near end of video - showing empty space tooltip");
+        
+        // Force show the empty space tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+        setAvailableSegmentDuration(0.5); // Minimum value
+        
+        // Calculate and set tooltip position
+        let xPos;
+        if (zoomLevel > 1) {
+          const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
+          const clickPosPercent = newTime / duration;
+          xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
+        } else {
+          xPos = e.clientX;
+        }
+        
+        setTooltipPosition({ 
+          x: xPos, 
+          y: rect.top - 10
+        });
+        
+        return; // Exit early since we've handled this special case
+      }
+      
+      // First, check if we're at a segment boundary with a small tolerance
+      const isAtSegmentBoundary = clipSegments.some(seg => 
+        Math.abs(newTime - seg.startTime) < 0.01 || 
+        Math.abs(newTime - seg.endTime) < 0.01
       );
       
-      // If there's a segment, show its tooltip instead of the empty space tooltip
+      // If we're at a segment boundary, ensure we can still show a tooltip
+      if (isAtSegmentBoundary) {
+        logger.debug("Clicked exactly at segment boundary:", formatDetailedTime(newTime));
+        
+        // Find the segment whose boundary we clicked on
+        const boundarySegment = clipSegments.find(seg => 
+          Math.abs(newTime - seg.startTime) < 0.01 || 
+          Math.abs(newTime - seg.endTime) < 0.01
+        );
+        
+        if (boundarySegment) {
+          // If we clicked at the exact end of a segment, show that segment's tooltip
+          if (Math.abs(newTime - boundarySegment.endTime) < 0.01) {
+            setSelectedSegmentId(boundarySegment.id);
+            setShowEmptySpaceTooltip(false);
+            
+            // Calculate and set tooltip position
+            let xPos;
+            if (zoomLevel > 1) {
+              const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
+              const clickPosPercent = newTime / duration;
+              xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
+            } else {
+              xPos = e.clientX;
+            }
+            
+            setTooltipPosition({ 
+              x: xPos, 
+              y: rect.top - 10
+            });
+            
+            return; // Exit early since we've handled this case
+          }
+        }
+        
+        // For other boundary cases, continue to normal processing
+      }
+      
+      // Check if there's a segment at the clicked position
       if (segmentAtClickedTime) {
         setSelectedSegmentId(segmentAtClickedTime.id);
         setShowEmptySpaceTooltip(false);
@@ -1026,6 +1250,10 @@ const TimelineControls = ({
     document.dispatchEvent(new CustomEvent('segment-drag-start', {
       detail: { segmentId }
     }));
+    
+    // Hide tooltip during drag
+    setSelectedSegmentId(null);
+    setShowEmptySpaceTooltip(false);
     
     // Function to handle both mouse and touch movements
     const handleDragMove = (clientX: number) => {
@@ -1171,6 +1399,10 @@ const TimelineControls = ({
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
       }
+      
+      // Keep tooltip hidden after drag
+      setSelectedSegmentId(null);
+      setShowEmptySpaceTooltip(false);
       
       // Record the final position in history as a single action
       const finalSegments = clipSegments.map(seg => {
@@ -1364,6 +1596,8 @@ const TimelineControls = ({
     if ((wasPlaying || isPreviewMode) && videoRef.current) {
       // Set current segment as active segment for boundary checking
       setActiveSegment(segment);
+      // Reset the continuePastBoundary flag when clicking on a segment to ensure boundaries work
+      setContinuePastBoundary(false);
       // Continue playing from the new position
       videoRef.current.play()
         .then(() => {
@@ -1503,6 +1737,482 @@ const TimelineControls = ({
     });
   };
 
+  // Add a new useEffect hook to listen for segment deletion events
+  useEffect(() => {
+    // Handle the segment deletion event
+    const handleSegmentDelete = (event: CustomEvent) => {
+      const { segmentId } = event.detail;
+      
+      // If the deleted segment is the one with the currently open tooltip
+      if (selectedSegmentId === segmentId) {
+        const deletedSegmentIndex = clipSegments.findIndex(seg => seg.id === segmentId);
+        if (deletedSegmentIndex !== -1) {
+          const deletedSegment = clipSegments[deletedSegmentIndex];
+          
+          // We need the current time to check if we should show the cutaway tooltip
+          const currentVideoTime = currentTime;
+          
+          // Check if the current time was within the deleted segment
+          const wasInsideDeletedSegment = 
+            currentVideoTime >= deletedSegment.startTime && 
+            currentVideoTime <= deletedSegment.endTime;
+          
+          // Calculate position in the middle of the deleted segment for tooltip
+          const deletedSegmentMiddle = (deletedSegment.startTime + deletedSegment.endTime) / 2;
+          const timeToUse = wasInsideDeletedSegment ? currentVideoTime : deletedSegmentMiddle;
+          
+          // Calculate available space after deletion
+          const availableSpace = calculateAvailableSpace(timeToUse);
+          
+          // Update UI to show cutaway tooltip in place of segment tooltip
+          setSelectedSegmentId(null);
+          
+          if (availableSpace >= 0.5) {
+            // Set the time for the tooltip
+            setClickedTime(timeToUse);
+            setDisplayTime(timeToUse);
+            
+            // Calculate tooltip position
+            if (timelineRef.current) {
+              const rect = timelineRef.current.getBoundingClientRect();
+              const posPercent = (timeToUse / duration) * 100;
+              const xPosition = rect.left + (rect.width * (posPercent / 100));
+              
+              setTooltipPosition({
+                x: xPosition,
+                y: rect.top - 10
+              });
+              
+              // Show the empty space tooltip
+              setAvailableSegmentDuration(availableSpace);
+              setShowEmptySpaceTooltip(true);
+              
+              logger.debug("Segment deleted, showing cutaway tooltip with available space:", 
+                formatDetailedTime(availableSpace),
+                "at position:",
+                formatDetailedTime(timeToUse)
+              );
+            }
+          } else {
+            // Not enough space for a new segment, hide tooltips
+            setShowEmptySpaceTooltip(false);
+          }
+        }
+      }
+    };
+    
+    // Add event listener for the custom delete-segment event
+    document.addEventListener('delete-segment', handleSegmentDelete as EventListener);
+    
+    // Clean up event listener on component unmount
+    return () => {
+      document.removeEventListener('delete-segment', handleSegmentDelete as EventListener);
+    };
+  }, [selectedSegmentId, clipSegments, currentTime, duration]);
+
+  // Add an effect to synchronize tooltip play state with video play state
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    const handlePlay = () => {
+      logger.debug("Video started playing from external control");
+      setIsPlayingSegment(true);
+    };
+    
+    const handlePause = () => {
+      logger.debug("Video paused from external control");
+      setIsPlayingSegment(false);
+    };
+    
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    
+    return () => {
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, []);
+
+  // Handle mouse movement over timeline to remember position
+  const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!timelineRef.current) return;
+    
+    const rect = timelineRef.current.getBoundingClientRect();
+    const position = (e.clientX - rect.left) / rect.width;
+    const time = position * duration;
+    
+    // Ensure time is within bounds
+    const boundedTime = Math.max(0, Math.min(duration, time));
+    
+    // Store position globally for iOS Safari
+    if (typeof window !== 'undefined') {
+      window.lastSeekedPosition = boundedTime;
+    }
+  };
+
+  // Add the dragging state and handlers to the component
+
+  // Inside the TimelineControls component, add these new state variables
+  const [isDragging, setIsDragging] = useState(false);
+  // Add a dragging ref to track state without relying on React's state updates
+  const isDraggingRef = useRef(false);
+
+  // Add drag handlers to enable dragging the timeline marker
+  const startDrag = (e: React.MouseEvent | React.TouchEvent) => {
+    // If on mobile device and video hasn't been initialized, don't allow dragging
+    if (isIOSUninitialized) {
+      return;
+    }
+    
+    e.stopPropagation(); // Don't trigger the timeline click
+    e.preventDefault(); // Prevent text selection during drag
+    
+    setIsDragging(true);
+    isDraggingRef.current = true; // Use ref for immediate value access
+    
+    // Show tooltip immediately when starting to drag
+    // Find the segment at the current time using improved matching
+    const segmentAtCurrentTime = clipSegments.find(seg => {
+      const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
+      const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
+      const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
+      return isWithinSegment || isAtExactStart || isAtExactEnd;
+    });
+    
+    if (segmentAtCurrentTime) {
+      // Show segment tooltip
+      setSelectedSegmentId(segmentAtCurrentTime.id);
+      setShowEmptySpaceTooltip(false);
+    } else {
+      // Calculate available space for new segment before showing tooltip
+      const availableSpace = calculateAvailableSpace(currentTime);
+      setAvailableSegmentDuration(availableSpace);
+      
+      // Only show tooltip if there's enough space for a minimal segment
+      if (availableSpace >= 0.5) {
+        // Show empty space tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+      }
+    }
+    
+    // Handle mouse events
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!timelineRef.current || !scrollContainerRef.current) return;
+      
+      // Calculate the position based on mouse or touch coordinates
+      const rect = timelineRef.current.getBoundingClientRect();
+      let position;
+      
+      if (zoomLevel > 1) {
+        // When zoomed, account for scroll position
+        const scrollLeft = scrollContainerRef.current.scrollLeft;
+        const totalWidth = timelineRef.current.clientWidth;
+        position = (moveEvent.clientX - rect.left + scrollLeft) / totalWidth;
+      } else {
+        // Normal calculation for 1x zoom
+        position = (moveEvent.clientX - rect.left) / rect.width;
+      }
+      
+      // Constrain position between 0 and 1
+      position = Math.max(0, Math.min(1, position));
+      
+      // Convert to time and seek
+      const newTime = position * duration;
+      
+      // Update both clicked time and display time to show the current position in tooltip
+      setClickedTime(newTime);
+      setDisplayTime(newTime);
+      
+      // Check if we're in a segment to show the appropriate tooltip
+      const segmentAtTime = clipSegments.find(
+        seg => newTime >= seg.startTime && newTime <= seg.endTime
+      );
+      
+      // Calculate available space for new segment if needed
+      const availableSpace = segmentAtTime ? 0 : calculateAvailableSpace(newTime);
+      
+      if (segmentAtTime) {
+        // Show segment tooltip
+        setSelectedSegmentId(segmentAtTime.id);
+        setShowEmptySpaceTooltip(false);
+      } else if (availableSpace >= 0.5) {
+        // Only show tooltip if there's enough space for a minimal segment
+        // Show empty space tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+        setAvailableSegmentDuration(availableSpace);
+      } else {
+        // Not enough space, don't show tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(false);
+      }
+      
+      // Calculate and update tooltip position
+      if ((segmentAtTime || availableSpace >= 0.5) && timelineRef.current) {
+        const timelineRect = timelineRef.current.getBoundingClientRect();
+        let xPos = moveEvent.clientX; // Default to cursor position
+        
+        if (zoomLevel > 1 && scrollContainerRef.current) {
+          // For zoomed timeline, adjust for scroll position
+          const visibleTimelineLeft = timelineRect.left - scrollContainerRef.current.scrollLeft;
+          const percentPos = newTime / duration;
+          xPos = visibleTimelineLeft + (timelineRect.width * percentPos);
+        }
+        
+        setTooltipPosition({
+          x: xPos,
+          y: timelineRect.top - 10
+        });
+      }
+      
+      // Store position globally for iOS Safari
+      if (typeof window !== 'undefined') {
+        (window as any).lastSeekedPosition = newTime;
+      }
+      
+      // Seek to the new position
+      onSeek(newTime);
+    };
+    
+    // Handle touch move events
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (!timelineRef.current || !scrollContainerRef.current || !moveEvent.touches[0]) return;
+      
+      // Calculate the position based on touch coordinates
+      const rect = timelineRef.current.getBoundingClientRect();
+      let position;
+      
+      if (zoomLevel > 1) {
+        // When zoomed, account for scroll position
+        const scrollLeft = scrollContainerRef.current.scrollLeft;
+        const totalWidth = timelineRef.current.clientWidth;
+        position = (moveEvent.touches[0].clientX - rect.left + scrollLeft) / totalWidth;
+      } else {
+        // Normal calculation for 1x zoom
+        position = (moveEvent.touches[0].clientX - rect.left) / rect.width;
+      }
+      
+      // Constrain position between 0 and 1
+      position = Math.max(0, Math.min(1, position));
+      
+      // Convert to time and seek
+      const newTime = position * duration;
+      
+      // Update both clicked time and display time to show the current position in tooltip
+      setClickedTime(newTime);
+      setDisplayTime(newTime);
+      
+      // Check if we're in a segment to show the appropriate tooltip
+      const segmentAtTime = clipSegments.find(
+        seg => newTime >= seg.startTime && newTime <= seg.endTime
+      );
+      
+      // Calculate available space for new segment if needed
+      const availableSpace = segmentAtTime ? 0 : calculateAvailableSpace(newTime);
+      
+      if (segmentAtTime) {
+        // Show segment tooltip
+        setSelectedSegmentId(segmentAtTime.id);
+        setShowEmptySpaceTooltip(false);
+      } else if (availableSpace >= 0.5) {
+        // Only show tooltip if there's enough space for a minimal segment
+        // Show empty space tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+        setAvailableSegmentDuration(availableSpace);
+      } else {
+        // Not enough space, don't show tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(false);
+      }
+      
+      // Calculate and update tooltip position
+      if ((segmentAtTime || availableSpace >= 0.5) && timelineRef.current) {
+        const timelineRect = timelineRef.current.getBoundingClientRect();
+        let xPos = moveEvent.touches[0].clientX; // Default to touch position
+        
+        if (zoomLevel > 1 && scrollContainerRef.current) {
+          // For zoomed timeline, adjust for scroll position
+          const visibleTimelineLeft = timelineRect.left - scrollContainerRef.current.scrollLeft;
+          const percentPos = newTime / duration;
+          xPos = visibleTimelineLeft + (timelineRect.width * percentPos);
+        }
+        
+        setTooltipPosition({
+          x: xPos,
+          y: timelineRect.top - 10
+        });
+      }
+      
+      // Store position globally for mobile browsers
+      if (typeof window !== 'undefined') {
+        (window as any).lastSeekedPosition = newTime;
+      }
+      
+      // Seek to the new position
+      onSeek(newTime);
+    };
+    
+    // Handle mouse up to stop dragging
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      isDraggingRef.current = false; // Update ref immediately
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    // Add event listeners to track movement and release
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    // Remove these incorrect event listeners that were causing linter errors
+    // document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    // document.addEventListener('touchend', handleTouchEnd);
+    // document.addEventListener('touchcancel', handleTouchEnd);
+  };
+
+  // Handle touch events for mobile devices
+  const startTouchDrag = (e: React.TouchEvent) => {
+    // If on mobile device and video hasn't been initialized, don't allow dragging
+    if (isIOSUninitialized) {
+      return;
+    }
+    
+    e.stopPropagation(); // Don't trigger the timeline click
+    
+    setIsDragging(true);
+    isDraggingRef.current = true; // Use ref for immediate value access
+    
+    // Show tooltip immediately when starting to drag
+    // Find the segment at the current time using improved matching
+    const segmentAtCurrentTime = clipSegments.find(seg => {
+      const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
+      const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
+      const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
+      return isWithinSegment || isAtExactStart || isAtExactEnd;
+    });
+    
+    if (segmentAtCurrentTime) {
+      // Show segment tooltip
+      setSelectedSegmentId(segmentAtCurrentTime.id);
+      setShowEmptySpaceTooltip(false);
+    } else {
+      // Calculate available space for new segment before showing tooltip
+      const availableSpace = calculateAvailableSpace(currentTime);
+      setAvailableSegmentDuration(availableSpace);
+      
+      // Only show tooltip if there's enough space for a minimal segment
+      if (availableSpace >= 0.5) {
+        // Show empty space tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+      }
+    }
+    
+    // Handle touch move events
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (!timelineRef.current || !scrollContainerRef.current || !moveEvent.touches[0]) return;
+      
+      // Calculate the position based on touch coordinates
+      const rect = timelineRef.current.getBoundingClientRect();
+      let position;
+      
+      if (zoomLevel > 1) {
+        // When zoomed, account for scroll position
+        const scrollLeft = scrollContainerRef.current.scrollLeft;
+        const totalWidth = timelineRef.current.clientWidth;
+        position = (moveEvent.touches[0].clientX - rect.left + scrollLeft) / totalWidth;
+      } else {
+        // Normal calculation for 1x zoom
+        position = (moveEvent.touches[0].clientX - rect.left) / rect.width;
+      }
+      
+      // Constrain position between 0 and 1
+      position = Math.max(0, Math.min(1, position));
+      
+      // Convert to time and seek
+      const newTime = position * duration;
+      
+      // Update both clicked time and display time to show the current position in tooltip
+      setClickedTime(newTime);
+      setDisplayTime(newTime);
+      
+      // Store position globally for mobile browsers
+      if (typeof window !== 'undefined') {
+        (window as any).lastSeekedPosition = newTime;
+      }
+      
+      // Seek to the new position
+      onSeek(newTime);
+    };
+    
+    // Handle touch end to stop dragging
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      isDraggingRef.current = false; // Update ref immediately 
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
+    };
+    
+    // Add event listeners to track movement and release
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchEnd);
+  };
+
+  // Add a useEffect to log the redirect URL whenever it changes
+  useEffect(() => {
+    if (redirectUrl) {
+      logger.debug('Redirect URL updated:', {
+        redirectUrl,
+        saveType,
+        isSuccessModalOpen: showSuccessModal
+      });
+    }
+  }, [redirectUrl, saveType, showSuccessModal]);
+
+  // Add a useEffect for auto-redirection
+  useEffect(() => {
+    let countdownInterval: NodeJS.Timeout;
+    let redirectTimeout: NodeJS.Timeout;
+    
+    if (showSuccessModal && redirectUrl) {
+      // Start countdown timer
+      let secondsLeft = 10;
+      
+      // Update the countdown every second
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        const countdownElement = document.querySelector('.countdown');
+        if (countdownElement) {
+          countdownElement.textContent = secondsLeft.toString();
+        }
+        
+        if (secondsLeft <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+      
+      // Set redirect timeout
+      redirectTimeout = setTimeout(() => {
+        // Reset unsaved changes flag before navigating away
+        if (onSave) onSave();
+        
+        // Redirect to the URL
+        logger.debug('Automatically redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
+      }, 100000); // 10 seconds
+    }
+    
+    // Cleanup on unmount or when success modal closes
+    return () => {
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (redirectTimeout) clearTimeout(redirectTimeout);
+    };
+  }, [showSuccessModal, redirectUrl, onSave]);
+
   return (
     <div className="timeline-container-card">
       {/* Current Timecode with Milliseconds */}
@@ -1527,9 +2237,10 @@ const TimelineControls = ({
           ref={timelineRef}
           className="timeline-container"
           onClick={handleTimelineClick}
-
+          onMouseMove={handleTimelineMouseMove}
           style={{ 
-            width: `${zoomLevel === 1 ? '100%' : `${zoomLevel * 100}%`}`
+            width: `${zoomLevel * 100}%`,
+            cursor: 'pointer'
           }}
         >
           {/* Current Position Marker */}
@@ -1538,7 +2249,7 @@ const TimelineControls = ({
             style={{ left: `${currentTimePercent}%` }}
           >
             <div 
-              className="timeline-marker-head"
+              className={`timeline-marker-head ${isDragging ? 'dragging' : ''}`}
               onClick={(e) => {
                 // Prevent event propagation to avoid triggering the timeline container click
                 e.stopPropagation();
@@ -1583,11 +2294,14 @@ const TimelineControls = ({
                     // Only show tooltip if there's enough space for a minimal segment
                     if (availableSpace >= 0.5) {
                       // Show empty space tooltip
+                      setSelectedSegmentId(null);
                       setShowEmptySpaceTooltip(true);
                     }
                   }
                 }
               }}
+              onMouseDown={startDrag}
+              onTouchStart={startTouchDrag}
             >
               <span className="timeline-marker-head-icon">
                 {selectedSegmentId || showEmptySpaceTooltip ? '-' : '+'}
@@ -1664,8 +2378,7 @@ const TimelineControls = ({
                       } 
                     });
                     document.dispatchEvent(deleteEvent);
-                    // Keep the tooltip open (we're removing this line)
-                    // setSelectedSegmentId(null);
+                    // We don't need to manually close the tooltip - our event handler will take care of updating the UI
                   }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1781,6 +2494,34 @@ const TimelineControls = ({
                         const isNearEnd = Math.abs(videoRef.current.currentTime - segment.endTime) < 0.05;
                         
                         if (isExactlyAtEnd || isNearEnd) {
+                          // Check if there's a segment immediately after this one
+                          const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                          const nextSegmentIndex = sortedSegments.findIndex(seg => seg.id === segment.id) + 1;
+                          const nextSegment = nextSegmentIndex < sortedSegments.length ? sortedSegments[nextSegmentIndex] : null;
+                          
+                          // If there's an adjacent segment (no gap between segments)
+                          if (nextSegment && Math.abs(nextSegment.startTime - segment.endTime) < 0.1) {
+                            // Move to the start of the next segment
+                            logger.debug(`At segment boundary: Moving to adjacent segment ${nextSegment.id}`);
+                            videoRef.current.currentTime = nextSegment.startTime;
+                            setSelectedSegmentId(nextSegment.id);
+                            setActiveSegment(nextSegment);
+                            setDisplayTime(nextSegment.startTime);
+                            setClickedTime(nextSegment.startTime);
+                            
+                            // Play from this next segment
+                            videoRef.current.play()
+                              .then(() => {
+                                setIsPlayingSegment(true);
+                                logger.debug("Playing from adjacent segment");
+                              })
+                              .catch(err => {
+                                console.error("Error playing from adjacent segment:", err);
+                              });
+                            
+                            return; // Exit early since we've handled this case
+                          }
+                          
                           // If we're at or near the segment end, move significantly past it
                           // This ensures we completely bypass the end boundary
                           const newPosition = segment.endTime + 0.5; // Move half a second past end
@@ -2115,6 +2856,27 @@ const TimelineControls = ({
                           logger.debug(`Approaching boundary at ${formatDetailedTime(nextSegment.startTime)}, continuePastBoundary=${continuePastBoundary}, willStop=${shouldStop}`);
                         }
                         
+                        // Also check if we've entered a different segment - we need to detect this too
+                        const segmentAtCurrentTime = segments.find(
+                          seg => currentPosition >= seg.startTime && currentPosition <= seg.endTime
+                        );
+                        
+                        // If we've moved directly into a segment during playback, we need to update the active segment
+                        if (segmentAtCurrentTime && activeSegment?.id !== segmentAtCurrentTime.id) {
+                          logger.debug(`Entered segment ${segmentAtCurrentTime.id} during cutaway playback`);
+                          setActiveSegment(segmentAtCurrentTime);
+                          setSelectedSegmentId(segmentAtCurrentTime.id);
+                          setShowEmptySpaceTooltip(false);
+                          
+                          // Remove our boundary checker since we're now in a standard segment
+                          videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
+                          
+                          // Reset continuation flags
+                          setContinuePastBoundary(false);
+                          sessionStorage.removeItem('continuingPastSegment');
+                          return;
+                        }
+                        
                         // If we've entered a segment, stop at its boundary
                         if (shouldStop && nextSegment) {
                           logger.debug(`CUTAWAY MANUAL BOUNDARY CHECK: Current position ${formatDetailedTime(currentPosition)} approaching segment at ${formatDetailedTime(nextSegment.startTime)} (distance: ${Math.abs(currentPosition - nextSegment.startTime).toFixed(3)}s) - STOPPING`);
@@ -2130,6 +2892,14 @@ const TimelineControls = ({
                               // Also update tooltip time displays
                               setDisplayTime(nextSegment.startTime);
                               setClickedTime(nextSegment.startTime);
+                              
+                              // Reset continuePastBoundary when stopping at a boundary
+                              setContinuePastBoundary(false);
+                              
+                              // Update tooltip to show the segment at the boundary
+                              setSelectedSegmentId(nextSegment.id);
+                              setShowEmptySpaceTooltip(false);
+                              setActiveSegment(nextSegment);
                               
                               // Force multiple adjustments to ensure exact precision
                               const verifyPosition = () => {
@@ -2239,6 +3009,33 @@ const TimelineControls = ({
                         const currentTime = videoRef.current.currentTime;
                         const nextSegment = sortedSegments.find(seg => seg.startTime > currentTime);
                         
+                        // Check if we're at a segment boundary that we previously stopped at
+                        const isAtSegmentBoundary = nextSegment && Math.abs(currentTime - nextSegment.startTime) < 0.05;
+                        
+                        if (isAtSegmentBoundary && nextSegment) {
+                          // We're at the start of a segment - just continue into the segment rather than staying in cutaway
+                          logger.debug(`At segment boundary: Moving into segment ${nextSegment.id}`);
+                          
+                          // Update UI to show segment tooltip instead of empty space tooltip
+                          setSelectedSegmentId(nextSegment.id);
+                          setShowEmptySpaceTooltip(false);
+                          
+                          // Set this segment as the active segment for boundary checking
+                          setActiveSegment(nextSegment);
+                          
+                          // Play from this segment directly
+                          videoRef.current.play()
+                            .then(() => {
+                              setIsPlayingSegment(true);
+                              logger.debug("Playing from segment start after boundary");
+                            })
+                            .catch(err => {
+                              console.error("Error starting playback:", err);
+                            });
+                          
+                          return;  // Exit early as we've handled this special case
+                        }
+                        
                         // Define end boundary (either next segment start or video end)
                         const endTime = nextSegment ? nextSegment.startTime : duration;
                         
@@ -2287,6 +3084,27 @@ const TimelineControls = ({
                           // to catch the boundary earlier
                           const nextSegment = segments.find(seg => seg.startTime > currentPosition - 0.3);
                           
+                          // Also check if we've entered a different segment - we need to detect this too
+                          const segmentAtCurrentTime = segments.find(
+                            seg => currentPosition >= seg.startTime && currentPosition <= seg.endTime
+                          );
+                          
+                          // If we've moved directly into a segment during playback, we need to update the active segment
+                          if (segmentAtCurrentTime && activeSegment?.id !== segmentAtCurrentTime.id) {
+                            logger.debug(`Entered segment ${segmentAtCurrentTime.id} during cutaway playback`);
+                            setActiveSegment(segmentAtCurrentTime);
+                            setSelectedSegmentId(segmentAtCurrentTime.id);
+                            setShowEmptySpaceTooltip(false);
+                            
+                            // Remove our boundary checker since we're now in a standard segment
+                            videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
+                            
+                            // Reset continuation flags
+                            setContinuePastBoundary(false);
+                            sessionStorage.removeItem('continuingPastSegment');
+                            return;
+                          }
+                          
                           // We need to detect boundaries much earlier to allow for time to react
                           // This is a key fix - we need to detect the boundary BEFORE we reach it
                           // But don't stop if we're in continuePastBoundary mode
@@ -2316,6 +3134,14 @@ const TimelineControls = ({
                                 // Also update tooltip time displays
                                 setDisplayTime(nextSegment.startTime);
                                 setClickedTime(nextSegment.startTime);
+                                
+                                // Reset continuePastBoundary when stopping at a boundary
+                                setContinuePastBoundary(false);
+                                
+                                // Update tooltip to show the segment at the boundary
+                                setSelectedSegmentId(nextSegment.id);
+                                setShowEmptySpaceTooltip(false);
+                                setActiveSegment(nextSegment);
                                 
                                 // Force multiple adjustments to ensure exact precision
                                 const verifyPosition = () => {
@@ -2571,7 +3397,7 @@ const TimelineControls = ({
                     }
                   }}
                 >
-                  <img src={segmentEndIcon} alt="Set end point" style={{width: '24px', height: '24px'}} />
+                  <img src={segmentNewEndIcon} alt="Set end point" style={{width: '24px', height: '24px'}} />
                 </button>
                 
                 {/* Segment start adjustment button (always shown) */}
@@ -2778,11 +3604,8 @@ const TimelineControls = ({
                     }
                   }}
                 >
-                  <svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
-                    <g data-name="1" id="_1">
-                      <path d="M27,3V29a1,1,0,0,1-1,1H6a1,1,0,0,1-1-1V27H7v1H25V4H7V7H5V3A1,1,0,0,1,6,2H26A1,1,0,0,1,27,3ZM12.29,20.29l1.42,1.42,5-5a1,1,0,0,0,0-1.42l-5-5-1.42,1.42L15.59,15H5v2H15.59Z" id="login_account_enter_door"/>
-                    </g>
-                  </svg>
+                   <img src={segmentNewStartIcon} alt="Set start point" style={{width: '24px', height: '24px'}} />
+                 
                 </button>
               </div>
             </div>
@@ -3098,7 +3921,11 @@ const TimelineControls = ({
                 </button>
                 <button 
                   className="modal-button modal-button-primary" 
-                  onClick={handleSaveConfirm}
+                  onClick={() => {
+                    // Reset unsaved changes flag before saving
+                    if (onSave) onSave();
+                    handleSaveConfirm();
+                  }}
                 >
                   Confirm Save
                 </button>
@@ -3128,7 +3955,11 @@ const TimelineControls = ({
                 </button>
                 <button 
                   className="modal-button modal-button-primary" 
-                  onClick={handleSaveAsCopyConfirm}
+                  onClick={() => {
+                    // Reset unsaved changes flag before saving
+                    if (onSaveACopy) onSaveACopy();
+                    handleSaveAsCopyConfirm();
+                  }}
                 >
                   Confirm Save As Copy
                 </button>
@@ -3172,7 +4003,11 @@ const TimelineControls = ({
                 </button>
                 <button 
                   className="modal-button modal-button-primary" 
-                  onClick={handleSaveSegmentsConfirm}
+                  onClick={() => {
+                    // Reset unsaved changes flag before saving
+                    if (onSaveSegments) onSaveSegments();
+                    handleSaveSegmentsConfirm();
+                  }}
                 >
                   Save Segments
                 </button>
@@ -3192,22 +4027,22 @@ const TimelineControls = ({
           <Modal
             isOpen={showSuccessModal}
             onClose={() => setShowSuccessModal(false)}
-            title="Video Processed Successfully"
+            title="Video Edited Successfully"
           >
-            <div className="modal-choices">
-              {redirectUrl && (
-                <a 
-                  href={redirectUrl}
-                  className="modal-choice-button centered-choice"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                  {saveType === "save" ? "Go to media page" : 
-                   saveType === "copy" ? "Go to the media page, the new video will soon be there" : 
-                   "Go to the media page, the new video(s) will soon be there"}
-                </a>
-              )}
+            <div className="modal-success-content">
+              {/* <p className="modal-message text-center">
+                {successMessage || "Processing completed successfully!"}
+              </p> */}
+              
+              <p className="modal-message text-center redirect-message">
+                {saveType === "segments" 
+                  ? "You will be redirected to your media page in "
+                  : "You will be redirected to your media page in "}
+                <span className="countdown">10</span> seconds. {' '}
+                {saveType === "segments" 
+                  ? "The new video(s) will soon be there."
+                  : "Changes to the video might take a few minutes to be applied."}
+              </p>
             </div>
           </Modal>
           
@@ -3217,16 +4052,18 @@ const TimelineControls = ({
             onClose={() => setShowErrorModal(false)}
             title="Video Processing Error"
           >
-            <div className="modal-error-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
+            <div className="modal-error-content">
+              <div className="modal-error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#F44336" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <p className="modal-message text-center error-message">
+                {errorMessage}
+              </p>
             </div>
-            <p className="modal-message text-center">
-              {errorMessage}
-            </p>
             <div className="modal-choices">
               <button 
                 onClick={() => setShowErrorModal(false)}
@@ -3244,6 +4081,16 @@ const TimelineControls = ({
           {/* Dropdown was moved inside the container element */}
         </div>
       </div>
+      
+      {/* Mobile Uninitialized Overlay - Show only when on mobile and video hasn't been played yet */}
+      {isIOSUninitialized && (
+        <div className="mobile-timeline-overlay">
+          <div className="mobile-timeline-message">
+            <p>Please play the video first to enable timeline controls</p>
+            <div className="mobile-play-icon"></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

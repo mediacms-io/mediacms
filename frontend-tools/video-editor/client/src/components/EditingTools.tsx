@@ -25,6 +25,17 @@ const EditingTools = ({
   isPreviewMode = false,
   isPlaying = false,
 }: EditingToolsProps) => {
+  // Handle play button click with iOS fix
+  const handlePlay = () => {
+    // Ensure lastSeekedPosition is used when play is clicked
+    if (typeof window !== 'undefined') {
+      console.log("Play button clicked, current lastSeekedPosition:", window.lastSeekedPosition);
+    }
+    
+    // Call the original handler
+    onPlay();
+  };
+
   return (
     <div className="editing-tools-container">
       <div className="flex-container single-row">
@@ -63,7 +74,7 @@ const EditingTools = ({
           {!isPreviewMode && (
             <button 
               className="button play-button"
-              onClick={onPlay}
+              onClick={handlePlay}
               data-tooltip={isPlaying ? "Pause video" : "Play full video"}
               style={{ fontSize: '0.875rem' }}
             >

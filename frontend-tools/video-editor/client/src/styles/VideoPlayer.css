@@ -149,45 +149,72 @@
   }
   
   .video-progress {
-    width: 100%;
-    height: 4px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
     position: relative;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
     cursor: pointer;
-    margin-bottom: 0.75rem;
-    
-    &:hover {
-      height: 6px;
-      
-      .video-scrubber {
-        transform: translate(-50%, -50%) scale(1.2);
-      }
-    }
+    margin: 0 10px;
+    touch-action: none; /* Prevent browser handling of drag gestures */
+    flex-grow: 1;
+  }
+  
+  .video-progress.dragging {
+    height: 8px;
   }
   
   .video-progress-fill {
-    height: 100%;
-    background-color: #ef4444;
-    border-radius: 2px;
     position: absolute;
     top: 0;
     left: 0;
+    height: 100%;
+    background-color: #ff0000;
+    border-radius: 3px;
+    pointer-events: none;
   }
   
   .video-scrubber {
-    width: 12px;
-    height: 12px;
-    background-color: #ef4444;
-    border-radius: 50%;
     position: absolute;
     top: 50%;
-    left: 0; /* This will be overridden by inline style */
-    /* Fix vertical centering by adjusting transform */
     transform: translate(-50%, -50%);
-    transition: transform 0.2s;
-    /* Add a small border to make it more visible */
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    width: 16px;
+    height: 16px;
+    background-color: #ff0000;
+    border-radius: 50%;
+    cursor: grab;
+    transition: transform 0.1s ease, width 0.1s ease, height 0.1s ease;
+  }
+  
+  /* Make the scrubber larger when dragging for better control */
+  .video-progress.dragging .video-scrubber {
+    transform: translate(-50%, -50%) scale(1.2);
+    width: 18px;
+    height: 18px;
+    cursor: grabbing;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  }
+  
+  /* Enhance for touch devices */
+  @media (pointer: coarse) {
+    .video-scrubber {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .video-progress.dragging .video-scrubber {
+      width: 24px;
+      height: 24px;
+    }
+    
+    /* Create a larger invisible touch target */
+    .video-scrubber:before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      bottom: -10px;
+    }
   }
   
   .video-controls-buttons {
@@ -215,5 +242,35 @@
       width: 1.25rem;
       height: 1.25rem;
     }
+  }
+  
+  /* Time tooltip that appears when dragging */
+  .video-time-tooltip {
+    position: absolute;
+    top: -30px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Add a small arrow to the tooltip */
+  .video-time-tooltip:after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid rgba(0, 0, 0, 0.7);
   }
 } 

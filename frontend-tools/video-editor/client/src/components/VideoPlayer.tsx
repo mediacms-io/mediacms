@@ -1,5 +1,5 @@
-import { useRef, useEffect } from "react";
-import { formatTime } from "@/lib/timeUtils";
+import { useRef, useEffect, useState } from "react";
+import { formatTime, formatDetailedTime } from "@/lib/timeUtils";
 import '../styles/VideoPlayer.css';
 
 interface VideoPlayerProps {
@@ -24,9 +24,43 @@ const VideoPlayer = ({
   onToggleMute
 }: VideoPlayerProps) => {
   const progressRef = useRef<HTMLDivElement>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [lastPosition, setLastPosition] = useState<number | null>(null);
+  const [isDraggingProgress, setIsDraggingProgress] = useState(false);
+  const isDraggingProgressRef = useRef(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0 });
+  const [tooltipTime, setTooltipTime] = useState(0);
+  
   const sampleVideoUrl = typeof window !== 'undefined' && 
     (window as any).MEDIA_DATA?.videoUrl || 
     "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+  
+  // Detect iOS device
+  useEffect(() => {
+    const checkIOS = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+    };
+    
+    setIsIOS(checkIOS());
+    
+    // Check if video was previously initialized
+    if (typeof window !== 'undefined') {
+      const wasInitialized = localStorage.getItem('video_initialized') === 'true';
+      setHasInitialized(wasInitialized);
+    }
+  }, []);
+  
+  // Update initialized state when video plays
+  useEffect(() => {
+    if (isPlaying && !hasInitialized) {
+      setHasInitialized(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('video_initialized', 'true');
+      }
+    }
+  }, [isPlaying, hasInitialized]);
   
   // Add iOS-specific attributes to prevent fullscreen playback
   useEffect(() => {
@@ -39,25 +73,158 @@ const VideoPlayer = ({
     }
   }, [videoRef]);
   
+  // Save current time to lastPosition when it changes (from external seeking)
+  useEffect(() => {
+    setLastPosition(currentTime);
+  }, [currentTime]);
+  
   // Jump 10 seconds forward
   const handleForward = () => {
-    onSeek(Math.min(currentTime + 10, duration));
+    const newTime = Math.min(currentTime + 10, duration);
+    onSeek(newTime);
+    setLastPosition(newTime);
   };
 
   // Jump 10 seconds backward
   const handleBackward = () => {
-    onSeek(Math.max(currentTime - 10, 0));
+    const newTime = Math.max(currentTime - 10, 0);
+    onSeek(newTime);
+    setLastPosition(newTime);
   };
   
   // Calculate progress percentage
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  // Handle click on progress bar
+  // Handle start of progress bar dragging
+  const handleProgressDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    setIsDraggingProgress(true);
+    isDraggingProgressRef.current = true;
+    
+    // Get initial position
+    handleProgressDrag(e);
+    
+    // Set up document-level event listeners for mouse movement and release
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (isDraggingProgressRef.current) {
+        handleProgressDrag(moveEvent);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsDraggingProgress(false);
+      isDraggingProgressRef.current = false;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+  
+  // Handle progress dragging for both mouse and touch events
+  const handleProgressDrag = (e: MouseEvent | React.MouseEvent) => {
+    if (!progressRef.current) return;
+    
+    const rect = progressRef.current.getBoundingClientRect();
+    const clickPosition = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const seekTime = duration * clickPosition;
+    
+    // Update tooltip position and time
+    setTooltipPosition({ x: e.clientX });
+    setTooltipTime(seekTime);
+    
+    // Store position locally for iOS Safari - critical for timeline seeking
+    setLastPosition(seekTime);
+    
+    // Also store globally for integration with other components
+    if (typeof window !== 'undefined') {
+      (window as any).lastSeekedPosition = seekTime;
+    }
+    
+    onSeek(seekTime);
+  };
+
+  // Handle touch events for progress bar
+  const handleProgressTouchStart = (e: React.TouchEvent) => {
+    if (!progressRef.current || !e.touches[0]) return;
+    e.preventDefault();
+    
+    setIsDraggingProgress(true);
+    isDraggingProgressRef.current = true;
+    
+    // Get initial position using touch
+    handleProgressTouchMove(e);
+    
+    // Set up document-level event listeners for touch movement and release
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (isDraggingProgressRef.current) {
+        handleProgressTouchMove(moveEvent);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      setIsDraggingProgress(false);
+      isDraggingProgressRef.current = false;
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchEnd);
+  };
+  
+  // Handle touch dragging on progress bar
+  const handleProgressTouchMove = (e: TouchEvent | React.TouchEvent) => {
+    if (!progressRef.current) return;
+    
+    // Get the touch coordinates
+    const touch = 'touches' in e ? e.touches[0] : null;
+    if (!touch) return;
+    
+    e.preventDefault(); // Prevent scrolling while dragging
+    
+    const rect = progressRef.current.getBoundingClientRect();
+    const touchPosition = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    const seekTime = duration * touchPosition;
+    
+    // Update tooltip position and time
+    setTooltipPosition({ x: touch.clientX });
+    setTooltipTime(seekTime);
+    
+    // Store position for iOS Safari
+    setLastPosition(seekTime);
+    
+    // Also store globally for integration with other components
+    if (typeof window !== 'undefined') {
+      (window as any).lastSeekedPosition = seekTime;
+    }
+    
+    onSeek(seekTime);
+  };
+
+  // Handle click on progress bar (for non-drag interactions)
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If we're already dragging, don't handle the click
+    if (isDraggingProgress) return;
+    
     if (progressRef.current) {
       const rect = progressRef.current.getBoundingClientRect();
       const clickPosition = (e.clientX - rect.left) / rect.width;
-      onSeek(duration * clickPosition);
+      const seekTime = duration * clickPosition;
+      
+      // Store position locally for iOS Safari - critical for timeline seeking
+      setLastPosition(seekTime);
+      
+      // Also store globally for integration with other components
+      if (typeof window !== 'undefined') {
+        (window as any).lastSeekedPosition = seekTime;
+      }
+      
+      onSeek(seekTime);
     }
   };
 
@@ -72,13 +239,64 @@ const VideoPlayer = ({
     }
   };
 
+  // Handle click on video to play/pause
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    // If the video is paused, we want to play it
+    if (video.paused) {
+      // For iOS Safari: Before playing, explicitly seek to the remembered position
+      if (isIOS && lastPosition !== null && lastPosition > 0) {
+        console.log("iOS: Explicitly setting position before play:", lastPosition);
+        
+        // First, seek to the position
+        video.currentTime = lastPosition;
+        
+        // Use a small timeout to ensure seeking is complete before play
+        // This is critical for iOS Safari
+        setTimeout(() => {
+          if (videoRef.current) {
+            // Try to play with proper promise handling
+            videoRef.current.play()
+              .then(() => {
+                console.log("iOS: Play started successfully at position:", videoRef.current?.currentTime);
+                
+                // Mark as initialized
+                setHasInitialized(true);
+                localStorage.setItem('video_initialized', 'true');
+              })
+              .catch(err => {
+                console.error("iOS: Error playing video:", err);
+              });
+          }
+        }, 50);
+      } else {
+        // Normal play (non-iOS or no remembered position)
+        video.play()
+          .then(() => {
+            console.log("Normal: Play started successfully");
+          })
+          .catch(err => {
+            console.error("Error playing video:", err);
+          });
+      }
+    } else {
+      // If playing, just pause
+      video.pause();
+    }
+    
+    // Call the parent component's onPlayPause to update state
+    onPlayPause();
+  };
+
   return (
     <div className="video-player-container">
       <video
         ref={videoRef}
         preload="auto"
         crossOrigin="anonymous"
-        onClick={onPlayPause}
+        onClick={handleVideoClick}
         playsInline
         webkit-playsinline="true"
         x-webkit-airplay="allow"
@@ -88,6 +306,15 @@ const VideoPlayer = ({
         <source src={sampleVideoUrl} type="video/mp4" />
         <p>Your browser doesn't support HTML5 video.</p>
       </video>
+      
+      {/* iOS First-play indicator - only shown on first visit for iOS devices when not initialized */}
+      {isIOS && !hasInitialized && !isPlaying && (
+        <div className="ios-first-play-indicator">
+          <div className="ios-play-message">
+            Tap Play to initialize video controls
+          </div>
+        </div>
+      )}
       
       {/* Play/Pause Indicator (shows based on current state) */}
       <div className={`play-pause-indicator ${isPlaying ? 'pause-icon' : 'play-icon'}`}></div>
@@ -100,11 +327,13 @@ const VideoPlayer = ({
           <span className="video-duration">/ {formatTime(duration)}</span>
         </div>
         
-        {/* Progress Bar */}
+        {/* Progress Bar with enhanced dragging */}
         <div 
           ref={progressRef}
-          className="video-progress"
+          className={`video-progress ${isDraggingProgress ? 'dragging' : ''}`}
           onClick={handleProgressClick}
+          onMouseDown={handleProgressDragStart}
+          onTouchStart={handleProgressTouchStart}
         >
           <div 
             className="video-progress-fill"
@@ -114,6 +343,16 @@ const VideoPlayer = ({
             className="video-scrubber"
             style={{ left: `${progressPercentage}%` }}
           ></div>
+          
+          {/* Floating time tooltip when dragging */}
+          {isDraggingProgress && (
+            <div className="video-time-tooltip" style={{ 
+              left: `${tooltipPosition.x}px`,
+              transform: 'translateX(-50%)'
+            }}>
+              {formatDetailedTime(tooltipTime)}
+            </div>
+          )}
         </div>
         
         {/* Controls - Mute and Fullscreen buttons */}

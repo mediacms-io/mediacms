@@ -70,6 +70,8 @@
   color: #333;
   font-size: 1rem;
   line-height: 1.5;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .modal-actions {
@@ -155,12 +157,56 @@
   font-size: 2rem;
 }
 
+.modal-success-icon svg {
+  width: 60px;
+  height: 60px;
+  color: #4CAF50;
+  animation: success-pop 0.5s ease-out;
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .modal-error-icon {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
   color: #dc3545;
   font-size: 2rem;
+}
+
+.modal-error-icon svg {
+  width: 60px;
+  height: 60px;
+  color: #F44336;
+  animation: error-pop 0.5s ease-out;
+}
+
+@keyframes error-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal-choices {
@@ -172,9 +218,9 @@
 
 .modal-choice-button {
   padding: 12px 16px;
-  border: 1px solid #ddd;
+  border: none;
   border-radius: 4px;
-  background-color: #f8f8f8;
+  background-color: #0066cc;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
@@ -183,16 +229,25 @@
   justify-content: center;
   font-weight: 500;
   text-decoration: none;
-  color: #333;
+  color: white;
 }
 
 .modal-choice-button:hover {
-  background-color: #eee;
-  border-color: #ccc;
+  background-color: #0055aa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .modal-choice-button svg {
   margin-right: 8px;
+}
+
+.success-link {
+  background-color: #4CAF50;
+}
+
+.success-link:hover {
+  background-color: #3d8b40;
 }
 
 .centered-choice {
@@ -219,5 +274,29 @@
   .modal-button {
     width: 100%;
   }
+}
+
+.error-message {
+  color: #F44336;
+  font-weight: 500;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 4px solid #F44336;
+  margin-top: 10px;
+}
+
+.redirect-message {
+  margin-top: 20px;
+  color: #555;
+  font-size: 0.95rem;
+  padding: 0;
+  margin: 0;
+}
+
+.countdown {
+  font-weight: bold;
+  color: #0066cc;
+  font-size: 1.1rem;
 }
 }

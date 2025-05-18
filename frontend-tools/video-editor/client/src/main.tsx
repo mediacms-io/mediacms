@@ -7,6 +7,7 @@ if (typeof window !== 'undefined') {
     videoUrl: "",
     mediaId: ""
   };
+  window.lastSeekedPosition = 0;
 }
 
 declare global {
@@ -16,6 +17,7 @@ declare global {
       mediaId: string;
     };
     seekToFunction?: (time: number) => void;
+    lastSeekedPosition: number;
   }
 }
 
