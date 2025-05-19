@@ -2203,7 +2203,7 @@ const TimelineControls = ({
         // Redirect to the URL
         logger.debug('Automatically redirecting to:', redirectUrl);
         window.location.href = redirectUrl;
-      }, 100000); // 10 seconds
+      }, 10000); // 10 seconds
     }
     
     // Cleanup on unmount or when success modal closes
