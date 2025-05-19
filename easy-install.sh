@@ -28,9 +28,10 @@ It is expected to run on a new system **with no running instances of any these s
     esac
 done
 
+# Not all distros include lsb-release these days.
 apt install -y lsb-release
-
 osVersion=$(lsb_release -d)
+
 
 if [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
     echo 'Ubuntu 22 / Debian Bookworm detected - system update and dependency installation, this will take a few minutes'
