@@ -14,6 +14,18 @@ import segmentEndIcon from '../assets/segment-end-new.svg';
 import segmentStartIcon from '../assets/segment-start-new.svg';
 import segmentNewStartIcon from '../assets/segment-start-new-cutaway.svg';
 import segmentNewEndIcon from '../assets/segment-end-new-cutaway.svg';
+
+// Add styles for the media page link
+const mediaPageLinkStyles = {
+  color: '#007bff',
+  textDecoration: 'none',
+  fontWeight: 'bold',
+  '&:hover': {
+    textDecoration: 'underline',
+    color: '#0056b3'
+  }
+} as const;
+
 interface TimelineControlsProps {
   currentTime: number;
   duration: number;
@@ -4129,8 +4141,10 @@ const TimelineControls = ({
               
               <p className="modal-message text-center redirect-message">
                 {saveType === "segments" 
-                  ? "You will be redirected to your media page in "
-                  : "You will be redirected to your media page in "}
+                  ? "You will be redirected to your "
+                  : "You will be redirected to your "}
+                <a href={redirectUrl} className="media-page-link" style={mediaPageLinkStyles}>media page</a>
+                {" in "}
                 <span className="countdown">10</span> seconds. {' '}
                 {saveType === "segments" 
                   ? "The new video(s) will soon be there."
