@@ -319,7 +319,6 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
 
     def save(self, *args, **kwargs):
-        print(f"SAVE called for {self.friendly_token}")
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -680,7 +679,8 @@ class Media(models.Model):
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 
-        return None
+        # showing the original file
+        return helpers.url_from_path(self.media_file.path)
 
 
     @property
@@ -688,7 +688,7 @@ class Media(models.Model):
         if self.media_type not in ["video"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4').order_by("-profile__resolution").first()
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
         if ret:
             return ret.media_file.path
 
@@ -705,9 +705,14 @@ class Media(models.Model):
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
 
-        # if this is enabled, return original file on a way
-        # that video.js can consume
+        # if DO_NOT_TRANSCODE_VIDEO enabled, return original file on a way
+        # that video.js can consume. Or also if encoding_status is running, do the
+        # same so that the video appears on the player
         if settings.DO_NOT_TRANSCODE_VIDEO:
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
+
+        if self.encoding_status in ["running", "pending"]:
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
@@ -1577,7 +1582,6 @@ def media_save(sender, instance, created, **kwargs):
     # once model is saved
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
-    print(f'mpainei media_save gia {instance.friendly_token}')
     if not instance.friendly_token:
         return False
 
@@ -1599,7 +1603,6 @@ def media_save(sender, instance, created, **kwargs):
             tag.update_tag_media()
 
     instance.update_search_vector()
-    print(f'EXIT media_save gia {instance.friendly_token}')
 
 
 @receiver(pre_delete, sender=Media)

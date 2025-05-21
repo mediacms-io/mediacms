@@ -2,13 +2,11 @@
 # related content
 
 import itertools
-import json
 import logging
-import os
 import random
 import re
-import tempfile
 from datetime import datetime
+import subprocess
 
 from django.conf import settings
 from django.core.cache import cache
@@ -17,7 +15,6 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.utils import timezone
 from contextlib import contextmanager
-from django.db.models.signals import post_save
 
 from cms import celery_app
 
@@ -414,6 +411,25 @@ def clean_comment(raw_comment):
     return cleaned_comment
 
 
+def kill_ffmpeg_process(filepath):
+    """Kill ffmpeg process that is processing a specific file
+
+    Args:
+        filepath: Path to the file being processed by ffmpeg
+
+    Returns:
+        subprocess.CompletedProcess: Result of the kill command
+    """
+    cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    pid = result.stdout.decode("utf-8").strip()
+    if pid:
+        logger.info("Killing ffmpeg process with PID: %s", pid)
+        cmd = "kill -9 %s" % pid
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    return result
+
+
 def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     """Create a copy of a media object
 
@@ -446,7 +462,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
 
 
     if copy_encodings:
-        for encoding in original_media.encodings.filter(status="success", chunk=False):
+        for encoding in original_media.encodings.filter(chunk=False):
             if encoding.media_file:
                 with open(encoding.media_file.path, "rb") as f:
                     myfile = File(f)
@@ -454,7 +470,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                         media_file=myfile,
                         media=new_media,
                         profile=encoding.profile,
-                        status="success",
+                        status=encoding.status,
                         progress=100,
                         chunk=False,
                         logs=f"Copied from encoding {encoding.id}"

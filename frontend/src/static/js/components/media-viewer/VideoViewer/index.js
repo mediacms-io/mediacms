@@ -16,11 +16,11 @@ import '../VideoViewer.scss';
 
 function filterVideoEncoding(encoding_status) {
   switch (encoding_status) {
-    case 'running':
+    case 'running_X':
       MediaPageStore.set('media-load-error-type', 'encodingRunning');
       MediaPageStore.set('media-load-error-message', 'Media encoding is currently running. Try again in few minutes.');
       break;
-    case 'pending':
+    case 'pending_X':
       MediaPageStore.set('media-load-error-type', 'encodingPending');
       MediaPageStore.set('media-load-error-message', 'Media encoding is pending');
       break;
@@ -590,7 +590,7 @@ function findGetParameter(parameterName) {
 }
 
  function handleCanvas(videoElem) { // Make sure it's a video element
-  
+
   if (!videoElem || !videoElem.tagName || videoElem.tagName.toLowerCase() !== 'video') {
     console.error('Invalid video element:', videoElem);
     return;
@@ -603,7 +603,7 @@ function findGetParameter(parameterName) {
     const muted = parseInt(findGetParameter('muted'));
     const autoplay = parseInt(findGetParameter('autoplay'));
     const timestamp = parseInt(findGetParameter('t'));
-    
+
     // Handle timestamp clicks
     document.addEventListener('click', function (e) {
       if (e.target.classList.contains('video-timestamp')) {
@@ -621,7 +621,7 @@ function findGetParameter(parameterName) {
     if (muted == 1) {
       Player.muted(true);
     }
-    
+
     if (timestamp >= 0 && timestamp < Player.duration()) {
       // Start the video from the given time
       Player.currentTime(timestamp);

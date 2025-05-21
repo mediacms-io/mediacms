@@ -606,6 +606,17 @@ def view_media(request):
             context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
+
+    # TODO: explaim
+    if media.media_type == 'video':
+        video_msg = None
+        if media.encoding_status == "pending":
+            video_msg = "Media encoding hasn't started yet. Attempting to show the original video file"
+        if media.encoding_status == "running":
+            video_msg = "Media encoding is under processing. Attempting to show the original video file"
+        if video_msg:
+            messages.add_message(request, messages.INFO, video_msg)
+
     return render(request, "cms/media.html", context)
 
 
