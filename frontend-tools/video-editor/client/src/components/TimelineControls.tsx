@@ -145,29 +145,20 @@ const TimelineControls = ({
   const handleContinuousTimeAdjustment = (offsetSeconds: number) => {
     // Fixed adjustment amount - exactly 50ms each time
     const adjustmentValue = offsetSeconds;
-    // Hold timer
-    let holdTimer: number | null = null;
+    // Hold timer for continuous adjustment
+    let holdTimer: NodeJS.Timeout | null = null;
+    let continuousTimer: NodeJS.Timeout | null = null;
     // Store the last time value to correctly calculate the next increment
     let lastTimeValue = clickedTime;
     
     // Function to perform time adjustment
     const adjustTime = () => {
-      // Always use the last time value for calculations to prevent stalling
-      const currentTime = lastTimeValue;
-      
       // Calculate new time based on fixed offset (positive or negative)
       const newTime = adjustmentValue < 0
-        ? Math.max(0, currentTime + adjustmentValue) // For negative offsets (going back)
-        : Math.min(duration, currentTime + adjustmentValue); // For positive offsets (going forward)
+        ? Math.max(0, lastTimeValue + adjustmentValue) // For negative offsets (going back)
+        : Math.min(duration, lastTimeValue + adjustmentValue); // For positive offsets (going forward)
       
-      // Check if we've reached a boundary
-      if ((adjustmentValue < 0 && newTime <= 0) || 
-          (adjustmentValue > 0 && newTime >= duration)) {
-        // If we hit a boundary, we'll still update the display but keep the same value
-        // Don't clear the timer - it allows for adjusting back from the boundary
-      }
-      
-      // Update our last time value
+      // Update our last time value for next adjustment
       lastTimeValue = newTime;
       
       // Save the current playing state before seeking
@@ -180,7 +171,7 @@ const TimelineControls = ({
       setClickedTime(newTime);
       setDisplayTime(newTime);
       
-      // Update tooltip position and type during drag
+      // Update tooltip position
       if (timelineRef.current) {
         const rect = timelineRef.current.getBoundingClientRect();
         const positionPercent = (newTime / duration) * 100;
@@ -190,25 +181,19 @@ const TimelineControls = ({
           y: rect.top - 10
         });
 
-        // Create a temporary segment with the current drag position
-        const draggedSegment = {
-          ...segment,
-          startTime: isLeft ? newTime : segment.startTime,
-          endTime: isLeft ? segment.endTime : newTime
-        };
+        // Find if we're in a segment at the new time
+        const segmentAtTime = clipSegments.find(
+          seg => newTime >= seg.startTime && newTime <= seg.endTime
+        );
 
-        // Check if the current marker position (currentTime) is within the dragged segment
-        const isMarkerInSegment = currentTime >= draggedSegment.startTime && currentTime <= draggedSegment.endTime;
-        
-        if (isMarkerInSegment) {
-          // Show segment tooltip if marker is inside the segment
-          setSelectedSegmentId(segment.id);
+        if (segmentAtTime) {
+          // Show segment tooltip
+          setSelectedSegmentId(segmentAtTime.id);
           setShowEmptySpaceTooltip(false);
         } else {
-          // Show cutaway tooltip if marker is outside the segment
+          // Show cutaway tooltip
           setSelectedSegmentId(null);
-          // Calculate available space for cutaway tooltip
-          const availableSpace = calculateAvailableSpace(currentTime);
+          const availableSpace = calculateAvailableSpace(newTime);
           setAvailableSegmentDuration(availableSpace);
           setShowEmptySpaceTooltip(true);
         }
@@ -221,7 +206,7 @@ const TimelineControls = ({
       }
     };
     
-    // Return mouse event handlers
+    // Return mouse event handlers with touch support
     return {
       onMouseDown: (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -233,18 +218,21 @@ const TimelineControls = ({
         // Perform initial adjustment
         adjustTime();
         
-        // Start continuous adjustment after a short delay
-        holdTimer = window.setTimeout(() => {
-          // Start consistent intervals at a moderate pace (exactly 8 adjustments per second)
-          // This ensures it adds/subtracts exactly 50ms at a steady, countable pace
-          holdTimer = window.setInterval(adjustTime, 125);
-        }, 250);
+        // Start continuous adjustment after 1.5s hold
+        holdTimer = setTimeout(() => {
+          // After 1.5s delay, start adjusting at a slower pace (every 200ms)
+          continuousTimer = setInterval(adjustTime, 200);
+        }, 750);
         
         // Add mouse up and leave handlers to document to ensure we catch the release
         const clearTimers = () => {
           if (holdTimer) {
-            clearInterval(holdTimer);
+            clearTimeout(holdTimer);
             holdTimer = null;
+          }
+          if (continuousTimer) {
+            clearInterval(continuousTimer);
+            continuousTimer = null;
           }
           document.removeEventListener('mouseup', clearTimers);
           document.removeEventListener('mouseleave', clearTimers);
@@ -252,6 +240,39 @@ const TimelineControls = ({
         
         document.addEventListener('mouseup', clearTimers);
         document.addEventListener('mouseleave', clearTimers);
+      },
+      onTouchStart: (e: React.TouchEvent) => {
+        e.stopPropagation();
+        e.preventDefault();21
+        
+        // Update the initial last time value
+        lastTimeValue = clickedTime;
+        
+        // Perform initial adjustment
+        adjustTime();
+        
+        // Start continuous adjustment after 1.5s hold
+        holdTimer = setTimeout(() => {
+          // After 1.5s delay, start adjusting at a slower pace (every 200ms)
+          continuousTimer = setInterval(adjustTime, 200);
+        }, 750);
+        
+        // Add touch end handler to ensure we catch the release
+        const clearTimers = () => {
+          if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
+          if (continuousTimer) {
+            clearInterval(continuousTimer);
+            continuousTimer = null;
+          }
+          document.removeEventListener('touchend', clearTimers);
+          document.removeEventListener('touchcancel', clearTimers);
+        };
+        
+        document.addEventListener('touchend', clearTimers);
+        document.addEventListener('touchcancel', clearTimers);
       },
       onClick: (e: React.MouseEvent) => {
         // This prevents the click event from firing twice
@@ -2479,21 +2500,37 @@ const TimelineControls = ({
             >
               {/* First row with time adjustment buttons */}
               <div className="tooltip-row">
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
-                  {...handleContinuousTimeAdjustment(-0.05)}
-                >
-                  -50ms
-                </button>
-                <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
-                <button 
-                  className="tooltip-time-btn"
-                  data-tooltip="Increase by 50ms (hold for continuous adjustment)"
-                  {...handleContinuousTimeAdjustment(0.05)}
-                >
-                  +50ms
-                </button>
+                                  <button 
+                    className="tooltip-time-btn"
+                    data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
+                    {...handleContinuousTimeAdjustment(-0.05)}
+                    style={{
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      WebkitTouchCallout: 'none',
+                      touchAction: 'manipulation',
+                      cursor: 'pointer',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                  >
+                    -50ms
+                  </button>
+                  <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
+                  <button 
+                    className="tooltip-time-btn"
+                    data-tooltip="Increase by 50ms (hold for continuous adjustment)"
+                    {...handleContinuousTimeAdjustment(0.05)}
+                    style={{
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      WebkitTouchCallout: 'none',
+                      touchAction: 'manipulation',
+                      cursor: 'pointer',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                  >
+                    +50ms
+                  </button>
               </div>
               
               {/* Second row with action buttons */}
