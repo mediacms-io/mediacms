@@ -649,6 +649,9 @@ class Media(models.Model):
             from . import tasks
             tasks.create_hls.delay(self.friendly_token)
 
+            need_to_run_post_trim_action = False
+            if need_to_run_post_trim_action:
+                tasks.post_trim_action.delay(self.friendly_token)
         return True
 
     def set_encoding_status(self):

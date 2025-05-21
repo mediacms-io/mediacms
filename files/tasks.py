@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
 from django.db.models import Q
-
+from django.db import DatabaseError
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
 
@@ -350,18 +350,28 @@ def encode_media(
                             percent = duration * 100 / media.duration
                             if n_times % 60 == 0:
                                 encoding.progress = percent
-                                try:
-                                    encoding.save(update_fields=["progress", "update_date"])
-                                    logger.info("Saved {0}".format(round(percent, 2)))
-                                except Exception as e:
-                                    raise
+                                encoding.save(update_fields=["progress", "update_date"])
+                                logger.info("Saved {0}".format(round(percent, 2)))
                             n_times += 1
+                    except DatabaseError as e:
+                        print(e, 'XA'*100)
+                        kill_ffmpeg_process(encoding.temp_file)
+                        kill_ffmpeg_process(encoding.chunk_file_path)
+                        return False
+
                     except StopIteration:
                         break
                     except VideoEncodingError:
                         # ffmpeg error, or ffmpeg was killed
                         raise
+
             except Exception as e:
+                if isinstance(e, DatabaseError):
+                    print(e, 'BA'*100)
+                    kill_ffmpeg_process(encoding.temp_file)
+                    kill_ffmpeg_process(encoding.chunk_file_path)
+                    return False
+
                 try:
                     # output is empty, fail message is on the exception
                     output = e.message
@@ -967,14 +977,14 @@ def video_trim_task(self, trim_request_id):
         if deleted_encodings:
             # give the chance to run encodings for encodings that didnt make it
             target_media.encode(force=False)
+            trim_request_status = "running"
             # TODO: find way to call post_trim_action only after this has finished...
         else:
             post_trim_action.delay(target_media.friendly_token)
+            trim_request_status = "success"
 
-        trim_request.status = "success"
+        trim_request.status = trim_request_status
         trim_request.save(update_fields=["status"])
-        logger.info(f"Successfully processed video trim request {trim_request_id} for media {target_media.friendly_token}")
-
     else:
         for i, timestamp in enumerate(timestamps_encodings, start=1):
             # copy the original file for each of the segments. This could be optimized to avoid the overhead but
@@ -994,11 +1004,13 @@ def video_trim_task(self, trim_request_id):
             if deleted_encodings:
                 # give the chance to run encodings for encodings that didnt make it
                 target_media.encode(force=False)
+                trim_request_status = "running"
                 # TODO: find way to call post_trim_action only after this has finished...
             else:
                 post_trim_action.delay(target_media.friendly_token)
+                trim_request_status = "success"
 
-        trim_request.status = "success"
+        trim_request.status = trim_request_status
         trim_request.save(update_fields=["status"])
         logger.info(f"Successfully processed video trim request {trim_request_id} for media {original_media.friendly_token}")
 
