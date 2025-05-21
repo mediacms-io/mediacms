@@ -1,5 +1,6 @@
-import { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { formatTime, formatDetailedTime } from "@/lib/timeUtils";
+import logger from '../lib/logger';
 import '../styles/VideoPlayer.css';
 
 interface VideoPlayerProps {
@@ -13,7 +14,7 @@ interface VideoPlayerProps {
   onToggleMute?: () => void;
 }
 
-const VideoPlayer = ({
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoRef,
   currentTime,
   duration,
@@ -22,7 +23,7 @@ const VideoPlayer = ({
   onPlayPause,
   onSeek,
   onToggleMute
-}: VideoPlayerProps) => {
+}) => {
   const progressRef = useRef<HTMLDivElement>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -34,7 +35,7 @@ const VideoPlayer = ({
   
   const sampleVideoUrl = typeof window !== 'undefined' && 
     (window as any).MEDIA_DATA?.videoUrl || 
-    "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    "/videos/sample-video-30s.mp4";
   
   // Detect iOS device
   useEffect(() => {
@@ -64,14 +65,48 @@ const VideoPlayer = ({
   
   // Add iOS-specific attributes to prevent fullscreen playback
   useEffect(() => {
-    if (videoRef.current) {
-      // These attributes need to be set directly on the DOM element
-      // for iOS Safari to respect inline playback
-      videoRef.current.setAttribute('playsinline', 'true');
-      videoRef.current.setAttribute('webkit-playsinline', 'true');
-      videoRef.current.setAttribute('x-webkit-airplay', 'allow');
-    }
-  }, [videoRef]);
+    const video = videoRef.current;
+    if (!video) return;
+
+    // These attributes need to be set directly on the DOM element
+    // for iOS Safari to respect inline playback
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('x-webkit-airplay', 'allow');
+
+    // Store the last known good position for iOS
+    const handleTimeUpdate = () => {
+      if (!isDraggingProgressRef.current) {
+        setLastPosition(video.currentTime);
+        if (typeof window !== 'undefined') {
+          window.lastSeekedPosition = video.currentTime;
+        }
+      }
+    };
+
+    // Handle iOS-specific play/pause state
+    const handlePlay = () => {
+      logger.debug('Video play event fired');
+      if (isIOS) {
+        setHasInitialized(true);
+        localStorage.setItem('video_initialized', 'true');
+      }
+    };
+
+    const handlePause = () => {
+      logger.debug('Video pause event fired');
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [videoRef, isIOS, isDraggingProgressRef]);
   
   // Save current time to lastPosition when it changes (from external seeking)
   useEffect(() => {
@@ -248,23 +283,19 @@ const VideoPlayer = ({
     if (video.paused) {
       // For iOS Safari: Before playing, explicitly seek to the remembered position
       if (isIOS && lastPosition !== null && lastPosition > 0) {
-        console.log("iOS: Explicitly setting position before play:", lastPosition);
+        logger.debug("iOS: Explicitly setting position before play:", lastPosition);
         
         // First, seek to the position
         video.currentTime = lastPosition;
         
         // Use a small timeout to ensure seeking is complete before play
-        // This is critical for iOS Safari
         setTimeout(() => {
           if (videoRef.current) {
             // Try to play with proper promise handling
             videoRef.current.play()
               .then(() => {
-                console.log("iOS: Play started successfully at position:", videoRef.current?.currentTime);
-                
-                // Mark as initialized
-                setHasInitialized(true);
-                localStorage.setItem('video_initialized', 'true');
+                logger.debug("iOS: Play started successfully at position:", videoRef.current?.currentTime);
+                onPlayPause(); // Update parent state after successful play
               })
               .catch(err => {
                 console.error("iOS: Error playing video:", err);
@@ -275,19 +306,18 @@ const VideoPlayer = ({
         // Normal play (non-iOS or no remembered position)
         video.play()
           .then(() => {
-            console.log("Normal: Play started successfully");
+            logger.debug("Normal: Play started successfully");
+            onPlayPause(); // Update parent state after successful play
           })
           .catch(err => {
             console.error("Error playing video:", err);
           });
       }
     } else {
-      // If playing, just pause
+      // If playing, pause and update state
       video.pause();
+      onPlayPause();
     }
-    
-    // Call the parent component's onPlayPause to update state
-    onPlayPause();
   };
 
   return (

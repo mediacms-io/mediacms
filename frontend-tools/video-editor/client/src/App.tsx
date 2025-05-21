@@ -1,4 +1,6 @@
 import { useRef, useEffect, useState } from "react";
+import { formatTime, formatDetailedTime } from "./lib/timeUtils";
+import logger from "./lib/logger";
 import VideoPlayer from "@/components/VideoPlayer";
 import TimelineControls from "@/components/TimelineControls";
 import EditingTools from "@/components/EditingTools";
@@ -7,85 +9,48 @@ import MobilePlayPrompt from "@/components/IOSPlayPrompt";
 import useVideoTrimmer from "@/hooks/useVideoTrimmer";
 
 const App = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [videoInitialized, setVideoInitialized] = useState(false);
-
   const {
     videoRef,
     currentTime,
     duration,
     isPlaying,
-    isPreviewMode,
+    setIsPlaying,
     isMuted,
+    isPreviewMode,
     thumbnails,
     trimStart,
     trimEnd,
     splitPoints,
     zoomLevel,
     clipSegments,
+    hasUnsavedChanges,
     historyPosition,
     history,
-    hasUnsavedChanges,
-    playPauseVideo,
-    seekVideo,
     handleTrimStartChange,
     handleTrimEndChange,
+    handleZoomChange,
+    handleMobileSafeSeek,
     handleSplit,
     handleReset,
     handleUndo,
     handleRedo,
     handlePreview,
-    handlePlay,
-    handleZoomChange,
     toggleMute,
     handleSave,
     handleSaveACopy,
     handleSaveSegments,
+    isMobile,
+    videoInitialized,
+    setVideoInitialized,
   } = useVideoTrimmer();
-
-  // Refs for hold-to-continue functionality
-  const incrementIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const decrementIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Detect if we're on a mobile device and reset on each visit
-  useEffect(() => {
-    const checkIsMobile = () => {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent);
-    };
-    
-    setIsMobile(checkIsMobile());
-    setVideoInitialized(false); // Reset each time for mobile devices
-
-    // Add an event listener to detect when the video has been played
-    const video = videoRef.current;
-    if (video) {
-      const handlePlay = () => {
-        setVideoInitialized(true);
-      };
-      
-      video.addEventListener('play', handlePlay);
-      
-      return () => {
-        video.removeEventListener('play', handlePlay);
-      };
-    }
-  }, [videoRef]);
-
-  // Clean up intervals on unmount
-  useEffect(() => {
-    return () => {
-      if (incrementIntervalRef.current) clearInterval(incrementIntervalRef.current);
-      if (decrementIntervalRef.current) clearInterval(decrementIntervalRef.current);
-    };
-  }, []);
 
   // Function to play from the beginning
   const playFromBeginning = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      seekVideo(0);
+      handleMobileSafeSeek(0);
       if (!isPlaying) {
-        playPauseVideo();
+        handlePlay();
       }
     }
   };
@@ -93,80 +58,176 @@ const App = () => {
   // Function to jump 15 seconds backward
   const jumpBackward15 = () => {
     const newTime = Math.max(0, currentTime - 15);
-    seekVideo(newTime);
+    handleMobileSafeSeek(newTime);
   };
 
   // Function to jump 15 seconds forward
   const jumpForward15 = () => {
     const newTime = Math.min(duration, currentTime + 15);
-    seekVideo(newTime);
+    handleMobileSafeSeek(newTime);
   };
 
-  // Start continuous 50ms increment when button is held
-  const startIncrement = (e: React.MouseEvent | React.TouchEvent) => {
-    // Prevent default to avoid text selection
-    e.preventDefault();
+  const handlePlay = () => {
+    if (!videoRef.current) return;
     
-    if (incrementIntervalRef.current) clearInterval(incrementIntervalRef.current);
+    const video = videoRef.current;
     
-    // First immediate adjustment
-    seekVideo(Math.min(duration, currentTime + 0.05));
-    
-    // Setup continuous adjustment
-    incrementIntervalRef.current = setInterval(() => {
-      const currentVideoTime = videoRef.current?.currentTime || 0;
-      const newTime = Math.min(duration, currentVideoTime + 0.05);
-      seekVideo(newTime);
-    }, 100);
-  };
-
-  // Stop continuous increment
-  const stopIncrement = () => {
-    if (incrementIntervalRef.current) {
-      clearInterval(incrementIntervalRef.current);
-      incrementIntervalRef.current = null;
+    // If already playing, just pause the video
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+      return;
     }
-  };
-
-  // Start continuous 50ms decrement when button is held
-  const startDecrement = (e: React.MouseEvent | React.TouchEvent) => {
-    // Prevent default to avoid text selection
-    e.preventDefault();
     
-    if (decrementIntervalRef.current) clearInterval(decrementIntervalRef.current);
+    const currentPosition = Number(video.currentTime.toFixed(6)); // Fix to microsecond precision
     
-    // First immediate adjustment
-    seekVideo(Math.max(0, currentTime - 0.05));
+    // Find the next stopping point based on current position
+    let stopTime = duration;
+    let currentSegment = null;
+    let nextSegment = null;
     
-    // Setup continuous adjustment
-    decrementIntervalRef.current = setInterval(() => {
-      const currentVideoTime = videoRef.current?.currentTime || 0;
-      const newTime = Math.max(0, currentVideoTime - 0.05);
-      seekVideo(newTime);
-    }, 100);
-  };
-
-  // Stop continuous decrement
-  const stopDecrement = () => {
-    if (decrementIntervalRef.current) {
-      clearInterval(decrementIntervalRef.current);
-      decrementIntervalRef.current = null;
+    // Sort segments by start time to ensure correct order
+    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    
+    // First, check if we're inside a segment or exactly at its start/end
+    currentSegment = sortedSegments.find(seg => {
+      const segStartTime = Number(seg.startTime.toFixed(6));
+      const segEndTime = Number(seg.endTime.toFixed(6));
+      
+      // Check if we're inside the segment
+      if (currentPosition > segStartTime && currentPosition < segEndTime) {
+        return true;
+      }
+      // Check if we're exactly at the start
+      if (currentPosition === segStartTime) {
+        return true;
+      }
+      // Check if we're exactly at the end
+      if (currentPosition === segEndTime) {
+        // If we're at the end of a segment, we should look for the next one
+        return false;
+      }
+      return false;
+    });
+    
+    // If we're not in a segment, find the next segment
+    if (!currentSegment) {
+      nextSegment = sortedSegments.find(seg => {
+        const segStartTime = Number(seg.startTime.toFixed(6));
+        return segStartTime > currentPosition;
+      });
     }
-  };
-
-  // Handle seeking with mobile check
-  const handleMobileSafeSeek = (time: number) => {
-    // Only allow seeking if not on mobile or if video has been played
-    if (!isMobile || videoInitialized) {
-      seekVideo(time);
+    
+    // Determine where to stop based on position
+    if (currentSegment) {
+      // If we're in a segment, stop at its end
+      stopTime = Number(currentSegment.endTime.toFixed(6));
+    } else if (nextSegment) {
+      // If we're in a cutaway and there's a next segment, stop at its start
+      stopTime = Number(nextSegment.startTime.toFixed(6));
     }
+    
+    // Create a boundary checker function with high precision
+    const checkBoundary = () => {
+      if (!video) return;
+      
+      const currentPosition = Number(video.currentTime.toFixed(6));
+      const timeLeft = Number((stopTime - currentPosition).toFixed(6));
+      
+      // If we've reached or passed the boundary
+      if (timeLeft <= 0 || currentPosition >= stopTime) {
+        // First pause playback
+        video.pause();
+        
+        // Force exact position with multiple verification attempts
+        const setExactPosition = () => {
+          if (!video) return;
+          
+          // Set to exact boundary time
+          video.currentTime = stopTime;
+          handleMobileSafeSeek(stopTime);
+          
+          const actualPosition = Number(video.currentTime.toFixed(6));
+          const difference = Number(Math.abs(actualPosition - stopTime).toFixed(6));
+          
+          logger.debug("Position verification:", {
+            target: formatDetailedTime(stopTime),
+            actual: formatDetailedTime(actualPosition),
+            difference: difference
+          });
+          
+          // If we're not exactly at the target position, try one more time
+          if (difference > 0) {
+            video.currentTime = stopTime;
+            handleMobileSafeSeek(stopTime);
+          }
+        };
+        
+        // Multiple attempts to ensure precision, with increasing delays
+        setExactPosition();
+        setTimeout(setExactPosition, 5);  // Quick first retry
+        setTimeout(setExactPosition, 10); // Second retry
+        setTimeout(setExactPosition, 20); // Third retry if needed
+        setTimeout(setExactPosition, 50); // Final verification
+        
+        // Remove our boundary checker
+        video.removeEventListener('timeupdate', checkBoundary);
+        setIsPlaying(false);
+        
+        // Log the final position for debugging
+        logger.debug("Stopped at position:", {
+          target: formatDetailedTime(stopTime),
+          actual: formatDetailedTime(video.currentTime),
+          type: currentSegment ? "segment end" : (nextSegment ? "next segment start" : "end of video"),
+          segment: currentSegment ? {
+            id: currentSegment.id,
+            start: formatDetailedTime(currentSegment.startTime),
+            end: formatDetailedTime(currentSegment.endTime)
+          } : null,
+          nextSegment: nextSegment ? {
+            id: nextSegment.id,
+            start: formatDetailedTime(nextSegment.startTime),
+            end: formatDetailedTime(nextSegment.endTime)
+          } : null
+        });
+        
+        return;
+      }
+    };
+    
+    // Start our boundary checker
+    video.addEventListener('timeupdate', checkBoundary);
+    
+    // Start playing
+    video.play()
+      .then(() => {
+        setIsPlaying(true);
+        setVideoInitialized(true);
+        logger.debug("Playback started:", {
+          from: formatDetailedTime(currentPosition),
+          to: formatDetailedTime(stopTime),
+          currentSegment: currentSegment ? {
+            id: currentSegment.id,
+            start: formatDetailedTime(currentSegment.startTime),
+            end: formatDetailedTime(currentSegment.endTime)
+          } : 'None',
+          nextSegment: nextSegment ? {
+            id: nextSegment.id,
+            start: formatDetailedTime(nextSegment.startTime),
+            end: formatDetailedTime(nextSegment.endTime)
+          } : 'None'
+        });
+      })
+      .catch(err => {
+        console.error("Error playing video:", err);
+      });
   };
 
   return (
     <div className="bg-background min-h-screen">
       <MobilePlayPrompt 
         videoRef={videoRef}
-        onPlay={playPauseVideo}
+        onPlay={handlePlay}
       />
       
       <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -177,7 +238,7 @@ const App = () => {
           duration={duration}
           isPlaying={isPlaying}
           isMuted={isMuted}
-          onPlayPause={playPauseVideo}
+          onPlayPause={handlePlay}
           onSeek={handleMobileSafeSeek}
           onToggleMute={toggleMute}
         />
@@ -217,6 +278,9 @@ const App = () => {
           isPreviewMode={isPreviewMode}
           hasUnsavedChanges={hasUnsavedChanges}
           isIOSUninitialized={isMobile && !videoInitialized}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+          onPlayPause={handlePlay}
         />
 
         {/* Clip Segments */}

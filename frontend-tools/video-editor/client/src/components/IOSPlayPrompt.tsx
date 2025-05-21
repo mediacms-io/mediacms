@@ -47,7 +47,7 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
   return (
     <div className="mobile-play-prompt-overlay">
       <div className="mobile-play-prompt">
-        <h3>Mobile Device Notice</h3>
+        {/* <h3>Mobile Device Notice</h3>
         
         <p>
           For the best video editing experience on mobile devices, you need to <strong>play the video first</strong> before 
@@ -61,13 +61,13 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
             <li>After the video starts, you can pause it</li>
             <li>Then you'll be able to use all timeline controls</li>
           </ol>
-        </div>
+        </div> */}
         
         <button 
           className="mobile-play-button"
           onClick={handlePlayClick}
         >
-          Play Video Now
+          Click to start editing...
         </button>
       </div>
     </div>

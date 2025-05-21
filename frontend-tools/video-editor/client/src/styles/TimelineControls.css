@@ -56,31 +56,51 @@
 
   .timeline-marker {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: red;
-    z-index: 30;
+    height: 82px;  /* Increased height to extend below timeline */
+    width: 2px;
+    background-color: #000;
+    transform: translateX(-50%);
+    z-index: 50;
     pointer-events: none;
   }
 
   .timeline-marker-head {
     position: absolute;
-    top: -11px;
+    top: -6px;
     left: 50%;
     transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
-    background-color: red;
+    width: 16px;
+    height: 16px;
+    background-color: #ef4444;
     border-radius: 50%;
-    pointer-events: auto;
-    cursor: grab;
-    z-index: 31;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.1s ease, background-color 0.1s ease;
-    touch-action: none;
+    pointer-events: auto;
+    z-index: 51;
+  }
+
+  .timeline-marker-drag {
+    position: absolute;
+    bottom: -12px;  /* Changed from -6px to -12px to move it further down */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #4b5563;
+    border-radius: 50%;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    z-index: 51;
+  }
+
+  .timeline-marker-drag.dragging {
+    cursor: grabbing;
+    background-color: #374151;
   }
 
   .timeline-marker-head-icon {
@@ -88,13 +108,16 @@
     font-size: 14px;
     font-weight: bold;
     line-height: 1;
+    user-select: none;
   }
 
-  .timeline-marker-head.dragging {
-    transform: translateX(-50%) scale(1.2);
-    cursor: grabbing;
-    background-color: #ff3333;
-    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+  .timeline-marker-drag-icon {
+    color: white;
+    font-size: 12px;
+    line-height: 1;
+    user-select: none;
+    transform: rotate(90deg);
+    display: inline-block;
   }
 
   .trim-line-marker {
@@ -258,26 +281,26 @@
       background-color: rgba(0, 0, 0, 0.6);
     }
 
+    .timeline-marker {
+      height: 52px;  /* Increased height for touch devices */
+    }
+    
     .timeline-marker-head {
       width: 24px;
       height: 24px;
       top: -13px;
     }
     
+    .timeline-marker-drag {
+      width: 24px;
+      height: 24px;
+      bottom: -18px;  /* Adjusted for larger touch target */
+    }
+    
     .timeline-marker-head.dragging {
       width: 28px;
       height: 28px;
       top: -15px;
-    }
-    
-    /* Create a larger invisible touch target */
-    .timeline-marker-head:before {
-      content: '';
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      right: -10px;
-      bottom: -10px;
     }
   }
 
@@ -292,7 +315,8 @@
     min-width: 150px;
     text-align: center;
     pointer-events: auto;
-    top: -90px !important;
+    top: -100px !important;
+    transform: translateY(-10px);
   }
 
   .segment-tooltip:after,
@@ -307,6 +331,21 @@
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
     border-top: 5px solid white;
+  }
+
+  .segment-tooltip:before,
+  .empty-space-tooltip:before {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(0, 0, 0, 0.1);
+    z-index: -1;
   }
 
   .tooltip-time {

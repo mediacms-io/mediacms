@@ -37,7 +37,7 @@ const IOSVideoPlayer = ({
       }
     } else {
       // Fallback to sample video if needed
-      setVideoUrl("https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+      setVideoUrl("/videos/sample-video-30s.mp4");
     }
   }, [videoRef]);
 

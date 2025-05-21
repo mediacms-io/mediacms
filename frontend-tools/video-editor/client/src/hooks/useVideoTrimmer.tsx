@@ -145,6 +145,7 @@ const useVideoTrimmer = () => {
       // Only update isPlaying if we're not in preview mode
       if (!isPreviewMode) {
         setIsPlaying(true);
+        setVideoInitialized(true);
       }
     };
     
@@ -932,11 +933,27 @@ const useVideoTrimmer = () => {
     saveState('save_segments');
   };
   
+  // Handle seeking with mobile check
+  const handleMobileSafeSeek = (time: number) => {
+    // Only allow seeking if not on mobile or if video has been played
+    if (!isMobile || videoInitialized) {
+      seekVideo(time);
+    }
+  };
+  
+  // Check if device is mobile
+  const isMobile = typeof window !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent);
+  
+  // Add videoInitialized state
+  const [videoInitialized, setVideoInitialized] = useState(false);
+  
   return {
     videoRef,
     currentTime,
     duration,
     isPlaying,
+    setIsPlaying,
+    isMuted,
     isPreviewMode,
     thumbnails,
     trimStart,
@@ -944,25 +961,25 @@ const useVideoTrimmer = () => {
     splitPoints,
     zoomLevel,
     clipSegments,
+    hasUnsavedChanges,
     historyPosition,
     history,
-    isMuted,
-    hasUnsavedChanges, // Add unsaved changes flag to the return object
-    playPauseVideo,
-    seekVideo,
     handleTrimStartChange,
     handleTrimEndChange,
+    handleZoomChange,
+    handleMobileSafeSeek,
     handleSplit,
     handleReset,
     handleUndo,
     handleRedo,
     handlePreview,
-    handlePlay,
-    handleZoomChange,
     toggleMute,
     handleSave,
     handleSaveACopy,
     handleSaveSegments,
+    isMobile,
+    videoInitialized,
+    setVideoInitialized,
   };
 };
 

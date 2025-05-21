@@ -5,3 +5,4 @@ server/public
 vite.config.ts.*
 *.tar.gz
 yt.readme.md
+client/public/videos/sample-video.mp4

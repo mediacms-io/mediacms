@@ -61,17 +61,36 @@
   }
   .video-player-container {
     position: relative;
-    background-color: black;
+    width: 100%;
+    background: #000;
     border-radius: 0.5rem;
     overflow: hidden;
     margin-bottom: 1rem;
     aspect-ratio: 16/9;
+    /* Prevent iOS Safari from showing default video controls */
+    -webkit-user-select: none;
+    user-select: none;
   }
   
   .video-player-container video {
     width: 100%;
     height: 100%;
     cursor: pointer;
+    /* Force hardware acceleration */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Prevent iOS Safari from showing default video controls */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* iOS-specific styles */
+  @supports (-webkit-touch-callout: none) {
+    .video-player-container video {
+      /* Additional iOS optimizations */
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
   }
   
   .play-pause-indicator {
@@ -85,34 +104,65 @@
     border-radius: 50%;
     opacity: 0;
     transition: opacity 0.3s;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-    
-    &.play-icon::before {
-      width: 0;
-      height: 0;
-      border-top: 15px solid transparent;
-      border-bottom: 15px solid transparent;
-      border-left: 25px solid white;
-      margin-left: 3px;
-    }
-    
-    &.pause-icon::before {
-      width: 20px;
-      height: 25px;
-      border-left: 6px solid white;
-      border-right: 6px solid white;
-    }
+    pointer-events: none;
   }
   
   .video-player-container:hover .play-pause-indicator {
     opacity: 1;
+  }
+  
+  .play-pause-indicator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .play-pause-indicator.play-icon::before {
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 25px solid white;
+    margin-left: 3px;
+  }
+  
+  .play-pause-indicator.pause-icon::before {
+    width: 20px;
+    height: 25px;
+    border-left: 6px solid white;
+    border-right: 6px solid white;
+  }
+  
+  /* iOS First-play indicator */
+  .ios-first-play-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .ios-play-message {
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 0.5rem;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 0.7; transform: scale(1); }
   }
   
   .video-controls {

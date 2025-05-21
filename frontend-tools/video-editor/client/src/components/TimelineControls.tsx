@@ -34,6 +34,9 @@ interface TimelineControlsProps {
   isPreviewMode?: boolean;
   hasUnsavedChanges?: boolean;
   isIOSUninitialized?: boolean;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  onPlayPause: () => void; // Add this prop
 }
 
 // Function to calculate and constrain tooltip position to keep it on screen
@@ -77,7 +80,10 @@ const TimelineControls = ({
   onSaveSegments,
   isPreviewMode,
   hasUnsavedChanges = false,
-  isIOSUninitialized = false
+  isIOSUninitialized = false,
+  isPlaying,
+  setIsPlaying,
+  onPlayPause // Add this prop
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -161,6 +167,40 @@ const TimelineControls = ({
       // Update both clicked time and display time
       setClickedTime(newTime);
       setDisplayTime(newTime);
+      
+      // Update tooltip position and type during drag
+      if (timelineRef.current) {
+        const rect = timelineRef.current.getBoundingClientRect();
+        const positionPercent = (newTime / duration) * 100;
+        const xPos = rect.left + (rect.width * (positionPercent / 100));
+        setTooltipPosition({
+          x: xPos,
+          y: rect.top - 10
+        });
+
+        // Create a temporary segment with the current drag position
+        const draggedSegment = {
+          ...segment,
+          startTime: isLeft ? newTime : segment.startTime,
+          endTime: isLeft ? segment.endTime : newTime
+        };
+
+        // Check if the current marker position (currentTime) is within the dragged segment
+        const isMarkerInSegment = currentTime >= draggedSegment.startTime && currentTime <= draggedSegment.endTime;
+        
+        if (isMarkerInSegment) {
+          // Show segment tooltip if marker is inside the segment
+          setSelectedSegmentId(segment.id);
+          setShowEmptySpaceTooltip(false);
+        } else {
+          // Show cutaway tooltip if marker is outside the segment
+          setSelectedSegmentId(null);
+          // Calculate available space for cutaway tooltip
+          const availableSpace = calculateAvailableSpace(currentTime);
+          setAvailableSegmentDuration(availableSpace);
+          setShowEmptySpaceTooltip(true);
+        }
+      }
       
       // Resume playback if it was playing before
       if (wasPlaying && videoRef.current) {
@@ -786,34 +826,11 @@ const TimelineControls = ({
   
   // Global click handler to close tooltips when clicking outside
   useEffect(() => {
-    const handleGlobalClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      
-      // Close tooltips when clicking outside of tooltips and timeline marker head
-      if ((selectedSegmentId !== null || showEmptySpaceTooltip) && 
-          !target.closest('.empty-space-tooltip') && 
-          !target.closest('.segment-tooltip') && 
-          !target.closest('.timeline-marker-head') && 
-          !target.closest('.clip-segment') && 
-          !target.closest('.timeline-container')) {
-        // Reset play state when closing tooltip
-        if (isPlayingSegment) {
-          setIsPlayingSegment(false);
-          setActiveSegment(null);
-        }
-        // Also reset continuePastBoundary flag when closing tooltips
-        setContinuePastBoundary(false);
-        logger.debug("Closing tooltip - resetting continuePastBoundary flag");
-        
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(false);
-      }
-    };
+    // Remove the global click handler that closes tooltips
+    // This keeps the popup always visible, even when clicking outside the timeline
     
-    document.addEventListener('mousedown', handleGlobalClick);
-    return () => {
-      document.removeEventListener('mousedown', handleGlobalClick);
-    };
+    // Keeping the dependency array to avoid linting errors
+    return () => {};
   }, [selectedSegmentId, showEmptySpaceTooltip, isPlayingSegment]);
 
   // Initialize drag handlers for trim handles
@@ -969,32 +986,49 @@ const TimelineControls = ({
     if (duration - startTime < 0.3) {
       logger.debug("Very close to end of video, ensuring tooltip can show:", 
                    formatDetailedTime(startTime), "video end:", formatDetailedTime(duration));
-      return 0.5; // Minimum value to show tooltip
+      return Math.max(0.5, remainingDuration); // Use actual remaining duration if larger
     }
     
     // 2. Find the next segment (if any)
     const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
     
-    // Check if we're exactly at a segment boundary (start or end of any segment)
-    // Use a small tolerance for floating point comparison
-    const isAtSegmentBoundary = sortedSegments.some(seg => 
-      Math.abs(startTime - seg.startTime) < 0.01 || 
-      Math.abs(startTime - seg.endTime) < 0.01
-    );
+    // Check if we're in a cutaway area near a segment boundary
+    // Use a larger tolerance (100ms) for boundary detection
+    const isNearSegmentBoundary = sortedSegments.some(seg => {
+      const distanceToStart = Math.abs(startTime - seg.startTime);
+      const distanceToEnd = Math.abs(startTime - seg.endTime);
+      // Consider both start and end boundaries with different tolerances
+      return (distanceToStart < 0.1 && distanceToStart > 0) || // Near start but not exactly at it
+             (distanceToEnd < 0.1 && distanceToEnd > 0);       // Near end but not exactly at it
+    });
     
-    // If we're exactly at a segment boundary, return a small non-zero value to ensure tooltip shows
-    if (isAtSegmentBoundary) {
+    // If we're near a segment boundary in cutaway area, ensure tooltip shows
+    if (isNearSegmentBoundary) {
+      logger.debug("Near segment boundary in cutaway area:", formatDetailedTime(startTime));
       return 0.5; // Minimum value to show tooltip
     }
     
     const nextSegment = sortedSegments.find(seg => seg.startTime > startTime);
+    const prevSegment = [...sortedSegments].reverse().find(seg => seg.endTime < startTime);
     
     if (nextSegment) {
       // Space available until the next segment starts
       const spaceUntilNextSegment = Math.max(0, nextSegment.startTime - startTime);
+      // If we're very close to the next segment, ensure tooltip still shows
+      if (spaceUntilNextSegment < 0.1) {
+        return 0.5;
+      }
       return Math.min(30, spaceUntilNextSegment); // Take either 30s or available space, whichever is smaller
+    } else if (prevSegment) {
+      // We're after the last segment, use remaining duration
+      const spaceAfterPrevSegment = Math.max(0, duration - startTime);
+      // If we're very close to the previous segment's end, ensure tooltip shows
+      if (startTime - prevSegment.endTime < 0.1) {
+        return 0.5;
+      }
+      return Math.min(30, spaceAfterPrevSegment);
     } else {
-      // No next segment, just limited by video duration
+      // No segments at all, use remaining duration
       return Math.min(30, remainingDuration);
     }
   };
@@ -1048,9 +1082,6 @@ const TimelineControls = ({
     setClickedTime(newTime);
     setDisplayTime(newTime);
     
-    // Special case: when clicking very close to the end of the video
-    const isNearVideoEnd = duration - newTime < 0.3; // Within 300ms of the end
-    
     // Find if we clicked in a segment with a small tolerance for boundaries
     const segmentAtClickedTime = clipSegments.find(seg => {
       // Standard check for being inside a segment
@@ -1085,94 +1116,17 @@ const TimelineControls = ({
     
     // Only process tooltip display if clicked on the timeline background or thumbnails, not on other UI elements
     if (e.target === timelineRef.current || (e.target as HTMLElement).classList.contains('timeline-thumbnail')) {
-      // Special handling for near-end-of-video clicks
-      if (isNearVideoEnd) {
-        logger.debug("Near end of video - showing empty space tooltip");
-        
-        // Force show the empty space tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-        setAvailableSegmentDuration(0.5); // Minimum value
-        
-        // Calculate and set tooltip position
-        let xPos;
-        if (zoomLevel > 1) {
-          const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
-          const clickPosPercent = newTime / duration;
-          xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
-        } else {
-          xPos = e.clientX;
-        }
-        
-        setTooltipPosition({ 
-          x: xPos, 
-          y: rect.top - 10
-        });
-        
-        return; // Exit early since we've handled this special case
-      }
-      
-      // First, check if we're at a segment boundary with a small tolerance
-      const isAtSegmentBoundary = clipSegments.some(seg => 
-        Math.abs(newTime - seg.startTime) < 0.01 || 
-        Math.abs(newTime - seg.endTime) < 0.01
-      );
-      
-      // If we're at a segment boundary, ensure we can still show a tooltip
-      if (isAtSegmentBoundary) {
-        logger.debug("Clicked exactly at segment boundary:", formatDetailedTime(newTime));
-        
-        // Find the segment whose boundary we clicked on
-        const boundarySegment = clipSegments.find(seg => 
-          Math.abs(newTime - seg.startTime) < 0.01 || 
-          Math.abs(newTime - seg.endTime) < 0.01
-        );
-        
-        if (boundarySegment) {
-          // If we clicked at the exact end of a segment, show that segment's tooltip
-          if (Math.abs(newTime - boundarySegment.endTime) < 0.01) {
-            setSelectedSegmentId(boundarySegment.id);
-            setShowEmptySpaceTooltip(false);
-            
-            // Calculate and set tooltip position
-            let xPos;
-            if (zoomLevel > 1) {
-              const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
-              const clickPosPercent = newTime / duration;
-              xPos = visibleTimelineLeft + (clickPosPercent * rect.width);
-            } else {
-              xPos = e.clientX;
-            }
-            
-            setTooltipPosition({ 
-              x: xPos, 
-              y: rect.top - 10
-            });
-            
-            return; // Exit early since we've handled this case
-          }
-        }
-        
-        // For other boundary cases, continue to normal processing
-      }
-      
       // Check if there's a segment at the clicked position
       if (segmentAtClickedTime) {
         setSelectedSegmentId(segmentAtClickedTime.id);
         setShowEmptySpaceTooltip(false);
       } else {
-        // First, close segment tooltip if open
+        // We're in a cutaway area - always show tooltip
         setSelectedSegmentId(null);
         
         // Calculate the available space for a new segment
         const availableSpace = calculateAvailableSpace(newTime);
         setAvailableSegmentDuration(availableSpace);
-        
-        // If there's no space to create even a minimal segment (at least 0.5 seconds), don't show the tooltip
-        if (availableSpace < 0.5) {
-          setShowEmptySpaceTooltip(false);
-          return;
-        }
         
         // Calculate and set tooltip position correctly for zoomed timeline
         let xPos;
@@ -1191,18 +1145,20 @@ const TimelineControls = ({
           y: rect.top - 10  // Position tooltip above the timeline
         });
         
-        // Show the empty space tooltip
+        // Always show the empty space tooltip in cutaway areas
         setShowEmptySpaceTooltip(true);
         
-        // Close tooltip when clicking outside
-        const handleClickOutside = (event: MouseEvent) => {
-          const target = event.target as HTMLElement;
-          
-          // This is now handled by the global document click handler - just remove this listener
-          document.removeEventListener('mousedown', handleClickOutside);
-        };
+        // Log the cutaway area details
+        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        const prevSegment = [...sortedSegments].reverse().find(seg => seg.endTime < newTime);
+        const nextSegment = sortedSegments.find(seg => seg.startTime > newTime);
         
-        document.addEventListener('mousedown', handleClickOutside);
+        logger.debug("Clicked in cutaway area:", {
+          position: formatDetailedTime(newTime),
+          availableSpace: formatDetailedTime(availableSpace),
+          prevSegmentEnd: prevSegment ? formatDetailedTime(prevSegment.endTime) : "none",
+          nextSegmentStart: nextSegment ? formatDetailedTime(nextSegment.startTime) : "none"
+        });
       }
     }
   };
@@ -1251,10 +1207,7 @@ const TimelineControls = ({
       detail: { segmentId }
     }));
     
-    // Hide tooltip during drag
-    setSelectedSegmentId(null);
-    setShowEmptySpaceTooltip(false);
-    
+    // Keep the tooltip visible during drag
     // Function to handle both mouse and touch movements
     const handleDragMove = (clientX: number) => {
       if (!isDragging || !timelineRef.current) return;
@@ -1262,7 +1215,35 @@ const TimelineControls = ({
       const updatedTimelineRect = timelineRef.current.getBoundingClientRect();
       const position = Math.max(0, Math.min(1, (clientX - updatedTimelineRect.left) / updatedTimelineRect.width));
       const newTime = position * duration;
+
+      // Create a temporary segment with the current drag position to check against
+      const draggedSegment = {
+        id: segmentId,
+        startTime: isLeft ? newTime : originalStartTime,
+        endTime: isLeft ? originalEndTime : newTime,
+        name: '',
+        thumbnail: ''
+      };
       
+      // Check if the current marker position intersects with where the segment will be
+      const currentSegmentStart = isLeft ? newTime : originalStartTime;
+      const currentSegmentEnd = isLeft ? originalEndTime : newTime;
+      const isMarkerInSegment = currentTime >= currentSegmentStart && currentTime <= currentSegmentEnd;
+
+      // Update tooltip based on marker intersection
+      if (isMarkerInSegment) {
+        // Show segment tooltip if marker is inside the segment
+        setSelectedSegmentId(segmentId);
+        setShowEmptySpaceTooltip(false);
+      } else {
+        // Show cutaway tooltip if marker is outside the segment
+        setSelectedSegmentId(null);
+        // Calculate available space for cutaway tooltip
+        const availableSpace = calculateAvailableSpace(currentTime);
+        setAvailableSegmentDuration(availableSpace);
+        setShowEmptySpaceTooltip(true);
+      }
+
       // Find neighboring segments (exclude the current one)
       const otherSegments = clipSegments.filter(seg => seg.id !== segmentId);
       
@@ -1399,10 +1380,6 @@ const TimelineControls = ({
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
       }
-      
-      // Keep tooltip hidden after drag
-      setSelectedSegmentId(null);
-      setShowEmptySpaceTooltip(false);
       
       // Record the final position in history as a single action
       const finalSegments = clipSegments.map(seg => {
@@ -1737,66 +1714,85 @@ const TimelineControls = ({
     });
   };
 
-  // Add a new useEffect hook to listen for segment deletion events
+      // Add a new useEffect hook to listen for segment deletion events
   useEffect(() => {
-    // Handle the segment deletion event
     const handleSegmentDelete = (event: CustomEvent) => {
       const { segmentId } = event.detail;
       
-      // If the deleted segment is the one with the currently open tooltip
-      if (selectedSegmentId === segmentId) {
-        const deletedSegmentIndex = clipSegments.findIndex(seg => seg.id === segmentId);
-        if (deletedSegmentIndex !== -1) {
-          const deletedSegment = clipSegments[deletedSegmentIndex];
+      // Check if this was the last segment before deletion
+      const remainingSegments = clipSegments.filter(seg => seg.id !== segmentId);
+      if (remainingSegments.length === 0) {
+        // Create a full video segment
+        const fullVideoSegment: Segment = {
+          id: Date.now(),
+          name: 'Full Video',
+          startTime: 0,
+          endTime: duration,
+          thumbnail: ''
+        };
+        
+        // Create and dispatch the update event to replace all segments with the full video segment
+        const updateEvent = new CustomEvent('update-segments', { 
+          detail: { 
+            segments: [fullVideoSegment],
+            recordHistory: true,
+            action: 'create_full_video_segment'
+          } 
+        });
+        document.dispatchEvent(updateEvent);
+        
+        // Update UI to show the segment tooltip
+        setSelectedSegmentId(fullVideoSegment.id);
+        setShowEmptySpaceTooltip(false);
+        setClickedTime(currentTime);
+        setDisplayTime(currentTime);
+        setActiveSegment(fullVideoSegment);
+        
+        // Calculate tooltip position at current time
+        if (timelineRef.current) {
+          const rect = timelineRef.current.getBoundingClientRect();
+          const posPercent = (currentTime / duration) * 100;
+          const xPosition = rect.left + (rect.width * (posPercent / 100));
           
-          // We need the current time to check if we should show the cutaway tooltip
-          const currentVideoTime = currentTime;
+          setTooltipPosition({
+            x: xPosition,
+            y: rect.top - 10
+          });
           
-          // Check if the current time was within the deleted segment
-          const wasInsideDeletedSegment = 
-            currentVideoTime >= deletedSegment.startTime && 
-            currentVideoTime <= deletedSegment.endTime;
+          logger.debug("Created full video segment:", {
+            id: fullVideoSegment.id,
+            duration: formatDetailedTime(duration),
+            currentPosition: formatDetailedTime(currentTime)
+          });
+        }
+      } else if (selectedSegmentId === segmentId) {
+        // Handle normal segment deletion
+        const deletedSegment = clipSegments.find(seg => seg.id === segmentId);
+        if (!deletedSegment) return;
+        
+        // Calculate available space after deletion
+        const availableSpace = calculateAvailableSpace(currentTime);
+        
+        // Update UI to show cutaway tooltip
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+        setAvailableSegmentDuration(availableSpace);
+        
+        // Calculate tooltip position
+        if (timelineRef.current) {
+          const rect = timelineRef.current.getBoundingClientRect();
+          const posPercent = (currentTime / duration) * 100;
+          const xPosition = rect.left + (rect.width * (posPercent / 100));
           
-          // Calculate position in the middle of the deleted segment for tooltip
-          const deletedSegmentMiddle = (deletedSegment.startTime + deletedSegment.endTime) / 2;
-          const timeToUse = wasInsideDeletedSegment ? currentVideoTime : deletedSegmentMiddle;
+          setTooltipPosition({
+            x: xPosition,
+            y: rect.top - 10
+          });
           
-          // Calculate available space after deletion
-          const availableSpace = calculateAvailableSpace(timeToUse);
-          
-          // Update UI to show cutaway tooltip in place of segment tooltip
-          setSelectedSegmentId(null);
-          
-          if (availableSpace >= 0.5) {
-            // Set the time for the tooltip
-            setClickedTime(timeToUse);
-            setDisplayTime(timeToUse);
-            
-            // Calculate tooltip position
-            if (timelineRef.current) {
-              const rect = timelineRef.current.getBoundingClientRect();
-              const posPercent = (timeToUse / duration) * 100;
-              const xPosition = rect.left + (rect.width * (posPercent / 100));
-              
-              setTooltipPosition({
-                x: xPosition,
-                y: rect.top - 10
-              });
-              
-              // Show the empty space tooltip
-              setAvailableSegmentDuration(availableSpace);
-              setShowEmptySpaceTooltip(true);
-              
-              logger.debug("Segment deleted, showing cutaway tooltip with available space:", 
-                formatDetailedTime(availableSpace),
-                "at position:",
-                formatDetailedTime(timeToUse)
-              );
-            }
-          } else {
-            // Not enough space for a new segment, hide tooltips
-            setShowEmptySpaceTooltip(false);
-          }
+          logger.debug("Segment deleted, showing cutaway tooltip:", {
+            position: formatDetailedTime(currentTime),
+            availableSpace: formatDetailedTime(availableSpace)
+          });
         }
       }
     };
@@ -1808,7 +1804,7 @@ const TimelineControls = ({
     return () => {
       document.removeEventListener('delete-segment', handleSegmentDelete as EventListener);
     };
-  }, [selectedSegmentId, clipSegments, currentTime, duration]);
+  }, [selectedSegmentId, clipSegments, currentTime, duration, timelineRef]);
 
   // Add an effect to synchronize tooltip play state with video play state
   useEffect(() => {
@@ -1816,8 +1812,124 @@ const TimelineControls = ({
     if (!video) return;
     
     const handlePlay = () => {
-      logger.debug("Video started playing from external control");
-      setIsPlayingSegment(true);
+      if (!videoRef.current) return;
+      
+      const video = videoRef.current;
+      const currentPosition = video.currentTime;
+      
+      // Reset continuePastBoundary flag when starting new playback
+      setContinuePastBoundary(false);
+      
+      // Find the next stopping point based on current position
+      let stopTime = duration;
+      let currentSegment = null;
+      let nextSegment = null;
+      
+      // First, check if we're inside a segment with high precision
+      currentSegment = clipSegments.find(seg => {
+        const isWithinSegment = currentPosition >= seg.startTime && currentPosition <= seg.endTime;
+        const isAtExactStart = Math.abs(currentPosition - seg.startTime) < 0.001; // Within 1ms of start
+        const isAtExactEnd = Math.abs(currentPosition - seg.endTime) < 0.001; // Within 1ms of end
+        return isWithinSegment || isAtExactStart || isAtExactEnd;
+      });
+      
+      // Find the next segment with high precision
+      nextSegment = clipSegments
+        .filter(seg => {
+          const isAfterCurrent = seg.startTime > currentPosition;
+          const isNotAtExactPosition = Math.abs(seg.startTime - currentPosition) > 0.001;
+          return isAfterCurrent && isNotAtExactPosition;
+        })
+        .sort((a, b) => a.startTime - b.startTime)[0];
+      
+      // Determine where to stop based on position
+      if (currentSegment) {
+        // If we're in a segment, stop at its end
+        stopTime = currentSegment.endTime;
+        setActiveSegment(currentSegment);
+      } else if (nextSegment) {
+        // If we're in a cutaway and there's a next segment, stop at its start
+        stopTime = nextSegment.startTime;
+        // Don't set active segment since we're in a cutaway
+      }
+      
+      // Create a boundary checker function with high precision
+      const checkBoundary = () => {
+        if (!video) return;
+        
+        const currentPosition = video.currentTime;
+        const timeLeft = stopTime - currentPosition;
+        
+        // If we're approaching the boundary (within 1ms) or have passed it
+        if (timeLeft <= 0.001 || currentPosition >= stopTime) {
+          // First pause playback
+          video.pause();
+          
+          // Force exact position with multiple verification attempts
+          const setExactPosition = () => {
+            if (!video) return;
+            
+            // Set to exact boundary time
+            video.currentTime = stopTime;
+            onSeek(stopTime);
+            setDisplayTime(stopTime);
+            setClickedTime(stopTime);
+            
+            logger.debug("Position verification:", {
+              target: formatDetailedTime(stopTime),
+              actual: formatDetailedTime(video.currentTime),
+              difference: Math.abs(video.currentTime - stopTime).toFixed(3)
+            });
+          };
+          
+          // Multiple attempts to ensure precision
+          setExactPosition();
+          setTimeout(setExactPosition, 10);
+          setTimeout(setExactPosition, 20);
+          setTimeout(setExactPosition, 50);
+          
+          // Update UI based on where we stopped
+          if (currentSegment) {
+            setSelectedSegmentId(currentSegment.id);
+            setShowEmptySpaceTooltip(false);
+          } else if (nextSegment) {
+            setSelectedSegmentId(nextSegment.id);
+            setShowEmptySpaceTooltip(false);
+            setActiveSegment(nextSegment);
+          } else {
+            setSelectedSegmentId(null);
+            setShowEmptySpaceTooltip(true);
+            setActiveSegment(null);
+          }
+          
+          // Remove our boundary checker
+          video.removeEventListener('timeupdate', checkBoundary);
+          setIsPlaying(false);
+          setIsPlayingSegment(false);
+          // Reset continuePastBoundary flag when stopping at boundary
+          setContinuePastBoundary(false);
+          return;
+        }
+      };
+      
+      // Start our boundary checker
+      video.addEventListener('timeupdate', checkBoundary);
+      
+      // Start playing
+      video.play()
+        .then(() => {
+          setIsPlaying(true);
+          setIsPlayingSegment(true);
+          logger.debug("Playback started:", {
+            from: formatDetailedTime(currentPosition),
+            to: formatDetailedTime(stopTime),
+            currentSegment: currentSegment ? `Segment ${currentSegment.id}` : 'None',
+            nextSegment: nextSegment ? `Segment ${nextSegment.id}` : 'None'
+          });
+        })
+        .catch(err => {
+          console.error("Error playing video:", err);
+        });
     };
     
     const handlePause = () => {
@@ -1832,7 +1944,7 @@ const TimelineControls = ({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, []);
+  }, [clipSegments, duration, onSeek]);
 
   // Handle mouse movement over timeline to remember position
   const handleTimelineMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -2248,8 +2360,9 @@ const TimelineControls = ({
             className="timeline-marker"
             style={{ left: `${currentTimePercent}%` }}
           >
+            {/* Top circle for popup toggle */}
             <div 
-              className={`timeline-marker-head ${isDragging ? 'dragging' : ''}`}
+              className="timeline-marker-head"
               onClick={(e) => {
                 // Prevent event propagation to avoid triggering the timeline container click
                 e.stopPropagation();
@@ -2300,12 +2413,19 @@ const TimelineControls = ({
                   }
                 }
               }}
-              onMouseDown={startDrag}
-              onTouchStart={startTouchDrag}
             >
               <span className="timeline-marker-head-icon">
                 {selectedSegmentId || showEmptySpaceTooltip ? '-' : '+'}
               </span>
+            </div>
+            
+            {/* Bottom circle for dragging */}
+            <div 
+              className={`timeline-marker-drag ${isDragging ? 'dragging' : ''}`}
+              onMouseDown={startDrag}
+              onTouchStart={startTouchDrag}
+            >
+              <span className="timeline-marker-drag-icon">⋮</span>
             </div>
           </div>
           
@@ -2461,139 +2581,82 @@ const TimelineControls = ({
                 >
                   <img src={playFromBeginningIcon} alt="Play from beginning" style={{width: '24px', height: '24px'}} />
                 </button>
-                <button 
-                  className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
-                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play from current position"}
+        {/*         <button 
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
+                  data-tooltip={isPlaying ? "Pause playback" : "Play from current position"}
                   onClick={(e) => {
                     e.stopPropagation();
                     
-                    // Find the selected segment
-                    const segment = clipSegments.find(seg => seg.id === selectedSegmentId);
-                    if (segment && videoRef.current) {
-                      if (isPlayingSegment) {
-                        // If already playing, pause the video
+                    // Find the current segment
+                    const currentSegment = clipSegments.find(seg => 
+                      currentTime >= seg.startTime && currentTime <= seg.endTime
+                    );
+
+                    if (isPlaying) {
+                      // If playing, just pause
+                      if (videoRef.current) {
                         videoRef.current.pause();
                         setIsPlayingSegment(false);
-                        // Reset continuePastBoundary when stopping playback
                         setContinuePastBoundary(false);
-                        logger.debug("Pause clicked - resetting continuePastBoundary flag");
-                      } else {
-                        // Enable continuePastBoundary flag when user explicitly clicks play
-                        // This will allow playback to continue even if we're at segment boundary
-                        setContinuePastBoundary(true);
-                        logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
-                        
-                        // Keep current position (use the current time marker) and just start playing
-                        // Don't seek to segment start - this allows continuing from where the marker is
-                        logger.debug("Play from current position - initial time:", formatDetailedTime(videoRef.current.currentTime));
-                        
-                        // Determine if we're at the segment end
-                        // Exact check - we want to be very precise here
-                        const isExactlyAtEnd = Math.abs(videoRef.current.currentTime - segment.endTime) < 0.001;
-                        // Near check - for cases where we're very close but not exactly at the end
-                        const isNearEnd = Math.abs(videoRef.current.currentTime - segment.endTime) < 0.05;
-                        
-                        if (isExactlyAtEnd || isNearEnd) {
-                          // Check if there's a segment immediately after this one
-                          const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-                          const nextSegmentIndex = sortedSegments.findIndex(seg => seg.id === segment.id) + 1;
-                          const nextSegment = nextSegmentIndex < sortedSegments.length ? sortedSegments[nextSegmentIndex] : null;
-                          
-                          // If there's an adjacent segment (no gap between segments)
-                          if (nextSegment && Math.abs(nextSegment.startTime - segment.endTime) < 0.1) {
-                            // Move to the start of the next segment
-                            logger.debug(`At segment boundary: Moving to adjacent segment ${nextSegment.id}`);
-                            videoRef.current.currentTime = nextSegment.startTime;
-                            setSelectedSegmentId(nextSegment.id);
-                            setActiveSegment(nextSegment);
-                            setDisplayTime(nextSegment.startTime);
-                            setClickedTime(nextSegment.startTime);
-                            
-                            // Play from this next segment
-                            videoRef.current.play()
-                              .then(() => {
-                                setIsPlayingSegment(true);
-                                logger.debug("Playing from adjacent segment");
-                              })
-                              .catch(err => {
-                                console.error("Error playing from adjacent segment:", err);
-                              });
-                            
-                            return; // Exit early since we've handled this case
-                          }
-                          
-                          // If we're at or near the segment end, move significantly past it
-                          // This ensures we completely bypass the end boundary
-                          const newPosition = segment.endTime + 0.5; // Move half a second past end
-                          
-                          logger.debug("At segment end - repositioning to continue beyond segment boundary:", 
-                            formatDetailedTime(videoRef.current.currentTime), 
-                            "->", formatDetailedTime(newPosition)
-                          );
-                          
-                          videoRef.current.currentTime = newPosition;
-                          
-                          // Don't set active segment for boundary checking
-                          // to allow playback to continue past the segment
-                          setActiveSegment(null);
-                          
-                          // Set a flag in sessionStorage to remember we're in "continue past segment" mode
-                          // This is an extra safeguard against reactivation of boundary checking
-                          sessionStorage.setItem('continuingPastSegment', 'true');
-                          sessionStorage.setItem('lastSegmentId', segment.id.toString());
-                          logger.debug("Continuing past segment boundary mode activated");
-                          
-                        } else {
-                          // Normal case - not at segment end
-                          // Make sure we're within the segment's bounds
-                          const isWithinSegment = 
-                            videoRef.current.currentTime >= segment.startTime && 
-                            videoRef.current.currentTime <= segment.endTime;
-                          
-                          logger.debug("Current position check:", {
-                            currentTime: formatDetailedTime(videoRef.current.currentTime),
-                            segmentStart: formatDetailedTime(segment.startTime),
-                            segmentEnd: formatDetailedTime(segment.endTime),
-                            isWithinSegment: isWithinSegment
-                          });
-                            
-                          // Only adjust position if we're outside the segment bounds
-                          if (!isWithinSegment) {
-                            // If outside segment bounds, move to current marker position
-                            // or to segment start if marker is before segment
-                            const newPosition = Math.max(segment.startTime, Math.min(segment.endTime, currentTime));
-                            logger.debug("Adjusting position to be within segment:", formatDetailedTime(newPosition));
-                            videoRef.current.currentTime = newPosition;
-                          } else {
-                            logger.debug("Keeping current position for playback");
-                          }
-                            
-                          // Set active segment for boundary checking
-                          setActiveSegment(segment);
-                          logger.debug("Set active segment for boundary checking:", segment.id);
-                        }
-                        
-                        // Play the video from the current position
+                      }
+                    } else {
+                      // If starting playback, set the active segment
+                      if (currentSegment) {
+                        setActiveSegment(currentSegment);
+                      }
+                      
+                      // Reset continuation flag when starting new playback
+                      setContinuePastBoundary(false);
+                      
+                      if (videoRef.current) {
                         videoRef.current.play()
                           .then(() => {
                             setIsPlayingSegment(true);
-                            logger.debug("Play clicked - continuing from current position:", formatDetailedTime(videoRef.current?.currentTime || 0));
                           })
                           .catch(err => {
-                            console.error("Error starting playback:", err);
+                            console.error("Error playing video:", err);
+                            setIsPlayingSegment(false);
                           });
                       }
                     }
-                    
-                    // Don't close the tooltip, keep it visible while playing
                   }}
                 >
-                  {isPlayingSegment ? (
+                  {isPlaying ? (
+                    <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
+                  ) : (
+                    <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
+                  )}
+                </button> */}
+
+                {/* Play/Pause button for empty space - Same as main play/pause button */}
+                <button 
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
+                  data-tooltip={isPlaying ? "Pause playback" : "Play from current position"}
+                  onClick={(e) => {
+                  e.stopPropagation();
+
+                   if (isPlaying) {
+
+                      // If playing, just pause
+                      if (videoRef.current) {
+                        videoRef.current.pause();
+                        setIsPlayingSegment(false);
+                        setContinuePastBoundary(false);
+                      }
+                      
+                  } else {
+             
+                    onPlayPause();
+                  }
+                 }}
+                >
+                  {isPlaying ? (
                     <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
                   ) : (
                     <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
                   )}
                 </button>
+                
                 <button 
                   className="tooltip-action-btn set-in"
                   data-tooltip="Set start point at current position"
@@ -2979,16 +3042,17 @@ const TimelineControls = ({
                 >
                   <img src={playFromBeginningIcon} alt="Play from beginning" style={{width: '24px', height: '24px'}} />
                 </button>
+
                 
                 {/* Play/Pause button for empty space */}
-                <button 
-                  className={`tooltip-action-btn ${isPlayingSegment ? 'pause' : 'play'}`}
-                  data-tooltip={isPlayingSegment ? "Pause playback" : "Play from here until next segment"}
+                {/* <button 
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
+                  data-tooltip={isPlaying ? "Pause playback" : "Play from here until next segment"}
                   onClick={(e) => {
                     e.stopPropagation();
                     
                     if (videoRef.current) {
-                      if (isPlayingSegment) {
+                      if (isPlaying) {
                         // If already playing, pause the video
                         videoRef.current.pause();
                         setIsPlayingSegment(false);
@@ -3216,7 +3280,36 @@ const TimelineControls = ({
                     }
                   }}
                 >
-                  {isPlayingSegment ? (
+                  {isPlaying ? (
+                    <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
+                  ) : (
+                    <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
+                  )}
+                </button> */}
+
+                {/* Play/Pause button for empty space - Same as main play/pause button */}
+                <button 
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
+                  data-tooltip={isPlaying ? "Pause playback" : "Play from here until next segment"}
+                 onClick={(e) => {
+                  e.stopPropagation();
+
+                   if (isPlaying) {
+
+                      // If playing, just pause
+                      if (videoRef.current) {
+                        videoRef.current.pause();
+                        setIsPlayingSegment(false);
+                        setContinuePastBoundary(false);
+                      }
+                      
+                  } else {
+             
+                    onPlayPause();
+                  }
+                 }}
+                >
+                  {isPlaying ? (
                     <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
                   ) : (
                     <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
