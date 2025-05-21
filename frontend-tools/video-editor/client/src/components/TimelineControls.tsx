@@ -1066,6 +1066,43 @@ const TimelineControls = ({
     }
   };
 
+  // Function to update tooltip based on current time position
+  const updateTooltipForPosition = (currentPosition: number) => {
+    if (!timelineRef.current) return;
+
+    // Find if we're in a segment at the current position
+    const segmentAtPosition = clipSegments.find(
+      seg => currentPosition >= seg.startTime && currentPosition <= seg.endTime
+    );
+
+    if (segmentAtPosition) {
+      setSelectedSegmentId(segmentAtPosition.id);
+      setShowEmptySpaceTooltip(false);
+    } else {
+      // Calculate available space for new segment before showing tooltip
+      const availableSpace = calculateAvailableSpace(currentPosition);
+      setAvailableSegmentDuration(availableSpace);
+      
+      // Only show tooltip if there's enough space for a minimal segment
+      if (availableSpace >= 0.5) {
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(true);
+      } else {
+        setSelectedSegmentId(null);
+        setShowEmptySpaceTooltip(false);
+      }
+    }
+
+    // Update tooltip position
+    const rect = timelineRef.current.getBoundingClientRect();
+    const positionPercent = (currentPosition / duration) * 100;
+    const xPos = rect.left + (rect.width * (positionPercent / 100));
+    setTooltipPosition({
+      x: xPos,
+      y: rect.top - 10
+    });
+  };
+
   // Handle timeline click to seek and show a tooltip
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!timelineRef.current || !scrollContainerRef.current) return;
@@ -2070,47 +2107,8 @@ const TimelineControls = ({
       setClickedTime(newTime);
       setDisplayTime(newTime);
       
-      // Check if we're in a segment to show the appropriate tooltip
-      const segmentAtTime = clipSegments.find(
-        seg => newTime >= seg.startTime && newTime <= seg.endTime
-      );
-      
-      // Calculate available space for new segment if needed
-      const availableSpace = segmentAtTime ? 0 : calculateAvailableSpace(newTime);
-      
-      if (segmentAtTime) {
-        // Show segment tooltip
-        setSelectedSegmentId(segmentAtTime.id);
-        setShowEmptySpaceTooltip(false);
-      } else if (availableSpace >= 0.5) {
-        // Only show tooltip if there's enough space for a minimal segment
-        // Show empty space tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-        setAvailableSegmentDuration(availableSpace);
-      } else {
-        // Not enough space, don't show tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(false);
-      }
-      
-      // Calculate and update tooltip position
-      if ((segmentAtTime || availableSpace >= 0.5) && timelineRef.current) {
-        const timelineRect = timelineRef.current.getBoundingClientRect();
-        let xPos = moveEvent.clientX; // Default to cursor position
-        
-        if (zoomLevel > 1 && scrollContainerRef.current) {
-          // For zoomed timeline, adjust for scroll position
-          const visibleTimelineLeft = timelineRect.left - scrollContainerRef.current.scrollLeft;
-          const percentPos = newTime / duration;
-          xPos = visibleTimelineLeft + (timelineRect.width * percentPos);
-        }
-        
-        setTooltipPosition({
-          x: xPos,
-          y: timelineRect.top - 10
-        });
-      }
+      // Update tooltip state based on new position
+      updateTooltipForPosition(newTime);
       
       // Store position globally for iOS Safari
       if (typeof window !== 'undefined') {
@@ -2282,6 +2280,9 @@ const TimelineControls = ({
       // Update both clicked time and display time to show the current position in tooltip
       setClickedTime(newTime);
       setDisplayTime(newTime);
+      
+      // Update tooltip state based on new position
+      updateTooltipForPosition(newTime);
       
       // Store position globally for mobile browsers
       if (typeof window !== 'undefined') {
