@@ -1017,81 +1017,89 @@ const TimelineControls = ({
     // 1. Check remaining space until the end of video
     const remainingDuration = Math.max(0, duration - startTime);
     
-    // Special case: If we're very close to the end of the video (within 300ms)
-    if (duration - startTime < 0.3) {
-      logger.debug("Very close to end of video, ensuring tooltip can show:", 
-                   formatDetailedTime(startTime), "video end:", formatDetailedTime(duration));
-      return Math.max(MIN_SPACE, remainingDuration);
-    }
-    
     // 2. Find the next segment (if any)
     const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
     
-    // Special case: If we're before the first segment
-    if (sortedSegments.length > 0 && startTime < sortedSegments[0].startTime) {
-      const spaceUntilFirstSegment = sortedSegments[0].startTime - startTime;
-      logger.debug("Before first segment, space available:", formatDetailedTime(spaceUntilFirstSegment));
-      return Math.max(MIN_SPACE, spaceUntilFirstSegment);
-    }
-    
-    // Check if we're in a cutaway area near any segment boundary
-    const isNearSegment = sortedSegments.some(seg => {
-      const distanceToStart = Math.abs(startTime - seg.startTime);
-      const distanceToEnd = Math.abs(startTime - seg.endTime);
-      // Use a larger tolerance (300ms) for boundary detection
-      return distanceToStart < 0.3 || distanceToEnd < 0.3;
-    });
-    
-    // If we're near any segment, ensure tooltip shows
-    if (isNearSegment) {
-      logger.debug("Near segment boundary:", formatDetailedTime(startTime));
-      return MIN_SPACE;
-    }
-    
+    // Find the next and previous segments
     const nextSegment = sortedSegments.find(seg => seg.startTime > startTime);
     const prevSegment = [...sortedSegments].reverse().find(seg => seg.endTime < startTime);
     
+    // Calculate the actual available space
+    let availableSpace;
     if (nextSegment) {
-      // Space available until the next segment starts
-      const spaceUntilNextSegment = Math.max(0, nextSegment.startTime - startTime);
-      // Always ensure minimum space to show tooltip
-      return Math.max(MIN_SPACE, Math.min(30, spaceUntilNextSegment));
-    } else if (prevSegment) {
-      // We're after the last segment, use remaining duration
-      const spaceAfterPrevSegment = Math.max(0, duration - startTime);
-      return Math.max(MIN_SPACE, Math.min(30, spaceAfterPrevSegment));
+      // Space until next segment
+      availableSpace = nextSegment.startTime - startTime;
     } else {
-      // No segments at all, use remaining duration
-      return Math.max(MIN_SPACE, Math.min(30, remainingDuration));
+      // Space until end of video
+      availableSpace = duration - startTime;
     }
+    
+    // Log the space calculation for debugging
+    logger.debug("Space calculation:", {
+      position: formatDetailedTime(startTime),
+      nextSegment: nextSegment ? formatDetailedTime(nextSegment.startTime) : "none",
+      prevSegment: prevSegment ? formatDetailedTime(prevSegment.endTime) : "none",
+      availableSpace: formatDetailedTime(Math.max(MIN_SPACE, availableSpace))
+    });
+    
+    // Always return at least MIN_SPACE to ensure tooltip shows
+    return Math.max(MIN_SPACE, availableSpace);
   };
 
   // Function to update tooltip based on current time position
   const updateTooltipForPosition = (currentPosition: number) => {
     if (!timelineRef.current) return;
 
-    // Find if we're in a segment at the current position
-    const segmentAtPosition = clipSegments.find(
-      seg => currentPosition >= seg.startTime && currentPosition <= seg.endTime
-    );
+    // Find if we're in a segment at the current position with a small tolerance
+    const segmentAtPosition = clipSegments.find(seg => {
+      const isWithinSegment = currentPosition >= seg.startTime && currentPosition <= seg.endTime;
+      const isVeryCloseToStart = Math.abs(currentPosition - seg.startTime) < 0.001;
+      const isVeryCloseToEnd = Math.abs(currentPosition - seg.endTime) < 0.001;
+      return isWithinSegment || isVeryCloseToStart || isVeryCloseToEnd;
+    });
+
+    // Find the next and previous segments
+    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    const nextSegment = sortedSegments.find(seg => seg.startTime > currentPosition);
+    const prevSegment = [...sortedSegments].reverse().find(seg => seg.endTime < currentPosition);
 
     if (segmentAtPosition) {
+      // We're in or exactly at a segment boundary
       setSelectedSegmentId(segmentAtPosition.id);
       setShowEmptySpaceTooltip(false);
     } else {
-      // Calculate available space for new segment before showing tooltip
+      // We're in a cutaway area
+      // Calculate available space for new segment
       const availableSpace = calculateAvailableSpace(currentPosition);
       setAvailableSegmentDuration(availableSpace);
-      
-      // Always show tooltip in empty spaces
+
+      // Always show empty space tooltip
       setSelectedSegmentId(null);
       setShowEmptySpaceTooltip(true);
+
+      // Log position info for debugging
+      logger.debug("Cutaway position:", {
+        current: formatDetailedTime(currentPosition),
+        prevSegmentEnd: prevSegment ? formatDetailedTime(prevSegment.endTime) : "none",
+        nextSegmentStart: nextSegment ? formatDetailedTime(nextSegment.startTime) : "none",
+        availableSpace: formatDetailedTime(availableSpace)
+      });
     }
 
     // Update tooltip position
     const rect = timelineRef.current.getBoundingClientRect();
     const positionPercent = (currentPosition / duration) * 100;
-    const xPos = rect.left + (rect.width * (positionPercent / 100));
+    let xPos;
+
+    if (zoomLevel > 1 && scrollContainerRef.current) {
+      // For zoomed timeline, adjust for scroll position
+      const visibleTimelineLeft = rect.left - scrollContainerRef.current.scrollLeft;
+      xPos = visibleTimelineLeft + (rect.width * (positionPercent / 100));
+    } else {
+      // For non-zoomed timeline, use simple calculation
+      xPos = rect.left + (rect.width * (positionPercent / 100));
+    }
+
     setTooltipPosition({
       x: xPos,
       y: rect.top - 10
@@ -2283,35 +2291,9 @@ const TimelineControls = ({
                   // Don't reopen the tooltip - just leave it closed
                   return;
                 } else {
-                  // Get segment at current time - ensure precise matching within segment boundaries
-                  // We need to be extra careful with floating point comparisons
-                  const segmentAtCurrentTime = clipSegments.find(seg => {
-                    const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
-                    const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
-                    const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
-                    return isWithinSegment || isAtExactStart || isAtExactEnd;
-                  });
-                  
-                  // Log detection of segments at marker (for debugging)
-                  logger.debug("Checking for segment at marker:", segmentAtCurrentTime ? 
-                    `Found segment ${segmentAtCurrentTime.id}` : "No segment found");
-                  
-                  // Show the appropriate tooltip
-                  if (segmentAtCurrentTime) {
-                    // Show segment tooltip
-                    setSelectedSegmentId(segmentAtCurrentTime.id);
-                  } else {
-                    // Calculate available space for new segment before showing tooltip
-                    const availableSpace = calculateAvailableSpace(currentTime);
-                    setAvailableSegmentDuration(availableSpace);
-                    
-                    // Only show tooltip if there's enough space for a minimal segment
-                    if (availableSpace >= 0.5) {
-                      // Show empty space tooltip
-                      setSelectedSegmentId(null);
-                      setShowEmptySpaceTooltip(true);
-                    }
-                  }
+                  // Use our improved tooltip position logic
+                  updateTooltipForPosition(currentTime);
+                  logger.debug("Opening tooltip at:", formatDetailedTime(currentTime));
                 }
               }}
             >
