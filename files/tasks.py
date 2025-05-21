@@ -974,14 +974,11 @@ def video_trim_task(self, trim_request_id):
                 encoding.delete()
 
         deleted_encodings = handle_pending_running_encodings(target_media)
-        if deleted_encodings:
-            # give the chance to run encodings for encodings that didnt make it
-            target_media.encode(force=False)
-            trim_request_status = "running"
-            # TODO: find way to call post_trim_action only after this has finished...
-        else:
-            post_trim_action.delay(target_media.friendly_token)
-            trim_request_status = "success"
+        # give the chance to run encodings for encodings that didnt make it
+        target_media.encode(force=False)
+        trim_request_status = "running"
+        # TODO: find way to call post_trim_action only after this has finished...
+        post_trim_action.delay(target_media.friendly_token)
 
         trim_request.status = trim_request_status
         trim_request.save(update_fields=["status"])
@@ -1001,14 +998,11 @@ def video_trim_task(self, trim_request_id):
                     encoding.delete()
 
             deleted_encodings = handle_pending_running_encodings(target_media)
-            if deleted_encodings:
-                # give the chance to run encodings for encodings that didnt make it
-                target_media.encode(force=False)
-                trim_request_status = "running"
-                # TODO: find way to call post_trim_action only after this has finished...
-            else:
-                post_trim_action.delay(target_media.friendly_token)
-                trim_request_status = "success"
+            # give the chance to run encodings for encodings that didnt make it
+            target_media.encode(force=False)
+            trim_request_status = "running"
+            # TODO: find way to call post_trim_action only after this has finished...
+            post_trim_action.delay(target_media.friendly_token)
 
         trim_request.status = trim_request_status
         trim_request.save(update_fields=["status"])

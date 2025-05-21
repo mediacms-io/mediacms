@@ -464,7 +464,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
 
 
     if copy_encodings:
-        for encoding in original_media.encodings.filter(chunk=False):
+        for encoding in original_media.encodings.filter(chunk=False, status="success"):
             if encoding.media_file:
                 with open(encoding.media_file.path, "rb") as f:
                     myfile = File(f)
@@ -472,7 +472,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                         media_file=myfile,
                         media=new_media,
                         profile=encoding.profile,
-                        status=encoding.status,
+                        status="success",
                         progress=100,
                         chunk=False,
                         logs=f"Copied from encoding {encoding.id}"
