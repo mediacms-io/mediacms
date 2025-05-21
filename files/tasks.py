@@ -183,6 +183,7 @@ class EncodingTask(Task):
                 self.encoding.status = "fail"
                 self.encoding.save(update_fields=["status"])
                 kill_ffmpeg_process(self.encoding.temp_file)
+                kill_ffmpeg_process(self.encoding.chunk_file_path)
                 if hasattr(self.encoding, "media"):
                     self.encoding.media.post_encode_actions()
         except BaseException:
@@ -367,6 +368,7 @@ def encode_media(
                 except AttributeError:
                     output = ""
                 kill_ffmpeg_process(encoding.temp_file)
+                kill_ffmpeg_process(encoding.chunk_file_path)
                 encoding.logs = output
                 encoding.status = "fail"
                 encoding.save(update_fields=["status", "logs"])
@@ -966,8 +968,8 @@ def video_trim_task(self, trim_request_id):
             # give the chance to run encodings for encodings that didnt make it
             target_media.encode(force=False)
             # TODO: find way to call post_trim_action only after this has finished...
-
-        post_trim_action.delay(target_media.friendly_token)
+        else:
+            post_trim_action.delay(target_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])
@@ -993,8 +995,8 @@ def video_trim_task(self, trim_request_id):
                 # give the chance to run encodings for encodings that didnt make it
                 target_media.encode(force=False)
                 # TODO: find way to call post_trim_action only after this has finished...
-
-            post_trim_action.delay(target_media.friendly_token)
+            else:
+                post_trim_action.delay(target_media.friendly_token)
 
         trim_request.status = "success"
         trim_request.save(update_fields=["status"])

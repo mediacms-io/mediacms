@@ -420,6 +420,8 @@ def kill_ffmpeg_process(filepath):
     Returns:
         subprocess.CompletedProcess: Result of the kill command
     """
+    if not filepath:
+        return False
     cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
     result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     pid = result.stdout.decode("utf-8").strip()
