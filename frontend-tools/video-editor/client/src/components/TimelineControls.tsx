@@ -1010,35 +1010,42 @@ const TimelineControls = ({
 
   // Helper function to calculate available space for a new segment
   const calculateAvailableSpace = (startTime: number): number => {
+    // Always return at least 0.1 seconds to ensure tooltip shows
+    const MIN_SPACE = 0.1;
+    
     // Determine the amount of available space:
     // 1. Check remaining space until the end of video
     const remainingDuration = Math.max(0, duration - startTime);
     
     // Special case: If we're very close to the end of the video (within 300ms)
-    // return a small value to ensure the tooltip can still be shown
     if (duration - startTime < 0.3) {
       logger.debug("Very close to end of video, ensuring tooltip can show:", 
                    formatDetailedTime(startTime), "video end:", formatDetailedTime(duration));
-      return Math.max(0.5, remainingDuration); // Use actual remaining duration if larger
+      return Math.max(MIN_SPACE, remainingDuration);
     }
     
     // 2. Find the next segment (if any)
     const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
     
-    // Check if we're in a cutaway area near a segment boundary
-    // Use a larger tolerance (100ms) for boundary detection
-    const isNearSegmentBoundary = sortedSegments.some(seg => {
+    // Special case: If we're before the first segment
+    if (sortedSegments.length > 0 && startTime < sortedSegments[0].startTime) {
+      const spaceUntilFirstSegment = sortedSegments[0].startTime - startTime;
+      logger.debug("Before first segment, space available:", formatDetailedTime(spaceUntilFirstSegment));
+      return Math.max(MIN_SPACE, spaceUntilFirstSegment);
+    }
+    
+    // Check if we're in a cutaway area near any segment boundary
+    const isNearSegment = sortedSegments.some(seg => {
       const distanceToStart = Math.abs(startTime - seg.startTime);
       const distanceToEnd = Math.abs(startTime - seg.endTime);
-      // Consider both start and end boundaries with different tolerances
-      return (distanceToStart < 0.1 && distanceToStart > 0) || // Near start but not exactly at it
-             (distanceToEnd < 0.1 && distanceToEnd > 0);       // Near end but not exactly at it
+      // Use a larger tolerance (300ms) for boundary detection
+      return distanceToStart < 0.3 || distanceToEnd < 0.3;
     });
     
-    // If we're near a segment boundary in cutaway area, ensure tooltip shows
-    if (isNearSegmentBoundary) {
-      logger.debug("Near segment boundary in cutaway area:", formatDetailedTime(startTime));
-      return 0.5; // Minimum value to show tooltip
+    // If we're near any segment, ensure tooltip shows
+    if (isNearSegment) {
+      logger.debug("Near segment boundary:", formatDetailedTime(startTime));
+      return MIN_SPACE;
     }
     
     const nextSegment = sortedSegments.find(seg => seg.startTime > startTime);
@@ -1047,22 +1054,15 @@ const TimelineControls = ({
     if (nextSegment) {
       // Space available until the next segment starts
       const spaceUntilNextSegment = Math.max(0, nextSegment.startTime - startTime);
-      // If we're very close to the next segment, ensure tooltip still shows
-      if (spaceUntilNextSegment < 0.1) {
-        return 0.5;
-      }
-      return Math.min(30, spaceUntilNextSegment); // Take either 30s or available space, whichever is smaller
+      // Always ensure minimum space to show tooltip
+      return Math.max(MIN_SPACE, Math.min(30, spaceUntilNextSegment));
     } else if (prevSegment) {
       // We're after the last segment, use remaining duration
       const spaceAfterPrevSegment = Math.max(0, duration - startTime);
-      // If we're very close to the previous segment's end, ensure tooltip shows
-      if (startTime - prevSegment.endTime < 0.1) {
-        return 0.5;
-      }
-      return Math.min(30, spaceAfterPrevSegment);
+      return Math.max(MIN_SPACE, Math.min(30, spaceAfterPrevSegment));
     } else {
       // No segments at all, use remaining duration
-      return Math.min(30, remainingDuration);
+      return Math.max(MIN_SPACE, Math.min(30, remainingDuration));
     }
   };
 
@@ -1083,14 +1083,9 @@ const TimelineControls = ({
       const availableSpace = calculateAvailableSpace(currentPosition);
       setAvailableSegmentDuration(availableSpace);
       
-      // Only show tooltip if there's enough space for a minimal segment
-      if (availableSpace >= 0.5) {
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-      } else {
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(false);
-      }
+      // Always show tooltip in empty spaces
+      setSelectedSegmentId(null);
+      setShowEmptySpaceTooltip(true);
     }
 
     // Update tooltip position
@@ -2054,30 +2049,7 @@ const TimelineControls = ({
     isDraggingRef.current = true; // Use ref for immediate value access
     
     // Show tooltip immediately when starting to drag
-    // Find the segment at the current time using improved matching
-    const segmentAtCurrentTime = clipSegments.find(seg => {
-      const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
-      const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
-      const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
-      return isWithinSegment || isAtExactStart || isAtExactEnd;
-    });
-    
-    if (segmentAtCurrentTime) {
-      // Show segment tooltip
-      setSelectedSegmentId(segmentAtCurrentTime.id);
-      setShowEmptySpaceTooltip(false);
-    } else {
-      // Calculate available space for new segment before showing tooltip
-      const availableSpace = calculateAvailableSpace(currentTime);
-      setAvailableSegmentDuration(availableSpace);
-      
-      // Only show tooltip if there's enough space for a minimal segment
-      if (availableSpace >= 0.5) {
-        // Show empty space tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-      }
-    }
+    updateTooltipForPosition(currentTime);
     
     // Handle mouse events
     const handleMouseMove = (moveEvent: MouseEvent) => {
@@ -2103,7 +2075,7 @@ const TimelineControls = ({
       // Convert to time and seek
       const newTime = position * duration;
       
-      // Update both clicked time and display time to show the current position in tooltip
+      // Update both clicked time and display time
       setClickedTime(newTime);
       setDisplayTime(newTime);
       
@@ -2111,85 +2083,6 @@ const TimelineControls = ({
       updateTooltipForPosition(newTime);
       
       // Store position globally for iOS Safari
-      if (typeof window !== 'undefined') {
-        (window as any).lastSeekedPosition = newTime;
-      }
-      
-      // Seek to the new position
-      onSeek(newTime);
-    };
-    
-    // Handle touch move events
-    const handleTouchMove = (moveEvent: TouchEvent) => {
-      if (!timelineRef.current || !scrollContainerRef.current || !moveEvent.touches[0]) return;
-      
-      // Calculate the position based on touch coordinates
-      const rect = timelineRef.current.getBoundingClientRect();
-      let position;
-      
-      if (zoomLevel > 1) {
-        // When zoomed, account for scroll position
-        const scrollLeft = scrollContainerRef.current.scrollLeft;
-        const totalWidth = timelineRef.current.clientWidth;
-        position = (moveEvent.touches[0].clientX - rect.left + scrollLeft) / totalWidth;
-      } else {
-        // Normal calculation for 1x zoom
-        position = (moveEvent.touches[0].clientX - rect.left) / rect.width;
-      }
-      
-      // Constrain position between 0 and 1
-      position = Math.max(0, Math.min(1, position));
-      
-      // Convert to time and seek
-      const newTime = position * duration;
-      
-      // Update both clicked time and display time to show the current position in tooltip
-      setClickedTime(newTime);
-      setDisplayTime(newTime);
-      
-      // Check if we're in a segment to show the appropriate tooltip
-      const segmentAtTime = clipSegments.find(
-        seg => newTime >= seg.startTime && newTime <= seg.endTime
-      );
-      
-      // Calculate available space for new segment if needed
-      const availableSpace = segmentAtTime ? 0 : calculateAvailableSpace(newTime);
-      
-      if (segmentAtTime) {
-        // Show segment tooltip
-        setSelectedSegmentId(segmentAtTime.id);
-        setShowEmptySpaceTooltip(false);
-      } else if (availableSpace >= 0.5) {
-        // Only show tooltip if there's enough space for a minimal segment
-        // Show empty space tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-        setAvailableSegmentDuration(availableSpace);
-      } else {
-        // Not enough space, don't show tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(false);
-      }
-      
-      // Calculate and update tooltip position
-      if ((segmentAtTime || availableSpace >= 0.5) && timelineRef.current) {
-        const timelineRect = timelineRef.current.getBoundingClientRect();
-        let xPos = moveEvent.touches[0].clientX; // Default to touch position
-        
-        if (zoomLevel > 1 && scrollContainerRef.current) {
-          // For zoomed timeline, adjust for scroll position
-          const visibleTimelineLeft = timelineRect.left - scrollContainerRef.current.scrollLeft;
-          const percentPos = newTime / duration;
-          xPos = visibleTimelineLeft + (timelineRect.width * percentPos);
-        }
-        
-        setTooltipPosition({
-          x: xPos,
-          y: timelineRect.top - 10
-        });
-      }
-      
-      // Store position globally for mobile browsers
       if (typeof window !== 'undefined') {
         (window as any).lastSeekedPosition = newTime;
       }
@@ -2209,10 +2102,6 @@ const TimelineControls = ({
     // Add event listeners to track movement and release
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    // Remove these incorrect event listeners that were causing linter errors
-    // document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    // document.addEventListener('touchend', handleTouchEnd);
-    // document.addEventListener('touchcancel', handleTouchEnd);
   };
 
   // Handle touch events for mobile devices
@@ -2223,35 +2112,13 @@ const TimelineControls = ({
     }
     
     e.stopPropagation(); // Don't trigger the timeline click
+    e.preventDefault(); // Prevent text selection during drag
     
     setIsDragging(true);
     isDraggingRef.current = true; // Use ref for immediate value access
     
     // Show tooltip immediately when starting to drag
-    // Find the segment at the current time using improved matching
-    const segmentAtCurrentTime = clipSegments.find(seg => {
-      const isWithinSegment = currentTime >= seg.startTime && currentTime <= seg.endTime;
-      const isAtExactStart = Math.abs(currentTime - seg.startTime) < 0.001; // Within 1ms of start
-      const isAtExactEnd = Math.abs(currentTime - seg.endTime) < 0.001; // Within 1ms of end
-      return isWithinSegment || isAtExactStart || isAtExactEnd;
-    });
-    
-    if (segmentAtCurrentTime) {
-      // Show segment tooltip
-      setSelectedSegmentId(segmentAtCurrentTime.id);
-      setShowEmptySpaceTooltip(false);
-    } else {
-      // Calculate available space for new segment before showing tooltip
-      const availableSpace = calculateAvailableSpace(currentTime);
-      setAvailableSegmentDuration(availableSpace);
-      
-      // Only show tooltip if there's enough space for a minimal segment
-      if (availableSpace >= 0.5) {
-        // Show empty space tooltip
-        setSelectedSegmentId(null);
-        setShowEmptySpaceTooltip(true);
-      }
-    }
+    updateTooltipForPosition(currentTime);
     
     // Handle touch move events
     const handleTouchMove = (moveEvent: TouchEvent) => {
@@ -2277,7 +2144,7 @@ const TimelineControls = ({
       // Convert to time and seek
       const newTime = position * duration;
       
-      // Update both clicked time and display time to show the current position in tooltip
+      // Update both clicked time and display time
       setClickedTime(newTime);
       setDisplayTime(newTime);
       
@@ -2296,7 +2163,7 @@ const TimelineControls = ({
     // Handle touch end to stop dragging
     const handleTouchEnd = () => {
       setIsDragging(false);
-      isDraggingRef.current = false; // Update ref immediately 
+      isDraggingRef.current = false; // Update ref immediately
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
@@ -3341,7 +3208,7 @@ const TimelineControls = ({
                 <button 
                   className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
                   data-tooltip={isPlaying ? "Pause playback" : "Play from here until next segment"}
-                 onClick={(e) => {
+                  onClick={(e) => {
                   e.stopPropagation();
 
                    if (isPlaying) {
