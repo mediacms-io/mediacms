@@ -903,14 +903,22 @@ def post_trim_action(friendly_token):
 
     media.set_media_type()
     encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
-    for encoding in encodings:
-        # update encoding size, in case they don't have one, due to the
-        # way the copy_video took place
-        update_encoding_size(encoding.id)
+    # if they are still not encoded, when the first one will be encoded, it will have the chance to
+    # call post_trim_action again
+    if encodings:
+        for encoding in encodings:
+            # update encoding size, in case they don't have one, due to the
+            # way the copy_video took place
+            update_encoding_size(encoding.id)
 
-    media.produce_thumbnails_from_video()
-    produce_sprite_from_video.delay(friendly_token)
-    create_hls.delay(friendly_token)
+        media.produce_thumbnails_from_video()
+        produce_sprite_from_video.delay(friendly_token)
+        create_hls.delay(friendly_token)
+
+        vt_request = VideoTrimRequest.objects.filter(media=media, status="running").first()
+        if vt_request:
+            vt_request.status = "success"
+            vt_request.save(update_fields=["status"])
 
     return True
 
@@ -973,20 +981,24 @@ def video_trim_task(self, trim_request_id):
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                 encoding.delete()
 
-        # give the chance to run encodings for encodings that didnt make it
+        # give the chance to run encodings for encodings that didnt make it. If they are done, this won't do much
         target_media.encode(force=False)
-        trim_request_status = "running"
-        # TODO: find way to call post_trim_action only after this has finished...
         post_trim_action.delay(target_media.friendly_token)
 
-        trim_request.status = trim_request_status
-        trim_request.save(update_fields=["status"])
     else:
         for i, timestamp in enumerate(timestamps_encodings, start=1):
             # copy the original file for each of the segments. This could be optimized to avoid the overhead but
             # for now is necessary because the ffmpeg trim command will be run towards the original
             # file on different times.
             target_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
+
+            video_trim_request = VideoTrimRequest.objects.create(
+                media=target_media,
+                status="running",
+                video_action="create_segments",
+                media_trim_style='no_encoding',
+                timestamps=[timestamp]
+            )
 
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
             deleted_encodings = handle_pending_running_encodings(target_media)
@@ -997,15 +1009,16 @@ def video_trim_task(self, trim_request_id):
                     logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                     encoding.delete()
 
+
             # give the chance to run encodings for encodings that didnt make it
             target_media.encode(force=False)
-            trim_request_status = "running"
-            # TODO: find way to call post_trim_action only after this has finished...
             post_trim_action.delay(target_media.friendly_token)
 
-        trim_request.status = trim_request_status
+
+
+        # set as completed the initial trim_request
+        trim_request.status = "success"
         trim_request.save(update_fields=["status"])
-        logger.info(f"Successfully processed video trim request {trim_request_id} for media {original_media.friendly_token}")
 
     return True
 

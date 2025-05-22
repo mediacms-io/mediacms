@@ -649,6 +649,7 @@ class Media(models.Model):
             from . import tasks
             tasks.create_hls.delay(self.friendly_token)
 
+            # TODO: ideally would ensure this is run only at the end when the last encoding is done...
             vt_request = VideoTrimRequest.objects.filter(media=self, status="running").first()
             if vt_request:
                 tasks.post_trim_action.delay(self.friendly_token)
