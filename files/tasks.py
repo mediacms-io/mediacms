@@ -86,6 +86,40 @@ def handle_pending_running_encodings(media):
 
 
 
+def pre_trim_actions(media):
+    # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
+	# if the video is already completed. however if it is a new video (user uploded the video and starts trimming before the # video is processed), this is necessary, so encode has to be called
+    profiles = EncodeProfile.objects.filter(active=True, extension='mp4')
+    media_encodings = [e.profile for e in media.encodings.filter(status="success", profile__extension='mp4', chunk=False)]
+    media_encodings = EncodeProfile.objects.filter(
+        encoding__in=media.encodings.filter(
+        status="success",
+        chunk=False
+        ),
+        extension='mp4'
+    ).distinct()
+
+    picked = []
+    for profile in profiles:
+        if profile.extension == "gif":
+            continue
+        if media.video_height and media.video_height < profile.resolution:
+            continue
+        if profile in media_encodings:
+            continue
+        else:
+            picked.append(profile)
+
+    # give the chance to run encodings for encodings that didnt make it
+
+    if picked:
+        logger.info(f"Encoding media {media.friendly_token} with profiles {picked}")
+        media.encode(profiles=picked, force=False)
+    else:
+        logger.info(f"NO NO NOEncoding media {media.friendly_token} with profiles {picked}")
+
+    return True
+
 @task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
 def chunkize_media(self, friendly_token, profiles, force=True):
     """Break media in chunks and start encoding tasks"""
@@ -981,8 +1015,7 @@ def video_trim_task(self, trim_request_id):
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                 encoding.delete()
 
-        # give the chance to run encodings for encodings that didnt make it. If they are done, this won't do much
-        target_media.encode(force=False)
+        pre_trim_actions(target_media)
         post_trim_action.delay(target_media.friendly_token)
 
     else:
@@ -1009,11 +1042,8 @@ def video_trim_task(self, trim_request_id):
                     logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                     encoding.delete()
 
-
-            # give the chance to run encodings for encodings that didnt make it
-            target_media.encode(force=False)
+            pre_trim_actions(target_media)
             post_trim_action.delay(target_media.friendly_token)
-
 
 
         # set as completed the initial trim_request
