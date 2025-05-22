@@ -2235,7 +2235,7 @@ const TimelineControls = ({
   }, [showSuccessModal, redirectUrl, onSave]);
 
   return (
-    <div className="timeline-container-card">
+    <div className={`timeline-container-card ${isPreviewMode ? 'preview-mode' : ''}`}>
       {/* Current Timecode with Milliseconds */}
       <div className="timeline-header">
         <div className="timeline-title">
@@ -2342,7 +2342,7 @@ const TimelineControls = ({
           {/* Segment Tooltip */}
           {selectedSegmentId !== null && (
             <div 
-              className="segment-tooltip two-row-tooltip"
+              className={`segment-tooltip two-row-tooltip ${isPreviewMode ? 'preview-mode' : ''}`}
               style={{
                 position: 'absolute',
                 ...constrainTooltipPosition(currentTimePercent)
@@ -2639,7 +2639,7 @@ const TimelineControls = ({
           {/* Empty space tooltip - positioned absolutely within timeline container */}
           {showEmptySpaceTooltip && selectedSegmentId === null && (
             <div 
-              className="empty-space-tooltip two-row-tooltip"
+              className={`empty-space-tooltip two-row-tooltip ${isPreviewMode ? 'preview-mode' : ''}`}
               style={{
                 position: 'absolute',
                 ...constrainTooltipPosition(currentTimePercent)
