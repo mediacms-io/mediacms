@@ -49,6 +49,7 @@ interface TimelineControlsProps {
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
   onPlayPause: () => void; // Add this prop
+  isPlayingSegments?: boolean;
 }
 
 // Function to calculate and constrain tooltip position to keep it on screen
@@ -95,7 +96,8 @@ const TimelineControls = ({
   isIOSUninitialized = false,
   isPlaying,
   setIsPlaying,
-  onPlayPause // Add this prop
+  onPlayPause, // Add this prop
+  isPlayingSegments = false,
 }: TimelineControlsProps) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const leftHandleRef = useRef<HTMLDivElement>(null);
@@ -1108,11 +1110,13 @@ const TimelineControls = ({
 
   // Handle timeline click to seek and show a tooltip
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Prevent interaction if segments are playing
+    if (isPlayingSegments) return;
+
     if (!timelineRef.current || !scrollContainerRef.current) return;
     
     // If on mobile device and video hasn't been initialized, don't handle timeline clicks
     if (isIOSUninitialized) {
-      // Don't do anything on timeline click if mobile device hasn't been initialized
       return;
     }
     
@@ -1238,6 +1242,9 @@ const TimelineControls = ({
   
   // Handle segment resize - works with both mouse and touch events
   const handleSegmentResize = (segmentId: number, isLeft: boolean) => (e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent interaction if segments are playing
+    if (isPlayingSegments) return;
+
     e.preventDefault();
     e.stopPropagation(); // Prevent triggering parent's events
     
@@ -1571,6 +1578,9 @@ const TimelineControls = ({
   
   // Handle segment click to show the tooltip
   const handleSegmentClick = (segmentId: number) => (e: React.MouseEvent) => {
+    // Prevent interaction if segments are playing
+    if (isPlayingSegments) return;
+
     // Don't show tooltip if clicked on handle
     if ((e.target as HTMLElement).classList.contains('clip-segment-handle')) {
       return;
@@ -2235,7 +2245,7 @@ const TimelineControls = ({
   }, [showSuccessModal, redirectUrl, onSave]);
 
   return (
-    <div className={`timeline-container-card ${isPreviewMode ? 'preview-mode' : ''}`}>
+    <div className={`timeline-container-card ${isPlayingSegments ? 'segments-playback-mode' : ''}`}>
       {/* Current Timecode with Milliseconds */}
       <div className="timeline-header">
         <div className="timeline-title">
@@ -2250,10 +2260,11 @@ const TimelineControls = ({
       {/* Timeline Container with Scrollable Wrapper */}
       <div 
         ref={scrollContainerRef} 
-        className="timeline-scroll-container" 
+        className={`timeline-scroll-container ${isPlayingSegments ? 'segments-playback-mode' : ''}`}
         style={{ 
           overflow: zoomLevel > 1 ? 'auto' : 'hidden'
-        }}>
+        }}
+      >
         <div 
           ref={timelineRef}
           className="timeline-container"
@@ -2342,7 +2353,7 @@ const TimelineControls = ({
           {/* Segment Tooltip */}
           {selectedSegmentId !== null && (
             <div 
-              className={`segment-tooltip two-row-tooltip ${isPreviewMode ? 'preview-mode' : ''}`}
+              className={`segment-tooltip two-row-tooltip ${isPlayingSegments ? 'segments-playback-mode' : ''}`}
               style={{
                 position: 'absolute',
                 ...constrainTooltipPosition(currentTimePercent)
@@ -2639,7 +2650,7 @@ const TimelineControls = ({
           {/* Empty space tooltip - positioned absolutely within timeline container */}
           {showEmptySpaceTooltip && selectedSegmentId === null && (
             <div 
-              className={`empty-space-tooltip two-row-tooltip ${isPreviewMode ? 'preview-mode' : ''}`}
+              className={`empty-space-tooltip two-row-tooltip ${isPlayingSegments ? 'segments-playback-mode' : ''}`}
               style={{
                 position: 'absolute',
                 ...constrainTooltipPosition(currentTimePercent)

@@ -103,8 +103,8 @@ const EditingTools = ({
             )}
           </button>
 
-          {/* Standard Play button (only shown when not in preview mode) */}
-          {!isPreviewMode && (
+          {/* Standard Play button (only shown when not in preview mode or segments playback) */}
+          {!isPreviewMode && !isPlayingSegments && (
             <button 
               className="button play-button"
               onClick={handlePlay}
@@ -132,6 +132,18 @@ const EditingTools = ({
                 </>
               )}
             </button>
+          )}
+          
+          {/* Segments Playback message (replaces play button during segments playback) */}
+          {isPlayingSegments && (
+            <div className="segments-playback-message">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="8" />
+              </svg>
+              Segments Playback
+            </div>
           )}
           
           {/* Preview mode message (replaces play button) */}

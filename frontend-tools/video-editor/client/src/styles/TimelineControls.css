@@ -851,3 +851,57 @@
   border-color: rgba(0, 0, 0, 0.15);
   background-color: inherit !important;
 }
+
+/* Segments playback mode styles */
+.segments-playback-mode {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.segments-playback-mode .timeline-container,
+.segments-playback-mode .clip-segment,
+.segments-playback-mode .clip-segment-handle,
+.segments-playback-mode .timeline-marker-head,
+.segments-playback-mode .timeline-marker-drag,
+.segments-playback-mode .trim-handle {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.segments-playback-mode .tooltip-action-btn {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.segments-playback-mode .tooltip-time-btn {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.segments-playback-mode .clip-segment:hover {
+  box-shadow: none;
+  border-color: rgba(0, 0, 0, 0.15);
+  background-color: inherit !important;
+}
+
+/* Show segments playback message */
+.segments-playback-message {
+  display: flex;
+  align-items: center;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  animation: pulse 2s infinite;
+}
+
+.segments-playback-message svg {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+  color: #3b82f6;
+}

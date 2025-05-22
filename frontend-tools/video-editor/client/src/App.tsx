@@ -285,6 +285,7 @@ const App = () => {
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
           onPlayPause={handlePlay}
+          isPlayingSegments={isPlayingSegments}
         />
 
         {/* Clip Segments */}
