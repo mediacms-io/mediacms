@@ -42,6 +42,8 @@ const App = () => {
     isMobile,
     videoInitialized,
     setVideoInitialized,
+    isPlayingSegments,
+    handlePlaySegments,
   } = useVideoTrimmer();
 
   // Function to play from the beginning
@@ -250,9 +252,11 @@ const App = () => {
           onUndo={handleUndo}
           onRedo={handleRedo}
           onPreview={handlePreview}
+          onPlaySegments={handlePlaySegments}
           onPlay={handlePlay}
           isPreviewMode={isPreviewMode}
           isPlaying={isPlaying}
+          isPlayingSegments={isPlayingSegments}
           canUndo={historyPosition > 0}
           canRedo={historyPosition < history.length - 1}
         />

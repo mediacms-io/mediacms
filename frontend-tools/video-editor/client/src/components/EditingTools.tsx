@@ -6,11 +6,13 @@ interface EditingToolsProps {
   onUndo: () => void;
   onRedo: () => void;
   onPreview: () => void;
+  onPlaySegments: () => void;
   onPlay: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isPreviewMode?: boolean;
   isPlaying?: boolean;
+  isPlayingSegments?: boolean;
 }
 
 const EditingTools = ({
@@ -19,11 +21,13 @@ const EditingTools = ({
   onUndo,
   onRedo,
   onPreview,
+  onPlaySegments,
   onPlay,
   canUndo,
   canRedo,
   isPreviewMode = false,
   isPlaying = false,
+  isPlayingSegments = false,
 }: EditingToolsProps) => {
   // Handle play button click with iOS fix
   const handlePlay = () => {
@@ -41,6 +45,35 @@ const EditingTools = ({
       <div className="flex-container single-row">
         {/* Left side - Play buttons group */}
         <div className="button-group play-buttons-group">
+          {/* Play Segments button */}
+          <button 
+            className="button segments-button"
+            onClick={onPlaySegments}
+            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments once"}
+            style={{ fontSize: '0.875rem' }}
+          >
+            {isPlayingSegments ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="10" y1="15" x2="10" y2="9" />
+                  <line x1="14" y1="15" x2="14" y2="9" />
+                </svg>
+                <span className="full-text">Stop Segments</span>
+                <span className="short-text">Stop</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="10 8 16 12 10 16 10 8" />
+                </svg>
+                <span className="full-text">Play Segments</span>
+                <span className="short-text">Segments</span>
+              </>
+            )}
+          </button>
+
           {/* Play Preview button */}
           <button 
             className="button preview-button"

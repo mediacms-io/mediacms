@@ -42,6 +42,10 @@ const useVideoTrimmer = () => {
   // Track unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
+  // State for playing segments
+  const [isPlayingSegments, setIsPlayingSegments] = useState(false);
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  
   // Monitor for history changes
   useEffect(() => {
     if (history.length > 0) {
@@ -549,68 +553,149 @@ const useVideoTrimmer = () => {
   // Preview mode effect to handle playing only segments
   useEffect(() => {
     if (!isPreviewMode || !videoRef.current) return;
-    
-    // logger.debug("Preview mode effect running, previewSegmentIndex:", previewSegmentIndex);
-    
+
     // Sort segments by start time
     const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-    
-    // Check if we've reached the end of the current segment
+    if (orderedSegments.length === 0) return;
+
+    const video = videoRef.current;
+
+    // Function to handle segment playback
     const handleSegmentPlayback = () => {
-      if (!isPreviewMode || !videoRef.current) return;
-      
+      if (!isPreviewMode || !video) return;
+
       const currentSegment = orderedSegments[previewSegmentIndex];
       if (!currentSegment) return;
-      
-      // Make sure we're inside the current segment
-      const currentTime = videoRef.current.currentTime;
-      
-      // If the current time is before the segment start, move to the segment start
+
+      const currentTime = video.currentTime;
+
+      // If we're before the current segment's start, jump to it
       if (currentTime < currentSegment.startTime) {
-        videoRef.current.currentTime = currentSegment.startTime;
+        video.currentTime = currentSegment.startTime;
         return;
       }
-      
+
       // If we've reached the end of the current segment
-      if (currentTime >= currentSegment.endTime - 0.05) { // Slightly before the end to ensure smooth transition
+      if (currentTime >= currentSegment.endTime - 0.01) { // Small threshold to ensure smooth transition
         // Move to the next segment if available
         if (previewSegmentIndex < orderedSegments.length - 1) {
+          // Play next segment
           const nextSegment = orderedSegments[previewSegmentIndex + 1];
-          
-          // Play through the next segment immediately
-          videoRef.current.currentTime = nextSegment.startTime;
+          video.currentTime = nextSegment.startTime;
           setPreviewSegmentIndex(previewSegmentIndex + 1);
-          logger.debug("Moving to next segment in preview:", nextSegment.name, 
-                      "from", formatDetailedTime(currentSegment.endTime), 
-                      "to", formatDetailedTime(nextSegment.startTime));
           
-          // Ensure playback continues
-          videoRef.current.play().catch(err => {
-            console.error("Error continuing preview playback:", err);
+          logger.debug("Preview: Moving to next segment", {
+            from: formatDetailedTime(currentSegment.endTime),
+            to: formatDetailedTime(nextSegment.startTime),
+            segmentIndex: previewSegmentIndex + 1
           });
+
         } else {
-          // End of all segments, loop back to the first segment
-          logger.debug("End of all segments in preview, looping back to first");
-          videoRef.current.currentTime = orderedSegments[0].startTime;
+          // Loop back to first segment
+          logger.debug("Preview: Looping back to first segment");
+          video.currentTime = orderedSegments[0].startTime;
           setPreviewSegmentIndex(0);
-          
-          // Ensure playback continues
-          videoRef.current.play().catch(err => {
-            console.error("Error restarting preview playback:", err);
-          });
         }
+
+        // Ensure playback continues
+        video.play().catch(err => {
+          console.error("Error continuing preview playback:", err);
+        });
       }
     };
-    
+
     // Add event listener for timeupdate to check segment boundaries
-    videoRef.current.addEventListener('timeupdate', handleSegmentPlayback);
-    
+    video.addEventListener('timeupdate', handleSegmentPlayback);
+
+    // Start playing if not already playing
+    if (video.paused) {
+      video.currentTime = orderedSegments[previewSegmentIndex].startTime;
+      video.play().catch(err => {
+        console.error("Error starting preview playback:", err);
+      });
+    }
+
     return () => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('timeupdate', handleSegmentPlayback);
+      if (video) {
+        video.removeEventListener('timeupdate', handleSegmentPlayback);
       }
     };
   }, [isPreviewMode, previewSegmentIndex, clipSegments]);
+  
+  // Handle starting preview mode
+  const handleStartPreview = () => {
+    const video = videoRef.current;
+    if (!video || clipSegments.length === 0) return;
+    
+    // If preview is already active, do nothing
+    if (isPreviewMode) {
+      return;
+    }
+    
+    // If normal playback is happening, pause it
+    if (isPlaying) {
+      video.pause();
+      setIsPlaying(false);
+    }
+    
+    // Sort segments by start time
+    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    if (orderedSegments.length === 0) return;
+    
+    // Set the preview mode flag
+    setIsPreviewMode(true);
+    logger.debug("Entering preview mode");
+    
+    // Set the first segment as the current one in the preview sequence
+    setPreviewSegmentIndex(0);
+    
+    // Move to the start of the first segment
+    video.currentTime = orderedSegments[0].startTime;
+  };
+  
+  // Handle playing/stopping preview mode
+  const handlePreview = () => {
+    const video = videoRef.current;
+    if (!video || clipSegments.length === 0) return;
+    
+    // If preview is already active, turn it off
+    if (isPreviewMode) {
+      setIsPreviewMode(false);
+      
+      // Always pause the video when exiting preview mode
+      video.pause();
+      setIsPlaying(false);
+      
+      logger.debug("Exiting preview mode - video paused");
+      return;
+    }
+    
+    // Sort segments by start time
+    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    if (orderedSegments.length === 0) return;
+    
+    // Set the preview mode flag
+    setIsPreviewMode(true);
+    logger.debug("Entering preview mode");
+    
+    // Set the first segment as the current one in the preview sequence
+    setPreviewSegmentIndex(0);
+    
+    // Start preview mode by playing the first segment
+    video.currentTime = orderedSegments[0].startTime;
+    
+    // Start playback
+    video.play()
+      .then(() => {
+        setIsPlaying(true);
+        logger.debug("Preview started successfully");
+      })
+      .catch(err => {
+        console.error("Error starting preview:", err);
+        setIsPreviewMode(false);
+        setIsPlaying(false);
+      });
+  };
   
   // Handle trim start change
   const handleTrimStartChange = (time: number) => {
@@ -723,60 +808,6 @@ const useVideoTrimmer = () => {
     } else {
       logger.debug("Cannot redo: at latest history position");
     }
-  };
-  
-  // Handle playing the preview of all segments
-  const handlePreview = () => {
-    const video = videoRef.current;
-    if (!video || clipSegments.length === 0) return;
-    
-    // If preview is already active, turn it off
-    if (isPreviewMode) {
-      setIsPreviewMode(false);
-      
-      // Always pause the video when exiting preview mode
-      video.pause();
-      setIsPlaying(false);
-      
-      logger.debug("Exiting preview mode - video paused");
-      return;
-    }
-    
-    // If normal playback is happening, remember that state but pause it
-    const wasPlaying = isPlaying;
-    if (wasPlaying) {
-      video.pause();
-    }
-    
-    // Sort segments by start time to ensure proper playback order
-    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-    if (orderedSegments.length === 0) return;
-    
-    // Set the preview mode flag before starting playback
-    setIsPreviewMode(true);
-    logger.debug("Entering preview mode");
-    
-    // Set the first segment as the current one in the preview sequence
-    setPreviewSegmentIndex(0);
-    
-    // Start preview mode by playing the first segment
-    video.currentTime = orderedSegments[0].startTime;
-    
-    // Force a small delay before playing to ensure the preview mode state is set
-    setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.play()
-          .then(() => {
-            logger.debug("Preview started successfully");
-            setIsPlaying(true);
-          })
-          .catch(err => {
-            console.error("Error starting preview:", err);
-            setIsPreviewMode(false); // Reset preview mode if play fails
-            setIsPlaying(false);
-          });
-      }
-    }, 50); // Short delay to ensure state updates have processed
   };
   
   // Handle zoom level change
@@ -947,6 +978,75 @@ const useVideoTrimmer = () => {
   // Add videoInitialized state
   const [videoInitialized, setVideoInitialized] = useState(false);
   
+  // Effect to handle segments playback
+  useEffect(() => {
+    if (!isPlayingSegments || !videoRef.current) return;
+
+    const video = videoRef.current;
+    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    
+    const handleSegmentsPlayback = () => {
+      const currentSegment = orderedSegments[currentSegmentIndex];
+      if (!currentSegment) return;
+
+      const currentTime = video.currentTime;
+
+      // If we're before the current segment's start, jump to it
+      if (currentTime < currentSegment.startTime) {
+        video.currentTime = currentSegment.startTime;
+        return;
+      }
+
+      // If we've reached the end of the current segment
+      if (currentTime >= currentSegment.endTime - 0.01) {
+        if (currentSegmentIndex < orderedSegments.length - 1) {
+          // Move to next segment
+          const nextSegment = orderedSegments[currentSegmentIndex + 1];
+          video.currentTime = nextSegment.startTime;
+          setCurrentSegmentIndex(currentSegmentIndex + 1);
+          video.play().catch(console.error);
+        } else {
+          // End of all segments
+          video.pause();
+          setIsPlayingSegments(false);
+          setCurrentSegmentIndex(0);
+          video.removeEventListener('timeupdate', handleSegmentsPlayback);
+        }
+      }
+    };
+
+    video.addEventListener('timeupdate', handleSegmentsPlayback);
+
+    // Start playing if not already playing
+    if (video.paused && orderedSegments.length > 0) {
+      video.currentTime = orderedSegments[0].startTime;
+      video.play().catch(console.error);
+    }
+
+    return () => {
+      video.removeEventListener('timeupdate', handleSegmentsPlayback);
+    };
+  }, [isPlayingSegments, currentSegmentIndex, clipSegments]);
+
+  // Handle play segments
+  const handlePlaySegments = () => {
+    const video = videoRef.current;
+    if (!video || clipSegments.length === 0) return;
+
+    if (isPlayingSegments) {
+      // Stop segments playback
+      video.pause();
+      setIsPlayingSegments(false);
+      setCurrentSegmentIndex(0);
+    } else {
+      // Start segments playback
+      setIsPlayingSegments(true);
+      setCurrentSegmentIndex(0);
+      video.currentTime = clipSegments[0].startTime;
+      video.play().catch(console.error);
+    }
+  };
+  
   return {
     videoRef,
     currentTime,
@@ -955,6 +1055,7 @@ const useVideoTrimmer = () => {
     setIsPlaying,
     isMuted,
     isPreviewMode,
+    isPlayingSegments,
     thumbnails,
     trimStart,
     trimEnd,
@@ -973,6 +1074,7 @@ const useVideoTrimmer = () => {
     handleUndo,
     handleRedo,
     handlePreview,
+    handlePlaySegments,
     toggleMute,
     handleSave,
     handleSaveACopy,
