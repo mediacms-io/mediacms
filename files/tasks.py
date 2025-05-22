@@ -72,7 +72,7 @@ def handle_pending_running_encodings(media):
     Returns:
         bool: True if any encodings were deleted, False otherwise
     """
-    encodings = media.encodings.filter(status__in=["pending", "running"])
+    encodings = media.encodings.exclude(status="success")
     deleted = False
     for encoding in encodings:
         if encoding.temp_file:
@@ -210,7 +210,10 @@ def encode_media(
 ):
     """Encode a media to given profile, using ffmpeg, storing progress"""
 
-    logger.info("Encode Media started, friendly token {0}, profile id {1}, force {2}".format(friendly_token, profile_id, force))
+    logger.info(f"encode_media for {friendly_token}/{profile_id}/{encoding_id}/{force}/{chunk}")
+    if not Encoding.objects.filter(id=encoding_id).exists():
+        logger.info(f"Exiting for {friendly_token}/{profile_id}/{encoding_id}/{force} since encoding id not found")
+        return False
 
     if self.request.id:
         task_id = self.request.id
@@ -353,8 +356,7 @@ def encode_media(
                                 encoding.save(update_fields=["progress", "update_date"])
                                 logger.info("Saved {0}".format(round(percent, 2)))
                             n_times += 1
-                    except DatabaseError as e:
-                        print(e, 'XA'*100)
+                    except DatabaseError:
                         kill_ffmpeg_process(encoding.temp_file)
                         kill_ffmpeg_process(encoding.chunk_file_path)
                         return False
@@ -366,11 +368,6 @@ def encode_media(
                         raise
 
             except Exception as e:
-                if isinstance(e, DatabaseError):
-                    print(e, 'BA'*100)
-                    kill_ffmpeg_process(encoding.temp_file)
-                    kill_ffmpeg_process(encoding.chunk_file_path)
-                    return False
 
                 try:
                     # output is empty, fail message is on the exception
@@ -381,7 +378,10 @@ def encode_media(
                 kill_ffmpeg_process(encoding.chunk_file_path)
                 encoding.logs = output
                 encoding.status = "fail"
-                encoding.save(update_fields=["status", "logs"])
+                try:
+                    encoding.save(update_fields=["status", "logs"])
+                except DatabaseError:
+                    return False
                 raise_exception = True
                 # if this is an ffmpeg's valid error
                 # no need for the task to be re-run
@@ -507,7 +507,6 @@ def create_hls(friendly_token):
             if media.hls_file != pp:
                 Media.objects.filter(pk=media.pk).update(hls_file=pp)
                 hlsfile = Media.objects.filter(pk=media.pk).first().hls_file
-                logger.info(f"HLS file created: {hlsfile} size {os.path.getsize(hlsfile)}")
     return True
 
 
@@ -966,6 +965,7 @@ def video_trim_task(self, trim_request_id):
         if not original_trim_result:
             logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
+        deleted_encodings = handle_pending_running_encodings(target_media)
         encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
         for encoding in encodings:
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
@@ -973,7 +973,6 @@ def video_trim_task(self, trim_request_id):
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                 encoding.delete()
 
-        deleted_encodings = handle_pending_running_encodings(target_media)
         # give the chance to run encodings for encodings that didnt make it
         target_media.encode(force=False)
         trim_request_status = "running"
@@ -990,6 +989,7 @@ def video_trim_task(self, trim_request_id):
             target_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
 
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
+            deleted_encodings = handle_pending_running_encodings(target_media)
             encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
@@ -997,7 +997,6 @@ def video_trim_task(self, trim_request_id):
                     logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                     encoding.delete()
 
-            deleted_encodings = handle_pending_running_encodings(target_media)
             # give the chance to run encodings for encodings that didnt make it
             target_media.encode(force=False)
             trim_request_status = "running"

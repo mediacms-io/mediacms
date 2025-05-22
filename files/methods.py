@@ -426,7 +426,6 @@ def kill_ffmpeg_process(filepath):
     result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     pid = result.stdout.decode("utf-8").strip()
     if pid:
-        logger.info("Killing ffmpeg process with PID: %s", pid)
         cmd = "kill -9 %s" % pid
         result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     return result

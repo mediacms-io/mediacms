@@ -649,9 +649,11 @@ class Media(models.Model):
             from . import tasks
             tasks.create_hls.delay(self.friendly_token)
 
-            need_to_run_post_trim_action = False
-            if need_to_run_post_trim_action:
+            vt_request = VideoTrimRequest.objects.filter(media=self, status="running").first()
+            if vt_request:
                 tasks.post_trim_action.delay(self.friendly_token)
+                vt_request.status = "success"
+                vt_request.save(update_fields=["status"])
         return True
 
     def set_encoding_status(self):
@@ -1831,4 +1833,3 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
-
