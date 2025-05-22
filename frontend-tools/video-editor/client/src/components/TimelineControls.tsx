@@ -545,19 +545,20 @@ const TimelineControls = ({
   
   // Effect to check active segment boundaries during playback
   useEffect(() => {
+    // Skip if no video or no active segment
     const video = videoRef.current;
-    if (!video || !activeSegment || !isPlayingSegment) {
-      logger.debug("Segment boundary check not active:", {
-        hasVideo: !!video,
-        hasActiveSegment: !!activeSegment,
-        isPlaying: isPlayingSegment
-      });
+    if (!video || !activeSegment || !isPlayingSegment || isPreviewMode) {
+      // Log why we're skipping
+      if (!video) logger.debug("Skipping segment boundary check - no video element");
+      else if (!activeSegment) logger.debug("Skipping segment boundary check - no active segment");
+      else if (!isPlayingSegment) logger.debug("Skipping segment boundary check - not in segment playback mode");
+      else if (isPreviewMode) logger.debug("Skipping segment boundary check in preview mode");
       return;
     }
     
-    // Skip segment boundary checking in preview mode (it has its own handler)
-    if (isPreviewMode) {
-      logger.debug("Skipping segment boundary check in preview mode");
+    // Skip boundary checking when playing all segments
+    if (isPlayingSegments) {
+      logger.debug("Skipping segment boundary check during segments playback");
       return;
     }
     

@@ -1004,9 +1004,16 @@ const useVideoTrimmer = () => {
           const nextSegment = orderedSegments[currentSegmentIndex + 1];
           video.currentTime = nextSegment.startTime;
           setCurrentSegmentIndex(currentSegmentIndex + 1);
-          video.play().catch(console.error);
+          
+          // If video is somehow paused, ensure it keeps playing
+          if (video.paused) {
+            logger.debug("Ensuring playback continues to next segment");
+            video.play().catch(err => {
+              console.error("Error continuing segment playback:", err);
+            });
+          }
         } else {
-          // End of all segments
+          // End of all segments - only pause when we reach the very end
           video.pause();
           setIsPlayingSegments(false);
           setCurrentSegmentIndex(0);
@@ -1042,8 +1049,25 @@ const useVideoTrimmer = () => {
       // Start segments playback
       setIsPlayingSegments(true);
       setCurrentSegmentIndex(0);
-      video.currentTime = clipSegments[0].startTime;
-      video.play().catch(console.error);
+      
+      // Exit preview mode if active
+      if (isPreviewMode) {
+        setIsPreviewMode(false);
+      }
+      
+      // Sort segments by start time
+      const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+      
+      // Start from the first segment
+      video.currentTime = orderedSegments[0].startTime;
+      
+      // Start playback with proper error handling
+      video.play().catch(err => {
+        console.error("Error starting segments playback:", err);
+        setIsPlayingSegments(false);
+      });
+      
+      logger.debug("Starting playback of all segments continuously");
     }
   };
   

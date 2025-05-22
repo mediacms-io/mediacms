@@ -49,7 +49,7 @@ const EditingTools = ({
           <button 
             className="button segments-button"
             onClick={onPlaySegments}
-            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments once"}
+            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments continuously until the end"}
             style={{ fontSize: '0.875rem' }}
           >
             {isPlayingSegments ? (
@@ -59,8 +59,8 @@ const EditingTools = ({
                   <line x1="10" y1="15" x2="10" y2="9" />
                   <line x1="14" y1="15" x2="14" y2="9" />
                 </svg>
-                <span className="full-text">Stop Segments</span>
-                <span className="short-text">Stop</span>
+                <span className="full-text">Stop Preview</span>
+                <span className="short-text">Stop Preview</span>
               </>
             ) : (
               <>
@@ -68,14 +68,14 @@ const EditingTools = ({
                   <circle cx="12" cy="12" r="10" />
                   <polygon points="10 8 16 12 10 16 10 8" />
                 </svg>
-                <span className="full-text">Play Segments</span>
-                <span className="short-text">Segments</span>
+                <span className="full-text">Play Preview</span>
+                <span className="short-text">Play Preview</span>
               </>
             )}
           </button>
 
           {/* Play Preview button */}
-          <button 
+          {/* <button 
             className="button preview-button"
             onClick={onPreview}
             data-tooltip={isPreviewMode ? "Stop preview playback" : "Play only segments (skips gaps between segments)"}
@@ -101,7 +101,7 @@ const EditingTools = ({
                 <span className="short-text">Preview</span>
               </>
             )}
-          </button>
+          </button> */}
 
           {/* Standard Play button (only shown when not in preview mode or segments playback) */}
           {!isPreviewMode && !isPlayingSegments && (
@@ -142,7 +142,7 @@ const EditingTools = ({
                 <line x1="12" y1="16" x2="12" y2="12" />
                 <line x1="12" y1="8" x2="12" y2="8" />
               </svg>
-              Segments Playback
+              Preview Mode
             </div>
           )}
           
