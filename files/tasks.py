@@ -88,9 +88,14 @@ def handle_pending_running_encodings(media):
 
 def pre_trim_actions(media):
     # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
-	# if the video is already completed. however if it is a new video (user uploded the video and starts trimming before the # video is processed), this is necessary, so encode has to be called
-    profiles = EncodeProfile.objects.filter(active=True, extension='mp4')
-    media_encodings = [e.profile for e in media.encodings.filter(status="success", profile__extension='mp4', chunk=False)]
+	# if the video is already completed. however if it is a new video (user uploded the video and starts trimming
+    # before the video is processed), this is necessary, so encode has to be called
+
+    # also since we are making speed cutting, if a video resolution (say 720 and 360) has been ffmpeg copied by the
+    # original file, it has specificy information as I-frames. Now the original file was trimmed too. So now if we attempt
+    # to trim it for a missing resolution (eg 240), it will pick different I-frames and the result will be different
+    # while playing the video in HLS. Thus we need to re-encode the video for all resolutions to ensure they have the same information
+    profiles = EncodeProfile.objects.filter(active=True, extension='mp4', resolution__lte=media.video_height)
     media_encodings = EncodeProfile.objects.filter(
         encoding__in=media.encodings.filter(
         status="success",
@@ -101,22 +106,15 @@ def pre_trim_actions(media):
 
     picked = []
     for profile in profiles:
-        if profile.extension == "gif":
-            continue
-        if media.video_height and media.video_height < profile.resolution:
-            continue
         if profile in media_encodings:
             continue
         else:
             picked.append(profile)
 
-    # give the chance to run encodings for encodings that didnt make it
+    logger.info(f"Encoding media {media.friendly_token} will have to be performed for the following profiles {picked}")
 
     if picked:
-        logger.info(f"Encoding media {media.friendly_token} with profiles {picked}")
-        media.encode(profiles=picked, force=False)
-    else:
-        logger.info(f"NO NO NOEncoding media {media.friendly_token} with profiles {picked}")
+        media.encode()
 
     return True
 
