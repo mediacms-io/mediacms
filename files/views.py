@@ -376,6 +376,9 @@ def edit_chapters(request):
 @csrf_exempt
 @login_required
 def trim_video(request, friendly_token):
+    if not settings.ALLOW_VIDEO_TRIMMER:
+        return JsonResponse({"success": False, "error": "Video trimming is not allowed"}, status=400)
+
     if not request.method == "POST":
         return HttpResponseRedirect("/")
 
@@ -423,6 +426,10 @@ def edit_video(request):
 
     if not media.media_type == "video":
         messages.add_message(request, messages.INFO, "Media is not video")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    if not settings.ALLOW_VIDEO_TRIMMER:
+        messages.add_message(request, messages.INFO, "Video Trimmer is not enabled")
         return HttpResponseRedirect(media.get_absolute_url())
 
 
