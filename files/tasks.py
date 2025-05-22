@@ -111,9 +111,10 @@ def pre_trim_actions(media):
         else:
             picked.append(profile)
 
-    logger.info(f"Encoding media {media.friendly_token} will have to be performed for the following profiles {picked}")
 
     if picked:
+        logger.info(f"Encoding media {media.friendly_token} will have to be performed for all profiles")
+
         media.encode()
 
     return True
