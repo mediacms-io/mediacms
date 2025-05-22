@@ -25,10 +25,10 @@
 }
 
 .page-sidebar {
-  z-index: +20;
+  z-index: 9999;
 
   @media (min-width: 768px) {
-    z-index: +20;
+    z-index: 9999;
   }
 
   position: fixed;
