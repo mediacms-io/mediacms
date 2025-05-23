@@ -1,0 +1,94 @@
+.ios-video-player-container {
+  position: relative;
+  background-color: #f8f8f8;
+  border: 1px solid #e2e2e2;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.ios-video-player-container video {
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+  aspect-ratio: 16/9;
+  background-color: black;
+}
+
+.ios-time-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #333;
+}
+
+.ios-note {
+  text-align: center;
+  color: #777;
+  font-size: 0.8rem;
+  padding: 0.5rem 0;
+}
+
+/* iOS-specific styling tweaks */
+@supports (-webkit-touch-callout: none) {
+  .ios-video-player-container video {
+    max-height: 50vh; /* Use viewport height on iOS */
+  }
+  
+  /* Improve controls visibility on iOS */
+  video::-webkit-media-controls {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure controls don't disappear too quickly */
+  video::-webkit-media-controls-panel {
+    transition-duration: 3s !important;
+  }
+}
+
+/* External controls styling */
+.ios-external-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.ios-control-btn {
+  font-weight: bold;
+  min-width: 100px;
+  height: 44px; /* Minimum touch target size for iOS */
+  border: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+}
+
+.ios-control-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Prevent text selection on buttons */
+.no-select {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Safari */
+  -khtml-user-select: none;    /* Konqueror HTML */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;           /* Non-prefixed version, supported by Chrome and Opera */
+  cursor: default;
+}
+
+/* Specifically prevent default behavior on fine controls */
+.ios-fine-controls button, 
+.ios-external-controls .no-select {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+} 

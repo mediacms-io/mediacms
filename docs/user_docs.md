@@ -11,6 +11,7 @@
 - [Share media](#share-media)
 - [Embed media](#embed-media)
 - [Customize my profile options](#customize-my-profile-options)
+- [Trim videos](#trim-videos)
 
 ## Uploading media
 
@@ -198,7 +199,7 @@ You can now watch the captions/subtitles play back in the video player - and tog
     <img src="./images/CC-display.png"/>
 </p>
 
-## Using Timestamps for sharing 
+## Using Timestamps for sharing
 
 ### Using Timestamp in the URL
 
@@ -240,7 +241,7 @@ Comments send with mentions will contain a link to the user page, and can be set
 When enabled, comments including a timestamp will also be displayed in the current video Timebar as a little colorful dot. The comment can be previewed by hovering the dot (left image) and it will be displayed on top of the video when reaching the correct time (right image).
 
 Only comments with correct timestamps formats (HH:MM:SS or MM:SS) will be picked up and appear in the Timebar.
-    
+
 <p align="left">
     <img src="./images/TimebarComments_Hover.png" height="180" alt="Comment preview on hover"/>
     <img src="./images/TimebarComments_Hit.png" height="180" alt="Comment shown when the timestamp is reached "/>
@@ -257,3 +258,7 @@ How to use the embed media option
 
 ## Customize my profile options
 Customize profile and channel
+
+## Trim videos
+Once a video is uploaded, you can trim it to create a new video or to replace the original one. You can also create segments of the video, which will be available as separate videos. Edit the video and click on the "Trime Video" option. If the original video has finished processing (encodings are created for all resolutions), then this is an action that runs instantly. If the original video hasn't processed, which is the case when you upload a video and edit it right away, then the trim action will trigger processing of the video and will take some time to finish. In all cases, you get to see the original video (or the trimmed versions) immediately, so you are sure of what you have uploaded or trimmed, with a message that the video is being processed.
+

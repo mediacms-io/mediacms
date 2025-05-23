@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+yt.readme.md
+client/public/videos/sample-video.mp4
