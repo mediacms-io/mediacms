@@ -99,13 +99,6 @@ class MediaPublishForm(forms.ModelForm):
         help_text=""
     )
 
-    create_segments = forms.BooleanField(
-        required=False,
-        initial=False,
-        label="Create segments from video chapters",
-        help_text="If checked, separate media files will be created for each chapter"
-    )
-
     class Meta:
         model = Media
         fields = (
@@ -168,16 +161,6 @@ class MediaPublishForm(forms.ModelForm):
             CustomField('allow_download'),
         )
 
-        # Only add create_segments field if the media has chapters
-        if self.instance.media_type == 'video' and self.instance.chapters.exists():
-            self.fields['create_segments'] = forms.BooleanField(
-                required=False,
-                initial=False,
-                label="Create segments from video chapters",
-                help_text="If checked, separate media files will be created for each chapter"
-            )
-            self.helper.layout.append(CustomField('create_segments'))
-
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
 
     def clean(self):
@@ -192,6 +175,7 @@ class MediaPublishForm(forms.ModelForm):
                 # Make the confirm_state field visible and add it to the layout
                 self.fields['confirm_state'].widget = forms.CheckboxInput()
 
+                # add it after the state field
                 state_index = None
                 for i, layout_item in enumerate(self.helper.layout):
                     if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
