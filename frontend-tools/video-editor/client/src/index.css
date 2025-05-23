@@ -219,7 +219,7 @@
   border: 2px solid rgba(0, 123, 255, 0.9); /* Blue border */
 }
 .clip-segment:nth-child(even), .segment-color-2, .segment-color-4, .segment-color-6, .segment-color-8 {
-  background-color: transparent; 
+  background-color: transparent;
   border: 2px solid rgba(108, 117, 125, 0.9); /* Gray border */
 }
 
@@ -420,7 +420,7 @@ button[disabled][data-tooltip]::after {
   padding: 4px 8px;
   border-radius: 3px;
   white-space: nowrap;
-  
+
   /* Position below the button */
   bottom: -35px;
   left: 50%;
@@ -433,7 +433,7 @@ button[disabled][data-tooltip]::after {
   border-width: 5px;
   border-style: solid;
   border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
-  
+
   /* Position the arrow */
   bottom: -15px;
   left: 50%;
@@ -617,7 +617,7 @@ button[disabled][data-tooltip]::after {
 }
 
 /* Save buttons styling */
-.save-button, .save-copy-button {
+.save-button, .save-copy-button, .save-segments-button {
   background-color: rgba(0, 123, 255, 0.8);
   color: white;
   border: none;
@@ -706,7 +706,7 @@ button[disabled][data-tooltip]::after {
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .controls-right {
     margin-top: 10px;
     width: 100%;
@@ -757,28 +757,28 @@ button[disabled][data-tooltip]::after {
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .time-button-group {
     width: 100%;
     display: flex;
     justify-content: space-between;
     margin-top: 10px;
   }
-  
+
   .controls-right {
     flex-wrap: wrap;
     gap: 8px;
   }
-  
+
   .save-button, .save-copy-button {
     margin-top: 8px;
     width: 100%;
   }
-  
+
   .zoom-dropdown-container {
     width: 100%;
   }
-  
+
   .zoom-button {
     width: 100%;
     justify-content: center;
