@@ -447,7 +447,8 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             encoding_status=original_media.encoding_status,
             listable=original_media.listable,
             add_date=timezone.now(),
-            video_height=original_media.video_height
+            video_height=original_media.video_height,
+            media_info=original_media.media_info
         )
         models.Media.objects.bulk_create([new_media])
         # avoids calling signals since signals will call media_init and we don't want that
