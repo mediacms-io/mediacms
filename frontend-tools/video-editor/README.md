@@ -7,7 +7,6 @@ A modern browser-based video editing tool built with React and TypeScript that i
 - ⏱️ Trim video start and end points
 - ✂️ Split videos into multiple segments
 - 👁️ Preview individual segments or the full edited video
-- 🔍 Zoom timeline for precise editing
 - 🔄 Undo/redo support for all editing operations
 - 🔊 Audio mute controls
 - 💾 Save edits directly to MediaCMS

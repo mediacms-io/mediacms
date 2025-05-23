@@ -14,7 +14,6 @@ from django.core.files import File
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.utils import timezone
-from contextlib import contextmanager
 
 from cms import celery_app
 
@@ -22,15 +21,6 @@ from . import helpers, models
 from .helpers import mask_ip
 
 logger = logging.getLogger(__name__)
-
-@contextmanager
-def disable_signal(signal, receiver, sender):
-    """Context manager to temporarily disable a signal"""
-    signal.disconnect(receiver, sender=sender)
-    try:
-        yield
-    finally:
-        signal.connect(receiver, sender=sender)
 
 
 def get_user_or_session(request):
@@ -459,7 +449,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             add_date=timezone.now()
         )
         models.Media.objects.bulk_create([new_media])
-        # avoids calling signals
+        # avoids calling signals since signals will call media_init and we don't want that
 
 
     if copy_encodings:
@@ -477,7 +467,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                         logs=f"Copied from encoding {encoding.id}"
                     )
                     models.Encoding.objects.bulk_create([new_encoding])
-                    # avoids calling signals
+                    # avoids calling signals as this is still not ready
 
     # Copy categories and tags
     for category in original_media.category.all():

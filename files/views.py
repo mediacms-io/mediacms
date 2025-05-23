@@ -246,6 +246,8 @@ def history(request):
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
+    # this is not ready...
+    return False
     if not request.method == "POST":
         return HttpResponseRedirect("/")
 
@@ -354,7 +356,8 @@ def publish_media(request):
 @login_required
 def edit_chapters(request):
     """Edit chapters"""
-
+    # not implemented yet
+    return False
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
         return HttpResponseRedirect("/")
@@ -614,7 +617,8 @@ def view_media(request):
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
 
-    # TODO: explaim
+    # in case media is video and is processing (eg the case a video was just uploaded)
+    # attempt to show it (rather than showing a blank video player)
     if media.media_type == 'video':
         video_msg = None
         if media.encoding_status == "pending":

@@ -62,9 +62,11 @@ ERRORS_LIST = [
 def handle_pending_running_encodings(media):
     """Handle pending and running encodings for a media object.
 
-    we are trimming the original file. If there are encodings in success, this means that the encoding has run
-    and has succeeded, so we can keep them (they will be trimmed). However for encodings that are in pending
-    or running phase,
+    we are trimming the original file. If there are encodings in success state, this means that the encoding has run
+    and has succeeded, so we can keep them (they will be trimmed) or if we dont keep them we dont have to delete them
+    here
+
+    However for encodings that are in pending or running phase, just delete them
 
     Args:
         media: The media object to handle encodings for
@@ -86,15 +88,23 @@ def handle_pending_running_encodings(media):
 
 
 
-def pre_trim_actions(media):
-    # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
-	# if the video is already completed. however if it is a new video (user uploded the video and starts trimming
-    # before the video is processed), this is necessary, so encode has to be called
+def pre_trim_video_actions(media):
+    # the reason for this function is to perform tasks before trimming a video
 
-    # also since we are making speed cutting, if a video resolution (say 720 and 360) has been ffmpeg copied by the
-    # original file, it has specificy information as I-frames. Now the original file was trimmed too. So now if we attempt
-    # to trim it for a missing resolution (eg 240), it will pick different I-frames and the result will be different
-    # while playing the video in HLS. Thus we need to re-encode the video for all resolutions to ensure they have the same information
+    # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
+	# if the video is already completed
+    # however if it is a new video (user uploded the video and starts trimming
+    # before the video is processed), this is necessary, so encode has to be called to give it a chance to encode
+
+    # if a video is fully processed (all encodings are success), or if a video is new, then things are clear
+
+    # HOWEVER there is a race condition and this is that some encodings are success and some are pending/running
+    # Since we are making speed cutting, we will perform an ffmpeg -c copy on all of them and the result will be
+    # that they will end up differently cut, because ffmpeg checks for I-frames
+    # The result is fine if playing the video but is bad in case of HLS
+    # So we need to delete all encodings inevitably to produce same results, if there are some that are success and some that
+    # are still not finished.
+
     profiles = EncodeProfile.objects.filter(active=True, extension='mp4', resolution__lte=media.video_height)
     media_encodings = EncodeProfile.objects.filter(
         encoding__in=media.encodings.filter(
@@ -113,8 +123,8 @@ def pre_trim_actions(media):
 
 
     if picked:
+        # by calling encode will re-encode all. The logic is explained above...
         logger.info(f"Encoding media {media.friendly_token} will have to be performed for all profiles")
-
         media.encode()
 
     return True
@@ -244,6 +254,9 @@ def encode_media(
     """Encode a media to given profile, using ffmpeg, storing progress"""
 
     logger.info(f"encode_media for {friendly_token}/{profile_id}/{encoding_id}/{force}/{chunk}")
+    # TODO: this is new behavior, check whether it performs well. Before that check it would end up saving the Encoding
+    # at some point below. Now it exits the task. Could it be that before it would give it a chance to re-run? Or it was
+    # not being used at all?
     if not Encoding.objects.filter(id=encoding_id).exists():
         logger.info(f"Exiting for {friendly_token}/{profile_id}/{encoding_id}/{force} since encoding id not found")
         return False
@@ -390,6 +403,9 @@ def encode_media(
                                 logger.info("Saved {0}".format(round(percent, 2)))
                             n_times += 1
                     except DatabaseError:
+                        # primary reason for this is that the encoding has been deleted, because
+                        # the media file was deleted, or also that there was a trim video request
+                        # so it would be redundant to let it complete the encoding
                         kill_ffmpeg_process(encoding.temp_file)
                         kill_ffmpeg_process(encoding.chunk_file_path)
                         return False
@@ -539,7 +555,6 @@ def create_hls(friendly_token):
         if os.path.exists(pp):
             if media.hls_file != pp:
                 Media.objects.filter(pk=media.pk).update(hls_file=pp)
-                hlsfile = Media.objects.filter(pk=media.pk).first().hls_file
     return True
 
 
@@ -882,6 +897,8 @@ def update_encoding_size(encoding_id):
 
 @task(name="produce_video_chapters", queue="short_tasks")
 def produce_video_chapters(chapter_id):
+    # this is not used
+    return False
     chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
     if not chapter_object:
         return False
@@ -999,14 +1016,15 @@ def video_trim_task(self, trim_request_id):
             trim_request.media = new_media
             trim_request.save(update_fields=["media"])
 
-        # processing timestamps differently on encodings and original file, since they have different I-frames
-        # the cut is made based on the I-frames
+        # processing timestamps differently on encodings and original file, in case we do accuracy trimming (currently not)
+        # these have different I-frames and the cut is made based on the I-frames
 
         original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
         if not original_trim_result:
             logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
 
         deleted_encodings = handle_pending_running_encodings(target_media)
+        # the following could be un-necessary, read commend in pre_trim_video_actions to see why
         encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
         for encoding in encodings:
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
@@ -1014,7 +1032,7 @@ def video_trim_task(self, trim_request_id):
                 logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                 encoding.delete()
 
-        pre_trim_actions(target_media)
+        pre_trim_video_actions(target_media)
         post_trim_action.delay(target_media.friendly_token)
 
     else:
@@ -1034,6 +1052,7 @@ def video_trim_task(self, trim_request_id):
 
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
             deleted_encodings = handle_pending_running_encodings(target_media)
+            # the following could be un-necessary, read commend in pre_trim_video_actions to see why
             encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
@@ -1041,7 +1060,7 @@ def video_trim_task(self, trim_request_id):
                     logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
                     encoding.delete()
 
-            pre_trim_actions(target_media)
+            pre_trim_video_actions(target_media)
             post_trim_action.delay(target_media.friendly_token)
 
 
