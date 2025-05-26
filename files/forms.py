@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import Category, Media, MEDIA_STATES, Subtitle
+from .models import MEDIA_STATES, Category, Media, Subtitle
 
 
 class CustomField(Field):
@@ -92,12 +92,7 @@ class MediaMetadataForm(forms.ModelForm):
 
 
 class MediaPublishForm(forms.ModelForm):
-    confirm_state = forms.BooleanField(
-        required=False,
-        initial=False,
-        label="Acknowledge sharing status",
-        help_text=""
-    )
+    confirm_state = forms.BooleanField(required=False, initial=False, label="Acknowledge sharing status", help_text="")
 
     class Meta:
         model = Media
@@ -128,7 +123,6 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
-
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
@@ -186,7 +180,6 @@ class MediaPublishForm(forms.ModelForm):
                     layout_items = list(self.helper.layout)
                     layout_items.insert(state_index + 1, CustomField('confirm_state'))
                     self.helper.layout = Layout(*layout_items)
-
 
                 if not cleaned_data.get('confirm_state'):
                     error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', '.join(rbac_categories)}"

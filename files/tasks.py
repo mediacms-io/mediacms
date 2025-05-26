@@ -2,13 +2,11 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 from datetime import datetime, timedelta
 
 from celery import Task
 from celery import shared_task as task
-from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
 
 # from celery.task.control import revoke
@@ -16,8 +14,9 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
-from django.db.models import Q
 from django.db import DatabaseError
+from django.db.models import Q
+
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
 
@@ -36,7 +35,13 @@ from .helpers import (
     run_command,
     trim_video_method,
 )
-from .methods import list_tasks, notify_users, pre_save_action, copy_video, kill_ffmpeg_process
+from .methods import (
+    copy_video,
+    kill_ffmpeg_process,
+    list_tasks,
+    notify_users,
+    pre_save_action,
+)
 from .models import (
     Category,
     EncodeProfile,
@@ -45,7 +50,7 @@ from .models import (
     Rating,
     Tag,
     VideoChapterData,
-    VideoTrimRequest
+    VideoTrimRequest,
 )
 
 logger = get_task_logger(__name__)
@@ -87,12 +92,11 @@ def handle_pending_running_encodings(media):
     return deleted
 
 
-
 def pre_trim_video_actions(media):
     # the reason for this function is to perform tasks before trimming a video
 
     # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
-	# if the video is already completed
+    # if the video is already completed
     # however if it is a new video (user uploded the video and starts trimming
     # before the video is processed), this is necessary, so encode has to be called to give it a chance to encode
 
@@ -106,13 +110,7 @@ def pre_trim_video_actions(media):
     # are still not finished.
 
     profiles = EncodeProfile.objects.filter(active=True, extension='mp4', resolution__lte=media.video_height)
-    media_encodings = EncodeProfile.objects.filter(
-        encoding__in=media.encodings.filter(
-        status="success",
-        chunk=False
-        ),
-        extension='mp4'
-    ).distinct()
+    media_encodings = EncodeProfile.objects.filter(encoding__in=media.encodings.filter(status="success", chunk=False), extension='mp4').distinct()
 
     picked = []
     for profile in profiles:
@@ -121,13 +119,13 @@ def pre_trim_video_actions(media):
         else:
             picked.append(profile)
 
-
     if picked:
         # by calling encode will re-encode all. The logic is explained above...
         logger.info(f"Encoding media {media.friendly_token} will have to be performed for all profiles")
         media.encode()
 
     return True
+
 
 @task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
 def chunkize_media(self, friendly_token, profiles, force=True):
@@ -417,7 +415,6 @@ def encode_media(
                         raise
 
             except Exception as e:
-
                 try:
                     # output is empty, fail message is on the exception
                     output = e.message
@@ -496,11 +493,7 @@ def produce_sprite_from_video(friendly_token):
                 with open(output_name, "rb") as f:
                     myfile = File(f)
                     # SOS: avoid race condition, since this runs for a long time and will replace any other media changes on the meanwhile!!!
-                    media.sprites.save(
-                        content=myfile,
-                        name=get_file_name(media.media_file.path) + "sprites.jpg",
-                        save=False
-                    )
+                    media.sprites.save(content=myfile, name=get_file_name(media.media_file.path) + "sprites.jpg", save=False)
                     media.save(update_fields=["sprites"])
 
         except Exception as e:
@@ -877,8 +870,6 @@ def task_sent_handler(sender=None, headers=None, body=None, **kwargs):
     return True
 
 
-
-
 @task(name="remove_media_file", base=Task, queue="long_tasks")
 def remove_media_file(media_file=None):
     rm_file(media_file)
@@ -1006,9 +997,7 @@ def video_trim_task(self, trim_request_id):
         else:
             proceed_with_single_file = False
 
-
     if proceed_with_single_file:
-
         if trim_request.video_action == "save_new" or trim_request.video_action == "create_segments" and len(timestamps_encodings) == 1:
             new_media = copy_video(original_media, copy_encodings=True)
 
@@ -1042,16 +1031,10 @@ def video_trim_task(self, trim_request_id):
             # file on different times.
             target_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
 
-            video_trim_request = VideoTrimRequest.objects.create(
-                media=target_media,
-                status="running",
-                video_action="create_segments",
-                media_trim_style='no_encoding',
-                timestamps=[timestamp]
-            )
+            video_trim_request = VideoTrimRequest.objects.create(media=target_media, status="running", video_action="create_segments", media_trim_style='no_encoding', timestamps=[timestamp])  # noqa
 
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
-            deleted_encodings = handle_pending_running_encodings(target_media)
+            deleted_encodings = handle_pending_running_encodings(target_media)  # noqa
             # the following could be un-necessary, read commend in pre_trim_video_actions to see why
             encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
             for encoding in encodings:
@@ -1062,7 +1045,6 @@ def video_trim_task(self, trim_request_id):
 
             pre_trim_video_actions(target_media)
             post_trim_action.delay(target_media.friendly_token)
-
 
         # set as completed the initial trim_request
         trim_request.status = "success"

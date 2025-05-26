@@ -13,9 +13,9 @@ from .models import (
     Encoding,
     Language,
     Media,
-    VideoTrimRequest,
     Subtitle,
     Tag,
+    VideoTrimRequest,
 )
 
 
@@ -198,6 +198,7 @@ class LanguageAdmin(admin.ModelAdmin):
 
 class SubtitleAdmin(admin.ModelAdmin):
     pass
+
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
     pass

@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timedelta
-from . import helpers
+
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import messages
@@ -38,6 +38,7 @@ from cms.version import VERSION
 from identity_providers.models import LoginOption
 from users.models import User
 
+from . import helpers
 from .forms import (
     ContactForm,
     EditSubtitleForm,
@@ -393,10 +394,7 @@ def trim_video(request, friendly_token):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
-    existing_requests = VideoTrimRequest.objects.filter(
-        media=media,
-        status__in=["initial", "running"]
-    ).exists()
+    existing_requests = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
 
     if existing_requests:
         return JsonResponse({"success": False, "error": "A trim request is already in progress for this video"}, status=400)
@@ -407,7 +405,7 @@ def trim_video(request, friendly_token):
         video_trim_task.delay(video_trim_request.id)
         ret = {"success": True, "request_id": video_trim_request.id}
         return JsonResponse(ret, safe=False, status=200)
-    except Exception as e:
+    except Exception as e:  # noqa
         ret = {"success": False, "error": "Incorrect request data"}
         return JsonResponse(ret, safe=False, status=400)
 
@@ -435,12 +433,8 @@ def edit_video(request):
         messages.add_message(request, messages.INFO, "Video Trimmer is not enabled")
         return HttpResponseRedirect(media.get_absolute_url())
 
-
     # Check if there's a running trim request
-    running_trim_request = VideoTrimRequest.objects.filter(
-        media=media,
-        status__in=["initial", "running"]
-    ).exists()
+    running_trim_request = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
 
     if running_trim_request:
         messages.add_message(request, messages.INFO, "Video trim request is already running")

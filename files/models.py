@@ -84,7 +84,6 @@ ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
 
 
-
 def generate_uid():
     return get_random_string(length=16)
 
@@ -651,6 +650,7 @@ class Media(models.Model):
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
+
             tasks.create_hls.delay(self.friendly_token)
 
             # TODO: ideally would ensure this is run only at the end when the last encoding is done...
@@ -691,7 +691,6 @@ class Media(models.Model):
 
         # showing the original file
         return helpers.url_from_path(self.media_file.path)
-
 
     @property
     def trim_video_path(self):

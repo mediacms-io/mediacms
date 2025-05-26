@@ -548,4 +548,3 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/confirm-email/.*/$',
         #        r'/api/v[0-9]+/',
     ]
-

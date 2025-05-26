@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('files', '0007_alter_media_state_videochapterdata'),
     ]

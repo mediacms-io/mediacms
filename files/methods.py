@@ -5,8 +5,8 @@ import itertools
 import logging
 import random
 import re
-from datetime import datetime
 import subprocess
+from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
@@ -448,11 +448,10 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             listable=original_media.listable,
             add_date=timezone.now(),
             video_height=original_media.video_height,
-            media_info=original_media.media_info
+            media_info=original_media.media_info,
         )
         models.Media.objects.bulk_create([new_media])
         # avoids calling signals since signals will call media_init and we don't want that
-
 
     if copy_encodings:
         for encoding in original_media.encodings.filter(chunk=False, status="success"):
@@ -460,13 +459,7 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
                 with open(encoding.media_file.path, "rb") as f:
                     myfile = File(f)
                     new_encoding = models.Encoding(
-                        media_file=myfile,
-                        media=new_media,
-                        profile=encoding.profile,
-                        status="success",
-                        progress=100,
-                        chunk=False,
-                        logs=f"Copied from encoding {encoding.id}"
+                        media_file=myfile, media=new_media, profile=encoding.profile, status="success", progress=100, chunk=False, logs=f"Copied from encoding {encoding.id}"
                     )
                     models.Encoding.objects.bulk_create([new_encoding])
                     # avoids calling signals as this is still not ready
@@ -483,12 +476,10 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
             new_media.thumbnail.save(thumbnail_name, File(f))
 
-
     if original_media.poster:
         with open(original_media.poster.path, 'rb') as f:
             poster_name = helpers.get_file_name(original_media.poster.path)
             new_media.poster.save(poster_name, File(f))
-
 
     return new_media
 
@@ -510,13 +501,7 @@ def create_video_trim_request(media, data):
     elif data.get('saveAsCopy'):
         video_action = "save_new"
 
-    video_trim_request = models.VideoTrimRequest.objects.create(
-        media=media,
-        status="initial",
-        video_action=video_action,
-        media_trim_style='no_encoding',
-        timestamps=data.get('segments', {})
-    )
+    video_trim_request = models.VideoTrimRequest.objects.create(media=media, status="initial", video_action=video_action, media_trim_style='no_encoding', timestamps=data.get('segments', {}))
 
     return video_trim_request
 
