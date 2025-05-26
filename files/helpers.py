@@ -820,7 +820,7 @@ def seconds_to_timestamp(seconds):
     seconds_int = int(seconds_remainder)
     milliseconds = int((seconds_remainder - seconds_int) * 1000)
 
-    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"  # noqa
 
 
 def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
