@@ -912,7 +912,7 @@ def produce_video_chapters(chapter_id):
         timestamp = chapter["start"]
         title = chapter["title"]
 
-        output_filename = f"thumbnail_{i:02d}.jpg"   # noqa
+        output_filename = f"thumbnail_{i:02d}.jpg"  # noqa
         output_path = os.path.join(output_folder, output_filename)
 
         command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
