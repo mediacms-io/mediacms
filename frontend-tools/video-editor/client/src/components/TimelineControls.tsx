@@ -3939,9 +3939,6 @@ const TimelineControls = ({
             <p className="modal-message">
               You're about to replace the original video with this trimmed version. This can't be undone.
             </p>
-            <p className="modal-message">
-              The original video will be replaced with this trimmed version.
-            </p>
           </Modal>
 
           {/* Save As Copy Modal */}
@@ -3972,9 +3969,6 @@ const TimelineControls = ({
           >
             <p className="modal-message">
               You're about to save a new copy with your edits. The original video will stay the same. Find the new file in your My Media folder - named after the original file.
-            </p>
-            <p className="modal-message">
-              A new copy of the video will be created with your trimmed segments.
             </p>
           </Modal>
 
@@ -4020,9 +4014,6 @@ const TimelineControls = ({
           >
             <p className="modal-message">
               You're about to save each segment as a separate video. Find the new files in your My Media folder - named after the original file.
-            </p>
-            <p className="modal-message">
-              Each segment will be saved with its name as the filename.
             </p>
           </Modal>
 

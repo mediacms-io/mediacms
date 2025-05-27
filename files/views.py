@@ -446,6 +446,10 @@ def edit_video(request):
         messages.add_message(request, messages.INFO, "Media processing has not finished yet")
         return HttpResponseRedirect(media.get_absolute_url())
 
+    if media.encoding_status in ["pending", "running"]:
+        video_msg = "Media encoding hasn't finished yet. Attempting to show the original video file"
+        messages.add_message(request, messages.INFO, video_msg)
+
     return render(
         request,
         "cms/edit_video.html",
