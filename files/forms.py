@@ -41,7 +41,10 @@ class MediaForm(forms.ModelForm):
         if not is_mediacms_editor(user):
             self.fields.pop("featured")
             self.fields.pop("reported_times")
-            self.fields.pop("is_reviewed")
+            if 'is_reviewed' in self.fields:
+                self.fields['is_reviewed'].widget.attrs['readonly'] = True
+                self.fields['is_reviewed'].widget.attrs['disabled'] = True
+                self.fields['is_reviewed'].help_text = "This field can only be changed by editors"
         #           if settings.PORTAL_WORKFLOW == 'private':
         #                self.fields.pop("state")
 
