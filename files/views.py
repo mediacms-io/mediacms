@@ -652,7 +652,7 @@ class MediaDetail(APIView):
                 media.is_reviewed = True
             elif result is False:
                 media.is_reviewed = False
-            media.save(update_fields=["is_reviewed"])
+            media.save(update_fields=["is_reviewed", "listable"])
             return Response({"detail": "media reviewed set"}, status=status.HTTP_201_CREATED)
         return Response(
             {"detail": "not valid action or no action specified"},
