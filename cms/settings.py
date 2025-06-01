@@ -465,6 +465,7 @@ LANGUAGES = [
     ('pt', _('Portuguese')),
     ('ru', _('Russian')),
     ('zh-hans', _('Simplified Chinese')),
+    ('zh-hant', _('Traditional Chinese')),
     ('es', _('Spanish')),
     ('tr', _('Turkish')),
     ('el', _('Greek')),
