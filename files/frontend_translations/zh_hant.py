@@ -65,13 +65,12 @@ translation_strings = {
     'VIEW ALL': '查看全部',
     'View all': '瀏覽全部',
     'comment': '留言',
-    'is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media':
-        '這是一個現代化且功能完整的開源影音內容管理系統，專為現代網路平台的觀賞與分享需求所打造。',
+    'is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media': '這是一個現代化且功能完整的開源影音內容管理系統，專為現代網路平台的觀賞與分享需求所打造。',
     'media in category': '此分類下的媒體',
     'media in tag': '此標籤下的媒體',
     'view': '次觀看',
     'views': '次觀看',
-    'yet': ' '  # no such usage in this language,
+    'yet': ' ',  # no such usage in this language,
 }
 
 replacement_strings = {
