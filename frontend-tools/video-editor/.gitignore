@@ -6,3 +6,7 @@ vite.config.ts.*
 *.tar.gz
 yt.readme.md
 client/public/videos/sample-video.mp4
+client/public/videos/sample-video-30s.mp4
+client/public/videos/sample-video-37s.mp4
+videos/sample-video-37s.mp4
+client/public/videos/sample-video-30s.mp4
