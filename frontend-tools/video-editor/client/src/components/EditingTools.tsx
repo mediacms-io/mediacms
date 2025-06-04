@@ -1,4 +1,5 @@
 import '../styles/EditingTools.css';
+import { useEffect, useState } from 'react';
 
 interface EditingToolsProps {
   onSplit: () => void;
@@ -29,6 +30,18 @@ const EditingTools = ({
   isPlaying = false,
   isPlayingSegments = false,
 }: EditingToolsProps) => {
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth <= 640);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // Handle play button click with iOS fix
   const handlePlay = () => {
     // Ensure lastSeekedPosition is used when play is clicked
@@ -47,7 +60,7 @@ const EditingTools = ({
         <div className="button-group play-buttons-group">
           {/* Play Segments button */}
           <button 
-            className="button segments-button"
+            className={`button segments-button ${isPlayingSegments && isSmallScreen ? 'highlighted-stop' : ''}`}
             onClick={onPlaySegments}
             data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments continuously until the end"}
             style={{ fontSize: '0.875rem' }}
@@ -104,12 +117,13 @@ const EditingTools = ({
           </button> */}
 
           {/* Standard Play button (only shown when not in preview mode or segments playback) */}
-          {!isPreviewMode && !isPlayingSegments && (
+          {!isPreviewMode && (!isPlayingSegments || !isSmallScreen) && (
             <button 
-              className="button play-button"
+              className={`button play-button ${isPlayingSegments ? 'greyed-out' : ''}`}
               onClick={handlePlay}
               data-tooltip={isPlaying ? "Pause video" : "Play full video"}
               style={{ fontSize: '0.875rem' }}
+              disabled={isPlayingSegments}
             >
               {isPlaying ? (
                 <>
@@ -135,7 +149,7 @@ const EditingTools = ({
           )}
           
           {/* Segments Playback message (replaces play button during segments playback) */}
-          {isPlayingSegments && (
+          {isPlayingSegments && !isSmallScreen && (
             <div className="segments-playback-message">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />

@@ -207,6 +207,26 @@
   white-space: nowrap;
 }
 
+/* Disabled state for tooltip action buttons */
+.tooltip-action-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+}
+
+.tooltip-action-btn.disabled:hover {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+}
+
+.tooltip-action-btn.disabled svg {
+  color: #9ca3af;
+}
+
+.tooltip-action-btn.disabled .tooltip-btn-text {
+  color: #9ca3af;
+}
+
 /* Additional mobile optimizations */
 @media (max-width: 768px) {
   .two-row-tooltip {

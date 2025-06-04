@@ -282,7 +282,7 @@
     }
 
     .timeline-marker {
-      height: 52px;  /* Increased height for touch devices */
+      height: 85px;
     }
     
     .timeline-marker-head {
@@ -294,7 +294,7 @@
     .timeline-marker-drag {
       width: 24px;
       height: 24px;
-      bottom: -18px;  /* Adjusted for larger touch target */
+      bottom: -18px;
     }
     
     .timeline-marker-head.dragging {
@@ -854,8 +854,6 @@
 
 /* Segments playback mode styles */
 .segments-playback-mode {
-  pointer-events: none;
-  cursor: not-allowed;
 }
 
 .segments-playback-mode .timeline-container,
@@ -864,20 +862,14 @@
 .segments-playback-mode .timeline-marker-head,
 .segments-playback-mode .timeline-marker-drag,
 .segments-playback-mode .trim-handle {
-  pointer-events: none;
-  cursor: not-allowed;
 }
 
 .segments-playback-mode .tooltip-action-btn {
   opacity: 0.5;
-  pointer-events: none;
-  cursor: not-allowed;
 }
 
 .segments-playback-mode .tooltip-time-btn {
   opacity: 0.5;
-  pointer-events: none;
-  cursor: not-allowed;
 }
 
 .segments-playback-mode .clip-segment:hover {

@@ -53,22 +53,47 @@ interface TimelineControlsProps {
 }
 
 // Function to calculate and constrain tooltip position to keep it on screen
+// Uses smooth transitions instead of hard breakpoints to eliminate jumping
 const constrainTooltipPosition = (positionPercent: number) => {
-  // Default position logic (centered)
-  let leftValue = `${positionPercent}%`;
-  let transform = 'translateX(-50%)';
-
-  // Near left edge (first 17%)
-  if (positionPercent < 17) {
-    // Position the left edge of tooltip at 0%, no transform
-    leftValue = '0%';
-    transform = 'none';
-  }
-  // Near right edge (last 17%)
-  else if (positionPercent > 83) {
-    // Position the right edge of tooltip at 100%
-    leftValue = '100%';
-    transform = 'translateX(-100%)';
+  // Smooth transition zones instead of hard breakpoints
+  const leftTransitionStart = 0;
+  const leftTransitionEnd = 25;
+  const rightTransitionStart = 75;
+  const rightTransitionEnd = 100;
+  
+  let leftValue: string;
+  let transform: string;
+  
+  if (positionPercent <= leftTransitionEnd) {
+    // Left side: smooth transition from center to left-aligned
+    if (positionPercent <= leftTransitionStart) {
+      // Fully left-aligned
+      leftValue = '0%';
+      transform = 'none';
+    } else {
+      // Smooth transition zone
+      const transitionProgress = (positionPercent - leftTransitionStart) / (leftTransitionEnd - leftTransitionStart);
+      const translateAmount = -50 * transitionProgress; // Gradually reduce from 0% to -50%
+      leftValue = `${positionPercent}%`;
+      transform = `translateX(${translateAmount}%)`;
+    }
+  } else if (positionPercent >= rightTransitionStart) {
+    // Right side: smooth transition from center to right-aligned
+    if (positionPercent >= rightTransitionEnd) {
+      // Fully right-aligned
+      leftValue = '100%';
+      transform = 'translateX(-100%)';
+    } else {
+      // Smooth transition zone
+      const transitionProgress = (positionPercent - rightTransitionStart) / (rightTransitionEnd - rightTransitionStart);
+      const translateAmount = -50 - (50 * transitionProgress); // Gradually change from -50% to -100%
+      leftValue = `${positionPercent}%`;
+      transform = `translateX(${translateAmount}%)`;
+    }
+  } else {
+    // Center zone: normal centered positioning
+    leftValue = `${positionPercent}%`;
+    transform = 'translateX(-50%)';
   }
 
   return { left: leftValue, transform };
@@ -1111,8 +1136,8 @@ const TimelineControls = ({
 
   // Handle timeline click to seek and show a tooltip
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Prevent interaction if segments are playing
-    if (isPlayingSegments) return;
+    // Remove the check that prevents interaction during preview mode
+    // This allows users to click and jump in the timeline while previewing
 
     if (!timelineRef.current || !scrollContainerRef.current) return;
 
@@ -1243,8 +1268,8 @@ const TimelineControls = ({
 
   // Handle segment resize - works with both mouse and touch events
   const handleSegmentResize = (segmentId: number, isLeft: boolean) => (e: React.MouseEvent | React.TouchEvent) => {
-    // Prevent interaction if segments are playing
-    if (isPlayingSegments) return;
+    // Remove the check that prevents interaction during preview mode
+    // This allows users to resize segments while previewing
 
     e.preventDefault();
     e.stopPropagation(); // Prevent triggering parent's events
@@ -1579,8 +1604,8 @@ const TimelineControls = ({
 
   // Handle segment click to show the tooltip
   const handleSegmentClick = (segmentId: number) => (e: React.MouseEvent) => {
-    // Prevent interaction if segments are playing
-    if (isPlayingSegments) return;
+    // Remove the check that prevents interaction during preview mode
+    // This allows users to click segments while previewing
 
     // Don't show tooltip if clicked on handle
     if ((e.target as HTMLElement).classList.contains('clip-segment-handle')) {
@@ -2679,72 +2704,70 @@ const TimelineControls = ({
               {/* Second row with action buttons similar to segment tooltip */}
               <div className="tooltip-row tooltip-actions">
                 {/* New segment button - Moved to first position */}
-                {availableSegmentDuration >= 0.5 && (
-                  <button
-                    className="tooltip-action-btn new-segment"
-                    data-tooltip={`Create new segment`}
-                    onClick={async (e) => {
-                      e.stopPropagation();
+                <button
+                  className={`tooltip-action-btn new-segment ${availableSegmentDuration < 0.5 ? 'disabled' : ''}`}
+                  data-tooltip={availableSegmentDuration < 0.5 ? 'Not enough space for new segment' : 'Create new segment'}
+                  disabled={availableSegmentDuration < 0.5}
+                  onClick={async (e) => {
+                    e.stopPropagation();
 
-                      // Create a new segment with the calculated available duration
-                      const segmentStartTime = clickedTime;
-                      const segmentEndTime = segmentStartTime + availableSegmentDuration;
+                    // Only create if we have at least 0.5 seconds of space
+                    if (availableSegmentDuration < 0.5) {
+                      // Not enough space, do nothing
+                      return;
+                    }
 
-                      // Only create if we have at least 0.5 seconds of space
-                      if (availableSegmentDuration < 0.5) {
-                        // Not enough space, close tooltip
-                        setShowEmptySpaceTooltip(false);
-                        return;
+                    // Create a new segment with the calculated available duration
+                    const segmentStartTime = clickedTime;
+                    const segmentEndTime = segmentStartTime + availableSegmentDuration;
+
+                    // Create the new segment with a generic name
+                    const newSegment: Segment = {
+                      id: Date.now(),
+                      name: `segment`,
+                      startTime: segmentStartTime,
+                      endTime: segmentEndTime,
+                      thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
+                    };
+
+                    // Add the new segment to existing segments
+                    const updatedSegments = [...clipSegments, newSegment];
+
+                    // Create and dispatch the update event
+                    const updateEvent = new CustomEvent('update-segments', {
+                      detail: {
+                        segments: updatedSegments,
+                        recordHistory: true, // Explicitly record this action in history
+                        action: 'create_segment'
                       }
+                    });
+                    document.dispatchEvent(updateEvent);
 
-                      // Create the new segment with a generic name
-                      const newSegment: Segment = {
-                        id: Date.now(),
-                        name: `segment`,
-                        startTime: segmentStartTime,
-                        endTime: segmentEndTime,
-                        thumbnail: '' // Empty placeholder - we'll use dynamic colors instead
-                      };
+                    // Close empty space tooltip
+                    setShowEmptySpaceTooltip(false);
 
-                      // Add the new segment to existing segments
-                      const updatedSegments = [...clipSegments, newSegment];
+                    // After creating the segment, wait a short time for the state to update
+                    setTimeout(() => {
+                      // The newly created segment is the last one in the array with the ID we just assigned
+                      const createdSegment = updatedSegments[updatedSegments.length - 1];
 
-                      // Create and dispatch the update event
-                      const updateEvent = new CustomEvent('update-segments', {
-                        detail: {
-                          segments: updatedSegments,
-                          recordHistory: true, // Explicitly record this action in history
-                          action: 'create_segment'
-                        }
-                      });
-                      document.dispatchEvent(updateEvent);
-
-                      // Close empty space tooltip
-                      setShowEmptySpaceTooltip(false);
-
-                      // After creating the segment, wait a short time for the state to update
-                      setTimeout(() => {
-                        // The newly created segment is the last one in the array with the ID we just assigned
-                        const createdSegment = updatedSegments[updatedSegments.length - 1];
-
-                        if (createdSegment) {
-                          // Set this segment as selected to show its tooltip
-                          setSelectedSegmentId(createdSegment.id);
-                          logger.debug("Created and selected new segment:", createdSegment.id);
-                        }
-                      }, 100); // Small delay to ensure state is updated
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="12" y1="8" x2="12" y2="16"></line>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                    </svg>
-                    <span className="tooltip-btn-text">
-                      New
-                    </span>
-                  </button>
-                )}
+                      if (createdSegment) {
+                        // Set this segment as selected to show its tooltip
+                        setSelectedSegmentId(createdSegment.id);
+                        logger.debug("Created and selected new segment:", createdSegment.id);
+                      }
+                    }, 100); // Small delay to ensure state is updated
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                  <span className="tooltip-btn-text">
+                    New
+                  </span>
+                </button>
 
                 {/* Go to start button - play from beginning of cutaway (until next segment) */}
                 <button
