@@ -443,13 +443,17 @@ export default function CommentsList(props) {
       let split = match.split(':'),
         s = 0,
         m = 1;
+      let searchParameters = new URLSearchParams(window.location.search);
 
       while (split.length > 0) {
         s += m * parseInt(split.pop(), 10);
         m *= 60;
       }
+      searchParameters.set('t', s);
 
-      const wrapped = `<a href="#" data-timestamp="${s}" class="video-timestamp">${match}</a>`;
+      let mediaUrl = MediaPageStore.get('media-url').split('?')[0] + '?' + searchParameters;
+
+      const wrapped = '<a href="' + mediaUrl + '">' + match + '</a>';
       return wrapped;
     }
 
