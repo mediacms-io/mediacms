@@ -60,7 +60,7 @@ const EditingTools = ({
         <div className="button-group play-buttons-group">
           {/* Play Segments button */}
           <button 
-            className={`button segments-button ${isPlayingSegments && isSmallScreen ? 'highlighted-stop' : ''}`}
+            className={`button segments-button`}
             onClick={onPlaySegments}
             data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments continuously until the end"}
             style={{ fontSize: '0.875rem' }}
@@ -149,7 +149,7 @@ const EditingTools = ({
           )}
           
           {/* Segments Playback message (replaces play button during segments playback) */}
-          {isPlayingSegments && !isSmallScreen && (
+          {/* {isPlayingSegments && !isSmallScreen && (
             <div className="segments-playback-message">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -158,10 +158,10 @@ const EditingTools = ({
               </svg>
               Preview Mode
             </div>
-          )}
+          )} */}
           
           {/* Preview mode message (replaces play button) */}
-          {isPreviewMode && (
+          {/* {isPreviewMode && (
             <div className="preview-mode-message">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -170,7 +170,7 @@ const EditingTools = ({
               </svg>
               Preview Mode
             </div>
-          )}
+          )} */}
         </div>
         
         {/* Right side - Editing tools */}
