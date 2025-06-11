@@ -174,8 +174,6 @@ class User(AbstractUser):
             self.is_editor = False
             self.is_manager = False
             update_fields.extend(['is_superuser', 'is_staff', 'advancedUser', 'is_editor', 'is_manager'])
-            # XYZ TODO: to confirm with Thorkild
-            # return True
 
         if update_fields:
             self.save(update_fields=update_fields)

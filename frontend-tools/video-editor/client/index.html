@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Video Editor</title>
+    <!-- Add meta tag to help iOS devices render as desktop -->
+    <script>
+      // Try to detect iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      
+      if (isIOS) {
+        // Replace viewport meta tag with one optimized for desktop view
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+          viewportMeta.setAttribute('content', 'width=1024, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+        
+        // Add a class to the HTML element for iOS-specific styles
+        document.documentElement.classList.add('ios-device');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="video-editor-trim-root"></div>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

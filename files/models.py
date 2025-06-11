@@ -387,6 +387,7 @@ class Media(models.Model):
         Update SearchVector field of SearchModel using raw SQL
         search field is used to store SearchVector
         """
+
         db_table = self._meta.db_table
 
         # first get anything interesting out of the media
@@ -524,8 +525,12 @@ class Media(models.Model):
                 with open(self.media_file.path, "rb") as f:
                     myfile = File(f)
                     thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
-                    self.thumbnail.save(content=myfile, name=thumbnail_name)
-                    self.poster.save(content=myfile, name=thumbnail_name)
+                    # avoid saving the whole object, because something might have been changed
+                    # on the meanwhile
+                    self.thumbnail.save(content=myfile, name=thumbnail_name, save=False)
+                    self.poster.save(content=myfile, name=thumbnail_name, save=False)
+                    self.save(update_fields=["thumbnail", "poster"])
+
         return True
 
     def produce_thumbnails_from_video(self):
@@ -559,8 +564,11 @@ class Media(models.Model):
             with open(tf, "rb") as f:
                 myfile = File(f)
                 thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
-                self.thumbnail.save(content=myfile, name=thumbnail_name)
-                self.poster.save(content=myfile, name=thumbnail_name)
+                # avoid saving the whole object, because something might have been changed
+                # on the meanwhile
+                self.thumbnail.save(content=myfile, name=thumbnail_name, save=False)
+                self.poster.save(content=myfile, name=thumbnail_name, save=False)
+                self.save(update_fields=["thumbnail", "poster"])
         helpers.rm_file(tf)
         return True
 
@@ -637,15 +645,20 @@ class Media(models.Model):
                     self.preview_file_path = ""
                 else:
                     self.preview_file_path = encoding.media_file.path
-                self.save(update_fields=["listable", "preview_file_path"])
 
-        self.save(update_fields=["encoding_status", "listable"])
+        self.save(update_fields=["encoding_status", "listable", "preview_file_path"])
 
-        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add":
+        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
 
-            tasks.create_hls(self.friendly_token)
+            tasks.create_hls.delay(self.friendly_token)
 
+            # TODO: ideally would ensure this is run only at the end when the last encoding is done...
+            vt_request = VideoTrimRequest.objects.filter(media=self, status="running").first()
+            if vt_request:
+                tasks.post_trim_action.delay(self.friendly_token)
+                vt_request.status = "success"
+                vt_request.save(update_fields=["status"])
         return True
 
     def set_encoding_status(self):
@@ -668,6 +681,29 @@ class Media(models.Model):
         return True
 
     @property
+    def trim_video_url(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        if ret:
+            return helpers.url_from_path(ret.media_file.path)
+
+        # showing the original file
+        return helpers.url_from_path(self.media_file.path)
+
+    @property
+    def trim_video_path(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        if ret:
+            return ret.media_file.path
+
+        return None
+
+    @property
     def encodings_info(self, full=False):
         """Property used on serializers"""
 
@@ -678,9 +714,14 @@ class Media(models.Model):
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
 
-        # if this is enabled, return original file on a way
-        # that video.js can consume
+        # if DO_NOT_TRANSCODE_VIDEO enabled, return original file on a way
+        # that video.js can consume. Or also if encoding_status is running, do the
+        # same so that the video appears on the player
         if settings.DO_NOT_TRANSCODE_VIDEO:
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
+
+        if self.encoding_status in ["running", "pending"]:
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
@@ -948,6 +989,19 @@ class Media(models.Model):
             )
         return ret
 
+    @property
+    def video_chapters_folder(self):
+        custom_folder = f"{settings.THUMBNAIL_UPLOAD_DIR}{self.user.username}/{self.friendly_token}_chapters"
+        return os.path.join(settings.MEDIA_ROOT, custom_folder)
+
+    @property
+    def chapter_data(self):
+        data = []
+        chapter_data = self.chapters.first()
+        if chapter_data:
+            return chapter_data.chapter_data
+        return data
+
 
 class License(models.Model):
     """A Base license model to be used in Media"""
@@ -1184,11 +1238,25 @@ class Encoding(models.Model):
 
         super(Encoding, self).save(*args, **kwargs)
 
+    def update_size_without_save(self):
+        """Update the size of an encoding without saving to avoid calling signals"""
+        if self.media_file:
+            cmd = ["stat", "-c", "%s", self.media_file.path]
+            stdout = helpers.run_command(cmd).get("out")
+            if stdout:
+                size = int(stdout.strip())
+                size = helpers.show_file_size(size)
+                Encoding.objects.filter(pk=self.pk).update(size=size)
+                return True
+        return False
+
     def set_progress(self, progress, commit=True):
         if isinstance(progress, int):
             if 0 <= progress <= 100:
                 self.progress = progress
-                self.save(update_fields=["progress"])
+                # save object with filter update
+                # to avoid calling signals
+                Encoding.objects.filter(pk=self.pk).update(progress=progress)
                 return True
         return False
 
@@ -1440,6 +1508,82 @@ class Comment(MPTTModel):
         return self.get_absolute_url()
 
 
+class VideoChapterData(models.Model):
+    data = models.JSONField(null=False, blank=False, help_text="Chapter data")
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='chapters')
+
+    class Meta:
+        unique_together = ['media']
+
+    def save(self, *args, **kwargs):
+        from . import tasks
+
+        is_new = self.pk is None
+        if is_new or (not is_new and self._check_data_changed()):
+            super().save(*args, **kwargs)
+            tasks.produce_video_chapters.delay(self.pk)
+        else:
+            super().save(*args, **kwargs)
+
+    def _check_data_changed(self):
+        if self.pk:
+            old_instance = VideoChapterData.objects.get(pk=self.pk)
+            return old_instance.data != self.data
+        return False
+
+    @property
+    def chapter_data(self):
+        # ensure response is consistent
+        data = []
+        for item in self.data:
+            if item.get("start") and item.get("title"):
+                thumbnail = item.get("thumbnail")
+                if thumbnail:
+                    thumbnail = helpers.url_from_path(thumbnail)
+                else:
+                    thumbnail = "static/images/chapter_default.jpg"
+                data.append(
+                    {
+                        "start": item.get("start"),
+                        "title": item.get("title"),
+                        "thumbnail": thumbnail,
+                    }
+                )
+        return data
+
+
+class VideoTrimRequest(models.Model):
+    """Model to handle video trimming requests"""
+
+    VIDEO_TRIM_STATUS = (
+        ("initial", "Initial"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("fail", "Fail"),
+    )
+
+    VIDEO_ACTION_CHOICES = (
+        ("replace", "Replace Original"),
+        ("save_new", "Save as New"),
+        ("create_segments", "Create Segments"),
+    )
+
+    TRIM_STYLE_CHOICES = (
+        ("no_encoding", "No Encoding"),
+        ("precise", "Precise"),
+    )
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='trim_requests')
+    status = models.CharField(max_length=20, choices=VIDEO_TRIM_STATUS, default="initial")
+    add_date = models.DateTimeField(auto_now_add=True)
+    video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
+    media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
+    timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+
+    def __str__(self):
+        return f"Trim request for {self.media.title} ({self.status})"
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1447,6 +1591,9 @@ def media_save(sender, instance, created, **kwargs):
     # once model is saved
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
+    if not instance.friendly_token:
+        return False
+
     if created:
         from .methods import notify_users
 
@@ -1479,13 +1626,17 @@ def media_file_pre_delete(sender, instance, **kwargs):
             tag.update_tag_media()
 
 
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    helpers.rm_dir(instance.media.video_chapters_folder)
+
+
 @receiver(post_delete, sender=Media)
 def media_file_delete(sender, instance, **kwargs):
     """
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
-
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1501,6 +1652,7 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.hls_file:
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
+
     instance.user.update_user_media()
 
     # remove extra zombie thumbnails

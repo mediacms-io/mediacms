@@ -18,3 +18,10 @@ static/drf-yasg
 cms/local_settings.py
 deploy/docker/local_settings.py
 yt.readme.md
+/frontend-tools/video-editor/node_modules
+/frontend-tools/video-editor/client/node_modules
+/static_collected
+/frontend-tools/video-editor-v1
+frontend-tools/.DS_Store
+static/video_editor/videos/sample-video-30s.mp4
+static/video_editor/videos/sample-video-37s.mp4

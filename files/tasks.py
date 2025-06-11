@@ -2,13 +2,11 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import tempfile
 from datetime import datetime, timedelta
 
 from celery import Task
 from celery import shared_task as task
-from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
 
 # from celery.task.control import revoke
@@ -16,6 +14,7 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
+from django.db import DatabaseError
 from django.db.models import Q
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
@@ -28,14 +27,31 @@ from .helpers import (
     create_temp_file,
     get_file_name,
     get_file_type,
+    get_trim_timestamps,
     media_file_info,
     produce_ffmpeg_commands,
     produce_friendly_token,
     rm_file,
     run_command,
+    trim_video_method,
 )
-from .methods import list_tasks, notify_users, pre_save_action
-from .models import Category, EncodeProfile, Encoding, Media, Rating, Tag
+from .methods import (
+    copy_video,
+    kill_ffmpeg_process,
+    list_tasks,
+    notify_users,
+    pre_save_action,
+)
+from .models import (
+    Category,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Rating,
+    Tag,
+    VideoChapterData,
+    VideoTrimRequest,
+)
 
 logger = get_task_logger(__name__)
 
@@ -46,6 +62,69 @@ ERRORS_LIST = [
     "Invalid data found when processing input",
     "Unable to find a suitable output format for",
 ]
+
+
+def handle_pending_running_encodings(media):
+    """Handle pending and running encodings for a media object.
+
+    we are trimming the original file. If there are encodings in success state, this means that the encoding has run
+    and has succeeded, so we can keep them (they will be trimmed) or if we dont keep them we dont have to delete them
+    here
+
+    However for encodings that are in pending or running phase, just delete them
+
+    Args:
+        media: The media object to handle encodings for
+
+    Returns:
+        bool: True if any encodings were deleted, False otherwise
+    """
+    encodings = media.encodings.exclude(status="success")
+    deleted = False
+    for encoding in encodings:
+        if encoding.temp_file:
+            kill_ffmpeg_process(encoding.temp_file)
+        if encoding.chunk_file_path:
+            kill_ffmpeg_process(encoding.chunk_file_path)
+        deleted = True
+        encoding.delete()
+
+    return deleted
+
+
+def pre_trim_video_actions(media):
+    # the reason for this function is to perform tasks before trimming a video
+
+    # avoid re-running unnecessary encodings (or chunkize_media, which is the first step for them)
+    # if the video is already completed
+    # however if it is a new video (user uploded the video and starts trimming
+    # before the video is processed), this is necessary, so encode has to be called to give it a chance to encode
+
+    # if a video is fully processed (all encodings are success), or if a video is new, then things are clear
+
+    # HOWEVER there is a race condition and this is that some encodings are success and some are pending/running
+    # Since we are making speed cutting, we will perform an ffmpeg -c copy on all of them and the result will be
+    # that they will end up differently cut, because ffmpeg checks for I-frames
+    # The result is fine if playing the video but is bad in case of HLS
+    # So we need to delete all encodings inevitably to produce same results, if there are some that are success and some that
+    # are still not finished.
+
+    profiles = EncodeProfile.objects.filter(active=True, extension='mp4', resolution__lte=media.video_height)
+    media_encodings = EncodeProfile.objects.filter(encoding__in=media.encodings.filter(status="success", chunk=False), extension='mp4').distinct()
+
+    picked = []
+    for profile in profiles:
+        if profile in media_encodings:
+            continue
+        else:
+            picked.append(profile)
+
+    if picked:
+        # by calling encode will re-encode all. The logic is explained above...
+        logger.info(f"Encoding media {media.friendly_token} will have to be performed for all profiles")
+        media.encode()
+
+    return True
 
 
 @task(name="chunkize_media", bind=True, queue="short_tasks", soft_time_limit=60 * 30 * 4)
@@ -145,6 +224,7 @@ class EncodingTask(Task):
                 self.encoding.status = "fail"
                 self.encoding.save(update_fields=["status"])
                 kill_ffmpeg_process(self.encoding.temp_file)
+                kill_ffmpeg_process(self.encoding.chunk_file_path)
                 if hasattr(self.encoding, "media"):
                     self.encoding.media.post_encode_actions()
         except BaseException:
@@ -171,7 +251,13 @@ def encode_media(
 ):
     """Encode a media to given profile, using ffmpeg, storing progress"""
 
-    logger.info("Encode Media started, friendly token {0}, profile id {1}, force {2}".format(friendly_token, profile_id, force))
+    logger.info(f"encode_media for {friendly_token}/{profile_id}/{encoding_id}/{force}/{chunk}")
+    # TODO: this is new behavior, check whether it performs well. Before that check it would end up saving the Encoding
+    # at some point below. Now it exits the task. Could it be that before it would give it a chance to re-run? Or it was
+    # not being used at all?
+    if not Encoding.objects.filter(id=encoding_id).exists():
+        logger.info(f"Exiting for {friendly_token}/{profile_id}/{encoding_id}/{force} since encoding id not found")
+        return False
 
     if self.request.id:
         task_id = self.request.id
@@ -311,28 +397,37 @@ def encode_media(
                             percent = duration * 100 / media.duration
                             if n_times % 60 == 0:
                                 encoding.progress = percent
-                                try:
-                                    encoding.save(update_fields=["progress", "update_date"])
-                                    logger.info("Saved {0}".format(round(percent, 2)))
-                                except BaseException:
-                                    pass
+                                encoding.save(update_fields=["progress", "update_date"])
+                                logger.info("Saved {0}".format(round(percent, 2)))
                             n_times += 1
+                    except DatabaseError:
+                        # primary reason for this is that the encoding has been deleted, because
+                        # the media file was deleted, or also that there was a trim video request
+                        # so it would be redundant to let it complete the encoding
+                        kill_ffmpeg_process(encoding.temp_file)
+                        kill_ffmpeg_process(encoding.chunk_file_path)
+                        return False
+
                     except StopIteration:
                         break
                     except VideoEncodingError:
                         # ffmpeg error, or ffmpeg was killed
                         raise
+
             except Exception as e:
                 try:
                     # output is empty, fail message is on the exception
                     output = e.message
                 except AttributeError:
                     output = ""
-                if isinstance(e, SoftTimeLimitExceeded):
-                    kill_ffmpeg_process(encoding.temp_file)
+                kill_ffmpeg_process(encoding.temp_file)
+                kill_ffmpeg_process(encoding.chunk_file_path)
                 encoding.logs = output
                 encoding.status = "fail"
-                encoding.save(update_fields=["status", "logs"])
+                try:
+                    encoding.save(update_fields=["status", "logs"])
+                except DatabaseError:
+                    return False
                 raise_exception = True
                 # if this is an ffmpeg's valid error
                 # no need for the task to be re-run
@@ -397,10 +492,10 @@ def produce_sprite_from_video(friendly_token):
             if os.path.exists(output_name) and get_file_type(output_name) == "image":
                 with open(output_name, "rb") as f:
                     myfile = File(f)
-                    media.sprites.save(
-                        content=myfile,
-                        name=get_file_name(media.media_file.path) + "sprites.jpg",
-                    )
+                    # SOS: avoid race condition, since this runs for a long time and will replace any other media changes on the meanwhile!!!
+                    media.sprites.save(content=myfile, name=get_file_name(media.media_file.path) + "sprites.jpg", save=False)
+                    media.save(update_fields=["sprites"])
+
         except Exception as e:
             print(e)
     return True
@@ -452,8 +547,7 @@ def create_hls(friendly_token):
         pp = os.path.join(output_dir, "master.m3u8")
         if os.path.exists(pp):
             if media.hls_file != pp:
-                media.hls_file = pp
-                media.save(update_fields=["hls_file"])
+                Media.objects.filter(pk=media.pk).update(hls_file=pp)
     return True
 
 
@@ -776,20 +870,186 @@ def task_sent_handler(sender=None, headers=None, body=None, **kwargs):
     return True
 
 
-def kill_ffmpeg_process(filepath):
-    # this is not ideal, ffmpeg pid could be linked to the Encoding object
-    cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    pid = result.stdout.decode("utf-8").strip()
-    if pid:
-        cmd = "kill -9 %s" % pid
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    return result
-
-
 @task(name="remove_media_file", base=Task, queue="long_tasks")
 def remove_media_file(media_file=None):
     rm_file(media_file)
+    return True
+
+
+@task(name="update_encoding_size", queue="short_tasks")
+def update_encoding_size(encoding_id):
+    """Update the size of an encoding without saving to avoid calling signals"""
+    encoding = Encoding.objects.filter(id=encoding_id).first()
+    if encoding:
+        encoding.update_size_without_save()
+        return True
+    return False
+
+
+@task(name="produce_video_chapters", queue="short_tasks")
+def produce_video_chapters(chapter_id):
+    # this is not used
+    return False
+    chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
+    if not chapter_object:
+        return False
+
+    media = chapter_object.media
+    video_path = media.media_file.path
+    output_folder = media.video_chapters_folder
+
+    chapters = chapter_object.data
+
+    width = 336
+    height = 188
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    results = []
+
+    for i, chapter in enumerate(chapters):
+        timestamp = chapter["start"]
+        title = chapter["title"]
+
+        output_filename = f"thumbnail_{i:02d}.jpg"  # noqa
+        output_path = os.path.join(output_folder, output_filename)
+
+        command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
+        ret = run_command(command)  # noqa
+        if os.path.exists(output_path) and get_file_type(output_path) == "image":
+            results.append({"start": timestamp, "title": title, "thumbnail": output_path})
+
+    chapter_object.data = results
+    chapter_object.save(update_fields=["data"])
+    return True
+
+
+@task(name="post_trim_action", queue="short_tasks", soft_time_limit=600)
+def post_trim_action(friendly_token):
+    """Perform post-processing actions after video trimming
+
+    Args:
+        friendly_token: The friendly token of the media
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    logger.info(f"Post trim action for {friendly_token}")
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        logger.info(f"Media with friendly token {friendly_token} not found")
+        return False
+
+    media.set_media_type()
+    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+    # if they are still not encoded, when the first one will be encoded, it will have the chance to
+    # call post_trim_action again
+    if encodings:
+        for encoding in encodings:
+            # update encoding size, in case they don't have one, due to the
+            # way the copy_video took place
+            update_encoding_size(encoding.id)
+
+        media.produce_thumbnails_from_video()
+        produce_sprite_from_video.delay(friendly_token)
+        create_hls.delay(friendly_token)
+
+        vt_request = VideoTrimRequest.objects.filter(media=media, status="running").first()
+        if vt_request:
+            vt_request.status = "success"
+            vt_request.save(update_fields=["status"])
+
+    return True
+
+
+@task(name="video_trim_task", bind=True, queue="short_tasks", soft_time_limit=600)
+def video_trim_task(self, trim_request_id):
+    # SOS: if at some point we move from ffmpeg copy, then this need be changed
+    # to long_tasks
+    try:
+        trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
+    except VideoTrimRequest.DoesNotExist:
+        logger.info(f"VideoTrimRequest with ID {trim_request_id} not found")
+        return False
+
+    trim_request.status = "running"
+    trim_request.save(update_fields=["status"])
+
+    timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
+    timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
+
+    if not timestamps_encodings:
+        trim_request.status = "fail"
+        trim_request.save(update_fields=["status"])
+        return False
+
+    target_media = trim_request.media
+    original_media = trim_request.media
+
+    # splitting the logic for single file and multiple files
+    if trim_request.video_action in ["save_new", "replace"]:
+        proceed_with_single_file = True
+    if trim_request.video_action == "create_segments":
+        if len(timestamps_encodings) == 1:
+            proceed_with_single_file = True
+        else:
+            proceed_with_single_file = False
+
+    if proceed_with_single_file:
+        if trim_request.video_action == "save_new" or trim_request.video_action == "create_segments" and len(timestamps_encodings) == 1:
+            new_media = copy_video(original_media, copy_encodings=True)
+
+            target_media = new_media
+            trim_request.media = new_media
+            trim_request.save(update_fields=["media"])
+
+        # processing timestamps differently on encodings and original file, in case we do accuracy trimming (currently not)
+        # these have different I-frames and the cut is made based on the I-frames
+
+        original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
+        if not original_trim_result:
+            logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
+
+        deleted_encodings = handle_pending_running_encodings(target_media)
+        # the following could be un-necessary, read commend in pre_trim_video_actions to see why
+        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+        for encoding in encodings:
+            trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
+            if not trim_result:
+                logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+                encoding.delete()
+
+        pre_trim_video_actions(target_media)
+        post_trim_action.delay(target_media.friendly_token)
+
+    else:
+        for i, timestamp in enumerate(timestamps_encodings, start=1):
+            # copy the original file for each of the segments. This could be optimized to avoid the overhead but
+            # for now is necessary because the ffmpeg trim command will be run towards the original
+            # file on different times.
+            target_media = copy_video(original_media, title_suffix=f"(Trimmed) {i}", copy_encodings=True)
+
+            video_trim_request = VideoTrimRequest.objects.create(media=target_media, status="running", video_action="create_segments", media_trim_style='no_encoding', timestamps=[timestamp])  # noqa
+
+            original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
+            deleted_encodings = handle_pending_running_encodings(target_media)  # noqa
+            # the following could be un-necessary, read commend in pre_trim_video_actions to see why
+            encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+            for encoding in encodings:
+                trim_result = trim_video_method(encoding.media_file.path, [timestamp])
+                if not trim_result:
+                    logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+                    encoding.delete()
+
+            pre_trim_video_actions(target_media)
+            post_trim_action.delay(target_media.friendly_token)
+
+        # set as completed the initial trim_request
+        trim_request.status = "success"
+        trim_request.save(update_fields=["status"])
+
     return True
 
 

@@ -15,8 +15,10 @@ export function PopupContent(props) {
     }
 
     const domElem = findDOMNode(wrapperRef.current);
-
-    if (-1 === ev.path.indexOf(domElem)) {
+    const clickedElement = ev.target;
+    
+    // Check if the clicked element is outside the popup
+    if (domElem && !domElem.contains(clickedElement)) {
       hide();
     }
   }, []);
@@ -29,12 +31,12 @@ export function PopupContent(props) {
   }, []);
 
   function enableListeners() {
-    document.addEventListener('click', onClickOutside);
+    document.addEventListener('mousedown', onClickOutside);
     document.addEventListener('keydown', onKeyDown);
   }
 
   function disableListeners() {
-    document.removeEventListener('click', onClickOutside);
+    document.removeEventListener('mousedown', onClickOutside);
     document.removeEventListener('keydown', onKeyDown);
   }
 
