@@ -2389,7 +2389,7 @@ const TimelineControls = ({
               <div className="tooltip-row">
                                   <button
                     className="tooltip-time-btn"
-                    data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
+                    data-tooltip="Seek -50ms (click or hold)"
                     {...handleContinuousTimeAdjustment(-0.05)}
                     style={{
                       userSelect: 'none',
@@ -2405,7 +2405,7 @@ const TimelineControls = ({
                   <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
                   <button
                     className="tooltip-time-btn"
-                    data-tooltip="Increase by 50ms (hold for continuous adjustment)"
+                    data-tooltip="Seek +50ms (click or hold)"
                     {...handleContinuousTimeAdjustment(0.05)}
                     style={{
                       userSelect: 'none',
@@ -2686,7 +2686,7 @@ const TimelineControls = ({
               <div className="tooltip-row">
                 <button
                   className="tooltip-time-btn"
-                  data-tooltip="Decrease by 50ms (hold for continuous adjustment)"
+                  data-tooltip="Seek -50ms (click or hold)"
                   {...handleContinuousTimeAdjustment(-0.05)}
                 >
                   -50ms
@@ -2694,7 +2694,7 @@ const TimelineControls = ({
                 <div className="tooltip-time-display">{formatDetailedTime(clickedTime)}</div>
                 <button
                   className="tooltip-time-btn"
-                  data-tooltip="Increase by 50ms (hold for continuous adjustment)"
+                  data-tooltip="Seek +50ms (click or hold)"
                   {...handleContinuousTimeAdjustment(0.05)}
                 >
                   +50ms
@@ -3253,7 +3253,7 @@ const TimelineControls = ({
                 {/* Segment end adjustment button (always shown) */}
                 <button
                   className="tooltip-action-btn segment-end"
-                  data-tooltip="Adjust end of previous segment or create segment from start"
+                  data-tooltip="Adjust end of previous segment"
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -3430,7 +3430,7 @@ const TimelineControls = ({
                 {/* Segment start adjustment button (always shown) */}
                 <button
                   className="tooltip-action-btn segment-start"
-                  data-tooltip="Adjust start of next segment or create segment to end"
+                  data-tooltip="Adjust start of next segment"
                   onClick={(e) => {
                     e.stopPropagation();
 

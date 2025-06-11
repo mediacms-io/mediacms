@@ -62,7 +62,7 @@ const EditingTools = ({
           <button 
             className={`button segments-button`}
             onClick={onPlaySegments}
-            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play all segments continuously until the end"}
+            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play segments in one continuous flow"}
             style={{ fontSize: '0.875rem' }}
           >
             {isPlayingSegments ? (
