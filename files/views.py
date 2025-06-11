@@ -327,7 +327,7 @@ def edit_media(request):
 def publish_media(request):
     """Publish media"""
 
-    friendly_token = request.GET.get("m", "").strip()
+    friendly_token = request.GET.get('m', '').strip()
     if not friendly_token:
         return HttpResponseRedirect("/")
     media = Media.objects.filter(friendly_token=friendly_token).first()
@@ -349,8 +349,14 @@ def publish_media(request):
 
     return render(
         request,
-        "cms/publish_media.html",
-        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+        'cms/publish_media.html',
+        {'form': form,
+         "media_object": media,
+         "add_subtitle_url": media.add_subtitle_url
+
+
+
+                                                                  },
     )
 
 
