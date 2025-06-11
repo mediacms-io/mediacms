@@ -1035,6 +1035,23 @@ const useVideoTrimmer = () => {
     };
   }, [isPlayingSegments, currentSegmentIndex, clipSegments]);
 
+  // Effect to handle manual segment index updates during segments playback
+  useEffect(() => {
+    const handleSegmentIndexUpdate = (event: CustomEvent) => {
+      const { segmentIndex } = event.detail;
+      if (isPlayingSegments && segmentIndex !== currentSegmentIndex) {
+        logger.debug(`Updating current segment index from ${currentSegmentIndex} to ${segmentIndex}`);
+        setCurrentSegmentIndex(segmentIndex);
+      }
+    };
+
+    document.addEventListener('update-segment-index', handleSegmentIndexUpdate as EventListener);
+
+    return () => {
+      document.removeEventListener('update-segment-index', handleSegmentIndexUpdate as EventListener);
+    };
+  }, [isPlayingSegments, currentSegmentIndex]);
+
   // Handle play segments
   const handlePlaySegments = () => {
     const video = videoRef.current;

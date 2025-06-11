@@ -852,30 +852,23 @@
   background-color: inherit !important;
 }
 
-/* Segments playback mode styles */
-.segments-playback-mode {
-}
-
-.segments-playback-mode .timeline-container,
-.segments-playback-mode .clip-segment,
-.segments-playback-mode .clip-segment-handle,
-.segments-playback-mode .timeline-marker-head,
-.segments-playback-mode .timeline-marker-drag,
-.segments-playback-mode .trim-handle {
-}
-
-.segments-playback-mode .tooltip-action-btn {
-  opacity: 0.5;
-}
-
+/* Segments playback mode styles - minimal functional styling */
 .segments-playback-mode .tooltip-time-btn {
-  opacity: 0.5;
+  opacity: 1;
+  cursor: pointer;
 }
 
-.segments-playback-mode .clip-segment:hover {
-  box-shadow: none;
-  border-color: rgba(0, 0, 0, 0.15);
-  background-color: inherit !important;
+.segments-playback-mode .tooltip-action-btn.set-in,
+.segments-playback-mode .tooltip-action-btn.set-out,
+.segments-playback-mode .tooltip-action-btn.play-from-start {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.segments-playback-mode .tooltip-action-btn.play,
+.segments-playback-mode .tooltip-action-btn.pause {
+  opacity: 1;
+  cursor: pointer;
 }
 
 /* Show segments playback message */

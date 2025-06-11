@@ -1201,20 +1201,51 @@ const TimelineControls = ({
       setActiveSegment(segmentAtClickedTime);
     }
 
-    // Resume playback in two cases:
-    // 1. If it was playing before (regular playback)
-    // 2. If we're in preview mode (regardless of previous playing state)
-    if ((wasPlaying || isPreviewMode) && videoRef.current) {
-      logger.debug("Resuming playback after timeline click");
-      videoRef.current.play()
-        .then(() => {
-          setIsPlayingSegment(true);
-          logger.debug("Resumed playback after seeking");
-        })
-        .catch(err => {
-          console.error("Error resuming playback:", err);
-          setIsPlayingSegment(false);
-        });
+    // Resume playback based on the current mode
+    if (videoRef.current) {
+      // Special handling for segments playback mode
+      if (isPlayingSegments && wasPlaying) {
+        // Update the current segment index if we clicked into a segment
+        if (segmentAtClickedTime) {
+          const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+          const targetSegmentIndex = orderedSegments.findIndex(seg => seg.id === segmentAtClickedTime.id);
+          
+          if (targetSegmentIndex !== -1) {
+            // Dispatch a custom event to update the current segment index
+            const updateSegmentIndexEvent = new CustomEvent('update-segment-index', {
+              detail: { segmentIndex: targetSegmentIndex }
+            });
+            document.dispatchEvent(updateSegmentIndexEvent);
+            logger.debug(`Segments playback mode: updating segment index to ${targetSegmentIndex} for timeline click in segment ${segmentAtClickedTime.id}`);
+          }
+        }
+        
+        logger.debug("Segments playback mode: resuming playback after timeline click");
+        videoRef.current.play()
+          .then(() => {
+            setIsPlayingSegment(true);
+            logger.debug("Resumed segments playback after timeline seeking");
+          })
+          .catch(err => {
+            console.error("Error resuming segments playback:", err);
+            setIsPlayingSegment(false);
+          });
+      }
+      // Resume playback in two cases (but not during segments playback):
+      // 1. If it was playing before (regular playback)
+      // 2. If we're in preview mode (regardless of previous playing state)
+      else if ((wasPlaying || isPreviewMode) && !isPlayingSegments) {
+        logger.debug("Resuming playback after timeline click");
+        videoRef.current.play()
+          .then(() => {
+            setIsPlayingSegment(true);
+            logger.debug("Resumed playback after seeking");
+          })
+          .catch(err => {
+            console.error("Error resuming playback:", err);
+            setIsPlayingSegment(false);
+          });
+      }
     }
 
     // Only process tooltip display if clicked on the timeline background or thumbnails, not on other UI elements
@@ -1678,34 +1709,63 @@ const TimelineControls = ({
     // Seek to this position (this will update the video's current time)
     onSeek(boundedTime);
 
-    // If video was playing before OR we're in preview mode, ensure it continues playing
-    if ((wasPlaying || isPreviewMode) && videoRef.current) {
-      // Set current segment as active segment for boundary checking
-      setActiveSegment(segment);
-      // Reset the continuePastBoundary flag when clicking on a segment to ensure boundaries work
-      setContinuePastBoundary(false);
-      // Continue playing from the new position
-      videoRef.current.play()
-        .then(() => {
-          setIsPlayingSegment(true);
-          logger.debug("Continued preview playback after segment click");
-        })
-        .catch(err => {
-          console.error("Error resuming playback after segment click:", err);
-        });
-    }
-
-    // Always continue playback in preview mode, even if video was paused when clicking
-    if (isPreviewMode && videoRef.current) {
-      setActiveSegment(segment);
-      videoRef.current.play()
-        .then(() => {
-          setIsPlayingSegment(true);
-          logger.debug("Continued preview playback after segment click");
-        })
-        .catch(err => {
-          console.error("Error continuing preview playback:", err);
-        });
+    // Handle playback continuation based on the current mode
+    if (videoRef.current) {
+      // Special handling for segments playback mode
+      if (isPlayingSegments && wasPlaying) {
+        // Update the current segment index for segments playback mode
+        const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        const targetSegmentIndex = orderedSegments.findIndex(seg => seg.id === segmentId);
+        
+        if (targetSegmentIndex !== -1) {
+          // Dispatch a custom event to update the current segment index
+          const updateSegmentIndexEvent = new CustomEvent('update-segment-index', {
+            detail: { segmentIndex: targetSegmentIndex }
+          });
+          document.dispatchEvent(updateSegmentIndexEvent);
+          logger.debug(`Segments playback mode: updating segment index to ${targetSegmentIndex} for segment ${segmentId}`);
+        }
+        
+        // In segments playback mode, we want to continue the segments playback from the new position
+        // The segments playback will naturally handle continuing to the next segments
+        logger.debug("Segments playback mode: continuing playback from new position");
+        videoRef.current.play()
+          .then(() => {
+            setIsPlayingSegment(true);
+            logger.debug("Continued segments playback after segment click");
+          })
+          .catch(err => {
+            console.error("Error continuing segments playback after segment click:", err);
+          });
+      }
+      // If video was playing before OR we're in preview mode, ensure it continues playing (but not in segments mode)
+      else if ((wasPlaying || isPreviewMode) && !isPlayingSegments) {
+        // Set current segment as active segment for boundary checking
+        setActiveSegment(segment);
+        // Reset the continuePastBoundary flag when clicking on a segment to ensure boundaries work
+        setContinuePastBoundary(false);
+        // Continue playing from the new position
+        videoRef.current.play()
+          .then(() => {
+            setIsPlayingSegment(true);
+            logger.debug("Continued preview playback after segment click");
+          })
+          .catch(err => {
+            console.error("Error resuming playback after segment click:", err);
+          });
+      }
+      // Always continue playback in preview mode, even if video was paused when clicking (but not in segments mode)
+      else if (isPreviewMode && !isPlayingSegments) {
+        setActiveSegment(segment);
+        videoRef.current.play()
+          .then(() => {
+            setIsPlayingSegment(true);
+            logger.debug("Continued preview playback after segment click");
+          })
+          .catch(err => {
+            console.error("Error continuing preview playback:", err);
+          });
+      }
     }
 
     // Calculate tooltip position directly above click point
