@@ -11,7 +11,8 @@ fi
 while true; do
     read -p "
 This script will attempt to perform a system update, install required dependencies, install and configure PostgreSQL, NGINX, Redis and a few other utilities.
-It is expected to run on a new system **with no running instances of any these services**. Make sure you check the script before you continue. Then enter yes or no
+It is expected to run on a new system **with no running instances of any these services**.
+Also this is tested on Ubuntu 24 only and it will not work on other systems. Make sure you check the script before you continue. Then enter yes or no
 " yn
     case $yn in
         [Yy]* ) echo "OK!"; break;;
@@ -20,15 +21,7 @@ It is expected to run on a new system **with no running instances of any these s
     esac
 done
 
-
-osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
-else
-    echo "This script is tested for Ubuntu 20/22 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
-    exit
-fi
+apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick procps libxml2-dev libxmlsec1-dev libxmlsec1-openssl python3-certbot-nginx certbot wget xz-utils -y
 
 # install ffmpeg
 echo "Downloading and installing ffmpeg"
