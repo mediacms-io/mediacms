@@ -1,12 +1,20 @@
 #!/bin/bash
-# should be run as root and only on Ubuntu 20/22, Debian 10/11 (Buster/Bullseye) versions!
-echo "Welcome to the MediacMS installation!";
+
+#### Ubuntu (using sudo):
+### sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+###
+### Debian (not using sudo):
+### su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+###
+
+#!/bin/bash
+
+echo "MediaCMS Easy Installation";
 
 if [ `id -u` -ne 0 ]
-  then echo "Please run as root"
+  then echo "Please run as root:  sudo su -c 'easy-install.sh' root"
   exit
 fi
-
 
 while true; do
     read -p "
@@ -20,15 +28,27 @@ It is expected to run on a new system **with no running instances of any these s
     esac
 done
 
-
+# Not all distros include lsb-release these days.
+apt install -y lsb-release
 osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
+
+
+if [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"bookworm"* ]]; then
+    echo 'Ubuntu 22 / Debian Bookworm detected - system update and dependency installation, this will take a few minutes'
+    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev libxmlsec1-dev pkg-config virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
+
+elif [[ $osVersion == *"Ubuntu 24"* ]] || [[ $osVersion == *"trixie"* ]]; then
+    echo 'Ubuntu 24 / Debian Trixie detected - system update and installing Ubuntu 24 dependencies - this may take a few minutes'
+    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev pkg-config libxmlsec1-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
+
 else
-    echo "This script is tested for Ubuntu 20/22 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
+    echo "This script is tested for Ubuntu 22/24 versions only, if you want to try MediaCMS on another system you have to perform a manual installation."
     exit
 fi
+
+# Generate the directory
+mkdir -p /home/mediacms.io
+cd /home/mediacms.io/
 
 # install ffmpeg
 echo "Downloading and installing ffmpeg"
@@ -46,18 +66,36 @@ read -p "Enter portal name, or press enter for 'MediaCMS : " PORTAL_NAME
 [ -z "$FRONTEND_HOST" ] && FRONTEND_HOST='localhost'
 
 echo 'Creating database to be used in MediaCMS'
-
-su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
-su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
-su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+su - postgres -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\""
+su - postgres -c "psql -c \"CREATE DATABASE mediacms WITH OWNER mediacms\""
+su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\""
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
 cd /home/mediacms.io
-virtualenv . --python=python3
+python3 -mvenv .
 source  /home/mediacms.io/bin/activate
+
+echo "Cloning latest into mediacms"
+git clone https://github.com/mediacms-io/mediacms
 cd mediacms
+
+## Ubuntu 24 specific dependencies
+if [[ $osVersion == *"Ubuntu 24"* ]] || [[ $osVersion == *"trixie"* ]]; then
+    pip install --no-binary lxml lxml==5.4.0
+    pip install --no-binary xmlsec xmlsec==1.3.15
+else
+    pip install --no-binary lxml lxml==4.9.2
+    pip install --no-binary xmlsec xmlsec==1.3.13
+fi
+
+# Remove lxml pin from requirements.txt if exists
+sed -i '/lxml==5/d' requirements.txt  # Delete lxml==5.0.0 line
+echo "lxml>=4.9.2" >> requirements.txt # Add lxml>=4.9.2 requirement
+
+# Install other pip requirements.
 pip install -r requirements.txt
+
 
 SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 

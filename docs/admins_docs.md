@@ -31,27 +31,52 @@
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
 
-## 2. Server Installation
+## 2. Single-Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
+Single-server installation is supported on Ubuntu 22+ or Debian 11+
 
-Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
+<details>
+  <summary>More... </summary>
 
-Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
+### Easy Install
 
+Easy install is the recommended way to do a new single-server installation, and is intended for fresh Ubuntu Server 22/24 or Debian Bookworm/Trixie installations.   It should only be used on a system which has no MediaCMS services running - i.e. a fresh installation.   For upgrades, see  "Upgrades" further down in this section.
+
+Ubuntu (using sudo):
 ```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
+sudo su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
 ```
 
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
+Debian (not using sudo):
+```bash
+su -c "bash <(wget -qO- https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh)" root
+```
 
 
-### Update
+Alternatively, you can download the script and view or modify it before executing:
+```bash
+wget -O "easy-install.sh" https://github.com/mediacms-io/mediacms/raw/refs/heads/main/easy-install.sh
+cat easy-install.sh | less
+```
 
-If you've used the above way to install MediaCMS, update with the following:
+Once satisfied, run it:
+
+Ubuntu (using sudo):
+```bash
+sudo su -c "easy-install.sh" root
+```
+
+Debian (not using sudo):
+```bash
+su -c "easy-install.sh" root
+```
+
+Easy Install will create a new folder for the installation, located at /home/mediacms.io/, and clone the latest source into a sub-folder 'mediacms'.   If you wish to use an older release, review the installation instructions that come with that release (MediaCMS 4, for example), or modify the ```git clone ...``` line in easy-install to pull the specific branch you prefer to use:  ```git clone https://github.com/mediacms.io/mediacms --branch <your branch>```
+
+ 
+### Updates
+
+For single-server installs, updates are performed using git.  If you've used the single-server install to install MediaCMS, update as below:
 
 ```bash
 cd /home/mediacms.io/mediacms # enter mediacms directory
@@ -62,20 +87,6 @@ python manage.py migrate # run Django migrations
 sudo systemctl restart mediacms celery_long celery_short # restart services
 ```
 
-### Update from version 2 to version 3
-Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
-The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
-
-```
-# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
-# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
-# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
-# systemctl daemon-reload
-# systemctl start celery_long celery_short celery_beat
-```
-
-
-
 ### Configuration
 Checkout the configuration section here.
 
@@ -83,20 +94,42 @@ Checkout the configuration section here.
 ### Maintenance
 Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
 
+</details>
 
 ## 3. Docker Installation
 
-## Installation
+### Install Docker
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-For Ubuntu 20/22 systems this is:
+<details>
+	<summary>More... </summary>
+
+For Ubuntu 20/22/24 systems you can add the docker repo:
 
 ```bash
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
 ```
+
+And then install docker-ce
+```bash
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+For full instructions on how to install docker, see docker's website: https://docs.docker.com/engine/install/ubuntu/
+
+</details>
 
 Then run as root
 
@@ -111,7 +144,7 @@ If you want to explore more options (including setup of https with letsencrypt c
 Run
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
@@ -131,8 +164,8 @@ Get latest MediaCMS image and stop/start containers
 ```bash
 cd /path/to/mediacms/installation
 docker pull mediacms/mediacms
-docker-compose down
-docker-compose up
+docker compose down
+docker compose up
 ```
 
 ### Update from version 2 to version 3
@@ -170,9 +203,9 @@ By default, all these services are enabled, but in order to create a scaleable d
 
 Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
 
-See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
+See example deployments in the sections below. These example deployments have been tested on `docker compose version 1.27.4` running on `Docker version 19.03.13`
 
-To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
+To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
 
@@ -230,7 +263,7 @@ Single server installation: edit `cms/local_settings.py`, make a change and rest
 Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
 
 ```bash
-#docker-compose restart web celery_worker celery_beat
+#docker compose restart web celery_worker celery_beat
 ```
 
 ### 5.1 Change portal logo

@@ -37,7 +37,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install runtime system dependencies
 RUN apt-get update -y && \
     apt-get -y upgrade && \
-    apt-get install --no-install-recommends supervisor nginx imagemagick procps libxml2-dev libxmlsec1-dev libxmlsec1-openssl -y && \
+    apt-get install --no-install-recommends supervisor nginx pkg-config imagemagick procps libxml2-dev libxmlsec1-dev libxmlsec1-openssl -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get purge --auto-remove && \
     apt-get clean
@@ -57,6 +57,9 @@ RUN mkdir -p /home/mediacms.io/mediacms/{logs} && \
 COPY requirements.txt requirements-dev.txt ./
 
 ARG DEVELOPMENT_MODE=False
+
+RUN pip install --no-binary lxml lxml==5.4.0
+RUN pip install --no-binary xmlsec xmlsec==1.3.15
 
 RUN pip install --no-cache-dir -r requirements.txt && \
     if [ "$DEVELOPMENT_MODE" = "True" ]; then \
