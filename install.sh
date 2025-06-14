@@ -43,6 +43,7 @@ echo 'Creating database to be used in MediaCMS'
 su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
 su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
 su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+su -c "psql -d mediacms -c \"GRANT CREATE, USAGE ON SCHEMA public TO mediacms\"" postgres
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
