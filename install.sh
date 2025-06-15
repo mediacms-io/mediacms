@@ -10,9 +10,9 @@ fi
 
 while true; do
     read -p "
-This script will attempt to perform a system update, install required dependencies, install and configure PostgreSQL, NGINX, Redis and a few other utilities.
+This script will attempt to perform a system update and install services including PostgreSQL, nginx and Django.
 It is expected to run on a new system **with no running instances of any these services**.
-Also this is tested on Ubuntu 24 only and it will not work on other systems. Make sure you check the script before you continue. Then enter yes or no
+This has been tested only in Ubuntu Linux 22 and 24. Make sure you check the script before you continue. Then enter yes or no
 " yn
     case $yn in
         [Yy]* ) echo "OK!"; break;;

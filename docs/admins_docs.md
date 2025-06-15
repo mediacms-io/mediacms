@@ -33,12 +33,12 @@ This page is created for MediaCMS administrators that are responsible for settin
 
 ## 2. Single Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But the install.sh is only tested in Linux Ubuntu 24.
+The core dependencies are python3, Django, celery, PostgreSQL, redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But the install.sh is only tested in Linux Ubuntu 24 and 22 versions.
 
-Installation on an Ubuntu 24 system with git utility installed should be completed in a few minutes with the following steps.
+Installation on an Ubuntu 22/24 system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
 
-Automated script - tested on Ubuntu 24
+
 
 ```bash
 mkdir /home/mediacms.io && cd /home/mediacms.io/
