@@ -471,6 +471,7 @@ LANGUAGES = [
     ('tr', _('Turkish')),
     ('el', _('Greek')),
     ('ur', _('Urdu')),
+    ('he', _('Hebrew')),
 ]
 
 LANGUAGE_CODE = 'en'  # default language
