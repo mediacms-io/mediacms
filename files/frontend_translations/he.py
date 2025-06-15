@@ -65,13 +65,12 @@ translation_strings = {
     'VIEW ALL': 'הצג הכל',
     'View all': 'הצג הכל',
     'comment': 'תגובה',
-    'is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media':
-        'מערכת ניהול מדיה ווידאו מודרנית, פתוחה ומלאה בפיצ׳רים. פותחה כדי לענות על הצרכים של פלטפורמות אינטרנט מודרניות לצפייה ושיתוף מדיה.',
+    'is a modern, fully featured open source video and media CMS. It is developed to meet the needs of modern web platforms for viewing and sharing media': 'מערכת ניהול מדיה ווידאו מודרנית, פתוחה ומלאה בפיצ׳רים. פותחה כדי לענות על הצרכים של פלטפורמות אינטרנט מודרניות לצפייה ושיתוף מדיה.',
     'media in category': 'מדיה בקטגוריה',
     'media in tag': 'מדיה בתגית',
     'view': 'צפיות',
     'views': 'צפיות',
-    'yet': 'עדיין'
+    'yet': 'עדיין',
 }
 
 replacement_strings = {
