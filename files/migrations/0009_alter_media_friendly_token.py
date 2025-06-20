@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('files', '0008_alter_media_state_videotrimrequest'),
     ]
