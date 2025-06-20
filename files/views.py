@@ -506,6 +506,9 @@ def liked_media(request):
 def manage_users(request):
     """List users management view"""
 
+    if not is_mediacms_editor(request.user):
+        return HttpResponseRedirect("/")
+
     context = {}
     return render(request, "cms/manage_users.html", context)
 
@@ -513,14 +516,19 @@ def manage_users(request):
 @login_required
 def manage_media(request):
     """List media management view"""
+    if not is_mediacms_editor(request.user):
+        return HttpResponseRedirect("/")
 
-    context = {}
+    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
+    context = {'categories': list(categories)}
     return render(request, "cms/manage_media.html", context)
 
 
 @login_required
 def manage_comments(request):
     """List comments management view"""
+    if not is_mediacms_editor(request.user):
+        return HttpResponseRedirect("/")
 
     context = {}
     return render(request, "cms/manage_comments.html", context)

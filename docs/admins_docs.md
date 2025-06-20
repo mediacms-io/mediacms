@@ -25,7 +25,7 @@
 - [22. Role-Based Access Control](#22-role-based-access-control)
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
-
+- [25. Custom urls](#25-custom-urls)
 
 
 ## 1. Welcome
@@ -965,3 +965,6 @@ USE_IDENTITY_PROVIDERS = True
 
 Visiting the admin, you will see the Identity Providers tab and you can add one.
 
+## 25. Custom urls
+To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
+This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this. 
