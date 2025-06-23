@@ -21,8 +21,6 @@ const useVideoTrimmer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   
-  // Removed preview mode - replaced by isPlayingSegments
-  
   // Timeline state
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [trimStart, setTrimStart] = useState(0);
@@ -514,10 +512,6 @@ const useVideoTrimmer = () => {
       document.removeEventListener('delete-segment', handleDeleteSegment as EventListener);
     };
   }, [clipSegments, duration]);
-  
-  // Removed preview mode effect - functionality replaced by isPlayingSegments
-  
-  // Removed preview mode functions - replaced by handlePlaySegments
   
   // Handle trim start change
   const handleTrimStartChange = (time: number) => {

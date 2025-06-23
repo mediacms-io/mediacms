@@ -1739,7 +1739,6 @@ const TimelineControls = ({
             console.error("Error resuming playback after segment click:", err);
           });
       }
-      // Removed preview mode playback - preview functionality replaced by segments playback
     }
 
     // Calculate tooltip position directly above click point
