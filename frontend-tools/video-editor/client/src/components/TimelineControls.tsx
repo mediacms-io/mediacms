@@ -1827,7 +1827,8 @@ const TimelineControls = ({
           </div>
 
           {/* Resize handles with both mouse and touch support */}
-          <div
+          {isPlayingSegments ? null : <>
+            <div
             className="clip-segment-handle left"
             title="Resize segment start"
             onMouseDown={(e) => {
@@ -1851,6 +1852,7 @@ const TimelineControls = ({
               handleSegmentResize(segment.id, false)(e);
             }}
           ></div>
+          </>}
         </div>
       );
     });
@@ -2373,6 +2375,7 @@ const TimelineControls = ({
             </div>
 
             {/* Bottom circle for dragging */}
+            {isPlayingSegments ? null : (
             <div
               className={`timeline-marker-drag ${isDragging ? 'dragging' : ''}`}
               onMouseDown={startDrag}
@@ -2380,6 +2383,7 @@ const TimelineControls = ({
             >
               <span className="timeline-marker-drag-icon">⋮</span>
             </div>
+            )}
           </div>
 
           {/* Trim Line Markers - hidden when segments exist */}
