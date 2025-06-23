@@ -201,18 +201,7 @@
     flex-shrink: 0;
   }
   
-  /* Style for the preview mode message that replaces the play button */
-  .preview-mode-message {
-    display: flex;
-    align-items: center;
-    background-color: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: 600;
-    font-size: 0.875rem;
-    animation: pulse 2s infinite;
-  }
+  /* Preview mode styles removed - replaced by segments playback mode */
   
   @keyframes pulse {
     0% {
@@ -224,13 +213,6 @@
     100% {
       opacity: 0.8;
     }
-  }
-  
-  .preview-mode-message svg {
-    height: 1.25rem;
-    width: 1.25rem;
-    margin-right: 0.5rem;
-    color: #3b82f6;
   }
   
   /* Add responsive button text class */
@@ -340,11 +322,7 @@
       padding: 0.25rem;
     }
     
-    /* Smaller preview mode message */
-    .preview-mode-message {
-      font-size: 0.8rem;
-      padding: 4px 8px;
-    }
+    /* Removed preview mode message styles */
     
     .divider {
       margin: 0 0.25rem;

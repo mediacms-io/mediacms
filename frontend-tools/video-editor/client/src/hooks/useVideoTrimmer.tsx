@@ -21,9 +21,7 @@ const useVideoTrimmer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   
-  // Preview mode state for playing only segments
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [previewSegmentIndex, setPreviewSegmentIndex] = useState(0);
+  // Removed preview mode - replaced by isPlayingSegments
   
   // Timeline state
   const [thumbnails, setThumbnails] = useState<string[]>([]);
@@ -146,18 +144,12 @@ const useVideoTrimmer = () => {
     };
     
     const handlePlay = () => {
-      // Only update isPlaying if we're not in preview mode
-      if (!isPreviewMode) {
-        setIsPlaying(true);
-        setVideoInitialized(true);
-      }
+      setIsPlaying(true);
+      setVideoInitialized(true);
     };
     
     const handlePause = () => {
-      // Only update isPlaying if we're not in preview mode
-      if (!isPreviewMode) {
-        setIsPlaying(false);
-      }
+      setIsPlaying(false);
     };
     
     const handleEnded = () => {
@@ -180,7 +172,7 @@ const useVideoTrimmer = () => {
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('ended', handleEnded);
     };
-  }, [isPreviewMode]);
+  }, []);
   
   // Play/pause video
   const playPauseVideo = () => {
@@ -226,9 +218,6 @@ const useVideoTrimmer = () => {
     // Track if the video was playing before seeking
     const wasPlaying = !video.paused;
     
-    // Store current preview mode state to preserve it
-    const wasInPreviewMode = isPreviewMode;
-    
     // Update the video position
     video.currentTime = time;
     setCurrentTime(time);
@@ -239,36 +228,12 @@ const useVideoTrimmer = () => {
       window.lastSeekedPosition = time;
     }
     
-    // Find segment at this position for preview mode playback
-    if (wasInPreviewMode) {
-      const segmentAtPosition = clipSegments.find(
-        seg => time >= seg.startTime && time <= seg.endTime
-      );
-      
-      if (segmentAtPosition) {
-        // Update the active segment index in preview mode
-        const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-        const newSegmentIndex = orderedSegments.findIndex(seg => seg.id === segmentAtPosition.id);
-        if (newSegmentIndex !== -1) {
-          setPreviewSegmentIndex(newSegmentIndex);
-        }
-      }
-    }
-    
-    // Resume playback in two scenarios:
-    // 1. If it was playing before (regular mode)
-    // 2. If we're in preview mode (regardless of previous state)
-    if (wasPlaying || wasInPreviewMode) {
-      // Ensure preview mode stays on if it was on before
-      if (wasInPreviewMode) {
-        setIsPreviewMode(true);
-      }
-      
+    // Resume playback if it was playing before
+    if (wasPlaying) {
       // Play immediately without delay
       video.play()
         .then(() => {
           setIsPlaying(true); // Update state to reflect we're playing
-          // "Resumed playback after seeking in " + (wasInPreviewMode ? "preview" : "regular") + " mode"
         })
         .catch(err => {
           console.error("Error resuming playback:", err);
@@ -550,152 +515,9 @@ const useVideoTrimmer = () => {
     };
   }, [clipSegments, duration]);
   
-  // Preview mode effect to handle playing only segments
-  useEffect(() => {
-    if (!isPreviewMode || !videoRef.current) return;
-
-    // Sort segments by start time
-    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-    if (orderedSegments.length === 0) return;
-
-    const video = videoRef.current;
-
-    // Function to handle segment playback
-    const handleSegmentPlayback = () => {
-      if (!isPreviewMode || !video) return;
-
-      const currentSegment = orderedSegments[previewSegmentIndex];
-      if (!currentSegment) return;
-
-      const currentTime = video.currentTime;
-
-      // If we're before the current segment's start, jump to it
-      if (currentTime < currentSegment.startTime) {
-        video.currentTime = currentSegment.startTime;
-        return;
-      }
-
-      // If we've reached the end of the current segment
-      if (currentTime >= currentSegment.endTime - 0.01) { // Small threshold to ensure smooth transition
-        // Move to the next segment if available
-        if (previewSegmentIndex < orderedSegments.length - 1) {
-          // Play next segment
-          const nextSegment = orderedSegments[previewSegmentIndex + 1];
-          video.currentTime = nextSegment.startTime;
-          setPreviewSegmentIndex(previewSegmentIndex + 1);
-          
-          logger.debug("Preview: Moving to next segment", {
-            from: formatDetailedTime(currentSegment.endTime),
-            to: formatDetailedTime(nextSegment.startTime),
-            segmentIndex: previewSegmentIndex + 1
-          });
-
-        } else {
-          // Loop back to first segment
-          logger.debug("Preview: Looping back to first segment");
-          video.currentTime = orderedSegments[0].startTime;
-          setPreviewSegmentIndex(0);
-        }
-
-        // Ensure playback continues
-        video.play().catch(err => {
-          console.error("Error continuing preview playback:", err);
-        });
-      }
-    };
-
-    // Add event listener for timeupdate to check segment boundaries
-    video.addEventListener('timeupdate', handleSegmentPlayback);
-
-    // Start playing if not already playing
-    if (video.paused) {
-      video.currentTime = orderedSegments[previewSegmentIndex].startTime;
-      video.play().catch(err => {
-        console.error("Error starting preview playback:", err);
-      });
-    }
-
-    return () => {
-      if (video) {
-        video.removeEventListener('timeupdate', handleSegmentPlayback);
-      }
-    };
-  }, [isPreviewMode, previewSegmentIndex, clipSegments]);
+  // Removed preview mode effect - functionality replaced by isPlayingSegments
   
-  // Handle starting preview mode
-  const handleStartPreview = () => {
-    const video = videoRef.current;
-    if (!video || clipSegments.length === 0) return;
-    
-    // If preview is already active, do nothing
-    if (isPreviewMode) {
-      return;
-    }
-    
-    // If normal playback is happening, pause it
-    if (isPlaying) {
-      video.pause();
-      setIsPlaying(false);
-    }
-    
-    // Sort segments by start time
-    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-    if (orderedSegments.length === 0) return;
-    
-    // Set the preview mode flag
-    setIsPreviewMode(true);
-    logger.debug("Entering preview mode");
-    
-    // Set the first segment as the current one in the preview sequence
-    setPreviewSegmentIndex(0);
-    
-    // Move to the start of the first segment
-    video.currentTime = orderedSegments[0].startTime;
-  };
-  
-  // Handle playing/stopping preview mode
-  const handlePreview = () => {
-    const video = videoRef.current;
-    if (!video || clipSegments.length === 0) return;
-    
-    // If preview is already active, turn it off
-    if (isPreviewMode) {
-      setIsPreviewMode(false);
-      
-      // Always pause the video when exiting preview mode
-      video.pause();
-      setIsPlaying(false);
-      
-      logger.debug("Exiting preview mode - video paused");
-      return;
-    }
-    
-    // Sort segments by start time
-    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-    if (orderedSegments.length === 0) return;
-    
-    // Set the preview mode flag
-    setIsPreviewMode(true);
-    logger.debug("Entering preview mode");
-    
-    // Set the first segment as the current one in the preview sequence
-    setPreviewSegmentIndex(0);
-    
-    // Start preview mode by playing the first segment
-    video.currentTime = orderedSegments[0].startTime;
-    
-    // Start playback
-    video.play()
-      .then(() => {
-        setIsPlaying(true);
-        logger.debug("Preview started successfully");
-      })
-      .catch(err => {
-        console.error("Error starting preview:", err);
-        setIsPreviewMode(false);
-        setIsPlaying(false);
-      });
-  };
+  // Removed preview mode functions - replaced by handlePlaySegments
   
   // Handle trim start change
   const handleTrimStartChange = (time: number) => {
@@ -819,16 +641,6 @@ const useVideoTrimmer = () => {
   const handlePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    
-    // If in preview mode, exit it before toggling normal play
-    if (isPreviewMode) {
-      setIsPreviewMode(false);
-      // Don't immediately start playing when exiting preview mode
-      // Just update the state and return
-      setIsPlaying(false);
-      video.pause();
-      return;
-    }
     
     if (isPlaying) {
       // Pause the video
@@ -1067,10 +879,7 @@ const useVideoTrimmer = () => {
       setIsPlayingSegments(true);
       setCurrentSegmentIndex(0);
       
-      // Exit preview mode if active
-      if (isPreviewMode) {
-        setIsPreviewMode(false);
-      }
+      // Start segments playback
       
       // Sort segments by start time
       const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
@@ -1095,7 +904,6 @@ const useVideoTrimmer = () => {
     isPlaying,
     setIsPlaying,
     isMuted,
-    isPreviewMode,
     isPlayingSegments,
     thumbnails,
     trimStart,
@@ -1114,7 +922,6 @@ const useVideoTrimmer = () => {
     handleReset,
     handleUndo,
     handleRedo,
-    handlePreview,
     handlePlaySegments,
     toggleMute,
     handleSave,

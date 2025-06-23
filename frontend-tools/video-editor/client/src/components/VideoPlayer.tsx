@@ -35,7 +35,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   
   const sampleVideoUrl = typeof window !== 'undefined' && 
     (window as any).MEDIA_DATA?.videoUrl || 
-    "/videos/sample-video-37s.mp4";
+    "/videos/sample-video-10m.mp4";
   
   // Detect iOS device
   useEffect(() => {

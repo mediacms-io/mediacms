@@ -16,7 +16,6 @@ const App = () => {
     isPlaying,
     setIsPlaying,
     isMuted,
-    isPreviewMode,
     thumbnails,
     trimStart,
     trimEnd,
@@ -34,7 +33,6 @@ const App = () => {
     handleReset,
     handleUndo,
     handleRedo,
-    handlePreview,
     toggleMute,
     handleSave,
     handleSaveACopy,
@@ -251,10 +249,8 @@ const App = () => {
           onReset={handleReset}
           onUndo={handleUndo}
           onRedo={handleRedo}
-          onPreview={handlePreview}
           onPlaySegments={handlePlaySegments}
           onPlay={handlePlay}
-          isPreviewMode={isPreviewMode}
           isPlaying={isPlaying}
           isPlayingSegments={isPlayingSegments}
           canUndo={historyPosition > 0}
@@ -279,7 +275,6 @@ const App = () => {
           onSave={handleSave}
           onSaveACopy={handleSaveACopy}
           onSaveSegments={handleSaveSegments}
-          isPreviewMode={isPreviewMode}
           hasUnsavedChanges={hasUnsavedChanges}
           isIOSUninitialized={isMobile && !videoInitialized}
           isPlaying={isPlaying}

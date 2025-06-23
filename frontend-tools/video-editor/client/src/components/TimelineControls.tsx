@@ -43,7 +43,6 @@ interface TimelineControlsProps {
   onSave?: () => void;
   onSaveACopy?: () => void;
   onSaveSegments?: () => void;
-  isPreviewMode?: boolean;
   hasUnsavedChanges?: boolean;
   isIOSUninitialized?: boolean;
   isPlaying: boolean;
@@ -116,7 +115,6 @@ const TimelineControls = ({
   onSave,
   onSaveACopy,
   onSaveSegments,
-  isPreviewMode,
   hasUnsavedChanges = false,
   isIOSUninitialized = false,
   isPlaying,
@@ -572,12 +570,11 @@ const TimelineControls = ({
   useEffect(() => {
     // Skip if no video or no active segment
     const video = videoRef.current;
-    if (!video || !activeSegment || !isPlayingSegment || isPreviewMode) {
+    if (!video || !activeSegment || !isPlayingSegment) {
       // Log why we're skipping
       if (!video) logger.debug("Skipping segment boundary check - no video element");
-      else if (!activeSegment) logger.debug("Skipping segment boundary check - no active segment");
-      else if (!isPlayingSegment) logger.debug("Skipping segment boundary check - not in segment playback mode");
-      else if (isPreviewMode) logger.debug("Skipping segment boundary check in preview mode");
+              else if (!activeSegment) logger.debug("Skipping segment boundary check - no active segment");
+        else if (!isPlayingSegment) logger.debug("Skipping segment boundary check - not in segment playback mode");
       return;
     }
 
@@ -664,7 +661,7 @@ const TimelineControls = ({
       video.removeEventListener('timeupdate', handleTimeUpdate);
       logger.debug("Segment boundary check DEACTIVATED");
     };
-  }, [activeSegment, isPlayingSegment, isPreviewMode, continuePastBoundary, clipSegments]);
+  }, [activeSegment, isPlayingSegment, continuePastBoundary, clipSegments]);
 
   // Update display time and check for transitions between segments and empty spaces
   useEffect(() => {
@@ -1231,10 +1228,8 @@ const TimelineControls = ({
             setIsPlayingSegment(false);
           });
       }
-      // Resume playback in two cases (but not during segments playback):
-      // 1. If it was playing before (regular playback)
-      // 2. If we're in preview mode (regardless of previous playing state)
-      else if ((wasPlaying || isPreviewMode) && !isPlayingSegments) {
+      // Resume playback if it was playing before (but not during segments playback)
+      else if (wasPlaying && !isPlayingSegments) {
         logger.debug("Resuming playback after timeline click");
         videoRef.current.play()
           .then(() => {
@@ -1581,17 +1576,7 @@ const TimelineControls = ({
           else if (!wasInsideSegmentBefore && isInsideSegment) {
             logger.debug("Playhead moved INTO segment during drag - can start playback");
             setActiveSegment(segment);
-            // In preview mode, we automatically start playing when playhead enters segment
-            if (isPreviewMode) {
-              videoRef.current.play()
-                .then(() => {
-                  setIsPlayingSegment(true);
-                  logger.debug("Started playback after dragging segment to include playhead");
-                })
-                .catch(err => {
-                  console.error("Error starting playback:", err);
-                });
-            }
+            // Removed automatic playback - user needs to manually start playback
           }
           // Another special case: playhead was inside segment before, but now is also inside but at a different position
           else if (wasInsideSegmentBefore && isInsideSegment &&
@@ -1738,8 +1723,8 @@ const TimelineControls = ({
             console.error("Error continuing segments playback after segment click:", err);
           });
       }
-      // If video was playing before OR we're in preview mode, ensure it continues playing (but not in segments mode)
-      else if ((wasPlaying || isPreviewMode) && !isPlayingSegments) {
+      // If video was playing before, ensure it continues playing (but not in segments mode)
+      else if (wasPlaying && !isPlayingSegments) {
         // Set current segment as active segment for boundary checking
         setActiveSegment(segment);
         // Reset the continuePastBoundary flag when clicking on a segment to ensure boundaries work
@@ -1754,18 +1739,7 @@ const TimelineControls = ({
             console.error("Error resuming playback after segment click:", err);
           });
       }
-      // Always continue playback in preview mode, even if video was paused when clicking (but not in segments mode)
-      else if (isPreviewMode && !isPlayingSegments) {
-        setActiveSegment(segment);
-        videoRef.current.play()
-          .then(() => {
-            setIsPlayingSegment(true);
-            logger.debug("Continued preview playback after segment click");
-          })
-          .catch(err => {
-            console.error("Error continuing preview playback:", err);
-          });
-      }
+      // Removed preview mode playback - preview functionality replaced by segments playback
     }
 
     // Calculate tooltip position directly above click point
@@ -2448,15 +2422,16 @@ const TimelineControls = ({
               {/* First row with time adjustment buttons */}
               <div className="tooltip-row">
                                   <button
-                    className="tooltip-time-btn"
-                    data-tooltip="Seek -50ms (click or hold)"
-                    {...handleContinuousTimeAdjustment(-0.05)}
+                    className={`tooltip-time-btn ${isPlayingSegments ? 'disabled' : ''}`}
+                    data-tooltip={isPlayingSegments ? "Disabled during preview" : "Seek -50ms (click or hold)"}
+                    disabled={isPlayingSegments}
+                    {...(!isPlayingSegments ? handleContinuousTimeAdjustment(-0.05) : {})}
                     style={{
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       WebkitTouchCallout: 'none',
                       touchAction: 'manipulation',
-                      cursor: 'pointer',
+                      cursor: isPlayingSegments ? 'not-allowed' : 'pointer',
                       WebkitTapHighlightColor: 'transparent'
                     }}
                   >
@@ -2464,15 +2439,16 @@ const TimelineControls = ({
                   </button>
                   <div className="tooltip-time-display">{formatDetailedTime(displayTime)}</div>
                   <button
-                    className="tooltip-time-btn"
-                    data-tooltip="Seek +50ms (click or hold)"
-                    {...handleContinuousTimeAdjustment(0.05)}
+                    className={`tooltip-time-btn ${isPlayingSegments ? 'disabled' : ''}`}
+                    data-tooltip={isPlayingSegments ? "Disabled during preview" : "Seek +50ms (click or hold)"}
+                    disabled={isPlayingSegments}
+                    {...(!isPlayingSegments ? handleContinuousTimeAdjustment(0.05) : {})}
                     style={{
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       WebkitTouchCallout: 'none',
                       touchAction: 'manipulation',
-                      cursor: 'pointer',
+                      cursor: isPlayingSegments ? 'not-allowed' : 'pointer',
                       WebkitTapHighlightColor: 'transparent'
                     }}
                   >
@@ -2483,8 +2459,9 @@ const TimelineControls = ({
               {/* Second row with action buttons */}
               <div className="tooltip-row tooltip-actions">
                 <button
-                  className="tooltip-action-btn delete"
-                  data-tooltip="Delete segment"
+                  className={`tooltip-action-btn delete ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Delete segment"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
                     // Call the delete segment function with the current segment ID
@@ -2505,8 +2482,9 @@ const TimelineControls = ({
                   </svg>
                 </button>
                 <button
-                  className="tooltip-action-btn scissors"
-                  data-tooltip="Split segment at current position"
+                  className={`tooltip-action-btn scissors ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Split segment at current position"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
                     // Call the split segment function with the current segment ID and time
@@ -2530,8 +2508,9 @@ const TimelineControls = ({
                   </svg>
                 </button>
                 <button
-                  className="tooltip-action-btn play-from-start"
-                  data-tooltip="Play segment from beginning"
+                  className={`tooltip-action-btn play-from-start ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Play segment from beginning"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -2626,8 +2605,9 @@ const TimelineControls = ({
 
                 {/* Play/Pause button for empty space - Same as main play/pause button */}
                 <button
-                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
-                  data-tooltip={isPlaying ? "Pause playback" : "Play from current position"}
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'} ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : (isPlaying ? "Pause playback" : "Play from current position")}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                   e.stopPropagation();
 
@@ -2654,8 +2634,9 @@ const TimelineControls = ({
                 </button>
 
                 <button
-                  className="tooltip-action-btn set-in"
-                  data-tooltip="Set start point at current position"
+                  className={`tooltip-action-btn set-in ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Set start point at current position"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -2692,8 +2673,9 @@ const TimelineControls = ({
                   <img src={segmentStartIcon} alt="Set start point" style={{width: '24px', height: '24px'}} />
                 </button>
                 <button
-                  className="tooltip-action-btn set-out"
-                  data-tooltip="Set end point at current position"
+                  className={`tooltip-action-btn set-out ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Set end point at current position"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -2745,17 +2727,35 @@ const TimelineControls = ({
               {/* First row with time adjustment buttons - same as segment tooltip */}
               <div className="tooltip-row">
                 <button
-                  className="tooltip-time-btn"
-                  data-tooltip="Seek -50ms (click or hold)"
-                  {...handleContinuousTimeAdjustment(-0.05)}
+                  className={`tooltip-time-btn ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Seek -50ms (click or hold)"}
+                  disabled={isPlayingSegments}
+                  {...(!isPlayingSegments ? handleContinuousTimeAdjustment(-0.05) : {})}
+                  style={{
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    touchAction: 'manipulation',
+                    cursor: isPlayingSegments ? 'not-allowed' : 'pointer',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
                 >
                   -50ms
                 </button>
                 <div className="tooltip-time-display">{formatDetailedTime(clickedTime)}</div>
                 <button
-                  className="tooltip-time-btn"
-                  data-tooltip="Seek +50ms (click or hold)"
-                  {...handleContinuousTimeAdjustment(0.05)}
+                  className={`tooltip-time-btn ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Seek +50ms (click or hold)"}
+                  disabled={isPlayingSegments}
+                  {...(!isPlayingSegments ? handleContinuousTimeAdjustment(0.05) : {})}
+                  style={{
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                    touchAction: 'manipulation',
+                    cursor: isPlayingSegments ? 'not-allowed' : 'pointer',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
                 >
                   +50ms
                 </button>
@@ -2765,9 +2765,9 @@ const TimelineControls = ({
               <div className="tooltip-row tooltip-actions">
                 {/* New segment button - Moved to first position */}
                 <button
-                  className={`tooltip-action-btn new-segment ${availableSegmentDuration < 0.5 ? 'disabled' : ''}`}
-                  data-tooltip={availableSegmentDuration < 0.5 ? 'Not enough space for new segment' : 'Create new segment'}
-                  disabled={availableSegmentDuration < 0.5}
+                  className={`tooltip-action-btn new-segment ${availableSegmentDuration < 0.5 || isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? 'Disabled during preview' : (availableSegmentDuration < 0.5 ? 'Not enough space for new segment' : 'Create new segment')}
+                  disabled={availableSegmentDuration < 0.5 || isPlayingSegments}
                   onClick={async (e) => {
                     e.stopPropagation();
 
@@ -2831,8 +2831,9 @@ const TimelineControls = ({
 
                 {/* Go to start button - play from beginning of cutaway (until next segment) */}
                 <button
-                  className="tooltip-action-btn play-from-start"
-                  data-tooltip="Play from beginning of cutaway"
+                  className={`tooltip-action-btn play-from-start ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Play from beginning of cutaway"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -3283,8 +3284,9 @@ const TimelineControls = ({
 
                 {/* Play/Pause button for empty space - Same as main play/pause button */}
                 <button
-                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
-                  data-tooltip={isPlaying ? "Pause playback" : "Play from here until next segment"}
+                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'} ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : (isPlaying ? "Pause playback" : "Play from here until next segment")}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                   e.stopPropagation();
 
@@ -3312,8 +3314,9 @@ const TimelineControls = ({
 
                 {/* Segment end adjustment button (always shown) */}
                 <button
-                  className="tooltip-action-btn segment-end"
-                  data-tooltip="Adjust end of previous segment"
+                  className={`tooltip-action-btn segment-end ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Adjust end of previous segment"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 
@@ -3489,8 +3492,9 @@ const TimelineControls = ({
 
                 {/* Segment start adjustment button (always shown) */}
                 <button
-                  className="tooltip-action-btn segment-start"
-                  data-tooltip="Adjust start of next segment"
+                  className={`tooltip-action-btn segment-start ${isPlayingSegments ? 'disabled' : ''}`}
+                  data-tooltip={isPlayingSegments ? "Disabled during preview" : "Adjust start of next segment"}
+                  disabled={isPlayingSegments}
                   onClick={(e) => {
                     e.stopPropagation();
 

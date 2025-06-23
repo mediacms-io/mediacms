@@ -227,6 +227,43 @@
   color: #9ca3af;
 }
 
+/* Ensure pause button is properly styled when disabled */
+.tooltip-action-btn.pause.disabled {
+  color: #9ca3af !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip-action-btn.pause.disabled:hover {
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
+}
+
+/* Ensure play button is properly styled when disabled */
+.tooltip-action-btn.play.disabled {
+  color: #9ca3af !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip-action-btn.play.disabled:hover {
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
+}
+
+/* Ensure time adjustment buttons are properly styled when disabled */
+.tooltip-time-btn.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
+}
+
+.tooltip-time-btn.disabled:hover {
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
+}
+
 /* Additional mobile optimizations */
 @media (max-width: 768px) {
   .two-row-tooltip {

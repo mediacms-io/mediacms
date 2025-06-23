@@ -6,12 +6,10 @@ interface EditingToolsProps {
   onReset: () => void;
   onUndo: () => void;
   onRedo: () => void;
-  onPreview: () => void;
   onPlaySegments: () => void;
   onPlay: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  isPreviewMode?: boolean;
   isPlaying?: boolean;
   isPlayingSegments?: boolean;
 }
@@ -21,12 +19,10 @@ const EditingTools = ({
   onReset,
   onUndo,
   onRedo,
-  onPreview,
   onPlaySegments,
   onPlay,
   canUndo,
   canRedo,
-  isPreviewMode = false,
   isPlaying = false,
   isPlayingSegments = false,
 }: EditingToolsProps) => {
@@ -116,8 +112,8 @@ const EditingTools = ({
             )}
           </button> */}
 
-          {/* Standard Play button (only shown when not in preview mode or segments playback) */}
-          {!isPreviewMode && (!isPlayingSegments || !isSmallScreen) && (
+          {/* Standard Play button (only shown when not in segments playback on small screens) */}
+          {(!isPlayingSegments || !isSmallScreen) && (
             <button 
               className={`button play-button ${isPlayingSegments ? 'greyed-out' : ''}`}
               onClick={handlePlay}
@@ -125,7 +121,7 @@ const EditingTools = ({
               style={{ fontSize: '0.875rem' }}
               disabled={isPlayingSegments}
             >
-              {isPlaying ? (
+              {isPlaying && !isPlayingSegments ? (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />

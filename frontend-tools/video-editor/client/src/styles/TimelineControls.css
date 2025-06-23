@@ -814,43 +814,7 @@
   100% { opacity: 0.7; transform: scale(1); }
 }
 
-/* Preview mode styles */
-.preview-mode .tooltip-action-btn {
-  opacity: 0.5;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.preview-mode .tooltip-time-btn {
-  opacity: 0.5;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-/* Timeline preview mode styles */
-.timeline-container-card.preview-mode {
-  pointer-events: none;
-}
-
-.timeline-container-card.preview-mode .timeline-marker-head,
-.timeline-container-card.preview-mode .timeline-marker-drag,
-.timeline-container-card.preview-mode .clip-segment,
-.timeline-container-card.preview-mode .clip-segment-handle,
-.timeline-container-card.preview-mode .time-button,
-.timeline-container-card.preview-mode .zoom-button,
-.timeline-container-card.preview-mode .save-button,
-.timeline-container-card.preview-mode .save-copy-button,
-.timeline-container-card.preview-mode .save-segments-button {
-  opacity: 0.5;
-  pointer-events: none;
-  cursor: not-allowed;
-}
-
-.timeline-container-card.preview-mode .clip-segment:hover {
-  box-shadow: none;
-  border-color: rgba(0, 0, 0, 0.15);
-  background-color: inherit !important;
-}
+/* Preview mode styles removed - replaced by segments playback mode */
 
 /* Segments playback mode styles - minimal functional styling */
 .segments-playback-mode .tooltip-time-btn {
