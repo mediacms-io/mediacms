@@ -56,7 +56,7 @@
 
   .timeline-marker {
     position: absolute;
-    height: 82px;  /* Increased height to extend below timeline */
+    height: 82px; /* Increased height to extend below timeline */
     width: 2px;
     background-color: #000;
     transform: translateX(-50%);
@@ -83,7 +83,7 @@
 
   .timeline-marker-drag {
     position: absolute;
-    bottom: -12px;  /* Changed from -6px to -12px to move it further down */
+    bottom: -12px; /* Changed from -6px to -12px to move it further down */
     left: 50%;
     transform: translateX(-50%);
     width: 16px;
@@ -248,16 +248,16 @@
     right: 0;
     border-radius: 0 2px 2px 0;
   }
-  
+
   /* Enhanced handles for touch devices */
   @media (pointer: coarse) {
     .clip-segment-handle {
       width: 14px; /* Wider target for touch devices */
       background-color: rgba(0, 0, 0, 0.4); /* Darker by default for better visibility */
     }
-    
+
     .clip-segment-handle:after {
-      content: "";
+      content: '';
       position: absolute;
       top: 50%;
       left: 50%;
@@ -267,15 +267,15 @@
       background-color: rgba(255, 255, 255, 0.8);
       border-radius: 1px;
     }
-    
+
     .clip-segment-handle.left:after {
       box-shadow: -2px 0 0 rgba(0, 0, 0, 0.5);
     }
-    
+
     .clip-segment-handle.right:after {
       box-shadow: 2px 0 0 rgba(0, 0, 0, 0.5);
     }
-    
+
     /* Active state for touch feedback */
     .clip-segment-handle:active {
       background-color: rgba(0, 0, 0, 0.6);
@@ -284,19 +284,19 @@
     .timeline-marker {
       height: 85px;
     }
-    
+
     .timeline-marker-head {
       width: 24px;
       height: 24px;
       top: -13px;
     }
-    
+
     .timeline-marker-drag {
       width: 24px;
       height: 24px;
       bottom: -18px;
     }
-    
+
     .timeline-marker-head.dragging {
       width: 28px;
       height: 28px;
@@ -438,7 +438,7 @@
     font-size: 0.875rem;
     border: none;
     cursor: pointer;
-    margin-right: 0.50rem;
+    margin-right: 0.5rem;
   }
 
   .time-button:hover {
@@ -532,8 +532,8 @@
   }
 
   /* General styles for all save buttons */
-  .save-button, 
-  .save-copy-button, 
+  .save-button,
+  .save-copy-button,
   .save-segments-button {
     color: #ffffff;
     background: #0066cc;
@@ -548,8 +548,8 @@
   }
 
   /* Shared hover effect */
-  .save-button:hover, 
-  .save-copy-button:hover, 
+  .save-button:hover,
+  .save-copy-button:hover,
   .save-segments-button:hover {
     background-color: #0056b3;
   }
@@ -561,30 +561,30 @@
       justify-content: space-between;
       gap: 0.5rem;
     }
-    
-    .save-button, 
-    .save-copy-button, 
+
+    .save-button,
+    .save-copy-button,
     .save-segments-button {
       flex: 1;
       font-size: 0.7rem;
       padding: 0.25rem 0.35rem;
     }
   }
-  
+
   /* Very small screens - adjust save buttons */
   @media (max-width: 480px) {
-    .save-button, 
-    .save-copy-button, 
+    .save-button,
+    .save-copy-button,
     .save-segments-button {
       font-size: 0.675rem;
       padding: 0.25rem;
     }
-    
+
     /* Remove margins for controls-right buttons */
     .controls-right {
       margin: 0;
     }
-    
+
     .controls-right button {
       margin: 0;
     }
@@ -595,7 +595,7 @@
     [data-tooltip] {
       position: relative;
     }
-  
+
     [data-tooltip]:before {
       content: attr(data-tooltip);
       position: absolute;
@@ -616,7 +616,7 @@
       z-index: 1000;
       pointer-events: none;
     }
-  
+
     [data-tooltip]:after {
       content: '';
       position: absolute;
@@ -631,14 +631,14 @@
       transition: opacity 0.2s, visibility 0.2s;
       pointer-events: none;
     }
-  
+
     [data-tooltip]:hover:before,
     [data-tooltip]:hover:after {
       opacity: 1;
       visibility: visible;
     }
   }
-  
+
   /* Hide button tooltips on touch devices */
   @media (pointer: coarse) {
     [data-tooltip]:before,
@@ -669,27 +669,27 @@
   }
 
   .modal-success-icon svg {
-    color: #4CAF50;
+    color: #4caf50;
     animation: fadeIn 0.5s ease-in-out;
   }
 
   .modal-error-icon svg {
-    color: #F44336; 
+    color: #f44336;
     animation: fadeIn 0.5s ease-in-out;
   }
 
   .success-link {
-    background-color: #4CAF50;
+    background-color: #4caf50;
     color: white;
     transition: background-color 0.3s;
   }
 
   .success-link:hover {
-    background-color: #388E3C;
+    background-color: #388e3c;
   }
 
   .error-message {
-    color: #F44336;
+    color: #f44336;
     font-weight: 500;
   }
 
@@ -809,12 +809,19 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0.7; transform: scale(1); }
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
 }
-
-/* Preview mode styles removed - replaced by segments playback mode */
 
 /* Segments playback mode styles - minimal functional styling */
 .segments-playback-mode .tooltip-time-btn {
@@ -822,17 +829,20 @@
   cursor: pointer;
 }
 
-.segments-playback-mode .tooltip-action-btn.set-in,
-.segments-playback-mode .tooltip-action-btn.set-out,
-.segments-playback-mode .tooltip-action-btn.play-from-start {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 .segments-playback-mode .tooltip-action-btn.play,
 .segments-playback-mode .tooltip-action-btn.pause {
   opacity: 1;
   cursor: pointer;
+}
+
+/* Disable all interactions within tooltips during segments playback */
+.two-row-tooltip.segments-playback-mode {
+  pointer-events: none !important;
+}
+
+/* Allow pointer events only on the tooltip container itself for positioning */
+.two-row-tooltip.segments-playback-mode > * {
+  pointer-events: none !important;
 }
 
 /* Show segments playback message */
