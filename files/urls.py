@@ -51,7 +51,7 @@ urlpatterns = [
     re_path(r"^api/v1/media$", views.MediaList.as_view()),
     re_path(r"^api/v1/media/$", views.MediaList.as_view()),
     re_path(
-        r"^api/v1/media/(?P<friendly_token>[\w]*)$",
+        r"^api/v1/media/(?P<friendly_token>[\w\-_]*)$",
         views.MediaDetail.as_view(),
         name="api_get_media",
     ),
