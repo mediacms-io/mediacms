@@ -4,28 +4,28 @@ A modern browser-based video editing tool built with React and TypeScript that i
 
 ## Features
 
--   ⏱️ Trim video start and end points
--   ✂️ Split videos into multiple segments
--   👁️ Preview individual segments or the full edited video
--   🔄 Undo/redo support for all editing operations
--   🔊 Audio mute controls
--   💾 Save edits directly to MediaCMS
+- ⏱️ Trim video start and end points
+- ✂️ Split videos into multiple segments
+- 👁️ Preview individual segments or the full edited video
+- 🔄 Undo/redo support for all editing operations
+- 🔊 Audio mute controls
+- 💾 Save edits directly to MediaCMS
 
 ## Tech Stack
 
--   React 18
--   TypeScript
--   Vite
--   Tailwind CSS
--   Express (for development server)
--   Drizzle ORM
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Express (for development server)
+- Drizzle ORM
 
 ## Installation
 
 ### Prerequisites
 
--   Node.js (v20+) - Use `nvm use 20` if you have nvm installed
--   Yarn or npm package manager
+- Node.js (v20+) - Use `nvm use 20` if you have nvm installed
+- Yarn or npm package manager
 
 ### Setup
 
@@ -119,12 +119,12 @@ npm run deploy
 
 ## Project Structure
 
--   `/src` - Source code
-    -   `/components` - React components
-    -   `/hooks` - Custom React hooks
-    -   `/lib` - Utility functions and helpers
-    -   `/services` - API services
-    -   `/styles` - CSS and style definitions
+- `/src` - Source code
+  - `/components` - React components
+  - `/hooks` - Custom React hooks
+  - `/lib` - Utility functions and helpers
+  - `/services` - API services
+  - `/styles` - CSS and style definitions
 
 ## API Integration
 
@@ -146,6 +146,7 @@ npx prettier --write src/
 Or for specific file types:
 
 ```bash
+cd frontend-tools/video-editor/
 npx prettier --write "client/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
 ```
 
