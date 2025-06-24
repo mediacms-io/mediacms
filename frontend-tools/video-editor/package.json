@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "build:django": "vite build --config vite.video-editor.config.ts --outDir ../../../static/video_editor",
-    "format": "prettier --write client/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
+    "format": "npx prettier --write client/src/**/*.{ts,tsx,css}"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.74.4",
