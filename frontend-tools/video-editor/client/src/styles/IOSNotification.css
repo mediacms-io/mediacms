@@ -132,7 +132,7 @@
   .ios-notification {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .ios-notification-close {
     padding: 10px;
   }
@@ -143,11 +143,11 @@
   .ios-notification-content {
     padding: 5px;
   }
-  
+
   .ios-notification-message h3 {
     font-size: 15px;
   }
-  
+
   .ios-notification-message p,
   .ios-notification-message ol {
     font-size: 13px;
@@ -164,4 +164,4 @@ html.ios-device {
 html.ios-device .ios-control-btn {
   /* Make buttons easier to tap in desktop mode */
   min-height: 44px;
-} 
+}

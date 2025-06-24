@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import '../styles/IOSPlayPrompt.css';
+import React, { useState, useEffect } from "react";
+import "../styles/IOSPlayPrompt.css";
 
 interface MobilePlayPromptProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -13,7 +13,9 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
   useEffect(() => {
     const checkIsMobile = () => {
       // More comprehensive check for mobile/tablet devices
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(navigator.userAgent);
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i.test(
+        navigator.userAgent
+      );
     };
 
     // Always show for mobile devices on each visit
@@ -31,9 +33,9 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
       setIsVisible(false);
     };
 
-    video.addEventListener('play', handlePlay);
+    video.addEventListener("play", handlePlay);
     return () => {
-      video.removeEventListener('play', handlePlay);
+      video.removeEventListener("play", handlePlay);
     };
   }, [videoRef]);
 
@@ -62,11 +64,8 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
             <li>Then you'll be able to use all timeline controls</li>
           </ol>
         </div> */}
-        
-        <button 
-          className="mobile-play-button"
-          onClick={handlePlayClick}
-        >
+
+        <button className="mobile-play-button" onClick={handlePlayClick}>
           Click to start editing...
         </button>
       </div>
@@ -74,4 +73,4 @@ const MobilePlayPrompt: React.FC<MobilePlayPromptProps> = ({ videoRef, onPlay })
   );
 };
 
-export default MobilePlayPrompt; 
+export default MobilePlayPrompt;

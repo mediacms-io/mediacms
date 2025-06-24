@@ -125,13 +125,13 @@
   overflow-x: auto;
   overflow-y: hidden;
   margin-bottom: 0.75rem;
-  background-color: #EEE; /* Very light gray background */
+  background-color: #eee; /* Very light gray background */
   position: relative;
 }
 
 .timeline-container {
   position: relative;
-  background-color: #EEE; /* Very light gray background */
+  background-color: #eee; /* Very light gray background */
   height: 6rem;
   width: 100%;
   cursor: pointer;
@@ -208,17 +208,27 @@
   overflow: hidden;
   cursor: grab;
   user-select: none;
-  transition: box-shadow 0.2s, transform 0.1s;
+  transition:
+    box-shadow 0.2s,
+    transform 0.1s;
   /* Original z-index for stacking order based on segment ID */
   z-index: 15;
 }
 
 /* No background colors for segments, just borders with 2-color scheme */
-.clip-segment:nth-child(odd), .segment-color-1, .segment-color-3, .segment-color-5, .segment-color-7 {
+.clip-segment:nth-child(odd),
+.segment-color-1,
+.segment-color-3,
+.segment-color-5,
+.segment-color-7 {
   background-color: transparent;
   border: 2px solid rgba(0, 123, 255, 0.9); /* Blue border */
 }
-.clip-segment:nth-child(even), .segment-color-2, .segment-color-4, .segment-color-6, .segment-color-8 {
+.clip-segment:nth-child(even),
+.segment-color-2,
+.segment-color-4,
+.segment-color-6,
+.segment-color-8 {
   background-color: transparent;
   border: 2px solid rgba(108, 117, 125, 0.9); /* Gray border */
 }
@@ -315,7 +325,7 @@
 input[type="range"] {
   -webkit-appearance: none;
   height: 6px;
-  background: #E0E0E0;
+  background: #e0e0e0;
   border-radius: 3px;
 }
 
@@ -350,12 +360,14 @@ input[type="range"]::-webkit-slider-thumb {
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   pointer-events: none;
 }
 
 [data-tooltip]::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 100%;
   left: 50%;
@@ -366,7 +378,9 @@ input[type="range"]::-webkit-slider-thumb {
   margin-bottom: 0px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   pointer-events: none;
 }
 
@@ -464,7 +478,7 @@ button[disabled][data-tooltip]::after {
 }
 
 .segment-tooltip::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -6px;
   left: 50%;
@@ -539,7 +553,7 @@ button[disabled][data-tooltip]::after {
 }
 
 .empty-space-tooltip::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -8px;
   left: 50%;
@@ -617,7 +631,9 @@ button[disabled][data-tooltip]::after {
 }
 
 /* Save buttons styling */
-.save-button, .save-copy-button, .save-segments-button {
+.save-button,
+.save-copy-button,
+.save-segments-button {
   background-color: rgba(0, 123, 255, 0.8);
   color: white;
   border: none;
@@ -628,7 +644,8 @@ button[disabled][data-tooltip]::after {
   transition: background-color 0.2s;
 }
 
-.save-button:hover, .save-copy-button:hover {
+.save-button:hover,
+.save-copy-button:hover {
   background-color: rgba(0, 123, 255, 1);
 }
 
@@ -735,7 +752,8 @@ button[disabled][data-tooltip]::after {
   font-size: 1.1rem;
 }
 
-.current-time, .duration-time {
+.current-time,
+.duration-time {
   white-space: nowrap;
 }
 
@@ -770,7 +788,8 @@ button[disabled][data-tooltip]::after {
     gap: 8px;
   }
 
-  .save-button, .save-copy-button {
+  .save-button,
+  .save-copy-button {
     margin-top: 8px;
     width: 100%;
   }

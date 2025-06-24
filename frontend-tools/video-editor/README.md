@@ -129,3 +129,43 @@ npm run deploy
 ## API Integration
 
 The video editor interfaces with MediaCMS through a set of API endpoints for retrieving and saving video edits.
+
+Sure! Here's your updated `README.md` section with a new **"Code Formatting"** section using Prettier. I placed it after the "Development" section to keep the flow logical:
+
+---
+
+## Code Formatting
+
+To automatically format all source files using [Prettier](https://prettier.io):
+
+```bash
+# Format all code in the src directory
+npx prettier --write src/
+```
+
+Or for specific file types:
+
+```bash
+cd frontend-tools/video-editor/
+npx prettier --write "client/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
+```
+
+You can also add this as a script in `package.json`:
+
+```json
+"scripts": {
+  "format": "prettier --write client/src/"
+}
+```
+
+Then run:
+
+```bash
+yarn format
+# or
+npm run format
+```
+
+---
+
+Let me know if you'd like to auto-format on commit using `lint-staged` + `husky`.

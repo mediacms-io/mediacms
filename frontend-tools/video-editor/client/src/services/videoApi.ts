@@ -4,36 +4,36 @@ interface TrimVideoRequest {
   segments: {
     startTime: string;
     endTime: string;
-    name?: string; 
+    name?: string;
   }[];
   saveAsCopy?: boolean;
-  saveIndividualSegments?: boolean; 
+  saveIndividualSegments?: boolean;
 }
 
 interface TrimVideoResponse {
   msg: string;
   url_redirect: string;
-  status?: number;  // HTTP status code for success/error
-  error?: string;   // Error message if status is not 200
+  status?: number; // HTTP status code for success/error
+  error?: string; // Error message if status is not 200
 }
 
 // Helper function to simulate delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // For now, we'll use a mock API that returns a promise
 // This can be replaced with actual API calls later
 export const trimVideo = async (
-  mediaId: string, 
+  mediaId: string,
   data: TrimVideoRequest
 ): Promise<TrimVideoResponse> => {
   try {
     // Attempt the real API call
     const response = await fetch(`/api/v1/media/${mediaId}/trim_video`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
-    
+
     if (!response.ok) {
       // For error responses, return with error status and message
       if (response.status === 400) {
@@ -86,7 +86,7 @@ export const trimVideo = async (
         };
       }
     }
-    
+
     // Successful response
     const jsonResponse = await response.json();
     return {
@@ -104,7 +104,7 @@ export const trimVideo = async (
       url_redirect: `./view?m=${mediaId}`
     };
   }
-  
+
   /* Mock implementation that simulates network latency
   return new Promise((resolve) => {
     setTimeout(() => {

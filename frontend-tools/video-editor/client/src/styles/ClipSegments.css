@@ -4,7 +4,7 @@
     [data-tooltip] {
       position: relative;
     }
-    
+
     [data-tooltip]:before {
       content: attr(data-tooltip);
       position: absolute;
@@ -21,13 +21,15 @@
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       z-index: 1000;
       pointer-events: none;
     }
-    
+
     [data-tooltip]:after {
-      content: '';
+      content: "";
       position: absolute;
       bottom: 100%;
       left: 50%;
@@ -37,17 +39,19 @@
       border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       pointer-events: none;
     }
-    
+
     [data-tooltip]:hover:before,
     [data-tooltip]:hover:after {
       opacity: 1;
       visibility: visible;
     }
   }
-  
+
   /* Hide button tooltips on touch devices */
   @media (pointer: coarse) {
     [data-tooltip]:before,
@@ -143,7 +147,9 @@
     border-radius: 9999px;
     border: none;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
     min-width: auto;
 
     &:hover {
@@ -163,12 +169,28 @@
     color: rgba(51, 51, 51, 0.7);
   }
 
-  .segment-color-1 { background-color: rgba(59, 130, 246, 0.15); }
-  .segment-color-2 { background-color: rgba(16, 185, 129, 0.15); }
-  .segment-color-3 { background-color: rgba(245, 158, 11, 0.15); }
-  .segment-color-4 { background-color: rgba(239, 68, 68, 0.15); }
-  .segment-color-5 { background-color: rgba(139, 92, 246, 0.15); }
-  .segment-color-6 { background-color: rgba(236, 72, 153, 0.15); }
-  .segment-color-7 { background-color: rgba(6, 182, 212, 0.15); }
-  .segment-color-8 { background-color: rgba(250, 204, 21, 0.15); }
-} 
+  .segment-color-1 {
+    background-color: rgba(59, 130, 246, 0.15);
+  }
+  .segment-color-2 {
+    background-color: rgba(16, 185, 129, 0.15);
+  }
+  .segment-color-3 {
+    background-color: rgba(245, 158, 11, 0.15);
+  }
+  .segment-color-4 {
+    background-color: rgba(239, 68, 68, 0.15);
+  }
+  .segment-color-5 {
+    background-color: rgba(139, 92, 246, 0.15);
+  }
+  .segment-color-6 {
+    background-color: rgba(236, 72, 153, 0.15);
+  }
+  .segment-color-7 {
+    background-color: rgba(6, 182, 212, 0.15);
+  }
+  .segment-color-8 {
+    background-color: rgba(250, 204, 21, 0.15);
+  }
+}
