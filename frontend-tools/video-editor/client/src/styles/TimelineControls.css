@@ -612,7 +612,9 @@
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       z-index: 1000;
       pointer-events: none;
     }
@@ -628,7 +630,9 @@
       border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       pointer-events: none;
     }
 
