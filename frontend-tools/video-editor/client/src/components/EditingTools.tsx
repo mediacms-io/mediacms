@@ -208,7 +208,7 @@ const EditingTools = ({
           <button
             className="button"
             aria-label="Undo"
-            data-tooltip="Undo last action"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Undo last action"}
             disabled={!canUndo || isPlayingSegments}
             onClick={onUndo}
           >
@@ -229,7 +229,7 @@ const EditingTools = ({
           <button
             className="button"
             aria-label="Redo"
-            data-tooltip="Redo last undone action"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Redo last undone action"}
             disabled={!canRedo || isPlayingSegments}
             onClick={onRedo}
           >
@@ -251,7 +251,7 @@ const EditingTools = ({
           <button
             className="button"
             onClick={onReset}
-            data-tooltip="Reset to full video"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Reset to full video"}
             disabled={isPlayingSegments}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

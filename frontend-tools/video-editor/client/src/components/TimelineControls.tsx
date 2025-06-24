@@ -2878,8 +2878,8 @@ const TimelineControls = ({
                     isPlayingSegments
                       ? "Disabled during preview"
                       : isPlaying
-                        ? "Pause playback"
-                        : "Play from current position"
+                      ? "Pause playback"
+                      : "Play from current position"
                   }
                   style={{
                     userSelect: "none",
@@ -3142,8 +3142,8 @@ const TimelineControls = ({
                     isPlayingSegments
                       ? "Disabled during preview"
                       : availableSegmentDuration < 0.5
-                        ? "Not enough space for new segment"
-                        : "Create new segment"
+                      ? "Not enough space for new segment"
+                      : "Create new segment"
                   }
                   disabled={availableSegmentDuration < 0.5 || isPlayingSegments}
                   onClick={async (e) => {
@@ -3735,8 +3735,8 @@ const TimelineControls = ({
                     isPlayingSegments
                       ? "Disabled during preview"
                       : isPlaying
-                        ? "Pause playback"
-                        : "Play from here until next segment"
+                      ? "Pause playback"
+                      : "Play from here until next segment"
                   }
                   style={{
                     userSelect: "none",

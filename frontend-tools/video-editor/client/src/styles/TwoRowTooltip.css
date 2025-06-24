@@ -67,6 +67,15 @@
   -ms-user-select: none !important;
 }
 
+/* Force disabled tooltips to show on hover for better user feedback */
+.tooltip-time-btn.disabled[data-tooltip]:hover:before,
+.tooltip-time-btn.disabled[data-tooltip]:hover:after,
+.tooltip-action-btn.disabled[data-tooltip]:hover:before,
+.tooltip-action-btn.disabled[data-tooltip]:hover:after {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .tooltip-actions {
   display: flex;
   justify-content: space-between;
@@ -111,9 +120,7 @@
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   z-index: 2500; /* High z-index */
   pointer-events: none;
 }
@@ -132,9 +139,7 @@
   margin-left: 0; /* Reset margin */
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s;
   z-index: 2500; /* High z-index */
   pointer-events: none;
 }

@@ -612,9 +612,7 @@
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition:
-        opacity 0.2s,
-        visibility 0.2s;
+      transition: opacity 0.2s, visibility 0.2s;
       z-index: 1000;
       pointer-events: none;
     }
@@ -630,9 +628,7 @@
       border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
       opacity: 0;
       visibility: hidden;
-      transition:
-        opacity 0.2s,
-        visibility 0.2s;
+      transition: opacity 0.2s, visibility 0.2s;
       pointer-events: none;
     }
 
@@ -839,14 +835,18 @@
   cursor: pointer;
 }
 
-/* Disable all interactions within tooltips during segments playback */
-.two-row-tooltip.segments-playback-mode {
-  pointer-events: none !important;
+/* During segments playback mode, disable button interactions but keep hover working */
+.segments-playback-mode .tooltip-time-btn[disabled],
+.segments-playback-mode .tooltip-action-btn[disabled] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
 }
 
-/* Allow pointer events only on the tooltip container itself for positioning */
-.two-row-tooltip.segments-playback-mode > * {
-  pointer-events: none !important;
+/* Ensure disabled buttons still show tooltips on hover */
+.segments-playback-mode [data-tooltip][disabled]:hover:before,
+.segments-playback-mode [data-tooltip][disabled]:hover:after {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Show segments playback message */
