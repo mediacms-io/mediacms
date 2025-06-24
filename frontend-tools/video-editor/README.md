@@ -4,28 +4,28 @@ A modern browser-based video editing tool built with React and TypeScript that i
 
 ## Features
 
-- ⏱️ Trim video start and end points
-- ✂️ Split videos into multiple segments
-- 👁️ Preview individual segments or the full edited video
-- 🔄 Undo/redo support for all editing operations
-- 🔊 Audio mute controls
-- 💾 Save edits directly to MediaCMS
+-   ⏱️ Trim video start and end points
+-   ✂️ Split videos into multiple segments
+-   👁️ Preview individual segments or the full edited video
+-   🔄 Undo/redo support for all editing operations
+-   🔊 Audio mute controls
+-   💾 Save edits directly to MediaCMS
 
 ## Tech Stack
 
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- Express (for development server)
-- Drizzle ORM
+-   React 18
+-   TypeScript
+-   Vite
+-   Tailwind CSS
+-   Express (for development server)
+-   Drizzle ORM
 
 ## Installation
 
 ### Prerequisites
 
-- Node.js (v20+) - Use `nvm use 20` if you have nvm installed
-- Yarn or npm package manager
+-   Node.js (v20+) - Use `nvm use 20` if you have nvm installed
+-   Yarn or npm package manager
 
 ### Setup
 
@@ -119,13 +119,52 @@ npm run deploy
 
 ## Project Structure
 
-- `/src` - Source code
-  - `/components` - React components
-  - `/hooks` - Custom React hooks
-  - `/lib` - Utility functions and helpers
-  - `/services` - API services
-  - `/styles` - CSS and style definitions
+-   `/src` - Source code
+    -   `/components` - React components
+    -   `/hooks` - Custom React hooks
+    -   `/lib` - Utility functions and helpers
+    -   `/services` - API services
+    -   `/styles` - CSS and style definitions
 
 ## API Integration
 
 The video editor interfaces with MediaCMS through a set of API endpoints for retrieving and saving video edits.
+
+Sure! Here's your updated `README.md` section with a new **"Code Formatting"** section using Prettier. I placed it after the "Development" section to keep the flow logical:
+
+---
+
+## Code Formatting
+
+To automatically format all source files using [Prettier](https://prettier.io):
+
+```bash
+# Format all code in the src directory
+npx prettier --write src/
+```
+
+Or for specific file types:
+
+```bash
+npx prettier --write "client/src/**/*.{js,jsx,ts,tsx,json,css,scss,md}"
+```
+
+You can also add this as a script in `package.json`:
+
+```json
+"scripts": {
+  "format": "prettier --write client/src/"
+}
+```
+
+Then run:
+
+```bash
+yarn format
+# or
+npm run format
+```
+
+---
+
+Let me know if you'd like to auto-format on commit using `lint-staged` + `husky`.
