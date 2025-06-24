@@ -111,7 +111,9 @@
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   z-index: 2500; /* High z-index */
   pointer-events: none;
 }
@@ -130,7 +132,9 @@
   margin-left: 0; /* Reset margin */
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
   z-index: 2500; /* High z-index */
   pointer-events: none;
 }

@@ -4,7 +4,7 @@
     [data-tooltip] {
       position: relative;
     }
-    
+
     [data-tooltip]:before {
       content: attr(data-tooltip);
       position: absolute;
@@ -21,13 +21,15 @@
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       z-index: 1000;
       pointer-events: none;
     }
-    
+
     [data-tooltip]:after {
-      content: '';
+      content: "";
       position: absolute;
       bottom: 100%;
       left: 50%;
@@ -37,17 +39,19 @@
       border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       pointer-events: none;
     }
-    
+
     [data-tooltip]:hover:before,
     [data-tooltip]:hover:after {
       opacity: 1;
       visibility: visible;
     }
   }
-  
+
   /* Hide button tooltips on touch devices */
   @media (pointer: coarse) {
     [data-tooltip]:before,
@@ -71,7 +75,7 @@
     -webkit-user-select: none;
     user-select: none;
   }
-  
+
   .video-player-container video {
     width: 100%;
     height: 100%;
@@ -83,7 +87,7 @@
     -webkit-user-select: none;
     user-select: none;
   }
-  
+
   /* iOS-specific styles */
   @supports (-webkit-touch-callout: none) {
     .video-player-container video {
@@ -92,7 +96,7 @@
       -webkit-touch-callout: none;
     }
   }
-  
+
   .play-pause-indicator {
     position: absolute;
     top: 50%;
@@ -106,19 +110,19 @@
     transition: opacity 0.3s;
     pointer-events: none;
   }
-  
+
   .video-player-container:hover .play-pause-indicator {
     opacity: 1;
   }
-  
+
   .play-pause-indicator::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
   }
-  
+
   .play-pause-indicator.play-icon::before {
     width: 0;
     height: 0;
@@ -127,14 +131,14 @@
     border-left: 25px solid white;
     margin-left: 3px;
   }
-  
+
   .play-pause-indicator.pause-icon::before {
     width: 20px;
     height: 25px;
     border-left: 6px solid white;
     border-right: 6px solid white;
   }
-  
+
   /* iOS First-play indicator */
   .ios-first-play-indicator {
     position: absolute;
@@ -148,7 +152,7 @@
     justify-content: center;
     z-index: 10;
   }
-  
+
   .ios-play-message {
     color: white;
     font-size: 1.2rem;
@@ -158,13 +162,22 @@
     border-radius: 0.5rem;
     animation: pulse 2s infinite;
   }
-  
+
   @keyframes pulse {
-    0% { opacity: 0.7; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-    100% { opacity: 0.7; transform: scale(1); }
+    0% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
   }
-  
+
   .video-controls {
     position: absolute;
     bottom: 0;
@@ -175,21 +188,21 @@
     opacity: 0;
     transition: opacity 0.3s;
   }
-  
+
   .video-player-container:hover .video-controls {
     opacity: 1;
   }
-  
+
   .video-current-time {
     color: white;
     font-size: 0.875rem;
   }
-  
+
   .video-duration {
     color: white;
     font-size: 0.875rem;
   }
-  
+
   .video-time-display {
     display: flex;
     justify-content: space-between;
@@ -197,7 +210,7 @@
     color: white;
     font-size: 0.875rem;
   }
-  
+
   .video-progress {
     position: relative;
     height: 6px;
@@ -208,11 +221,11 @@
     touch-action: none; /* Prevent browser handling of drag gestures */
     flex-grow: 1;
   }
-  
+
   .video-progress.dragging {
     height: 8px;
   }
-  
+
   .video-progress-fill {
     position: absolute;
     top: 0;
@@ -222,7 +235,7 @@
     border-radius: 3px;
     pointer-events: none;
   }
-  
+
   .video-scrubber {
     position: absolute;
     top: 50%;
@@ -232,9 +245,12 @@
     background-color: #ff0000;
     border-radius: 50%;
     cursor: grab;
-    transition: transform 0.1s ease, width 0.1s ease, height 0.1s ease;
+    transition:
+      transform 0.1s ease,
+      width 0.1s ease,
+      height 0.1s ease;
   }
-  
+
   /* Make the scrubber larger when dragging for better control */
   .video-progress.dragging .video-scrubber {
     transform: translate(-50%, -50%) scale(1.2);
@@ -243,22 +259,22 @@
     cursor: grabbing;
     box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
   }
-  
+
   /* Enhance for touch devices */
   @media (pointer: coarse) {
     .video-scrubber {
       width: 20px;
       height: 20px;
     }
-    
+
     .video-progress.dragging .video-scrubber {
       width: 24px;
       height: 24px;
     }
-    
+
     /* Create a larger invisible touch target */
     .video-scrubber:before {
-      content: '';
+      content: "";
       position: absolute;
       top: -10px;
       left: -10px;
@@ -266,14 +282,14 @@
       bottom: -10px;
     }
   }
-  
+
   .video-controls-buttons {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 0.75rem;
   }
-  
+
   .mute-button,
   .fullscreen-button {
     min-width: auto;
@@ -283,17 +299,17 @@
     cursor: pointer;
     padding: 0.25rem;
     transition: transform 0.2s;
-    
+
     &:hover {
       transform: scale(1.1);
     }
-    
+
     svg {
       width: 1.25rem;
       height: 1.25rem;
     }
   }
-  
+
   /* Time tooltip that appears when dragging */
   .video-time-tooltip {
     position: absolute;
@@ -309,10 +325,10 @@
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
-  
+
   /* Add a small arrow to the tooltip */
   .video-time-tooltip:after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -4px;
     left: 50%;
@@ -323,4 +339,4 @@
     border-right: 4px solid transparent;
     border-top: 4px solid rgba(0, 0, 0, 0.7);
   }
-} 
+}

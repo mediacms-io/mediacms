@@ -257,7 +257,7 @@
     }
 
     .clip-segment-handle:after {
-      content: '';
+      content: "";
       position: absolute;
       top: 50%;
       left: 50%;
@@ -321,7 +321,7 @@
 
   .segment-tooltip:after,
   .empty-space-tooltip:after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -5px;
     left: 50%;
@@ -335,7 +335,7 @@
 
   .segment-tooltip:before,
   .empty-space-tooltip:before {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -6px;
     left: 50%;
@@ -612,13 +612,15 @@
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       z-index: 1000;
       pointer-events: none;
     }
 
     [data-tooltip]:after {
-      content: '';
+      content: "";
       position: absolute;
       bottom: 100%;
       left: 50%;
@@ -628,7 +630,9 @@
       border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
+      transition:
+        opacity 0.2s,
+        visibility 0.2s;
       pointer-events: none;
     }
 

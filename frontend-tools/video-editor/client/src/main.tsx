@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.MEDIA_DATA = {
     videoUrl: "",
     mediaId: ""
@@ -30,8 +30,8 @@ const mountComponents = () => {
   }
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mountComponents);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", mountComponents);
 } else {
   mountComponents();
 }

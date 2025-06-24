@@ -36,13 +36,13 @@
   .ios-video-player-container video {
     max-height: 50vh; /* Use viewport height on iOS */
   }
-  
+
   /* Improve controls visibility on iOS */
   video::-webkit-media-controls {
     opacity: 1 !important;
     visibility: visible !important;
   }
-  
+
   /* Ensure controls don't disappear too quickly */
   video::-webkit-media-controls-panel {
     transition-duration: 3s !important;
@@ -76,19 +76,19 @@
 /* Prevent text selection on buttons */
 .no-select {
   -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none;   /* Safari */
-  -khtml-user-select: none;    /* Konqueror HTML */
-  -moz-user-select: none;      /* Firefox */
-  -ms-user-select: none;       /* Internet Explorer/Edge */
-  user-select: none;           /* Non-prefixed version, supported by Chrome and Opera */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, supported by Chrome and Opera */
   cursor: default;
 }
 
 /* Specifically prevent default behavior on fine controls */
-.ios-fine-controls button, 
+.ios-fine-controls button,
 .ios-external-controls .no-select {
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   pointer-events: auto;
-} 
+}
