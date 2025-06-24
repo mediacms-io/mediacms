@@ -6,9 +6,11 @@
   "singleQuote": false,
   "quoteProps": "as-needed",
   "bracketSpacing": true,
+  "bracketSameLine": false,
   "arrowParens": "always",
   "trailingComma": "none",
   "endOfLine": "lf",
+  "embeddedLanguageFormatting": "auto",
   "overrides": [
     {
       "files": ["*.css", "*.scss"],
