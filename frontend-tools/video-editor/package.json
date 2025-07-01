@@ -7,7 +7,8 @@
     "dev": "vite",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "build:django": "vite build --config vite.video-editor.config.ts --outDir ../../../static/video_editor"
+    "build:django": "vite build --config vite.video-editor.config.ts --outDir ../../../static/video_editor",
+    "format": "npx prettier --write client/src/**/*.{ts,tsx,css}"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.74.4",
@@ -35,6 +36,7 @@
     "autoprefixer": "^10.4.20",
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
+    "prettier": "^3.6.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "vite": "^5.4.18"

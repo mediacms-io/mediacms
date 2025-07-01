@@ -1,17 +1,15 @@
-import '../styles/EditingTools.css';
-import { useEffect, useState } from 'react';
+import "../styles/EditingTools.css";
+import { useEffect, useState } from "react";
 
 interface EditingToolsProps {
   onSplit: () => void;
   onReset: () => void;
   onUndo: () => void;
   onRedo: () => void;
-  onPreview: () => void;
   onPlaySegments: () => void;
   onPlay: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  isPreviewMode?: boolean;
   isPlaying?: boolean;
   isPlayingSegments?: boolean;
 }
@@ -21,14 +19,12 @@ const EditingTools = ({
   onReset,
   onUndo,
   onRedo,
-  onPreview,
   onPlaySegments,
   onPlay,
   canUndo,
   canRedo,
-  isPreviewMode = false,
   isPlaying = false,
-  isPlayingSegments = false,
+  isPlayingSegments = false
 }: EditingToolsProps) => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -38,17 +34,17 @@ const EditingTools = ({
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Handle play button click with iOS fix
   const handlePlay = () => {
     // Ensure lastSeekedPosition is used when play is clicked
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       console.log("Play button clicked, current lastSeekedPosition:", window.lastSeekedPosition);
     }
-    
+
     // Call the original handler
     onPlay();
   };
@@ -59,15 +55,25 @@ const EditingTools = ({
         {/* Left side - Play buttons group */}
         <div className="button-group play-buttons-group">
           {/* Play Segments button */}
-          <button 
+          <button
             className={`button segments-button`}
             onClick={onPlaySegments}
-            data-tooltip={isPlayingSegments ? "Stop segments playback" : "Play segments in one continuous flow"}
-            style={{ fontSize: '0.875rem' }}
+            data-tooltip={
+              isPlayingSegments ? "Stop segments playback" : "Play segments in one continuous flow"
+            }
+            style={{ fontSize: "0.875rem" }}
           >
             {isPlayingSegments ? (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="10" y1="15" x2="10" y2="9" />
                   <line x1="14" y1="15" x2="14" y2="9" />
@@ -77,7 +83,15 @@ const EditingTools = ({
               </>
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <polygon points="10 8 16 12 10 16 10 8" />
                 </svg>
@@ -116,18 +130,26 @@ const EditingTools = ({
             )}
           </button> */}
 
-          {/* Standard Play button (only shown when not in preview mode or segments playback) */}
-          {!isPreviewMode && (!isPlayingSegments || !isSmallScreen) && (
-            <button 
-              className={`button play-button ${isPlayingSegments ? 'greyed-out' : ''}`}
+          {/* Standard Play button (only shown when not in segments playback on small screens) */}
+          {(!isPlayingSegments || !isSmallScreen) && (
+            <button
+              className={`button play-button ${isPlayingSegments ? "greyed-out" : ""}`}
               onClick={handlePlay}
               data-tooltip={isPlaying ? "Pause video" : "Play full video"}
-              style={{ fontSize: '0.875rem' }}
+              style={{ fontSize: "0.875rem" }}
               disabled={isPlayingSegments}
             >
-              {isPlaying ? (
+              {isPlaying && !isPlayingSegments ? (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <circle cx="12" cy="12" r="10" />
                     <line x1="10" y1="15" x2="10" y2="9" />
                     <line x1="14" y1="15" x2="14" y2="9" />
@@ -137,7 +159,15 @@ const EditingTools = ({
                 </>
               ) : (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <circle cx="12" cy="12" r="10" />
                     <polygon points="10 8 16 12 10 16 10 8" />
                   </svg>
@@ -147,7 +177,7 @@ const EditingTools = ({
               )}
             </button>
           )}
-          
+
           {/* Segments Playback message (replaces play button during segments playback) */}
           {/* {isPlayingSegments && !isSmallScreen && (
             <div className="segments-playback-message">
@@ -159,7 +189,7 @@ const EditingTools = ({
               Preview Mode
             </div>
           )} */}
-          
+
           {/* Preview mode message (replaces play button) */}
           {/* {isPreviewMode && (
             <div className="preview-mode-message">
@@ -172,43 +202,64 @@ const EditingTools = ({
             </div>
           )} */}
         </div>
-        
+
         {/* Right side - Editing tools */}
         <div className="button-group secondary">
-          <button 
+          <button
             className="button"
-            aria-label="Undo" 
-            data-tooltip="Undo last action"
-            disabled={!canUndo}
+            aria-label="Undo"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Undo last action"}
+            disabled={!canUndo || isPlayingSegments}
             onClick={onUndo}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 14 4 9l5-5"/>
-              <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 14 4 9l5-5" />
+              <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
             </svg>
             <span className="button-text">Undo</span>
           </button>
-          <button 
+          <button
             className="button"
-            aria-label="Redo" 
-            data-tooltip="Redo last undone action"
-            disabled={!canRedo}
+            aria-label="Redo"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Redo last undone action"}
+            disabled={!canRedo || isPlayingSegments}
             onClick={onRedo}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 14 5-5-5-5"/>
-              <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 14 5-5-5-5" />
+              <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13" />
             </svg>
             <span className="button-text">Redo</span>
           </button>
           <div className="divider"></div>
-          <button 
+          <button
             className="button"
             onClick={onReset}
-            data-tooltip="Reset to full video"
+            data-tooltip={isPlayingSegments ? "Disabled during preview" : "Reset to full video"}
+            disabled={isPlayingSegments}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                clipRule="evenodd"
+              />
             </svg>
             <span className="reset-text">Reset</span>
           </button>

@@ -7,21 +7,21 @@ const logger = {
    * Logs debug messages only in development environment
    */
   debug: (...args: any[]) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.debug(...args);
     }
   },
-  
+
   /**
    * Always logs error messages
    */
   error: (...args: any[]) => console.error(...args),
-  
+
   /**
    * Always logs warning messages
    */
   warn: (...args: any[]) => console.warn(...args),
-  
+
   /**
    * Always logs info messages
    */

@@ -25,3 +25,7 @@ yt.readme.md
 frontend-tools/.DS_Store
 static/video_editor/videos/sample-video-30s.mp4
 static/video_editor/videos/sample-video-37s.mp4
+/frontend-tools/video-editor-v2
+.DS_Store
+static/video_editor/videos/sample-video-10m.mp4
+static/video_editor/videos/sample-video-10s.mp4
