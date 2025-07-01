@@ -22,6 +22,7 @@ class MediaMetadataForm(forms.ModelForm):
     class Meta:
         model = Media
         fields = (
+            "friendly_token",
             "title",
             "new_tags",
             "add_date",
@@ -38,11 +39,13 @@ class MediaMetadataForm(forms.ModelForm):
             "thumbnail_time": forms.NumberInput(attrs={'min': 0, 'step': 0.1}),
         }
         labels = {
+            "friendly_token": "Slug",
             "uploaded_poster": "Poster Image",
             "thumbnail_time": "Thumbnail Time (seconds)",
         }
         help_texts = {
             "title": "",
+            "friendly_token": "Media URL slug",
             "thumbnail_time": "Select the time in seconds for the video thumbnail",
             "uploaded_poster": "Maximum file size: 5MB",
         }
@@ -50,6 +53,8 @@ class MediaMetadataForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(MediaMetadataForm, self).__init__(*args, **kwargs)
+        if not getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
+            self.fields.pop("friendly_token")
         if self.instance.media_type != "video":
             self.fields.pop("thumbnail_time")
         if self.instance.media_type == "image":
@@ -74,8 +79,21 @@ class MediaMetadataForm(forms.ModelForm):
 
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))
+        if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
+            self.helper.layout.insert(0, CustomField('friendly_token'))
 
         self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
+
+    def clean_friendly_token(self):
+        token = self.cleaned_data.get("friendly_token", "").strip()
+
+        if token:
+            if not all(c.isalnum() or c in "-_" for c in token):
+                raise forms.ValidationError("Slug can only contain alphanumeric characters, underscores, or hyphens.")
+
+            if Media.objects.filter(friendly_token=token).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError("This slug is already in use. Please choose a different one.")
+            return token
 
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)

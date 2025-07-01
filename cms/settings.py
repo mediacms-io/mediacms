@@ -503,6 +503,8 @@ JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 USE_ROUNDED_CORNERS = True
 
 ALLOW_VIDEO_TRIMMER = True
+
+ALLOW_CUSTOM_MEDIA_URLS = False
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
