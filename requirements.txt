@@ -18,7 +18,6 @@ requests==2.32.3
 django-celery-email==3.0.0
 m3u8==6.0.0
 django-debug-toolbar==5.0.1
-django-login-required-middleware==0.9.0
 pre-commit==4.1.0
 django-jazzmin==3.0.1
 pysubs2==1.8.0
