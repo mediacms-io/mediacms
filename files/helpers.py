@@ -55,6 +55,7 @@ VIDEO_CRFS = {
 VIDEO_BITRATES = {
     "h264": {
         25: {
+            144: 150,
             240: 300,
             360: 500,
             480: 1000,
@@ -67,6 +68,7 @@ VIDEO_BITRATES = {
     },
     "h265": {
         25: {
+            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -79,6 +81,7 @@ VIDEO_BITRATES = {
     },
     "vp9": {
         25: {
+            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -730,7 +733,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
         return False
 
     if media_info.get("video_height") < resolution:
-        if resolution not in [240, 360]:  # always get these two
+        if resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
             return False
 
     #    if codec == "h264_baseline":
