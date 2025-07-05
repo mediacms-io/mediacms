@@ -166,14 +166,14 @@ Media becomes private if it gets reported %s times\n
         )
 
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was reported"
             d = {}
             d["title"] = title
             d["msg"] = msg
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was reported"
             d = {}
             d["title"] = title
             d["msg"] = msg
@@ -182,7 +182,7 @@ Media becomes private if it gets reported %s times\n
 
     if action == "media_added" and media:
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Media was added".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was added"
             msg = """
 Media %s was added by user %s.
 """ % (
@@ -195,7 +195,7 @@ Media %s was added by user %s.
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Your media was added".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Your media was added"
             msg = """
 Your media has been added! It will be encoded and will be available soon.
 URL: %s
@@ -339,7 +339,7 @@ def notify_user_on_comment(friendly_token):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - A comment was added".format(settings.PORTAL_NAME)
+        title = f"[{settings.PORTAL_NAME}] - A comment was added"
         msg = """
 A comment has been added to your media %s .
 View it on %s
@@ -363,7 +363,7 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - You were mentioned in a comment".format(settings.PORTAL_NAME)
+        title = f"[{settings.PORTAL_NAME}] - You were mentioned in a comment"
         msg = """
 You were mentioned in a comment on  %s .
 View it on %s

@@ -105,7 +105,7 @@ class User(AbstractUser):
         ret = {}
         results = []
         ret["results"] = results
-        ret["user_media"] = "/api/v1/media?author={0}".format(self.username)
+        ret["user_media"] = f"/api/v1/media?author={self.username}"
         return ret
 
     def save(self, *args, **kwargs):
@@ -210,7 +210,7 @@ class Channel(models.Model):
         super(Channel, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "{0} -{1}".format(self.user.username, self.title)
+        return f"{self.user.username} -{self.title}"
 
     def get_absolute_url(self, edit=False):
         if edit:
@@ -230,7 +230,7 @@ def post_user_create(sender, instance, created, **kwargs):
         new = Channel.objects.create(title="default", user=instance)
         new.save()
         if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
-            title = "[{}] - New user just registered".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - New user just registered"
             msg = """
 User has just registered with email %s\n
 Visit user profile page at %s

@@ -173,7 +173,7 @@ def rm_dir(directory):
 
 def url_from_path(filename):
     # TODO: find a way to preserver http - https ...
-    return "{0}{1}".format(settings.MEDIA_URL, filename.replace(settings.MEDIA_ROOT, ""))
+    return f"{settings.MEDIA_URL}{filename.replace(settings.MEDIA_ROOT, '')}"
 
 
 def create_temp_file(suffix=None, dir=settings.TEMP_DIRECTORY):
@@ -488,7 +488,7 @@ def show_file_size(size):
     if size:
         size = size / 1000000
         size = round(size, 1)
-        size = "{0}MB".format(str(size))
+        size = f"{str(size)}MB"
     return size
 
 
