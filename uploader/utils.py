@@ -7,7 +7,7 @@ def import_class(path):
     path_bits = path.split(".")
 
     if len(path_bits) < 2:
-        message = "'{0}' is not a complete Python path.".format(path)
+        message = f"'{path}' is not a complete Python path."
         raise ImproperlyConfigured(message)
 
     class_name = path_bits.pop()
@@ -15,7 +15,7 @@ def import_class(path):
     module_itself = import_module(module_path)
 
     if not hasattr(module_itself, class_name):
-        message = "The Python module '{}' has no '{}' class.".format(module_path, class_name)
+        message = f"The Python module '{module_path}' has no '{class_name}' class."
         raise ImportError(message)
 
     return getattr(module_itself, class_name)
