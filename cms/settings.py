@@ -384,6 +384,7 @@ DATABASES = {
         "PORT": "5432",
         "USER": "mediacms",
         "PASSWORD": "mediacms",
+        "OPTIONS": {'pool': True}
     }
 }
 
