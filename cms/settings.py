@@ -505,6 +505,10 @@ USE_ROUNDED_CORNERS = True
 ALLOW_VIDEO_TRIMMER = True
 
 ALLOW_CUSTOM_MEDIA_URLS = False
+
+# ffmpeg options
+FFMPEG_DEFAULT_PRESET = "medium" # see https://trac.ffmpeg.org/wiki/Encode/H.264
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
