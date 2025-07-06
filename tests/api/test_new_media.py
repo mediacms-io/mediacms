@@ -43,7 +43,7 @@ class TestX(TestCase):
         self.assertEqual(Media.objects.filter(media_type='image').count(), 1, "Media identification failed")
         self.assertEqual(Media.objects.filter(user=self.user).count(), 3, "User assignment failed")
         medium_video = Media.objects.get(title="medium_video.mp4")
-        self.assertEqual(len(medium_video.hls_info), 11, "Problem with HLS info")
+        self.assertEqual(len(medium_video.hls_info), 13, "Problem with HLS info")
 
         # using the provided EncodeProfiles, these two files should produce 9 Encoding objects.
         # if new EncodeProfiles are added and enabled, this will break!
