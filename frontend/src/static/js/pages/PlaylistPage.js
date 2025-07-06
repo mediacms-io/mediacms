@@ -46,12 +46,7 @@ if (window.MediaCMS.site.devEnv) {
 }
 
 function PlayAllLink(props) {
-
-  if (!props.media || !props.media.length) {
-      return <span>{props.children}</span>;
-    }
-
-  let playAllUrl = props.media[0].url;
+  let playAllUrl = props.media && props.media.length ? props.media[0].url : '';
 
   if (window.MediaCMS.site.devEnv && -1 < playAllUrl.indexOf('view?')) {
     playAllUrl = '/media.html?' + playAllUrl.split('view?')[1];
