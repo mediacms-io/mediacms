@@ -545,13 +545,5 @@ except ImportError:
 
 
 if GLOBAL_LOGIN_REQUIRED:
-    # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
-    LOGIN_REQUIRED_IGNORE_PATHS = [
-        r'/accounts/login/$',
-        r'/accounts/logout/$',
-        r'/accounts/signup/$',
-        r'/accounts/password/.*/$',
-        r'/accounts/confirm-email/.*/$',
-        #        r'/api/v[0-9]+/',
-    ]
+    auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(auth_index + 1, "django.contrib.auth.middleware.LoginRequiredMiddleware")
