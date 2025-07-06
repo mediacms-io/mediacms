@@ -22,7 +22,7 @@ MediaCMS.url = {
     editChannel: "{{user.default_channel_edit_url}}",
     changePassword: "/accounts/password/change/",
     /* Administration pages */
-    {% if IS_MEDIACMS_ADMIN %}admin: '/admin',{% endif %}
+    {% if IS_MEDIACMS_ADMIN %}admin: '/{{DJANGO_ADMIN_URL}}',{% endif %}
     /* Management pages */
     {% if IS_MEDIACMS_EDITOR %}manageMedia: "/manage/media",{% endif %}
     {% if IS_MEDIACMS_MANAGER %}manageUsers: "/manage/users",{% endif %}

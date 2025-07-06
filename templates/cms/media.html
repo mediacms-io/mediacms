@@ -20,100 +20,105 @@
 <meta property="og:type" content="website">
 {% endif %}
 
-{% if media_object.media_type == "video" %}
+{% if media_object.state != "private" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+    {% if media_object.media_type == "video" %}
 
-<meta name="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
 
-<script type="application/ld+json">
-{
-    "@context": "http://schema.org",
-    "@type": "VideoObject",
-    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
-    "thumbnailUrl": [
-    	"{{FRONTEND_HOST}}{{media_object.poster_url}}"
-    ],
-    "uploadDate": "{{media_object.add_date}}",
-    "dateModified": "{{media_object.edit_date}}",
-    "embedUrl": "{{FRONTEND_HOST}}/embed?m={{media}}",
-    "duration": "T{{media_object.duration}}S",
-    "potentialAction": {
-        "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    <meta name="twitter:card" content="summary_large_image">
+
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "VideoObject",
+        "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+        "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "thumbnailUrl": [
+            "{{FRONTEND_HOST}}{{media_object.poster_url}}"
+        ],
+        "uploadDate": "{{media_object.add_date}}",
+        "dateModified": "{{media_object.edit_date}}",
+        "embedUrl": "{{FRONTEND_HOST}}/embed?m={{media}}",
+        "duration": "T{{media_object.duration}}S",
+        "potentialAction": {
+            "@type": "ViewAction",
+            "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        }
     }
-}
-</script>
+    </script>
 
-{% elif media_object.media_type == "audio" %}
+    {% elif media_object.media_type == "audio" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
+    <meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.poster_url}}">
 
-<meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary_large_image">
 
-<script type="application/ld+json">
-{
-    "@context": "http://schema.org",
-    "@type": "AudioObject",
-    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
-    "uploadDate": "{{media_object.add_date}}",
-    "dateModified": "{{media_object.edit_date}}",
-    "duration": "T{{media_object.duration}}S",
-    "potentialAction": {
-        "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "AudioObject",
+        "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+        "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "uploadDate": "{{media_object.add_date}}",
+        "dateModified": "{{media_object.edit_date}}",
+        "duration": "T{{media_object.duration}}S",
+        "potentialAction": {
+            "@type": "ViewAction",
+            "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        }
     }
-}
-</script>
+    </script>
 
-{% elif media_object.media_type == "image" %}
+    {% elif media_object.media_type == "image" %}
 
-<meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.original_media_url}}">
+    <meta property="og:image" content="{{FRONTEND_HOST}}{{media_object.original_media_url}}">
 
-<meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary_large_image">
 
-<script type="application/ld+json">
-{
-    "@context": "http://schema.org",
-    "@type": "ImageObject",
-    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
-    "uploadDate": "{{media_object.add_date}}",
-    "dateModified": "{{media_object.edit_date}}",
-    "potentialAction": {
-        "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "ImageObject",
+        "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+        "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "uploadDate": "{{media_object.add_date}}",
+        "dateModified": "{{media_object.edit_date}}",
+        "potentialAction": {
+            "@type": "ViewAction",
+            "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        }
     }
-}
-</script>
+    </script>
+
+    {% else %}
+
+    <meta name="twitter:card" content="summary">
+
+    <script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "MediaObject",
+        "name": "{{media_object.title}} - {{PORTAL_NAME}}",
+        "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
+        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "uploadDate": "{{media_object.add_date}}",
+        "dateModified": "{{media_object.edit_date}}",
+        "potentialAction": {
+            "@type": "ViewAction",
+            "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
+        }
+    }
+    </script>
+
+    {% endif %}
 
 {% else %}
 
-<meta name="twitter:card" content="summary">
-
-<script type="application/ld+json">
-{
-    "@context": "http://schema.org",
-    "@type": "MediaObject",
-    "name": "{{media_object.title}} - {{PORTAL_NAME}}",
-    "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-    "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
-    "uploadDate": "{{media_object.add_date}}",
-    "dateModified": "{{media_object.edit_date}}",
-    "potentialAction": {
-        "@type": "ViewAction",
-        "target": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}"
-    }
-}
-</script>
-
 {% endif %}
-
 {% endblock headermeta %}
 
 {% block topimports %}

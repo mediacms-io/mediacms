@@ -6,6 +6,7 @@ import { MediaMultiListWrapper } from '../components/MediaMultiListWrapper';
 import { ItemListAsync } from '../components/item-list/ItemListAsync.jsx';
 import { InlineSliderItemListAsync } from '../components/item-list/InlineSliderItemListAsync.jsx';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 const EmptyMedia: React.FC = ({}) => {
   return (
@@ -35,9 +36,12 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({
   id = 'home',
-  featured_title = PageStore.get('config-options').pages.home.sections.featured.title,
-  recommended_title = PageStore.get('config-options').pages.home.sections.recommended.title,
-  latest_title = PageStore.get('config-options').pages.home.sections.latest.title,
+  //featured_title = PageStore.get('config-options').pages.home.sections.featured.title,
+  //recommended_title = PageStore.get('config-options').pages.home.sections.recommended.title,
+  //latest_title = PageStore.get('config-options').pages.home.sections.latest.title,
+  featured_title = translateString('Featured'),
+  recommended_title = translateString('Recommended'),
+  latest_title = translateString('Latest'),
   latest_view_all_link = false,
   featured_view_all_link = true,
   recommended_view_all_link = true,

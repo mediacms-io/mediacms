@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageActions } from '../../utils/actions/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { ItemList } from '../item-list/ItemList';
+import { translateString } from '../../utils/helpers/';
 
 function autoPlayMedia() {
   const dt = MediaPageStore.get('media-data');
@@ -38,10 +39,10 @@ export function AutoPlay(props) {
   return !media ? null : (
     <div className="auto-play">
       <div className="auto-play-header">
-        <div className="next-label">Up next</div>
+        <div className="next-label">{translateString("Up next")}</div>
         <div className="auto-play-option">
           <label className="checkbox-label right-selectbox" tabIndex={0} onKeyPress={onKeyPress}>
-            AUTOPLAY
+          {translateString("AUTOPLAY")}
             <span className="checkbox-switcher-wrap">
               <span className="checkbox-switcher">
                 <input

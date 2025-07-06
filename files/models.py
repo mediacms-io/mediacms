@@ -18,6 +18,7 @@ from django.db.models.signals import m2m_changed, post_delete, post_save, pre_de
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
@@ -81,6 +82,10 @@ CODECS = (
 
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
+
+
+def generate_uid():
+    return get_random_string(length=16)
 
 
 def original_media_file_path(instance, filename):
@@ -150,7 +155,7 @@ class Media(models.Model):
         help_text="Whether media is globally featured by a MediaCMS editor",
     )
 
-    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the Media")
+    friendly_token = models.CharField(blank=True, max_length=150, db_index=True, unique=True, help_text="Identifier for the Media")
 
     hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
 
@@ -382,6 +387,7 @@ class Media(models.Model):
         Update SearchVector field of SearchModel using raw SQL
         search field is used to store SearchVector
         """
+
         db_table = self._meta.db_table
 
         # first get anything interesting out of the media
@@ -519,8 +525,12 @@ class Media(models.Model):
                 with open(self.media_file.path, "rb") as f:
                     myfile = File(f)
                     thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
-                    self.thumbnail.save(content=myfile, name=thumbnail_name)
-                    self.poster.save(content=myfile, name=thumbnail_name)
+                    # avoid saving the whole object, because something might have been changed
+                    # on the meanwhile
+                    self.thumbnail.save(content=myfile, name=thumbnail_name, save=False)
+                    self.poster.save(content=myfile, name=thumbnail_name, save=False)
+                    self.save(update_fields=["thumbnail", "poster"])
+
         return True
 
     def produce_thumbnails_from_video(self):
@@ -554,8 +564,11 @@ class Media(models.Model):
             with open(tf, "rb") as f:
                 myfile = File(f)
                 thumbnail_name = helpers.get_file_name(self.media_file.path) + ".jpg"
-                self.thumbnail.save(content=myfile, name=thumbnail_name)
-                self.poster.save(content=myfile, name=thumbnail_name)
+                # avoid saving the whole object, because something might have been changed
+                # on the meanwhile
+                self.thumbnail.save(content=myfile, name=thumbnail_name, save=False)
+                self.poster.save(content=myfile, name=thumbnail_name, save=False)
+                self.save(update_fields=["thumbnail", "poster"])
         helpers.rm_file(tf)
         return True
 
@@ -632,15 +645,20 @@ class Media(models.Model):
                     self.preview_file_path = ""
                 else:
                     self.preview_file_path = encoding.media_file.path
-                self.save(update_fields=["listable", "preview_file_path"])
 
-        self.save(update_fields=["encoding_status", "listable"])
+        self.save(update_fields=["encoding_status", "listable", "preview_file_path"])
 
-        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add":
+        if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
             from . import tasks
 
-            tasks.create_hls(self.friendly_token)
+            tasks.create_hls.delay(self.friendly_token)
 
+            # TODO: ideally would ensure this is run only at the end when the last encoding is done...
+            vt_request = VideoTrimRequest.objects.filter(media=self, status="running").first()
+            if vt_request:
+                tasks.post_trim_action.delay(self.friendly_token)
+                vt_request.status = "success"
+                vt_request.save(update_fields=["status"])
         return True
 
     def set_encoding_status(self):
@@ -663,6 +681,29 @@ class Media(models.Model):
         return True
 
     @property
+    def trim_video_url(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        if ret:
+            return helpers.url_from_path(ret.media_file.path)
+
+        # showing the original file
+        return helpers.url_from_path(self.media_file.path)
+
+    @property
+    def trim_video_path(self):
+        if self.media_type not in ["video"]:
+            return None
+
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        if ret:
+            return ret.media_file.path
+
+        return None
+
+    @property
     def encodings_info(self, full=False):
         """Property used on serializers"""
 
@@ -673,9 +714,14 @@ class Media(models.Model):
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
 
-        # if this is enabled, return original file on a way
-        # that video.js can consume
+        # if DO_NOT_TRANSCODE_VIDEO enabled, return original file on a way
+        # that video.js can consume. Or also if encoding_status is running, do the
+        # same so that the video appears on the player
         if settings.DO_NOT_TRANSCODE_VIDEO:
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
+
+        if self.encoding_status in ["running", "pending"]:
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
@@ -781,13 +827,45 @@ class Media(models.Model):
         return None
 
     @property
+    def slideshow_items(self):
+        slideshow_items = getattr(settings, "SLIDESHOW_ITEMS", 30)
+        if self.media_type != "image":
+            items = []
+        else:
+            qs = Media.objects.filter(listable=True, user=self.user, media_type="image").exclude(id=self.id).order_by('id')[:slideshow_items]
+
+            items = [
+                {
+                    "poster_url": item.poster_url,
+                    "url": item.get_absolute_url(),
+                    "thumbnail_url": item.thumbnail_url,
+                    "title": item.title,
+                    "original_media_url": item.original_media_url,
+                }
+                for item in qs
+            ]
+            items.insert(
+                0,
+                {
+                    "poster_url": self.poster_url,
+                    "url": self.get_absolute_url(),
+                    "thumbnail_url": self.thumbnail_url,
+                    "title": self.title,
+                    "original_media_url": self.original_media_url,
+                },
+            )
+        return items
+
+    @property
     def subtitles_info(self):
         """Property used on serializers
         Returns subtitles info
         """
 
         ret = []
-        for subtitle in self.subtitles.all():
+        # Retrieve all subtitles and sort by the first letter of their associated language's title
+        sorted_subtitles = sorted(self.subtitles.all(), key=lambda s: s.language.title[0])
+        for subtitle in sorted_subtitles:
             ret.append(
                 {
                     "src": helpers.url_from_path(subtitle.subtitle_file.path),
@@ -911,6 +989,19 @@ class Media(models.Model):
             )
         return ret
 
+    @property
+    def video_chapters_folder(self):
+        custom_folder = f"{settings.THUMBNAIL_UPLOAD_DIR}{self.user.username}/{self.friendly_token}_chapters"
+        return os.path.join(settings.MEDIA_ROOT, custom_folder)
+
+    @property
+    def chapter_data(self):
+        data = []
+        chapter_data = self.chapters.first()
+        if chapter_data:
+            return chapter_data.chapter_data
+        return data
+
 
 class License(models.Model):
     """A Base license model to be used in Media"""
@@ -925,11 +1016,11 @@ class License(models.Model):
 class Category(models.Model):
     """A Category base model"""
 
-    uid = models.UUIDField(unique=True, default=uuid.uuid4)
+    uid = models.CharField(unique=True, max_length=36, default=generate_uid)
 
     add_date = models.DateTimeField(auto_now_add=True)
 
-    title = models.CharField(max_length=100, unique=True, db_index=True)
+    title = models.CharField(max_length=100, db_index=True)
 
     description = models.TextField(blank=True)
 
@@ -949,6 +1040,18 @@ class Category(models.Model):
 
     listings_thumbnail = models.CharField(max_length=400, blank=True, null=True, help_text="Thumbnail to show on listings")
 
+    is_rbac_category = models.BooleanField(default=False, db_index=True, help_text='If access to Category is controlled by role based membership of Groups')
+
+    identity_provider = models.ForeignKey(
+        'socialaccount.SocialApp',
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='categories',
+        help_text='If category is related with a specific Identity Provider',
+        verbose_name='IDP Config Name',
+    )
+
     def __str__(self):
         return self.title
 
@@ -962,7 +1065,11 @@ class Category(models.Model):
     def update_category_media(self):
         """Set media_count"""
 
-        self.media_count = Media.objects.filter(listable=True, category=self).count()
+        if getattr(settings, 'USE_RBAC', False) and self.is_rbac_category:
+            self.media_count = Media.objects.filter(category=self).count()
+        else:
+            self.media_count = Media.objects.filter(listable=True, category=self).count()
+
         self.save(update_fields=["media_count"])
         return True
 
@@ -1131,11 +1238,25 @@ class Encoding(models.Model):
 
         super(Encoding, self).save(*args, **kwargs)
 
+    def update_size_without_save(self):
+        """Update the size of an encoding without saving to avoid calling signals"""
+        if self.media_file:
+            cmd = ["stat", "-c", "%s", self.media_file.path]
+            stdout = helpers.run_command(cmd).get("out")
+            if stdout:
+                size = int(stdout.strip())
+                size = helpers.show_file_size(size)
+                Encoding.objects.filter(pk=self.pk).update(size=size)
+                return True
+        return False
+
     def set_progress(self, progress, commit=True):
         if isinstance(progress, int):
             if 0 <= progress <= 100:
                 self.progress = progress
-                self.save(update_fields=["progress"])
+                # save object with filter update
+                # to avoid calling signals
+                Encoding.objects.filter(pk=self.pk).update(progress=progress)
                 return True
         return False
 
@@ -1178,8 +1299,35 @@ class Subtitle(models.Model):
 
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
 
+    class Meta:
+        ordering = ["language__title"]
+
     def __str__(self):
         return "{0}-{1}".format(self.media.title, self.language.title)
+
+    def get_absolute_url(self):
+        return f"{reverse('edit_subtitle')}?id={self.id}"
+
+    @property
+    def url(self):
+        return self.get_absolute_url()
+
+    def convert_to_srt(self):
+        input_path = self.subtitle_file.path
+        with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
+            pysub = settings.PYSUBS_COMMAND
+
+            cmd = [pysub, input_path, "--to", "vtt", "-o", tmpdirname]
+            stdout = helpers.run_command(cmd)
+
+            list_of_files = os.listdir(tmpdirname)
+            if list_of_files:
+                subtitles_file = os.path.join(tmpdirname, list_of_files[0])
+                cmd = ["cp", subtitles_file, input_path]
+                stdout = helpers.run_command(cmd)  # noqa
+            else:
+                raise Exception("Could not convert to srt")
+        return True
 
 
 class RatingCategory(models.Model):
@@ -1253,7 +1401,7 @@ class Playlist(models.Model):
 
     @property
     def media_count(self):
-        return self.media.count()
+        return self.media.filter(listable=True).count()
 
     def get_absolute_url(self, api=False):
         if api:
@@ -1300,7 +1448,7 @@ class Playlist(models.Model):
 
     @property
     def thumbnail_url(self):
-        pm = self.playlistmedia_set.first()
+        pm = self.playlistmedia_set.filter(media__listable=True).first()
         if pm and pm.media.thumbnail:
             return helpers.url_from_path(pm.media.thumbnail.path)
         return None
@@ -1360,6 +1508,82 @@ class Comment(MPTTModel):
         return self.get_absolute_url()
 
 
+class VideoChapterData(models.Model):
+    data = models.JSONField(null=False, blank=False, help_text="Chapter data")
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='chapters')
+
+    class Meta:
+        unique_together = ['media']
+
+    def save(self, *args, **kwargs):
+        from . import tasks
+
+        is_new = self.pk is None
+        if is_new or (not is_new and self._check_data_changed()):
+            super().save(*args, **kwargs)
+            tasks.produce_video_chapters.delay(self.pk)
+        else:
+            super().save(*args, **kwargs)
+
+    def _check_data_changed(self):
+        if self.pk:
+            old_instance = VideoChapterData.objects.get(pk=self.pk)
+            return old_instance.data != self.data
+        return False
+
+    @property
+    def chapter_data(self):
+        # ensure response is consistent
+        data = []
+        for item in self.data:
+            if item.get("start") and item.get("title"):
+                thumbnail = item.get("thumbnail")
+                if thumbnail:
+                    thumbnail = helpers.url_from_path(thumbnail)
+                else:
+                    thumbnail = "static/images/chapter_default.jpg"
+                data.append(
+                    {
+                        "start": item.get("start"),
+                        "title": item.get("title"),
+                        "thumbnail": thumbnail,
+                    }
+                )
+        return data
+
+
+class VideoTrimRequest(models.Model):
+    """Model to handle video trimming requests"""
+
+    VIDEO_TRIM_STATUS = (
+        ("initial", "Initial"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("fail", "Fail"),
+    )
+
+    VIDEO_ACTION_CHOICES = (
+        ("replace", "Replace Original"),
+        ("save_new", "Save as New"),
+        ("create_segments", "Create Segments"),
+    )
+
+    TRIM_STYLE_CHOICES = (
+        ("no_encoding", "No Encoding"),
+        ("precise", "Precise"),
+    )
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='trim_requests')
+    status = models.CharField(max_length=20, choices=VIDEO_TRIM_STATUS, default="initial")
+    add_date = models.DateTimeField(auto_now_add=True)
+    video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
+    media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
+    timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+
+    def __str__(self):
+        return f"Trim request for {self.media.title} ({self.status})"
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1367,6 +1591,9 @@ def media_save(sender, instance, created, **kwargs):
     # once model is saved
     # SOS: do not put anything here, as if more logic is added,
     # we have to disconnect signal to avoid infinite recursion
+    if not instance.friendly_token:
+        return False
+
     if created:
         from .methods import notify_users
 
@@ -1399,13 +1626,17 @@ def media_file_pre_delete(sender, instance, **kwargs):
             tag.update_tag_media()
 
 
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    helpers.rm_dir(instance.media.video_chapters_folder)
+
+
 @receiver(post_delete, sender=Media)
 def media_file_delete(sender, instance, **kwargs):
     """
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
-
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1421,6 +1652,7 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.hls_file:
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
+
     instance.user.update_user_media()
 
     # remove extra zombie thumbnails

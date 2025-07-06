@@ -8,6 +8,7 @@ import { PendingItemsList } from '../../item-list/PendingItemsList.jsx';
 import { renderManageItems } from './includes/functions';
 import initManageItemsList from './includes/initManageItemsList';
 import { ManageItemsListHandler } from './includes/ManageItemsListHandler';
+import { translateString } from '../../../utils/helpers/';
 
 import './ManageItemList.scss';
 
@@ -102,7 +103,7 @@ function useManageItemListSync(props) {
 
     return 1 > listHandler.totalPages() || listHandler.loadedAllItems() ? null : (
       <button className="load-more" onClick={onClickLoadMore}>
-        SHOW MORE
+        {translateString("SHOW MORE")}
       </button>
     );
   }

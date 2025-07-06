@@ -1,0 +1,14 @@
+
+// These are the translations that will be used in frontend/src using the helper function
+// translateString (frontend/src/static/js/utils/helpers/translate.js)
+// They are fetched from the backend, and specifically files/frontend_translations
+// The Django backend is passing dictionary FRONTEND_TRANSLATIONS.
+// This contains key values where keys do not have a space
+// TRANSLATIONS object will be availaible as window.TRANSLATIONS
+
+// IMPORTANT: If you are starting the frontend app (localhost:8088), you are not getting at this
+// POINT, so there are not translations. Translations can only be available and tested on the Django app
+// and templates, that are loading React as well
+
+    window.TRANSLATION = {{ TRANSLATION|safe }};;
+    window.REPLACEMENTS = {{ REPLACEMENTS|safe }};;

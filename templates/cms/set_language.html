@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load custom_filters %}
+
+{% block headtitle %}About - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="About - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+			"@type": "WebPage",
+	        "@id": "{{FRONTEND_HOST}}"
+	    }
+    },
+    {
+		"@type": "ListItem",
+		"position": 2,
+        "name": "About",
+        "item": {
+			"@type": "AboutPage",
+	        "@id": "{{FRONTEND_HOST}}/about"
+	    }
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block innercontent %}
+<div class="custom-page-wrapper">
+	{% get_current_language as LANGUAGE_CODE %}
+
+	<h1>{{"Change Language"| custom_translate:LANGUAGE_CODE}}</h1>
+	<hr/>
+	<h2>{{"Select"| custom_translate:LANGUAGE_CODE}}</h2>
+
+    <p>
+		<form action="{% url 'set_language' %}" method="post">{% csrf_token %}
+			<input name="next" type="hidden" value="/">
+			<select name="language">
+				{% get_current_language as LANGUAGE_CODE %}
+				{% get_available_languages as LANGUAGES %}
+				{% get_language_info_list for LANGUAGES as languages %}
+				{% for language in languages %}
+					<option value="{{ language.code }}"{% if language.code == LANGUAGE_CODE %} selected{% endif %}>
+						{{ language.name_local }} ({{ language.code }})
+					</option>
+				{% endfor %}
+			</select>
+			<input type="submit" value={{"Go"| custom_translate:LANGUAGE_CODE}}>
+		</form>
+
+	</p>
+</div>
+{% endblock %}

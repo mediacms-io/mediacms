@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useItemList } from './useItemList';
+import { translateString } from '../../utils/helpers/';
 
 export function useItemListSync(props) {
   const itemsListRef = useRef(null);
@@ -32,7 +33,7 @@ export function useItemListSync(props) {
 
     return 1 > listHandler.totalPages() || listHandler.loadedAllItems() ? null : (
       <button className="load-more" onClick={onClickLoadMore}>
-        SHOW MORE
+        {translateString("SHOW MORE")}
       </button>
     );
   }

@@ -6,13 +6,15 @@ import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { formatInnerLink, publishedOnDate } from '../../utils/helpers/';
 import { PopupMain } from '../_shared/';
 import CommentsList from '../comments/Comments';
+import { replaceString } from '../../utils/helpers/';
+import { translateString } from '../../utils/helpers/';
 
 function metafield(arr) {
   let i;
   let sep;
   let ret = [];
 
-  if (arr.length) {
+  if (arr && arr.length) {
     i = 0;
     sep = 1 < arr.length ? ', ' : '';
     while (i < arr.length) {
@@ -48,7 +50,9 @@ function MediaAuthorBanner(props) {
           </a>
         </span>
         {PageStore.get('config-media-item').displayPublishDate && props.published ? (
-          <span className="author-banner-date">Published on {publishedOnDate(new Date(props.published))}</span>
+          <span className="author-banner-date">
+            {translateString('Published on')} {replaceString(publishedOnDate(new Date(props.published)))}
+          </span>
         ) : null}
       </div>
     </div>
@@ -76,8 +80,8 @@ function EditMediaButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title="Edit media" className="edit-media">
-      EDIT MEDIA
+    <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media">
+      {translateString('EDIT MEDIA')}
     </a>
   );
 }
@@ -90,8 +94,8 @@ function EditSubtitleButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title="Edit subtitle" className="edit-subtitle">
-      EDIT SUBTITLE
+    <a href={link} rel="nofollow" title={translateString('Edit subtitle')} className="edit-subtitle">
+      {translateString('EDIT SUBTITLE')}
     </a>
   );
 }
@@ -171,6 +175,25 @@ export default function ViewerInfoContent(props) {
   const authorLink = formatInnerLink(props.author.url, SiteContext._currentValue.url);
   const authorThumb = formatInnerLink(props.author.thumb, SiteContext._currentValue.url);
 
+  function setTimestampAnchors(text) {
+    function wrapTimestampWithAnchor(match, string) {
+      let split = match.split(':'),
+        s = 0,
+        m = 1;
+
+      while (split.length > 0) {
+        s += m * parseInt(split.pop(), 10);
+        m *= 60;
+      }
+
+      const wrapped = `<a href="#" data-timestamp="${s}" class="video-timestamp">${match}</a>`;
+      return wrapped;
+    }
+
+    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
+    return text.replace(timeRegex, wrapTimestampWithAnchor);
+  }
+
   return (
     <div className="media-info-content">
       {void 0 === PageStore.get('config-media-item').displayAuthor ||
@@ -183,11 +206,10 @@ export default function ViewerInfoContent(props) {
         <div className="media-content-banner-inner">
           {hasSummary ? <div className="media-content-summary">{summary}</div> : null}
           {(!hasSummary || isContentVisible) && description ? (
-            PageStore.get('config-options').pages.media.htmlInDescription ? (
-              <div className="media-content-description" dangerouslySetInnerHTML={{ __html: description }}></div>
-            ) : (
-              <div className="media-content-description">{description}</div>
-            )
+            <div
+              className="media-content-description"
+              dangerouslySetInnerHTML={{ __html: setTimestampAnchors(description) }}
+            ></div>
           ) : null}
           {hasSummary ? (
             <button className="load-more" onClick={onClickLoadMore}>
@@ -195,12 +217,16 @@ export default function ViewerInfoContent(props) {
             </button>
           ) : null}
           {tagsContent.length ? (
-            <MediaMetaField value={tagsContent} title={1 < tagsContent.length ? 'Tags' : 'Tag'} id="tags" />
+            <MediaMetaField
+              value={tagsContent}
+              title={1 < tagsContent.length ? translateString('Tags') : translateString('Tag')}
+              id="tags"
+            />
           ) : null}
           {categoriesContent.length ? (
             <MediaMetaField
               value={categoriesContent}
-              title={1 < categoriesContent.length ? 'Categories' : 'Category'}
+              title={1 < categoriesContent.length ? translateString('Categories') : translateString('Category')}
               id="categories"
             />
           ) : null}
@@ -215,7 +241,7 @@ export default function ViewerInfoContent(props) {
               ) : null}
 
               <PopupTrigger contentRef={popupContentRef}>
-                <button className="remove-media">DELETE MEDIA</button>
+                <button className="remove-media">{translateString('DELETE MEDIA')}</button>
               </PopupTrigger>
 
               <PopupContent contentRef={popupContentRef}>

@@ -7,6 +7,7 @@ import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { ProfileHistoryPage } from './ProfileHistoryPage';
 import { Page } from './Page';
+import { translateString } from '../utils/helpers/';
 
 declare global {
   interface Window {
@@ -21,7 +22,7 @@ interface AnonymousHistoryPageProps {
 
 export const AnonymousHistoryPage: React.FC<AnonymousHistoryPageProps> = ({
   id = 'history-media',
-  title = PageStore.get('config-enabled').pages.history.title,
+  title = translateString('History'),
 }) => {
   const [resultsCount, setResultsCount] = useState<number | null>(null);
 

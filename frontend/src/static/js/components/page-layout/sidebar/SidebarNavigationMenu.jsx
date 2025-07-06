@@ -4,6 +4,7 @@ import { useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
 import { LinksContext, SidebarContext } from '../../../utils/contexts/';
 import { NavigationMenuList } from '../../_shared';
+import { translateString } from '../../../utils/helpers/';
 
 export function SidebarNavigationMenu() {
   const { userCan, isAnonymous, pages: userPages } = useUser();
@@ -40,7 +41,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.home,
         icon: 'home',
-        text: 'Home',
+        text: translateString('Home'),
         className: 'nav-item-home',
       });
     }
@@ -49,7 +50,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.featured,
         icon: 'star',
-        text: PageStore.get('config-enabled').pages.featured.title,
+        text: translateString('Featured'),
         className: 'nav-item-featured',
       });
     }
@@ -61,7 +62,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.recommended,
         icon: 'done_outline',
-        text: PageStore.get('config-enabled').pages.recommended.title,
+        text: translateString("Recommended"),
         className: 'nav-item-recommended',
       });
     }
@@ -70,7 +71,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.latest,
         icon: 'new_releases',
-        text: PageStore.get('config-enabled').pages.latest.title,
+        text: translateString("Latest"),
         className: 'nav-item-latest',
       });
     }
@@ -83,7 +84,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.archive.tags,
         icon: 'local_offer',
-        text: PageStore.get('config-enabled').taxonomies.tags.title,
+        text: translateString("Tags"),
         className: 'nav-item-tags',
       });
     }
@@ -96,7 +97,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.archive.categories,
         icon: 'list_alt',
-        text: PageStore.get('config-enabled').taxonomies.categories.title,
+        text: translateString("Categories"),
         className: 'nav-item-categories',
       });
     }
@@ -105,7 +106,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.members,
         icon: 'people',
-        text: PageStore.get('config-enabled').pages.members.title,
+        text: translateString("Members"),
         className: 'nav-item-members',
       });
     }
@@ -132,7 +133,7 @@ export function SidebarNavigationMenu() {
         items.push({
           link: links.user.addMedia,
           icon: 'video_call',
-          text: 'Upload media',
+          text: translateString("Upload"),
           className: 'nav-item-upload-media',
         });
 
@@ -140,7 +141,7 @@ export function SidebarNavigationMenu() {
           items.push({
             link: userPages.media,
             icon: 'video_library',
-            text: 'My media',
+            text: translateString("My media"),
             className: 'nav-item-my-media',
           });
         }
@@ -150,7 +151,7 @@ export function SidebarNavigationMenu() {
         items.push({
           link: userPages.playlists,
           icon: 'playlist_play',
-          text: 'My playlists',
+          text: translateString("My playlists"),
           className: 'nav-item-my-playlists',
         });
       }
@@ -166,7 +167,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.user.history,
         icon: 'history',
-        text: PageStore.get('config-enabled').pages.history.title,
+        text: translateString("History"),
         className: 'nav-item-history',
       });
     }
@@ -179,7 +180,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.user.liked,
         icon: 'thumb_up',
-        text: PageStore.get('config-enabled').pages.liked.title,
+        text: translateString("Liked media"),
         className: 'nav-item-liked',
       });
     }
@@ -188,7 +189,35 @@ export function SidebarNavigationMenu() {
   }
 
   function CustomMenuSection() {
-    const items = PageStore.get('config-contents').sidebar.navMenu.items;
+    const items = [];
+
+    items.push({
+      link: '/about',
+      icon: 'contact_support',
+      text: translateString("About"),
+      className: 'nav-item-about',
+    });
+
+      items.push({
+      link: '/tos',
+      icon: 'description',
+      text: translateString("Terms"),
+      className: 'nav-item-terms',
+    });
+
+    items.push({
+      link: '/contact',
+      icon: 'alternate_email',
+      text: translateString("Contact"),
+      className: 'nav-item-contact',
+    });
+
+    items.push({
+      link: '/setlanguage',
+      icon: 'language',
+      text: translateString("Language"),
+      className: 'nav-item-language',
+    });
 
     return items.length ? <NavigationMenuList key="custom" items={formatItems(items)} /> : null;
   }
@@ -200,7 +229,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.manage.media,
         icon: 'miscellaneous_services',
-        text: 'Manage media',
+        text: translateString("Manage media"),
         className: 'nav-item-manage-media',
       });
     }
@@ -209,7 +238,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.manage.users,
         icon: 'miscellaneous_services',
-        text: 'Manage users',
+        text: translateString("Manage users"),
         className: 'nav-item-manage-users',
       });
     }
@@ -218,7 +247,7 @@ export function SidebarNavigationMenu() {
       items.push({
         link: links.manage.comments,
         icon: 'miscellaneous_services',
-        text: 'Manage comments',
+        text: translateString("Manage comments"),
         className: 'nav-item-manage-comments',
       });
     }

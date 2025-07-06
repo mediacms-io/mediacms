@@ -13,6 +13,7 @@ export default class ViewerSidebar extends React.PureComponent {
       isPlaylistPage: !!props.playlistData,
       activeItem: 0,
       mediaType: MediaPageStore.get('media-type'),
+      chapters: MediaPageStore.get('media-data')?.chapters
     };
 
     if (props.playlistData) {
@@ -37,6 +38,7 @@ export default class ViewerSidebar extends React.PureComponent {
   onMediaLoad() {
     this.setState({
       mediaType: MediaPageStore.get('media-type'),
+      chapters: MediaPageStore.get('media-data')?.chapter_data || []
     });
   }
 

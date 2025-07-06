@@ -7,6 +7,7 @@ ln -sf /dev/stdout /var/log/nginx/mediacms.io.access.log && ln -sf /dev/stderr /
 
 cp /home/mediacms.io/mediacms/deploy/docker/local_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
 
+
 mkdir -p /home/mediacms.io/mediacms/{logs,media_files/hls}
 touch /home/mediacms.io/mediacms/logs/debug.log
 
@@ -28,7 +29,8 @@ else
 fi
 
 # We should do this only for folders that have a different owner, since it is an expensive operation
-find /home/mediacms.io/ ! \( -user www-data -group $TARGET_GID \) -exec chown www-data:$TARGET_GID {} +
+# Also ignoring .git folder to fix this issue https://github.com/mediacms-io/mediacms/issues/934
+find /home/mediacms.io/mediacms ! \( -path "*.git*" \) -exec chown www-data:$TARGET_GID {} +
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
 

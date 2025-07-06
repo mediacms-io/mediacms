@@ -10,8 +10,9 @@ fi
 
 while true; do
     read -p "
-This script will attempt to perform a system update, install required dependencies, install and configure PostgreSQL, NGINX, Redis and a few other utilities.
-It is expected to run on a new system **with no running instances of any these services**. Make sure you check the script before you continue. Then enter yes or no
+This script will attempt to perform a system update and install services including PostgreSQL, nginx and Django.
+It is expected to run on a new system **with no running instances of any these services**.
+This has been tested only in Ubuntu Linux 22 and 24. Make sure you check the script before you continue. Then enter yes or no
 " yn
     case $yn in
         [Yy]* ) echo "OK!"; break;;
@@ -20,15 +21,7 @@ It is expected to run on a new system **with no running instances of any these s
     esac
 done
 
-
-osVersion=$(lsb_release -d)
-if [[ $osVersion == *"Ubuntu 20"* ]] || [[ $osVersion == *"Ubuntu 22"* ]] || [[ $osVersion == *"buster"* ]] || [[ $osVersion == *"bullseye"* ]]; then
-    echo 'Performing system update and dependency installation, this will take a few minutes'
-    apt-get update && apt-get -y upgrade && apt-get install python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick python3-certbot-nginx certbot wget xz-utils -y
-else
-    echo "This script is tested for Ubuntu 20/22 versions only, if you want to try MediaCMS on another system you have to perform the manual installation"
-    exit
-fi
+apt-get update && apt-get -y upgrade && apt-get install pkg-config python3-venv python3-dev virtualenv redis-server postgresql nginx git gcc vim unzip imagemagick procps libxml2-dev libxmlsec1-dev libxmlsec1-openssl python3-certbot-nginx certbot wget xz-utils -y
 
 # install ffmpeg
 echo "Downloading and installing ffmpeg"
@@ -50,6 +43,7 @@ echo 'Creating database to be used in MediaCMS'
 su -c "psql -c \"CREATE DATABASE mediacms\"" postgres
 su -c "psql -c \"CREATE USER mediacms WITH ENCRYPTED PASSWORD 'mediacms'\"" postgres
 su -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE mediacms TO mediacms\"" postgres
+su -c "psql -d mediacms -c \"GRANT CREATE, USAGE ON SCHEMA public TO mediacms\"" postgres
 
 echo 'Creating python virtualenv on /home/mediacms.io'
 
@@ -57,7 +51,7 @@ cd /home/mediacms.io
 virtualenv . --python=python3
 source  /home/mediacms.io/bin/activate
 cd mediacms
-pip install -r requirements.txt
+pip install --no-binary lxml,xmlsec -r requirements.txt
 
 SECRET_KEY=`python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
 

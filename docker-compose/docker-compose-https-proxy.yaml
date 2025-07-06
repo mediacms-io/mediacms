@@ -1,0 +1,94 @@
+version: "3"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./deploy/docker/reverse_proxy/certs/:/etc/nginx/certs/
+      - ./deploy/docker/reverse_proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+  migrations:
+    image: mediacms/mediacms:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+    command: "./deploy/docker/prestart.sh"
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+  web:
+    image: mediacms/mediacms:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_MIGRATIONS: 'no'
+      ADMIN_USER: 'admin'
+      ADMIN_EMAIL: 'admin@localhost'
+      #ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+      VIRTUAL_HOST: localhost
+    depends_on:
+      - migrations
+  celery_beat:
+    image: mediacms/mediacms:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_MIGRATIONS: 'no'
+    depends_on:
+      - redis
+  celery_worker:
+    image: mediacms/mediacms:latest
+    deploy:
+      replicas: 2
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_BEAT: 'no'
+      ENABLE_MIGRATIONS: 'no'
+    depends_on:
+      - migrations
+  db:
+    image: postgres:17.2-alpine
+    volumes:
+      - ../postgres_data/:/var/lib/postgresql/data/
+    restart: always
+    environment:
+      POSTGRES_USER: mediacms
+      POSTGRES_PASSWORD: mediacms
+      POSTGRES_DB: mediacms
+      TZ: Europe/London
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: "redis:alpine"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

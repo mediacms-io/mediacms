@@ -46,6 +46,11 @@ if (window.MediaCMS.site.devEnv) {
 }
 
 function PlayAllLink(props) {
+
+  if (!props.media || !props.media.length) {
+      return <span>{props.children}</span>;
+    }
+
   let playAllUrl = props.media[0].url;
 
   if (window.MediaCMS.site.devEnv && -1 < playAllUrl.indexOf('view?')) {

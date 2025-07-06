@@ -520,6 +520,6 @@
     };
   }
 
-  _video2.default.plugin('markers', registerVideoJsMarkersPlugin);
+    videojs.registerPlugin('markers', registerVideoJsMarkersPlugin);
 });
 //# sourceMappingURL=videojs-markers.js.map

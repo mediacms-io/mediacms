@@ -1,0 +1,41 @@
+{% extends 'admin/change_form.html' %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Array of fields to modify
+  const fieldNames = [
+    'contributors_field',
+    'managers_field',
+    'members_field',
+    'categories'
+  ];
+  
+  // Process each field
+  fieldNames.forEach(fieldName => {
+    const fieldElement = document.querySelector(`.field-${fieldName}`);
+    if (fieldElement) {
+      const row = fieldElement.closest('.row');
+      if (row) {
+        const label = row.querySelector(`label[for="id_${fieldName}"]`);
+        if (label) {
+          label.remove();
+        }
+        
+        fieldElement.classList.remove('col-sm-7');
+        fieldElement.classList.add('col-sm-12');
+
+        const otherColElements = row.querySelectorAll('.col-sm-7');
+        otherColElements.forEach(colElement => {
+          colElement.classList.remove('col-sm-7');
+          colElement.classList.add('col-sm-12');
+        });	      
+      }
+    }
+  });
+});
+</script>
+
+{% endblock %}
+

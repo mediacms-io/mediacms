@@ -1,3 +1,4 @@
+from allauth.account.views import LoginView
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
@@ -7,11 +8,17 @@ from . import management_views, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
 urlpatterns = [
+    path("i18n/", include("django.conf.urls.i18n")),
     re_path(r"^$", views.index),
     re_path(r"^about", views.about, name="about"),
+    re_path(r"^setlanguage", views.setlanguage, name="setlanguage"),
     re_path(r"^add_subtitle", views.add_subtitle, name="add_subtitle"),
+    re_path(r"^edit_subtitle", views.edit_subtitle, name="edit_subtitle"),
     re_path(r"^categories$", views.categories, name="categories"),
     re_path(r"^contact$", views.contact, name="contact"),
+    re_path(r"^publish", views.publish_media, name="publish_media"),
+    re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
+    re_path(r"^edit_video", views.edit_video, name="edit_video"),
     re_path(r"^edit", views.edit_media, name="edit_media"),
     re_path(r"^embed", views.embed_media, name="get_embed"),
     re_path(r"^featured$", views.featured_media),
@@ -44,7 +51,7 @@ urlpatterns = [
     re_path(r"^api/v1/media$", views.MediaList.as_view()),
     re_path(r"^api/v1/media/$", views.MediaList.as_view()),
     re_path(
-        r"^api/v1/media/(?P<friendly_token>[\w]*)$",
+        r"^api/v1/media/(?P<friendly_token>[\w\-_]*)$",
         views.MediaDetail.as_view(),
         name="api_get_media",
     ),
@@ -57,6 +64,14 @@ urlpatterns = [
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/actions$",
         views.MediaActions.as_view(),
+    ),
+    re_path(
+        r"^api/v1/media/(?P<friendly_token>[\w]*)/chapters$",
+        views.video_chapters,
+    ),
+    re_path(
+        r"^api/v1/media/(?P<friendly_token>[\w]*)/trim_video$",
+        views.trim_video,
     ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
@@ -89,6 +104,15 @@ urlpatterns = [
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if hasattr(settings, "USE_SAML") and settings.USE_SAML:
+    urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
+
+if hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS:
+    urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
+    urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
+else:
+    urlpatterns.append(path('accounts/login', LoginView.as_view(), name='login_system'))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

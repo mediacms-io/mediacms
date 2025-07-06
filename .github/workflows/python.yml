@@ -13,10 +13,10 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build the Stack
-      run:  docker-compose -f docker-compose-dev.yaml build
+      run:  docker compose -f docker-compose-dev.yaml build
 
     - name: Start containers
-      run: docker-compose -f docker-compose-dev.yaml up -d
+      run: docker compose -f docker-compose-dev.yaml up -d
 
     - name: List containers
       run: docker ps
@@ -26,10 +26,10 @@ jobs:
       shell: bash
 
     - name: Run Django Tests
-      run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+      run: docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
 
       # Run with coverage, saves report on htmlcov dir
       # run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest --cov --cov-report=html --cov-config=.coveragerc
 
     - name: Tear down the Stack
-      run:  docker-compose -f docker-compose-dev.yaml down
+      run:  docker compose -f docker-compose-dev.yaml down
