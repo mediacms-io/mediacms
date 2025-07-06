@@ -2,7 +2,7 @@ Django==5.1.6
 djangorestframework==3.15.2
 python3-saml==1.16.0
 django-allauth==65.4.1
-psycopg==3.2.4
+psycopg[pool]==3.2.4
 uwsgi==2.0.28
 django-redis==5.4.0
 celery==5.4.0
