@@ -13,7 +13,8 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ValidationError
 from django.core.files import File
-from django.db import connection, models
+from django.db import models
+from django.db.models import Func, Value
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -388,8 +389,6 @@ class Media(models.Model):
         search field is used to store SearchVector
         """
 
-        db_table = self._meta.db_table
-
         # first get anything interesting out of the media
         # that needs to be search able
 
@@ -413,17 +412,8 @@ class Media(models.Model):
 
         text = helpers.clean_query(text)
 
-        sql_code = f"""
-            UPDATE {db_table} SET search = to_tsvector(
-                'simple', '{text}'
-            ) WHERE {db_table}.id = {self.id}
-            """
+        Media.objects.filter(id=self.id).update(search=Func(Value('simple'), Value(text), function='to_tsvector'))
 
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(sql_code)
-        except BaseException:
-            pass  # TODO:add log
         return True
 
     def media_init(self):
