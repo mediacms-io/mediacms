@@ -73,6 +73,7 @@ ENCODE_RESOLUTIONS = (
     (480, "480"),
     (360, "360"),
     (240, "240"),
+    (144, "144"),
 )
 
 CODECS = (
@@ -896,7 +897,7 @@ class Media(models.Model):
         """
 
         res = {}
-        valid_resolutions = [240, 360, 480, 720, 1080, 1440, 2160]
+        valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file

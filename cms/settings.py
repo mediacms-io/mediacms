@@ -186,7 +186,7 @@ CHUNKIZE_VIDEO_DURATION = 60 * 5
 VIDEO_CHUNKS_DURATION = 60 * 4
 
 # always get these two, even if upscaling
-MINIMUM_RESOLUTIONS_TO_ENCODE = [240, 360]
+MINIMUM_RESOLUTIONS_TO_ENCODE = [144, 240]
 
 # default settings for notifications
 # not all of them are implemented
@@ -497,6 +497,10 @@ USE_ROUNDED_CORNERS = True
 ALLOW_VIDEO_TRIMMER = True
 
 ALLOW_CUSTOM_MEDIA_URLS = False
+
+# ffmpeg options
+FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
