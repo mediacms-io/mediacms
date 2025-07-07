@@ -136,8 +136,8 @@ def chunkize_media(self, friendly_token, profiles, force=True):
     cwd = os.path.dirname(os.path.realpath(media.media_file.path))
     file_name = media.media_file.path.split("/")[-1]
     random_prefix = produce_friendly_token()
-    file_format = "{0}_{1}".format(random_prefix, file_name)
-    chunks_file_name = "%02d_{0}".format(file_format)
+    file_format = f"{random_prefix}_{file_name}"
+    chunks_file_name = f"%02d_{file_format}"
     chunks_file_name += ".mkv"
     cmd = [
         settings.FFMPEG_COMMAND,
@@ -162,7 +162,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 chunks.append(ch[0])
     if not chunks:
         # command completely failed to segment file.putting to normal encode
-        logger.info("Failed to break file {0} in chunks." " Putting to normal encode queue".format(friendly_token))
+        logger.info(f"Failed to break file {friendly_token} in chunks. Putting to normal encode queue")
         for profile in profiles:
             if media.video_height and media.video_height < profile.resolution:
                 if profile.resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
@@ -211,7 +211,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 priority=priority,
             )
 
-    logger.info("got {0} chunks and will encode to {1} profiles".format(len(chunks), to_profiles))
+    logger.info(f"got {len(chunks)} chunks and will encode to {to_profiles} profiles")
     return True
 
 
@@ -355,8 +355,8 @@ def encode_media(
     #    return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
-        tf = create_temp_file(suffix=".{0}".format(profile.extension), dir=temp_dir)
-        tfpass = create_temp_file(suffix=".{0}".format(profile.extension), dir=temp_dir)
+        tf = create_temp_file(suffix=f".{profile.extension}", dir=temp_dir)
+        tfpass = create_temp_file(suffix=f".{profile.extension}", dir=temp_dir)
         ffmpeg_commands = produce_ffmpeg_commands(
             original_media_path,
             media.media_info,
@@ -398,7 +398,7 @@ def encode_media(
                             if n_times % 60 == 0:
                                 encoding.progress = percent
                                 encoding.save(update_fields=["progress", "update_date"])
-                                logger.info("Saved {0}".format(round(percent, 2)))
+                                logger.info(f"Saved {round(percent, 2)}")
                             n_times += 1
                     except DatabaseError:
                         # primary reason for this is that the encoding has been deleted, because
@@ -451,7 +451,7 @@ def encode_media(
 
                 with open(tf, "rb") as f:
                     myfile = File(f)
-                    output_name = "{0}.{1}".format(get_file_name(original_media_path), profile.extension)
+                    output_name = f"{get_file_name(original_media_path)}.{profile.extension}"
                     encoding.media_file.save(content=myfile, name=output_name)
                 encoding.total_run_time = (encoding.update_date - encoding.add_date).seconds
 
@@ -472,7 +472,7 @@ def produce_sprite_from_video(friendly_token):
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except BaseException:
-        logger.info("failed to get media with friendly_token %s" % friendly_token)
+        logger.info(f"failed to get media with friendly_token {friendly_token}")
         return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
@@ -516,7 +516,7 @@ def create_hls(friendly_token):
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except BaseException:
-        logger.info("failed to get media with friendly_token %s" % friendly_token)
+        logger.info(f"failed to get media with friendly_token {friendly_token}")
         return False
 
     p = media.uid.hex
@@ -558,7 +558,7 @@ def check_running_states():
 
     encodings = Encoding.objects.filter(status="running")
 
-    logger.info("got {0} encodings that are in state running".format(encodings.count()))
+    logger.info(f"got {encodings.count()} encodings that are in state running")
     changed = 0
     for encoding in encodings:
         now = datetime.now(encoding.update_date.tzinfo)
@@ -575,7 +575,7 @@ def check_running_states():
             # TODO: allign with new code + chunksize...
             changed += 1
     if changed:
-        logger.info("changed from running to pending on {0} items".format(changed))
+        logger.info(f"changed from running to pending on {changed} items")
     return True
 
 
@@ -585,7 +585,7 @@ def check_media_states():
     # check encoding status of not success media
     media = Media.objects.filter(Q(encoding_status="running") | Q(encoding_status="fail") | Q(encoding_status="pending"))
 
-    logger.info("got {0} media that are not in state success".format(media.count()))
+    logger.info(f"got {media.count()} media that are not in state success")
 
     changed = 0
     for m in media:
@@ -593,7 +593,7 @@ def check_media_states():
         m.save(update_fields=["encoding_status"])
         changed += 1
     if changed:
-        logger.info("changed encoding status to {0} media items".format(changed))
+        logger.info(f"changed encoding status to {changed} media items")
     return True
 
 
@@ -628,7 +628,7 @@ def check_pending_states():
             media.encode(profiles=[profile], force=False)
             changed += 1
     if changed:
-        logger.info("set to the encode queue {0} encodings that were on pending state".format(changed))
+        logger.info(f"set to the encode queue {changed} encodings that were on pending state")
     return True
 
 
@@ -652,7 +652,7 @@ def check_missing_profiles():
             # if they appear on the meanwhile (eg on a big queue)
             changed += 1
     if changed:
-        logger.info("set to the encode queue {0} profiles".format(changed))
+        logger.info(f"set to the encode queue {changed} profiles")
     return True
 
 
@@ -828,7 +828,7 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info("updated {} categories".format(saved))
+    logger.info(f"updated {saved} categories")
 
     # Tags
     used_media = []
@@ -841,7 +841,7 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info("updated {} tags".format(saved))
+    logger.info(f"updated {saved} tags")
 
     return True
 
