@@ -13,6 +13,7 @@ DATABASES = {
         "PORT": os.getenv('POSTGRES_PORT', '5432'),
         "USER": os.getenv('POSTGRES_USER', 'mediacms'),
         "PASSWORD": os.getenv('POSTGRES_PASSWORD', 'mediacms'),
+        "OPTIONS": {'pool': True},
     }
 }
 

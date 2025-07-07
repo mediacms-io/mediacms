@@ -376,16 +376,7 @@ LOGGING = {
     },
 }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mediacms",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
-        "USER": "mediacms",
-        "PASSWORD": "mediacms",
-    }
-}
+DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
@@ -466,6 +457,7 @@ LANGUAGES = [
     ('pt', _('Portuguese')),
     ('ru', _('Russian')),
     ('zh-hans', _('Simplified Chinese')),
+    ('sl', _('Slovenian')),
     ('zh-hant', _('Traditional Chinese')),
     ('es', _('Spanish')),
     ('tr', _('Turkish')),
@@ -548,13 +540,5 @@ except ImportError:
 
 
 if GLOBAL_LOGIN_REQUIRED:
-    # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
-    LOGIN_REQUIRED_IGNORE_PATHS = [
-        r'/accounts/login/$',
-        r'/accounts/logout/$',
-        r'/accounts/signup/$',
-        r'/accounts/password/.*/$',
-        r'/accounts/confirm-email/.*/$',
-        #        r'/api/v[0-9]+/',
-    ]
+    auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(auth_index + 1, "django.contrib.auth.middleware.LoginRequiredMiddleware")

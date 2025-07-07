@@ -211,7 +211,7 @@ def contact(request):
                 name = request.POST.get("name")
             message = request.POST.get("message")
 
-            title = "[{}] - Contact form message received".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Contact form message received"
 
             msg = """
 You have received a message through the contact form\n
