@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from cms.version import VERSION
+
 from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
 
@@ -37,6 +39,7 @@ def stuff(request):
     ret["USE_SAML"] = settings.USE_SAML
     ret["USE_RBAC"] = settings.USE_RBAC
     ret["USE_ROUNDED_CORNERS"] = settings.USE_ROUNDED_CORNERS
+    ret["VERSION"] = VERSION
 
     if request.user.is_superuser:
         ret["DJANGO_ADMIN_URL"] = settings.DJANGO_ADMIN_URL
