@@ -47,4 +47,4 @@ class TestX(TestCase):
 
         # using the provided EncodeProfiles, these two files should produce 9 Encoding objects.
         # if new EncodeProfiles are added and enabled, this will break!
-        self.assertEqual(Encoding.objects.filter(status='success').count(), 9, "Not all video transcodings finished well")
+        self.assertEqual(Encoding.objects.filter(status='success').count(), 10, "Not all video transcodings finished well")
