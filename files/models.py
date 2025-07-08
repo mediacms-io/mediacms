@@ -138,7 +138,6 @@ class Media(models.Model):
         null=True,
         help_text="Media can exist in one or no Channels",
     )
-
     description = models.TextField(blank=True)
 
     dislikes = models.IntegerField(default=0)
@@ -1572,6 +1571,27 @@ class VideoTrimRequest(models.Model):
 
     def __str__(self):
         return f"Trim request for {self.media.title} ({self.status})"
+
+
+class MediaPermission(models.Model):
+    """Model to store user permissions for media"""
+    PERMISSION_CHOICES = (
+        ("viewer", "Viewer"),
+        ("editor", "Editor"),
+        ("owner", "Owner"),
+    )
+
+    owner_user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='granted_permissions')
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='permissions')
+    permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'media')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.media.title} ({self.permission})"
 
 
 @receiver(post_save, sender=Media)

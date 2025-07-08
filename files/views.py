@@ -293,7 +293,7 @@ def edit_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
     if request.method == "POST":
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
@@ -335,7 +335,7 @@ def publish_media(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
     if request.method == "POST":
@@ -669,6 +669,12 @@ class MediaList(APIView):
     )
     def get(self, request, format=None):
         # Show media
+        # authenticated users can see:
+
+        # All listable media (public access)
+        # Non-listable media they have RBAC access to
+        # Non-listable media they have direct permissions for
+
         params = self.request.query_params
         show_param = params.get("show", "")
 
@@ -679,6 +685,10 @@ class MediaList(APIView):
         if show_param == "recommended":
             pagination_class = FastPaginationWithoutCount
             media = show_recommended_media(request, limit=50)
+        elif show_param == "shared_by_me":
+            media = Media.objects.filter(permissions__owner_user=self.request.user)
+        elif show_param == "shared_with_me":
+            media = Media.objects.filter(permissions__user=self.request.user)
         else:
             pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
             if author_param:
@@ -690,12 +700,15 @@ class MediaList(APIView):
                     basic_query = Q(listable=True, user=user)
             else:
                 # base listings should show safe content
-                basic_query = Q(listable=True)
+                if request.user.is_authenticated:
+                    basic_query = Q(listable=True) | Q(category__rbac_groups__members=self.request.user) | Q(permissions__user=self.request.user)
+                else:
+                    basic_query = Q(listable=True)
 
             if show_param == "featured":
-                media = Media.objects.filter(basic_query, featured=True)
+                media = Media.objects.filter(basic_query, featured=True).distinct()
             else:
-                media = Media.objects.filter(basic_query).order_by("-add_date")
+                media = Media.objects.filter(basic_query).distinct().order_by("-add_date")
 
         paginator = pagination_class()
 
@@ -735,17 +748,17 @@ class MediaDetail(APIView):
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
-    def get_object(self, friendly_token, password=None):
+    def get_object(self, friendly_token):
         try:
             media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
 
             # this need be explicitly called, and will call
             # has_object_permission() after has_permission has succeeded
             self.check_object_permissions(self.request, media)
-            if media.state == "private" and not (self.request.user == media.user or is_mediacms_editor(self.request.user)):
-                if getattr(settings, 'USE_RBAC', False) and self.request.user.is_authenticated and self.request.user.has_member_access_to_media(media):
+            if media.state == "private":
+                if self.request.user.has_member_access_to_media(media) or is_mediacms_editor(self.request.user):
                     pass
-                elif (not password) or (not media.password) or (password != media.password):
+                else:
                     return Response(
                         {"detail": "media is private"},
                         status=status.HTTP_401_UNAUTHORIZED,
@@ -770,8 +783,8 @@ class MediaDetail(APIView):
     )
     def get(self, request, friendly_token, format=None):
         # Get media details
-        password = request.GET.get("password")
-        media = self.get_object(friendly_token, password=password)
+        # password = request.GET.get("password")
+        media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
 
@@ -877,6 +890,10 @@ class MediaDetail(APIView):
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
+
+        if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
+            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
             serializer.save(user=request.user)
@@ -1060,7 +1077,12 @@ class MediaSearch(APIView):
             ret = {}
             return Response(ret, status=status.HTTP_200_OK)
 
-        media = Media.objects.filter(state="public", is_reviewed=True)
+        if request.user.is_authenticated:
+            basic_query = Q(listable=True) | Q(category__rbac_groups__members=self.request.user) | Q(permissions__user=self.request.user)
+        else:
+            basic_query = Q(listable=True)
+
+        media = Media.objects.filter(basic_query).distinct().order_by("-add_date")
 
         if query:
             # move this processing to a prepare_query function

@@ -11,7 +11,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
-from files.models import Category, Media, Tag
+from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
 
 
@@ -131,31 +131,63 @@ class User(AbstractUser):
         return rbac_groups.exists()
 
     def has_member_access_to_media(self, media):
-        # TODO: include MediaShare too here
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
         if getattr(settings, 'USE_RBAC', False):
             rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
             if rbac_groups.exists():
                 return True
-        # TODO: add MediaShare check here
-        return False
+
+        # Then check MediaShare permissions for any access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+        ).exists()
+
+        return media_permission_exists
 
     def has_contributor_access_to_media(self, media):
-        # TODO: include MediaShare too here
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
         if getattr(settings, 'USE_RBAC', False):
             rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"], categories__in=media.category.all()).distinct()
             if rbac_groups.exists():
                 return True
-            # TODO: add MediaShare check here
-        return False
+
+        # Then check MediaShare permissions for editor or owner access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+            permission__in=["editor", "owner"],
+        ).exists()
+
+        return media_permission_exists
 
     def has_owner_access_to_media(self, media):
-        # TODO: include MediaShare too here
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
         if getattr(settings, 'USE_RBAC', False):
             rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["manager"], categories__in=media.category.all()).distinct()
             if rbac_groups.exists():
                 return True
-            # TODO: add MediaShare check here
-        return False
+
+        # Then check MediaShare permissions for owner access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+            permission="owner",
+        ).exists()
+
+        return media_permission_exists
 
     def get_rbac_categories_as_contributor(self):
         """
