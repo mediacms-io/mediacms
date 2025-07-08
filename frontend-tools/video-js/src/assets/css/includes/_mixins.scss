@@ -1,0 +1,69 @@
+@use 'sass:math';
+
+@mixin multiline_texts_excerpt(
+    $font-size: 1em,
+    $line-height: 1.15,
+    $lines-to-show: 2,
+    $bg-color: transparent
+) {
+    line-height: $line-height;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: $bg-color;
+
+    /* Fallback for non-webkit */
+    display: block;
+    max-height: $lines-to-show * $line-height;
+
+    /* Only for non-webkit */
+    display: -webkit-box;
+    -webkit-line-clamp: $lines-to-show;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+}
+
+@mixin media_list_row_width($width, $vertSpace: 56) {
+    width: $width;
+
+    @media (min-width: #{$vertSpace + ( 2 * $width )}px) {
+        width: #{2 * $width}px;
+    }
+
+    @media (min-width: #{$vertSpace + ( 3 * $width )}px) {
+        width: #{3 * $width}px;
+    }
+
+    @media (min-width: #{$vertSpace + ( 4 * $width )}px) {
+        width: #{4 * $width}px;
+    }
+
+    @media (min-width: #{$vertSpace + ( 5 * $width )}px) {
+        width: #{5 * $width}px;
+    }
+
+    @media (min-width: #{$vertSpace + ( 7 * $width )}px) {
+        width: #{6 * $width}px;
+    }
+
+    .visible-sidebar & {
+        @media (min-width: #{$vertSpace + ( 2 * $width )}px) {
+            width: #{1 * $width}px;
+        }
+
+        @media (min-width: #{$vertSpace + ( 3 * $width )}px) {
+            width: #{2 * $width}px;
+        }
+
+        @media (min-width: #{$vertSpace + ( 4 * $width )}px) {
+            width: #{3 * $width}px;
+        }
+
+        @media (min-width: #{$vertSpace + ( 5 * $width )}px) {
+            width: #{4 * $width}px;
+        }
+
+        @media (min-width: #{$vertSpace + ( 7 * $width )}px) {
+            width: #{6 * $width}px;
+        }
+    }
+}
