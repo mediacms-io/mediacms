@@ -140,6 +140,18 @@ const PAGES = {
     component: 'PlaylistPage',
     global: { playlistId: DEV_SAMPLE_DATA.playlistId },
   },
+  'shared_by_me': {
+    id: 'shared_by_me',
+    title: 'Profile - Shared by Me',
+    component: 'ProfileSharedByMePage',
+    global: { profileId: DEV_SAMPLE_DATA.profileId },
+  },
+  'shared_with_me': {
+    id: 'shared_with_me',
+    title: 'Profile - Shared with Me',
+    component: 'ProfileSharedWithMePage',
+    global: { profileId: DEV_SAMPLE_DATA.profileId },
+  },
   'profile-media': {
     id: 'profile-media',
     title: 'Profile - Media',

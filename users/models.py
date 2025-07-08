@@ -131,8 +131,31 @@ class User(AbstractUser):
         return rbac_groups.exists()
 
     def has_member_access_to_media(self, media):
-        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
-        return rbac_groups.exists()
+        # TODO: include MediaShare too here
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+        # TODO: add MediaShare check here
+        return False
+
+    def has_contributor_access_to_media(self, media):
+        # TODO: include MediaShare too here
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+            # TODO: add MediaShare check here
+        return False
+
+    def has_owner_access_to_media(self, media):
+        # TODO: include MediaShare too here
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+            # TODO: add MediaShare check here
+        return False
 
     def get_rbac_categories_as_contributor(self):
         """

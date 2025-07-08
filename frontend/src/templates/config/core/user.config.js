@@ -30,6 +30,8 @@ module.exports = {
   pages: {
     about: './profile-about.html',
     media: './profile-media.html',
+    shared_by_me: './shared_by_me.html',
+    shared_with_me: './shared_with_me.html',
     playlists: './profile-playlists.html',
   },
 };
