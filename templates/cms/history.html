@@ -4,8 +4,9 @@
 {% block headtitle %}History - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-<link href="{% static "css/history.css" %}" rel="preload" as="style">
-<link href="{% static "css/history.css" %}" rel="stylesheet">
+{% load static %}
+<link href="{% static "css/history.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/history.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block content %}
@@ -13,5 +14,6 @@
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/history.js" %}"></script>
+{% load static %}
+<script src="{% static "js/history.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

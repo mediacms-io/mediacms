@@ -122,12 +122,13 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-<link href="{% static "css/media.css" %}" rel="preload" as="style">
-<link href="{% static "css/media.css" %}" rel="stylesheet">
+{% load static %}
+<link href="{% static "css/media.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/media.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block content %}<div id="page-media"></div>{% endblock content %}
 
 {% block bottomimports %}
-<script src="{% static "js/media.js" %}"></script>
+<script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

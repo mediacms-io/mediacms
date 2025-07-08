@@ -14,8 +14,9 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-<link href="{% static "css/profile-about.css" %}" rel="preload" as="style">
-<link href="{% static "css/profile-about.css" %}" rel="stylesheet">
+{% load static %}
+<link href="{% static "css/profile-about.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/profile-about.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -29,5 +30,6 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/profile-about.js" %}"></script>
+{% load static %}
+<script src="{% static "js/profile-about.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

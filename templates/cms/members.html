@@ -41,5 +41,6 @@
 {% block content %}<div id="page-members"></div>{% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/members.js" %}"></script>
+{% load static %}
+<script src="{% static "js/members.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

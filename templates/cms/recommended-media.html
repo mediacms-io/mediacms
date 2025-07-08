@@ -43,5 +43,6 @@
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/recommended.js" %}"></script>
+{% load static %}
+<script src="{% static "js/recommended.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

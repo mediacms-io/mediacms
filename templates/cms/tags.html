@@ -41,5 +41,6 @@
 {% block content %}<div id="page-tags"></div>{% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/tags.js" %}"></script>
+{% load static %}
+<script src="{% static "js/tags.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

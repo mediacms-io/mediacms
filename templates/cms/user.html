@@ -14,8 +14,9 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-<link href="{% static "css/profile-media.css" %}" rel="preload" as="style">
-<link href="{% static "css/profile-media.css" %}" rel="stylesheet">
+{% load static %}
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -29,5 +30,6 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/profile-media.js" %}"></script>
+{% load static %}
+<script src="{% static "js/profile-media.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

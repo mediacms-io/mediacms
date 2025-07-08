@@ -14,5 +14,6 @@
 {% block content %}<div id="page-manage-users"></div>{% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/manage-users.js" %}"></script>
+{% load static %}
+<script src="{% static "js/manage-users.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

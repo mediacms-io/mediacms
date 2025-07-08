@@ -4,8 +4,9 @@
 {% block headtitle %}Playlist - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-<link href="{% static "css/playlist.css" %}" rel="preload" as="style">
-<link href="{% static "css/playlist.css" %}" rel="stylesheet">
+{% load static %}
+<link href="{% static "css/playlist.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/playlist.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block content %}
@@ -13,5 +14,5 @@
 {% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/playlist.js" %}"></script>
+<script src="{% static "js/playlist.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
