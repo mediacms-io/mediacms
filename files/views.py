@@ -701,7 +701,7 @@ class MediaList(APIView):
             else:
                 # base listings should show safe content
                 if request.user.is_authenticated:
-                    basic_query = Q(listable=True) | Q(category__rbac_groups__members=self.request.user) | Q(permissions__user=self.request.user)
+                    basic_query = Q(listable=True) | Q(permissions__user=self.request.user)
                 else:
                     basic_query = Q(listable=True)
 
@@ -1078,7 +1078,7 @@ class MediaSearch(APIView):
             return Response(ret, status=status.HTTP_200_OK)
 
         if request.user.is_authenticated:
-            basic_query = Q(listable=True) | Q(category__rbac_groups__members=self.request.user) | Q(permissions__user=self.request.user)
+            basic_query = Q(listable=True) | Q(permissions__user=self.request.user)
         else:
             basic_query = Q(listable=True)
 
