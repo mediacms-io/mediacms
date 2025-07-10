@@ -701,7 +701,11 @@ class MediaList(APIView):
             else:
                 # base listings should show safe content
                 if request.user.is_authenticated:
-                    basic_query = Q(listable=True) | Q(permissions__user=self.request.user)
+                    basic_query = Q(listable=True) | Q(permissions__user=request.user)
+                    # TODO: OPTIMIZE!!!
+                    #if getattr(settings, 'USE_RBAC', False):
+                    #    rbac_categories = request.user.get_rbac_categories_as_member()
+                    #    basic_query |= Q(categories__in=rbac_categories)
                 else:
                     basic_query = Q(listable=True)
 
@@ -1078,9 +1082,16 @@ class MediaSearch(APIView):
             return Response(ret, status=status.HTTP_200_OK)
 
         if request.user.is_authenticated:
-            basic_query = Q(listable=True) | Q(permissions__user=self.request.user)
+            basic_query = Q(listable=True) | Q(permissions__user=request.user)
+            # TODO: OPTIMIZE!!!
+
+#            if getattr(settings, 'USE_RBAC', False):
+ #               rbac_categories = request.user.get_rbac_categories_as_member()
+  #              basic_query |= Q(categories__in=rbac_categories)
+
         else:
             basic_query = Q(listable=True)
+
 
         media = Media.objects.filter(basic_query).distinct().order_by("-add_date")
 
@@ -1102,11 +1113,6 @@ class MediaSearch(APIView):
 
         if category:
             media = media.filter(category__title__contains=category)
-            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
-                c_object = Category.objects.filter(title=category, is_rbac_category=True).first()
-                if c_object and request.user.has_member_access_to_category(c_object):
-                    # show all media where user has access based on RBAC
-                    media = Media.objects.filter(category=c_object)
 
         if media_type:
             media = media.filter(media_type=media_type)
