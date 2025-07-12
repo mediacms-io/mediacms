@@ -733,9 +733,28 @@ class MediaList(APIView):
         elif show_param == "featured":
             media = Media.objects.filter(listable=True, featured=True).prefetch_related("user").order_by("-add_date")
         elif show_param == "shared_by_me":
-            media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user")
+            if not self.request.user.is_authenticated:
+                media = Media.objects.none()
+            else:
+                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user")
         elif show_param == "shared_with_me":
-            media = Media.objects.filter(permissions__user=self.request.user).prefetch_related("user")
+            if not self.request.user.is_authenticated:
+                media = Media.objects.none()
+            else:
+                base_queryset = Media.objects.prefetch_related("user")
+                user_media_filters = {'permissions__user': request.user}
+                media = base_queryset.filter(**user_media_filters)
+
+                if getattr(settings, 'USE_RBAC', False):
+                    rbac_categories = request.user.get_rbac_categories_as_member()
+                    rbac_filters = {'category__in': rbac_categories}
+
+                    rbac_media = base_queryset.filter(**rbac_filters)
+                    media = media.union(rbac_media, all=True)
+                    # TODO: same comment for all=True as above
+                media = media.order_by("-add_date")
+
+                media = Media.objects.filter(permissions__user=self.request.user).prefetch_related("user")
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
