@@ -1685,12 +1685,15 @@ class CategoryList(APIView):
         },
     )
     def get(self, request, format=None):
+        base_filters = {}
 
-        if is_mediacms_editor(request.user):
-            categories = Category.objects.filter()
-        else:
-            categories = Category.objects.filter(is_rbac_category=False)
+        if not is_mediacms_editor(request.user):
+            base_filters = {"is_rbac_category": False}
 
+        base_queryset = Category.objects.prefetch_related("user")
+        categories = base_queryset.filter(**base_filters)
+
+        if not is_mediacms_editor(request.user):
             if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
                 rbac_categories = request.user.get_rbac_categories_as_member()
                 categories = categories.union(rbac_categories)
