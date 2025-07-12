@@ -707,10 +707,7 @@ class MediaList(APIView):
             rbac_media = base_queryset.filter(**rbac_filters)
             media = media.union(rbac_media, all=True)
 
-        # TODO: check if this is needed, or has to be adjusted
-        # interested for performance reasons only
-        if media.count() < 50000:
-            media = media.distinct()
+        media = media.distinct("id")
 
         return media.order_by("-add_date")
 
