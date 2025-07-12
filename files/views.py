@@ -669,38 +669,51 @@ class MediaList(APIView):
         responses={200: MediaSerializer(many=True)},
     )
 
-    def _get_media_queryset(self, request, author_param=None):
-        # Common base filters
+    def _get_media_queryset(self, request, user=None):
         base_filters = {'listable': True}
-        user = None
-
-        if author_param:
-            user = get_object_or_404(User.objects.all(), username=author_param)
+        if user:
             base_filters['user'] = user
 
-        # Initialize base queryset with prefetch_related
+        # 1. public media
         base_queryset = Media.objects.prefetch_related("user")
         listable_media = base_queryset.filter(**base_filters)
 
-        # Handle authenticated user permissions
-        if request.user.is_authenticated:
-            permission_filter = {'user': request.user}
-            if user:  # Only add owner_user if we have a specific author
-                permission_filter['owner_user'] = user
+        if not request.user.is_authenticated:
+            return listable_media.order_by("-add_date")
 
-            if MediaPermission.objects.filter(**permission_filter).exists():
-                user_media_filters = {'permissions__user': request.user}
-                if user:
-                    user_media_filters['user'] = user
+        # 2. user permissions for authenticated users
+        permission_filter = {'user': request.user}
+        if user:
+            permission_filter['owner_user'] = user
 
-                user_media = base_queryset.filter(**user_media_filters)
-                media = listable_media.union(user_media, all=True)
-                if media.count() < 50000:  # Adjust threshold based on your typical results
-                    media = media.distinct()
-                return media.order_by("-add_date")
+        # quick check for Permission model existence
+        if MediaPermission.objects.filter(**permission_filter).exists():
+            user_media_filters = {'permissions__user': request.user}
+            if user:
+                user_media_filters['user'] = user
 
-        # Default case (no permissions or not authenticated)
-        return listable_media.order_by("-add_date")
+            user_media = base_queryset.filter(**user_media_filters)
+            media = listable_media.union(user_media, all=True)
+        else:
+            media = listable_media
+
+        # 3. RBAC for authenticated users
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_categories = request.user.get_rbac_categories_as_member()
+            rbac_filters = {'category__in': rbac_categories}
+            if user:
+                rbac_filters['user'] = user
+
+            rbac_media = base_queryset.filter(**rbac_filters)
+            media = media.union(rbac_media, all=True)
+
+        # TODO: check if this is needed, or has to be adjusted
+        # interested for performance reasons only
+        if media.count() < 50000:
+            media = media.distinct()
+
+        return media.order_by("-add_date")
+
 
     def get(self, request, format=None):
         # Show media
@@ -731,7 +744,7 @@ class MediaList(APIView):
             if self.request.user == user:
                 media = Media.objects.filter(user=user).prefetch_related("user").order_by("-add_date")
             else:
-                media = self._get_media_queryset(request, author_param)
+                media = self._get_media_queryset(request, user)
         else:
             media = self._get_media_queryset(request)
 
