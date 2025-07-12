@@ -1122,7 +1122,7 @@ class MediaSearch(APIView):
             basic_query = Q(listable=True)
 
 
-        media = Media.objects.filter(basic_query).distinct().order_by("-add_date")
+        media = Media.objects.filter(basic_query).distinct()
 
         if query:
             # move this processing to a prepare_query function
