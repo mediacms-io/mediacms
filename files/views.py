@@ -49,7 +49,9 @@ from .forms import (
 from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
+    change_media_owner,
     check_comment_for_mention,
+    copy_media,
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
@@ -789,6 +791,168 @@ class MediaList(APIView):
             serializer.save(user=request.user, media_file=media_file)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class MediaBulkUserActions(APIView):
+    """Bulk actions on media items"""
+
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='media_ids', in_=openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), required=True, description="List of media IDs"),
+            openapi.Parameter(name='action', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="Action to perform", enum=["enable_comments", "disable_comments", "delete_media", "enable_download", "disable_download", "add_to_playlist", "remove_from_playlist", "set_state", "change_owner", "copy_media"]),
+            openapi.Parameter(name='playlist_ids', in_=openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), required=False, description="List of playlist IDs (required for add_to_playlist and remove_from_playlist actions)"),
+            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="State to set (required for set_state action)", enum=["private", "public", "unlisted"]),
+            openapi.Parameter(name='owner', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="New owner username (required for change_owner action)"),
+        ],
+        tags=['Media'],
+        operation_summary='Perform bulk actions on media',
+        operation_description='Perform various bulk actions on multiple media items at once',
+        responses={
+            200: openapi.Response('Action performed successfully'),
+            400: 'Bad request',
+            401: 'Not authenticated',
+        },
+    )
+    def post(self, request, format=None):
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get required parameters
+        media_ids = request.data.get('media_ids', [])
+        action = request.data.get('action')
+
+        # Validate required parameters
+        if not media_ids:
+            return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not action:
+            return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get media objects owned by the user
+        media = Media.objects.filter(user=request.user, id__in=media_ids)
+
+        if not media:
+            return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process based on action
+        if action == "enable_comments":
+            media.update(enable_comments=True)
+            return Response({"detail": f"Comments enabled for {media.count()} media items"})
+
+        elif action == "disable_comments":
+            media.update(enable_comments=False)
+            return Response({"detail": f"Comments disabled for {media.count()} media items"})
+
+        elif action == "delete_media":
+            count = media.count()
+            media.delete()
+            return Response({"detail": f"{count} media items deleted"})
+
+        elif action == "enable_download":
+            media.update(allow_download=True)
+            return Response({"detail": f"Download enabled for {media.count()} media items"})
+
+        elif action == "disable_download":
+            media.update(allow_download=False)
+            return Response({"detail": f"Download disabled for {media.count()} media items"})
+
+        elif action == "add_to_playlist":
+            playlist_ids = request.data.get('playlist_ids', [])
+            if not playlist_ids:
+                return Response({"detail": "playlist_ids is required for add_to_playlist action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            playlists = Playlist.objects.filter(user=request.user, id__in=playlist_ids)
+            if not playlists:
+                return Response({"detail": "No matching playlists found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            added_count = 0
+            for playlist in playlists:
+                for m in media:
+                    media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+                    if media_in_playlist < settings.MAX_MEDIA_PER_PLAYLIST:
+                        obj, created = PlaylistMedia.objects.get_or_create(
+                            playlist=playlist,
+                            media=m,
+                            ordering=media_in_playlist + 1,
+                        )
+                        if created:
+                            added_count += 1
+
+            return Response({"detail": f"Added {added_count} media items to {playlists.count()} playlists"})
+
+        elif action == "remove_from_playlist":
+            playlist_ids = request.data.get('playlist_ids', [])
+            if not playlist_ids:
+                return Response({"detail": "playlist_ids is required for remove_from_playlist action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            playlists = Playlist.objects.filter(user=request.user, id__in=playlist_ids)
+            if not playlists:
+                return Response({"detail": "No matching playlists found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            removed_count = 0
+            for playlist in playlists:
+                removed = PlaylistMedia.objects.filter(playlist=playlist, media__in=media).delete()[0]
+                removed_count += removed
+
+            return Response({"detail": f"Removed {removed_count} media items from {playlists.count()} playlists"})
+
+        elif action == "set_state":
+            state = request.data.get('state')
+            if not state:
+                return Response({"detail": "state is required for set_state action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            valid_states = ["private", "public", "unlisted"]
+            if state not in valid_states:
+                return Response({"detail": f"state must be one of {valid_states}"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if user can set public state
+            if not is_mediacms_editor(request.user) and settings.PORTAL_WORKFLOW != "public":
+                if state == "public":
+                    return Response({"detail": "You are not allowed to set media to public state"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update media state
+            for m in media:
+                m.state = state
+                if m.state == "public" and m.encoding_status == "success" and m.is_reviewed is True:
+                    m.listable = True
+                else:
+                    m.listable = False
+
+                m.save(update_fields=["state", "listable"])
+
+            return Response({"detail": f"State updated to {state} for {media.count()} media items"})
+
+        elif action == "change_owner":
+            owner = request.data.get('owner')
+            if not owner:
+                return Response({"detail": "owner is required for change_owner action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            new_user = User.objects.filter(username=owner).first()
+            if not new_user:
+                return Response({"detail": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            changed_count = 0
+            for m in media:
+                result = change_media_owner(m.id, new_user)
+                if result:
+                    changed_count += 1
+
+            return Response({"detail": f"Owner changed for {changed_count} media items"})
+
+        elif action == "copy_media":
+            for m in media:
+                copy_media(m.id)
+
+            return Response({"detail": f"{media.count()} media items copied"})
+
+        else:
+            return Response({"detail": f"Unknown action: {action}"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class MediaDetail(APIView):
