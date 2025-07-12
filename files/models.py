@@ -1084,9 +1084,10 @@ class Category(models.Model):
         if self.thumbnail:
             return helpers.url_from_path(self.thumbnail.path)
 
-        media = Media.objects.filter(category=self, state="public").order_by("-views").first()
-        if media:
-            return media.thumbnail_url
+        if Media.objects.filter(category=self, state="public").exists():
+            media = Media.objects.filter(category=self, state="public").order_by("-views").first()
+            if media:
+                return media.thumbnail_url
 
         return None
 
