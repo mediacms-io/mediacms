@@ -675,7 +675,7 @@ class MediaList(APIView):
             base_filters['user'] = user
 
         # 1. public media
-        base_queryset = Media.objects.select_related("user")
+        base_queryset = Media.objects.prefetch_related("user")
         listable_media = base_queryset.filter(**base_filters)
 
         if not request.user.is_authenticated:
@@ -729,16 +729,16 @@ class MediaList(APIView):
             pagination_class = FastPaginationWithoutCount
             media = show_recommended_media(request, limit=50)
         elif show_param == "featured":
-            media = Media.objects.filter(listable=True, featured=True).select_related("user").order_by("-add_date")
+            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user").order_by("-add_date")
         elif show_param == "shared_by_me":
-            media = Media.objects.filter(permissions__owner_user=self.request.user).select_related("user")
+            media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user")
         elif show_param == "shared_with_me":
-            media = Media.objects.filter(permissions__user=self.request.user).select_related("user")
+            media = Media.objects.filter(permissions__user=self.request.user).prefetch_related("user")
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
             if self.request.user == user:
-                media = Media.objects.filter(user=user).select_related("user").order_by("-add_date")
+                media = Media.objects.filter(user=user).prefetch_related("user").order_by("-add_date")
             else:
                 media = self._get_media_queryset(request, user)
         else:
@@ -1170,7 +1170,7 @@ class MediaSearch(APIView):
             media = media.values("title")[:40]
             return Response(media, status=status.HTTP_200_OK)
         else:
-            media = media.select_related("user")
+            media = media.prefetch_related("user")
             if category or tag:
                 pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
             else:
@@ -1687,9 +1687,9 @@ class CategoryList(APIView):
     def get(self, request, format=None):
 
         if is_mediacms_editor(request.user):
-            categories = Category.objects.select_related('user').filter()
+            categories = Category.objects.filter()
         else:
-            categories = Category.objects.select_related('user').filter(is_rbac_category=False)
+            categories = Category.objects.filter(is_rbac_category=False)
 
             if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
                 rbac_categories = request.user.get_rbac_categories_as_member()

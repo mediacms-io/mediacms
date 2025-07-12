@@ -1054,10 +1054,20 @@ class Category(models.Model):
     def update_category_media(self):
         """Set media_count"""
 
-        if getattr(settings, 'USE_RBAC', False) and self.is_rbac_category:
-            self.media_count = Media.objects.filter(category=self).count()
-        else:
-            self.media_count = Media.objects.filter(listable=True, category=self).count()
+        # Always set number of Category the total number of media
+        # Depending on how RBAC is set and Permissions etc it is
+        # possible that users won't see all media in a Category
+        # but it's worth to handle this on the UI level
+        # (eg through a message that says that you see only files you have permissions to see)
+
+        self.media_count = Media.objects.filter(category=self).count()
+        self.save(update_fields=["media_count"])
+
+        # OLD login
+        # if getattr(settings, 'USE_RBAC', False) and self.is_rbac_category:
+        #    self.media_count = Media.objects.filter(category=self).count()
+        # else:
+        #    self.media_count = Media.objects.filter(listable=True, category=self).count()
 
         self.save(update_fields=["media_count"])
         return True
