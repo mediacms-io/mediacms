@@ -707,7 +707,7 @@ class MediaList(APIView):
             rbac_media = base_queryset.filter(**rbac_filters)
             media = media.union(rbac_media, all=True)
 
-        media = media.distinct("id")
+        media = media.distinct()
 
         return media.order_by("-add_date")
 
