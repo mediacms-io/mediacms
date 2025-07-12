@@ -753,8 +753,6 @@ class MediaList(APIView):
                     media = media.union(rbac_media, all=True)
                     # TODO: same comment for all=True as above
                 media = media.order_by("-add_date")
-
-                media = Media.objects.filter(permissions__user=self.request.user).prefetch_related("user")
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
