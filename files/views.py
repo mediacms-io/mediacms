@@ -1171,7 +1171,8 @@ class MediaSearch(APIView):
             media = media.values("title")[:40]
             return Response(media, status=status.HTTP_200_OK)
         else:
-            media = media.prefetch_related("user")
+            media = media.prefetch_related("user")[:1000]  # limit to 1000 results
+
             if category or tag:
                 pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
             else:
