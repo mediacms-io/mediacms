@@ -693,7 +693,7 @@ class MediaList(APIView):
                 user_media_filters['user'] = user
 
             user_media = base_queryset.filter(**user_media_filters)
-            media = listable_media.union(user_media, all=True)
+            media = listable_media.union(user_media)
         else:
             media = listable_media
 
@@ -705,9 +705,8 @@ class MediaList(APIView):
                 rbac_filters['user'] = user
 
             rbac_media = base_queryset.filter(**rbac_filters)
-            media = media.union(rbac_media, all=True)
+            media = media.union(rbac_media)
 
-        #media = media.distinct()
 
         return media.order_by("-add_date")
 
