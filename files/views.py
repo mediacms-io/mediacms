@@ -619,7 +619,7 @@ def view_media(request):
     context["CAN_DELETE_COMMENTS"] = False
 
     if request.user.is_authenticated:
-        if media.user.id == request.user.id or is_mediacms_editor(request.user):
+        if request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user):
             context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
@@ -694,6 +694,7 @@ class MediaList(APIView):
 
             user_media = base_queryset.filter(**user_media_filters)
             media = listable_media.union(user_media, all=True)
+            # TODO: all=True might return duplicates, but makes the query faster
         else:
             media = listable_media
 
@@ -706,6 +707,7 @@ class MediaList(APIView):
 
             rbac_media = base_queryset.filter(**rbac_filters)
             media = media.union(rbac_media, all=True)
+            # TODO: same comment for all=True as above
 
 
         return media.order_by("-add_date")
