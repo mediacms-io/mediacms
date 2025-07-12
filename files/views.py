@@ -1113,11 +1113,10 @@ class MediaSearch(APIView):
 
         if request.user.is_authenticated:
             basic_query = Q(listable=True) | Q(permissions__user=request.user)
-            # TODO: OPTIMIZE!!!
 
-#            if getattr(settings, 'USE_RBAC', False):
- #               rbac_categories = request.user.get_rbac_categories_as_member()
-  #              basic_query |= Q(categories__in=rbac_categories)
+            if getattr(settings, 'USE_RBAC', False):
+                rbac_categories = request.user.get_rbac_categories_as_member()
+                basic_query |= Q(category__in=rbac_categories)
 
         else:
             basic_query = Q(listable=True)
