@@ -48,8 +48,12 @@ urlpatterns = [
     re_path(r"^view", views.view_media, name="get_media"),
     re_path(r"^upload", views.upload_media, name="upload_media"),
     # API VIEWS
+    re_path(r"^api/v1/media/user/bulk_actions$", views.MediaBulkUserActions.as_view()),
+    re_path(r"^api/v1/media/user/bulk_actions/$", views.MediaBulkUserActions.as_view()),
+
     re_path(r"^api/v1/media$", views.MediaList.as_view()),
     re_path(r"^api/v1/media/$", views.MediaList.as_view()),
+
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w\-_]*)$",
         views.MediaDetail.as_view(),
