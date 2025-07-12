@@ -66,6 +66,7 @@ from .models import (
     EncodeProfile,
     Encoding,
     Media,
+    MediaPermission,
     Playlist,
     PlaylistMedia,
     Subtitle,
@@ -667,6 +668,40 @@ class MediaList(APIView):
         operation_description='Lists all media',
         responses={200: MediaSerializer(many=True)},
     )
+
+    def _get_media_queryset(self, request, author_param=None):
+        # Common base filters
+        base_filters = {'listable': True}
+        user = None
+
+        if author_param:
+            user = get_object_or_404(User.objects.all(), username=author_param)
+            base_filters['user'] = user
+
+        # Initialize base queryset with prefetch_related
+        base_queryset = Media.objects.prefetch_related("user")
+        listable_media = base_queryset.filter(**base_filters)
+
+        # Handle authenticated user permissions
+        if request.user.is_authenticated:
+            permission_filter = {'user': request.user}
+            if user:  # Only add owner_user if we have a specific author
+                permission_filter['owner_user'] = user
+
+            if MediaPermission.objects.filter(**permission_filter).exists():
+                user_media_filters = {'permissions__user': request.user}
+                if user:
+                    user_media_filters['user'] = user
+
+                user_media = base_queryset.filter(**user_media_filters)
+                media = listable_media.union(user_media, all=True)
+                if media.count() < 50000:  # Adjust threshold based on your typical results
+                    media = media.distinct()
+                return media.order_by("-add_date")
+
+        # Default case (no permissions or not authenticated)
+        return listable_media.order_by("-add_date")
+
     def get(self, request, format=None):
         # Show media
         # authenticated users can see:
@@ -679,45 +714,29 @@ class MediaList(APIView):
         show_param = params.get("show", "")
 
         author_param = params.get("author", "").strip()
-        if author_param:
-            user_queryset = User.objects.all()
-            user = get_object_or_404(user_queryset, username=author_param)
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
         if show_param == "recommended":
             pagination_class = FastPaginationWithoutCount
             media = show_recommended_media(request, limit=50)
+        elif show_param == "featured":
+            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user").order_by("-add_date")
         elif show_param == "shared_by_me":
-            media = Media.objects.filter(permissions__owner_user=self.request.user)
+            media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user")
         elif show_param == "shared_with_me":
-            media = Media.objects.filter(permissions__user=self.request.user)
+            media = Media.objects.filter(permissions__user=self.request.user).prefetch_related("user")
+        elif author_param:
+            user_queryset = User.objects.all()
+            user = get_object_or_404(user_queryset, username=author_param)
+            if self.request.user == user:
+                media = Media.objects.filter(user=user).prefetch_related("user").order_by("-add_date")
+            else:
+                media = self._get_media_queryset(request, author_param)
         else:
-            pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-            if author_param:
-                # in case request.user is the user here, show
-                # all media independant of state
-                if self.request.user == user:
-                    basic_query = Q(user=user)
-                else:
-                    basic_query = Q(listable=True, user=user)
-            else:
-                # base listings should show safe content
-                if request.user.is_authenticated:
-                    basic_query = Q(listable=True) | Q(permissions__user=request.user)
-                    # TODO: OPTIMIZE!!!
-                    #if getattr(settings, 'USE_RBAC', False):
-                    #    rbac_categories = request.user.get_rbac_categories_as_member()
-                    #    basic_query |= Q(categories__in=rbac_categories)
-                else:
-                    basic_query = Q(listable=True)
-
-            if show_param == "featured":
-                media = Media.objects.filter(basic_query, featured=True).distinct()
-            else:
-                media = Media.objects.filter(basic_query).distinct().order_by("-add_date")
+            media = self._get_media_queryset(request)
 
         paginator = pagination_class()
 
-        if show_param != "recommended":
-            media = media.prefetch_related("user")
         page = paginator.paginate_queryset(media, request)
 
         serializer = MediaSerializer(page, many=True, context={"request": request})
