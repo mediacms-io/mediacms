@@ -123,7 +123,7 @@ class User(AbstractUser):
         Get all categories related to RBAC groups the user belongs to
         """
         rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"])
-        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        categories = Category.objects.prefetch_related("user").filter(rbac_groups__in=rbac_groups).distinct()
         return categories
 
     def has_member_access_to_category(self, category):
