@@ -1,7 +1,7 @@
 .PHONY: admin-shell build-frontend
 
 admin-shell:
-	@container_id=$$(docker-compose ps -q web); \
+	@container_id=$$(docker compose ps -q web); \
 	if [ -z "$$container_id" ]; then \
 		echo "Web container not found"; \
 		exit 1; \
