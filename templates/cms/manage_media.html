@@ -19,7 +19,6 @@ window.CATEGORIES = {{ categories|safe }};
 {% endblock %}
 
 {% block bottomimports %}
-{% load static %}
-<script src="{% static "js/manage-media.js" %}?v={{ VERSION }}"></script>
+<script src="{% static "js/manage-media.js" %}"></script>
 {% endblock bottomimports %}
 

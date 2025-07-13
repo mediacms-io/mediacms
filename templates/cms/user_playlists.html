@@ -14,9 +14,8 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-{% load static %}
-<link href="{% static "css/profile-playlists.css" %}?v={{ VERSION }}" rel="preload" as="style">
-<link href="{% static "css/profile-playlists.css" %}?v={{ VERSION }}" rel="stylesheet">
+<link href="{% static "css/profile-playlists.css" %}" rel="preload" as="style">
+<link href="{% static "css/profile-playlists.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -30,6 +29,5 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
-{% load static %}
-<script src="{% static "js/profile-playlists.js" %}?v={{ VERSION }}"></script>
+<script src="{% static "js/profile-playlists.js" %}"></script>
 {% endblock bottomimports %}

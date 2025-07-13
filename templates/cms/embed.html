@@ -2,14 +2,12 @@
 {% load static %}
 
 {% block topimports %}
-{% load static %}
-<link href="{% static "css/embed.css" %}?v={{ VERSION }}" rel="preload" as="style">
-<link href="{% static "css/embed.css" %}?v={{ VERSION }}" rel="stylesheet">
+<link href="{% static "css/embed.css" %}" rel="preload" as="style">
+<link href="{% static "css/embed.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block content %}<div id="page-embed"></div>{% endblock content %}
 
 {% block bottomimports %}
-{% load static %}
-<script src="{% static "js/embed.js" %}?v={{ VERSION }}"></script>
+<script src="{% static "js/embed.js" %}"></script>
 {% endblock bottomimports %}

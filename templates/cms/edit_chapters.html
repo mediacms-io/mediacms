@@ -5,9 +5,8 @@
 {% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-{% load static %}
-<link href="{% static "video_editor/video-editor.css" %}?v={{ VERSION }}" rel="preload" as="style">
-<link href="{% static "video_editor/video-editor.css" %}?v={{ VERSION }}" rel="stylesheet">
+<link href="{% static "video_editor/video-editor.css" %}" rel="preload" as="style">
+<link href="{% static "video_editor/video-editor.css" %}" rel="stylesheet">
 <script>
 window.MEDIA_DATA = {
 	videoUrl: "",
@@ -31,7 +30,7 @@ window.MEDIA_DATA = {
 	]
 };
 </script>
-<script src="{% static 'video_editor/video-editor.js' %}?v={{ VERSION }}"></script>
+<script src="{% static 'video_editor/video-editor.js' %}"></script>
 {%endblock topimports %}
 
 {% block innercontent %}

@@ -8,16 +8,14 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/file-uploader/5.13.0/fine-uploader.min.js" rel="preload" as="script">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/file-uploader/5.13.0/fine-uploader.min.js"></script>
 {% else %}
-{% load static %}
 <link href="{% static "lib/file-uploader/5.13.0/fine-uploader.min.js" %}" rel="preload" as="script">
 <script src="{% static "lib/file-uploader/5.13.0/fine-uploader.min.js" %}"></script>
 {% endif %}
 {% endblock externallinks %}
 
 {% block topimports %}
-{% load static %}
-<link href="{% static "css/add-media.css" %}?v={{ VERSION }}" rel="preload" as="style">
-<link href="{% static "css/add-media.css" %}?v={{ VERSION }}" rel="stylesheet">
+<link href="{% static "css/add-media.css" %}" rel="preload" as="style">
+<link href="{% static "css/add-media.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -131,8 +129,7 @@
 {% endblock innercontent %}
 
 {% block bottomimports %}
-{% load static %}
-<script src="{% static "js/add-media.js" %}?v={{ VERSION }}"></script>
+<script src="{% static "js/add-media.js" %}"></script>
 <script>
 	document.addEventListener("DOMContentLoaded", function(event) {
 		function getCSRFToken() {
