@@ -20,10 +20,10 @@ function VideoJSPlayer() {
                 : {
                       data: {},
                       siteUrl: '',
+                      hasNextLink: true,
                   },
         []
     );
-    console.log('window.MEDIA_DATA hasNextLink', mediaData.hasNextLink);
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
@@ -138,9 +138,13 @@ function VideoJSPlayer() {
         },
     ]);
 
-    // Function to navigate to next video (disabled for single video)
+    // Function to navigate to next video
     const goToNextVideo = () => {
-        // console.log('Next video functionality disabled for single video mode');
+        console.log('Next video functionality disabled for single video mode');
+
+        if (mediaData.onClickNextCallback && typeof mediaData.onClickNextCallback === 'function') {
+            mediaData.onClickNextCallback();
+        }
     };
 
     useEffect(() => {
@@ -494,7 +498,7 @@ function VideoJSPlayer() {
                         const playToggle = controlBar.getChild('playToggle');
                         const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
 
-                        // Implement custom time display component
+                        // BEGIN: Implement custom time display component
                         const customRemainingTime = new CustomRemainingTime(playerRef.current, {
                             displayNegative: false,
                             customPrefix: '',
@@ -508,12 +512,15 @@ function VideoJSPlayer() {
                         } else {
                             controlBar.addChild(customRemainingTime, {}, 2);
                         }
+                        // END: Implement custom time display component
 
-                        // Implement custom next video button
-                        const nextVideoButton = new NextVideoButton(playerRef.current);
-
-                        const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
-                        controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
+                        // BEGIN: Implement custom next video button
+                        if (mediaData.hasNextLink) {
+                            const nextVideoButton = new NextVideoButton(playerRef.current);
+                            const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
+                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
+                        }
+                        // END: Implement custom next video button
 
                         // Remove duplicate captions button and move chapters to end
                         const cleanupControls = () => {
