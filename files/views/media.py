@@ -56,7 +56,6 @@ class MediaList(APIView):
         operation_description='Lists all media',
         responses={200: MediaSerializer(many=True)},
     )
-
     def _get_media_queryset(self, request, user=None):
         base_filters = Q(listable=True)
         if user:
@@ -90,7 +89,6 @@ class MediaList(APIView):
             conditions |= rbac_conditions
 
         return base_queryset.filter(conditions).distinct().order_by("-add_date")[:1000]
-
 
     def get(self, request, format=None):
         # Show media

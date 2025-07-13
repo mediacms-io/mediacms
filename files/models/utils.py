@@ -1,5 +1,3 @@
-import re
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.crypto import get_random_string
@@ -58,8 +56,6 @@ CODECS = (
 
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
-
-RE_TIMECODE = re.compile(r"(\d+:\d+:\d+.\d+)")
 
 
 def generate_uid():
