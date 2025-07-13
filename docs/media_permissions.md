@@ -98,7 +98,7 @@ Users can share media with others by:
 When listing media, the system filters based on permissions:
 
 ```python
-# Simplified example from files/views.py
+# Simplified example from files/views/media.py
 def _get_media_queryset(self, request, user=None):
     # 1. Public media
     listable_media = Media.objects.filter(listable=True)

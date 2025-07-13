@@ -120,7 +120,6 @@ class MediaList(APIView):
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-
                 base_queryset = Media.objects.prefetch_related("user")
                 user_media_filters = {'permissions__user': request.user}
                 media = base_queryset.filter(**user_media_filters)
@@ -132,8 +131,6 @@ class MediaList(APIView):
                     rbac_media = base_queryset.filter(**rbac_filters)
                     media = media.union(rbac_media)
                 media = media.order_by("-add_date")[:1000]  # limit to 1000 results
-
-
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
