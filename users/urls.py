@@ -7,7 +7,6 @@ urlpatterns = [
     re_path(r"^user/(?P<username>[\w@._-]*)/$", views.view_user, name="get_user"),
     re_path(r"^user/(?P<username>[\w@._-]*)/shared_with_me", views.shared_with_me, name="shared_with_me"),
     re_path(r"^user/(?P<username>[\w@._-]*)/shared_by_me", views.shared_by_me, name="shared_by_me"),
-
     re_path(
         r"^user/(?P<username>[\w@.]*)/playlists$",
         views.view_user_playlists,

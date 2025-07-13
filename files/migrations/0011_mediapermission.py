@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('files', '0010_alter_encodeprofile_resolution'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
