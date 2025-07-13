@@ -129,7 +129,7 @@
 {% endblock innercontent %}
 
 {% block bottomimports %}
-<script src="{% static "js/add-media.js" %}"></script>
+<script src="{% static "js/add-media.js" %}?v={{ VERSION }}"></script>
 <script>
 	document.addEventListener("DOMContentLoaded", function(event) {
 		function getCSRFToken() {

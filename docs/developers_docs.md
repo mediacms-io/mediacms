@@ -17,7 +17,7 @@ to be written
 
 ## 3. API documentation
 API is documented using Swagger - checkout ot http://your_installation/swagger - example https://demo.mediacms.io/swagger/
-This page allows you to login to perform authenticated actions - it will also use your session if logged in. 
+This page allows you to login to perform authenticated actions - it will also use your session if logged in.
 
 
 An example of working with Python requests library:
@@ -50,8 +50,8 @@ Checkout the [Code of conduct page](../CODE_OF_CONDUCT.md) if you want to contri
 To perform the Docker installation, follow instructions to install Docker + Docker compose (docs/Docker_Compose.md) and then build/start docker-compose-dev.yaml . This will run the frontend application on port 8088 on top of all other containers (including the Django web application on port 80)
 
 ```
-docker-compose -f docker-compose-dev.yaml build
-docker-compose -f docker-compose-dev.yaml up
+docker compose -f docker-compose-dev.yaml build
+docker compose -f docker-compose-dev.yaml up
 ```
 
 An `admin` user is created during the installation process. Its attributes are defined in `docker-compose-dev.yaml`:
@@ -65,16 +65,16 @@ ADMIN_EMAIL: 'admin@localhost'
 Eg change `frontend/src/static/js/pages/HomePage.tsx` , dev application refreshes in a number of seconds (hot reloading) and I see the changes, once I'm happy I can run
 
 ```
-docker-compose -f docker-compose-dev.yaml exec -T frontend npm run dist
+docker compose -f docker-compose-dev.yaml exec -T frontend npm run dist
 ```
 
-And then in order for the changes to be visible on the application while served through nginx, 
+And then in order for the changes to be visible on the application while served through nginx,
 
 ```
 cp -r frontend/dist/static/* static/
 ```
 
-POST calls: cannot be performed through the dev server, you have to make through the normal application (port 80) and then see changes on the dev application on port 8088. 
+POST calls: cannot be performed through the dev server, you have to make through the normal application (port 80) and then see changes on the dev application on port 8088.
 Make sure the urls are set on `frontend/.env` if different than localhost
 
 
@@ -90,7 +90,7 @@ http://localhost:8088/manage-media.html manage_media
 After I make changes to the django application (eg make a change on `files/forms.py`) in order to see the changes I have to restart the web container
 
 ```
-docker-compose -f docker-compose-dev.yaml restart web
+docker compose -f docker-compose-dev.yaml restart web
 ```
 
 ## How video is transcoded
@@ -113,7 +113,7 @@ there is also an experimental small service (not commited to the repo currently)
 
 When the Encode object is marked as success and chunk=False, and thus is available for download/stream, there is a task that gets started and saves an HLS version of the file (1 mp4-->x number of small .ts chunks). This would be FILES_C
 
-This mechanism allows for workers that have access on the same filesystem (either localhost, or through a shared network filesystem, eg NFS/EFS) to work on the same time and produce results. 
+This mechanism allows for workers that have access on the same filesystem (either localhost, or through a shared network filesystem, eg NFS/EFS) to work on the same time and produce results.
 
 ## 6. Working with the automated tests
 
@@ -122,19 +122,19 @@ This instructions assume that you're using the docker installation
 1. start docker-compose
 
 ```
-docker-compose up
+docker compose up
 ```
 
 2. Install the requirements on `requirements-dev.txt ` on web container (we'll use the web container for this)
 
 ```
-docker-compose exec -T web pip install -r requirements-dev.txt 
+docker compose exec -T web pip install -r requirements-dev.txt
 ```
 
 3. Now you can run the existing tests
 
 ```
-docker-compose exec --env TESTING=True -T web pytest
+docker compose exec --env TESTING=True -T web pytest
 ```
 
 The `TESTING=True` is passed for Django to be aware this is a testing environment (so that it runs Celery tasks as functions for example and not as background tasks, since Celery is not started in the case of pytest)
@@ -143,13 +143,13 @@ The `TESTING=True` is passed for Django to be aware this is a testing environmen
 4. You may try a single test, by specifying the path, for example
 
 ```
-docker-compose exec --env TESTING=True -T web pytest tests/test_fixtures.py
+docker compose exec --env TESTING=True -T web pytest tests/test_fixtures.py
 ```
 
 5. You can also see the coverage
 
 ```
-docker-compose exec --env TESTING=True -T web pytest --cov=. --cov-report=html
+docker compose exec --env TESTING=True -T web pytest --cov=. --cov-report=html
 ```
 
 and of course...you are very welcome to help us increase it ;)

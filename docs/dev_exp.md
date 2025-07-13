@@ -4,10 +4,10 @@ There is ongoing effort to provide a better developer experience and document it
 ## How to develop locally with Docker
 First install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-Then run `docker-compose -f docker-compose-dev.yaml up`
+Then run `docker compose -f docker-compose-dev.yaml up`
 
 ```
-user@user:~/mediacms$ docker-compose -f docker-compose-dev.yaml up
+user@user:~/mediacms$ docker compose -f docker-compose-dev.yaml up
 ```
 
 In a few minutes the app will be available at http://localhost . Login via admin/admin
@@ -37,7 +37,7 @@ Django starts at http://localhost and is reloading automatically. Making any cha
 If Django breaks due to an error (eg SyntaxError, while editing the code), you might have to restart it
 
 ```
-docker-compose -f docker-compose-dev.yaml restart web
+docker compose -f docker-compose-dev.yaml restart web
 ```
 
 
@@ -62,9 +62,9 @@ In order to make changes to React code, edit code on frontend/src and check it's
 ### Development workflow with the frontend
 1. Edit frontend/src/ files
 2. Check changes on http://localhost:8088/
-3. Build frontend with `docker-compose -f docker-compose-dev.yaml exec frontend npm run dist`
+3. Build frontend with `docker compose -f docker-compose-dev.yaml exec frontend npm run dist`
 4. Copy static files to Django static folder with`cp -r frontend/dist/static/* static/`
-5. Restart Django - `docker-compose -f docker-compose-dev.yaml restart web` so that it uses the new static files
+5. Restart Django - `docker compose -f docker-compose-dev.yaml restart web` so that it uses the new static files
 6. Commit the changes
 
 ### Helper commands
@@ -81,7 +81,7 @@ Build the frontend:
 
 ```
 user@user:~/mediacms$ make build-frontend
-docker-compose -f docker-compose-dev.yaml exec frontend npm run dist
+docker compose -f docker-compose-dev.yaml exec frontend npm run dist
 
 > mediacms-frontend@0.9.1 dist /home/mediacms.io/mediacms/frontend
 > mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist

@@ -820,7 +820,7 @@ def update_listings_thumbnails():
     # Categories
     used_media = []
     saved = 0
-    qs = Category.objects.filter().order_by("-media_count")
+    qs = Category.objects.filter()
     for object in qs:
         media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state="public", is_reviewed=True).order_by("-views").first()
         if media:
@@ -833,7 +833,7 @@ def update_listings_thumbnails():
     # Tags
     used_media = []
     saved = 0
-    qs = Tag.objects.filter().order_by("-media_count")
+    qs = Tag.objects.filter()
     for object in qs:
         media = Media.objects.exclude(friendly_token__in=used_media).filter(tags=object, state="public", is_reviewed=True).order_by("-views").first()
         if media:
