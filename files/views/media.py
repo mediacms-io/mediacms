@@ -130,8 +130,8 @@ class MediaList(APIView):
                     rbac_filters = {'category__in': rbac_categories}
 
                     rbac_media = base_queryset.filter(**rbac_filters)
-                    media = media.union(rbac_media)[:1000]  # limit to 1000 results
-                media = media.order_by("-add_date")
+                    media = media.union(rbac_media)
+                media = media.order_by("-add_date")[:1000]  # limit to 1000 results
 
 
         elif author_param:
