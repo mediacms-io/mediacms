@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from django.core.files import File
 from django.test import Client, TestCase
 
@@ -18,12 +16,7 @@ class TestSearch(TestCase):
         # Create test media items with different attributes for search testing
         with open('fixtures/test_image2.jpg', "rb") as f:
             myfile = File(f)
-            self.media1 = Media.objects.create(
-                title="Python Tutorial",
-                description="Learn Python programming",
-                user=self.user,
-                media_file=myfile
-            )
+            self.media1 = Media.objects.create(title="Python Tutorial", description="Learn Python programming", user=self.user, media_file=myfile)
 
         with open('fixtures/test_image2.jpg', "rb") as f:
             myfile = File(f)
