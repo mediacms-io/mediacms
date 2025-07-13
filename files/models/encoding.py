@@ -1,4 +1,5 @@
 import json
+import tempfile
 
 from django.conf import settings
 from django.core.files import File
@@ -184,7 +185,7 @@ def encoding_file_save(sender, instance, created, **kwargs):
                 # concatenate chunks and create final encoding file
                 chunks_paths = [f.media_file.path for f in chunks]
 
-                with helpers.create_temp_directory() as temp_dir:
+                with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
                     seg_file = helpers.create_temp_file(suffix=".txt", dir=temp_dir)
                     tf = helpers.create_temp_file(suffix=f".{instance.profile.extension}", dir=temp_dir)
                     with open(seg_file, "w") as ff:
