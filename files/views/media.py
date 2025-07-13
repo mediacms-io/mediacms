@@ -131,7 +131,6 @@ class MediaList(APIView):
 
                 media = base_queryset.filter(conditions).distinct().order_by("-add_date")[:1000]
 
-                media = media.order_by("-add_date")
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
