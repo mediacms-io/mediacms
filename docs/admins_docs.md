@@ -168,8 +168,6 @@ By default, all these services are enabled, but in order to create a scaleable d
 
 Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
 
-See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
-
 To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
@@ -967,4 +965,4 @@ Visiting the admin, you will see the Identity Providers tab and you can add one.
 
 ## 25. Custom urls
 To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
-This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this. 
+This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.

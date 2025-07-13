@@ -567,3 +567,42 @@ def handle_video_chapters(media, chapters):
         video_chapter = models.VideoChapterData.objects.create(media=media, data=chapters)
 
     return media.chapter_data
+
+
+def change_media_owner(media_id, new_user):
+    """Change the owner of a media
+
+    Args:
+        media_id: ID of the media to change owner
+        new_user: New user object to set as owner
+
+    Returns:
+        Media object or None if media not found
+    """
+    media = models.Media.objects.filter(id=media_id).first()
+    if not media:
+        return None
+
+    # Change the owner
+    media.user = new_user
+    media.save(update_fields=["user"])
+
+    # Update any related permissions
+    media_permissions = models.MediaPermission.objects.filter(media=media)
+    for permission in media_permissions:
+        permission.owner_user = new_user
+        permission.save(update_fields=["owner_user"])
+
+    return media
+
+
+def copy_media(media_id):
+    """Create a copy of a media
+
+    Args:
+        media_id: ID of the media to copy
+
+    Returns:
+        None
+    """
+    pass

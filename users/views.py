@@ -47,17 +47,28 @@ def view_user(request, username):
     return render(request, "cms/user.html", context)
 
 
-def view_user_media(request, username):
+def shared_with_me(request, username):
     context = {}
     user = get_user(username=username)
-    if not user:
-        return HttpResponseRedirect("/members")
+    if not user or (user != request.user):
+        return HttpResponseRedirect("/")
 
     context["user"] = user
-    context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
-    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
-    context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
-    return render(request, "cms/user_media.html", context)
+    context["CAN_EDIT"] = True
+    context["CAN_DELETE"] = True
+    return render(request, "cms/user_shared_with_me.html", context)
+
+
+def shared_by_me(request, username):
+    context = {}
+    user = get_user(username=username)
+    if not user or (user != request.user):
+        return HttpResponseRedirect("/")
+
+    context["user"] = user
+    context["CAN_EDIT"] = True
+    context["CAN_DELETE"] = True
+    return render(request, "cms/user_shared_by_me.html", context)
 
 
 def view_user_playlists(request, username):
