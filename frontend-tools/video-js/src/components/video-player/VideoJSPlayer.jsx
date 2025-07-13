@@ -55,7 +55,7 @@ function VideoJSPlayer() {
                   ]
                 : [
                       {
-                          src: 'https://vjs.zencdn.net/v/oceans.mp4',
+                          src: '/videos/sample-video.mp4',
                           type: 'video/mp4',
                       },
                   ],
