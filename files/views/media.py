@@ -56,45 +56,41 @@ class MediaList(APIView):
         operation_description='Lists all media',
         responses={200: MediaSerializer(many=True)},
     )
+    
     def _get_media_queryset(self, request, user=None):
-        base_filters = {'listable': True}
+        base_filters = Q(listable=True)
         if user:
-            base_filters['user'] = user
+            base_filters &= Q(user=user)
 
-        # 1. public media
         base_queryset = Media.objects.prefetch_related("user")
-        listable_media = base_queryset.filter(**base_filters)
 
         if not request.user.is_authenticated:
-            return listable_media.order_by("-add_date")
+            return base_queryset.filter(base_filters).order_by("-add_date")
 
-        # 2. user permissions for authenticated users
+        # Build OR conditions for authenticated users
+        conditions = base_filters  # Start with listable media
+
+        # Add user permissions
         permission_filter = {'user': request.user}
         if user:
             permission_filter['owner_user'] = user
 
-        # quick check for Permission model existence
         if MediaPermission.objects.filter(**permission_filter).exists():
-            user_media_filters = {'permissions__user': request.user}
+            perm_conditions = Q(permissions__user=request.user)
             if user:
-                user_media_filters['user'] = user
+                perm_conditions &= Q(user=user)
+            conditions |= perm_conditions
 
-            user_media = base_queryset.filter(**user_media_filters)
-            media = listable_media.union(user_media)
-        else:
-            media = listable_media
-
-        # 3. RBAC for authenticated users
+        # Add RBAC conditions
         if getattr(settings, 'USE_RBAC', False):
             rbac_categories = request.user.get_rbac_categories_as_member()
-            rbac_filters = {'category__in': rbac_categories}
+            rbac_conditions = Q(category__in=rbac_categories)
             if user:
-                rbac_filters['user'] = user
+                rbac_conditions &= Q(user=user)
+            conditions |= rbac_conditions
 
-            rbac_media = base_queryset.filter(**rbac_filters)
-            media = media.union(rbac_media)
+        return base_queryset.filter(conditions).distinct().order_by("-add_date")[:1000]
 
-        return media.order_by("-add_date")
 
     def get(self, request, format=None):
         # Show media
@@ -133,7 +129,7 @@ class MediaList(APIView):
                     rbac_filters = {'category__in': rbac_categories}
 
                     rbac_media = base_queryset.filter(**rbac_filters)
-                    media = media.union(rbac_media)
+                    media = media.union(rbac_media)[:1000]  # limit to 1000 results
                 media = media.order_by("-add_date")
         elif author_param:
             user_queryset = User.objects.all()
