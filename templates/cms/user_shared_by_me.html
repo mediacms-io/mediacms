@@ -26,10 +26,12 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-media"></div>{% endif %}
+{% if user %}
+    <div id="page-profile-media"></div>
+{% endif %}
+
 {% endblock %}
 
 {% block bottomimports %}
-{% load static %}
-<script src="{% static "js/profile-media.js" %}?v={{ VERSION }}"></script>
+    <script src="{% static "js/profile-media.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
