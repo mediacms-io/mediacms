@@ -6,6 +6,7 @@ import 'video.js/dist/video-js.css';
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
 import NextVideoButton from '../controls/NextVideoButton';
+import CustomRemainingTime from '../controls/CustomRemainingTime';
 
 function VideoJSPlayer() {
     const videoRef = useRef(null);
@@ -47,9 +48,7 @@ function VideoJSPlayer() {
             sources: mediaData.data?.original_media_url
                 ? [
                       {
-                          src:
-                              mediaData.siteUrl +
-                              mediaData.data.original_media_url,
+                          src: mediaData.siteUrl + mediaData.data.original_media_url,
                           type: 'video/mp4',
                       },
                   ]
@@ -155,11 +154,7 @@ function VideoJSPlayer() {
 
             const timer = setTimeout(() => {
                 // Double-check that we still don't have a player and element exists
-                if (
-                    !playerRef.current &&
-                    videoRef.current &&
-                    !videoRef.current.player
-                ) {
+                if (!playerRef.current && videoRef.current && !videoRef.current.player) {
                     playerRef.current = videojs(videoRef.current, {
                         // ===== STANDARD <video> ELEMENT OPTIONS =====
 
@@ -318,9 +313,7 @@ function VideoJSPlayer() {
 
                                 // Function to override play/pause key (default: 'k' and Space)
                                 playPauseKey: function (event) {
-                                    return (
-                                        event.which === 75 || event.which === 32
-                                    ); // 'k' or Space
+                                    return event.which === 75 || event.which === 32; // 'k' or Space
                                 },
                             },
                         },
@@ -345,9 +338,10 @@ function VideoJSPlayer() {
                                 },
                             },
                             // Remaining time display configuration
-                            remainingTimeDisplay: {
+                            remainingTimeDisplay: false,
+                            /* remainingTimeDisplay: {
                                 displayNegative: true,
-                            },
+                            }, */
 
                             // Volume panel configuration
                             volumePanel: {
@@ -425,22 +419,14 @@ function VideoJSPlayer() {
                     // Event listeners
                     playerRef.current.on('ready', () => {
                         // Auto-play video when navigating from next button
-                        const urlParams = new URLSearchParams(
-                            window.location.search
-                        );
+                        const urlParams = new URLSearchParams(window.location.search);
                         const hasVideoParam = urlParams.get('m');
                         if (hasVideoParam) {
                             // Small delay to ensure everything is loaded
                             setTimeout(() => {
-                                if (
-                                    playerRef.current &&
-                                    !playerRef.current.isDisposed()
-                                ) {
+                                if (playerRef.current && !playerRef.current.isDisposed()) {
                                     playerRef.current.play().catch((error) => {
-                                        console.log(
-                                            'Autoplay was prevented:',
-                                            error
-                                        );
+                                        console.log('Autoplay was prevented:', error);
                                     });
                                 }
                             }, 100);
@@ -471,16 +457,11 @@ function VideoJSPlayer() {
                         );
 
                         // Create a text track for chapters programmatically
-                        const chaptersTrack = playerRef.current.addTextTrack(
-                            'chapters',
-                            'Chapters',
-                            'en'
-                        );
+                        const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
 
                         // Add cues to the chapters track
                         chaptersData.forEach((chapter) => {
-                            const cue = new (window.VTTCue ||
-                                window.TextTrackCue)(
+                            const cue = new (window.VTTCue || window.TextTrackCue)(
                                 chapter.startTime,
                                 chapter.endTime,
                                 chapter.text
@@ -494,44 +475,45 @@ function VideoJSPlayer() {
                                 .getChild('controlBar')
                                 .getChild('progressControl');
                             if (progressControl) {
-                                const seekBar =
-                                    progressControl.getChild('seekBar');
+                                const seekBar = progressControl.getChild('seekBar');
                                 if (seekBar) {
-                                    const markers =
-                                        seekBar.getChild('ChapterMarkers');
-                                    if (
-                                        markers &&
-                                        markers.updateChapterMarkers
-                                    ) {
+                                    const markers = seekBar.getChild('ChapterMarkers');
+                                    if (markers && markers.updateChapterMarkers) {
                                         markers.updateChapterMarkers();
                                     }
                                 }
                             }
                         }, 500);
 
-                        console.log(
-                            'Subtitles loaded but disabled by default - use CC button to enable'
-                        );
+                        console.log('Subtitles loaded but disabled by default - use CC button to enable');
                     });
 
                     // Add Next Video button to control bar and reorder chapters button
                     playerRef.current.ready(() => {
-                        const controlBar =
-                            playerRef.current.getChild('controlBar');
-                        const nextVideoButton = new NextVideoButton(
-                            playerRef.current
-                        );
-
-                        // Insert after play button
+                        const controlBar = playerRef.current.getChild('controlBar');
                         const playToggle = controlBar.getChild('playToggle');
-                        const playToggleIndex = controlBar
-                            .children()
-                            .indexOf(playToggle);
-                        controlBar.addChild(
-                            nextVideoButton,
-                            {},
-                            playToggleIndex + 1
-                        );
+                        const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
+
+                        // Implement custom time display component
+                        const customRemainingTime = new CustomRemainingTime(playerRef.current, {
+                            displayNegative: false,
+                            customPrefix: '',
+                            customSuffix: '',
+                        });
+
+                        // Insert it in the desired position (e.g., after current time display)
+                        if (currentTimeDisplay) {
+                            const currentTimeIndex = controlBar.children().indexOf(currentTimeDisplay);
+                            controlBar.addChild(customRemainingTime, {}, currentTimeIndex + 1);
+                        } else {
+                            controlBar.addChild(customRemainingTime, {}, 2);
+                        }
+
+                        // Implement custom next video button
+                        const nextVideoButton = new NextVideoButton(playerRef.current);
+
+                        const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
+                        controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
 
                         // Remove duplicate captions button and move chapters to end
                         const cleanupControls = () => {
@@ -539,10 +521,7 @@ function VideoJSPlayer() {
                             const allChildren = controlBar.children();
 
                             // Try to find and remove captions/subs-caps button (but keep subtitles)
-                            const possibleCaptionButtons = [
-                                'captionsButton',
-                                'subsCapsButton',
-                            ];
+                            const possibleCaptionButtons = ['captionsButton', 'subsCapsButton'];
                             possibleCaptionButtons.forEach((buttonName) => {
                                 const button = controlBar.getChild(buttonName);
                                 if (button) {
@@ -550,47 +529,29 @@ function VideoJSPlayer() {
                                         controlBar.removeChild(button);
                                         console.log(`✓ Removed ${buttonName}`);
                                     } catch (e) {
-                                        console.log(
-                                            `✗ Failed to remove ${buttonName}:`,
-                                            e
-                                        );
+                                        console.log(`✗ Failed to remove ${buttonName}:`, e);
                                     }
                                 }
                             });
 
                             // Alternative: hide buttons we can't remove
                             allChildren.forEach((child, index) => {
-                                const name = (
-                                    child.name_ ||
-                                    child.constructor.name ||
-                                    ''
-                                ).toLowerCase();
-                                if (
-                                    name.includes('caption') &&
-                                    !name.includes('subtitle')
-                                ) {
+                                const name = (child.name_ || child.constructor.name || '').toLowerCase();
+                                if (name.includes('caption') && !name.includes('subtitle')) {
                                     child.hide();
-                                    console.log(
-                                        `✓ Hidden button at index ${index}: ${name}`
-                                    );
+                                    console.log(`✓ Hidden button at index ${index}: ${name}`);
                                 }
                             });
 
                             // Move chapters button to the very end
-                            const chaptersButton =
-                                controlBar.getChild('chaptersButton');
+                            const chaptersButton = controlBar.getChild('chaptersButton');
                             if (chaptersButton) {
                                 try {
                                     controlBar.removeChild(chaptersButton);
                                     controlBar.addChild(chaptersButton);
-                                    console.log(
-                                        '✓ Chapters button moved to last position'
-                                    );
+                                    console.log('✓ Chapters button moved to last position');
                                 } catch (e) {
-                                    console.log(
-                                        '✗ Failed to move chapters button:',
-                                        e
-                                    );
+                                    console.log('✗ Failed to move chapters button:', e);
                                 }
                             }
                         };
@@ -604,15 +565,10 @@ function VideoJSPlayer() {
                         setTimeout(() => {
                             const setupClickableMenus = () => {
                                 // Find all menu buttons (chapters, subtitles, etc.)
-                                const menuButtons = [
-                                    'chaptersButton',
-                                    'subtitlesButton',
-                                    'playbackRateMenuButton',
-                                ];
+                                const menuButtons = ['chaptersButton', 'subtitlesButton', 'playbackRateMenuButton'];
 
                                 menuButtons.forEach((buttonName) => {
-                                    const button =
-                                        controlBar.getChild(buttonName);
+                                    const button = controlBar.getChild(buttonName);
                                     if (button && button.menuButton_) {
                                         // Override the menu button behavior
                                         const menuButton = button.menuButton_;
@@ -623,75 +579,40 @@ function VideoJSPlayer() {
 
                                         // Add click-to-toggle behavior
                                         menuButton.on('click', function () {
-                                            if (
-                                                this.menu.hasClass(
-                                                    'vjs-lock-showing'
-                                                )
-                                            ) {
-                                                this.menu.removeClass(
-                                                    'vjs-lock-showing'
-                                                );
+                                            if (this.menu.hasClass('vjs-lock-showing')) {
+                                                this.menu.removeClass('vjs-lock-showing');
                                                 this.menu.hide();
                                             } else {
-                                                this.menu.addClass(
-                                                    'vjs-lock-showing'
-                                                );
+                                                this.menu.addClass('vjs-lock-showing');
                                                 this.menu.show();
                                             }
                                         });
 
-                                        console.log(
-                                            `✓ Made ${buttonName} clickable`
-                                        );
+                                        console.log(`✓ Made ${buttonName} clickable`);
                                     } else if (button) {
                                         // For buttons without menuButton_ property
                                         const buttonEl = button.el();
                                         if (buttonEl) {
                                             // Add click handler to show/hide menu
-                                            buttonEl.addEventListener(
-                                                'click',
-                                                function (e) {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
+                                            buttonEl.addEventListener('click', function (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
 
-                                                    const menu =
-                                                        buttonEl.querySelector(
-                                                            '.vjs-menu'
-                                                        );
-                                                    if (menu) {
-                                                        if (
-                                                            menu.style
-                                                                .display ===
-                                                            'block'
-                                                        ) {
-                                                            menu.style.display =
-                                                                'none';
-                                                        } else {
-                                                            // Hide other menus first
-                                                            document
-                                                                .querySelectorAll(
-                                                                    '.vjs-menu'
-                                                                )
-                                                                .forEach(
-                                                                    (m) => {
-                                                                        if (
-                                                                            m !==
-                                                                            menu
-                                                                        )
-                                                                            m.style.display =
-                                                                                'none';
-                                                                    }
-                                                                );
-                                                            menu.style.display =
-                                                                'block';
-                                                        }
+                                                const menu = buttonEl.querySelector('.vjs-menu');
+                                                if (menu) {
+                                                    if (menu.style.display === 'block') {
+                                                        menu.style.display = 'none';
+                                                    } else {
+                                                        // Hide other menus first
+                                                        document.querySelectorAll('.vjs-menu').forEach((m) => {
+                                                            if (m !== menu) m.style.display = 'none';
+                                                        });
+                                                        menu.style.display = 'block';
                                                     }
                                                 }
-                                            );
+                                            });
 
-                                            console.log(
-                                                `✓ Added click handler to ${buttonName}`
-                                            );
+                                            console.log(`✓ Added click handler to ${buttonName}`);
                                         }
                                     }
                                 });
@@ -701,15 +622,11 @@ function VideoJSPlayer() {
                         }, 1500);
 
                         // Add chapter markers to progress control
-                        const progressControl =
-                            controlBar.getChild('progressControl');
+                        const progressControl = controlBar.getChild('progressControl');
                         if (progressControl) {
-                            const progressHolder =
-                                progressControl.getChild('seekBar');
+                            const progressHolder = progressControl.getChild('seekBar');
                             if (progressHolder) {
-                                const chapterMarkers = new ChapterMarkers(
-                                    playerRef.current
-                                );
+                                const chapterMarkers = new ChapterMarkers(playerRef.current);
                                 progressHolder.addChild(chapterMarkers);
                             }
                         }
@@ -738,23 +655,16 @@ function VideoJSPlayer() {
 
                         // Keep controls active after video ends
                         setTimeout(() => {
-                            if (
-                                playerRef.current &&
-                                !playerRef.current.isDisposed()
-                            ) {
+                            if (playerRef.current && !playerRef.current.isDisposed()) {
                                 // Remove vjs-ended class if it disables controls
                                 const playerEl = playerRef.current.el();
                                 if (playerEl) {
                                     // Keep the visual ended state but ensure controls work
-                                    const controlBar =
-                                        playerRef.current.getChild(
-                                            'controlBar'
-                                        );
+                                    const controlBar = playerRef.current.getChild('controlBar');
                                     if (controlBar) {
                                         controlBar.show();
                                         controlBar.el().style.opacity = '1';
-                                        controlBar.el().style.pointerEvents =
-                                            'auto';
+                                        controlBar.el().style.pointerEvents = 'auto';
                                     }
                                 }
                             }
@@ -762,9 +672,7 @@ function VideoJSPlayer() {
 
                         // Prevent creating multiple end screens
                         if (endScreen) {
-                            console.log(
-                                'End screen already exists, removing previous one'
-                            );
+                            console.log('End screen already exists, removing previous one');
                             playerRef.current.removeChild(endScreen);
                             endScreen = null;
                         }
@@ -809,26 +717,15 @@ function VideoJSPlayer() {
                     });
 
                     playerRef.current.on('fullscreenchange', () => {
-                        console.log(
-                            'Fullscreen changed:',
-                            playerRef.current.isFullscreen()
-                        );
+                        console.log('Fullscreen changed:', playerRef.current.isFullscreen());
                     });
 
                     playerRef.current.on('volumechange', () => {
-                        console.log(
-                            'Volume changed:',
-                            playerRef.current.volume(),
-                            'Muted:',
-                            playerRef.current.muted()
-                        );
+                        console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
                     });
 
                     playerRef.current.on('ratechange', () => {
-                        console.log(
-                            'Playback rate changed:',
-                            playerRef.current.playbackRate()
-                        );
+                        console.log('Playback rate changed:', playerRef.current.playbackRate());
                     });
 
                     playerRef.current.on('texttrackchange', () => {
@@ -853,18 +750,13 @@ function VideoJSPlayer() {
                         // Focus the player element
                         if (playerRef.current.el()) {
                             playerRef.current.el().focus();
-                            console.log(
-                                'Video player focused for keyboard controls'
-                            );
+                            console.log('Video player focused for keyboard controls');
                         }
 
                         // Start playing the video immediately if autoplay is enabled
                         if (playerRef.current.autoplay()) {
                             playerRef.current.play().catch((error) => {
-                                console.log(
-                                    'Autoplay prevented by browser:',
-                                    error
-                                );
+                                console.log('Autoplay prevented by browser:', error);
                                 // If autoplay fails, we can still focus the element
                                 // so the user can manually start and use keyboard controls
                             });
@@ -915,21 +807,12 @@ function VideoJSPlayer() {
         setTimeout(focusVideo, 500);
 
         return () => {
-            document.removeEventListener(
-                'visibilitychange',
-                handleVisibilityChange
-            );
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('focus', handleWindowFocus);
         };
     }, []);
 
-    return (
-        <video
-            ref={videoRef}
-            className='video-js vjs-default-skin'
-            tabIndex='0'
-        />
-    );
+    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
 }
 
 export default VideoJSPlayer;
