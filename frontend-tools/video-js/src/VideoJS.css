@@ -35,15 +35,6 @@
     box-sizing: border-box;
 }
 
-/* Responsive App container */
-.App {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 20px;
-    box-sizing: border-box;
-}
-
 /* Ensure video.js responsive behavior */
 .video-js.vjs-fluid {
     width: 100% !important;
@@ -248,9 +239,8 @@
 
 .vjs-chapter-floating-tooltip {
     font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif !important;
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif !important;
     line-height: 1.4 !important;
     animation: fadeIn 0.2s ease-in-out;
 }
@@ -353,3 +343,106 @@
         font-size: 12px !important;
     }
 }
+
+/* Played portion, buffered portion, unplayed portion */
+.vjs-play-progress {
+    background-color: #019932 !important;
+}
+.vjs-load-progress {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+.vjs-progress-holder {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Move progress control out of control bar and position it above */
+.video-js .vjs-progress-control {
+    position: absolute !important;
+    bottom: 46px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 0 !important;
+    z-index: 3 !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+}
+
+/* Hide the original progress control from the control bar */
+.video-js .vjs-control-bar .vjs-progress-control {
+    display: none !important;
+}
+
+/* Optional: Ensure the progress control is visible */
+.video-js .vjs-progress-control.vjs-control {
+    display: block !important;
+}
+
+/* Make the seek bar thicker */
+/* .video-js .vjs-play-progress,
+.video-js .vjs-load-progress,
+.video-js .vjs-progress-holder {
+    height: 4px !important;
+} */
+
+/* Remove the semi-transparent background from control bar */
+.video-js .vjs-control-bar {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+}
+
+/* Push specific buttons to the right */
+.video-js .vjs-playback-rate,
+.video-js .vjs-picture-in-picture-control,
+.video-js .vjs-fullscreen-control {
+    margin-left: auto !important;
+    order: 999 !important;
+}
+.video-js .vjs-picture-in-picture-control {
+    margin-left: 0 !important;
+}
+.video-js .vjs-fullscreen-control {
+    margin-left: 0 !important;
+}
+
+/* Make all control bar icons bigger */
+.video-js .vjs-control-bar .vjs-icon-placeholder,
+.video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
+.video-js .vjs-control-bar [class*="vjs-icon-"] {
+    font-size: 1.5em !important; /* 1.5x bigger */
+    transform: translateY(-28px) !important; /* Move icons up by 3px */
+}
+.video-js .vjs-control-bar svg {
+    width: 3em !important;
+    height: 3em !important;
+    transform: translateY(-16px) !important;
+}
+
+/******** BEGIN: Custom Remaining Time Styles *********/
+.vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+    font-size: 14px !important; /* Increase font size */
+    font-weight: 500;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #fff;
+}
+
+/* Ensure proper vertical alignment within control bar */
+.vjs-control-bar .custom-remaining-time {
+    top: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/********* END: Custom Remaining Time Styles *********/
