@@ -500,6 +500,16 @@ By default `CAN_COMMENT = "all"` means that all registered users can add comment
 
 - **advancedUser**, only users that are marked as advanced users can add comment. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
 
+### 5.26 Control whether anonymous users can list all users
+
+By default, anonymous users can view the list of all users on the platform. To restrict this to authenticated users only, set:
+
+```
+ALLOW_ANONYMOUS_USER_LISTING = False
+```
+
+When set to False, only logged-in users will be able to access the user listing API endpoint.
+
 
 ## 6. Manage pages
 to be written

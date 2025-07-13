@@ -188,8 +188,12 @@ Sender email: %s\n
 
 
 class UserList(APIView):
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+    
+    def get_permissions(self):
+        if not settings.ALLOW_ANONYMOUS_USER_LISTING:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticatedOrReadOnly()]
 
     @swagger_auto_schema(
         manual_parameters=[
