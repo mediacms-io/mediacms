@@ -14,6 +14,7 @@ from rest_framework.parsers import (
     JSONParser,
     MultiPartParser,
 )
+
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -175,7 +176,7 @@ class MediaBulkUserActions(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter(name='media_ids', in_=openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), required=True, description="List of media IDs"),
+            openapi.Parameter(name='media_ids', in_=openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), required=True, description="List of media IDs"),
             openapi.Parameter(
                 name='action',
                 in_=openapi.IN_FORM,
@@ -234,7 +235,7 @@ class MediaBulkUserActions(APIView):
             return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get media objects owned by the user
-        media = Media.objects.filter(user=request.user, id__in=media_ids)
+        media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
         if not media:
             return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)

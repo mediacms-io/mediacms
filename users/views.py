@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
@@ -193,6 +194,7 @@ class UserList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name or username'),
         ],
         tags=['Users'],
         operation_summary='List users',
@@ -202,9 +204,12 @@ class UserList(APIView):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         users = User.objects.filter()
-        location = request.GET.get("location", "").strip()
-        if location:
-            users = users.filter(location=location)
+
+        name = request.GET.get("name", "").strip()
+        if name:
+            users = users.filter(
+                Q(name__icontains=name) | Q(username__icontains=name)
+            )
 
         page = paginator.paginate_queryset(users, request)
 
