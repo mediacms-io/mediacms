@@ -56,7 +56,7 @@ class MediaList(APIView):
         operation_description='Lists all media',
         responses={200: MediaSerializer(many=True)},
     )
-    
+
     def _get_media_queryset(self, request, user=None):
         base_filters = Q(listable=True)
         if user:
@@ -120,16 +120,17 @@ class MediaList(APIView):
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
+
                 base_queryset = Media.objects.prefetch_related("user")
-                user_media_filters = {'permissions__user': request.user}
-                media = base_queryset.filter(**user_media_filters)
+
+                conditions = Q(permissions__user=request.user)
 
                 if getattr(settings, 'USE_RBAC', False):
                     rbac_categories = request.user.get_rbac_categories_as_member()
-                    rbac_filters = {'category__in': rbac_categories}
+                    conditions |= Q(category__in=rbac_categories)
 
-                    rbac_media = base_queryset.filter(**rbac_filters)
-                    media = media.union(rbac_media)[:1000]  # limit to 1000 results
+                media = base_queryset.filter(conditions).distinct().order_by("-add_date")[:1000]
+
                 media = media.order_by("-add_date")
         elif author_param:
             user_queryset = User.objects.all()
