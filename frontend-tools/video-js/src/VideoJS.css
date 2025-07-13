@@ -6,11 +6,12 @@
 }
 
 /* Ensure video element can receive focus for keyboard controls */
-.video-js:focus {
+/* .video-js:focus {
+    border: 50px solid red;
     box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.15),
         0 0 0 3px rgba(0, 122, 204, 0.3) !important;
-}
+} */
 
 .video-js video {
     outline: none !important;
@@ -398,7 +399,7 @@
 }
 
 /* Push specific buttons to the right */
-.video-js .vjs-playback-rate,
+/* .video-js .vjs-playback-rate,
 .video-js .vjs-picture-in-picture-control,
 .video-js .vjs-fullscreen-control {
     margin-left: auto !important;
@@ -409,14 +410,14 @@
 }
 .video-js .vjs-fullscreen-control {
     margin-left: 0 !important;
-}
+} */
 
 /* Make all control bar icons bigger */
 .video-js .vjs-control-bar .vjs-icon-placeholder,
 .video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
 .video-js .vjs-control-bar [class*="vjs-icon-"] {
-    font-size: 1.5em !important; /* 1.5x bigger */
-    transform: translateY(-28px) !important; /* Move icons up by 3px */
+    font-size: 1.5em !important;
+    transform: translateY(-28px) !important;
 }
 .video-js .vjs-control-bar svg {
     width: 3em !important;
@@ -446,3 +447,11 @@
 }
 
 /********* END: Custom Remaining Time Styles *********/
+
+/* Volume Slider */
+.vjs-mouse-display {
+    z-index: 4 !important;
+}
+.vjs-slider-horizontal {
+    top: -5px;
+}
