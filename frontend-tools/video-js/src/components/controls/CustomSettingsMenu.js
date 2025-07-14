@@ -1,6 +1,7 @@
 // components/controls/CustomSettingsMenu.js
 import videojs from 'video.js';
 import './CustomSettingsMenu.css';
+import UserPreferences from '../../utils/UserPreferences';
 
 // Get the Component base class from Video.js
 const Component = videojs.getComponent('Component');
@@ -12,6 +13,7 @@ class CustomSettingsMenu extends Component {
         this.settingsButton = null;
         this.settingsOverlay = null;
         this.speedSubmenu = null;
+        this.userPreferences = options?.userPreferences || new UserPreferences();
 
         // Bind methods
         this.createSettingsButton = this.createSettingsButton.bind(this);
@@ -64,18 +66,26 @@ class CustomSettingsMenu extends Component {
         this.settingsOverlay = document.createElement('div');
         this.settingsOverlay.className = 'custom-settings-overlay';
 
+        // Get current preferences for display
+        const currentPlaybackRate = this.userPreferences.getPreference('playbackRate');
+        const currentQuality = this.userPreferences.getPreference('quality');
+
+        // Format playback rate for display
+        const playbackRateLabel = currentPlaybackRate === 1 ? 'Normal' : `${currentPlaybackRate}`;
+        const qualityLabel = currentQuality.charAt(0).toUpperCase() + currentQuality.slice(1);
+
         // Settings menu content
         this.settingsOverlay.innerHTML = `
             <div class="settings-header">Settings</div>
             
             <div class="settings-item" data-setting="playback-speed">
                 <span>Playback speed</span>
-                <span class="current-speed">Normal</span>
+                <span class="current-speed">${playbackRateLabel}</span>
             </div>
             
             <div class="settings-item" data-setting="quality">
                 <span>Quality</span>
-                <span class="current-quality">Auto</span>
+                <span class="current-quality">${qualityLabel}</span>
             </div>
         `;
 
@@ -101,6 +111,9 @@ class CustomSettingsMenu extends Component {
         this.speedSubmenu = document.createElement('div');
         this.speedSubmenu.className = 'speed-submenu';
 
+        // Get current playback rate for highlighting
+        const currentRate = this.userPreferences.getPreference('playbackRate');
+
         this.speedSubmenu.innerHTML = `
             <div class="submenu-header">
                 <span style="margin-right: 8px;">←</span>
@@ -109,9 +122,9 @@ class CustomSettingsMenu extends Component {
             ${speedOptions
                 .map(
                     (option) => `
-                <div class="speed-option ${option.value === 1 ? 'active' : ''}" data-speed="${option.value}">
+                <div class="speed-option ${option.value === currentRate ? 'active' : ''}" data-speed="${option.value}">
                     <span>${option.label}</span>
-                    ${option.value === 1 ? '<span>✓</span>' : ''}
+                    ${option.value === currentRate ? '<span>✓</span>' : ''}
                 </div>
             `
                 )
@@ -190,22 +203,30 @@ class CustomSettingsMenu extends Component {
         // Update player speed
         this.player().playbackRate(speed);
 
+        // Save preference
+        this.userPreferences.setPreference('playbackRate', speed);
+
         // Update UI
         document.querySelectorAll('.speed-option').forEach((opt) => {
+            opt.classList.remove('active');
             opt.style.background = 'transparent';
             opt.querySelector('span:last-child')?.remove();
         });
 
+        speedOption.classList.add('active');
         speedOption.style.background = 'rgba(255, 255, 255, 0.1)';
         speedOption.insertAdjacentHTML('beforeend', '<span>✓</span>');
 
         // Update main menu display
         const currentSpeedDisplay = this.settingsOverlay.querySelector('.current-speed');
-        currentSpeedDisplay.textContent = speedOption.querySelector('span').textContent;
+        const speedLabel = speed === 1 ? 'Normal' : `${speed}`;
+        currentSpeedDisplay.textContent = speedLabel;
 
         // Hide menus
         this.settingsOverlay.style.display = 'none';
         this.speedSubmenu.style.display = 'none';
+
+        console.log('Playback speed preference saved:', speed);
     }
 
     handleClickOutside(e) {

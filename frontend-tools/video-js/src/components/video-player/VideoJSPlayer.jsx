@@ -9,10 +9,12 @@ import NextVideoButton from '../controls/NextVideoButton';
 import CustomRemainingTime from '../controls/CustomRemainingTime';
 import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
+import UserPreferences from '../../utils/UserPreferences';
 
 function VideoJSPlayer() {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
+    const userPreferences = useRef(new UserPreferences()); // User preferences instance
 
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
@@ -427,6 +429,12 @@ function VideoJSPlayer() {
                         console.log('Video.js player ready');
                     }); */
                     playerRef.current.ready(() => {
+                        // Apply user preferences to player
+                        userPreferences.current.applyToPlayer(playerRef.current);
+
+                        // Set up auto-save for preference changes
+                        userPreferences.current.setupAutoSave(playerRef.current);
+
                         // Get control bar and its children
                         const controlBar = playerRef.current.getChild('controlBar');
                         const playToggle = controlBar.getChild('playToggle');
@@ -471,6 +479,11 @@ function VideoJSPlayer() {
                         subtitleTracks.forEach((track) => {
                             playerRef.current.addRemoteTextTrack(track, false);
                         });
+
+                        // Apply saved subtitle preference with additional delay
+                        setTimeout(() => {
+                            userPreferences.current.applySubtitlePreference(playerRef.current);
+                        }, 1000);
                         // END: Add subtitle tracks
 
                         // BEGIN: Chapters Implementation
@@ -659,12 +672,198 @@ function VideoJSPlayer() {
                         // END: Add Chapters Overlay Component
 
                         // BEGIN: Add Settings Menu Component
-                        customComponents.settingsMenu = new CustomSettingsMenu(playerRef.current);
+                        customComponents.settingsMenu = new CustomSettingsMenu(playerRef.current, {
+                            userPreferences: userPreferences.current,
+                        });
                         console.log('✓ Custom settings menu component created');
                         // END: Add Settings Menu Component
 
                         // Store components reference for potential cleanup
                         console.log('Custom components initialized:', Object.keys(customComponents));
+
+                        // Log current user preferences
+                        console.log('Current user preferences:', userPreferences.current.getPreferences());
+
+                        // Add debugging methods to window for testing
+                        window.debugSubtitles = {
+                            showTracks: () => {
+                                const textTracks = playerRef.current.textTracks();
+                                console.log('=== Available Text Tracks ===');
+                                for (let i = 0; i < textTracks.length; i++) {
+                                    const track = textTracks[i];
+                                    console.log(
+                                        `${i}: ${track.kind} | ${track.language} | ${track.label} | mode: ${track.mode}`
+                                    );
+                                }
+                            },
+                            enableEnglish: () => {
+                                const textTracks = playerRef.current.textTracks();
+                                for (let i = 0; i < textTracks.length; i++) {
+                                    const track = textTracks[i];
+                                    if (track.kind === 'subtitles' && track.language === 'en') {
+                                        track.mode = 'showing';
+                                        console.log('Enabled English subtitles');
+                                        break;
+                                    }
+                                }
+                            },
+                            enableGreek: () => {
+                                const textTracks = playerRef.current.textTracks();
+                                for (let i = 0; i < textTracks.length; i++) {
+                                    const track = textTracks[i];
+                                    if (track.kind === 'subtitles' && track.language === 'el') {
+                                        track.mode = 'showing';
+                                        console.log('Enabled Greek subtitles');
+                                        break;
+                                    }
+                                }
+                            },
+                            disableAll: () => {
+                                const textTracks = playerRef.current.textTracks();
+                                for (let i = 0; i < textTracks.length; i++) {
+                                    const track = textTracks[i];
+                                    if (track.kind === 'subtitles') {
+                                        track.mode = 'disabled';
+                                    }
+                                }
+                                console.log('Disabled all subtitles');
+                            },
+                            getPrefs: () => {
+                                console.log('Saved preferences:', userPreferences.current.getPreferences());
+                            },
+                            reapplyPrefs: () => {
+                                userPreferences.current.applySubtitlePreference(playerRef.current);
+                            },
+                            showMenu: () => {
+                                const controlBar = playerRef.current.getChild('controlBar');
+
+                                // Try different button names
+                                const possibleNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
+                                let subtitlesButton = null;
+
+                                for (const name of possibleNames) {
+                                    const button = controlBar.getChild(name);
+                                    if (button) {
+                                        console.log(`Found subtitle button: ${name}`);
+                                        subtitlesButton = button;
+                                        break;
+                                    }
+                                }
+
+                                if (subtitlesButton && subtitlesButton.menu) {
+                                    console.log('=== Subtitle Menu Items ===');
+                                    subtitlesButton.menu.children_.forEach((item, index) => {
+                                        if (item.track) {
+                                            console.log(
+                                                `${index}: ${item.track.label} (${item.track.language}) - selected: ${item.selected()}`
+                                            );
+                                        } else {
+                                            console.log(
+                                                `${index}: ${item.label || 'Unknown'} - selected: ${item.selected()}`
+                                            );
+                                        }
+                                    });
+                                } else {
+                                    console.log('No subtitle menu found, checking DOM...');
+
+                                    // Check DOM for subtitle menu items
+                                    const menuItems = playerRef.current.el().querySelectorAll('.vjs-menu-item');
+                                    console.log(`Found ${menuItems.length} menu items in DOM`);
+
+                                    menuItems.forEach((item, index) => {
+                                        if (
+                                            item.textContent.toLowerCase().includes('subtitle') ||
+                                            item.textContent.toLowerCase().includes('caption') ||
+                                            item.textContent.toLowerCase().includes('off')
+                                        ) {
+                                            console.log(
+                                                `DOM item ${index}: ${item.textContent} - classes: ${item.className}`
+                                            );
+                                        }
+                                    });
+                                }
+                            },
+                            testMenuClick: (index) => {
+                                const controlBar = playerRef.current.getChild('controlBar');
+                                const possibleNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
+                                let subtitlesButton = null;
+
+                                for (const name of possibleNames) {
+                                    const button = controlBar.getChild(name);
+                                    if (button) {
+                                        subtitlesButton = button;
+                                        break;
+                                    }
+                                }
+
+                                if (subtitlesButton && subtitlesButton.menu && subtitlesButton.menu.children_[index]) {
+                                    const menuItem = subtitlesButton.menu.children_[index];
+                                    console.log('Simulating click on menu item:', index);
+                                    menuItem.handleClick();
+                                } else {
+                                    console.log('Menu item not found at index:', index, 'trying DOM approach...');
+
+                                    // Try DOM approach
+                                    const menuItems = playerRef.current.el().querySelectorAll('.vjs-menu-item');
+                                    const subtitleItems = Array.from(menuItems).filter(
+                                        (item) =>
+                                            item.textContent.toLowerCase().includes('subtitle') ||
+                                            item.textContent.toLowerCase().includes('caption') ||
+                                            item.textContent.toLowerCase().includes('off')
+                                    );
+
+                                    if (subtitleItems[index]) {
+                                        console.log('Clicking DOM element:', subtitleItems[index].textContent);
+                                        subtitleItems[index].click();
+                                    } else {
+                                        console.log('No DOM subtitle item found at index:', index);
+                                    }
+                                }
+                            },
+                            forceEnableEnglish: () => {
+                                console.log('Force enabling English subtitles...');
+                                const textTracks = playerRef.current.textTracks();
+                                for (let i = 0; i < textTracks.length; i++) {
+                                    const track = textTracks[i];
+                                    if (track.kind === 'subtitles') {
+                                        track.mode = track.language === 'en' ? 'showing' : 'disabled';
+                                    }
+                                }
+                                userPreferences.current.setPreference('subtitleLanguage', 'en');
+                                console.log('English subtitles enabled and saved');
+                            },
+                            watchSubtitleChanges: () => {
+                                console.log('👀 Watching subtitle preference changes...');
+                                const originalSetPreference = userPreferences.current.setPreference;
+                                userPreferences.current.setPreference = function (key, value) {
+                                    if (key === 'subtitleLanguage') {
+                                        console.log(`🎯 SUBTITLE CHANGE: ${value} at ${new Date().toISOString()}`);
+                                        console.trace('Change origin:');
+                                    }
+                                    return originalSetPreference.call(this, key, value);
+                                };
+                                console.log('Subtitle change monitoring activated');
+                            },
+                            checkRestorationFlag: () => {
+                                console.log('Restoration flag:', userPreferences.current.isRestoringSubtitles);
+                                console.log('Auto-save disabled:', userPreferences.current.subtitleAutoSaveDisabled);
+                            },
+                            forceSaveGreek: () => {
+                                console.log('🚀 Force saving Greek subtitle preference...');
+                                userPreferences.current.forceSetSubtitleLanguage('el');
+                                console.log('Check result:', userPreferences.current.getPreferences());
+                            },
+                            forceSaveEnglish: () => {
+                                console.log('🚀 Force saving English subtitle preference...');
+                                userPreferences.current.forceSetSubtitleLanguage('en');
+                                console.log('Check result:', userPreferences.current.getPreferences());
+                            },
+                            forceSaveNull: () => {
+                                console.log('🚀 Force saving null subtitle preference...');
+                                userPreferences.current.forceSetSubtitleLanguage(null);
+                                console.log('Check result:', userPreferences.current.getPreferences());
+                            },
+                        };
                     });
 
                     // Listen for next video event
