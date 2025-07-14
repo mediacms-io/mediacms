@@ -61,18 +61,27 @@ class UserPreferences {
      * Set specific preference value
      * @param {string} key - Preference key
      * @param {*} value - Preference value
+     * @param {boolean} forceSet - Force set even if auto-save is disabled
      */
-    setPreference(key, value) {
+    setPreference(key, value, forceSet = false) {
         // Add special logging for subtitle language changes
         if (key === 'subtitleLanguage') {
             console.log(
-                `🔄 Setting subtitleLanguage: ${value} (restoring: ${this.isRestoringSubtitles}, autoSaveDisabled: ${this.subtitleAutoSaveDisabled})`
+                `🔄 Setting subtitleLanguage: ${value} (restoring: ${this.isRestoringSubtitles}, autoSaveDisabled: ${this.subtitleAutoSaveDisabled}, forceSet: ${forceSet})`
             );
 
-            // Block subtitle language changes during restoration or if disabled
-            if (this.isRestoringSubtitles || this.subtitleAutoSaveDisabled) {
-                console.log('🚫 BLOCKED: Subtitle language change during restoration or auto-save disabled');
-                return; // Don't save during restoration or if disabled
+            // Block subtitle language changes during restoration, but allow forced sets
+            if (this.isRestoringSubtitles) {
+                console.log('🚫 BLOCKED: Subtitle language change during restoration');
+                return; // Don't save during restoration
+            }
+
+            // Allow forced sets even if auto-save is disabled (for direct user clicks)
+            if (this.subtitleAutoSaveDisabled && !forceSet) {
+                console.log(
+                    '🚫 BLOCKED: Subtitle language change during auto-save disabled period (use forceSet=true to override)'
+                );
+                return; // Don't save if disabled unless forced
             }
 
             console.trace('Subtitle preference change stack trace');
@@ -103,11 +112,11 @@ class UserPreferences {
         this.subtitleAutoSaveDisabled = true;
         console.log('🔒 Subtitle auto-save DISABLED during initial load');
 
-        // Re-enable after 10 seconds to ensure everything has settled
+        // Re-enable after 3 seconds to ensure everything has settled
         setTimeout(() => {
             this.subtitleAutoSaveDisabled = false;
             console.log('🔓 Subtitle auto-save RE-ENABLED after initial load period');
-        }, 10000);
+        }, 3000);
 
         // Apply volume and mute state
         if (typeof prefs.volume === 'number' && prefs.volume >= 0 && prefs.volume <= 1) {
@@ -270,7 +279,7 @@ class UserPreferences {
 
                         // Extract language from the clicked item
                         setTimeout(() => {
-                            this.detectActiveSubtitleFromDOM(player);
+                            this.detectActiveSubtitleFromDOM(player, true); // Force set for user clicks
                         }, 200);
                     }
 
@@ -278,7 +287,7 @@ class UserPreferences {
                     if (target.closest('.vjs-menu-item') && target.textContent.toLowerCase().includes('off')) {
                         console.log('Captions off clicked via DOM listener');
                         setTimeout(() => {
-                            this.setPreference('subtitleLanguage', null);
+                            this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                         }, 200);
                     }
                 });
@@ -291,8 +300,9 @@ class UserPreferences {
     /**
      * Detect active subtitle from DOM and text tracks
      * @param {Object} player - Video.js player instance
+     * @param {boolean} forceSet - Force set even if auto-save is disabled
      */
-    detectActiveSubtitleFromDOM(player) {
+    detectActiveSubtitleFromDOM(player, forceSet = false) {
         // Skip saving if we're currently restoring subtitles
         if (this.isRestoringSubtitles) {
             console.log('Skipping DOM subtitle save - currently restoring preferences');
@@ -311,7 +321,7 @@ class UserPreferences {
             }
         }
 
-        this.setPreference('subtitleLanguage', activeLanguage);
+        this.setPreference('subtitleLanguage', activeLanguage, forceSet);
     }
 
     /**
@@ -342,10 +352,10 @@ class UserPreferences {
                             setTimeout(() => {
                                 if (track.mode === 'showing') {
                                     console.log('Saving subtitle preference:', track.language);
-                                    this.setPreference('subtitleLanguage', track.language);
+                                    this.setPreference('subtitleLanguage', track.language, true); // Force set for user clicks
                                 } else {
                                     console.log('Subtitle disabled, saving null');
-                                    this.setPreference('subtitleLanguage', null);
+                                    this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                                 }
                             }, 100);
                         };
@@ -359,7 +369,7 @@ class UserPreferences {
 
                             setTimeout(() => {
                                 console.log('Saving subtitle preference: null (off)');
-                                this.setPreference('subtitleLanguage', null);
+                                this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                             }, 100);
                         };
                     }
@@ -382,6 +392,7 @@ class UserPreferences {
         if (savedLanguage) {
             // Set flag to prevent auto-save during restoration
             this.isRestoringSubtitles = true;
+            console.log('isRestoringSubtitles', this.isRestoringSubtitles);
 
             // Multiple attempts with increasing delays to ensure text tracks are loaded
             const attemptToApplySubtitles = (attempt = 1) => {
@@ -423,7 +434,7 @@ class UserPreferences {
                 setTimeout(() => {
                     this.isRestoringSubtitles = false;
                     console.log('✅ Subtitle restoration complete, auto-save re-enabled');
-                }, 3000); // Increased to 3 seconds
+                }, 600); // Increased to 3 seconds
 
                 // If not found and we haven't tried too many times, try again
                 if (!found && attempt < 5) {
