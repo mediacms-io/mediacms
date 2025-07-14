@@ -26,18 +26,19 @@
 
 /* Settings overlay styling */
 .custom-settings-overlay {
+    border: 1px solid red;
     position: absolute;
-    bottom: 100%;
-    right: 0;
+    bottom: 60px;
+    right: 20px;
     width: 250px;
     background: rgba(28, 28, 28, 0.95);
     color: white;
-    border-radius: 4px;
+    border-radius: 7px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     display: none;
     z-index: 1000;
     font-size: 14px;
-    backdrop-filter: blur(10px);
+    overflow: visible;
 }
 
 /* Settings header */
