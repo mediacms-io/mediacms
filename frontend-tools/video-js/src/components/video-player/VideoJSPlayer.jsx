@@ -7,6 +7,8 @@ import EndScreenOverlay from '../overlays/EndScreenOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
 import NextVideoButton from '../controls/NextVideoButton';
 import CustomRemainingTime from '../controls/CustomRemainingTime';
+import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
+import CustomSettingsMenu from '../controls/CustomSettingsMenu';
 
 function VideoJSPlayer() {
     const videoRef = useRef(null);
@@ -366,7 +368,7 @@ function VideoJSPlayer() {
                             descriptionsButton: true,
 
                             // Subtitles button
-                            subtitlesButton: true,
+                            subtitlesButton: false,
 
                             // Captions button (disabled to avoid duplicate)
                             captionsButton: false,
@@ -421,7 +423,19 @@ function VideoJSPlayer() {
                     });
 
                     // Event listeners
-                    playerRef.current.on('ready', () => {
+                    /* playerRef.current.on('ready', () => {
+                        console.log('Video.js player ready');
+                    }); */
+                    playerRef.current.ready(() => {
+                        // Get control bar and its children
+                        const controlBar = playerRef.current.getChild('controlBar');
+                        const playToggle = controlBar.getChild('playToggle');
+                        const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
+                        const progressControl = controlBar.getChild('progressControl');
+                        const seekBar = progressControl.getChild('seekBar');
+                        const chaptersButton = controlBar.getChild('chaptersButton');
+                        const fullscreenToggle = controlBar.getChild('fullscreenToggle');
+
                         // Auto-play video when navigating from next button
                         const urlParams = new URLSearchParams(window.location.search);
                         const hasVideoParam = urlParams.get('m');
@@ -436,8 +450,8 @@ function VideoJSPlayer() {
                             }, 100);
                         }
 
-                        // Add English subtitle track after player is ready
-                        playerRef.current.addRemoteTextTrack(
+                        // BEGIN: Add subtitle tracks
+                        const subtitleTracks = [
                             {
                                 kind: 'subtitles',
                                 src: '/sample-subtitles.vtt',
@@ -445,11 +459,6 @@ function VideoJSPlayer() {
                                 label: 'English Subtitles',
                                 default: false,
                             },
-                            false
-                        );
-
-                        // Add Greek subtitle track
-                        playerRef.current.addRemoteTextTrack(
                             {
                                 kind: 'subtitles',
                                 src: '/sample-subtitles-greek.vtt',
@@ -457,46 +466,34 @@ function VideoJSPlayer() {
                                 label: 'Greek Subtitles (Ελληνικά)',
                                 default: false,
                             },
-                            false
-                        );
+                        ];
 
-                        // Create a text track for chapters programmatically
-                        const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
-
-                        // Add cues to the chapters track
-                        chaptersData.forEach((chapter) => {
-                            const cue = new (window.VTTCue || window.TextTrackCue)(
-                                chapter.startTime,
-                                chapter.endTime,
-                                chapter.text
-                            );
-                            chaptersTrack.addCue(cue);
+                        subtitleTracks.forEach((track) => {
+                            playerRef.current.addRemoteTextTrack(track, false);
                         });
+                        // END: Add subtitle tracks
+
+                        // BEGIN: Chapters Implementation
+                        if (chaptersData && chaptersData.length > 0) {
+                            const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
+                            // Add cues to the chapters track
+                            chaptersData.forEach((chapter) => {
+                                const cue = new (window.VTTCue || window.TextTrackCue)(
+                                    chapter.startTime,
+                                    chapter.endTime,
+                                    chapter.text
+                                );
+                                chaptersTrack.addCue(cue);
+                            });
+                        }
+                        // END: Chapters Implementation
 
                         // Force chapter markers update after chapters are loaded
-                        setTimeout(() => {
-                            const progressControl = playerRef.current
-                                .getChild('controlBar')
-                                .getChild('progressControl');
-                            if (progressControl) {
-                                const seekBar = progressControl.getChild('seekBar');
-                                if (seekBar) {
-                                    const markers = seekBar.getChild('ChapterMarkers');
-                                    if (markers && markers.updateChapterMarkers) {
-                                        markers.updateChapterMarkers();
-                                    }
-                                }
+                        /* setTimeout(() => {
+                            if (chapterMarkers && chapterMarkers.updateChapterMarkers) {
+                                chapterMarkers.updateChapterMarkers();
                             }
-                        }, 500);
-
-                        console.log('Subtitles loaded but disabled by default - use CC button to enable');
-                    });
-
-                    // Add Next Video button to control bar and reorder chapters button
-                    playerRef.current.ready(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const playToggle = controlBar.getChild('playToggle');
-                        const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
+                        }, 500); */
 
                         // BEGIN: Implement custom time display component
                         const customRemainingTime = new CustomRemainingTime(playerRef.current, {
@@ -523,7 +520,7 @@ function VideoJSPlayer() {
                         // END: Implement custom next video button
 
                         // Remove duplicate captions button and move chapters to end
-                        const cleanupControls = () => {
+                        /*  const cleanupControls = () => {
                             // Log all current children for debugging
                             const allChildren = controlBar.children();
 
@@ -561,12 +558,12 @@ function VideoJSPlayer() {
                                     console.log('✗ Failed to move chapters button:', e);
                                 }
                             }
-                        };
+                        }; */
 
                         // Try multiple times with different delays
-                        setTimeout(cleanupControls, 200);
+                        /* setTimeout(cleanupControls, 200);
                         setTimeout(cleanupControls, 500);
-                        setTimeout(cleanupControls, 1000);
+                        setTimeout(cleanupControls, 1000); */
 
                         // Make menus clickable instead of hover-only
                         setTimeout(() => {
@@ -628,15 +625,46 @@ function VideoJSPlayer() {
                             setupClickableMenus();
                         }, 1500);
 
-                        // Add chapter markers to progress control
-                        const progressControl = controlBar.getChild('progressControl');
-                        if (progressControl) {
-                            const progressHolder = progressControl.getChild('seekBar');
-                            if (progressHolder) {
-                                const chapterMarkers = new ChapterMarkers(playerRef.current);
-                                progressHolder.addChild(chapterMarkers);
+                        // BEGIN: Add chapter markers to progress control
+                        if (progressControl && seekBar) {
+                            const chapterMarkers = new ChapterMarkers(playerRef.current);
+                            seekBar.addChild(chapterMarkers);
+                        }
+                        // END: Add chapter markers to progress control
+
+                        // BEGIN: Move chapters button after fullscreen toggle
+                        if (chaptersButton && fullscreenToggle) {
+                            try {
+                                const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
+                                controlBar.addChild(chaptersButton, {}, fullscreenIndex + 1);
+                                console.log('✓ Chapters button moved after fullscreen toggle');
+                            } catch (e) {
+                                console.log('✗ Failed to move chapters button:', e);
                             }
                         }
+                        // END: Move chapters button after fullscreen toggle
+
+                        // Store custom components for potential future use (cleanup, method access, etc.)
+                        const customComponents = {};
+
+                        // BEGIN: Add Chapters Overlay Component
+                        if (chaptersData && chaptersData.length > 0) {
+                            customComponents.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
+                                chaptersData: chaptersData,
+                            });
+                            console.log('✓ Custom chapters overlay component created');
+                        } else {
+                            console.log('⚠ No chapters data available for overlay');
+                        }
+                        // END: Add Chapters Overlay Component
+
+                        // BEGIN: Add Settings Menu Component
+                        customComponents.settingsMenu = new CustomSettingsMenu(playerRef.current);
+                        console.log('✓ Custom settings menu component created');
+                        // END: Add Settings Menu Component
+
+                        // Store components reference for potential cleanup
+                        console.log('Custom components initialized:', Object.keys(customComponents));
                     });
 
                     // Listen for next video event
