@@ -15,6 +15,7 @@ from .models import (
     Media,
     Subtitle,
     Tag,
+    VideoTrimRequest,
 )
 
 
@@ -199,6 +200,10 @@ class SubtitleAdmin(admin.ModelAdmin):
     pass
 
 
+class VideoTrimRequestAdmin(admin.ModelAdmin):
+    pass
+
+
 class EncodingAdmin(admin.ModelAdmin):
     list_display = ["get_title", "chunk", "profile", "progress", "status", "has_file"]
     list_filter = ["chunk", "profile", "status"]
@@ -222,5 +227,6 @@ admin.site.register(Category, CategoryAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
+admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 
 Media._meta.app_config.verbose_name = "Media"

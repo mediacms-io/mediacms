@@ -5,16 +5,19 @@ import itertools
 import logging
 import random
 import re
+import subprocess
 from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files import File
 from django.core.mail import EmailMessage
 from django.db.models import Q
+from django.utils import timezone
 
 from cms import celery_app
 
-from . import models
+from . import helpers, models
 from .helpers import mask_ip
 
 logger = logging.getLogger(__name__)
@@ -163,14 +166,14 @@ Media becomes private if it gets reported %s times\n
         )
 
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was reported"
             d = {}
             d["title"] = title
             d["msg"] = msg
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was reported"
             d = {}
             d["title"] = title
             d["msg"] = msg
@@ -179,7 +182,7 @@ Media becomes private if it gets reported %s times\n
 
     if action == "media_added" and media:
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Media was added".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Media was added"
             msg = """
 Media %s was added by user %s.
 """ % (
@@ -192,7 +195,7 @@ Media %s was added by user %s.
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Your media was added".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - Your media was added"
             msg = """
 Your media has been added! It will be encoded and will be available soon.
 URL: %s
@@ -262,7 +265,7 @@ def show_related_media_content(media, request, limit):
         "user_featured",
         "-user_featured",
     ]
-    # TODO: MAke this mess more readable, and add TAGS support - aka related
+    # TODO: Make this mess more readable, and add TAGS support - aka related
     # tags rather than random media
     if len(m) < limit:
         category = media.category.first()
@@ -336,7 +339,7 @@ def notify_user_on_comment(friendly_token):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - A comment was added".format(settings.PORTAL_NAME)
+        title = f"[{settings.PORTAL_NAME}] - A comment was added"
         msg = """
 A comment has been added to your media %s .
 View it on %s
@@ -360,7 +363,7 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - You were mentioned in a comment".format(settings.PORTAL_NAME)
+        title = f"[{settings.PORTAL_NAME}] - You were mentioned in a comment"
         msg = """
 You were mentioned in a comment on  %s .
 View it on %s
@@ -396,6 +399,111 @@ def clean_comment(raw_comment):
     cleaned_comment = cleaned_comment.replace("_]", '')
 
     return cleaned_comment
+
+
+def kill_ffmpeg_process(filepath):
+    """Kill ffmpeg process that is processing a specific file
+
+    Args:
+        filepath: Path to the file being processed by ffmpeg
+
+    Returns:
+        subprocess.CompletedProcess: Result of the kill command
+    """
+    if not filepath:
+        return False
+    cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    pid = result.stdout.decode("utf-8").strip()
+    if pid:
+        cmd = "kill -9 %s" % pid
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    return result
+
+
+def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
+    """Create a copy of a media object
+
+    Args:
+        original_media: Original Media object to copy
+        copy_encodings: Whether to copy the encodings too
+
+    Returns:
+        New Media object
+    """
+
+    with open(original_media.media_file.path, "rb") as f:
+        myfile = File(f)
+        new_media = models.Media(
+            media_file=myfile,
+            title=f"{original_media.title} {title_suffix}",
+            description=original_media.description,
+            user=original_media.user,
+            media_type="video",
+            enable_comments=original_media.enable_comments,
+            allow_download=original_media.allow_download,
+            state=original_media.state,
+            is_reviewed=original_media.is_reviewed,
+            encoding_status=original_media.encoding_status,
+            listable=original_media.listable,
+            add_date=timezone.now(),
+            video_height=original_media.video_height,
+            media_info=original_media.media_info,
+        )
+        models.Media.objects.bulk_create([new_media])
+        # avoids calling signals since signals will call media_init and we don't want that
+
+    if copy_encodings:
+        for encoding in original_media.encodings.filter(chunk=False, status="success"):
+            if encoding.media_file:
+                with open(encoding.media_file.path, "rb") as f:
+                    myfile = File(f)
+                    new_encoding = models.Encoding(
+                        media_file=myfile, media=new_media, profile=encoding.profile, status="success", progress=100, chunk=False, logs=f"Copied from encoding {encoding.id}"
+                    )
+                    models.Encoding.objects.bulk_create([new_encoding])
+                    # avoids calling signals as this is still not ready
+
+    # Copy categories and tags
+    for category in original_media.category.all():
+        new_media.category.add(category)
+
+    for tag in original_media.tags.all():
+        new_media.tags.add(tag)
+
+    if original_media.thumbnail:
+        with open(original_media.thumbnail.path, 'rb') as f:
+            thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
+            new_media.thumbnail.save(thumbnail_name, File(f))
+
+    if original_media.poster:
+        with open(original_media.poster.path, 'rb') as f:
+            poster_name = helpers.get_file_name(original_media.poster.path)
+            new_media.poster.save(poster_name, File(f))
+
+    return new_media
+
+
+def create_video_trim_request(media, data):
+    """Create a video trim request for a media
+
+    Args:
+        media: Media object
+        data: Dictionary with trim request data
+
+    Returns:
+        VideoTrimRequest object
+    """
+
+    video_action = "replace"
+    if data.get('saveIndividualSegments'):
+        video_action = "create_segments"
+    elif data.get('saveAsCopy'):
+        video_action = "save_new"
+
+    video_trim_request = models.VideoTrimRequest.objects.create(media=media, status="initial", video_action=video_action, media_trim_style='no_encoding', timestamps=data.get('segments', {}))
+
+    return video_trim_request
 
 
 def list_tasks():
@@ -448,3 +556,14 @@ def list_tasks():
     ret["task_ids"] = task_ids
     ret["media_profile_pairs"] = media_profile_pairs
     return ret
+
+
+def handle_video_chapters(media, chapters):
+    video_chapter = models.VideoChapterData.objects.filter(media=media).first()
+    if video_chapter:
+        video_chapter.data = chapters
+        video_chapter.save()
+    else:
+        video_chapter = models.VideoChapterData.objects.create(media=media, data=chapters)
+
+    return media.chapter_data

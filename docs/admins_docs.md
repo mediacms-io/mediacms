@@ -2,7 +2,7 @@
 
 ## Table of contents
 - [1. Welcome](#1-welcome)
-- [2. Server Installaton](#2-server-installation)
+- [2. Single Server Installaton](#2-single-server-installation)
 - [3. Docker Installation](#3-docker-installation)
 - [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
@@ -25,20 +25,20 @@
 - [22. Role-Based Access Control](#22-role-based-access-control)
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
-
+- [25. Custom urls](#25-custom-urls)
 
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
 
-## 2. Server Installation
+## 2. Single Server Installation
 
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
+The core dependencies are python3, Django, celery, PostgreSQL, redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But the install.sh is only tested in Linux Ubuntu 24 and 22 versions.
 
-Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
+Installation on an Ubuntu 22/24 system with git utility installed should be completed in a few minutes with the following steps.
 Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
 
-Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
+
 
 ```bash
 mkdir /home/mediacms.io && cd /home/mediacms.io/
@@ -89,13 +89,11 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 ## Installation
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-For Ubuntu 20/22 systems this is:
+For Ubuntu systems this is:
 
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 Then run as root
@@ -111,7 +109,7 @@ If you want to explore more options (including setup of https with letsencrypt c
 Run
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
@@ -131,8 +129,8 @@ Get latest MediaCMS image and stop/start containers
 ```bash
 cd /path/to/mediacms/installation
 docker pull mediacms/mediacms
-docker-compose down
-docker-compose up
+docker compose down
+docker compose up
 ```
 
 ### Update from version 2 to version 3
@@ -172,7 +170,7 @@ Also see the `Dockerfile` for other environment variables which you may wish to 
 
 See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
 
-To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
+To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
 
@@ -189,7 +187,7 @@ Edit this file and set `VIRTUAL_HOST` as my_domain.com, `LETSENCRYPT_HOST` as my
 
 Edit `deploy/docker/local_settings.py` and set https://my_domain.com as `FRONTEND_HOST`
 
-Now run docker-compose -f docker-compose-letsencrypt.yaml up, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
+Now run `docker compose -f docker-compose-letsencrypt.yaml up`, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
 
 ### Advanced Deployment, accessed as http://localhost:8000
 
@@ -230,7 +228,7 @@ Single server installation: edit `cms/local_settings.py`, make a change and rest
 Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
 
 ```bash
-#docker-compose restart web celery_worker celery_beat
+#docker compose restart web celery_worker celery_beat
 ```
 
 ### 5.1 Change portal logo
@@ -809,14 +807,8 @@ This will disable the transcoding process and only the original file will be sho
 
 ## 19. Rounded corners on videos
 
-By default the video player and media items are now having rounded corners, on larger screens (not in mobile). If you don't like this change, remove the `border-radius` added on the following files:
+By default the video player and media items are now having rounded corners, on larger screens (not in mobile). If you don't like this change, set `USE_ROUNDED_CORNERS = False` in `local_settings.py`.
 
-```
-frontend/src/static/css/_extra.css
-frontend/src/static/js/components/list-item/Item.scss
-frontend/src/static/js/components/media-page/MediaPage.scss
-```
-you now have to re-run the frontend build in order to see the changes (check docs/dev_exp.md)
 
 
 ## 20. Translations
@@ -879,7 +871,7 @@ By default there are 3 statuses for any Media that lives on the system, public, 
 
 Now user can view the Media even if it is in private state. User also sees all media in Category page
 
-When user is added to group, they can be set as Member, Contributor, Manager. 
+When user is added to group, they can be set as Member, Contributor, Manager.
 
 - Member: user can view media that are published on one or more categories that this group is associated with
 - Contributor: besides viewing, user can also edit the Media in a category associated with this Group. They can also publish Media to this category
@@ -891,17 +883,17 @@ Use cases facilitated with RBAC:
 - viewing all media of a category: if RBAC is enabled, and user visits a Category, they are able to see the listing of all media that are published in this category, independent of their state, provided that the category is associated with a group that the user is member of
 - viewing all categories associated with groups the user is member of: if RBAC is enabled, and user visits the listing of categories, they can view all categories that are associated with a group the user is member
 
-How to enable RBAC support: 
+How to enable RBAC support:
 
 ```
 USE_RBAC = True
 ```
 
-on `local_settings.py` and restart the instance. 
+on `local_settings.py` and restart the instance.
 
 
 ## 23. SAML setup
-SAML authentication is supported along with the option to utilize the SAML response and do useful things as setting up the user role in MediaCMS or participation in groups. 
+SAML authentication is supported along with the option to utilize the SAML response and do useful things as setting up the user role in MediaCMS or participation in groups.
 
 To enable SAML support, edit local_settings.py and set the following options:
 
@@ -942,8 +934,8 @@ Select the SAML Configurations tab, create a new one and set:
 
 1. **IDP ID**: Must be a URL
 2. **IDP Certificate**: x509cert from your SAML provider
-3. **SSO URL**: 
-4. **SLO URL**: 
+3. **SSO URL**:
+4. **SLO URL**:
 5. **SP Metadata URL**: The metadata URL that the IDP will utilize. This can be https://{portal}/saml/metadata and is autogenerated by MediaCMS
 
 - Step 3: Set other Options
@@ -971,5 +963,8 @@ to enable the identity providers, set the following setting on `local_settings.p
 USE_IDENTITY_PROVIDERS = True
 ```
 
-Visiting the admin, you will see the Identity Providers tab and you can add one. 
+Visiting the admin, you will see the Identity Providers tab and you can add one.
 
+## 25. Custom urls
+To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
+This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this. 

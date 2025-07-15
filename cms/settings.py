@@ -186,7 +186,7 @@ CHUNKIZE_VIDEO_DURATION = 60 * 5
 VIDEO_CHUNKS_DURATION = 60 * 4
 
 # always get these two, even if upscaling
-MINIMUM_RESOLUTIONS_TO_ENCODE = [240, 360]
+MINIMUM_RESOLUTIONS_TO_ENCODE = [144, 240]
 
 # default settings for notifications
 # not all of them are implemented
@@ -376,16 +376,7 @@ LOGGING = {
     },
 }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mediacms",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
-        "USER": "mediacms",
-        "PASSWORD": "mediacms",
-    }
-}
+DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
@@ -453,6 +444,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 LANGUAGES = [
     ('ar', _('Arabic')),
     ('bn', _('Bengali')),
+    ('da', _('Danish')),
     ('nl', _('Dutch')),
     ('en', _('English')),
     ('fr', _('French')),
@@ -465,10 +457,13 @@ LANGUAGES = [
     ('pt', _('Portuguese')),
     ('ru', _('Russian')),
     ('zh-hans', _('Simplified Chinese')),
+    ('sl', _('Slovenian')),
+    ('zh-hant', _('Traditional Chinese')),
     ('es', _('Spanish')),
     ('tr', _('Turkish')),
     ('el', _('Greek')),
     ('ur', _('Urdu')),
+    ('he', _('Hebrew')),
 ]
 
 LANGUAGE_CODE = 'en'  # default language
@@ -497,6 +492,14 @@ USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
+USE_ROUNDED_CORNERS = True
+
+ALLOW_VIDEO_TRIMMER = True
+
+ALLOW_CUSTOM_MEDIA_URLS = False
+
+# ffmpeg options
+FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
 try:
     # keep a local_settings.py file for local overrides
@@ -507,6 +510,8 @@ try:
 except ImportError:
     # local_settings not in use
     pass
+
+# Don't add new settings below that could be overridden in local_settings.py!!!
 
 if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
@@ -535,13 +540,5 @@ except ImportError:
 
 
 if GLOBAL_LOGIN_REQUIRED:
-    # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
-    LOGIN_REQUIRED_IGNORE_PATHS = [
-        r'/accounts/login/$',
-        r'/accounts/logout/$',
-        r'/accounts/signup/$',
-        r'/accounts/password/.*/$',
-        r'/accounts/confirm-email/.*/$',
-        #        r'/api/v[0-9]+/',
-    ]
+    auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(auth_index + 1, "django.contrib.auth.middleware.LoginRequiredMiddleware")

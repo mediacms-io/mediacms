@@ -46,6 +46,7 @@ class MediaList(APIView):
 
         featured = params.get("featured", "").strip()
         is_reviewed = params.get("is_reviewed", "").strip()
+        category = params.get("category", "").strip()
 
         sort_by_options = [
             "title",
@@ -97,6 +98,9 @@ class MediaList(APIView):
             qs = qs.filter(featured=featured)
         if is_reviewed != "all":
             qs = qs.filter(is_reviewed=is_reviewed)
+
+        if category:
+            qs = qs.filter(category__title__contains=category)
 
         media = qs.order_by(f"{ordering}{sort_by}")
 

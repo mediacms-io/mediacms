@@ -389,77 +389,39 @@
 
 document.addEventListener('DOMContentLoaded', function() {
   const breadcrumbItems = document.querySelectorAll('.breadcrumb-item a');
-  
+
   breadcrumbItems.forEach(function(link) {
     if (link.getAttribute('href') === '/admin/account/') {
       link.setAttribute('href', '/admin/users/');
       link.textContent = 'Users';
     }
-    
+
     if (link.getAttribute('href') === '/admin/rbac/') {
       link.setAttribute('href', '/admin/users/');
       link.textContent = 'Users';
     }
   });
-  
+
   const identityProvidersHeader = Array.from(document.querySelectorAll('.nav-header')).find(
     header => header.textContent.trim() === 'Identity_Providers'
   );
-  
+
   if (identityProvidersHeader) {
     identityProvidersHeader.style.display = 'none';
-    
+
     const loginOptionsItem = document.querySelector('.nav-item a[href="/admin/identity_providers/loginoption/"]');
     if (loginOptionsItem) {
       loginOptionsItem.closest('.nav-item').style.display = 'none';
     }
-    
+
     const userLogsItem = document.querySelector('.nav-item a[href="/admin/identity_providers/identityprovideruserlog/"]');
     if (userLogsItem) {
       userLogsItem.closest('.nav-item').style.display = 'none';
     }
   }
-  
+
   const tables = document.querySelectorAll('table.table-sm');
-  
-  for (const table of tables) {
-    const userLink = table.querySelector('a[href="/admin/users/user/"]');
-    if (userLink) {
-      const tbody = table.querySelector('tbody');
-      if (tbody) {
-        const emailAddressesRow = document.createElement('tr');
-        emailAddressesRow.innerHTML = `
-          <td>
-            <a href="/admin/account/emailaddress/">Email Addresses</a>
-          </td>
-          <td>
-            <div class="btn-group float-right">
-              <a href="/admin/account/emailaddress/add/" class="btn btn-xs btn-success addlink">Add</a>
-              <a href="/admin/account/emailaddress/" class="btn btn-xs btn-info changelink">Change</a>
-            </div>
-          </td>
-        `;
-        
-        const groupsRow = document.createElement('tr');
-        groupsRow.innerHTML = `
-          <td>
-            <a href="/admin/rbac/rbacgroup/">Groups</a>
-          </td>
-          <td>
-            <div class="btn-group float-right">
-              <a href="/admin/rbac/rbacgroup/add/" class="btn btn-xs btn-success addlink">Add</a>
-              <a href="/admin/rbac/rbacgroup/" class="btn btn-xs btn-info changelink">Change</a>
-            </div>
-          </td>
-        `;
-        
-        tbody.appendChild(emailAddressesRow);
-        tbody.appendChild(groupsRow);
-        
-        break;
-      }
-    }
-  }
+
 });
 
 </script>
