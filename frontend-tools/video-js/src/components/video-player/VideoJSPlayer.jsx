@@ -562,6 +562,7 @@ function VideoJSPlayer() {
                       },
                       siteUrl: '',
                       hasNextLink: true,
+                      nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
                   },
         []
     );
@@ -588,6 +589,7 @@ function VideoJSPlayer() {
             poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
+            nextLink: mediaData.nextLink || '',
             sources: mediaData.data?.original_media_url
                 ? [
                       {
@@ -1023,7 +1025,9 @@ function VideoJSPlayer() {
 
                         // BEGIN: Implement custom next video button
                         if (mediaData.hasNextLink) {
-                            const nextVideoButton = new NextVideoButton(playerRef.current);
+                            const nextVideoButton = new NextVideoButton(playerRef.current, {
+                                nextLink: mediaData.nextLink,
+                            });
                             const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
                             controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
                         }
@@ -1659,7 +1663,12 @@ function VideoJSPlayer() {
         };
     }, []);
 
-    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
+    return (
+        <>
+            <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />
+            <em>nextLink: {currentVideo.nextLink}</em>
+        </>
+    );
 }
 
 export default VideoJSPlayer;
