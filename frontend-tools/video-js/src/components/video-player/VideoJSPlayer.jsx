@@ -9,12 +9,14 @@ import NextVideoButton from '../controls/NextVideoButton';
 import CustomRemainingTime from '../controls/CustomRemainingTime';
 import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
+import SeekIndicator from '../controls/SeekIndicator';
 import UserPreferences from '../../utils/UserPreferences';
 
 function VideoJSPlayer() {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
+    const customComponents = useRef({}); // Store custom components for cleanup
 
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
@@ -809,6 +811,15 @@ function VideoJSPlayer() {
                                 playPauseKey: function (event) {
                                     return event.which === 75 || event.which === 32; // 'k' or Space
                                 },
+
+                                // Custom seek functions for arrow keys
+                                seekForwardKey: function (event) {
+                                    return event.which === 39; // Right arrow key
+                                },
+
+                                seekBackwardKey: function (event) {
+                                    return event.which === 37; // Left arrow key
+                                },
                             },
                         },
 
@@ -1206,12 +1217,9 @@ function VideoJSPlayer() {
                         }
                         // END: Move chapters button after fullscreen toggle
 
-                        // Store custom components for potential future use (cleanup, method access, etc.)
-                        const customComponents = {};
-
                         // BEGIN: Add Chapters Overlay Component
                         if (chaptersData && chaptersData.length > 0) {
-                            customComponents.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
+                            customComponents.current.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
                                 chaptersData: chaptersData,
                             });
                             console.log('✓ Custom chapters overlay component created');
@@ -1221,19 +1229,111 @@ function VideoJSPlayer() {
                         // END: Add Chapters Overlay Component
 
                         // BEGIN: Add Settings Menu Component
-                        customComponents.settingsMenu = new CustomSettingsMenu(playerRef.current, {
+                        customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {
                             userPreferences: userPreferences.current,
                         });
                         console.log('✓ Custom settings menu component created');
                         // END: Add Settings Menu Component
 
+                        // BEGIN: Add Seek Indicator Component
+                        customComponents.current.seekIndicator = new SeekIndicator(playerRef.current, {
+                            seekAmount: 5, // 5 seconds seek amount
+                        });
+                        // Add the component but ensure it's hidden initially
+                        playerRef.current.addChild(customComponents.current.seekIndicator);
+
+                        // Log the element to verify it exists
+                        console.log('✓ Custom seek indicator component created');
+                        console.log('Seek indicator element:', customComponents.current.seekIndicator.el());
+                        console.log('Player element:', playerRef.current.el());
+
+                        customComponents.current.seekIndicator.hide(); // Explicitly hide on creation
+                        console.log('✓ Seek indicator hidden after creation');
+                        // END: Add Seek Indicator Component
+
                         // Store components reference for potential cleanup
-                        console.log('Custom components initialized:', Object.keys(customComponents));
+                        console.log('Custom components initialized:', Object.keys(customComponents.current));
+
+                        // BEGIN: Add custom arrow key seek functionality
+                        const handleKeyDown = (event) => {
+                            // Only handle if the player has focus or no input elements are focused
+                            const activeElement = document.activeElement;
+                            const isInputFocused =
+                                activeElement &&
+                                (activeElement.tagName === 'INPUT' ||
+                                    activeElement.tagName === 'TEXTAREA' ||
+                                    activeElement.contentEditable === 'true');
+
+                            if (isInputFocused) {
+                                return; // Don't interfere with input fields
+                            }
+
+                            const seekAmount = 5; // 5 seconds
+
+                            if (event.key === 'ArrowRight' || event.keyCode === 39) {
+                                event.preventDefault();
+                                const currentTime = playerRef.current.currentTime();
+                                const duration = playerRef.current.duration();
+                                const newTime = Math.min(currentTime + seekAmount, duration);
+
+                                playerRef.current.currentTime(newTime);
+                                customComponents.current.seekIndicator.show('forward', seekAmount);
+                            } else if (event.key === 'ArrowLeft' || event.keyCode === 37) {
+                                event.preventDefault();
+                                const currentTime = playerRef.current.currentTime();
+                                const newTime = Math.max(currentTime - seekAmount, 0);
+
+                                playerRef.current.currentTime(newTime);
+                                customComponents.current.seekIndicator.show('backward', seekAmount);
+                            }
+                        };
+
+                        // Add keyboard event listener to the document
+                        document.addEventListener('keydown', handleKeyDown);
+
+                        // Store cleanup function
+                        customComponents.current.cleanupKeyboardHandler = () => {
+                            document.removeEventListener('keydown', handleKeyDown);
+                        };
+
+                        console.log('✓ Arrow key seek functionality enabled');
+                        // END: Add custom arrow key seek functionality
 
                         // Log current user preferences
                         console.log('Current user preferences:', userPreferences.current.getPreferences());
 
                         // Add debugging methods to window for testing
+                        window.debugSeek = {
+                            testForward: () => {
+                                console.log('🧪 Testing seek indicator forward');
+                                customComponents.current.seekIndicator.show('forward', 5);
+                            },
+                            testBackward: () => {
+                                console.log('🧪 Testing seek indicator backward');
+                                customComponents.current.seekIndicator.show('backward', 5);
+                            },
+                            testHide: () => {
+                                console.log('🧪 Testing seek indicator hide');
+                                customComponents.current.seekIndicator.hide();
+                            },
+                            getElement: () => {
+                                return customComponents.current.seekIndicator.el();
+                            },
+                            getStyles: () => {
+                                const el = customComponents.current.seekIndicator.el();
+                                return {
+                                    display: el.style.display,
+                                    visibility: el.style.visibility,
+                                    opacity: el.style.opacity,
+                                    position: el.style.position,
+                                    zIndex: el.style.zIndex,
+                                    top: el.style.top,
+                                    left: el.style.left,
+                                    cssText: el.style.cssText,
+                                };
+                            },
+                        };
+
                         window.debugSubtitles = {
                             showTracks: () => {
                                 const textTracks = playerRef.current.textTracks();
@@ -1555,6 +1655,11 @@ function VideoJSPlayer() {
 
         // Cleanup function
         return () => {
+            // Clean up keyboard event listener if it exists
+            if (customComponents.current && customComponents.current.cleanupKeyboardHandler) {
+                customComponents.current.cleanupKeyboardHandler();
+            }
+
             if (playerRef.current && !playerRef.current.isDisposed()) {
                 playerRef.current.dispose();
                 playerRef.current = null;
