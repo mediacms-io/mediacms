@@ -509,39 +509,7 @@
     gap: 6px !important;
 }
 
-/* Create a spacer to push remaining controls to the right */
-.video-js .vjs-control-bar .vjs-volume-panel::after {
-    content: "";
-    flex: 1;
-    margin-left: auto;
-}
-
-/* Move these 5 controls to the right */
-.video-js .vjs-playback-rate,
-.video-js .vjs-picture-in-picture-control,
-.video-js .vjs-chapters-button,
-.video-js .vjs-subtitles-button,
-.video-js .vjs-fullscreen-control,
-.video-js .vjs-subs-caps-button {
-    margin-left: auto !important;
-    order: 999 !important;
-}
-
-/* Remove auto margin from subsequent items to keep them grouped */
-.video-js .vjs-picture-in-picture-control,
-.video-js .vjs-chapters-button,
-.video-js .vjs-subtitles-button,
-.video-js .vjs-fullscreen-control,
-.video-js .vjs-subs-caps-button {
-    margin-left: 0 !important;
-}
-
-/* Alternative approach - target by position */
-.video-js .vjs-control-bar > *:nth-last-child(-n + 5) {
-    margin-left: auto !important;
-    order: 999 !important;
-}
-
-.video-js .vjs-control-bar > *:nth-last-child(-n + 4) {
-    margin-left: 0 !important;
+/* Basic control bar styling - let JavaScript handle positioning */
+.video-js .vjs-control-bar .vjs-control {
+    /* Natural flex flow */
 }
