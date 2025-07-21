@@ -11,6 +11,7 @@ class ChapterMarkers extends Component {
         this.chaptersData = [];
         this.tooltip = null;
         this.isHovering = false;
+        this.previewSprite = options.previewSprite || null;
     }
 
     createEl() {
@@ -72,9 +73,7 @@ class ChapterMarkers extends Component {
     }
 
     setupProgressBarHover() {
-        const progressControl = this.player()
-            .getChild('controlBar')
-            .getChild('progressControl');
+        const progressControl = this.player().getChild('controlBar').getChild('progressControl');
         if (!progressControl) return;
 
         const seekBar = progressControl.getChild('seekBar');
@@ -103,11 +102,61 @@ class ChapterMarkers extends Component {
                 bottom: '45px',
                 transform: 'translateX(-50%)',
                 display: 'none',
-                maxWidth: '250px',
+                minWidth: '200px',
+                maxWidth: '280px',
+                width: 'auto',
                 textAlign: 'center',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
             });
+
+            // Create stable DOM structure to avoid trembling
+            this.chapterTitle = videojs.dom.createEl('div', {
+                className: 'chapter-title',
+            });
+            Object.assign(this.chapterTitle.style, {
+                fontWeight: 'bold',
+                marginBottom: '4px',
+                color: '#fff',
+            });
+
+            this.chapterInfo = videojs.dom.createEl('div', {
+                className: 'chapter-info',
+            });
+            Object.assign(this.chapterInfo.style, {
+                fontSize: '11px',
+                opacity: '0.8',
+                marginBottom: '2px',
+            });
+
+            this.positionInfo = videojs.dom.createEl('div', {
+                className: 'position-info',
+            });
+            Object.assign(this.positionInfo.style, {
+                fontSize: '10px',
+                opacity: '0.6',
+            });
+
+            this.chapterImage = videojs.dom.createEl('div', {
+                className: 'chapter-image-sprite',
+            });
+            Object.assign(this.chapterImage.style, {
+                width: '160px',
+                height: '90px',
+                marginTop: '8px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'block',
+                overflow: 'hidden',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'auto',
+            });
+
+            // Append all elements to tooltip
+            this.tooltip.appendChild(this.chapterTitle);
+            this.tooltip.appendChild(this.chapterInfo);
+            this.tooltip.appendChild(this.positionInfo);
+            this.tooltip.appendChild(this.chapterImage);
         }
 
         // Add tooltip to seekBar if not already added
@@ -124,18 +173,9 @@ class ChapterMarkers extends Component {
         const progressControlEl = progressControl.el();
 
         // Remove existing listeners to prevent duplicates
-        progressControlEl.removeEventListener(
-            'mouseenter',
-            this.handleMouseEnter
-        );
-        progressControlEl.removeEventListener(
-            'mouseleave',
-            this.handleMouseLeave
-        );
-        progressControlEl.removeEventListener(
-            'mousemove',
-            this.handleMouseMove
-        );
+        progressControlEl.removeEventListener('mouseenter', this.handleMouseEnter);
+        progressControlEl.removeEventListener('mouseleave', this.handleMouseLeave);
+        progressControlEl.removeEventListener('mousemove', this.handleMouseMove);
 
         // Bind methods to preserve context
         this.handleMouseEnter = () => {
@@ -171,10 +211,7 @@ class ChapterMarkers extends Component {
 
         // Use seekBar for horizontal calculation but allow vertical tolerance
         const offsetX = event.clientX - seekBarRect.left;
-        const percentage = Math.max(
-            0,
-            Math.min(1, offsetX / seekBarRect.width)
-        );
+        const percentage = Math.max(0, Math.min(1, offsetX / seekBarRect.width));
         const currentTime = percentage * duration;
 
         // Position tooltip relative to progress control area
@@ -195,21 +232,49 @@ class ChapterMarkers extends Component {
             const endTime = formatTime(currentChapter.endTime);
             const timeAtPosition = formatTime(currentTime);
 
-            this.tooltip.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 4px; color: #fff;">${currentChapter.text}</div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom: 2px;">Chapter: ${startTime} - ${endTime}</div>
-                <div style="font-size: 10px; opacity: 0.6;">Position: ${timeAtPosition}</div>
-            `;
+            // Update text content without rebuilding DOM
+            this.chapterTitle.textContent = currentChapter.text;
+            this.chapterInfo.textContent = `Chapter: ${startTime} - ${endTime}`;
+            this.positionInfo.textContent = `Position: ${timeAtPosition}`;
+
+            // Update sprite thumbnail
+            this.updateSpriteThumbnail(currentTime);
+            this.chapterImage.style.display = 'block';
         } else {
             const timeAtPosition = this.formatTime(currentTime);
-            this.tooltip.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 2px;">No Chapter</div>
-                <div style="font-size: 10px; opacity: 0.6;">Position: ${timeAtPosition}</div>
-            `;
+            this.chapterTitle.textContent = 'No Chapter';
+            this.chapterInfo.textContent = '';
+            this.positionInfo.textContent = `Position: ${timeAtPosition}`;
+
+            // Still show sprite thumbnail even when not in a chapter
+            this.updateSpriteThumbnail(currentTime);
+            this.chapterImage.style.display = 'block';
         }
 
-        // Position tooltip relative to progress control container
-        this.tooltip.style.left = `${tooltipOffsetX}px`;
+        // Position tooltip with smart boundary detection
+        // Force tooltip to be visible momentarily to get accurate dimensions
+        this.tooltip.style.visibility = 'hidden';
+        this.tooltip.style.display = 'block';
+
+        const tooltipWidth = this.tooltip.offsetWidth || 240; // Fallback width
+        const progressControlWidth = progressControlRect.width;
+        const halfTooltipWidth = tooltipWidth / 2;
+
+        // Calculate ideal position (where mouse is)
+        let idealLeft = tooltipOffsetX;
+
+        // Check and adjust boundaries
+        if (idealLeft - halfTooltipWidth < 0) {
+            // Too far left - align to left edge with small margin
+            idealLeft = halfTooltipWidth + 5;
+        } else if (idealLeft + halfTooltipWidth > progressControlWidth) {
+            // Too far right - align to right edge with small margin
+            idealLeft = progressControlWidth - halfTooltipWidth - 5;
+        }
+
+        // Apply position and make visible
+        this.tooltip.style.left = `${idealLeft}px`;
+        this.tooltip.style.visibility = 'visible';
         this.tooltip.style.display = 'block';
     }
 
@@ -220,6 +285,61 @@ class ChapterMarkers extends Component {
             }
         }
         return null;
+    }
+
+    updateSpriteThumbnail(currentTime) {
+        if (!this.previewSprite || !this.previewSprite.url) {
+            // Hide image if no sprite data available
+            this.chapterImage.style.display = 'none';
+            console.log('No sprite data available:', this.previewSprite);
+            return;
+        }
+
+        const { url, frame } = this.previewSprite;
+        const { width, height } = frame;
+
+        // Calculate which frame to show based on current time
+        // Use sprite interval from frame data, fallback to 10 seconds
+        const frameInterval = frame.seconds || 10;
+
+        // Try to detect total frames based on video duration vs frame interval
+        const videoDuration = this.player().duration() || 45; // fallback duration
+        const calculatedMaxFrames = Math.ceil(videoDuration / frameInterval);
+        const maxFrames = Math.min(calculatedMaxFrames, 6); // Cap at 6 frames to be safe
+
+        let frameIndex = Math.floor(currentTime / frameInterval);
+
+        // Clamp frameIndex to available frames to prevent showing empty areas
+        frameIndex = Math.min(frameIndex, maxFrames - 1);
+
+        // Based on the sprite image you shared, it appears to have frames arranged vertically
+        // Let's try a vertical layout first (1 column, multiple rows)
+        const frameRow = frameIndex; // Each frame is on its own row
+        const frameCol = 0; // Always first (and only) column
+
+        // Calculate background position (negative values to shift the sprite)
+        const xPos = -(frameCol * width);
+        const yPos = -(frameRow * height);
+
+        console.log(
+            `Time: ${currentTime}s, Duration: ${this.player().duration()}s, Interval: ${frameInterval}s, Frame: ${frameIndex}/${maxFrames - 1}, Row: ${frameRow}, Col: ${frameCol}, Pos: ${xPos}px ${yPos}px, URL: ${url}`
+        );
+
+        // Apply sprite background
+        this.chapterImage.style.backgroundImage = `url("${url}")`;
+        this.chapterImage.style.backgroundPosition = `${xPos}px ${yPos}px`;
+        this.chapterImage.style.backgroundSize = 'auto';
+        this.chapterImage.style.backgroundRepeat = 'no-repeat';
+
+        // Ensure the image is visible
+        this.chapterImage.style.display = 'block';
+
+        // Fallback: if we're beyond frame 3 (30s+), try showing frame 2 instead (20-30s frame)
+        if (frameIndex >= 3 && currentTime > 30) {
+            const fallbackYPos = -(2 * height); // Frame 2 (20-30s range)
+            this.chapterImage.style.backgroundPosition = `${xPos}px ${fallbackYPos}px`;
+            console.log(`Fallback: Using frame 2 instead of frame ${frameIndex} for time ${currentTime}s`);
+        }
     }
 
     formatTime(seconds) {
@@ -259,23 +379,12 @@ class ChapterMarkers extends Component {
 
     dispose() {
         // Clean up event listeners
-        const progressControl = this.player()
-            .getChild('controlBar')
-            ?.getChild('progressControl');
+        const progressControl = this.player().getChild('controlBar')?.getChild('progressControl');
         if (progressControl) {
             const progressControlEl = progressControl.el();
-            progressControlEl.removeEventListener(
-                'mouseenter',
-                this.handleMouseEnter
-            );
-            progressControlEl.removeEventListener(
-                'mouseleave',
-                this.handleMouseLeave
-            );
-            progressControlEl.removeEventListener(
-                'mousemove',
-                this.handleMouseMove
-            );
+            progressControlEl.removeEventListener('mouseenter', this.handleMouseEnter);
+            progressControlEl.removeEventListener('mouseleave', this.handleMouseLeave);
+            progressControlEl.removeEventListener('mousemove', this.handleMouseMove);
         }
 
         // Remove tooltip
