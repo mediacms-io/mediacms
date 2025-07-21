@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
@@ -22,7 +22,538 @@ function VideoJSPlayer() {
             typeof window !== 'undefined' && window.MEDIA_DATA
                 ? window.MEDIA_DATA
                 : {
-                      data: {},
+                      data: {
+                          related_media: [
+                              {
+                                  friendly_token: 'jgLkic37V',
+                                  url: 'http://localhost/view?m=jgLkic37V',
+                                  api_url: 'http://localhost/api/v1/media/jgLkic37V',
+                                  user: 'admin',
+                                  title: 'Screenshot20250312at15.58.35.png',
+                                  description: '',
+                                  add_date: '2025-03-12T14:28:24.757807Z',
+                                  views: 5,
+                                  media_type: 'image',
+                                  state: 'public',
+                                  duration: 0,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/ad827f53568c4565b69ee59da88966c8.Screenshot20250312at15.58.35.png.jpg',
+                                  is_reviewed: true,
+                                  preview_url: null,
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: null,
+                              },
+                              {
+                                  friendly_token: '54Ip78oPK',
+                                  url: 'http://localhost/view?m=54Ip78oPK',
+                                  api_url: 'http://localhost/api/v1/media/54Ip78oPK',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) 2',
+                                  description: '',
+                                  add_date: '2025-05-19T01:22:10.354407+01:00',
+                                  views: 8,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 1,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/ca19044d26af4eada1669c3373c771cb_nhCvKcl.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/ca19044d26af4eada1669c3373c771cb.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '0.6MB',
+                              },
+                              {
+                                  friendly_token: '0VpZtWduU',
+                                  url: 'http://localhost/view?m=0VpZtWduU',
+                                  api_url: 'http://localhost/api/v1/media/0VpZtWduU',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) (Trimmed)',
+                                  description: '',
+                                  add_date: '2025-05-19T01:30:55.374863+01:00',
+                                  views: 13,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 6,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/46b2bec8d79f496682640ce99b5c53af_RA16Oba.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/46b2bec8d79f496682640ce99b5c53af.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '4.0MB',
+                              },
+                              {
+                                  friendly_token: 'efM2aLP4P',
+                                  url: 'http://localhost/view?m=efM2aLP4P',
+                                  api_url: 'http://localhost/api/v1/media/efM2aLP4P',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) 1',
+                                  description: '',
+                                  add_date: '2025-05-19T01:22:08.117300+01:00',
+                                  views: 11,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 8,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/c27f570a84d64cdc857f87c50dace993_Ma3ap4p.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/c27f570a84d64cdc857f87c50dace993.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 2,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '4.8MB',
+                              },
+                              {
+                                  friendly_token: '8RUHRjnji',
+                                  url: 'http://localhost/view?m=8RUHRjnji',
+                                  api_url: 'http://localhost/api/v1/media/8RUHRjnji',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed)',
+                                  description: '',
+                                  add_date: '2025-05-19T01:29:48.308159+01:00',
+                                  views: 7,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 7,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/884cac6a306e4ae9995726fcd3c7aa49_fT7pnM4.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '4.6MB',
+                              },
+                              {
+                                  friendly_token: 'N5Vpnqfpf',
+                                  url: 'http://localhost/view?m=N5Vpnqfpf',
+                                  api_url: 'http://localhost/api/v1/media/N5Vpnqfpf',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov',
+                                  description: '',
+                                  add_date: '2025-05-19T01:15:03.594646+01:00',
+                                  views: 11,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 37,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/e549ebb4b1dc41a48cf76ebccf592836_1xqZHHc.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/e549ebb4b1dc41a48cf76ebccf592836.tmpu6x4f3js.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '22.3MB',
+                              },
+                              {
+                                  friendly_token: 'MmyuYCEfC',
+                                  url: 'http://localhost/view?m=MmyuYCEfC',
+                                  api_url: 'http://localhost/api/v1/media/MmyuYCEfC',
+                                  user: 'admin',
+                                  title: 'JmailLogIdeasforYiannis.mp4',
+                                  description: 'check the 00:12 and then the 00:39',
+                                  add_date: '2025-03-12T02:37:42Z',
+                                  views: 49,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 112,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/3d4e6f1c7e014720bc6390ed9d61aba5_BppzBiz.JmailLogIdeasforYiannis.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/3d4e6f1c7e014720bc6390ed9d61aba5.tmpcjd0bvr5.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '40.6MB',
+                              },
+                              {
+                                  friendly_token: 'E8ia0lfir',
+                                  url: 'http://localhost/view?m=E8ia0lfir',
+                                  api_url: 'http://localhost/api/v1/media/E8ia0lfir',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed)',
+                                  description: '',
+                                  add_date: '2025-05-19T01:22:27.251447+01:00',
+                                  views: 12,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 37,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/8572a325a9d649f79cc60181fbece78c_0H5arHy.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/8572a325a9d649f79cc60181fbece78c.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '22.4MB',
+                              },
+                              {
+                                  friendly_token: 'eZAl84zg6',
+                                  url: 'http://localhost/view?m=eZAl84zg6',
+                                  api_url: 'http://localhost/api/v1/media/eZAl84zg6',
+                                  user: 'admin',
+                                  title: '20257855hd_1920_1080_60fps.mp4',
+                                  description: '',
+                                  add_date: '2025-03-12T02:35:59.779098Z',
+                                  views: 29,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 90,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/ed9c61a72c0445debfbedee011b6eba1_8HjWGZX.20257855hd_1920_1080_60fps.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/ed9c61a72c0445debfbedee011b6eba1.tmpil72jnbv.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '64.4MB',
+                              },
+                              {
+                                  friendly_token: '6WShYNxZx',
+                                  url: 'http://localhost/view?m=6WShYNxZx',
+                                  api_url: 'http://localhost/api/v1/media/6WShYNxZx',
+                                  user: 'admin',
+                                  title: 'SampleVideo_1280x720_30mb.mp4 test abc',
+                                  description: 'test 123 yiannis',
+                                  add_date: '2025-04-14T00:00:00+01:00',
+                                  views: 43,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 171,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/c868df836ac34688b876e741b58ada93_LRvu388.SampleVideo_1280x720_30mb.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/c868df836ac34688b876e741b58ada93.tmpyl_r01_l.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 3,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '31.5MB',
+                              },
+                              {
+                                  friendly_token: 'SOgLTsrAH',
+                                  url: 'http://localhost/view?m=SOgLTsrAH',
+                                  api_url: 'http://localhost/api/v1/media/SOgLTsrAH',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) (Trimmed) 1',
+                                  description: '',
+                                  add_date: '2025-05-19T01:31:11.057879+01:00',
+                                  views: 8,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 2,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/46c75315947e4a5f9dd464c1721206fd_6KJzqBH.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/46c75315947e4a5f9dd464c1721206fd.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '1.5MB',
+                              },
+                              {
+                                  friendly_token: 'PoDk009ue',
+                                  url: 'http://localhost/view?m=PoDk009ue',
+                                  api_url: 'http://localhost/api/v1/media/PoDk009ue',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov',
+                                  description: '',
+                                  add_date: '2025-05-19T01:17:44.296445+01:00',
+                                  views: 12,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 37,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/fd1d31460e614ca9b4645228e62c9eec_DB8nan8.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '22.4MB',
+                              },
+                              {
+                                  friendly_token: 'b7e06rUz5',
+                                  url: 'http://localhost/view?m=b7e06rUz5',
+                                  api_url: 'http://localhost/api/v1/media/b7e06rUz5',
+                                  user: 'admin',
+                                  title: 'Proto.cyTimesheet03_03_202507_03_2025.pdf',
+                                  description: '',
+                                  add_date: '2025-03-12T14:29:15.245599Z',
+                                  views: 16,
+                                  media_type: 'pdf',
+                                  state: 'public',
+                                  duration: 0,
+                                  thumbnail_url: null,
+                                  is_reviewed: true,
+                                  preview_url: null,
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: null,
+                              },
+                              {
+                                  friendly_token: 'wUu76zL5a',
+                                  url: 'http://localhost/view?m=wUu76zL5a',
+                                  api_url: 'http://localhost/api/v1/media/wUu76zL5a',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) 2 (Trimmed)',
+                                  description: '',
+                                  add_date: '2025-05-19T01:28:52.829907+01:00',
+                                  views: 2,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 0,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/1b3e7dc2431b46a5b7e40b297662137a_1V0DJz5.ca19044d26af4eada1669c3373c771cb.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/1b3e7dc2431b46a5b7e40b297662137a.ca19044d26af4eada1669c3373c771cb.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '0.3MB',
+                              },
+                              {
+                                  friendly_token: 'JBjMHLfLZ',
+                                  url: 'http://localhost/view?m=JBjMHLfLZ',
+                                  api_url: 'http://localhost/api/v1/media/JBjMHLfLZ',
+                                  user: 'admin',
+                                  title: 'att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov (Trimmed) (Trimmed) 2',
+                                  description: '',
+                                  add_date: '2025-05-19T01:31:11.848403+01:00',
+                                  views: 19,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 4,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/7759ca3e0ba1482aa9149201bd14139d_ISBMqD4.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.att.24Cz35hRdjJ9FV0RlxCPVVtc6XVAdJvrU4eb8Gkykc.mov.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/7759ca3e0ba1482aa9149201bd14139d.884cac6a306e4ae9995726fcd3c7aa49.fd1d31460e614ca9b4645228e62c9eec.tmpjohj96hu.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '2.5MB',
+                              },
+                              {
+                                  friendly_token: 'w13x5uUXc',
+                                  url: 'http://localhost/view?m=w13x5uUXc',
+                                  api_url: 'http://localhost/api/v1/media/w13x5uUXc',
+                                  user: 'admin',
+                                  title: 'Web357202503112025_05_33_AM.png',
+                                  description: '',
+                                  add_date: '2025-03-12T14:27:55.078360Z',
+                                  views: 3,
+                                  media_type: 'image',
+                                  state: 'public',
+                                  duration: 0,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/1da967bcdca540efa1d2362af2f3a34b.Web357202503112025_05_33_AM.png.jpg',
+                                  is_reviewed: true,
+                                  preview_url: null,
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: null,
+                              },
+                              {
+                                  friendly_token: 'sZxPpdon5',
+                                  url: 'http://localhost/view?m=sZxPpdon5',
+                                  api_url: 'http://localhost/api/v1/media/sZxPpdon5',
+                                  user: 'admin',
+                                  title: 'JmailLogIdeasforYiannis.mp4 (Trimmed)',
+                                  description: 'check the 00:12 and then the 00:39',
+                                  add_date: '2025-05-15T02:16:19.580745+01:00',
+                                  views: 9,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 17,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/7191a59cbfcd402ebed400e604a76840_5WRh0cp.3d4e6f1c7e014720bc6390ed9d61aba5.JmailLogIdeasforYiannis.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/7191a59cbfcd402ebed400e604a76840.3d4e6f1c7e014720bc6390ed9d61aba5.tmpcjd0bvr5.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '4.5MB',
+                              },
+                              {
+                                  friendly_token: 'TCycDZROI',
+                                  url: 'http://localhost/view?m=TCycDZROI',
+                                  api_url: 'http://localhost/api/v1/media/TCycDZROI',
+                                  user: 'admin',
+                                  title: 'JmailLogIdeasforYiannis.mp4 (Trimmed)',
+                                  description: 'check the 00:12 and then the 00:39',
+                                  add_date: '2025-05-15T02:14:58.855935+01:00',
+                                  views: 8,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 112,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/5cbfbe93d06c453487c65d9d54749318_CUIZl8y.3d4e6f1c7e014720bc6390ed9d61aba5.JmailLogIdeasforYiannis.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/5cbfbe93d06c453487c65d9d54749318.3d4e6f1c7e014720bc6390ed9d61aba5.tmpcjd0bvr5.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 1,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '40.6MB',
+                              },
+                              {
+                                  friendly_token: 'YjGJafibO',
+                                  url: 'http://localhost/view?m=YjGJafibO',
+                                  api_url: 'http://localhost/api/v1/media/YjGJafibO',
+                                  user: 'admin',
+                                  title: 'file_example_MP4_480_1_5MG.mp4',
+                                  description: '',
+                                  add_date: '2025-04-14T00:07:11.074523+01:00',
+                                  views: 18,
+                                  media_type: 'video',
+                                  state: 'public',
+                                  duration: 30,
+                                  thumbnail_url:
+                                      'http://localhost/media/original/thumbnails/user/admin/e76f4fff2b3d42adbadb0f1204b21b81_s8EEvSE.file_example_MP4_480_1_5MG.mp4.jpg',
+                                  is_reviewed: true,
+                                  preview_url:
+                                      '/media/encoded/1/admin/e76f4fff2b3d42adbadb0f1204b21b81.tmp04azp_tc.gif',
+                                  author_name: '',
+                                  author_profile: 'http://localhost/user/admin/',
+                                  author_thumbnail: 'http://localhost/media/userlogos/user.jpg',
+                                  encoding_status: 'success',
+                                  likes: 2,
+                                  dislikes: 0,
+                                  reported_times: 0,
+                                  featured: false,
+                                  user_featured: false,
+                                  size: '1.6MB',
+                              },
+                          ],
+                      },
                       previewSprite: {
                           url: 'https://demo.mediacms.io/media/original/thumbnails/user/markos/fe4933d67b884d4da507dd60e77f7438.VID_20200909_141053.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
@@ -54,6 +585,7 @@ function VideoJSPlayer() {
             title: mediaData.data?.title || 'Video',
             poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
             previewSprite: mediaData?.previewSprite || {},
+            related_media: mediaData.data?.related_media || [],
             sources: mediaData.data?.original_media_url
                 ? [
                       {
@@ -71,81 +603,30 @@ function VideoJSPlayer() {
         [mediaData]
     );
 
-    // Mock related videos data (would come from API)
-    const [relatedVideos] = useState([
-        {
-            id: 'Otbc37Yj4',
-            title: 'Amazing Ocean Depths',
-            author: 'Marine Explorer',
-            views: '2.1M views',
-            thumbnail: 'https://picsum.photos/320/180?random=1',
-            category: 'nature',
-        },
-        {
-            id: 'Kt9m2Pv8x',
-            title: 'Deep Sea Creatures',
-            author: 'Aquatic Life',
-            views: '854K views',
-            thumbnail: 'https://picsum.photos/320/180?random=2',
-            category: 'nature',
-        },
-        {
-            id: 'Ln5q8Bw3r',
-            title: 'Coral Reef Paradise',
-            author: 'Ocean Films',
-            views: '1.7M views',
-            thumbnail: 'https://picsum.photos/320/180?random=3',
-            category: 'nature',
-        },
-        {
-            id: 'Mz4x7Cy9p',
-            title: 'Underwater Adventure',
-            author: 'Sea Documentaries',
-            views: '3.2M views',
-            thumbnail: 'https://picsum.photos/320/180?random=4',
-            category: 'nature',
-        },
-        {
-            id: 'Nx8v2Fk6w',
-            title: 'Marine Wildlife',
-            author: 'Nature Plus',
-            views: '967K views',
-            thumbnail: 'https://picsum.photos/320/180?random=5',
-            category: 'nature',
-        },
-        {
-            id: 'Py7t4Mn1q',
-            title: 'Ocean Mysteries',
-            author: 'Discovery Zone',
-            views: '1.4M views',
-            thumbnail: 'https://picsum.photos/320/180?random=6',
-            category: 'nature',
-        },
-        {
-            id: 'Qw5e8Rt2n',
-            title: 'Whales and Dolphins',
-            author: 'Ocean Planet',
-            views: '2.8M views',
-            thumbnail: 'https://picsum.photos/320/180?random=7',
-            category: 'nature',
-        },
-        {
-            id: 'Uv3k9Lp7m',
-            title: 'Tropical Fish Paradise',
-            author: 'Aquatic World',
-            views: '1.2M views',
-            thumbnail: 'https://picsum.photos/320/180?random=8',
-            category: 'nature',
-        },
-        {
-            id: 'Zx6c4Mn8b',
-            title: 'Deep Ocean Exploration',
-            author: 'Marine Science',
-            views: '3.7M views',
-            thumbnail: 'https://picsum.photos/320/180?random=9',
-            category: 'nature',
-        },
-    ]);
+    // Get related videos from mediaData instead of static data
+    const relatedVideos = useMemo(() => {
+        if (!mediaData?.data?.related_media) {
+            return [];
+        }
+
+        return mediaData.data.related_media
+            .slice(0, 12) // Limit to maximum 12 items
+            .map((media) => ({
+                id: media.friendly_token,
+                title: media.title,
+                author: media.user || media.author_name || 'Unknown',
+                views: `${media.views} views`,
+                thumbnail: media.thumbnail_url || media.author_thumbnail,
+                category: media.media_type,
+                url: media.url,
+                duration: media.duration,
+                size: media.size,
+                likes: media.likes,
+                dislikes: media.dislikes,
+                add_date: media.add_date,
+                description: media.description,
+            }));
+    }, [mediaData]);
 
     // Function to navigate to next video
     const goToNextVideo = () => {
@@ -652,6 +1133,55 @@ function VideoJSPlayer() {
                         }
                         // END: Add chapter markers to progress control
 
+                        // BEGIN: Move CC (subtitles) and PiP buttons to the right side
+                        setTimeout(() => {
+                            // Find the subtitles/captions button (CC button)
+                            const possibleTextTrackButtons = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
+                            let textTrackButton = null;
+
+                            for (const buttonName of possibleTextTrackButtons) {
+                                const button = controlBar.getChild(buttonName);
+                                if (button) {
+                                    textTrackButton = button;
+                                    console.log(`Found text track button: ${buttonName}`);
+                                    break;
+                                }
+                            }
+
+                            // Find the picture-in-picture button
+                            const pipButton = controlBar.getChild('pictureInPictureToggle');
+
+                            // Move buttons to the right side in desired order
+                            if (fullscreenToggle) {
+                                const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
+                                let insertIndex = fullscreenIndex;
+
+                                // Move PiP button first (will be rightmost before fullscreen)
+                                if (pipButton) {
+                                    try {
+                                        controlBar.removeChild(pipButton);
+                                        controlBar.addChild(pipButton, {}, insertIndex);
+                                        console.log('✓ Picture-in-Picture button moved to right side');
+                                        insertIndex = controlBar.children().indexOf(fullscreenToggle); // Update index
+                                    } catch (e) {
+                                        console.log('✗ Failed to move PiP button:', e);
+                                    }
+                                }
+
+                                // Move CC button (will be before PiP)
+                                if (textTrackButton) {
+                                    try {
+                                        controlBar.removeChild(textTrackButton);
+                                        controlBar.addChild(textTrackButton, {}, insertIndex);
+                                        console.log('✓ CC button moved to right side');
+                                    } catch (e) {
+                                        console.log('✗ Failed to move CC button:', e);
+                                    }
+                                }
+                            }
+                        }, 100);
+                        // END: Move CC (subtitles) and PiP buttons to the right side
+
                         // BEGIN: Move chapters button after fullscreen toggle
                         if (chaptersButton && fullscreenToggle) {
                             try {
@@ -1053,7 +1583,12 @@ function VideoJSPlayer() {
         };
     }, []);
 
-    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
+    return (
+        <>
+            <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />
+            {JSON.stringify(currentVideo.related_media)}
+        </>
+    );
 }
 
 export default VideoJSPlayer;
