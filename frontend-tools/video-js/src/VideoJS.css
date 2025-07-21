@@ -25,6 +25,8 @@
 .video-js .vjs-control-bar {
     border-bottom-left-radius: 12px !important;
     border-bottom-right-radius: 12px !important;
+    padding-bottom: 5px;
+    padding-top: 0px;
 }
 
 /* Responsive video container */

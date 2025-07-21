@@ -1595,12 +1595,7 @@ function VideoJSPlayer() {
         };
     }, []);
 
-    return (
-        <>
-            <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />
-            {JSON.stringify(currentVideo.related_media)}
-        </>
-    );
+    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
 }
 
 export default VideoJSPlayer;
