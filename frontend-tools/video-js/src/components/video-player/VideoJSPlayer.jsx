@@ -23,6 +23,10 @@ function VideoJSPlayer() {
                 ? window.MEDIA_DATA
                 : {
                       data: {},
+                      previewSprite: {
+                          url: 'https://demo.mediacms.io/media/original/thumbnails/user/markos/fe4933d67b884d4da507dd60e77f7438.VID_20200909_141053.mp4sprites.jpg',
+                          frame: { width: 160, height: 90, seconds: 10 },
+                      },
                       siteUrl: '',
                       hasNextLink: true,
                   },
@@ -38,9 +42,9 @@ function VideoJSPlayer() {
         { startTime: 15, endTime: 20, text: 'Parcel Discounts - EuroHPC' },
         { startTime: 20, endTime: 25, text: 'Class Studies - EuroHPC' },
         { startTime: 25, endTime: 30, text: 'Sustainability - EuroHPC' },
-        { startTime: 30, endTime: 35, text: 'Funding and Finance - EuroHPC' },
+        { startTime: 30, endTime: 31, text: 'Funding and  - EuroHPC' } /* 
         { startTime: 35, endTime: 40, text: 'Virtual HPC Academy - EuroHPC' },
-        { startTime: 40, endTime: 45, text: 'Wrapping up - EuroHPC' },
+        { startTime: 40, endTime: 45, text: 'Wrapping up - EuroHPC' }, */,
     ];
 
     // Get video data from mediaData
@@ -49,6 +53,7 @@ function VideoJSPlayer() {
             id: mediaData.data?.friendly_token || 'default-video',
             title: mediaData.data?.title || 'Video',
             poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
+            previewSprite: mediaData?.previewSprite || {},
             sources: mediaData.data?.original_media_url
                 ? [
                       {
@@ -640,7 +645,9 @@ function VideoJSPlayer() {
 
                         // BEGIN: Add chapter markers to progress control
                         if (progressControl && seekBar) {
-                            const chapterMarkers = new ChapterMarkers(playerRef.current);
+                            const chapterMarkers = new ChapterMarkers(playerRef.current, {
+                                previewSprite: mediaData.previewSprite,
+                            });
                             seekBar.addChild(chapterMarkers);
                         }
                         // END: Add chapter markers to progress control
