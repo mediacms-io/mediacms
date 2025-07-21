@@ -1135,6 +1135,24 @@ function VideoJSPlayer() {
 
                         // BEGIN: Move CC (subtitles) and PiP buttons to the right side
                         setTimeout(() => {
+                            // Create a spacer element to push buttons to the right
+                            const spacer = videojs.dom.createEl('div', {
+                                className: 'vjs-spacer-control vjs-control',
+                            });
+                            spacer.style.flex = '1';
+                            spacer.style.minWidth = '1px';
+
+                            // Find insertion point after time displays
+                            const durationDisplay = controlBar.getChild('durationDisplay');
+                            const customRemainingTime = controlBar.getChild('customRemainingTime');
+                            const insertAfter = customRemainingTime || durationDisplay;
+
+                            if (insertAfter) {
+                                const insertIndex = controlBar.children().indexOf(insertAfter) + 1;
+                                controlBar.el().insertBefore(spacer, controlBar.children()[insertIndex]?.el() || null);
+                                console.log('✓ Spacer added after time displays');
+                            }
+
                             // Find the subtitles/captions button (CC button)
                             const possibleTextTrackButtons = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
                             let textTrackButton = null;
@@ -1148,37 +1166,31 @@ function VideoJSPlayer() {
                                 }
                             }
 
-                            // Find the picture-in-picture button
+                            // Find other buttons to move to the right
                             const pipButton = controlBar.getChild('pictureInPictureToggle');
+                            const playbackRateButton = controlBar.getChild('playbackRateMenuButton');
+                            const chaptersButton = controlBar.getChild('chaptersButton');
 
-                            // Move buttons to the right side in desired order
-                            if (fullscreenToggle) {
-                                const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
-                                let insertIndex = fullscreenIndex;
+                            // Move buttons to the right side (after spacer)
+                            const buttonsToMove = [
+                                playbackRateButton,
+                                textTrackButton,
+                                pipButton,
+                                chaptersButton,
+                                fullscreenToggle,
+                            ].filter(Boolean);
 
-                                // Move PiP button first (will be rightmost before fullscreen)
-                                if (pipButton) {
+                            buttonsToMove.forEach((button) => {
+                                if (button) {
                                     try {
-                                        controlBar.removeChild(pipButton);
-                                        controlBar.addChild(pipButton, {}, insertIndex);
-                                        console.log('✓ Picture-in-Picture button moved to right side');
-                                        insertIndex = controlBar.children().indexOf(fullscreenToggle); // Update index
+                                        controlBar.removeChild(button);
+                                        controlBar.addChild(button);
+                                        console.log(`✓ Moved ${button.name_ || 'button'} to right side`);
                                     } catch (e) {
-                                        console.log('✗ Failed to move PiP button:', e);
+                                        console.log(`✗ Failed to move button:`, e);
                                     }
                                 }
-
-                                // Move CC button (will be before PiP)
-                                if (textTrackButton) {
-                                    try {
-                                        controlBar.removeChild(textTrackButton);
-                                        controlBar.addChild(textTrackButton, {}, insertIndex);
-                                        console.log('✓ CC button moved to right side');
-                                    } catch (e) {
-                                        console.log('✗ Failed to move CC button:', e);
-                                    }
-                                }
-                            }
+                            });
                         }, 100);
                         // END: Move CC (subtitles) and PiP buttons to the right side
 
