@@ -13,8 +13,7 @@ class EndScreenOverlay extends Component {
         super(player, options);
 
         // Now set the instance property after super() completes
-        this.relatedVideos =
-            options && options.relatedVideos ? options.relatedVideos : [];
+        this.relatedVideos = options && options.relatedVideos ? options.relatedVideos : [];
 
         // console.log(
         //     'EndScreenOverlay created with',
@@ -25,14 +24,16 @@ class EndScreenOverlay extends Component {
 
     createEl() {
         // Get relatedVideos from options since createEl is called during super()
-        const relatedVideos =
-            this.options_ && this.options_._relatedVideos
-                ? this.options_._relatedVideos
-                : [];
+        const relatedVideos = this.options_ && this.options_._relatedVideos ? this.options_._relatedVideos : [];
+
+        // Limit items based on screen size
+        const isMobile = window.innerWidth <= 768;
+        const maxItems = isMobile ? 6 : 12;
+        const videosToShow = relatedVideos.slice(0, maxItems);
 
         // console.log(
         //     'Creating end screen with',
-        //     relatedVideos.length,
+        //     videosToShow.length,
         //     'related videos'
         // );
 
@@ -46,12 +47,8 @@ class EndScreenOverlay extends Component {
         });
 
         // Create video items
-        if (
-            relatedVideos &&
-            Array.isArray(relatedVideos) &&
-            relatedVideos.length > 0
-        ) {
-            relatedVideos.forEach((video) => {
+        if (videosToShow && Array.isArray(videosToShow) && videosToShow.length > 0) {
+            videosToShow.forEach((video) => {
                 const videoItem = this.createVideoItem(video);
                 grid.appendChild(videoItem);
             });
@@ -91,6 +88,11 @@ class EndScreenOverlay extends Component {
         });
         title.textContent = video.title;
 
+        // Create meta container for author and views
+        const meta = videojs.dom.createEl('div', {
+            className: 'vjs-related-video-meta',
+        });
+
         const author = videojs.dom.createEl('div', {
             className: 'vjs-related-video-author',
         });
@@ -101,12 +103,36 @@ class EndScreenOverlay extends Component {
         });
         views.textContent = video.views;
 
+        // Add author and views to meta container
+        meta.appendChild(author);
+        meta.appendChild(views);
+
+        // Add duration display (positioned absolutely in bottom right)
+        const duration = videojs.dom.createEl('div', {
+            className: 'vjs-related-video-duration',
+        });
+
+        // Format duration from seconds to MM:SS
+        const formatDuration = (seconds) => {
+            if (!seconds || seconds === 0) return '';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        duration.textContent = formatDuration(video.duration);
+
+        // Structure: title at top, meta at bottom
         overlay.appendChild(title);
-        overlay.appendChild(author);
-        overlay.appendChild(views);
+        overlay.appendChild(meta);
 
         item.appendChild(thumbnail);
         item.appendChild(overlay);
+
+        // Add duration to the item (positioned absolutely)
+        if (video.duration && video.duration > 0) {
+            item.appendChild(duration);
+        }
 
         // Add click handler
         item.addEventListener('click', () => {
