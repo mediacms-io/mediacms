@@ -1222,7 +1222,6 @@ function VideoJSPlayer() {
                             customComponents.current.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
                                 chaptersData: chaptersData,
                             });
-                            console.log('✓ Custom chapters overlay component created');
                         } else {
                             console.log('⚠ No chapters data available for overlay');
                         }
@@ -1232,7 +1231,7 @@ function VideoJSPlayer() {
                         customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {
                             userPreferences: userPreferences.current,
                         });
-                        console.log('✓ Custom settings menu component created');
+
                         // END: Add Settings Menu Component
 
                         // BEGIN: Add Seek Indicator Component
@@ -1242,17 +1241,10 @@ function VideoJSPlayer() {
                         // Add the component but ensure it's hidden initially
                         playerRef.current.addChild(customComponents.current.seekIndicator);
 
-                        // Log the element to verify it exists
-                        console.log('✓ Custom seek indicator component created');
-                        console.log('Seek indicator element:', customComponents.current.seekIndicator.el());
-                        console.log('Player element:', playerRef.current.el());
-
                         customComponents.current.seekIndicator.hide(); // Explicitly hide on creation
-                        console.log('✓ Seek indicator hidden after creation');
                         // END: Add Seek Indicator Component
 
                         // Store components reference for potential cleanup
-                        console.log('Custom components initialized:', Object.keys(customComponents.current));
 
                         // BEGIN: Add custom arrow key seek functionality
                         const handleKeyDown = (event) => {
@@ -1296,43 +1288,10 @@ function VideoJSPlayer() {
                             document.removeEventListener('keydown', handleKeyDown);
                         };
 
-                        console.log('✓ Arrow key seek functionality enabled');
                         // END: Add custom arrow key seek functionality
 
                         // Log current user preferences
                         console.log('Current user preferences:', userPreferences.current.getPreferences());
-
-                        // Add debugging methods to window for testing
-                        window.debugSeek = {
-                            testForward: () => {
-                                console.log('🧪 Testing seek indicator forward');
-                                customComponents.current.seekIndicator.show('forward', 5);
-                            },
-                            testBackward: () => {
-                                console.log('🧪 Testing seek indicator backward');
-                                customComponents.current.seekIndicator.show('backward', 5);
-                            },
-                            testHide: () => {
-                                console.log('🧪 Testing seek indicator hide');
-                                customComponents.current.seekIndicator.hide();
-                            },
-                            getElement: () => {
-                                return customComponents.current.seekIndicator.el();
-                            },
-                            getStyles: () => {
-                                const el = customComponents.current.seekIndicator.el();
-                                return {
-                                    display: el.style.display,
-                                    visibility: el.style.visibility,
-                                    opacity: el.style.opacity,
-                                    position: el.style.position,
-                                    zIndex: el.style.zIndex,
-                                    top: el.style.top,
-                                    left: el.style.left,
-                                    cssText: el.style.cssText,
-                                };
-                            },
-                        };
 
                         window.debugSubtitles = {
                             showTracks: () => {
