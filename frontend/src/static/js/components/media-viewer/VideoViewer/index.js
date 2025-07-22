@@ -541,7 +541,6 @@ export default class VideoViewer extends React.PureComponent {
                     onLoad: () => console.log('Video js loaded in VideoViewer'),
                     onError: (error) => console.error('Video js error in VideoViewer:', error),
                 })} */}
-
                 <div
                     key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
                     className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
@@ -558,6 +557,7 @@ export default class VideoViewer extends React.PureComponent {
                                 <SiteConsumer>
                                     {(site) => {
                                         return React.createElement(VideoJSEmbed, {
+                                            nextLink: nextLink,
                                             data: this.props.data,
                                             playerVolume: this.browserCache.get('player-volume'),
                                             playerSoundMuted: this.browserCache.get('player-sound-muted'),
@@ -592,7 +592,6 @@ export default class VideoViewer extends React.PureComponent {
                         ) : null}
                     </div>
                 </div>
-
                 {/* <div
                     key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
                     className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}

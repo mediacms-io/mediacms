@@ -55,6 +55,43 @@
     right: 10px;
 }
 
+/* Autoplay Toggle Button Styles */
+.vjs-autoplay-toggle {
+    width: 3em !important;
+    height: 3em !important;
+    flex: none;
+    padding: 0 !important;
+    margin: 0 4px !important;
+    line-height: 3em !important;
+    position: relative;
+    border: none !important;
+    background: transparent !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.vjs-autoplay-toggle:hover {
+    color: #ff4444 !important;
+    transform: scale(1.1) !important;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    pointer-events: none;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
 .vjs-next-video-control .vjs-icon-placeholder {
     width: 1.2em;
     height: 1.2em;
@@ -511,9 +548,17 @@
     gap: 6px !important;
 }
 
+/* Spacer element to push buttons to the right */
+.video-js .vjs-spacer-control {
+    flex: 1 !important;
+    min-width: 1px !important;
+    height: 100% !important;
+}
+
 /* Basic control bar styling - let JavaScript handle positioning */
 .video-js .vjs-control-bar .vjs-control {
     /* Natural flex flow */
+    flex: none !important; /* Prevent controls from growing */
 }
 
 /* Seek Indicator Styles */

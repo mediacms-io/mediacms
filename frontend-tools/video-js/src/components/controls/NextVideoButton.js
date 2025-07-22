@@ -6,7 +6,7 @@ const Button = videojs.getComponent('Button');
 class NextVideoButton extends Button {
     constructor(player, options) {
         super(player, options);
-        this.nextLink = options.nextLink || '';
+        // this.nextLink = options.nextLink || '';
     }
 
     createEl() {
@@ -43,7 +43,7 @@ class NextVideoButton extends Button {
     }
 
     handleClick() {
-        console.log('NextVideoButton handleClick', this.nextLink);
+        // console.log('NextVideoButton handleClick', this.nextLink);
         this.player().trigger('nextVideo');
     }
 }
