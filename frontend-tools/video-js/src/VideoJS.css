@@ -1,0 +1,683 @@
+.video-js {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    outline: none !important; /* Remove default focus outline */
+}
+
+/* Ensure video element can receive focus for keyboard controls */
+/* .video-js:focus {
+    border: 50px solid red;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 0 0 3px rgba(0, 122, 204, 0.3) !important;
+} */
+
+.video-js video {
+    outline: none !important;
+}
+.video-js .vjs-poster {
+    border-radius: 12px !important;
+}
+.video-js video {
+    border-radius: 12px !important;
+}
+.video-js .vjs-control-bar {
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+    padding-bottom: 5px;
+    padding-top: 0px;
+}
+
+/* Responsive video container */
+.video-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Ensure video.js responsive behavior */
+.video-js.vjs-fluid {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+.vjs-next-video-control {
+    width: 3em !important;
+    height: 3em !important;
+    flex: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 3em !important;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+/* Autoplay Toggle Button Styles */
+.vjs-autoplay-toggle {
+    width: 3em !important;
+    height: 3em !important;
+    flex: none;
+    padding: 0 !important;
+    margin: 0 4px !important;
+    line-height: 3em !important;
+    position: relative;
+    border: none !important;
+    background: transparent !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.vjs-autoplay-toggle:hover {
+    color: #ff4444 !important;
+    transform: scale(1.1) !important;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    pointer-events: none;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.vjs-next-video-control .vjs-icon-placeholder {
+    width: 1.2em;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+.vjs-next-video-control .vjs-icon-placeholder svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* End Screen Overlay Styles */
+.vjs-end-screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 46px);
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.vjs-related-videos-title {
+    color: white;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.vjs-related-videos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.vjs-related-video-item {
+    position: relative;
+    cursor: pointer;
+    border-radius: 0;
+    overflow: hidden;
+    transition: none;
+    background: #1a1a1a;
+    border: 1px solid #000;
+}
+
+.vjs-related-video-item:hover {
+    transform: none;
+}
+
+.vjs-related-video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0;
+}
+
+.vjs-related-video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+    color: white;
+    padding: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.vjs-related-video-item:hover .vjs-related-video-overlay {
+    opacity: 1;
+}
+
+.vjs-related-video-title {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.3;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.vjs-related-video-meta {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+}
+
+.vjs-related-video-author {
+    font-size: 12px;
+    color: #ccc;
+}
+
+.vjs-related-video-views {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.vjs-related-video-author::after {
+    content: "•";
+    margin-left: 8px;
+    color: #666;
+}
+
+.vjs-related-video-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.vjs-related-video-item:hover .vjs-related-video-duration {
+    opacity: 1;
+}
+
+/* Keep entire control bar active when video ends */
+.video-js.vjs-ended .vjs-control-bar {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.video-js.vjs-ended .vjs-control-bar .vjs-control {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.video-js.vjs-ended .vjs-control-bar button {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.video-js.vjs-ended .vjs-play-control {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.video-js.vjs-ended .vjs-progress-control {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.video-js.vjs-ended .vjs-volume-panel {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* Chapter Markers and Tooltip Styles */
+.vjs-chapter-markers-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.vjs-chapter-marker {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    pointer-events: auto;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.vjs-chapter-marker:hover {
+    background: rgba(255, 255, 255, 0.9);
+    width: 3px;
+}
+
+.vjs-chapter-marker-tooltip {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+}
+
+.vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+    opacity: 1;
+}
+
+.vjs-chapter-floating-tooltip {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif !important;
+    line-height: 1.4 !important;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Make menus clickable instead of hover-only */
+.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu {
+    display: none !important; /* Hide by default */
+}
+
+.video-js .vjs-menu-button:not(.vjs-disabled).vjs-lock-showing .vjs-menu,
+.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu.vjs-lock-showing {
+    display: block !important; /* Show when clicked */
+}
+
+/* Disable hover effects on menu buttons */
+.video-js .vjs-menu-button:hover .vjs-menu {
+    display: none !important;
+}
+
+.video-js .vjs-menu-button.vjs-lock-showing:hover .vjs-menu {
+    display: block !important;
+}
+
+/* Ensure clicked menus stay visible */
+.video-js .vjs-menu.vjs-lock-showing {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .video-container {
+        padding: 0 15px;
+    }
+
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 0;
+        height: calc(100% - 46px);
+    }
+
+    .vjs-related-video-thumbnail {
+        height: 100%;
+    }
+
+    .vjs-chapter-floating-tooltip {
+        max-width: 200px !important;
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .video-container {
+        padding: 0 10px;
+    }
+
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 0;
+        height: calc(100% - 46px);
+    }
+
+    .vjs-related-video-thumbnail {
+        height: 100%;
+    }
+
+    /* Make sure video info panel is responsive */
+    .video-info {
+        margin-top: 10px !important;
+        padding: 10px !important;
+        font-size: 14px !important;
+    }
+
+    .video-info h4 {
+        font-size: 16px !important;
+    }
+
+    .video-info ul {
+        font-size: 12px !important;
+    }
+}
+
+/* Played portion, buffered portion, unplayed portion */
+.vjs-play-progress {
+    background-color: #019932 !important;
+}
+.vjs-load-progress {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+.vjs-progress-holder {
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Move progress control out of control bar and position it above */
+.video-js .vjs-progress-control {
+    position: absolute !important;
+    bottom: 46px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 0 !important;
+    z-index: 3 !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+}
+
+/* Hide the original progress control from the control bar */
+.video-js .vjs-control-bar .vjs-progress-control {
+    display: none !important;
+}
+
+/* Optional: Ensure the progress control is visible */
+.video-js .vjs-progress-control.vjs-control {
+    display: block !important;
+}
+
+/* Make the seek bar thicker */
+/* .video-js .vjs-play-progress,
+.video-js .vjs-load-progress,
+.video-js .vjs-progress-holder {
+    height: 4px !important;
+} */
+
+/* Remove the semi-transparent background from control bar */
+.video-js .vjs-control-bar {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+}
+
+/* Push specific buttons to the right */
+/* .video-js .vjs-playback-rate,
+.video-js .vjs-picture-in-picture-control,
+.video-js .vjs-fullscreen-control {
+    margin-left: auto !important;
+    order: 999 !important;
+}
+.video-js .vjs-picture-in-picture-control {
+    margin-left: 0 !important;
+}
+.video-js .vjs-fullscreen-control {
+    margin-left: 0 !important;
+} */
+
+/* Make all control bar icons bigger */
+.video-js .vjs-control-bar .vjs-icon-placeholder,
+.video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
+.video-js .vjs-control-bar [class*="vjs-icon-"] {
+    font-size: 1.5em !important;
+    transform: translateY(-28px) !important;
+}
+.video-js .vjs-control-bar svg {
+    width: 3em !important;
+    height: 3em !important;
+    transform: translateY(-16px) !important;
+}
+
+/******** BEGIN: Custom Remaining Time Styles *********/
+.vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+    font-size: 14px !important; /* Increase font size */
+    font-weight: 500;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #fff;
+}
+
+/* Ensure proper vertical alignment within control bar */
+.vjs-control-bar .custom-remaining-time {
+    top: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/********* END: Custom Remaining Time Styles *********/
+
+/* Volume Slider */
+.vjs-mouse-display {
+    z-index: 4 !important;
+}
+.vjs-slider-horizontal {
+    top: -5px;
+}
+
+/* Push specific controls to the right side of control bar */
+.video-js .vjs-control-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+}
+
+/* Spacer element to push buttons to the right */
+.video-js .vjs-spacer-control {
+    flex: 1 !important;
+    min-width: 1px !important;
+    height: 100% !important;
+}
+
+/* Basic control bar styling - let JavaScript handle positioning */
+.video-js .vjs-control-bar .vjs-control {
+    /* Natural flex flow */
+    flex: none !important; /* Prevent controls from growing */
+}
+
+/* Seek Indicator Styles */
+.vjs-seek-indicator {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease-in-out !important;
+}
+
+.vjs-seek-indicator-content {
+    background: transparent !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.vjs-seek-indicator-icon {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+}
+
+.seek-icon-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: seekPulse 0.3s ease-out !important;
+}
+
+/* YouTube-style seek indicator */
+.youtube-seek-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: youtubeSeekPulse 0.3s ease-out !important;
+}
+
+.youtube-seek-circle {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.youtube-seek-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+}
+
+.youtube-seek-icon svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) !important;
+}
+
+.youtube-seek-time {
+    color: white !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    opacity: 0.9 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+@keyframes youtubeSeekPulse {
+    0% {
+        transform: scale(0.7);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.seek-seconds {
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7) !important;
+    line-height: 1 !important;
+}
+
+/* Remove old animation - replaced with youtubeSeekPulse */
+
+.vjs-seek-indicator-text {
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
