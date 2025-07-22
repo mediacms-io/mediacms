@@ -4,8 +4,10 @@ import 'video.js/dist/video-js.css';
 
 // Import the separated components
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
+import AutoplayCountdownOverlay from '../overlays/AutoplayCountdownOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
 import NextVideoButton from '../controls/NextVideoButton';
+import AutoplayToggleButton from '../controls/AutoplayToggleButton';
 import CustomRemainingTime from '../controls/CustomRemainingTime';
 import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
@@ -561,7 +563,6 @@ function VideoJSPlayer() {
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
                       siteUrl: '',
-                      hasNextLink: true,
                       nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
                   },
         []
@@ -589,7 +590,7 @@ function VideoJSPlayer() {
             poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
-            nextLink: mediaData.nextLink || '',
+            nextLink: mediaData?.nextLink || null,
             sources: mediaData.data?.original_media_url
                 ? [
                       {
@@ -661,8 +662,8 @@ function VideoJSPlayer() {
 
                         // Player dimensions - removed for responsive design
 
-                        // Autoplay behavior: false, true, 'muted', 'play', 'any'
-                        autoplay: true,
+                        // Autoplay behavior: Use 'muted' to comply with browser policies
+                        autoplay: 'muted',
 
                         // Start video over when it ends
                         loop: false,
@@ -951,7 +952,7 @@ function VideoJSPlayer() {
                             setTimeout(() => {
                                 if (playerRef.current && !playerRef.current.isDisposed()) {
                                     playerRef.current.play().catch((error) => {
-                                        console.log('Autoplay was prevented:', error);
+                                        console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
                                     });
                                 }
                             }, 100);
@@ -1024,7 +1025,8 @@ function VideoJSPlayer() {
                         // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
-                        if (mediaData.hasNextLink) {
+                        if (mediaData?.nextLink) {
+                            console.log('mediaData.nextLink edw', mediaData.nextLink);
                             const nextVideoButton = new NextVideoButton(playerRef.current, {
                                 nextLink: mediaData.nextLink,
                             });
@@ -1032,6 +1034,30 @@ function VideoJSPlayer() {
                             controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
                         }
                         // END: Implement custom next video button
+
+                        // BEGIN: Implement autoplay toggle button - simplified
+                        try {
+                            const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
+                                userPreferences: userPreferences.current,
+                            });
+                            // Add it after the play button
+                            const playToggleIndex = controlBar.children().indexOf(playToggle);
+                            controlBar.addChild(autoplayToggleButton, {}, playToggleIndex + 1);
+
+                            // Store reference for later use
+                            customComponents.current.autoplayToggleButton = autoplayToggleButton;
+
+                            // Force update icon after adding to DOM to ensure correct display
+                            setTimeout(() => {
+                                autoplayToggleButton.updateIcon();
+                                console.log('✓ Autoplay toggle button icon updated after DOM insertion');
+                            }, 100);
+
+                            console.log('✓ Autoplay toggle button added successfully');
+                        } catch (error) {
+                            console.error('✗ Failed to add autoplay toggle button:', error);
+                        }
+                        // END: Implement autoplay toggle button
 
                         // Remove duplicate captions button and move chapters to end
                         /*  const cleanupControls = () => {
@@ -1148,66 +1174,28 @@ function VideoJSPlayer() {
                         }
                         // END: Add chapter markers to progress control
 
-                        // BEGIN: Move CC (subtitles) and PiP buttons to the right side
+                        // BEGIN: Simple button layout fix - use CSS approach
                         setTimeout(() => {
-                            // Create a spacer element to push buttons to the right
-                            const spacer = videojs.dom.createEl('div', {
-                                className: 'vjs-spacer-control vjs-control',
-                            });
-                            spacer.style.flex = '1';
-                            spacer.style.minWidth = '1px';
+                            console.log('Setting up simplified button layout...');
 
-                            // Find insertion point after time displays
+                            // Add a simple spacer div using DOM manipulation (simpler approach)
+                            const spacerDiv = document.createElement('div');
+                            spacerDiv.className = 'vjs-spacer-control vjs-control';
+                            spacerDiv.style.flex = '1';
+                            spacerDiv.style.minWidth = '1px';
+                            spacerDiv.style.height = '100%';
+
+                            // Find insertion point after duration display
                             const durationDisplay = controlBar.getChild('durationDisplay');
-                            const customRemainingTime = controlBar.getChild('customRemainingTime');
-                            const insertAfter = customRemainingTime || durationDisplay;
-
-                            if (insertAfter) {
-                                const insertIndex = controlBar.children().indexOf(insertAfter) + 1;
-                                controlBar.el().insertBefore(spacer, controlBar.children()[insertIndex]?.el() || null);
-                                console.log('✓ Spacer added after time displays');
+                            if (durationDisplay && durationDisplay.el()) {
+                                const controlBarEl = controlBar.el();
+                                const durationEl = durationDisplay.el();
+                                const nextSibling = durationEl.nextSibling;
+                                controlBarEl.insertBefore(spacerDiv, nextSibling);
+                                console.log('✓ Simple spacer added after duration display');
                             }
-
-                            // Find the subtitles/captions button (CC button)
-                            const possibleTextTrackButtons = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
-                            let textTrackButton = null;
-
-                            for (const buttonName of possibleTextTrackButtons) {
-                                const button = controlBar.getChild(buttonName);
-                                if (button) {
-                                    textTrackButton = button;
-                                    console.log(`Found text track button: ${buttonName}`);
-                                    break;
-                                }
-                            }
-
-                            // Find other buttons to move to the right
-                            const pipButton = controlBar.getChild('pictureInPictureToggle');
-                            const playbackRateButton = controlBar.getChild('playbackRateMenuButton');
-                            const chaptersButton = controlBar.getChild('chaptersButton');
-
-                            // Move buttons to the right side (after spacer)
-                            const buttonsToMove = [
-                                playbackRateButton,
-                                textTrackButton,
-                                pipButton,
-                                chaptersButton,
-                                fullscreenToggle,
-                            ].filter(Boolean);
-
-                            buttonsToMove.forEach((button) => {
-                                if (button) {
-                                    try {
-                                        controlBar.removeChild(button);
-                                        controlBar.addChild(button);
-                                        console.log(`✓ Moved ${button.name_ || 'button'} to right side`);
-                                    } catch (e) {
-                                        console.log(`✗ Failed to move button:`, e);
-                                    }
-                                }
-                            });
-                        }, 100);
-                        // END: Move CC (subtitles) and PiP buttons to the right side
+                        }, 300);
+                        // END: Simple button layout fix
 
                         // BEGIN: Move chapters button after fullscreen toggle
                         if (chaptersButton && fullscreenToggle) {
@@ -1492,8 +1480,9 @@ function VideoJSPlayer() {
                         console.log('Video paused');
                     });
 
-                    // Store reference to end screen for cleanup
+                    // Store reference to end screen and autoplay countdown for cleanup
                     let endScreen = null;
+                    let autoplayCountdown = null;
 
                     playerRef.current.on('ended', () => {
                         console.log('Video ended');
@@ -1516,36 +1505,114 @@ function VideoJSPlayer() {
                             }
                         }, 50);
 
-                        // Prevent creating multiple end screens
-                        if (endScreen) {
-                            console.log('End screen already exists, removing previous one');
-                            playerRef.current.removeChild(endScreen);
-                            endScreen = null;
+                        console.log('mediaData.previewSprite', mediaData.previewSprite);
+                        console.log('mediaData.nextLink', mediaData.nextLink);
+                        console.log('userPreferences', userPreferences);
+
+                        // Check if autoplay is enabled and there's a next video
+                        const isAutoplayEnabled = userPreferences.current.getAutoplayPreference();
+                        const hasNextVideo = mediaData.nextLink !== null;
+
+                        console.log('isAutoplayEnabled', isAutoplayEnabled);
+                        console.log('hasNextVideo', hasNextVideo);
+
+                        if (isAutoplayEnabled && hasNextVideo) {
+                            // Get next video data for countdown display - find the next video in related videos
+                            let nextVideoData = {
+                                title: 'Next Video',
+                                author: '',
+                                duration: 0,
+                                thumbnail: '',
+                            };
+
+                            // Try to find the next video by URL matching or just use the first related video
+                            if (relatedVideos.length > 0) {
+                                // For now, use the first related video as the next video
+                                // In a real implementation, you might want to find the specific next video
+                                const nextVideo = relatedVideos[0];
+                                nextVideoData = {
+                                    title: nextVideo.title || 'Next Video',
+                                    author: nextVideo.author || '',
+                                    duration: nextVideo.duration || 0,
+                                    thumbnail: nextVideo.thumbnail || '',
+                                };
+                            }
+
+                            // Clean up any existing overlays
+                            if (endScreen) {
+                                playerRef.current.removeChild(endScreen);
+                                endScreen = null;
+                            }
+                            if (autoplayCountdown) {
+                                playerRef.current.removeChild(autoplayCountdown);
+                                autoplayCountdown = null;
+                            }
+
+                            // Show autoplay countdown
+                            autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
+                                nextVideoData: nextVideoData,
+                                countdownSeconds: 5,
+                                onPlayNext: () => {
+                                    console.log('Autoplay: Navigating to next video');
+                                    goToNextVideo();
+                                },
+                                onCancel: () => {
+                                    console.log('Autoplay: User cancelled, showing related videos');
+                                    // Hide countdown and show end screen instead
+                                    if (autoplayCountdown) {
+                                        playerRef.current.removeChild(autoplayCountdown);
+                                        autoplayCountdown = null;
+                                    }
+                                    showEndScreen();
+                                },
+                            });
+
+                            playerRef.current.addChild(autoplayCountdown);
+                            autoplayCountdown.startCountdown();
+                        } else {
+                            // Autoplay disabled or no next video - show regular end screen
+                            showEndScreen();
                         }
 
-                        // Show end screen with related videos
-                        endScreen = new EndScreenOverlay(playerRef.current, {
-                            relatedVideos: relatedVideos,
-                        });
+                        // Function to show the regular end screen
+                        function showEndScreen() {
+                            // Prevent creating multiple end screens
+                            if (endScreen) {
+                                console.log('End screen already exists, removing previous one');
+                                playerRef.current.removeChild(endScreen);
+                                endScreen = null;
+                            }
 
-                        // Also store the data directly on the component as backup
-                        endScreen.relatedVideos = relatedVideos;
+                            // Show end screen with related videos
+                            endScreen = new EndScreenOverlay(playerRef.current, {
+                                relatedVideos: relatedVideos,
+                            });
 
-                        playerRef.current.addChild(endScreen);
-                        endScreen.show();
+                            // Also store the data directly on the component as backup
+                            endScreen.relatedVideos = relatedVideos;
+
+                            playerRef.current.addChild(endScreen);
+                            endScreen.show();
+                        }
                     });
 
-                    // Hide end screen when user wants to replay
+                    // Hide end screen and autoplay countdown when user wants to replay
                     playerRef.current.on('play', () => {
                         if (endScreen) {
                             endScreen.hide();
                         }
+                        if (autoplayCountdown) {
+                            autoplayCountdown.stopCountdown();
+                        }
                     });
 
-                    // Hide end screen when user seeks
+                    // Hide end screen and autoplay countdown when user seeks
                     playerRef.current.on('seeking', () => {
                         if (endScreen) {
                             endScreen.hide();
+                        }
+                        if (autoplayCountdown) {
+                            autoplayCountdown.stopCountdown();
                         }
                     });
 
@@ -1602,7 +1669,7 @@ function VideoJSPlayer() {
                         // Start playing the video immediately if autoplay is enabled
                         if (playerRef.current.autoplay()) {
                             playerRef.current.play().catch((error) => {
-                                console.log('Autoplay prevented by browser:', error);
+                                console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
                                 // If autoplay fails, we can still focus the element
                                 // so the user can manually start and use keyboard controls
                             });
@@ -1663,12 +1730,7 @@ function VideoJSPlayer() {
         };
     }, []);
 
-    return (
-        <>
-            <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />
-            <em>nextLink: {currentVideo.nextLink}</em>
-        </>
-    );
+    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
 }
 
 export default VideoJSPlayer;

@@ -11,6 +11,7 @@ class UserPreferences {
             quality: 'auto', // Auto quality
             subtitleLanguage: null, // No subtitles by default
             muted: false,
+            autoplay: false, // Autoplay disabled by default
         };
     }
 
@@ -516,6 +517,23 @@ class UserPreferences {
         } catch (error) {
             console.error('❌ Error force saving subtitle language:', error);
         }
+    }
+
+    /**
+     * Get autoplay preference
+     * @returns {boolean} Autoplay preference
+     */
+    getAutoplayPreference() {
+        return this.getPreference('autoplay');
+    }
+
+    /**
+     * Set autoplay preference
+     * @param {boolean} autoplay - Autoplay setting
+     */
+    setAutoplayPreference(autoplay) {
+        this.setPreference('autoplay', autoplay);
+        console.log('Autoplay preference saved:', autoplay);
     }
 }
 

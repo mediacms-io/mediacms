@@ -1,0 +1,248 @@
+/* Autoplay Countdown Overlay Styles */
+.vjs-autoplay-countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 46px); /* Account for control bar */
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.vjs-autoplay-countdown-overlay.autoplay-countdown-show {
+    opacity: 1;
+}
+
+.autoplay-countdown-content {
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.autoplay-countdown-header {
+    margin-bottom: 20px;
+}
+
+.autoplay-countdown-header h3 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.countdown-timer {
+    color: #ff4444;
+    font-weight: 700;
+    font-size: 20px;
+    animation: countdownPulse 1s infinite;
+}
+
+@keyframes countdownPulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.autoplay-countdown-video-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.next-video-thumbnail {
+    flex-shrink: 0;
+    width: 80px;
+    height: 45px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #333;
+}
+
+.next-video-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.next-video-details {
+    flex-grow: 1;
+    min-width: 0; /* Allow text truncation */
+}
+
+.next-video-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.next-video-author {
+    color: #aaa;
+    font-size: 12px;
+    margin: 0 0 2px 0;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.next-video-duration {
+    color: #ccc;
+    font-size: 11px;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.autoplay-countdown-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.autoplay-play-button,
+.autoplay-cancel-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.autoplay-play-button {
+    background: #ff0000;
+    color: #fff;
+}
+
+.autoplay-play-button:hover {
+    background: #e60000;
+    transform: translateY(-1px);
+}
+
+.autoplay-play-button:active {
+    transform: translateY(0);
+}
+
+.autoplay-cancel-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.autoplay-cancel-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.autoplay-cancel-button:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.autoplay-play-button svg,
+.autoplay-cancel-button svg {
+    width: 1.2em;
+    height: 1.2em;
+    flex-shrink: 0;
+}
+
+/* Autoplay Toggle Button Styles */
+.vjs-autoplay-toggle {
+    width: 3em !important;
+    height: 3em !important;
+    flex: none;
+    padding: 0 !important;
+    margin: 0 4px !important;
+    line-height: 3em !important;
+    position: relative;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon {
+    width: 1.2em;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+.vjs-autoplay-toggle .vjs-autoplay-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .autoplay-countdown-content {
+        padding: 20px;
+        max-width: 320px;
+    }
+
+    .autoplay-countdown-header h3 {
+        font-size: 16px;
+    }
+
+    .countdown-timer {
+        font-size: 18px;
+    }
+
+    .autoplay-countdown-video-info {
+        gap: 10px;
+    }
+
+    .next-video-thumbnail {
+        width: 60px;
+        height: 34px;
+    }
+
+    .next-video-title {
+        font-size: 13px;
+    }
+
+    .autoplay-countdown-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .autoplay-play-button,
+    .autoplay-cancel-button {
+        width: 100%;
+    }
+}
