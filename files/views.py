@@ -247,8 +247,10 @@ def history(request):
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
-    # this is not ready...
-    return False
+    # TODO: Enable chapter saving functionality
+    # return False # TODO: Remove this
+    
+    # Enable chapter saving functionality
     if not request.method == "POST":
         return HttpResponseRedirect("/")
 
