@@ -63,28 +63,6 @@ const useVideoTrimmer = () => {
         }
     }, [history, historyPosition]);
 
-    // Set up page unload warning
-    useEffect(() => {
-        // Event handler for beforeunload
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (hasUnsavedChanges) {
-                // Standard way of showing a confirmation dialog before leaving
-                const message = 'Your edits will get lost if you leave the page. Do you want to continue?';
-                e.preventDefault();
-                e.returnValue = message; // Chrome requires returnValue to be set
-                return message; // For other browsers
-            }
-        };
-
-        // Add event listener
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        // Clean up
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [hasUnsavedChanges]);
-
     // Initialize video event listeners
     useEffect(() => {
         const video = videoRef.current;
@@ -665,7 +643,7 @@ const useVideoTrimmer = () => {
             if (typeof window !== 'undefined' && window.lastSeekedPosition > 0) {
                 // Only seek if the position is significantly different
                 if (Math.abs(video.currentTime - window.lastSeekedPosition) > 0.1) {
-                    console.log('handlePlay: Using lastSeekedPosition', window.lastSeekedPosition);
+                    logger.debug('handlePlay: Using lastSeekedPosition', window.lastSeekedPosition);
                     video.currentTime = window.lastSeekedPosition;
                 }
             }
