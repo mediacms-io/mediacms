@@ -13,6 +13,12 @@ cd frontend-tools/video-editor
 yarn build:django
 cd ../../
 
+# Build chapter editor package
+echo "Building chapters editor package..."
+cd frontend-tools/chapters-editor
+yarn build:django
+cd ../../   
+
 # Build video js package
 echo "Building video js package..."
 cd frontend-tools/video-js
