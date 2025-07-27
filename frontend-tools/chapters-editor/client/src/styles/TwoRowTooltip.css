@@ -1,0 +1,340 @@
+.two-row-tooltip {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    padding: 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 3000; /* Highest z-index to ensure it's above all other elements */
+}
+
+/* Hide ±100ms buttons for more compact tooltip */
+.tooltip-time-btn[data-tooltip="Decrease by 100ms"],
+.tooltip-time-btn[data-tooltip="Increase by 100ms"] {
+    display: none !important;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3px;
+}
+
+.tooltip-row:first-child {
+    margin-bottom: 6px;
+}
+
+.tooltip-time-btn {
+    background-color: #f0f0f0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+    min-width: 20px !important;
+}
+
+.tooltip-time-btn:hover {
+    background-color: #e0e0e0 !important;
+}
+
+.tooltip-time-display {
+    font-family: monospace !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    padding: 4px 6px !important;
+    background-color: #f7f7f7 !important;
+    border-radius: 4px !important;
+    min-width: 100px !important;
+    text-align: center !important;
+    overflow: hidden !important;
+}
+
+/* Disabled state for time display */
+.tooltip-time-display.disabled {
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+/* Force disabled tooltips to show on hover for better user feedback */
+.tooltip-time-btn.disabled[data-tooltip]:hover:before,
+.tooltip-time-btn.disabled[data-tooltip]:hover:after,
+.tooltip-action-btn.disabled[data-tooltip]:hover:before,
+.tooltip-action-btn.disabled[data-tooltip]:hover:after {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.tooltip-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3px;
+    position: relative;
+    z-index: 2500; /* Higher z-index to ensure buttons appear above other elements */
+}
+
+.tooltip-action-btn {
+    background-color: #f3f4f6;
+    border: none;
+    border-radius: 4px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #4b5563;
+    width: 26px;
+    height: 26px;
+    min-width: 20px !important;
+    position: relative; /* Add relative positioning for tooltips */
+}
+
+/* Custom tooltip styles for second row action buttons - positioned below */
+.tooltip-action-btn[data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    height: 30px;
+    top: 35px; /* Position below the button with increased space */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Center horizontally */
+    margin-left: 0; /* Reset margin */
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    text-align: left;
+    padding: 6px 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.2s,
+        visibility 0.2s;
+    z-index: 2500; /* High z-index */
+    pointer-events: none;
+}
+
+/* Triangle arrow pointing up to the button */
+.tooltip-action-btn[data-tooltip]:after {
+    content: "";
+    position: absolute;
+    top: 35px; /* Match the before element */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Center horizontally */
+    border-width: 4px;
+    border-style: solid;
+    /* Arrow pointing down from button to tooltip */
+    border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+    margin-left: 0; /* Reset margin */
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.2s,
+        visibility 0.2s;
+    z-index: 2500; /* High z-index */
+    pointer-events: none;
+}
+
+/* Show tooltips on hover - but only on devices with hover capability (desktops) */
+@media (hover: hover) and (pointer: fine) {
+    .tooltip-action-btn[data-tooltip]:hover:before,
+    .tooltip-action-btn[data-tooltip]:hover:after {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Keep the two-row-tooltip visible but hide button attribute tooltips on touch devices */
+@media (pointer: coarse) {
+    .tooltip-action-btn[data-tooltip]:before,
+    .tooltip-action-btn[data-tooltip]:after {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        content: none !important;
+    }
+}
+
+.tooltip-action-btn:hover {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+
+.tooltip-action-btn.delete {
+    color: #ef4444;
+}
+
+.tooltip-action-btn.delete:hover {
+    background-color: #fee2e2;
+}
+
+.tooltip-action-btn.play {
+    color: #10b981;
+}
+
+.tooltip-action-btn.play:hover {
+    background-color: #d1fae5;
+}
+
+.tooltip-action-btn.pause {
+    color: #3b82f6;
+}
+
+.tooltip-action-btn.pause:hover {
+    background-color: #dbeafe;
+}
+
+.tooltip-action-btn.play-from-start {
+    color: #4f46e5;
+}
+
+.tooltip-action-btn.play-from-start:hover {
+    background-color: #e0e7ff;
+}
+
+.tooltip-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Adjust the new segment button style */
+.tooltip-action-btn.new-segment {
+    width: auto;
+    height: auto;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: row;
+    color: #10b981;
+}
+
+.tooltip-action-btn.new-segment:hover {
+    background-color: #d1fae5;
+}
+
+.tooltip-action-btn.new-segment .tooltip-btn-text {
+    margin-left: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Disabled state for tooltip action buttons */
+.tooltip-action-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f3f4f6;
+}
+
+.tooltip-action-btn.disabled:hover {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+}
+
+.tooltip-action-btn.disabled svg {
+    color: #9ca3af;
+}
+
+.tooltip-action-btn.disabled .tooltip-btn-text {
+    color: #9ca3af;
+}
+
+/* Ensure pause button is properly styled when disabled */
+.tooltip-action-btn.pause.disabled {
+    color: #9ca3af !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tooltip-action-btn.pause.disabled:hover {
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+/* Ensure play button is properly styled when disabled */
+.tooltip-action-btn.play.disabled {
+    color: #9ca3af !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tooltip-action-btn.play.disabled:hover {
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+/* Ensure time adjustment buttons are properly styled when disabled */
+.tooltip-time-btn.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+.tooltip-time-btn.disabled:hover {
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 768px) {
+    .two-row-tooltip {
+        padding: 4px;
+    }
+
+    .tooltip-row:first-child {
+        margin-bottom: 4px;
+    }
+
+    .tooltip-time-btn {
+        min-width: 20px !important;
+        font-size: 0.7rem !important;
+        padding: 3px 6px !important;
+    }
+
+    .tooltip-time-display {
+        font-size: 0.8rem !important;
+        padding: 3px 4px !important;
+        min-width: 90px !important;
+    }
+
+    .tooltip-action-btn {
+        width: 24px;
+        height: 24px;
+        padding: 4px;
+    }
+
+    .tooltip-action-btn.new-segment {
+        padding: 4px 8px;
+    }
+
+    .tooltip-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Adjust tooltip position for small screens - maintain the same position but adjust size */
+    .tooltip-action-btn[data-tooltip]:before {
+        min-width: 100px;
+        font-size: 11px;
+        padding: 4px 8px;
+        height: 24px;
+        top: 33px; /* Maintain the same relative distance on mobile */
+    }
+
+    .tooltip-action-btn[data-tooltip]:after {
+        top: 33px; /* Match the tooltip position */
+    }
+}
