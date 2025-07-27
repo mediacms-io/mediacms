@@ -47,7 +47,7 @@ interface TimelineControlsProps {
     isIOSUninitialized?: boolean;
     isPlaying: boolean;
     setIsPlaying: (playing: boolean) => void;
-    onPlayPause: () => void; // Add this prop
+    onPlayPause: () => void;
     isPlayingSegments?: boolean;
 }
 

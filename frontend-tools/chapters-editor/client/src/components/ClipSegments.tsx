@@ -7,13 +7,15 @@ export interface Segment {
     startTime: number;
     endTime: number;
     thumbnail: string;
+    chapterTitle?: string;
 }
 
 interface ClipSegmentsProps {
     segments: Segment[];
+    selectedSegmentId?: number | null;
 }
 
-const ClipSegments = ({ segments }: ClipSegmentsProps) => {
+const ClipSegments = ({ segments, selectedSegmentId }: ClipSegmentsProps) => {
     // Sort segments by startTime
     const sortedSegments = [...segments].sort((a, b) => a.startTime - b.startTime);
 
@@ -33,19 +35,31 @@ const ClipSegments = ({ segments }: ClipSegmentsProps) => {
         return `segment-default-color segment-color-${(index % 8) + 1}`;
     };
 
+    // Get selected segment
+    const selectedSegment = sortedSegments.find((seg) => seg.id === selectedSegmentId);
+
     return (
         <div className="clip-segments-container">
-            <h3 className="clip-segments-title">Clip Segments</h3>
+            <h3 className="clip-segments-title">Chapters</h3>
 
             {sortedSegments.map((segment, index) => (
-                <div key={segment.id} className={`segment-item ${getSegmentColorClass(index)}`}>
+                <div
+                    key={segment.id}
+                    className={`segment-item ${getSegmentColorClass(index)} ${selectedSegmentId === segment.id ? 'selected' : ''}`}
+                >
                     <div className="segment-content">
                         <div
                             className="segment-thumbnail"
                             style={{ backgroundImage: `url(${segment.thumbnail})` }}
                         ></div>
                         <div className="segment-info">
-                            <div className="segment-title">Segment {index + 1}</div>
+                            <div className="segment-title">
+                                {segment.chapterTitle ? (
+                                    <span className="chapter-title">{segment.chapterTitle}</span>
+                                ) : (
+                                    <span className="default-title">Chapter {index + 1}</span>
+                                )}
+                            </div>
                             <div className="segment-time">
                                 {formatTime(segment.startTime)} - {formatTime(segment.endTime)}
                             </div>
@@ -74,7 +88,9 @@ const ClipSegments = ({ segments }: ClipSegmentsProps) => {
             ))}
 
             {sortedSegments.length === 0 && (
-                <div className="empty-message">No segments created yet. Use the split button to create segments.</div>
+                <div className="empty-message">
+                    No chapters created yet. Use the split button to create chapter segments.
+                </div>
             )}
         </div>
     );

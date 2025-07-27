@@ -13,7 +13,19 @@ interface EditorState {
     action?: string;
 }
 
-const useVideoTrimmer = () => {
+const useVideoChapters = () => {
+    // Helper function to parse time string (HH:MM:SS.mmm) to seconds
+    const parseTimeToSeconds = (timeString: string): number => {
+        const parts = timeString.split(':');
+        if (parts.length !== 3) return 0;
+
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        const seconds = parseFloat(parts[2]) || 0;
+
+        return hours * 3600 + minutes * 60 + seconds;
+    };
+
     // Video element reference and state
     const videoRef = useRef<HTMLVideoElement>(null);
     const [currentTime, setCurrentTime] = useState(0);
@@ -30,6 +42,9 @@ const useVideoTrimmer = () => {
 
     // Clip segments state
     const [clipSegments, setClipSegments] = useState<Segment[]>([]);
+
+    // Selected segment state for chapter editing
+    const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null);
 
     // History state for undo/redo
     const [history, setHistory] = useState<EditorState[]>([]);
@@ -94,31 +109,88 @@ const useVideoTrimmer = () => {
             setDuration(video.duration);
             setTrimEnd(video.duration);
 
-            // Generate placeholders and create initial segment
+            // Generate placeholders and create initial segments
             const initializeEditor = async () => {
-                // Generate thumbnail for initial segment
-                const segmentThumbnail = await generateThumbnail(video, video.duration / 2);
+                let initialSegments: Segment[] = [];
 
-                // Create an initial segment that spans the entire video
-                const initialSegment: Segment = {
-                    id: 1,
-                    name: 'segment',
-                    startTime: 0,
-                    endTime: video.duration,
-                    thumbnail: segmentThumbnail,
-                };
+                // Check if we have existing chapters from the backend
+                const existingChapters = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || [
+                    {
+                        name: 'Chapter 1',
+                        from: '00:00:00',
+                        to: '00:00:03',
+                    },
+                    {
+                        name: 'Chapter 2',
+                        from: '00:00:03',
+                        to: '00:00:06',
+                    },
+                    {
+                        name: 'Chapter 3',
+                        from: '00:00:09',
+                        to: '00:00:12',
+                    },
+                    {
+                        name: 'Chapter 4',
+                        from: '00:00:15',
+                        to: '00:00:18',
+                    },
+                    {
+                        name: 'Chapter 5',
+                        from: '00:00:21',
+                        to: '00:00:24',
+                    },
+                ];
 
-                // Initialize history state with the full-length segment
+                if (existingChapters.length > 0) {
+                    // Create segments from existing chapters
+                    for (let i = 0; i < existingChapters.length; i++) {
+                        const chapter = existingChapters[i];
+
+                        // Parse time strings to seconds
+                        const startTime = parseTimeToSeconds(chapter.from);
+                        const endTime = parseTimeToSeconds(chapter.to);
+
+                        // Generate thumbnail for this segment
+                        const segmentThumbnail = await generateThumbnail(video, (startTime + endTime) / 2);
+
+                        const segment: Segment = {
+                            id: i + 1,
+                            name: `segment-${i + 1}`,
+                            startTime: startTime,
+                            endTime: endTime,
+                            thumbnail: segmentThumbnail,
+                            chapterTitle: chapter.name, // Set the chapter title from backend data
+                        };
+
+                        initialSegments.push(segment);
+                    }
+                } else {
+                    // Create a default segment that spans the entire video (fallback)
+                    const segmentThumbnail = await generateThumbnail(video, video.duration / 2);
+
+                    const initialSegment: Segment = {
+                        id: 1,
+                        name: 'segment',
+                        startTime: 0,
+                        endTime: video.duration,
+                        thumbnail: segmentThumbnail,
+                    };
+
+                    initialSegments = [initialSegment];
+                }
+
+                // Initialize history state with the segments
                 const initialState: EditorState = {
                     trimStart: 0,
                     trimEnd: video.duration,
                     splitPoints: [],
-                    clipSegments: [initialSegment],
+                    clipSegments: initialSegments,
                 };
 
                 setHistory([initialState]);
                 setHistoryPosition(0);
-                setClipSegments([initialSegment]);
+                setClipSegments(initialSegments);
 
                 // Generate timeline thumbnails
                 const count = 6;
@@ -696,99 +768,81 @@ const useVideoTrimmer = () => {
         setIsMuted(!isMuted);
     };
 
-    // Handle save action
-    const handleSave = () => {
-        // Sort segments chronologically by start time before saving
-        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-
-        // Create the JSON data for saving
-        const saveData = {
-            type: 'save',
-            segments: sortedSegments.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-            })),
-        };
-
-        // Display JSON in alert (for demonstration purposes)
-        if (process.env.NODE_ENV === 'development') {
-            console.debug('Saving data:', saveData);
-        }
-
-        // Mark as saved - no unsaved changes
-        setHasUnsavedChanges(false);
-
-        // Debug message
-        if (process.env.NODE_ENV === 'development') {
-            console.debug('Changes saved - reset unsaved changes flag');
-        }
-
-        // Save to history with special "save" action to mark saved state
-        saveState('save');
-
-        // In a real implementation, this would make a POST request to save the data
-        // logger.debug("Save data:", saveData);
+    // Handle updating a specific segment
+    const handleSegmentUpdate = (segmentId: number, updates: Partial<Segment>) => {
+        setClipSegments((prevSegments) =>
+            prevSegments.map((segment) => (segment.id === segmentId ? { ...segment, ...updates } : segment))
+        );
+        setHasUnsavedChanges(true);
     };
 
-    // Handle save a copy action
-    const handleSaveACopy = () => {
-        // Sort segments chronologically by start time before saving
-        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    // Handle saving chapters to database
+    const handleChapterSave = async (chapters: { name: string; from: string; to: string }[]) => {
+        try {
+            // Get media ID from window.MEDIA_DATA
+            const mediaId = (window as any).MEDIA_DATA?.mediaId;
+            if (!mediaId) {
+                console.error('No media ID found');
+                return;
+            }
 
-        // Create the JSON data for saving as a copy
-        const saveData = {
-            type: 'save_as_a_copy',
-            segments: sortedSegments.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-            })),
-        };
+            // Convert chapters to backend expected format
+            const backendChapters = chapters.map((chapter) => ({
+                start: chapter.from,
+                title: chapter.name,
+            }));
 
-        // Display JSON in alert (for demonstration purposes)
-        if (process.env.NODE_ENV === 'development') {
-            console.debug('Saving data as copy:', saveData);
+            // Create the API request body
+            const requestData = {
+                chapters: backendChapters,
+            };
+
+            console.log('Saving chapters:', requestData);
+
+            // Make API call to save chapters
+            const csrfToken = getCsrfToken();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+            };
+
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+
+            const response = await fetch(`/api/v1/media/${mediaId}/chapters`, {
+                // TODO: Backend API is not ready yet
+                method: 'POST',
+                headers,
+                body: JSON.stringify(requestData),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save chapters: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Chapters saved successfully:', result);
+
+            // Mark as saved - no unsaved changes
+            setHasUnsavedChanges(false);
+        } catch (error) {
+            console.error('Error saving chapters:', error);
+            // You might want to show a user-friendly error message here
         }
-
-        // Mark as saved - no unsaved changes
-        setHasUnsavedChanges(false);
-
-        // Debug message
-        if (process.env.NODE_ENV === 'development') {
-            console.debug('Changes saved as copy - reset unsaved changes flag');
-        }
-
-        // Save to history with special "save_copy" action to mark saved state
-        saveState('save_copy');
     };
 
-    // Handle save segments individually action
-    const handleSaveSegments = () => {
-        // Sort segments chronologically by start time before saving
-        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    // Helper function to get CSRF token
+    const getCsrfToken = (): string => {
+        const name = 'csrftoken';
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+        return '';
+    };
 
-        // Create the JSON data for saving individual segments
-        const saveData = {
-            type: 'save_segments',
-            segments: sortedSegments.map((segment) => ({
-                name: segment.name,
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-            })),
-        };
-
-        // Display JSON in alert (for demonstration purposes)
-        if (process.env.NODE_ENV === 'development') {
-            console.debug('Saving data as segments:', saveData);
-        }
-
-        // Mark as saved - no unsaved changes
-        setHasUnsavedChanges(false);
-
-        // Debug message
-        logger.debug('All segments saved individually - reset unsaved changes flag');
-
-        // Save to history with special "save_segments" action to mark saved state
-        saveState('save_segments');
+    // Handle selected segment change
+    const handleSelectedSegmentChange = (segmentId: number | null) => {
+        setSelectedSegmentId(segmentId);
     };
 
     // Handle seeking with mobile check
@@ -928,6 +982,7 @@ const useVideoTrimmer = () => {
         splitPoints,
         zoomLevel,
         clipSegments,
+        selectedSegmentId,
         hasUnsavedChanges,
         historyPosition,
         history,
@@ -941,13 +996,13 @@ const useVideoTrimmer = () => {
         handleRedo,
         handlePlaySegments,
         toggleMute,
-        handleSave,
-        handleSaveACopy,
-        handleSaveSegments,
+        handleSegmentUpdate,
+        handleChapterSave,
+        handleSelectedSegmentChange,
         isMobile,
         videoInitialized,
         setVideoInitialized,
     };
 };
 
-export default useVideoTrimmer;
+export default useVideoChapters;
