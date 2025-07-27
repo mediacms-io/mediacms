@@ -18,19 +18,19 @@
 		redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}",
         chapters: [
             {
-                id: '1',
-                title: 'Chapter AAA',
-                timestamp: 0,
+                name: 'Chapter AAA',
+				from: '00:00:00.000',
+				to: '00:00:01.357',
             },
             {
-                id: '2',
-                title: 'Chapter BBB',
-                timestamp: 10,
-            },
+                name: 'Chapter BBB',
+				from: '00:00:01.999',
+				to: '00:00:02.714',
+            },		
             {
-                id: '3',
-                title: 'Chapter CCC',
-                timestamp: 20,
+                name: 'Chapter CCC',
+				from: '00:00:02.714',
+				to: '00:00:03.071',
             },
         ],
     };
