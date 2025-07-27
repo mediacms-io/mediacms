@@ -35,19 +35,20 @@ interface TimelineControlsProps {
     splitPoints: number[];
     zoomLevel: number;
     clipSegments: Segment[];
+    selectedSegmentId?: number | null;
+    onSelectedSegmentChange?: (segmentId: number | null) => void;
+    onSegmentUpdate?: (segmentId: number, updates: Partial<Segment>) => void;
+    onChapterSave?: (chapters: { name: string; from: string; to: string }[]) => void;
     onTrimStartChange: (time: number) => void;
     onTrimEndChange: (time: number) => void;
     onZoomChange: (level: number) => void;
     onSeek: (time: number) => void;
     videoRef: React.RefObject<HTMLVideoElement>;
-    onSave?: () => void;
-    onSaveACopy?: () => void;
-    onSaveSegments?: () => void;
     hasUnsavedChanges?: boolean;
     isIOSUninitialized?: boolean;
     isPlaying: boolean;
     setIsPlaying: (playing: boolean) => void;
-    onPlayPause: () => void; // Add this prop
+    onPlayPause: () => void;
     isPlayingSegments?: boolean;
 }
 
@@ -109,14 +110,15 @@ const TimelineControls = ({
     splitPoints,
     zoomLevel,
     clipSegments,
+    selectedSegmentId: externalSelectedSegmentId,
+    onSelectedSegmentChange,
+    onSegmentUpdate,
+    onChapterSave,
     onTrimStartChange,
     onTrimEndChange,
     onZoomChange,
     onSeek,
     videoRef,
-    onSave,
-    onSaveACopy,
-    onSaveSegments,
     hasUnsavedChanges = false,
     isIOSUninitialized = false,
     isPlaying,
@@ -127,7 +129,17 @@ const TimelineControls = ({
     const timelineRef = useRef<HTMLDivElement>(null);
     const leftHandleRef = useRef<HTMLDivElement>(null);
     const rightHandleRef = useRef<HTMLDivElement>(null);
-    const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null);
+    // Use external selectedSegmentId if provided, otherwise use internal state
+    const [internalSelectedSegmentId, setInternalSelectedSegmentId] = useState<number | null>(null);
+    const selectedSegmentId =
+        externalSelectedSegmentId !== undefined ? externalSelectedSegmentId : internalSelectedSegmentId;
+    const setSelectedSegmentId = (segmentId: number | null) => {
+        if (onSelectedSegmentChange) {
+            onSelectedSegmentChange(segmentId);
+        } else {
+            setInternalSelectedSegmentId(segmentId);
+        }
+    };
     const [showEmptySpaceTooltip, setShowEmptySpaceTooltip] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const [clickedTime, setClickedTime] = useState<number>(0);
@@ -141,6 +153,49 @@ const TimelineControls = ({
 
     // Reference for the scrollable container
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // Chapter editor state
+    const [editingChapterTitle, setEditingChapterTitle] = useState<string>('');
+    const [chapterHasUnsavedChanges, setChapterHasUnsavedChanges] = useState(false);
+
+    // Sort segments by startTime for chapter editor
+    const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+    const selectedSegment = sortedSegments.find((seg) => seg.id === selectedSegmentId);
+
+    // Update editing title when selected segment changes
+    useEffect(() => {
+        if (selectedSegment) {
+            setEditingChapterTitle(selectedSegment.chapterTitle || '');
+        } else {
+            setEditingChapterTitle('');
+        }
+    }, [selectedSegmentId, selectedSegment]);
+
+    // Handle chapter title change
+    const handleChapterTitleChange = (value: string) => {
+        setEditingChapterTitle(value);
+        setChapterHasUnsavedChanges(true);
+
+        // Update the segment immediately
+        if (selectedSegmentId && onSegmentUpdate) {
+            onSegmentUpdate(selectedSegmentId, { chapterTitle: value });
+        }
+    };
+
+    // Handle save chapters
+    const handleSaveChapters = () => {
+        if (!onChapterSave) return;
+
+        // Convert segments to chapter format
+        const chapters = sortedSegments.map((segment, index) => ({
+            name: segment.chapterTitle || `Chapter ${index + 1}`,
+            from: formatDetailedTime(segment.startTime),
+            to: formatDetailedTime(segment.endTime),
+        }));
+
+        onChapterSave(chapters);
+        setChapterHasUnsavedChanges(false);
+    };
 
     // Helper function for time adjustment buttons to maintain playback state
     const handleTimeAdjustment = (offsetSeconds: number) => (e: React.MouseEvent) => {
@@ -310,16 +365,14 @@ const TimelineControls = ({
     };
 
     // Modal states
-    const [showSaveModal, setShowSaveModal] = useState(false);
-    const [showSaveAsModal, setShowSaveAsModal] = useState(false);
-    const [showSaveSegmentsModal, setShowSaveSegmentsModal] = useState(false);
+    const [showSaveChaptersModal, setShowSaveChaptersModal] = useState(false);
     const [showProcessingModal, setShowProcessingModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [redirectUrl, setRedirectUrl] = useState('');
-    const [saveType, setSaveType] = useState<'save' | 'copy' | 'segments'>('save');
+    const [saveType, setSaveType] = useState<'chapters'>('chapters');
 
     // Calculate positions as percentages
     const currentTimePercent = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -328,218 +381,55 @@ const TimelineControls = ({
 
     // No need for an extra effect here as we handle displayTime updates in the segment playback effect
 
-    // Save and API handlers
-    const handleSaveConfirm = async () => {
+    // Save Chapters handler
+    const handleSaveChaptersConfirm = async () => {
         // Close confirmation modal and show processing modal
-        setShowSaveModal(false);
+        setShowSaveChaptersModal(false);
         setShowProcessingModal(true);
-        setSaveType('save');
+        setSaveType('chapters');
 
         try {
-            // Format segments data for API request
-            const segments = clipSegments.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-            }));
+            // Format chapters data for API request
+            const chapters = clipSegments
+                .filter((segment) => segment.chapterTitle && segment.chapterTitle.trim())
+                .map((segment) => ({
+                    name: segment.chapterTitle || `Chapter ${segment.id}`,
+                    from: formatDetailedTime(segment.startTime),
+                    to: formatDetailedTime(segment.endTime),
+                }));
 
-            const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
-            const redirectURL = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectURL) || null;
+            if (chapters.length === 0) {
+                setErrorMessage('No chapters with titles found');
+                setShowErrorModal(true);
+                setShowProcessingModal(false);
+                return;
+            }
 
-            // Log the request details for debugging
-            logger.debug('Save request:', {
-                mediaId,
-                segments,
-                saveAsCopy: false,
-                redirectURL,
-            });
+            // Call the onChapterSave function if provided
+            if (onChapterSave) {
+                await onChapterSave(chapters);
+                setShowProcessingModal(false);
+                setSuccessMessage('Chapters saved successfully!');
 
-            const response = await trimVideo(mediaId, {
-                segments,
-                saveAsCopy: false,
-            });
+                // Set redirect URL to media page
+                const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
+                if (mediaId) {
+                    setRedirectUrl(`/view?m=${mediaId}`);
+                }
 
-            // Log the response for debugging
-            logger.debug('Save response:', response);
-
-            // Hide processing modal
-            setShowProcessingModal(false);
-
-            // Check if response indicates success (200 OK)
-            if (response.status === 200) {
-                // For "Save", use the redirectURL from the window or response
-                const finalRedirectUrl = redirectURL || response.url_redirect;
-                logger.debug('Using redirect URL:', finalRedirectUrl);
-
-                setRedirectUrl(finalRedirectUrl);
-                setSuccessMessage('Video saved successfully!');
-
-                // Show success modal
                 setShowSuccessModal(true);
-            } else if (response.status === 400) {
-                // Set error message from response and show error modal
-                const errorMsg = response.error || 'An error occurred during processing';
-                logger.debug('Save error (400):', errorMsg);
-                setErrorMessage(errorMsg);
-                setShowErrorModal(true);
             } else {
-                // Handle other status codes as needed
-                logger.debug('Save error (unknown status):', response);
-                setErrorMessage('An unexpected error occurred');
+                setErrorMessage('Chapter save function not available');
                 setShowErrorModal(true);
+                setShowProcessingModal(false);
             }
         } catch (error) {
-            logger.error('Error processing video:', error);
+            logger.error('Error saving chapters:', error);
             setShowProcessingModal(false);
 
             // Set error message and show error modal
-            const errorMsg = error instanceof Error ? error.message : 'An error occurred during processing';
-            logger.debug('Save error (exception):', errorMsg);
-            setErrorMessage(errorMsg);
-            setShowErrorModal(true);
-        }
-    };
-
-    const handleSaveAsCopyConfirm = async () => {
-        // Close confirmation modal and show processing modal
-        setShowSaveAsModal(false);
-        setShowProcessingModal(true);
-        setSaveType('copy');
-
-        try {
-            // Format segments data for API request
-            const segments = clipSegments.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-            }));
-
-            const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
-            const redirectUserMediaURL =
-                (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL) || null;
-
-            // Log the request details for debugging
-            logger.debug('Save as copy request:', {
-                mediaId,
-                segments,
-                saveAsCopy: true,
-                redirectUserMediaURL,
-            });
-
-            const response = await trimVideo(mediaId, {
-                segments,
-                saveAsCopy: true,
-            });
-
-            // Log the response for debugging
-            logger.debug('Save as copy response:', response);
-
-            // Hide processing modal
-            setShowProcessingModal(false);
-
-            // Check if response indicates success (200 OK)
-            if (response.status === 200) {
-                // For "Save As Copy", use the redirectUserMediaURL from the window
-                const finalRedirectUrl = redirectUserMediaURL || response.url_redirect;
-                logger.debug('Using redirect user media URL:', finalRedirectUrl);
-
-                setRedirectUrl(finalRedirectUrl);
-                setSuccessMessage('Video saved as a new copy!');
-
-                // Show success modal
-                setShowSuccessModal(true);
-            } else if (response.status === 400) {
-                // Set error message from response and show error modal
-                const errorMsg = response.error || 'An error occurred during processing';
-                logger.debug('Save as copy error (400):', errorMsg);
-                setErrorMessage(errorMsg);
-                setShowErrorModal(true);
-            } else {
-                // Handle other status codes as needed
-                logger.debug('Save as copy error (unknown status):', response);
-                setErrorMessage('An unexpected error occurred');
-                setShowErrorModal(true);
-            }
-        } catch (error) {
-            logger.error('Error processing video:', error);
-            setShowProcessingModal(false);
-
-            // Set error message and show error modal
-            const errorMsg = error instanceof Error ? error.message : 'An error occurred during processing';
-            logger.debug('Save as copy error (exception):', errorMsg);
-            setErrorMessage(errorMsg);
-            setShowErrorModal(true);
-        }
-    };
-
-    const handleSaveSegmentsConfirm = async () => {
-        // Close confirmation modal and show processing modal
-        setShowSaveSegmentsModal(false);
-        setShowProcessingModal(true);
-        setSaveType('segments');
-
-        try {
-            // Format segments data for API request, with each segment saved as a separate file
-            const segments = clipSegments.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-                name: segment.name, // Include segment name for individual files
-            }));
-
-            const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
-            const redirectUserMediaURL =
-                (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.redirectUserMediaURL) || null;
-
-            // Log the request details for debugging
-            logger.debug('Save segments request:', {
-                mediaId,
-                segments,
-                saveAsCopy: true,
-                saveIndividualSegments: true,
-                redirectUserMediaURL,
-            });
-
-            const response = await trimVideo(mediaId, {
-                segments,
-                saveAsCopy: true,
-                saveIndividualSegments: true,
-            });
-
-            // Log the response for debugging
-            logger.debug('Save segments response:', response);
-
-            // Hide processing modal
-            setShowProcessingModal(false);
-
-            // Check if response indicates success (200 OK)
-            if (response.status === 200) {
-                // For "Save Segments", use the redirectUserMediaURL from the window
-                const finalRedirectUrl = redirectUserMediaURL || response.url_redirect;
-                logger.debug('Using redirect user media URL for segments:', finalRedirectUrl);
-
-                setRedirectUrl(finalRedirectUrl);
-                setSuccessMessage(`${segments.length} segments saved successfully!`);
-
-                // Show success modal
-                setShowSuccessModal(true);
-            } else if (response.status === 400) {
-                // Set error message from response and show error modal
-                const errorMsg = response.error || 'An error occurred during processing';
-                logger.debug('Save segments error (400):', errorMsg);
-                setErrorMessage(errorMsg);
-                setShowErrorModal(true);
-            } else {
-                // Handle other status codes as needed
-                logger.debug('Save segments error (unknown status):', response);
-                setErrorMessage('An unexpected error occurred');
-                setShowErrorModal(true);
-            }
-        } catch (error) {
-            // Handle errors
-            logger.error('Error processing video segments:', error);
-            setShowProcessingModal(false);
-
-            // Set error message and show error modal
-            const errorMsg = error instanceof Error ? error.message : 'An error occurred during processing';
-            logger.debug('Save segments error (exception):', errorMsg);
+            const errorMsg = error instanceof Error ? error.message : 'An error occurred while saving chapters';
+            logger.debug('Save chapters error (exception):', errorMsg);
             setErrorMessage(errorMsg);
             setShowErrorModal(true);
         }
@@ -2407,9 +2297,6 @@ const TimelineControls = ({
 
             // Set redirect timeout
             redirectTimeout = setTimeout(() => {
-                // Reset unsaved changes flag before navigating away
-                if (onSave) onSave();
-
                 // Redirect to the URL
                 logger.debug('Automatically redirecting to:', redirectUrl);
                 window.location.href = redirectUrl;
@@ -2421,7 +2308,15 @@ const TimelineControls = ({
             if (countdownInterval) clearInterval(countdownInterval);
             if (redirectTimeout) clearTimeout(redirectTimeout);
         };
-    }, [showSuccessModal, redirectUrl, onSave]);
+    }, [showSuccessModal, redirectUrl]);
+
+    // Effect to handle redirect after success modal is closed
+    useEffect(() => {
+        if (!showSuccessModal && redirectUrl) {
+            logger.debug('Redirecting to:', redirectUrl);
+            window.location.href = redirectUrl;
+        }
+    }, [redirectUrl, saveType, showSuccessModal]);
 
     return (
         <div className={`timeline-container-card ${isPlayingSegments ? 'segments-playback-mode' : ''}`}>
@@ -2543,6 +2438,23 @@ const TimelineControls = ({
                                 }
                             }}
                         >
+                            {/* Chapter Editor for this segment */}
+                            {selectedSegmentId && (
+                                <div className="tooltip-chapter-editor">
+                                    <textarea
+                                        className="tooltip-chapter-input"
+                                        placeholder="Chapter Title"
+                                        value={editingChapterTitle}
+                                        onChange={(e) => handleChapterTitleChange(e.target.value)}
+                                        rows={2}
+                                        maxLength={200}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                        onMouseUp={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            )}
+
                             {/* First row with time adjustment buttons */}
                             <div className="tooltip-row">
                                 <button
@@ -2600,7 +2512,6 @@ const TimelineControls = ({
                                     +50ms
                                 </button>
                             </div>
-
                             {/* Second row with action buttons */}
                             <div className="tooltip-row tooltip-actions">
                                 <button
@@ -4329,6 +4240,7 @@ const TimelineControls = ({
                             }
                         }}
                     />
+
                     {/* Helper function to show tooltip at current position */}
                     {/* This is defined within the component to access state variables and functions */}
                     <div className="time-button-group">
@@ -4512,99 +4424,44 @@ const TimelineControls = ({
                         )}
                     </div>
 
-                    {/* Save Buttons Row */}
+                    {/* Save Chapters Button */}
                     <div className="save-buttons-row">
-                        {onSave && (
-                            <button
-                                onClick={() => setShowSaveModal(true)}
-                                className="save-button"
-                                data-tooltip="Save changes"
-                            >
-                                Save
-                            </button>
-                        )}
-
-                        {onSaveACopy && (
-                            <button
-                                onClick={() => setShowSaveAsModal(true)}
-                                className="save-copy-button"
-                                data-tooltip="Save as a new copy"
-                            >
-                                Save as Copy
-                            </button>
-                        )}
-
-                        {onSaveSegments && (
-                            <button
-                                onClick={() => setShowSaveSegmentsModal(true)}
-                                className="save-segments-button"
-                                data-tooltip="Save segments as separate files"
-                            >
-                                Save Segments
-                            </button>
-                        )}
+                        <button
+                            onClick={() => setShowSaveChaptersModal(true)}
+                            className="save-chapters-button"
+                            data-tooltip="Save chapters"
+                            disabled={clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0}
+                        >
+                            Save Chapters
+                        </button>
                     </div>
 
                     {/* Save Confirmation Modal */}
                     <Modal
-                        isOpen={showSaveModal}
-                        onClose={() => setShowSaveModal(false)}
-                        title="Save Changes"
+                        isOpen={showSaveChaptersModal}
+                        onClose={() => setShowSaveChaptersModal(false)}
+                        title="Save Chapters"
                         actions={
                             <>
                                 <button
                                     className="modal-button modal-button-secondary"
-                                    onClick={() => setShowSaveModal(false)}
+                                    onClick={() => setShowSaveChaptersModal(false)}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     className="modal-button modal-button-primary"
-                                    onClick={() => {
-                                        // Reset unsaved changes flag before saving
-                                        if (onSave) onSave();
-                                        handleSaveConfirm();
-                                    }}
+                                    onClick={handleSaveChaptersConfirm}
                                 >
-                                    Confirm Save
+                                    Save Chapters
                                 </button>
                             </>
                         }
                     >
                         <p className="modal-message">
-                            You're about to replace the original video with this trimmed version. This can't be undone.
-                        </p>
-                    </Modal>
-
-                    {/* Save As Copy Modal */}
-                    <Modal
-                        isOpen={showSaveAsModal}
-                        onClose={() => setShowSaveAsModal(false)}
-                        title="Save As New Copy"
-                        actions={
-                            <>
-                                <button
-                                    className="modal-button modal-button-secondary"
-                                    onClick={() => setShowSaveAsModal(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="modal-button modal-button-primary"
-                                    onClick={() => {
-                                        // Reset unsaved changes flag before saving
-                                        if (onSaveACopy) onSaveACopy();
-                                        handleSaveAsCopyConfirm();
-                                    }}
-                                >
-                                    Confirm Save As Copy
-                                </button>
-                            </>
-                        }
-                    >
-                        <p className="modal-message">
-                            You're about to save a new copy with your edits. The original video will stay the same. Find
-                            the new file in your My Media folder - named after the original file.
+                            Are you sure you want to save the chapters? This will save{' '}
+                            {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length} chapters to the
+                            database.
                         </p>
                     </Modal>
 
@@ -4614,38 +4471,6 @@ const TimelineControls = ({
                             <div className="spinner"></div>
                         </div>
                         <p className="modal-message text-center">Please wait while your video is being processed...</p>
-                    </Modal>
-
-                    {/* Save Segments Modal */}
-                    <Modal
-                        isOpen={showSaveSegmentsModal}
-                        onClose={() => setShowSaveSegmentsModal(false)}
-                        title="Save Segments"
-                        actions={
-                            <>
-                                <button
-                                    className="modal-button modal-button-secondary"
-                                    onClick={() => setShowSaveSegmentsModal(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="modal-button modal-button-primary"
-                                    onClick={() => {
-                                        // Reset unsaved changes flag before saving
-                                        if (onSaveSegments) onSaveSegments();
-                                        handleSaveSegmentsConfirm();
-                                    }}
-                                >
-                                    Save Segments
-                                </button>
-                            </>
-                        }
-                    >
-                        <p className="modal-message">
-                            You're about to save each segment as a separate video. Find the new files in your My Media
-                            folder - named after the original file.
-                        </p>
                     </Modal>
 
                     {/* Success Modal */}
@@ -4660,17 +4485,13 @@ const TimelineControls = ({
               </p> */}
 
                             <p className="modal-message text-center redirect-message">
-                                {saveType === 'segments'
-                                    ? 'You will be redirected to your '
-                                    : 'You will be redirected to your '}
+                                You will be redirected to your{' '}
                                 <a href={redirectUrl} className="media-page-link" style={mediaPageLinkStyles}>
                                     media page
                                 </a>
                                 {' in '}
-                                <span className="countdown">10</span> seconds.{' '}
-                                {saveType === 'segments'
-                                    ? 'The new video(s) will soon be there.'
-                                    : 'Changes to the video might take a few minutes to be applied.'}
+                                <span className="countdown">10</span> seconds. Your chapters have been saved
+                                successfully.
                             </p>
                         </div>
                     </Modal>

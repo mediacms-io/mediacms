@@ -30,12 +30,10 @@ export default defineConfig({
         },
         rollupOptions: {
             output: {
-                // Ensure CSS file has a predictable name
                 assetFileNames: (assetInfo) => {
                     if (assetInfo.name === 'style.css') return 'chapters-editor.css';
                     return assetInfo.name;
                 },
-                // Add this to ensure the final bundle exposes React correctly
                 globals: {
                     react: 'React',
                     'react-dom': 'ReactDOM',

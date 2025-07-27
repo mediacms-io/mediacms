@@ -315,8 +315,12 @@
         min-width: 150px;
         text-align: center;
         pointer-events: auto;
-        top: -100px !important;
+        top: -105px !important;
         transform: translateY(-10px);
+    }
+
+    .segment-tooltip {
+        top: -165px !important;
     }
 
     .segment-tooltip:after,
@@ -871,4 +875,169 @@
     width: 1.25rem;
     margin-right: 0.5rem;
     color: #3b82f6;
+}
+
+/* Chapter Editor Styles */
+.chapter-editor {
+    background-color: #f8fafc;
+    border: 2px solid #3b82f6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.chapter-editor-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.chapter-editor-title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.chapter-editor-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.chapter-editor-segment {
+    font-size: 0.75rem;
+    color: #6b7280;
+    background-color: #e5e7eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    display: inline-block;
+}
+
+.save-chapters-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.save-chapters-button:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.save-chapters-button.has-changes {
+    background-color: #10b981;
+    animation: pulse-green-chapters 2s infinite;
+}
+
+.save-chapters-button.has-changes:hover {
+    background-color: #059669;
+}
+
+.save-chapters-button svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+@keyframes pulse-green-chapters {
+    0%,
+    100% {
+        background-color: #10b981;
+    }
+    50% {
+        background-color: #34d399;
+    }
+}
+
+.chapter-title-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    resize: vertical;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.chapter-title-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.chapter-title-input::placeholder {
+    color: #9ca3af;
+}
+
+.chapter-editor-info {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Chapter Editor Responsive styles */
+@media (max-width: 768px) {
+    .chapter-editor-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .save-chapters-button {
+        justify-content: center;
+        align-self: stretch;
+    }
+
+    .chapter-editor-segment {
+        text-align: center;
+    }
+}
+
+/* Tooltip Chapter Editor Styles */
+.tooltip-chapter-editor {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 0.375rem;
+    pointer-events: auto; /* Ensure it can receive clicks */
+}
+
+.tooltip-chapter-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid #ccc;
+    border-radius: 0.25rem;
+    background-color: white;
+    color: black;
+    font-size: 0.75rem;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+    max-height: 70px !important;
+}
+
+.tooltip-chapter-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.tooltip-chapter-input::placeholder {
+    color: #999;
 }
