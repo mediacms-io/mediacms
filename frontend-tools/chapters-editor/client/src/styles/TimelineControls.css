@@ -723,6 +723,10 @@
         }
     }
 
+    .auto-save-spinner {
+        animation: spin 1s linear infinite;
+    }
+
     @keyframes fadeIn {
         from {
             opacity: 0;

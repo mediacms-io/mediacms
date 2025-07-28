@@ -1,5 +1,6 @@
 import '../styles/EditingTools.css';
 import { useEffect, useState } from 'react';
+import logger from '@/lib/logger';
 
 interface EditingToolsProps {
     onSplit: () => void;
@@ -42,7 +43,7 @@ const EditingTools = ({
     const handlePlay = () => {
         // Ensure lastSeekedPosition is used when play is clicked
         if (typeof window !== 'undefined') {
-            console.log('Play button clicked, current lastSeekedPosition:', window.lastSeekedPosition);
+            logger.debug('Play button clicked, current lastSeekedPosition:', window.lastSeekedPosition);
         }
 
         // Call the original handler

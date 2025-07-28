@@ -1,9 +1,9 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { formatTime, formatDetailedTime } from '../lib/timeUtils';
 import { generateThumbnail, generateSolidColor } from '../lib/videoUtils';
 import { Segment } from './ClipSegments';
 import Modal from './Modal';
-import { trimVideo } from '../services/videoApi';
+import { autoSaveVideo } from '../services/videoApi';
 import logger from '../lib/logger';
 import '../styles/TimelineControls.css';
 import '../styles/TwoRowTooltip.css';
@@ -161,6 +161,96 @@ const TimelineControls = ({
     // Sort segments by startTime for chapter editor
     const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
     const selectedSegment = sortedSegments.find((seg) => seg.id === selectedSegmentId);
+
+    // Auto-save related state
+    const [lastAutoSaveTime, setLastAutoSaveTime] = useState<string>('');
+    const [isAutoSaving, setIsAutoSaving] = useState(false);
+    const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const clipSegmentsRef = useRef(clipSegments);
+
+    // Keep clipSegmentsRef updated
+    useEffect(() => {
+        clipSegmentsRef.current = clipSegments;
+    }, [clipSegments]);
+
+    // Auto-save function
+    const performAutoSave = useCallback(async () => {
+        try {
+            setIsAutoSaving(true);
+
+            // Format segments data for API request - use ref to get latest segments
+            const segments = clipSegmentsRef.current.map((segment) => ({
+                startTime: formatDetailedTime(segment.startTime),
+                endTime: formatDetailedTime(segment.endTime),
+                name: segment.name,
+                chapterTitle: segment.chapterTitle,
+            }));
+
+            logger.debug('segments', segments);
+
+            const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
+            // For testing, use '1234' if no mediaId is available
+            const finalMediaId = mediaId || '1234';
+
+            logger.debug('mediaId', finalMediaId);
+
+            if (!finalMediaId || segments.length === 0) {
+                logger.debug('No mediaId or segments, skipping auto-save');
+                setIsAutoSaving(false);
+                return;
+            }
+
+            logger.debug('Auto-saving segments:', { mediaId: finalMediaId, segments });
+
+            const response = await autoSaveVideo(finalMediaId, { segments });
+
+            if (response.success) {
+                logger.debug('Auto-save successful');
+                // Format the timestamp for display
+                const date = new Date(response.timestamp);
+                const formattedTime = date
+                    .toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false,
+                    })
+                    .replace(',', '');
+
+                setLastAutoSaveTime(formattedTime);
+                logger.debug('Auto-save successful:', formattedTime);
+            } else {
+                logger.error('Auto-save failed:', response.error);
+            }
+        } catch (error) {
+            logger.error('Auto-save error:', error);
+        } finally {
+            setIsAutoSaving(false);
+        }
+    }, []);
+
+    // Schedule auto-save with debounce
+    const scheduleAutoSave = useCallback(() => {
+        // Clear any existing timer
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+            logger.debug('Cleared existing auto-save timer');
+        }
+
+        logger.debug('Scheduling new auto-save in 1 second...');
+
+        // Schedule new auto-save after 1 second of inactivity
+        const timerId = setTimeout(() => {
+            logger.debug('Auto-save timer fired! Calling performAutoSave...');
+            performAutoSave();
+        }, 1000);
+
+        autoSaveTimerRef.current = timerId;
+        logger.debug('Timer ID set:', timerId);
+    }, [performAutoSave]);
 
     // Update editing title when selected segment changes
     useEffect(() => {
@@ -815,6 +905,162 @@ const TimelineControls = ({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isZoomDropdownOpen]);
+
+    // Listen for segment updates and trigger auto-save
+    useEffect(() => {
+        const handleSegmentUpdate = (event: CustomEvent) => {
+            const { recordHistory, fromAutoSave } = event.detail;
+            logger.debug('handleSegmentUpdate called, recordHistory:', recordHistory, 'fromAutoSave:', fromAutoSave);
+            // Only auto-save when history is recorded and not loading from auto-save
+            if (recordHistory && !fromAutoSave) {
+                logger.debug('Calling scheduleAutoSave from handleSegmentUpdate');
+                scheduleAutoSave();
+            }
+        };
+
+        const handleSegmentDragEnd = () => {
+            // Trigger auto-save when drag operations end
+            scheduleAutoSave();
+        };
+
+        const handleTrimUpdate = (event: CustomEvent) => {
+            const { recordHistory } = event.detail;
+            // Only auto-save when history is recorded (i.e., after trim operations complete)
+            if (recordHistory) {
+                scheduleAutoSave();
+            }
+        };
+
+        document.addEventListener('update-segments', handleSegmentUpdate as EventListener);
+        document.addEventListener('segment-drag-end', handleSegmentDragEnd);
+        document.addEventListener('update-trim', handleTrimUpdate as EventListener);
+        document.addEventListener('delete-segment', scheduleAutoSave);
+        document.addEventListener('split-segment', scheduleAutoSave);
+
+        return () => {
+            logger.debug('Cleaning up auto-save event listeners...');
+            document.removeEventListener('update-segments', handleSegmentUpdate as EventListener);
+            document.removeEventListener('segment-drag-end', handleSegmentDragEnd);
+            document.removeEventListener('update-trim', handleTrimUpdate as EventListener);
+            document.removeEventListener('delete-segment', scheduleAutoSave);
+            document.removeEventListener('split-segment', scheduleAutoSave);
+
+            // Clear any pending auto-save timer
+            if (autoSaveTimerRef.current) {
+                logger.debug('Clearing auto-save timer in cleanup:', autoSaveTimerRef.current);
+                clearTimeout(autoSaveTimerRef.current);
+            }
+        };
+    }, [scheduleAutoSave]);
+
+    // Perform initial auto-save when component mounts with segments
+    useEffect(() => {
+        if (clipSegments.length > 0 && !lastAutoSaveTime) {
+            // Perform initial auto-save after a short delay
+            setTimeout(() => {
+                performAutoSave();
+            }, 500);
+        }
+    }, [lastAutoSaveTime, performAutoSave]);
+
+    // Load saved segments from MEDIA_DATA on component mount
+    useEffect(() => {
+        const loadSavedSegments = () => {
+            // Get savedSegments directly from window.MEDIA_DATA
+            let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.savedSegments) || null;
+
+            // If no saved segments, use default segments
+            if (!savedData) {
+                logger.debug('No saved segments found in MEDIA_DATA, using default segments');
+                savedData = {
+                    segments: [
+                        {
+                            startTime: '00:00:00.000',
+                            endTime: '00:00:10.000',
+                            chapterTitle: 'Chapter 1 (from saved data)',
+                        },
+                        {
+                            startTime: '00:00:12.000',
+                            endTime: '00:00:17.000',
+                            chapterTitle: 'Chapter 2 (from saved data)',
+                        },
+                        {
+                            startTime: '00:00:20.000',
+                            endTime: '00:00:30.000',
+                            chapterTitle: 'Chapter 3 (from saved data)',
+                        },
+                    ],
+                    updated_at: '2025-06-24 14:59:14',
+                };
+            }
+
+            logger.debug('Loading saved segments:', savedData);
+
+            try {
+                if (savedData && savedData.segments && savedData.segments.length > 0) {
+                    logger.debug('Found saved segments:', savedData);
+
+                    // Convert the saved segments to the format expected by the component
+                    const convertedSegments: Segment[] = savedData.segments.map((seg: any, index: number) => ({
+                        id: Date.now() + index, // Generate unique IDs
+                        name: seg.name || `Segment ${index + 1}`,
+                        startTime: parseTimeString(seg.startTime),
+                        endTime: parseTimeString(seg.endTime),
+                        thumbnail: '',
+                        chapterTitle: seg.chapterTitle || '', // Preserve chapter title from saved data
+                    }));
+
+                    // Dispatch event to update segments
+                    const updateEvent = new CustomEvent('update-segments', {
+                        detail: {
+                            segments: convertedSegments,
+                            recordHistory: false, // Don't record loading saved segments in history
+                            fromAutoSave: true,
+                        },
+                    });
+                    document.dispatchEvent(updateEvent);
+
+                    // Update the last auto-save time
+                    if (savedData.updated_at) {
+                        const date = new Date(savedData.updated_at);
+                        const formattedTime = date
+                            .toLocaleString('en-US', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false,
+                            })
+                            .replace(',', '');
+                        setLastAutoSaveTime(formattedTime);
+                    }
+                } else {
+                    logger.debug('No saved segments found');
+                }
+            } catch (error) {
+                console.error('Error loading saved segments:', error);
+            }
+        };
+
+        // Helper function to parse time string "HH:MM:SS.mmm" to seconds
+        const parseTimeString = (timeStr: string): number => {
+            const parts = timeStr.split(':');
+            if (parts.length !== 3) return 0;
+
+            const hours = parseInt(parts[0]) || 0;
+            const minutes = parseInt(parts[1]) || 0;
+            const secondsParts = parts[2].split('.');
+            const seconds = parseInt(secondsParts[0]) || 0;
+            const milliseconds = parseInt(secondsParts[1]) || 0;
+
+            return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+        };
+
+        // Load saved segments after a short delay to ensure component is ready
+        setTimeout(loadSavedSegments, 100);
+    }, []); // Run only once on mount
 
     // Global click handler to close tooltips when clicking outside
     useEffect(() => {
@@ -2446,6 +2692,8 @@ const TimelineControls = ({
                                         placeholder="Chapter Title"
                                         value={editingChapterTitle}
                                         onChange={(e) => handleChapterTitleChange(e.target.value)}
+                                        onBlur={performAutoSave}
+                                        onMouseLeave={performAutoSave}
                                         rows={2}
                                         maxLength={200}
                                         onClick={(e) => e.stopPropagation()}
@@ -4421,6 +4669,41 @@ const TimelineControls = ({
                                     </div>
                                 ))}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Auto saved time */}
+                    <div
+                        className="auto-saved-time"
+                        style={{
+                            color: isAutoSaving ? '#1976d2' : 'gray',
+                            fontSize: '12px',
+                            marginLeft: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                        }}
+                    >
+                        {isAutoSaving ? (
+                            <>
+                                <span
+                                    className="auto-save-spinner"
+                                    style={{
+                                        display: 'inline-block',
+                                        width: '12px',
+                                        height: '12px',
+                                        border: '2px solid #f3f3f3',
+                                        borderTop: '2px solid #1976d2',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite',
+                                    }}
+                                ></span>
+                                Auto saving...
+                            </>
+                        ) : lastAutoSaveTime ? (
+                            `Auto saved: ${lastAutoSaveTime}`
+                        ) : (
+                            'Not saved yet'
                         )}
                     </div>
 
