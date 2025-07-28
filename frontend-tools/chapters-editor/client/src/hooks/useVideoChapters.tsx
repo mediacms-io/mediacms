@@ -92,8 +92,10 @@ const useVideoChapters = () => {
                 let initialSegments: Segment[] = [];
 
                 // Check if we have existing chapters from the backend
-                const existingChapters = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || [
-                    {
+                const existingChapters =
+                    (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) ||
+                    [
+                        /* {
                         name: 'Chapter 1',
                         from: '00:00:00',
                         to: '00:00:03',
@@ -117,8 +119,8 @@ const useVideoChapters = () => {
                         name: 'Chapter 5',
                         from: '00:00:21',
                         to: '00:00:24',
-                    },
-                ];
+                    }, */
+                    ];
 
                 if (existingChapters.length > 0) {
                     // Create segments from existing chapters

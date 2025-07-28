@@ -1,115 +1,95 @@
 // API service for video trimming operations
+import logger from '../lib/logger';
 
-interface TrimVideoRequest {
+// Helper function to simulate delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Auto-save interface
+interface AutoSaveRequest {
     segments: {
         startTime: string;
         endTime: string;
         name?: string;
     }[];
-    saveAsCopy?: boolean;
-    saveIndividualSegments?: boolean;
 }
 
-interface TrimVideoResponse {
-    msg: string;
-    url_redirect: string;
-    status?: number; // HTTP status code for success/error
-    error?: string; // Error message if status is not 200
+interface AutoSaveResponse {
+    success: boolean;
+    timestamp: string;
+    error?: string;
+    status?: string;
+    media_id?: string;
+    segments?: {
+        startTime: string;
+        endTime: string;
+        name: string;
+    }[];
+    updated_at?: string;
 }
 
-// Helper function to simulate delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// For now, we'll use a mock API that returns a promise
-// This can be replaced with actual API calls later
-export const trimVideo = async (mediaId: string, data: TrimVideoRequest): Promise<TrimVideoResponse> => {
+// Auto-save API function
+export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Promise<AutoSaveResponse> => {
     try {
-        // Attempt the real API call
-        const response = await fetch(`/api/v1/media/${mediaId}/trim_video`, {
+        const response = await fetch(`/api/v1/media/${mediaId}/save_chapters`, {
+            // TODO: ask backend to add save_chapters endpoint
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
 
+        logger.debug('response', response);
+
         if (!response.ok) {
-            // For error responses, return with error status and message
-            if (response.status === 400) {
-                // Handle 400 Bad Request - return with error details
-                try {
-                    // Try to get error details from response
-                    const errorData = await response.json();
-                    return {
-                        status: 400,
-                        error: errorData.error || 'An error occurred during processing',
-                        msg: 'Video Processing Error',
-                        url_redirect: '',
-                    };
-                } catch (parseError) {
-                    // If can't parse response JSON, return generic error
-                    return {
-                        status: 400,
-                        error: 'An error occurred during video processing',
-                        msg: 'Video Processing Error',
-                        url_redirect: '',
-                    };
-                }
-            } else if (response.status !== 404) {
+            // For error responses, return with error status
+            if (response.status === 404) {
+                // If endpoint not ready (404), return mock success response
+                const timestamp = new Date().toISOString();
+                return {
+                    success: true,
+                    timestamp: timestamp,
+                };
+            } else {
                 // Handle other error responses
                 try {
-                    // Try to get error details from response
                     const errorData = await response.json();
                     return {
-                        status: response.status,
-                        error: errorData.error || 'An error occurred during processing',
-                        msg: 'Video Processing Error',
-                        url_redirect: '',
+                        success: false,
+                        timestamp: new Date().toISOString(),
+                        error: errorData.error || 'Auto-save failed',
                     };
                 } catch (parseError) {
-                    // If can't parse response JSON, return generic error
                     return {
-                        status: response.status,
-                        error: 'An error occurred during video processing',
-                        msg: 'Video Processing Error',
-                        url_redirect: '',
+                        success: false,
+                        timestamp: new Date().toISOString(),
+                        error: 'Auto-save failed',
                     };
                 }
-            } else {
-                // If endpoint not ready (404), return mock success response
-                await delay(1500); // Simulate 1.5 second server delay
-                return {
-                    status: 200, // Mock success status
-                    msg: 'Video Processed Successfully', // Updated per requirements
-                    url_redirect: `./view?m=${mediaId}`,
-                };
             }
         }
 
         // Successful response
         const jsonResponse = await response.json();
-        return {
-            status: 200,
-            msg: 'Video Processed Successfully', // Ensure the success message is correct
-            url_redirect: jsonResponse.url_redirect || `./view?m=${mediaId}`,
-            ...jsonResponse,
-        };
+
+        // Check if the response has the expected format
+        if (jsonResponse.status === 'success') {
+            return {
+                success: true,
+                timestamp: jsonResponse.updated_at || new Date().toISOString(),
+                ...jsonResponse,
+            };
+        } else {
+            return {
+                success: false,
+                timestamp: new Date().toISOString(),
+                error: jsonResponse.error || 'Auto-save failed',
+            };
+        }
     } catch (error) {
-        // For any fetch errors, return mock success response with delay
-        await delay(1500); // Simulate 1.5 second server delay
+        // For any fetch errors, return mock success response
+        const timestamp = new Date().toISOString();
         return {
-            status: 200, // Mock success status
-            msg: 'Video Processed Successfully', // Consistent with requirements
-            url_redirect: `./view?m=${mediaId}`,
+            success: true,
+            timestamp: timestamp,
         };
     }
-
-    /* Mock implementation that simulates network latency
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        msg: "Video is processing for trim",
-        url_redirect: `./view?m=${mediaId}`
-      });
-    }, 1500); // Simulate 1.5 second server delay
-  });
-  */
 };
