@@ -1,0 +1,397 @@
+#chapters-editor-root {
+    /* Tooltip styles - only on desktop where hover is available */
+    @media (hover: hover) and (pointer: fine) {
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 5px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                opacity 0.2s,
+                visibility 0.2s;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                opacity 0.2s,
+                visibility 0.2s;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:hover:before,
+        [data-tooltip]:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    /* Hide button tooltips on touch devices */
+    @media (pointer: coarse) {
+        [data-tooltip]:before,
+        [data-tooltip]:after {
+            display: none !important;
+            content: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    }
+
+    .editing-tools-container {
+        background-color: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .flex-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .flex-container.single-row {
+        flex-wrap: nowrap;
+    }
+
+    /* Show full text on larger screens, hide short text */
+    .full-text {
+        display: inline;
+    }
+
+    .short-text {
+        display: none;
+    }
+
+    /* Reset text always visible by default */
+    .reset-text {
+        display: inline;
+    }
+
+    .button-group {
+        display: flex;
+        align-items: center;
+
+        &.play-buttons-group {
+            gap: 0.75rem;
+            justify-content: flex-start;
+            flex: 0 0 auto; /* Don't expand to fill space */
+        }
+
+        &.secondary {
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: flex-end;
+            margin-left: auto; /* Push to right edge */
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            color: #333;
+            background: none;
+            border: none;
+            cursor: pointer;
+            min-width: auto;
+
+            &:hover:not(:disabled) {
+                color: inherit;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            svg {
+                height: 1.25rem;
+                width: 1.25rem;
+                margin-right: 0.25rem;
+            }
+        }
+    }
+
+    .divider {
+        border-right: 1px solid #d1d5db;
+        height: 1.5rem;
+        margin: 0 0.5rem;
+    }
+
+    /* Style for play buttons with highlight effect */
+    .play-button,
+    .preview-button {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        min-width: 80px;
+        justify-content: center;
+        font-size: 0.875rem !important;
+    }
+
+    /* Greyed out play button when segments are playing */
+    .play-button.greyed-out {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Highlighted stop button with blue pulse on small screens */
+    .segments-button.highlighted-stop {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border: 1px solid #3b82f6;
+        animation: bluePulse 2s infinite;
+    }
+
+    @keyframes bluePulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+        }
+    }
+
+    /* Completely disable ALL hover effects for play buttons */
+    .play-button:hover:not(:disabled),
+    .preview-button:hover:not(:disabled) {
+        /* Reset everything to prevent any changes */
+        color: inherit !important;
+        transform: none !important;
+        font-size: 0.875rem !important;
+        width: auto !important;
+        background: none !important;
+    }
+
+    .play-button svg,
+    .preview-button svg {
+        height: 1.5rem;
+        width: 1.5rem;
+        /* Make sure SVG scales with the button but doesn't change layout */
+        flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+        0% {
+            opacity: 0.8;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0.8;
+        }
+    }
+
+    /* Add responsive button text class */
+    .button-text {
+        margin-left: 0.25rem;
+    }
+
+    /* Media queries for the editing tools */
+    @media (max-width: 992px) {
+        /* Hide text for undo/redo buttons on medium screens */
+        .button-group.secondary .button-text {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        /* Keep all buttons in a single row, make them more compact */
+        .flex-container.single-row {
+            justify-content: space-between;
+        }
+
+        .button-group {
+            gap: 0.5rem;
+        }
+
+        /* Keep font size consistent regardless of screen size */
+        .preview-button,
+        .play-button {
+            font-size: 0.875rem !important;
+        }
+    }
+
+    @media (max-width: 640px) {
+        /* Prevent container overflow on mobile */
+        .editing-tools-container {
+            padding: 0.75rem;
+            overflow-x: hidden;
+        }
+
+        /* At this breakpoint, make preview button text shorter */
+        .preview-button {
+            min-width: auto;
+        }
+
+        /* Switch to short text versions */
+        .full-text {
+            display: none;
+        }
+
+        .short-text {
+            display: inline;
+            margin-left: 0.15rem;
+        }
+
+        /* Hide reset text */
+        .reset-text {
+            display: none;
+        }
+
+        /* Ensure buttons stay in correct position */
+        .button-group.play-buttons-group {
+            flex: initial;
+            justify-content: flex-start;
+            flex-shrink: 0;
+        }
+
+        .button-group.secondary {
+            flex: initial;
+            justify-content: flex-end;
+            flex-shrink: 0;
+        }
+
+        /* Reduce button sizes on mobile */
+        .button-group button {
+            padding: 0.375rem;
+            min-width: auto;
+        }
+
+        .button-group button svg {
+            height: 1.125rem;
+            width: 1.125rem;
+            margin-right: 0.125rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        /* Keep single row, left-align play buttons, right-align controls */
+        .flex-container.single-row {
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 10px;
+        }
+
+        /* Fix left-align for play buttons */
+        .button-group.play-buttons-group {
+            justify-content: flex-start;
+            flex: 0 0 auto;
+        }
+
+        /* Fix right-align for editing controls */
+        .button-group.secondary {
+            justify-content: flex-end;
+            margin-left: auto;
+        }
+
+        /* Reduce button padding to fit more easily */
+        .button-group button {
+            padding: 0.25rem;
+        }
+
+        .divider {
+            margin: 0 0.25rem;
+        }
+    }
+
+    /* Very small screens - maintain layout but reduce further */
+    @media (max-width: 480px) {
+        .editing-tools-container {
+            padding: 0.5rem;
+        }
+
+        .flex-container.single-row {
+            gap: 8px;
+        }
+
+        .button-group.play-buttons-group,
+        .button-group.secondary {
+            gap: 0.25rem;
+        }
+
+        .divider {
+            display: none; /* Hide divider on very small screens */
+        }
+
+        /* Even smaller buttons on very small screens */
+        .button-group button {
+            padding: 0.125rem;
+        }
+
+        .button-group button svg {
+            height: 1rem;
+            width: 1rem;
+            margin-right: 0;
+        }
+
+        /* Hide all button text on very small screens */
+        .button-text,
+        .reset-text {
+            display: none;
+        }
+    }
+
+    /* Portrait orientation specific fixes */
+    @media (max-width: 640px) and (orientation: portrait) {
+        .editing-tools-container {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .flex-container.single-row {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Ensure button groups don't overflow */
+        .button-group {
+            max-width: 50%;
+        }
+
+        .button-group.play-buttons-group {
+            max-width: 60%;
+        }
+
+        .button-group.secondary {
+            max-width: 40%;
+        }
+    }
+}
