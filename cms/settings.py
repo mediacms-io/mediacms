@@ -376,7 +376,15 @@ LOGGING = {
     },
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {"default": {
+    "ENGINE": "django.db.backends.postgresql",
+    "NAME": "mediacms",
+    "HOST": "postgresql",
+    "PORT": "5433",
+    "USER": "mediacms",
+    "PASSWORD": "mediacms",
+    "OPTIONS": {'pool': True}}
+}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
