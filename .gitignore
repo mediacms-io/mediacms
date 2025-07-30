@@ -31,3 +31,4 @@ static/video_editor/videos/sample-video-10m.mp4
 static/video_editor/videos/sample-video-10s.mp4
 
 venv/
+__pycache__/
