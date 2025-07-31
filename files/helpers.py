@@ -262,7 +262,11 @@ def media_file_info(input_file):
 
     video_info = {}
     audio_info = {}
-    cmd = ["stat", "-c", "%s", input_file]
+    import platform
+    if platform.system() == "Darwin":  # macOS
+        cmd = ["stat", "-f", "%z", input_file]
+    else:  # Linux/其他
+        cmd = ["stat", "-c", "%s", input_file]
 
     stdout = run_command(cmd).get("out")
     if stdout:
@@ -271,7 +275,10 @@ def media_file_info(input_file):
         ret["fail"] = True
         return ret
 
-    cmd = ["md5sum", input_file]
+    if platform.system() == "Darwin":  # macOS
+        cmd = ["md5", "-q", input_file]  # -q 选项只输出 MD5 值
+    else:  # Linux/其他
+        cmd = ["md5sum", input_file]
     stdout = run_command(cmd).get("out")
     if stdout:
         md5sum = stdout.split()[0]

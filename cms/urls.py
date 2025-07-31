@@ -9,7 +9,11 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 schema_view = get_schema_view(
-    openapi.Info(title="MediaCMS API", default_version='v1', contact=openapi.Contact(url="https://mediacms.io"), x_logo={"url": "../../static/images/logo_dark.svg"}),
+    openapi.Info(
+        title="MediaCMS API",
+        default_version='v1',
+        contact=openapi.Contact(url="https://mediacms.io"),
+        x_logo={"url": "../../static/images/logo_dark.svg"}),
     public=True,
     permission_classes=(AllowAny,),
 )
