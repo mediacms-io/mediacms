@@ -14,7 +14,6 @@ from rest_framework.parsers import (
     JSONParser,
     MultiPartParser,
 )
-
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView

@@ -81,7 +81,6 @@ class MediaMetadataForm(forms.ModelForm):
 
         self.helper.layout = Layout(*layout_fields)
 
-
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))
         if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):

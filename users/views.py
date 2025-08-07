@@ -189,7 +189,7 @@ Sender email: %s\n
 
 class UserList(APIView):
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
-    
+
     def get_permissions(self):
         if not settings.ALLOW_ANONYMOUS_USER_LISTING:
             return [permissions.IsAuthenticated()]
@@ -211,9 +211,7 @@ class UserList(APIView):
 
         name = request.GET.get("name", "").strip()
         if name:
-            users = users.filter(
-                Q(name__icontains=name) | Q(username__icontains=name)
-            )
+            users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
 
         page = paginator.paginate_queryset(users, request)
 
