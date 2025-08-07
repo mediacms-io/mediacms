@@ -68,14 +68,18 @@ class MediaMetadataForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.form_enctype = "multipart/form-data"
         self.helper.form_show_errors = False
-        self.helper.layout = Layout(
+
+        layout_fields = [
             CustomField('title'),
             CustomField('new_tags'),
             CustomField('add_date'),
             CustomField('description'),
-            CustomField('uploaded_poster'),
             CustomField('enable_comments'),
-        )
+        ]
+        if self.instance.media_type != "image":
+            layout_fields.append(CustomField('uploaded_poster'))
+
+        self.helper.layout = Layout(*layout_fields)
 
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))

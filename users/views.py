@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
@@ -47,17 +48,28 @@ def view_user(request, username):
     return render(request, "cms/user.html", context)
 
 
-def view_user_media(request, username):
+def shared_with_me(request, username):
     context = {}
     user = get_user(username=username)
-    if not user:
-        return HttpResponseRedirect("/members")
+    if not user or (user != request.user):
+        return HttpResponseRedirect("/")
 
     context["user"] = user
-    context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
-    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
-    context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
-    return render(request, "cms/user_media.html", context)
+    context["CAN_EDIT"] = True
+    context["CAN_DELETE"] = True
+    return render(request, "cms/user_shared_with_me.html", context)
+
+
+def shared_by_me(request, username):
+    context = {}
+    user = get_user(username=username)
+    if not user or (user != request.user):
+        return HttpResponseRedirect("/")
+
+    context["user"] = user
+    context["CAN_EDIT"] = True
+    context["CAN_DELETE"] = True
+    return render(request, "cms/user_shared_by_me.html", context)
 
 
 def view_user_playlists(request, username):
@@ -176,12 +188,17 @@ Sender email: %s\n
 
 
 class UserList(APIView):
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    def get_permissions(self):
+        if not settings.ALLOW_ANONYMOUS_USER_LISTING:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticatedOrReadOnly()]
 
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name or username'),
         ],
         tags=['Users'],
         operation_summary='List users',
@@ -191,9 +208,10 @@ class UserList(APIView):
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         users = User.objects.filter()
-        location = request.GET.get("location", "").strip()
-        if location:
-            users = users.filter(location=location)
+
+        name = request.GET.get("name", "").strip()
+        if name:
+            users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
 
         page = paginator.paginate_queryset(users, request)
 

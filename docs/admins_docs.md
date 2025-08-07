@@ -168,8 +168,6 @@ By default, all these services are enabled, but in order to create a scaleable d
 
 Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
 
-See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
-
 To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
@@ -501,6 +499,16 @@ By default `CAN_COMMENT = "all"` means that all registered users can add comment
 - **email_verified**, a user not only has to register an account but also verify the email (by clicking the link sent upon registration). Apparently email configuration need to work, otherise users won't receive emails.
 
 - **advancedUser**, only users that are marked as advanced users can add comment. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
+
+### 5.26 Control whether anonymous users can list all users
+
+By default, anonymous users can view the list of all users on the platform. To restrict this to authenticated users only, set:
+
+```
+ALLOW_ANONYMOUS_USER_LISTING = False
+```
+
+When set to False, only logged-in users will be able to access the user listing API endpoint.
 
 
 ## 6. Manage pages
@@ -967,4 +975,4 @@ Visiting the admin, you will see the Identity Providers tab and you can add one.
 
 ## 25. Custom urls
 To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
-This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this. 
+This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.
