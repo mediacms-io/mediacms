@@ -174,40 +174,36 @@ class MediaBulkUserActions(APIView):
     parser_classes = (JSONParser,)
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(name='media_ids', in_=openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), required=True, description="List of media IDs"),
-            openapi.Parameter(
-                name='action',
-                in_=openapi.IN_FORM,
-                type=openapi.TYPE_STRING,
-                required=True,
-                description="Action to perform",
-                enum=[
-                    "enable_comments",
-                    "disable_comments",
-                    "delete_media",
-                    "enable_download",
-                    "disable_download",
-                    "add_to_playlist",
-                    "remove_from_playlist",
-                    "set_state",
-                    "change_owner",
-                    "copy_media",
-                ],
-            ),
-            openapi.Parameter(
-                name='playlist_ids',
-                in_=openapi.IN_FORM,
-                type=openapi.TYPE_ARRAY,
-                items=openapi.Items(type=openapi.TYPE_INTEGER),
-                required=False,
-                description="List of playlist IDs (required for add_to_playlist and remove_from_playlist actions)",
-            ),
-            openapi.Parameter(
-                name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="State to set (required for set_state action)", enum=["private", "public", "unlisted"]
-            ),
-            openapi.Parameter(name='owner', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="New owner username (required for change_owner action)"),
-        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['media_ids', 'action'],
+            properties={
+                'media_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description="List of media IDs"),
+                'action': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Action to perform",
+                    enum=[
+                        "enable_comments",
+                        "disable_comments",
+                        "delete_media",
+                        "enable_download",
+                        "disable_download",
+                        "add_to_playlist",
+                        "remove_from_playlist",
+                        "set_state",
+                        "change_owner",
+                        "copy_media",
+                    ],
+                ),
+                'playlist_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description="List of playlist IDs (required for add_to_playlist and remove_from_playlist actions)",
+                ),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, description="State to set (required for set_state action)", enum=["private", "public", "unlisted"]),
+                'owner': openapi.Schema(type=openapi.TYPE_STRING, description="New owner username (required for change_owner action)"),
+            },
+        ),
         tags=['Media'],
         operation_summary='Perform bulk actions on media',
         operation_description='Perform various bulk actions on multiple media items at once',
