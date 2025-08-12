@@ -178,11 +178,7 @@ class MediaBulkUserActions(APIView):
             type=openapi.TYPE_OBJECT,
             required=['media_ids', 'action'],
             properties={
-                'media_ids': openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="List of media IDs"
-                ),
+                'media_ids': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description="List of media IDs"),
                 'action': openapi.Schema(
                     type=openapi.TYPE_STRING,
                     description="Action to perform",
@@ -204,15 +200,8 @@ class MediaBulkUserActions(APIView):
                     items=openapi.Items(type=openapi.TYPE_INTEGER),
                     description="List of playlist IDs (required for add_to_playlist and remove_from_playlist actions)",
                 ),
-                'state': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description="State to set (required for set_state action)",
-                    enum=["private", "public", "unlisted"]
-                ),
-                'owner': openapi.Schema(
-                    type=openapi.TYPE_STRING,
-                    description="New owner username (required for change_owner action)"
-                ),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, description="State to set (required for set_state action)", enum=["private", "public", "unlisted"]),
+                'owner': openapi.Schema(type=openapi.TYPE_STRING, description="New owner username (required for change_owner action)"),
             },
         ),
         tags=['Media'],
