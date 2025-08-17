@@ -570,17 +570,12 @@ function VideoJSPlayer() {
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
-    const chaptersData = [
-        { startTime: 0, endTime: 5, text: 'Start111' },
-        { startTime: 5, endTime: 10, text: 'Introduction - EuroHPC' },
-        { startTime: 10, endTime: 15, text: 'Planning - EuroHPC' },
-        { startTime: 15, endTime: 20, text: 'Parcel Discounts - EuroHPC' },
-        { startTime: 20, endTime: 25, text: 'Class Studies - EuroHPC' },
-        { startTime: 25, endTime: 30, text: 'Sustainability - EuroHPC' },
-        { startTime: 30, endTime: 31, text: 'Funding and  - EuroHPC' } /* 
-        { startTime: 35, endTime: 40, text: 'Virtual HPC Academy - EuroHPC' },
-        { startTime: 40, endTime: 45, text: 'Wrapping up - EuroHPC' }, */,
-    ];
+    const chaptersData = mediaData.chaptersData;
+//    [
+//        { startTime: 0, endTime: 5, text: 'Start111' },
+//        { startTime: 5, endTime: 10, text: 'Introduction - EuroHPC' },
+//        { startTime: 10, endTime: 15, text: 'Planning - EuroHPC' },
+//    ];
 
     // Get video data from mediaData
     const currentVideo = useMemo(

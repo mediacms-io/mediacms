@@ -1,8 +1,8 @@
-{% extends "base.html" %} 
-{% load crispy_forms_tags %} 
-{% load static %} 
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
 
-{% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %} 
+{% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
 <link href="{% static "chapters_editor/chapters-editor.css" %}" rel="preload" as="style">
@@ -16,23 +16,7 @@
 		mediaId: "{{ media_object.friendly_token }}",
 		redirectURL: "{{ media_object.get_absolute_url }}",
 		redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}",
-        chapters: [
-            {
-                name: 'Chapter AAA',
-				from: '00:00:00.000',
-				to: '00:00:01.357',
-            },
-            {
-                name: 'Chapter BBB',
-				from: '00:00:01.999',
-				to: '00:00:02.714',
-            },		
-            {
-                name: 'Chapter CCC',
-				from: '00:00:02.714',
-				to: '00:00:03.071',
-            },
-        ],
+		chapters: "{{ chapters }}",
     };
 </script>
 {%endblock topimports %}
