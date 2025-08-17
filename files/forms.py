@@ -35,7 +35,7 @@ class MediaMetadataForm(forms.ModelForm):
         widgets = {
             "new_tags": MultipleSelect(),
             "description": forms.Textarea(attrs={'rows': 4}),
-            "add_date": forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            "add_date": forms.DateTimeInput(attrs={'type': 'datetime-local', 'step': '1'}, format='%Y-%m-%dT%H:%M:%S'),
             "thumbnail_time": forms.NumberInput(attrs={'min': 0, 'step': 0.1}),
         }
         labels = {
