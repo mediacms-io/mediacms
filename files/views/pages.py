@@ -574,7 +574,7 @@ def view_media(request):
             video_msg = "Media encoding hasn't started yet. Attempting to show the original video file"
         if media.encoding_status == "running":
             video_msg = "Media encoding is under processing. Attempting to show the original video file"
-        if video_msg:
+        if video_msg and media.user == request.user:
             messages.add_message(request, messages.INFO, video_msg)
 
     return render(request, "cms/media.html", context)
