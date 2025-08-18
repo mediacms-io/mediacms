@@ -8,8 +8,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from cms.permissions import user_allowed_to_upload
 from cms.version import VERSION
+from files.methods import user_allowed_to_upload
 from users.models import User
 
 from .. import helpers

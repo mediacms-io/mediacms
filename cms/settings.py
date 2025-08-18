@@ -501,6 +501,9 @@ ALLOW_CUSTOM_MEDIA_URLS = False
 # Whether to allow anonymous users to list all users
 ALLOW_ANONYMOUS_USER_LISTING = True
 
+# Maximum number of media a user can upload
+NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
+
 # ffmpeg options
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
