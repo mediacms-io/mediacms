@@ -32,6 +32,7 @@ from ..methods import (
     show_recommended_media,
     show_related_media,
     update_user_ratings,
+    user_allowed_to_upload,
 )
 from ..models import EncodeProfile, Media, MediaPermission, Playlist, PlaylistMedia
 from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer
@@ -159,6 +160,10 @@ class MediaList(APIView):
     )
     def post(self, request, format=None):
         # Add new media
+        # Check if user is allowed to upload
+        if not user_allowed_to_upload(request):
+            return Response({"detail": "You are not allowed to upload media"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]
