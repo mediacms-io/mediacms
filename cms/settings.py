@@ -504,6 +504,8 @@ ALLOW_ANONYMOUS_USER_LISTING = True
 # ffmpeg options
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
+ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
