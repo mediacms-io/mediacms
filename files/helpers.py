@@ -34,6 +34,12 @@ BUF_SIZE_MULTIPLIER = 1.5
 KEYFRAME_DISTANCE = 4
 KEYFRAME_DISTANCE_MIN = 2
 
+# speed presets
+# see https://trac.ffmpeg.org/wiki/Encode/H.264
+X26x_PRESET = "medium"  # "medium"
+X265_PRESET = "medium"
+X26x_PRESET_BIG_HEIGHT = "faster"
+
 # VP9_SPEED = 1  # between 0 and 4, lower is slower
 VP9_SPEED = 2
 
@@ -49,7 +55,6 @@ VIDEO_CRFS = {
 VIDEO_BITRATES = {
     "h264": {
         25: {
-            144: 150,
             240: 300,
             360: 500,
             480: 1000,
@@ -62,7 +67,6 @@ VIDEO_BITRATES = {
     },
     "h265": {
         25: {
-            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -75,7 +79,6 @@ VIDEO_BITRATES = {
     },
     "vp9": {
         25: {
-            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -170,7 +173,7 @@ def rm_dir(directory):
 
 def url_from_path(filename):
     # TODO: find a way to preserver http - https ...
-    return f"{settings.MEDIA_URL}{filename.replace(settings.MEDIA_ROOT, '')}"
+    return "{0}{1}".format(settings.MEDIA_URL, filename.replace(settings.MEDIA_ROOT, ""))
 
 
 def create_temp_file(suffix=None, dir=settings.TEMP_DIRECTORY):
@@ -485,7 +488,7 @@ def show_file_size(size):
     if size:
         size = size / 1000000
         size = round(size, 1)
-        size = f"{str(size)}MB"
+        size = "{0}MB".format(str(size))
     return size
 
 
@@ -540,8 +543,8 @@ def get_base_ffmpeg_command(
     target_width = round(target_height * 16 / 9)
     scale_filter_opts = [
         f"if(lt(iw\\,ih)\\,{target_height}\\,{target_width})",  # noqa
-        f"if(lt(iw\\,ih)\\,{target_width}\\,{target_height})",  # noqa
-        "force_original_aspect_ratio=decrease",
+        f"if(lt(ih\\,iw)\\,{target_width}\\,{target_height})",  # noqa
+        "force_original_aspect_ratio=increase",
         "force_divisible_by=2",
         "flags=lanczos",
     ]
@@ -593,13 +596,17 @@ def get_base_ffmpeg_command(
     cmd = base_cmd[:]
 
     # preset settings
-    preset = getattr(settings, "FFMPEG_DEFAULT_PRESET", "medium")
-
     if encoder == "libvpx-vp9":
         if pass_number == 1:
             speed = 4
         else:
             speed = VP9_SPEED
+    elif encoder in ["libx264"]:
+        preset = X26x_PRESET
+    elif encoder in ["libx265"]:
+        preset = X265_PRESET
+    if target_height >= 720:
+        preset = X26x_PRESET_BIG_HEIGHT
 
     if encoder == "libx264":
         level = "4.2" if target_height <= 1080 else "5.2"
@@ -723,7 +730,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
         return False
 
     if media_info.get("video_height") < resolution:
-        if resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
+        if resolution not in [240, 360]:  # always get these two
             return False
 
     #    if codec == "h264_baseline":
