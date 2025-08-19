@@ -210,7 +210,7 @@ UPLOAD_DIR = "uploads/"
 CHUNKS_DIR = "chunks/"
 
 # number of files to upload using fineuploader at once
-UPLOAD_MAX_FILES_NUMBER = 10
+UPLOAD_MAX_FILES_NUMBER = 100
 CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
 FILE_STORAGE = "django.core.files.storage.DefaultStorage"
