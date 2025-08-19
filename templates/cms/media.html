@@ -126,18 +126,19 @@
 <link href="{% static "css/media.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
-{% if is_media_allowed_type %}
+{% block content %}
+    {% if is_media_allowed_type %}
 
-    {% block content %}<div id="page-media"></div>{% endblock content %}
-{% else %}
-
-    <div class="user-action-form-wrap">
-        <div class="user-action-form-inner">
-            This media type is not supported.
+        <div id="page-media"></div>
+    {% else %}
+        <div class="user-action-form-wrap">
+            <div class="user-action-form-inner">
+                This media type is not supported.
+            </div>
         </div>
-    </div>
+    {% endif %}
 
-{% endif %}
+{% endblock content %}
 
 {% block bottomimports %}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>

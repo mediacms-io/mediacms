@@ -408,7 +408,7 @@ def user_allowed_to_upload(request):
 
     if request.user.is_anonymous:
         return False
-    if request.user.is_superuser:
+    if is_mediacms_editor(request.user):
         return True
 
     # Check if user has reached the maximum number of uploads

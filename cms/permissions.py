@@ -1,13 +1,22 @@
 from django.conf import settings
 from rest_framework import permissions
+from rest_framework.exceptions import PermissionDenied
 
-from files.methods import is_mediacms_editor, is_mediacms_manager
+from files.methods import (
+    is_mediacms_editor,
+    is_mediacms_manager,
+    user_allowed_to_upload,
+)
 
 
 class IsAuthorizedToAdd(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
+        if not user_allowed_to_upload(request):
+            raise PermissionDenied("You don't have permission to upload media, or have reached max number of media uploads.")
+
+        return True
 
 
 class IsAuthorizedToAddComment(permissions.BasePermission):

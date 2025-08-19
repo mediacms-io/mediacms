@@ -210,7 +210,7 @@ UPLOAD_DIR = "uploads/"
 CHUNKS_DIR = "chunks/"
 
 # number of files to upload using fineuploader at once
-UPLOAD_MAX_FILES_NUMBER = 100
+UPLOAD_MAX_FILES_NUMBER = 10
 CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
 FILE_STORAGE = "django.core.files.storage.DefaultStorage"
@@ -226,7 +226,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 # only in case where unlisted workflow is used and no commentary
 # exists
 
-CANNOT_ADD_MEDIA_MESSAGE = ""
+CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media uploaded reached."
 
 # mp4hls command, part of Bento4
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
