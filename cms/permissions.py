@@ -1,14 +1,22 @@
 from django.conf import settings
 from rest_framework import permissions
+from rest_framework.exceptions import PermissionDenied
 
-from files.methods import is_mediacms_editor, is_mediacms_manager
+from files.methods import (
+    is_mediacms_editor,
+    is_mediacms_manager,
+    user_allowed_to_upload,
+)
 
 
 class IsAuthorizedToAdd(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return user_allowed_to_upload(request)
+        if not user_allowed_to_upload(request):
+            raise PermissionDenied("You don't have permission to upload media, or have reached max number of media uploads.")
+
+        return True
 
 
 class IsAuthorizedToAddComment(permissions.BasePermission):
@@ -53,26 +61,6 @@ class IsUserOrEditor(permissions.BasePermission):
             return True
 
         return obj.user == request.user
-
-
-def user_allowed_to_upload(request):
-    """Any custom logic for whether a user is allowed
-    to upload content lives here
-    """
-    if request.user.is_anonymous:
-        return False
-    if request.user.is_superuser:
-        return True
-
-    if settings.CAN_ADD_MEDIA == "all":
-        return True
-    elif settings.CAN_ADD_MEDIA == "email_verified":
-        if request.user.email_is_verified:
-            return True
-    elif settings.CAN_ADD_MEDIA == "advancedUser":
-        if request.user.advancedUser:
-            return True
-    return False
 
 
 def user_allowed_to_comment(request):

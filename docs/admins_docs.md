@@ -26,6 +26,8 @@
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
 - [25. Custom urls](#25-custom-urls)
+- [26. Allowed files](#26-allowed-files)
+- [27. User upload limits](#27-user-upload-limits)
 
 
 ## 1. Welcome
@@ -976,3 +978,21 @@ Visiting the admin, you will see the Identity Providers tab and you can add one.
 ## 25. Custom urls
 To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
 This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.
+
+## 26. Allowed files
+MediaCMS performs identification attempts on new file uploads and only allows certain file types specified in the `ALLOWED_MEDIA_UPLOAD_TYPES` setting. By default, only ["video", "audio", "image", "pdf"] files are allowed.
+
+When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
+
+If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file.
+
+## 27. User upload limits
+MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
+
+When a user reaches this limit, they will no longer be able to upload new media until they delete some of their existing content. This limit applies regardless of the user's role or permissions in the system.
+
+To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` value in your settings file:
+
+```
+NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
+```

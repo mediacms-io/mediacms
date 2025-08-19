@@ -126,7 +126,19 @@
 <link href="{% static "css/media.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
-{% block content %}<div id="page-media"></div>{% endblock content %}
+{% block content %}
+    {% if is_media_allowed_type %}
+
+        <div id="page-media"></div>
+    {% else %}
+        <div class="user-action-form-wrap">
+            <div class="user-action-form-inner">
+                This media type is not supported.
+            </div>
+        </div>
+    {% endif %}
+
+{% endblock content %}
 
 {% block bottomimports %}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>

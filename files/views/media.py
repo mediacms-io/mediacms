@@ -159,6 +159,7 @@ class MediaList(APIView):
     )
     def post(self, request, format=None):
         # Add new media
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]

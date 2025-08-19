@@ -336,6 +336,15 @@ class Media(models.Model):
         video duration, encode
         """
         self.set_media_type()
+        from ..methods import is_media_allowed_type
+
+        if not is_media_allowed_type(self):
+            helpers.rm_file(self.media_file.path)
+            if self.state == "public":
+                self.state = "unlisted"
+                self.save(update_fields=["state"])
+            return False
+
         if self.media_type == "video":
             self.set_thumbnail(force=True)
             if settings.DO_NOT_TRANSCODE_VIDEO:

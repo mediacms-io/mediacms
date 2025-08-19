@@ -226,7 +226,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 # only in case where unlisted workflow is used and no commentary
 # exists
 
-CANNOT_ADD_MEDIA_MESSAGE = ""
+CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media uploads has been reached."
 
 # mp4hls command, part of Bento4
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
@@ -501,8 +501,13 @@ ALLOW_CUSTOM_MEDIA_URLS = False
 # Whether to allow anonymous users to list all users
 ALLOW_ANONYMOUS_USER_LISTING = True
 
+# Maximum number of media a user can upload
+NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
+
 # ffmpeg options
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
+
+ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
 
 try:
     # keep a local_settings.py file for local overrides

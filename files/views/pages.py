@@ -8,8 +8,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from cms.permissions import user_allowed_to_upload
 from cms.version import VERSION
+from files.methods import user_allowed_to_upload
 from users.models import User
 
 from .. import helpers
@@ -26,6 +26,7 @@ from ..methods import (
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
+    is_media_allowed_type,
     is_mediacms_editor,
 )
 from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
@@ -238,6 +239,10 @@ def edit_media(request):
 
     if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
+
+    if not is_media_allowed_type(media):
+        return HttpResponseRedirect(media.get_absolute_url())
+
     if request.method == "POST":
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
@@ -577,6 +582,7 @@ def view_media(request):
         if video_msg and media.user == request.user:
             messages.add_message(request, messages.INFO, video_msg)
 
+    context["is_media_allowed_type"] = is_media_allowed_type(media)
     return render(request, "cms/media.html", context)
 
 
