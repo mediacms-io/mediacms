@@ -5,40 +5,27 @@
 {% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-<link href="{% static "video_editor/video-editor.css" %}" rel="preload" as="style">
-<link href="{% static "video_editor/video-editor.css" %}" rel="stylesheet">
+<link href="{% static "chapters_editor/chapters-editor.css" %}" rel="preload" as="style">
+<link href="{% static "chapters_editor/chapters-editor.css" %}" rel="stylesheet">
+
+<script src="{% static 'chapters_editor/chapters-editor.js' %}"></script>
+
 <script>
-window.MEDIA_DATA = {
-	videoUrl: "",
-	mediaId: "{{ media_id }}",
-	chapters: [
-		{
-			id: "1",
-			title: "Chapter AAA",
-			timestamp: 0
-		},
-		{
-			id: "2",
-			title: "Chapter BBB",
-			timestamp: 10
-		},
-		{
-			id: "3",
-			title: "Chapter CCC",
-			timestamp: 20
-		}
-	]
-};
+    window.MEDIA_DATA = {
+		videoUrl: "{{ media_file_path }}",
+		mediaId: "{{ media_object.friendly_token }}",
+		redirectURL: "{{ media_object.get_absolute_url }}",
+		redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}",
+		chapters: "{{ chapters }}",
+    };
 </script>
-<script src="{% static 'video_editor/video-editor.js' %}"></script>
 {%endblock topimports %}
 
 {% block innercontent %}
-
-        <div class="user-action-form-wrap">
-			{% include "cms/media_nav.html" with active_tab="chapters" %}
-			<div class="user-action-form-inner" style="max-width: 1280px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
-				<div id="video-editor-chapters-root"></div>
-			</div>
+	<div class="user-action-form-wrap">
+		{% include "cms/media_nav.html" with active_tab="chapters" %}
+		<div class="user-action-form-inner" style="max-width: 1280px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
+			<div id="chapters-editor-root"></div>
 		</div>
+	</div>
 {% endblock innercontent %}

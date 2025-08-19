@@ -14,15 +14,14 @@
                     Trim
                 </a>
             </li>
-            {% comment %}
-                <li style="display: inline-block;">
-                    <a href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}"
-
-                    style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                        Chapters
-                    </a>
-                </li>
-            {% endcomment %}
+            <li style="display: inline-block">
+                <a
+                    href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}"
+                    style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}"
+                >
+                    Chapters
+                </a>
+            </li>
         {% endif %}
         <li style="display: inline-block;">
             <a href="{% url 'publish_media' %}?m={{media_object.friendly_token}}"
