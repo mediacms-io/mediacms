@@ -635,4 +635,6 @@ def copy_media(media_id):
 
 
 def is_media_allowed_type(media):
+    if "all" in settings.ALLOWED_MEDIA_UPLOAD_TYPES:
+        return True
     return media.media_type in settings.ALLOWED_MEDIA_UPLOAD_TYPES

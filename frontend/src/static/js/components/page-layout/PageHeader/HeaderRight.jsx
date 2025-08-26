@@ -77,12 +77,39 @@ function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
 }
 
 function UploadMediaButton({ user, links }) {
+  const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
+
+  const uploadMenuItems = [
+    {
+      itemType: 'link',
+      link: links.addMedia,
+      text: translateString('Upload'),
+      icon: 'upload',
+    },
+    {
+      itemType: 'link',
+      link: links.recordScreen,
+      text: translateString('Record Screen'),
+      icon: 'videocam',
+    },
+  ];
+
   return !user.is.anonymous && user.can.addMedia ? (
     <div className={'hidden-only-in-small'}>
-      <CircleIconButton type="link" href={links.user.addMedia} title="Upload media">
-        <MaterialIcon type="video_call" />
-        <span className="hidden-txt">Upload media</span>
-      </CircleIconButton>
+      <PopupTrigger contentRef={popupContentRef}>
+        <CircleIconButton title={translateString('Add media')}>
+          <MaterialIcon type="video_call" />
+          <span className="hidden-txt">{translateString('Add media')}</span>
+        </CircleIconButton>
+      </PopupTrigger>
+
+      <PopupContent contentRef={popupContentRef}>
+        <div>
+          <PopupMain>
+            <NavigationMenuList items={uploadMenuItems} />
+          </PopupMain>
+        </div>
+      </PopupContent>
     </div>
   ) : null;
 }

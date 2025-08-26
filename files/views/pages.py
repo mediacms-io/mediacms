@@ -33,6 +33,13 @@ from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
 
 
+def record_screen(request):
+    """Record screen view"""
+
+    context = {}
+    return render(request, "cms/record_screen.html", context)
+
+
 def about(request):
     """About view"""
 

@@ -8,6 +8,12 @@
         </li>
         {% if media_object.media_type == 'video' %}
             <li style="display: inline-block;">
+                <a href="{% url 'add_subtitle' %}?m={{media_object.friendly_token}}"
+                   style="text-decoration: none; {% if active_tab == 'subtitles' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
+                    Subtitles
+                </a>
+            </li>
+            <li style="display: inline-block;">
                 <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}"
 
                    style="text-decoration: none; {% if active_tab == 'trim' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
