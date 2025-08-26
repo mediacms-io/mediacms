@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% load i18n %}
+
 {% load static %}
 
 {% block headtitle %}Add new media - {{PORTAL_NAME}}{% endblock headtitle %}
+{% load custom_filters %}
 
 {% block externallinks %}
 {% if LOAD_FROM_CDN %}
@@ -19,6 +22,8 @@
 {%endblock topimports %}
 
 {% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
+
 {% if request.user.is_authenticated %}
 
 	{% if can_add %}
@@ -26,7 +31,7 @@
 		<div class="media-uploader-wrap">
 			<div class="media-uploader-top-wrap">
 				<div class="media-uploader-top-left-wrap">
-					<h1>Upload media files</h1>
+					<h1>{{ "Upload media" | custom_translate:LANGUAGE_CODE}}</h1>
 				</div>
 				<div class="media-uploader-top-right-wrap"> </div>
 			</div>
@@ -38,16 +43,24 @@
 								<div class="media-drag-drop-content">
 									<div class="media-drag-drop-content-inner">
 										<span><i class="material-icons">cloud_upload</i></span>
-										<span>Drag and drop files</span>
-										<span>or</span>
+										<span>{{ "Drag and drop files" | custom_translate:LANGUAGE_CODE}}</span>
+										<span>{{ "or" | custom_translate:LANGUAGE_CODE}}</span>
 										<span class="browse-files-btn-wrap">
-											<span class="qq-upload-button-selector">Browse your files</span>
+											<span class="qq-upload-button-selector">{{ "Browse your files" | custom_translate:LANGUAGE_CODE}}</span>
 										</span>
+
 										<div class="qq-upload-drop-area-selector media-dropzone" qq-hide-dropzone>
 											<span class="qq-upload-drop-area-text-selector"></span>
 										</div>
+
 									</div>
 								</div>
+									<div class=other-upload-options>
+										<span><a href="/record_screen">{{ "Record Screen" | custom_translate:LANGUAGE_CODE}}</a></span>
+									</div>
+
+
+
 							</div>
 						</div>
 					</div>

@@ -46,6 +46,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
     const stopBtn = document.getElementById('stopBtn');
     const spinner = document.getElementById('spinner');
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        alert('Screen recording is not supported in your browser. Please try a modern browser on a desktop computer.');
+        startBtn.disabled = true;
+        return;
+    }
+
     let mediaRecorder;
     let recordedChunks = [];
     let stream;
@@ -64,7 +70,27 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 }
             });
 
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
+            const mimeTypes = [
+                'video/mp4',
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm',
+            ];
+            let supportedMimeType = '';
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    supportedMimeType = mimeType;
+                    break;
+                }
+            }
+
+            if (!supportedMimeType) {
+                console.error("No supported mimeType found for MediaRecorder");
+                alert("Your browser doesn't support any suitable video recording format.");
+                return;
+            }
+
+            mediaRecorder = new MediaRecorder(stream, { mimeType: supportedMimeType });
 
             mediaRecorder.ondataavailable = event => {
                 if (event.data.size > 0) {
@@ -84,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                     stream.getTracks().forEach(track => track.stop());
                 }
 
-                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                const blob = new Blob(recordedChunks, { type: supportedMimeType });
                 recordedChunks = [];
 
                 uploadFile(blob);
@@ -121,7 +147,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
     function uploadFile(blob) {
         const formData = new FormData();
-        const fileName = `screen-recording-${new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')}.mp4`;
+        const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+        const fileName = `screen-recording-${new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')}.${extension}`;
         formData.append('media_file', blob, fileName);
         formData.append('title', fileName);
 
