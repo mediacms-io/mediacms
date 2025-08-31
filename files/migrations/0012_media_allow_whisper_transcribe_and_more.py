@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('files', '0011_mediapermission'),
     ]
@@ -15,7 +14,7 @@ class Migration(migrations.Migration):
             model_name='language',
             name='code',
             field=models.CharField(help_text='language code', max_length=30),
-        ),            
+        ),
         migrations.AddField(
             model_name='media',
             name='allow_whisper_transcribe',

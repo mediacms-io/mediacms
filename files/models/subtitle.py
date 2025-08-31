@@ -6,7 +6,7 @@ from django.db import models
 from django.urls import reverse
 
 from .. import helpers
-from .utils import subtitles_file_path, MEDIA_ENCODING_STATUS
+from .utils import MEDIA_ENCODING_STATUS, subtitles_file_path
 
 
 class Language(models.Model):
@@ -74,9 +74,7 @@ class Subtitle(models.Model):
 
 class TranscriptionRequest(models.Model):
     # Whisper transcription request
-    media = models.ForeignKey(
-        "Media", on_delete=models.CASCADE, related_name="transcriptionrequests"
-    )
+    media = models.ForeignKey("Media", on_delete=models.CASCADE, related_name="transcriptionrequests")
     add_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending", db_index=True)
     translate_to_english = models.BooleanField(default=False)

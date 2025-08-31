@@ -118,14 +118,7 @@ class MediaPublishForm(forms.ModelForm):
 
     class Meta:
         model = Media
-        fields = (
-            "category",
-            "state",
-            "featured",
-            "reported_times",
-            "is_reviewed",
-            "allow_download"
-        )
+        fields = ("category", "state", "featured", "reported_times", "is_reviewed", "allow_download")
 
         widgets = {
             "category": MultipleSelect(),
@@ -269,12 +262,12 @@ class WhisperSubtitlesForm(forms.ModelForm):
             return self.instance.allow_whisper_transcribe
         return self.cleaned_data['allow_whisper_transcribe']
 
-
     def clean_allow_whisper_transcribe_and_translate(self):
         # Ensure the field value doesn't change if it was originally True
         if self.instance and self.instance.allow_whisper_transcribe_and_translate:
             return self.instance.allow_whisper_transcribe_and_translate
         return self.cleaned_data['allow_whisper_transcribe_and_translate']
+
 
 class SubtitleForm(forms.ModelForm):
     class Meta:
@@ -304,7 +297,6 @@ class SubtitleForm(forms.ModelForm):
         )
 
         self.helper.layout.append(FormActions(Submit('submit', 'Submit', css_class='primaryAction')))
-
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user

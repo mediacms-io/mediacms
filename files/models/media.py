@@ -23,6 +23,7 @@ from imagekit.processors import ResizeToFit
 from .. import helpers
 from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
+from .subtitle import TranscriptionRequest
 from .utils import (
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
@@ -31,7 +32,6 @@ from .utils import (
     original_media_file_path,
     original_thumbnail_file_path,
 )
-from .subtitle import TranscriptionRequest
 from .video_data import VideoTrimRequest
 
 logger = logging.getLogger(__name__)
@@ -206,12 +206,8 @@ class Media(models.Model):
 
     views = models.IntegerField(db_index=True, default=1)
 
-    allow_whisper_transcribe = models.BooleanField(
-        "Transcribe auto-detected language", default=False
-    )
-    allow_whisper_transcribe_and_translate = models.BooleanField(
-        "Transcribe auto-detected language and translate to English", default=False
-    )
+    allow_whisper_transcribe = models.BooleanField("Transcribe auto-detected language", default=False)
+    allow_whisper_transcribe_and_translate = models.BooleanField("Transcribe auto-detected language and translate to English", default=False)
 
     # keep track if media file has changed, on saves
     __original_media_file = None
@@ -310,30 +306,19 @@ class Media(models.Model):
         to_transcribe_and_translate = False
 
         if self.allow_whisper_transcribe or self.allow_whisper_transcribe_and_translate:
-            if self.allow_whisper_transcribe and not TranscriptionRequest.objects.filter(
-                    media=self, translate_to_english=False
-                ).exists():
-                    to_transcribe = True
+            if self.allow_whisper_transcribe and not TranscriptionRequest.objects.filter(media=self, translate_to_english=False).exists():
+                to_transcribe = True
 
-            if self.allow_whisper_transcribe_and_translate and not TranscriptionRequest.objects.filter(
-                    media=self, translate_to_english=True
-                ).exists():
-                    to_transcribe_and_translate = True
-
+            if self.allow_whisper_transcribe_and_translate and not TranscriptionRequest.objects.filter(media=self, translate_to_english=True).exists():
+                to_transcribe_and_translate = True
 
             from .. import tasks
 
             if to_transcribe:
-                TranscriptionRequest.objects.create(
-                    media=self,
-                    translate_to_english=False
-                )
+                TranscriptionRequest.objects.create(media=self, translate_to_english=False)
                 tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=False)
             if to_transcribe_and_translate:
-                TranscriptionRequest.objects.create(
-                    media=self,
-                    translate_to_english=True
-                )
+                TranscriptionRequest.objects.create(media=self, translate_to_english=True)
                 tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=True)
 
     def update_search_vector(self):
@@ -581,7 +566,6 @@ class Media(models.Model):
 
         return True
 
-
     def whisper_transcribe(self, countdown=10):
         """Start Whisper Transcribe task
         with some delay
@@ -593,7 +577,6 @@ class Media(models.Model):
             countdown=countdown,
         )
         return True
-
 
     def post_encode_actions(self, encoding=None, action=None):
         """perform things after encode has run

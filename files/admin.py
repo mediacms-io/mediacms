@@ -223,6 +223,7 @@ class EncodingAdmin(admin.ModelAdmin):
 class TranscriptionRequestAdmin(admin.ModelAdmin):
     pass
 
+
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Media, MediaAdmin)

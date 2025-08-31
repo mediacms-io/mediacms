@@ -19,7 +19,7 @@ from ..forms import (
     MediaMetadataForm,
     MediaPublishForm,
     SubtitleForm,
-    WhisperSubtitlesForm
+    WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_only
@@ -77,7 +77,6 @@ def add_subtitle(request):
     show_whisper_form = can_transcribe_video(request.user)
 
     if request.method == "POST":
-        print(request.POST)
         if 'submit' in request.POST:
             form = SubtitleForm(media, request.POST, request.FILES, prefix="form")
             if form.is_valid():
@@ -86,7 +85,7 @@ def add_subtitle(request):
                     subtitle.convert_to_srt()
                     messages.add_message(request, messages.INFO, "Subtitle was added!")
                     return HttpResponseRedirect(subtitle.media.get_absolute_url())
-                except Exception as e:
+                except Exception as e:  # noqa
                     subtitle.delete()
                     error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
                     form.add_error("subtitle_file", error_msg)
@@ -106,12 +105,7 @@ def add_subtitle(request):
         whisper_form = WhisperSubtitlesForm(request.user, instance=media, prefix="whisper_form")
 
     subtitles = media.subtitles.all()
-    context = {
-        "media_object": media,
-        "form": form,
-        "subtitles": subtitles,
-        "whisper_form": whisper_form
-    }
+    context = {"media_object": media, "form": form, "subtitles": subtitles, "whisper_form": whisper_form}
     return render(request, "cms/add_subtitle.html", context)
 
 
