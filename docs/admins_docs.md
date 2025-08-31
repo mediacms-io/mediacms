@@ -984,7 +984,7 @@ MediaCMS performs identification attempts on new file uploads and only allows ce
 
 When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
 
-If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file.
+If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file. If 'all' is specified in this list, no check is performed and all files are allowed.
 
 ## 27. User upload limits
 MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
@@ -996,3 +996,24 @@ To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_
 ```
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
 ```
+
+## 28. Whisper Transcribe for Automatic Subtitles
+MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles for your media files. This feature is useful for making your content more accessible.
+
+### How it works
+When the whisper transcribe task is triggered for a media file, MediaCMS runs the `whisper` command-line tool to process the audio and generate a subtitle file in VTT format. The generated subtitles are then associated with the media and are available under the "automatic" language option.
+
+### Configuration
+You can configure the Whisper model and the device used for transcription in your `settings.py` or `local_settings.py` file.
+
+- `WHISPER_MODEL`: Specifies the Whisper model to use. Smaller models are faster but less accurate. Available models include `tiny`, `base`, `small`, `medium`, `large`. You can also use English-only models by appending `.en`, for example, `base.en`. The default is `'base.en'`.
+
+- `USER_CAN_TRANSCRIBE_VIDEO`: A boolean that determines if users are presented with the option to request automatic subtitles for their video or audio uploads. Defaults to `True`.
+
+Example configuration:
+```python
+# Use a larger model on a GPU for better accuracy
+WHISPER_MODEL = "medium"
+```
+
+**Note:** For this feature to work, the `whisper` command-line tool must be installed in the MediaCMS environment. You can install it via pip: `pip install -U openai-whisper`.

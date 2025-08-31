@@ -86,20 +86,6 @@ function EditMediaButton(props) {
   );
 }
 
-function EditSubtitleButton(props) {
-  let link = props.link;
-
-  if (window.MediaCMS.site.devEnv) {
-    link = '#';
-  }
-
-  return (
-    <a href={link} rel="nofollow" title={translateString('Edit subtitle')} className="edit-subtitle">
-      {translateString('EDIT SUBTITLE')}
-    </a>
-  );
-}
-
 export default function ViewerInfoContent(props) {
   const { userCan } = useUser();
 
@@ -231,14 +217,9 @@ export default function ViewerInfoContent(props) {
             />
           ) : null}
 
-          {userCan.editMedia || userCan.editSubtitle || userCan.deleteMedia ? (
+          {userCan.editMedia || userCan.deleteMedia ? (
             <div className="media-author-actions">
               {userCan.editMedia ? <EditMediaButton link={MediaPageStore.get('media-data').edit_url} /> : null}
-              {userCan.editSubtitle && 'video' === MediaPageStore.get('media-data').media_type ? (
-                <EditSubtitleButton
-                  link={MediaPageStore.get('media-data').edit_url.replace('edit?', 'add_subtitle?')}
-                />
-              ) : null}
 
               <PopupTrigger contentRef={popupContentRef}>
                 <button className="remove-media">{translateString('DELETE MEDIA')}</button>

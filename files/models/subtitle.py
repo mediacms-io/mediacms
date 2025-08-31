@@ -6,7 +6,7 @@ from django.db import models
 from django.urls import reverse
 
 from .. import helpers
-from .utils import subtitles_file_path
+from .utils import subtitles_file_path, MEDIA_ENCODING_STATUS
 
 
 class Language(models.Model):
@@ -14,7 +14,7 @@ class Language(models.Model):
     to be used with Subtitles
     """
 
-    code = models.CharField(max_length=12, help_text="language code")
+    code = models.CharField(max_length=30, help_text="language code")
 
     title = models.CharField(max_length=100, help_text="language code")
 
@@ -70,3 +70,17 @@ class Subtitle(models.Model):
             else:
                 raise Exception("Could not convert to srt")
         return True
+
+
+class TranscriptionRequest(models.Model):
+    # Whisper transcription request
+    media = models.ForeignKey(
+        "Media", on_delete=models.CASCADE, related_name="transcriptionrequests"
+    )
+    add_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending", db_index=True)
+    translate_to_english = models.BooleanField(default=False)
+    logs = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Transcription request for {self.media.title} - {self.status}"
