@@ -215,7 +215,6 @@ class MediaPublishForm(forms.ModelForm):
 
 
 class WhisperSubtitlesForm(forms.ModelForm):
-
     class Meta:
         model = Media
         fields = (
