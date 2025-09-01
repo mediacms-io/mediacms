@@ -1,6 +1,6 @@
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field, Layout, Submit
+from crispy_forms.layout import HTML, Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
@@ -241,6 +241,8 @@ class WhisperSubtitlesForm(forms.ModelForm):
             self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['readonly'] = True
             self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['disabled'] = True
 
+        both_readonly = self.instance.allow_whisper_transcribe and self.instance.allow_whisper_transcribe_and_translate
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -252,7 +254,13 @@ class WhisperSubtitlesForm(forms.ModelForm):
             CustomField('allow_whisper_transcribe_and_translate'),
         )
 
-        self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
+        if not both_readonly:
+            self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
+        else:
+            # Optional: Add a disabled button with explanatory text
+            self.helper.layout.append(
+                FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">Cannot submit - both options are already enabled</small>'))
+            )
 
     def clean_allow_whisper_transcribe(self):
         # Ensure the field value doesn't change if it was originally True

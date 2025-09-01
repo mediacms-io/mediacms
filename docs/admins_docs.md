@@ -124,7 +124,9 @@ migrations_1     | Created admin user with password: gwg1clfkwf
 
 or if you have set the ADMIN_PASSWORD variable on docker-compose file you have used (example `docker-compose.yaml`), that variable will be set as the admin user's password
 
-`Note`: if you want to use the automatic transcriptions, run `docker-compose -f docker-compose.yaml -f docker-compose.full.yaml up` instead, as this is using a separate image.
+`Note`: if you want to use the automatic transcriptions, you have to do one of the following:
+* either use the docker-compose.full.yaml, so in this case run `docker-compose -f docker-compose.yaml -f docker-compose.full.yaml up`
+* or edit the docker-compose.yaml file and set the image for the celery_worker service as mediacms/mediacms:full instead of mediacms/mediacms:latest
 
 
 ### Update
@@ -1008,7 +1010,7 @@ When the whisper transcribe task is triggered for a media file, MediaCMS runs th
 
 ### Configuration
 
-Transcription functionality is available only for the Docker installation. To enable this feature, you must use the `docker-compose.full.yaml` file, as it contains an image with the necessary requirements.
+Transcription functionality is available only for the Docker installation. To enable this feature, you must either use the `docker-compose.full.yaml` file, as it contains an image with the necessary requirements, or you can also set that celery_worker service is usine mediacms:full image instead of mediacms:latest.
 
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
