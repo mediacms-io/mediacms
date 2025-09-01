@@ -243,7 +243,7 @@ class Media(models.Model):
         strip_text_items = ["title", "description"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
-        self.title = self.title[:99]
+        self.title = self.title[:100]
 
         # if thumbnail_time specified, keep up to single digit
         if self.thumbnail_time:
