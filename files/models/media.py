@@ -566,18 +566,6 @@ class Media(models.Model):
 
         return True
 
-    def whisper_transcribe(self, countdown=10):
-        """Start Whisper Transcribe task
-        with some delay
-        """
-        from .. import tasks
-
-        tasks.whisper_transcribe.apply_async(
-            args=[self.friendly_token],
-            countdown=countdown,
-        )
-        return True
-
     def post_encode_actions(self, encoding=None, action=None):
         """perform things after encode has run
         whether it has failed or succeeded
