@@ -8,13 +8,13 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 <div class="custom-page-wrapper">
-	<h2>Record Screen</h2>
+	<h2>{{ "Record Screen" | custom_translate:LANGUAGE_CODE}}</h2>
 	<hr/>
 
     <div style="text-align: center; padding: 40px 0;">
         <p style="margin-bottom: 20px;">{{ "Click 'Start Recording' and select the screen or tab to record. Once recording is finished, click 'Stop Recording,' and the recording will be uploaded." | custom_translate:LANGUAGE_CODE}}</p>
-        <button id="startBtn" class="qq-upload-button-selector" style="padding: 10px 20px; font-size: 16px; margin-right: 10px; cursor: pointer;">Start Recording</button>
-        <button id="stopBtn" class="qq-upload-button-selector" disabled style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Stop Recording</button>
+        <button id="startBtn" class="qq-upload-button-selector" style="padding: 10px 20px; font-size: 16px; margin-right: 10px; cursor: pointer;">{{ "Start Recording" | custom_translate:LANGUAGE_CODE}}</button>
+        <button id="stopBtn" class="qq-upload-button-selector" disabled style="padding: 10px 20px; font-size: 16px; cursor: pointer;">{{ "Stop Recording" | custom_translate:LANGUAGE_CODE}}</button>
         <div id="spinner" style="display: none; margin-top: 20px;">
             <div class="spinner"></div>
             <p>video is getting uploaded</p>
