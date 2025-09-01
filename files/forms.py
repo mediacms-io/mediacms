@@ -215,7 +215,6 @@ class MediaPublishForm(forms.ModelForm):
 
 
 class WhisperSubtitlesForm(forms.ModelForm):
-    confirm_state = forms.BooleanField(required=False, initial=False, label="Acknowledge sharing status", help_text="")
 
     class Meta:
         model = Media

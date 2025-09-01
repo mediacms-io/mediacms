@@ -39,6 +39,10 @@ def record_screen(request):
     """Record screen view"""
 
     context = {}
+    context["can_add"] = user_allowed_to_upload(request)
+    can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
+    context["can_upload_exp"] = can_upload_exp
+
     return render(request, "cms/record_screen.html", context)
 
 
