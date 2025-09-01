@@ -1007,16 +1007,9 @@ MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles
 When the whisper transcribe task is triggered for a media file, MediaCMS runs the `whisper` command-line tool to process the audio and generate a subtitle file in VTT format. The generated subtitles are then associated with the media and are available under the "automatic" language option.
 
 ### Configuration
-You can configure the Whisper model and the device used for transcription in your `settings.py` or `local_settings.py` file.
 
-- `WHISPER_MODEL`: Specifies the Whisper model to use. Smaller models are faster but less accurate. Available models include `tiny`, `base`, `small`, `medium`, `large`. You can also use English-only models by appending `.en`, for example, `base.en`. The default is `'base.en'`.
+Transcription functionality is available only for the Docker installation. To enable this feature, you must use the `docker-compose.full.yaml` file, as it contains an image with the necessary requirements.
 
-- `USER_CAN_TRANSCRIBE_VIDEO`: A boolean that determines if users are presented with the option to request automatic subtitles for their video or audio uploads. Defaults to `True`.
+By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
-Example configuration:
-```python
-# Use a larger model on a GPU for better accuracy
-WHISPER_MODEL = "medium"
-```
-
-**Note:** For this feature to work, the `whisper` command-line tool must be installed in the MediaCMS environment. You can install it via pip: `pip install -U openai-whisper`.
+The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
