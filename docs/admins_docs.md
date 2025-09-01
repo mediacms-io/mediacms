@@ -124,6 +124,9 @@ migrations_1     | Created admin user with password: gwg1clfkwf
 
 or if you have set the ADMIN_PASSWORD variable on docker-compose file you have used (example `docker-compose.yaml`), that variable will be set as the admin user's password
 
+`Note`: if you want to use the automatic transcriptions, run `docker-compose -f docker-compose.yaml -f docker-compose.full.yaml up` instead, as this is using a separate image.
+
+
 ### Update
 
 Get latest MediaCMS image and stop/start containers
