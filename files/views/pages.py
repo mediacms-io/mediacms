@@ -19,10 +19,12 @@ from ..forms import (
     MediaMetadataForm,
     MediaPublishForm,
     SubtitleForm,
+    WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_only
 from ..methods import (
+    can_transcribe_video,
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
@@ -31,6 +33,18 @@ from ..methods import (
 )
 from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
+
+
+@login_required
+def record_screen(request):
+    """Record screen view"""
+
+    context = {}
+    context["can_add"] = user_allowed_to_upload(request)
+    can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
+    context["can_upload_exp"] = can_upload_exp
+
+    return render(request, "cms/record_screen.html", context)
 
 
 def about(request):
@@ -54,6 +68,7 @@ def add_subtitle(request):
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
         return HttpResponseRedirect("/")
+
     media = Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return HttpResponseRedirect("/")
@@ -61,24 +76,41 @@ def add_subtitle(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
-    if request.method == "POST":
-        form = SubtitleForm(media, request.POST, request.FILES)
-        if form.is_valid():
-            subtitle = form.save()
-            new_subtitle = Subtitle.objects.filter(id=subtitle.id).first()
-            try:
-                new_subtitle.convert_to_srt()
-                messages.add_message(request, messages.INFO, "Subtitle was added!")
-                return HttpResponseRedirect(subtitle.media.get_absolute_url())
-            except:  # noqa: E722
-                new_subtitle.delete()
-                error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
-                form.add_error("subtitle_file", error_msg)
+    # Initialize variables
+    form = None
+    whisper_form = None
+    show_whisper_form = can_transcribe_video(request.user)
 
-    else:
-        form = SubtitleForm(media_item=media)
+    if request.method == "POST":
+        if 'submit' in request.POST:
+            form = SubtitleForm(media, request.POST, request.FILES, prefix="form")
+            if form.is_valid():
+                subtitle = form.save()
+                try:
+                    subtitle.convert_to_srt()
+                    messages.add_message(request, messages.INFO, "Subtitle was added!")
+                    return HttpResponseRedirect(subtitle.media.get_absolute_url())
+                except Exception as e:  # noqa
+                    subtitle.delete()
+                    error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
+                    form.add_error("subtitle_file", error_msg)
+
+        elif 'submit_whisper' in request.POST and show_whisper_form:
+            whisper_form = WhisperSubtitlesForm(request.user, request.POST, instance=media, prefix="whisper_form")
+            if whisper_form.is_valid():
+                whisper_form.save()
+                messages.add_message(request, messages.INFO, "Request for transcription was sent")
+                return HttpResponseRedirect(media.get_absolute_url())
+
+    # GET request or form invalid
+    if form is None:
+        form = SubtitleForm(media_item=media, prefix="form")
+
+    if show_whisper_form and whisper_form is None:
+        whisper_form = WhisperSubtitlesForm(request.user, instance=media, prefix="whisper_form")
+
     subtitles = media.subtitles.all()
-    context = {"media": media, "form": form, "subtitles": subtitles}
+    context = {"media_object": media, "form": form, "subtitles": subtitles, "whisper_form": whisper_form}
     return render(request, "cms/add_subtitle.html", context)
 
 

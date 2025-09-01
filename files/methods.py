@@ -427,6 +427,15 @@ def user_allowed_to_upload(request):
     return False
 
 
+def can_transcribe_video(user):
+    """Checks if a user can transcribe a video."""
+    if is_mediacms_editor(user):
+        return True
+    if getattr(settings, 'USER_CAN_TRANSCRIBE_VIDEO', False):
+        return True
+    return False
+
+
 def kill_ffmpeg_process(filepath):
     """Kill ffmpeg process that is processing a specific file
 
@@ -635,4 +644,6 @@ def copy_media(media_id):
 
 
 def is_media_allowed_type(media):
+    if "all" in settings.ALLOWED_MEDIA_UPLOAD_TYPES:
+        return True
     return media.media_type in settings.ALLOWED_MEDIA_UPLOAD_TYPES

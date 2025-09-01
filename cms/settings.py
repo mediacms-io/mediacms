@@ -470,7 +470,7 @@ LANGUAGE_CODE = 'en'  # default language
 
 SPRITE_NUM_SECS = 10
 # number of seconds for sprite image.
-# If you plan to change this, you must also follow the instructions on admin_docs.md
+# If you plan to change this, you must also follow the instructions on admins_docs.md
 # to change the equivalent value in ./frontend/src/static/js/components/media-viewer/VideoViewer/index.js and then re-build frontend
 
 # how many images will be shown on the slideshow
@@ -507,7 +507,15 @@ NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 # ffmpeg options
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
+# If 'all' is in the list, no check is performed
 ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
+
+# transcription options
+# the full docker image needs to be used in order to be able to use transcription
+USER_CAN_TRANSCRIBE_VIDEO = True
+
+# Whisper transcribe options - https://github.com/openai/whisper
+WHISPER_MODEL = "base"
 
 try:
     # keep a local_settings.py file for local overrides

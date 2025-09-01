@@ -46,9 +46,12 @@ from .models import (
     Category,
     EncodeProfile,
     Encoding,
+    Language,
     Media,
     Rating,
+    Subtitle,
     Tag,
+    TranscriptionRequest,
     VideoChapterData,
     VideoTrimRequest,
 )
@@ -463,6 +466,67 @@ def encode_media(
             pass
 
         return success
+
+
+@task(name="whisper_transcribe", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def whisper_transcribe(friendly_token, translate_to_english=False):
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except:  # noqa
+        logger.info(f"failed to get media {friendly_token}")
+        return False
+
+    request = TranscriptionRequest.objects.filter(media=media, status="pending", translate_to_english=translate_to_english).first()
+    if not request:
+        logger.info(f"No pending transcription request for media {friendly_token}")
+        return False
+
+    if translate_to_english:
+        language = Language.objects.filter(code="whisper-translation").first()
+        if not language:
+            language = Language.objects.create(code="whisper-translation", title="Automatic Transcription and Translation")
+    else:
+        language = Language.objects.filter(code="whisper").first()
+        if not language:
+            language = Language.objects.create(code="whisper", title="Automatic Transcription")
+
+    cwd = os.path.dirname(os.path.realpath(media.media_file.path))
+    request.status = "running"
+    request.save(update_fields=["status"])
+
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
+        video_file_path = get_file_name(media.media_file.name)
+        video_file_path = '.'.join(video_file_path.split('.')[:-1])  # needed by whisper without the extension
+        subtitle_name = f"{video_file_path}.vtt"
+        output_name = f"{tmpdirname}/{subtitle_name}"
+
+        cmd = f"whisper /home/mediacms.io/mediacms/media_files/{media.media_file.name} --model {settings.WHISPER_MODEL} --output_dir {tmpdirname}"
+        if translate_to_english:
+            cmd += " --task translate"
+
+        logger.info(f"Whisper transcribe: ready to run command {cmd}")
+
+        start_time = datetime.now()
+        ret = run_command(cmd, cwd=cwd)  # noqa
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+
+        if os.path.exists(output_name):
+            subtitle = Subtitle.objects.create(media=media, user=media.user, language=language)
+
+            with open(output_name, 'rb') as f:
+                subtitle.subtitle_file.save(subtitle_name, File(f))
+
+            request.status = "success"
+            request.logs = f"Transcription took {duration:.2f} seconds."  # noqa
+            request.save(update_fields=["status", "logs"])
+            return True
+
+        request.status = "fail"
+        request.logs = f"Transcription failed after {duration:.2f} seconds. Error: {ret.get('error')}"  # noqa
+        request.save(update_fields=["status", "logs"])
+
+        return False
 
 
 @task(name="produce_sprite_from_video", queue="long_tasks")

@@ -23,6 +23,7 @@ from imagekit.processors import ResizeToFit
 from .. import helpers
 from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
+from .subtitle import TranscriptionRequest
 from .utils import (
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
@@ -205,6 +206,9 @@ class Media(models.Model):
 
     views = models.IntegerField(db_index=True, default=1)
 
+    allow_whisper_transcribe = models.BooleanField("Transcribe auto-detected language", default=False)
+    allow_whisper_transcribe_and_translate = models.BooleanField("Transcribe auto-detected language and translate to English", default=False)
+
     # keep track if media file has changed, on saves
     __original_media_file = None
     __original_thumbnail_time = None
@@ -296,6 +300,26 @@ class Media(models.Model):
                 myfile = File(f)
                 thumbnail_name = helpers.get_file_name(self.uploaded_poster.path)
                 self.uploaded_thumbnail.save(content=myfile, name=thumbnail_name)
+
+    def transcribe_function(self):
+        to_transcribe = False
+        to_transcribe_and_translate = False
+
+        if self.allow_whisper_transcribe or self.allow_whisper_transcribe_and_translate:
+            if self.allow_whisper_transcribe and not TranscriptionRequest.objects.filter(media=self, translate_to_english=False).exists():
+                to_transcribe = True
+
+            if self.allow_whisper_transcribe_and_translate and not TranscriptionRequest.objects.filter(media=self, translate_to_english=True).exists():
+                to_transcribe_and_translate = True
+
+            from .. import tasks
+
+            if to_transcribe:
+                TranscriptionRequest.objects.create(media=self, translate_to_english=False)
+                tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=False)
+            if to_transcribe_and_translate:
+                TranscriptionRequest.objects.create(media=self, translate_to_english=True)
+                tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=True)
 
     def update_search_vector(self):
         """
@@ -965,6 +989,8 @@ def media_save(sender, instance, created, **kwargs):
             tag.update_tag_media()
 
     instance.update_search_vector()
+    if instance.media_type == "video":
+        instance.transcribe_function()
 
 
 @receiver(pre_delete, sender=Media)

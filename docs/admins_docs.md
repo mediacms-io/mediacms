@@ -124,6 +124,9 @@ migrations_1     | Created admin user with password: gwg1clfkwf
 
 or if you have set the ADMIN_PASSWORD variable on docker-compose file you have used (example `docker-compose.yaml`), that variable will be set as the admin user's password
 
+`Note`: if you want to use the automatic transcriptions, run `docker-compose -f docker-compose.yaml -f docker-compose.full.yaml up` instead, as this is using a separate image.
+
+
 ### Update
 
 Get latest MediaCMS image and stop/start containers
@@ -984,7 +987,7 @@ MediaCMS performs identification attempts on new file uploads and only allows ce
 
 When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
 
-If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file.
+If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file. If 'all' is specified in this list, no check is performed and all files are allowed.
 
 ## 27. User upload limits
 MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
@@ -996,3 +999,17 @@ To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_
 ```
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
 ```
+
+## 28. Whisper Transcribe for Automatic Subtitles
+MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles for your media files. This feature is useful for making your content more accessible.
+
+### How it works
+When the whisper transcribe task is triggered for a media file, MediaCMS runs the `whisper` command-line tool to process the audio and generate a subtitle file in VTT format. The generated subtitles are then associated with the media and are available under the "automatic" language option.
+
+### Configuration
+
+Transcription functionality is available only for the Docker installation. To enable this feature, you must use the `docker-compose.full.yaml` file, as it contains an image with the necessary requirements.
+
+By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
+
+The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.

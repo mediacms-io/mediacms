@@ -1,17 +1,28 @@
+{% load custom_filters %}
+{% load i18n %}
+
+{% get_current_language as LANGUAGE_CODE %}
+
 <div class="media-edit-nav" style="background-color: #f0f0f0; padding: 10px 0; margin-bottom: 20px;">
     <ul style="list-style: none; display: flex; justify-content: space-around; margin: 0; padding: 0;">
         <li style="display: inline-block;">
             <a href="{% url 'edit_media' %}?m={{media_object.friendly_token}}"
                style="text-decoration: none; {% if active_tab == 'metadata' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                Metadata
+                {{ "Metadata" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
         {% if media_object.media_type == 'video' %}
             <li style="display: inline-block;">
+                <a href="{% url 'add_subtitle' %}?m={{media_object.friendly_token}}"
+                   style="text-decoration: none; {% if active_tab == 'subtitles' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
+                    {{ "Subtitles" | custom_translate:LANGUAGE_CODE}}
+                </a>
+            </li>
+            <li style="display: inline-block;">
                 <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}"
 
                    style="text-decoration: none; {% if active_tab == 'trim' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                    Trim
+                    {{ "Trim" | custom_translate:LANGUAGE_CODE}}
                 </a>
             </li>
             {% comment %}
@@ -19,7 +30,7 @@
                     <a href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}"
 
                     style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                        Chapters
+                        {{ "Chapters" | custom_translate:LANGUAGE_CODE}}
                     </a>
                 </li>
             {% endcomment %}
@@ -27,7 +38,7 @@
         <li style="display: inline-block;">
             <a href="{% url 'publish_media' %}?m={{media_object.friendly_token}}"
                style="text-decoration: none; {% if active_tab == 'publish' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                Publish
+                {{ "Publish" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
     </ul>

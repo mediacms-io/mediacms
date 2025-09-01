@@ -15,6 +15,7 @@ from .models import (
     Media,
     Subtitle,
     Tag,
+    TranscriptionRequest,
     VideoTrimRequest,
 )
 
@@ -219,6 +220,10 @@ class EncodingAdmin(admin.ModelAdmin):
     has_file.short_description = "Has file"
 
 
+class TranscriptionRequestAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Media, MediaAdmin)
@@ -228,5 +233,6 @@ admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
+admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
 
 Media._meta.app_config.verbose_name = "Media"
