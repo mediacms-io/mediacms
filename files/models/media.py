@@ -235,6 +235,8 @@ class Media(models.Model):
         self.__original_media_file = self.media_file
         self.__original_thumbnail_time = self.thumbnail_time
         self.__original_uploaded_poster = self.uploaded_poster
+        self.__original_allow_whisper_transcribe = self.allow_whisper_transcribe
+        self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
 
     def save(self, *args, **kwargs):
         if not self.title:
@@ -275,6 +277,17 @@ class Media(models.Model):
             if self.thumbnail_time != self.__original_thumbnail_time:
                 self.__original_thumbnail_time = self.thumbnail_time
                 self.set_thumbnail(force=True)
+
+            transcription_changed = (
+                self.allow_whisper_transcribe != self.__original_allow_whisper_transcribe or self.allow_whisper_transcribe_and_translate != self.__original_allow_whisper_transcribe_and_translate
+            )
+
+            if transcription_changed and self.media_type == "video":
+                self.transcribe_function()
+
+            # Update the original values for next comparison
+            self.__original_allow_whisper_transcribe = self.allow_whisper_transcribe
+            self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
         else:
             # media is going to be created now
             # after media is saved, post_save signal will call media_init function
@@ -989,8 +1002,6 @@ def media_save(sender, instance, created, **kwargs):
             tag.update_tag_media()
 
     instance.update_search_vector()
-    if instance.media_type == "video":
-        instance.transcribe_function()
 
 
 @receiver(pre_delete, sender=Media)
