@@ -518,12 +518,12 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
                 subtitle.subtitle_file.save(subtitle_name, File(f))
 
             request.status = "success"
-            request.logs = f"Transcription took {duration:.2f} seconds."
+            request.logs = f"Transcription took {duration:.2f} seconds."  # noqa
             request.save(update_fields=["status", "logs"])
             return True
 
         request.status = "fail"
-        request.logs = f"Transcription failed after {duration:.2f} seconds. Error: {ret.get('error')}"
+        request.logs = f"Transcription failed after {duration:.2f} seconds. Error: {ret.get('error')}"  # noqa
         request.save(update_fields=["status", "logs"])
 
         return False
