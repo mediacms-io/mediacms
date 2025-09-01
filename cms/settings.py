@@ -507,7 +507,15 @@ NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 # ffmpeg options
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
+# If 'all' is in the list, no check is performed
 ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
+
+# transcription options
+# the full docker image needs to be used in order to be able to use transcription
+USER_CAN_TRANSCRIBE_VIDEO = True
+
+# Whisper transcribe options - https://github.com/openai/whisper
+WHISPER_MODEL = "base"
 
 try:
     # keep a local_settings.py file for local overrides
