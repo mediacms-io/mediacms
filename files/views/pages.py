@@ -34,7 +34,7 @@ from ..methods import (
 from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
 
-
+@login_required
 def record_screen(request):
     """Record screen view"""
 
