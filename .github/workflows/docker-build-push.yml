@@ -59,15 +59,6 @@ jobs:
             org.opencontainers.image.source=https://github.com/mediacms-io/mediacms
             org.opencontainers.image.licenses=AGPL-3.0
 
-      - name: Build and push base image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          target: base
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-base.outputs.tags }}
-          labels: ${{ steps.meta-base.outputs.labels }}
-
       - name: Build and push full image
         uses: docker/build-push-action@v4
         with:
@@ -76,3 +67,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-full.outputs.tags }}
           labels: ${{ steps.meta-full.outputs.labels }}
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          target: base
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-base.outputs.tags }}
+          labels: ${{ steps.meta-base.outputs.labels }}
