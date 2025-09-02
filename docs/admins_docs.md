@@ -28,6 +28,7 @@
 - [25. Custom urls](#25-custom-urls)
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
+- [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
 
 
 ## 1. Welcome

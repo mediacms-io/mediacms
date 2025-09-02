@@ -25,11 +25,12 @@ A demo is available at https://demo.mediacms.io
 - **Complete control over your data**: host it yourself!
 - **Modern technologies**: Django/Python/Celery, React.
 - **Support for multiple publishing workflows**: public, private, unlisted and custom
+- **Role-Based Access Control (RBAC)**: create RBAC categories and connect users to groups with view/edit access on their media
+- **Automatic transcription**: through integration with Whisper running locally
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
 - **Video Trimmer**: trim video, replace, save as new or create segments
-- **Role-Based Access Control (RBAC)**: create RBAC categories and connect users to groups with view/edit access on their media
 - **SAML support**: with ability to add mappings to system roles and groups
 - **Easy media searching**: enriched with live search functionality
 - **Playlists for audio and video content**: create playlists, add and reorder content
@@ -48,7 +49,7 @@ A demo is available at https://demo.mediacms.io
 
 ## Example cases
 
-- **Schools, education.** Administrators and editors keep what content will be published, students are not distracted with advertisements and irrelevant content, plus they have the ability to select either to stream or download content.
+- **Universities, schools, education.** Administrators and editors keep what content will be published, students are not distracted with advertisements and irrelevant content, plus they have the ability to select either to stream or download content.
 - **Organization sensitive content.** In cases where content is sensitive and cannot be uploaded to external sites.
 - **Build a great community.** MediaCMS can be customized (URLs, logos, fonts, aesthetics) so that you create a highly customized video portal for your community!
 - **Personal portal.** Organize, categorize and host your content the way you prefer.
@@ -83,6 +84,7 @@ For a small to medium installation, with a few hours of video uploaded daily, an
 
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
 
+In order to support automatic transcriptions through Whisper, consider more CPUs.
 
 ## Installation / Maintanance
 
@@ -110,7 +112,7 @@ This software uses the following list of awesome technologies: Python, Django, D
 
 
 ## Who is using it
-
+- **Multiple Universities** for hosting educational videos
 - **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
 - **American Association of Gynecologic Laparoscopists** - https://surgeryu.org/
