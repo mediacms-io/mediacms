@@ -138,7 +138,7 @@ class Tag(models.Model):
 
     def save(self, *args, **kwargs):
         self.title = helpers.get_alphanumeric_only(self.title)
-        self.title = self.title[:99]
+        self.title = self.title[:100]
         super(Tag, self).save(*args, **kwargs)
 
     @property
