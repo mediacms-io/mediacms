@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitle was added": "",
     "Tags": "",
     "Terms": "",
+    "This works in Chrome, Safari and Edge browsers.": "",
     "Trim": "",
     "UPLOAD": "",
     "Up next": "",

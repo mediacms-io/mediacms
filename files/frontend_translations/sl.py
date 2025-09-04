@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "Podnapisi",
     "Tags": "Oznake",
     "Terms": "Pogoji",
+    "This works in Chrome, Safari and Edge browsers.": "To deluje v brskalnikih Chrome, Safari in Edge.",
     "Trim": "Obreži",
     "UPLOAD": "NALOŽI",
     "Up next": "Naslednji",

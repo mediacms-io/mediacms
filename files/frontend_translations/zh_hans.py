@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "字幕",
     "Tags": "标签",
     "Terms": "条款",
+    "This works in Chrome, Safari and Edge browsers.": "此功能适用于 Chrome、Safari 和 Edge 浏览器。",
     "Trim": "修剪",
     "UPLOAD": "上传",
     "Up next": "接下来",

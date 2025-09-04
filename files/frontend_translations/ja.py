@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "字幕",
     "Tags": "タグ",
     "Terms": "利用規約",
+    "This works in Chrome, Safari and Edge browsers.": "これはChrome、Safari、Edgeブラウザで動作します。",
     "Trim": "トリム",
     "UPLOAD": "アップロード",
     "Up next": "次に再生",

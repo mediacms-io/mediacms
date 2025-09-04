@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "Altyazılar",
     "Tags": "Etiketler",
     "Terms": "Şartlar",
+    "This works in Chrome, Safari and Edge browsers.": "Bu, Chrome, Safari ve Edge tarayıcılarında çalışır.",
     "Trim": "Kırp",
     "UPLOAD": "YÜKLE",
     "Up next": "Sıradaki",

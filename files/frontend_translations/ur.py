@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "سب ٹائٹلز",
     "Tags": "ٹیگز",
     "Terms": "شرائط",
+    "This works in Chrome, Safari and Edge browsers.": "یہ کروم، سفاری اور ایج براؤزرز میں کام کرتا ہے۔",
     "Trim": "تراشیں",
     "UPLOAD": "اپ لوڈ کریں",
     "Up next": "اگلا",

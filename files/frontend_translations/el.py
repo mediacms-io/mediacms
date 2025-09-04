@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "Υπότιτλοι",
     "Tags": "Ετικέτες",
     "Terms": "Όροι",
+    "This works in Chrome, Safari and Edge browsers.": "Αυτό λειτουργεί σε προγράμματα περιήγησης Chrome, Safari και Edge.",
     "Trim": "Περικοπή",
     "UPLOAD": "ΑΝΕΒΑΣΜΑ",
     "Up next": "Επόμενο",

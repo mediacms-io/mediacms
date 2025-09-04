@@ -484,11 +484,11 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
     if translate_to_english:
         language = Language.objects.filter(code="whisper-translation").first()
         if not language:
-            language = Language.objects.create(code="whisper-translation", title="Automatic Transcription and Translation")
+            language = Language.objects.create(code="whisper-translation", title="English Translation")
     else:
         language = Language.objects.filter(code="whisper").first()
         if not language:
-            language = Language.objects.create(code="whisper", title="Automatic Transcription")
+            language = Language.objects.create(code="whisper", title="Transcription")
 
     cwd = os.path.dirname(os.path.realpath(media.media_file.path))
     request.status = "running"

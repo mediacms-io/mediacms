@@ -16,6 +16,7 @@
 
     <div style="text-align: center; padding: 40px 0;">
         <p style="margin-bottom: 20px;">{{ "Click 'Start Recording' and select the screen or tab to record. Once recording is finished, click 'Stop Recording,' and the recording will be uploaded." | custom_translate:LANGUAGE_CODE}}</p>
+        <p style="margin-bottom: 20px;">{{ "This works in Chrome, Safari and Edge browsers." | custom_translate:LANGUAGE_CODE}}</p>
         <button id="startBtn" class="qq-upload-button-selector" style="padding: 10px 20px; font-size: 16px; margin-right: 10px; cursor: pointer;">{{ "Start Recording" | custom_translate:LANGUAGE_CODE}}</button>
         <button id="stopBtn" class="qq-upload-button-selector" disabled style="padding: 10px 20px; font-size: 16px; cursor: pointer;">{{ "Stop Recording" | custom_translate:LANGUAGE_CODE}}</button>
         <div id="spinner" style="display: none; margin-top: 20px;">
@@ -81,7 +82,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                stream = new MediaStream([...displayStream.getTracks(), ...audioStream.getTracks()]);
+                audioStream.getAudioTracks().forEach(track => displayStream.addTrack(track));
+                stream = displayStream;
             }
 
             // When user stops sharing screen via browser UI

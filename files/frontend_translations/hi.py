@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "उपशीर्षक",
     "Tags": "टैग",
     "Terms": "शर्तें",
+    "This works in Chrome, Safari and Edge browsers.": "यह क्रोम, सफारी और एज ब्राउज़र में काम करता है।",
     "Trim": "छांटें",
     "UPLOAD": "अपलोड करें",
     "Up next": "अगला",

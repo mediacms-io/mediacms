@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "ترجمات",
     "Tags": "العلامات",
     "Terms": "الشروط",
+    "This works in Chrome, Safari and Edge browsers.": "هذا يعمل في متصفحات Chrome و Safari و Edge.",
     "Trim": "قص",
     "UPLOAD": "رفع",
     "Up next": "التالي",
