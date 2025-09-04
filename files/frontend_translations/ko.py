@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "자막",
     "Tags": "태그",
     "Terms": "약관",
+    "This works in Chrome, Safari and Edge browsers.": "이 기능은 Chrome, Safari 및 Edge 브라우저에서 작동합니다.",
     "Trim": "자르기",
     "UPLOAD": "업로드",
     "Up next": "다음",

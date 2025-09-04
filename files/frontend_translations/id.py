@@ -65,6 +65,7 @@ translation_strings = {
     "Subtitles": "Subtitel",
     "Tags": "Tag",
     "Terms": "Ketentuan",
+    "This works in Chrome, Safari and Edge browsers.": "Ini berfungsi di browser Chrome, Safari, dan Edge.",
     "Trim": "Potong",
     "UPLOAD": "UNGGAH",
     "Up next": "Selanjutnya",

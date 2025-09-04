@@ -59,24 +59,43 @@
 </style>
 
 <div class="form-group{% if field.errors %} has-error{% endif %}">
-    <div class="control-label-container">
-        {% if field.label %}
-            <label for="{{ field.id_for_label }}" class="control-label">
-                {{ field.label }}
+    {% if field.field.widget.input_type == 'checkbox' and field.field.choices|length <= 1 %}
+        <div class="controls">
+            <label for="{{ field.id_for_label }}" class="control-label" style="font-weight: normal;">
+                {% crispy_field field %}
+                <span style="margin-left: 5px;">{{ field.label }}</span>
                 {% if field.help_text %}
                     <span class="help-text-inline">- {{ field.help_text|safe }}</span>
                 {% endif %}
             </label>
-        {% endif %}
-    </div>
-    <div class="controls {% if field.name == 'title' or field.name == 'new_tags' or field.name == 'description' %}full-width{% endif %}">
-        {% crispy_field field %}
-        {% if field.errors %}
-            <div class="error-container">
-                {% for error in field.errors %}
-                    <p class="invalid-feedback">{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-    </div>
+            {% if field.errors %}
+                <div class="error-container">
+                    {% for error in field.errors %}
+                        <p class="invalid-feedback">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="control-label-container">
+            {% if field.label %}
+                <label for="{{ field.id_for_label }}" class="control-label">
+                    {{ field.label }}
+                    {% if field.help_text %}
+                        <span class="help-text-inline">- {{ field.help_text|safe }}</span>
+                    {% endif %}
+                </label>
+            {% endif %}
+        </div>
+        <div class="controls {% if field.name == 'title' or field.name == 'new_tags' or field.name == 'description' %}full-width{% endif %}">
+            {% crispy_field field %}
+            {% if field.errors %}
+                <div class="error-container">
+                    {% for error in field.errors %}
+                        <p class="invalid-feedback">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 </div>

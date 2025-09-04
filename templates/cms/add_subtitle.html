@@ -7,6 +7,23 @@
 {% block innercontent %}
 			{% include "cms/media_nav.html" with active_tab="subtitles" %}
 
+
+	{% if whisper_form %}
+		<div class="user-action-form-wrap">
+			<div class="user-action-form-inner">
+				<h3 style="display: flex; align-items: center; gap: 0.25rem;">Request Automatic Transcription and Translation
+					<span title="This is Automatic Transcription using a Whisper model that is loaded locally" style="cursor: help;">
+						<i class="material-icons">info_outline</i>
+					</span>
+				</h3>
+				<form enctype="multipart/form-data" action="" method="post" class="post-form">
+					{% csrf_token %}
+					{% crispy whisper_form %}
+				</form>
+			</div>
+		</div>
+	{% endif %}
+
 	<div class="user-action-form-wrap">
 		<div class="user-action-form-inner">
 			<form enctype="multipart/form-data" action="" method="post" class="post-form">
@@ -20,7 +37,7 @@
 	{% if subtitles %}
 		<div class="user-action-form-wrap">
 			<div class="user-action-form-inner">
-				<h3>Existing Subtitles</h3>
+				<h3>Edit existing Captions</h3>
 				<ul>
 					{% for subtitle in subtitles %}
 						<li><a href="{{subtitle.url}}">{{subtitle.language.title}}</a></li>
@@ -30,20 +47,5 @@
 		</div>
 	{% endif %}
 
-	{% if whisper_form %}
-		<div class="user-action-form-wrap">
-			<div class="user-action-form-inner">
-				<h3 style="display: flex; align-items: center; gap: 0.25rem;">Request Automatic Tranascription
-					<span title="This is Automatic Transcription using a Whisper model that is loaded locally" style="cursor: help;">
-						<i class="material-icons">info_outline</i>
-					</span>
-				</h3>
-				<form enctype="multipart/form-data" action="" method="post" class="post-form">
-					{% csrf_token %}
-					{% crispy whisper_form %}
-				</form>
-			</div>
-		</div>
-	{% endif %}
 
 {% endblock innercontent %}
