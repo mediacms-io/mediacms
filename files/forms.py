@@ -222,12 +222,12 @@ class WhisperSubtitlesForm(forms.ModelForm):
             "allow_whisper_transcribe_and_translate",
         )
         labels = {
-            "allow_whisper_transcribe": "automatic transcription",
-            "allow_whisper_transcribe_and_translate": "automatic transcription and translation",
+            "allow_whisper_transcribe": "Transcription",
+            "allow_whisper_transcribe_and_translate": "English Translation",
         }
         help_texts = {
-            "allow_whisper_transcribe": "Request automatic transcription for this media.",
-            "allow_whisper_transcribe_and_translate": "Request automatic transcription and translation for this media.",
+            "allow_whisper_transcribe": "",
+            "allow_whisper_transcribe_and_translate": "",
         }
 
     def __init__(self, user, *args, **kwargs):
@@ -281,7 +281,7 @@ class SubtitleForm(forms.ModelForm):
         fields = ["language", "subtitle_file"]
 
         labels = {
-            "subtitle_file": "Subtitle or Closed Caption File",
+            "subtitle_file": "Upload Caption File",
         }
         help_texts = {
             "subtitle_file": "SubRip (.srt) and WebVTT (.vtt) are supported file formats.",

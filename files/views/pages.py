@@ -88,7 +88,7 @@ def add_subtitle(request):
                 subtitle = form.save()
                 try:
                     subtitle.convert_to_srt()
-                    messages.add_message(request, messages.INFO, "Subtitle was added!")
+                    messages.add_message(request, messages.INFO, "Caption was added!")
                     return HttpResponseRedirect(subtitle.media.get_absolute_url())
                 except Exception as e:  # noqa
                     subtitle.delete()
@@ -147,7 +147,7 @@ def edit_subtitle(request):
     elif request.method == "POST":
         confirm = request.GET.get("confirm", "").strip()
         if confirm == "true":
-            messages.add_message(request, messages.INFO, "Subtitle was deleted")
+            messages.add_message(request, messages.INFO, "Caption was deleted")
             redirect_url = subtitle.media.get_absolute_url()
             subtitle.delete()
             return HttpResponseRedirect(redirect_url)
@@ -156,7 +156,7 @@ def edit_subtitle(request):
         with open(subtitle.subtitle_file.path, "w") as ff:
             ff.write(subtitle_text)
 
-        messages.add_message(request, messages.INFO, "Subtitle was edited")
+        messages.add_message(request, messages.INFO, "Caption was edited")
         return HttpResponseRedirect(subtitle.media.get_absolute_url())
     return render(request, "cms/edit_subtitle.html", context)
 
