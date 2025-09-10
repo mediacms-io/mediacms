@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './VideoJS.css';
 
 import VideoJS from './VideoJS.jsx';
+// import ChapterList from './components/chapter/ChapterList.jsx';
 
 // Mount the components when the DOM is ready
 const mountComponents = () => {
@@ -11,7 +12,12 @@ const mountComponents = () => {
         const root = createRoot(rootContainer);
         root.render(
             <StrictMode>
-                <VideoJS />
+                <div className='video-wrapper'>
+                    <div className='video-box'>
+                        <VideoJS />
+                    </div>                    
+                    {/* <ChapterList />                     */}
+                </div>
             </StrictMode>
         );
     }

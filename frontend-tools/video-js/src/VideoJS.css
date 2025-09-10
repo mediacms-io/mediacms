@@ -71,10 +71,10 @@
     transition: all 0.2s ease !important;
 }
 
-.vjs-autoplay-toggle:hover {
+/* .vjs-autoplay-toggle:hover {
     color: #ff4444 !important;
     transform: scale(1.1) !important;
-}
+} */
 
 .vjs-autoplay-toggle .vjs-autoplay-icon {
     width: 1.2em;
@@ -358,6 +358,17 @@
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
+}
+
+/* Hide menus/tooltips when chapters overlay is open */
+.video-js.chapters-open .vjs-menu,
+.video-js.chapters-open .vjs-menu.vjs-lock-showing,
+.video-js.chapters-open .vjs-hover-display,
+.video-js.chapters-open .vjs-time-tooltip,
+.video-js.chapters-open .vjs-progress-holder .vjs-mouse-display {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 
 /* Responsive adjustments */
@@ -681,3 +692,55 @@
     text-align: center !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
+button{cursor: pointer;}
+
+body{ font-family: Arial, Helvetica, sans-serif; box-sizing:border-box;}
+.video-wrapper{ position:relative; font-family:Arial; height:calc(100vh - 16px);}
+.video-box{ height:100%;}
+.video-wrapper .video-box .video-js{ padding:0; height:100% !important;}
+
+.video-chapter{ position:absolute; top:10px; width:min(360px, calc(100% - 20px)); border:1px solid rgba(255, 255, 255, 0.12); border-radius:12px;
+height:calc(100% - 80px); background:rgba(18, 18, 18, 0.96); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); overflow:hidden;
+box-shadow: 0 12px 30px rgba(0,0,0,0.45); right:10px;}
+.chapter-head{ padding:12px 8px 10px 16px; position:sticky; top:0; left:0; background:linear-gradient(180deg, rgba(28,28,28,0.95), rgba(18,18,18,0.95));
+border-bottom:1px solid rgba(255,255,255,0.08); z-index:2; }
+.playlist-title{ display:flex; align-items:center; gap:10px; }
+.chapter-title{ width: auto; flex: 1; min-width: 0; }
+.chapter-title h3{ margin:0; padding:0;}
+.chapter-title h3 a{color:#fff; font-size: 18px; line-height: 26px; font-weight: 700; text-decoration: none;
+white-space: nowrap; text-overflow: ellipsis; height: 28px; overflow: hidden; display: block;}
+.chapter-title p{ margin:4px 0 0; padding:0; color:#bdbdbd; font-size:12px; font-weight:400; line-height:15px;}
+.chapter-title p a{ color:#bdbdbd; font-size:12px; font-weight:400; line-height:15px; text-decoration: none;}
+
+.chapter-close{ width:40px; margin-left:auto; display:flex; align-items:center; justify-content:flex-end;}
+.chapter-close button{ background:transparent; color:#fff; border: 0; width: 40px; height: 40px; padding: 0; display: flex;
+align-items: center; justify-content: center; border-radius:8px;}
+.chapter-close button:hover{ background:rgba(255,255,255,0.1);} 
+.playlist-action-menu{ display:none; justify-content:space-between; gap:10px;}
+.playlist-action-menu button{ background:transparent; border: 0; width: 40px; height: 40px; padding: 0; display: flex;
+align-items: center; justify-content: center; align-items:center; border-radius:100px; }
+.playlist-action-menu button:hover{ background:rgba(0, 0, 0, 0.1);}
+.start-action{ display:flex;}
+
+.chapter-body{ height:calc(100% - 59px); overflow:auto; }
+.chapter-body ul{ margin:0; padding:0;}
+.playlist-items a{ padding:12px; display:flex; align-items:center; text-decoration:none; gap:12px; width:100%; box-sizing:border-box;}
+.playlist-items a:hover{background:rgba(255,255,255,0.06);} 
+.playlist-items.selected a{ background:rgba(255,255,255,0.14);} 
+.playlist-drag-handle{ width:24px; display:flex; justify-content:center; color:#e0e0e0; font-size:12px;}
+.thumbnail-meta{ flex:1; min-width:0; padding:0;}
+.thumbnail-meta h4{ margin:0 2px 4px 0; font-size:14px; line-height:20px; font-weight:600; overflow:hidden; text-overflow:ellipsis;
+color:#fff; white-space:normal; max-height:40px; -webkit-line-clamp: 2; line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical;}
+.thumbnail-meta .meta-sub{ display:flex; gap:8px; align-items:center; }
+.thumbnail-meta .meta-sub .meta-dynamic{ color:#bdbdbd; font-size:12px; line-height:18px; }
+.thumbnail-action button{ border:0; background:transparent; color:#fff; opacity:0;}
+.playlist-items a:hover .thumbnail-action button{ opacity:1;}
+
+/* custom scrollbar for chapter list */
+.chapter-body::-webkit-scrollbar{ width:10px; }
+.chapter-body::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.18); border-radius:8px; }
+.chapter-body::-webkit-scrollbar-track{ background:transparent; }
+
+.video-box .video-js .vjs-control-bar .vjs-spacer-control{ margin-left:auto;}
+.video-js .vjs-control-bar .settings-item-svg{ display:flex;}
+.video-js .vjs-control-bar .settings-item-svg svg{width:auto !important; height: auto !important; transform:inherit !important;}

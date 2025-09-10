@@ -62,7 +62,11 @@ class AutoplayToggleButton extends Button {
     updateIcon() {
         if (this.isAutoplayEnabled) {
             // Simple text icon for now
-            this.iconSpan.innerHTML = `<span style="font-size: 1.2em; color: #ff4444;">●</span>`;
+            this.iconSpan.innerHTML = `<span style=" transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ff4444;"><svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="18" y="18" width="180" height="64" rx="32" fill="white"/>
+<rect width="100" height="100" rx="50" fill="white"/>
+<path d="M53.5714 75V25H75V75H53.5714ZM25 75V25H46.4286V75H25ZM60.7143 67.8571H67.8571V32.1429H60.7143V67.8571ZM32.1429 67.8571H39.2857V32.1429H32.1429V67.8571Z" fill="#1C1B1F"/>
+</svg></span>`;
             // Only update element properties if element exists
             if (this.el()) {
                 this.el().title = 'Autoplay is on';
@@ -74,7 +78,12 @@ class AutoplayToggleButton extends Button {
             }
         } else {
             // Simple text icon for now
-            this.iconSpan.innerHTML = `<span style="font-size: 1.2em; color: #ccc;">○</span>`;
+            this.iconSpan.innerHTML = `<span style="transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ccc;">
+               <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect y="18" width="180" height="64" rx="32" fill="white"/>
+<rect x="98" width="100" height="100" rx="50" fill="white"/>
+<path d="M129 75L168 50L129 25V75ZM136.091 61.9643V38.0357L154.705 50L136.091 61.9643Z" fill="#1C1B1F"/>
+</svg></span>`;
             // Only update element properties if element exists
             if (this.el()) {
                 this.el().title = 'Autoplay is off';

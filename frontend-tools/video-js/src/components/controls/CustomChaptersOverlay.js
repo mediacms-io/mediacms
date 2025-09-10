@@ -11,6 +11,9 @@ class CustomChaptersOverlay extends Component {
         this.chaptersData = options.chaptersData || [];
         this.overlay = null;
         this.chaptersList = null;
+        this.seriesTitle = options.seriesTitle || 'Chapters';
+        this.channelName = options.channelName || '';
+        this.thumbnail = options.thumbnail || '';
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -39,100 +42,123 @@ class CustomChaptersOverlay extends Component {
             position: absolute;
             top: 0;
             right: 0;
-            width: 300px;
+            width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, rgba(20, 20, 30, 0.95) 0%, rgba(40, 40, 50, 0.95) 100%);
-            color: white;
             z-index: 1000;
             display: none;
-            overflow-y: auto;
-            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none; /* allow clicks only on inner panel */
+            background: rgba(0, 0, 0, 0.35);
         `;
+
+        // Build container
+        const container = document.createElement('div');
+        container.className = 'video-chapter';
+        container.style.pointerEvents = 'auto';
+        this.overlay.appendChild(container);
 
         // Create header
         const header = document.createElement('div');
-        header.style.cssText = `
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            letter-spacing: 2px;
-            border-bottom: 2px solid #4a90e2;
-            position: sticky;
-            top: 0;
+        header.className = 'chapter-head';
+        container.appendChild(header);
+
+        const playlistTitle = document.createElement('div');
+        playlistTitle.className = 'playlist-title';
+        header.appendChild(playlistTitle);
+
+        const chapterTitle = document.createElement('div');
+        chapterTitle.className = 'chapter-title';
+        chapterTitle.innerHTML = `
+            <h3><a href="#">${this.seriesTitle}</a></h3>
+            <p><a href="#">${this.channelName}</a> <span>1 / ${this.chaptersData.length}</span></p>
         `;
-        header.textContent = 'CHAPTERS';
-        this.overlay.appendChild(header);
+        playlistTitle.appendChild(chapterTitle);
 
         // Create close button
-        const closeBtn = document.createElement('div');
-        closeBtn.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 25px;
-            height: 25px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 16px;
-            z-index: 10;
+        const chapterClose = document.createElement('div');
+        chapterClose.className = 'chapter-close';
+        const closeBtn = document.createElement('button');
+        closeBtn.setAttribute('aria-label', 'Close chapters');
+        closeBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.7096 12L20.8596 20.15L20.1496 20.86L11.9996 12.71L3.84965 20.86L3.13965 20.15L11.2896 12L3.14965 3.85001L3.85965 3.14001L11.9996 11.29L20.1496 3.14001L20.8596 3.85001L12.7096 12Z" fill="currentColor"/>
+            </svg>
         `;
-        closeBtn.textContent = '×';
         closeBtn.onclick = () => {
             this.overlay.style.display = 'none';
+            const el = this.player().el();
+            if (el) el.classList.remove('chapters-open');
         };
-        this.overlay.appendChild(closeBtn);
+        chapterClose.appendChild(closeBtn);
+        playlistTitle.appendChild(chapterClose);
 
         // Create chapters list
-        this.chaptersList = document.createElement('div');
-        this.chaptersList.style.cssText = `
-            padding: 10px 0;
-        `;
+        const body = document.createElement('div');
+        body.className = 'chapter-body';
+        container.appendChild(body);
+
+        const list = document.createElement('ul');
+        body.appendChild(list);
+        this.chaptersList = list;
 
         // Add chapters from data
-        this.chaptersData.forEach((chapter) => {
-            const chapterItem = document.createElement('div');
-            chapterItem.style.cssText = `
-                padding: 15px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                cursor: pointer;
-                transition: background 0.2s ease;
-                font-size: 14px;
-                line-height: 1.4;
-            `;
-            chapterItem.textContent = chapter.text;
+        this.chaptersData.forEach((chapter, index) => {
+            const li = document.createElement('li');
+            const item = document.createElement('div');
+            item.className = `playlist-items ${index === 0 ? 'selected' : ''}`;
 
-            // Add hover effect
-            chapterItem.onmouseenter = () => {
-                chapterItem.style.background = 'rgba(74, 144, 226, 0.2)';
-            };
-            chapterItem.onmouseleave = () => {
-                chapterItem.style.background = 'transparent';
-            };
+            const anchor = document.createElement('a');
+            anchor.href = '#';
+            anchor.onclick = (e) => e.preventDefault();
 
-            // Add click handler
-            chapterItem.onclick = () => {
+            const drag = document.createElement('div');
+            drag.className = 'playlist-drag-handle';
+            drag.textContent = index === 0 ? '▶' : String(index + 1);
+
+            const meta = document.createElement('div');
+            meta.className = 'thumbnail-meta';
+            // compute duration
+            const totalSec = Math.max(0, Math.floor((chapter.endTime || chapter.startTime) - chapter.startTime));
+            const hh = Math.floor(totalSec / 3600);
+            const mm = Math.floor((totalSec % 3600) / 60);
+            const ss = totalSec % 60;
+            const timeStr = hh > 0
+                ? `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+                : `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+            const titleEl = document.createElement('h4');
+            titleEl.textContent = chapter.text;
+            const sub = document.createElement('div');
+            sub.className = 'meta-sub';
+            const dynamic = document.createElement('span');
+            dynamic.className = 'meta-dynamic';
+            dynamic.textContent = this.channelName;
+            dynamic.setAttribute('data-duration', timeStr);
+            sub.appendChild(dynamic);
+            meta.appendChild(titleEl);
+            meta.appendChild(sub);
+
+            const action = document.createElement('div');
+            action.className = 'thumbnail-action';
+            const btn = document.createElement('button');
+            btn.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16.5C12.83 16.5 13.5 17.17 13.5 18C13.5 18.83 12.83 19.5 12 19.5C11.17 19.5 10.5 18.83 10.5 18C10.5 17.17 11.17 16.5 12 16.5ZM10.5 12C10.5 12.83 11.17 13.5 12 13.5C12.83 13.5 13.5 12.83 13.5 12C13.5 11.17 12.83 10.5 12 10.5C11.17 10.5 10.5 11.17 10.5 12ZM10.5 6C10.5 6.83 11.17 7.5 12 7.5C12.83 7.5 13.5 6.83 13.5 6C13.5 5.17 12.83 4.5 12 4.5C11.17 4.5 10.5 5.17 10.5 6Z" fill="currentColor"/>
+                </svg>`;
+            action.appendChild(btn);
+
+            // Click to seek
+            item.onclick = () => {
                 this.player().currentTime(chapter.startTime);
                 this.overlay.style.display = 'none';
-
-                // Update active state
-                this.chaptersList.querySelectorAll('div').forEach((item) => {
-                    item.style.background = 'transparent';
-                    item.style.fontWeight = 'normal';
-                });
-                chapterItem.style.background = 'rgba(74, 144, 226, 0.4)';
-                chapterItem.style.fontWeight = 'bold';
+                this.updateActiveItem(index);
             };
 
-            this.chaptersList.appendChild(chapterItem);
+            anchor.appendChild(drag);
+            anchor.appendChild(meta);
+            anchor.appendChild(action);
+            item.appendChild(anchor);
+            li.appendChild(item);
+            this.chaptersList.appendChild(li);
         });
-
-        this.overlay.appendChild(this.chaptersList);
 
         // Add to player
         playerEl.appendChild(this.overlay);
@@ -155,10 +181,20 @@ class CustomChaptersOverlay extends Component {
     toggleOverlay() {
         if (!this.overlay) return;
 
+        const el = this.player().el();
         if (this.overlay.style.display === 'none' || !this.overlay.style.display) {
             this.overlay.style.display = 'block';
+            if (el) el.classList.add('chapters-open');
+            // hide any open menus
+            try {
+                this.player().el().querySelectorAll('.vjs-menu').forEach((m) => {
+                    m.classList.remove('vjs-lock-showing');
+                    m.style.display = 'none';
+                });
+            } catch (e) {}
         } else {
             this.overlay.style.display = 'none';
+            if (el) el.classList.remove('chapters-open');
         }
     }
 
@@ -166,7 +202,7 @@ class CustomChaptersOverlay extends Component {
         if (!this.chaptersList || !this.chaptersData) return;
 
         const currentTime = this.player().currentTime();
-        const chapterItems = this.chaptersList.querySelectorAll('div');
+        const chapterItems = this.chaptersList.querySelectorAll('.playlist-items');
 
         chapterItems.forEach((item, index) => {
             const chapter = this.chaptersData[index];
@@ -174,12 +210,33 @@ class CustomChaptersOverlay extends Component {
                 currentTime >= chapter.startTime &&
                 (index === this.chaptersData.length - 1 || currentTime < this.chaptersData[index + 1].startTime);
 
+            const handle = item.querySelector('.playlist-drag-handle');
+            const dynamic = item.querySelector('.meta-dynamic');
             if (isPlaying) {
-                item.style.borderLeft = '4px solid #10b981';
-                item.style.paddingLeft = '16px';
+                item.classList.add('selected');
+                if (handle) handle.textContent = '▶';
+                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-duration') || '';
             } else {
-                item.style.borderLeft = 'none';
-                item.style.paddingLeft = '20px';
+                item.classList.remove('selected');
+                if (handle) handle.textContent = String(index + 1);
+                if (dynamic) dynamic.textContent = this.channelName;
+            }
+        });
+    }
+
+    updateActiveItem(activeIndex) {
+        const items = this.chaptersList.querySelectorAll('.playlist-items');
+        items.forEach((el, idx) => {
+            const handle = el.querySelector('.playlist-drag-handle');
+            const dynamic = el.querySelector('.meta-dynamic');
+            if (idx === activeIndex) {
+                el.classList.add('selected');
+                if (handle) handle.textContent = '▶';
+                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-duration') || '';
+            } else {
+                el.classList.remove('selected');
+                if (handle) handle.textContent = String(idx + 1);
+                if (dynamic) dynamic.textContent = this.channelName;
             }
         });
     }
@@ -188,6 +245,8 @@ class CustomChaptersOverlay extends Component {
         if (this.overlay) {
             this.overlay.remove();
         }
+        const el = this.player().el();
+        if (el) el.classList.remove('chapters-open');
         super.dispose();
     }
 }

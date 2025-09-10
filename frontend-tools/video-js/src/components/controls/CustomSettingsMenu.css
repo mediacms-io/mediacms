@@ -31,7 +31,7 @@
     bottom: 60px;
     right: 20px;
     width: 250px;
-    height: 600px;
+    height: 400px;
     background: rgba(28, 28, 28, 0.95);
     color: white;
     border-radius: 7px;
@@ -59,6 +59,8 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     transition: background 0.2s ease;
 }
+.custom-settings-overlay .settings-left span.vjs-icon-placeholder {transform: inherit !important;}
+
 
 .settings-item:last-child {
     border-bottom: none;
@@ -70,6 +72,18 @@
 
 /* Speed submenu */
 .speed-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 28, 28, 0.95);
+    display: none;
+    flex-direction: column;
+}
+
+/* Quality submenu mirrors speed submenu */
+.quality-submenu {
     position: absolute;
     top: 0;
     left: 0;
@@ -110,8 +124,50 @@
 .speed-option.active {
     background: rgba(255, 255, 255, 0.1);
 }
+
+/* Quality option styling */
+.quality-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.quality-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.quality-option.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Settings row left/right layout like YouTube */
+.settings-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
 .vjs-icon-cog:before {
     font-size: 20px !important;
     position: relative;
     top: -5px !important;
+}
+
+/* HD superscript badge for 1080p */
+sup.hd-badge {
+    font-size: 10px;
+    line-height: 1;
+    margin-left: 6px;
+    background: #e53935;
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 3px;
 }
