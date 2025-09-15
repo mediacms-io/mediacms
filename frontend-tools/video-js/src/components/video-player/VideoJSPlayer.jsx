@@ -20,6 +20,8 @@ function VideoJSPlayer() {
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
     const customComponents = useRef({}); // Store custom components for cleanup
 
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
         () =>
@@ -84,6 +86,28 @@ function VideoJSPlayer() {
                             "1080": {},
                             "1440": {},
                         },
+                        chapter_data: [
+                            {
+                                "startTime": 1.1,
+                                "endTime": 2.2,
+                                "text": "AAAAIntroduction",
+                            },
+                            {
+                                "startTime": 2.2,
+                                "endTime": 3.3,
+                                "text": "BBBXXX",
+                            },
+                            {
+                                "startTime": 3.3,
+                                "endTime": 4.3,
+                                "text": "DDDDXXXd",
+                            },
+                            {
+                                "startTime": 4.3,
+                                "endTime": 171,
+                                "text": "DDDDXXXd4aaaaaa3333",
+                            }
+                        ],
                         related_media: [
                             {
                                 friendly_token: 'jgLkic37V',
@@ -621,36 +645,13 @@ function VideoJSPlayer() {
                     },
                     siteUrl: '',
                     nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
-                    chaptersData: [
-                        { startTime: 0, endTime: 4, text: 'Introduction' },
-                        { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
-                        { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
-                        { startTime: 15, endTime: 20, text: 'Deep Sea Creatures' },
-                        { startTime: 20, endTime: 30, text: 'Ocean Conservation' },
-                        { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
-                        { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
-                        { startTime: 480, endTime: 560, text: 'Sustainable Fishing' },
-                        { startTime: 560, endTime: 640, text: 'Research Methods' },
-                        { startTime: 640, endTime: 720, text: 'Future Challenges' },
-                        { startTime: 720, endTime: 800, text: 'Conclusion' },
-                        { startTime: 800, endTime: 880, text: 'Marine Biodiversity Hotspots' },
-                        { startTime: 880, endTime: 960, text: 'Underwater Photography' },
-                        { startTime: 960, endTime: 1040, text: 'Whale Migration Patterns' },
-                        { startTime: 1040, endTime: 1120, text: 'Plastic Pollution Crisis' },
-                        { startTime: 1120, endTime: 1200, text: 'Seagrass Meadows' },
-                        { startTime: 1200, endTime: 1280, text: 'Ocean Acidification' },
-                        { startTime: 1280, endTime: 1360, text: 'Marine Archaeology' },
-                        { startTime: 1360, endTime: 1440, text: 'Tidal Pool Ecosystems' },
-                        { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
-                        { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
-                    ],
                 },
         []
     );
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
-    const chaptersData = mediaData.chaptersData ?? [
+    const chaptersData = mediaData?.data?.chapter_data ?? isDevelopment ? [
         { startTime: 0, endTime: 4, text: 'Introduction' },
         { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
         { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
@@ -673,7 +674,7 @@ function VideoJSPlayer() {
         { startTime: 1360, endTime: 1440, text: 'Tidal Pool Ecosystems' },
         { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
         { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
-    ];
+    ] : [];
 
     // Get video data from mediaData
     const currentVideo = useMemo(
@@ -921,7 +922,6 @@ function VideoJSPlayer() {
     // const demoSubtitleTracks = []; // NO Subtitles. TODO: hide it on production
 
     // Get subtitle tracks from backend response or fallback based on environment
-    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
     const backendSubtitles = mediaData?.data?.subtitles_info || (isDevelopment ? demoSubtitleTracks : []);
     const hasSubtitles = backendSubtitles.length > 0;
     const subtitleTracks = hasSubtitles 
@@ -1273,7 +1273,6 @@ function VideoJSPlayer() {
                         // END: Add subtitle tracks
 
                         // BEGIN: Chapters Implementation
-                        console.log('chaptersData1', chaptersData);
                         if (chaptersData && chaptersData.length > 0) {
                             const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
                             // Add cues to the chapters track
