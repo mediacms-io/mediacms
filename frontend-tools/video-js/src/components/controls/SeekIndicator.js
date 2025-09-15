@@ -33,8 +33,8 @@ class SeekIndicator extends Component {
 
     /**
      * Show seek indicator with direction and amount
-     * @param {string} direction - 'forward' or 'backward'
-     * @param {number} seconds - Number of seconds to seek
+     * @param {string} direction - 'forward', 'backward', 'play', or 'pause'
+     * @param {number} seconds - Number of seconds to seek (only used for forward/backward)
      */
     show(direction, seconds = this.seekAmount) {
         const el = this.el();
@@ -84,17 +84,17 @@ class SeekIndicator extends Component {
                     </div>
                 </div>
             `;
-        } else {
+        } else if (direction === 'backward') {
             iconEl.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: center; animation: youtubeSeekPulse 0.3s ease-out;">
                     <div style="
-                        width: 80px; 
-                        height: 80px; 
-                        border-radius: 50%; 
-                        background: rgba(0, 0, 0, 0.3); 
-                        display: flex; 
-                        flex-direction: column; 
-                        align-items: center; 
+                        width: 80px;
+                        height: 80px;
+                        border-radius: 50%;
+                        background: rgba(0, 0, 0, 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                         justify-content: center;
                         border: none;
                         outline: none;
@@ -121,6 +121,52 @@ class SeekIndicator extends Component {
                     </div>
                 </div>
             `;
+        } else if (direction === 'play') {
+            iconEl.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; animation: youtubeSeekPulse 0.3s ease-out;">
+      <div style="
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          outline: none;
+          box-sizing: border-box;
+          overflow: hidden;
+      ">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    </div>
+  `;
+            textEl.textContent = 'Play';
+        } else if (direction === 'pause') {
+            iconEl.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; animation: youtubeSeekPulse 0.3s ease-out;">
+      <div style="
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          outline: none;
+          box-sizing: border-box;
+          overflow: hidden;
+      ">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="white" style="filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      </div>
+    </div>
+  `;
+            textEl.textContent = 'Pause';
         }
 
         // Clear any text content in the text element

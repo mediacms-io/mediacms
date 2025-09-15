@@ -24,9 +24,10 @@ class NextVideoButton extends Button {
 
         // Create SVG that matches Video.js icon dimensions
         iconSpan.innerHTML = `
-        <svg viewBox="0 0 24 24" width="2em" height="2em" fill="currentColor" style="position: relative; top: 3px; left: 8px; right: 0; bottom: 0; margin: auto; cursor: pointer;">
-            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 34L28.1667 24L14 14V34ZM30.6667 14V34H34V14H30.6667Z" fill="currentColor"/>
         </svg>
+
     `;
 
         // Create control text span

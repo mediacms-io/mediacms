@@ -51,50 +51,63 @@ class AutoplayToggleButton extends Button {
             className: 'vjs-control-text',
         });
         controlTextSpan.textContent = this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off';
+        
+        console.log('✓ Autoplay button created with initial tooltip:', this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off');
 
         // Append both spans to button
         button.appendChild(this.iconSpan);
         button.appendChild(controlTextSpan);
 
+        // Add touch support for mobile tooltips
+        this.addTouchSupport(button);
+
         return button;
     }
 
     updateIcon() {
+    // Add transition and start fade-out
+    this.iconSpan.style.transition = 'opacity 0.1s ease';
+    this.iconSpan.style.opacity = '0';
+
+    // After fade-out complete, update innerHTML and fade back in
+    setTimeout(() => {
         if (this.isAutoplayEnabled) {
-            // Simple text icon for now
-            this.iconSpan.innerHTML = `<span style=" transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ff4444;"><svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="18" y="18" width="180" height="64" rx="32" fill="white"/>
-<rect width="100" height="100" rx="50" fill="white"/>
-<path d="M53.5714 75V25H75V75H53.5714ZM25 75V25H46.4286V75H25ZM60.7143 67.8571H67.8571V32.1429H60.7143V67.8571ZM32.1429 67.8571H39.2857V32.1429H32.1429V67.8571Z" fill="#1C1B1F"/>
-</svg></span>`;
-            // Only update element properties if element exists
+            this.iconSpan.innerHTML = `<span style="transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ff4444;">
+                <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect y="18" width="180" height="64" rx="32" fill="white"/>
+                    <rect x="98" width="100" height="100" rx="50" fill="white"/>
+                    <path d="M133 69L163 50L133 31V69ZM138.455 59.0929V40.9071L152.773 50L138.455 59.0929Z" fill="#1C1B1F"/>
+                </svg>
+            </span>`;
             if (this.el()) {
                 this.el().title = 'Autoplay is on';
                 this.el().setAttribute('aria-label', 'Autoplay is on');
                 const controlText = this.el().querySelector('.vjs-control-text');
-                if (controlText) {
-                    controlText.textContent = 'Autoplay is on';
-                }
+                if (controlText) controlText.textContent = 'Autoplay is on';
+                console.log('✓ Autoplay tooltip updated to: "Autoplay is on"');
             }
         } else {
-            // Simple text icon for now
             this.iconSpan.innerHTML = `<span style="transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ccc;">
-               <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect y="18" width="180" height="64" rx="32" fill="white"/>
-<rect x="98" width="100" height="100" rx="50" fill="white"/>
-<path d="M129 75L168 50L129 25V75ZM136.091 61.9643V38.0357L154.705 50L136.091 61.9643Z" fill="#1C1B1F"/>
-</svg></span>`;
-            // Only update element properties if element exists
+                <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="18" y="18" width="180" height="64" rx="32" fill="white"/>
+                    <rect width="100" height="100" rx="50" fill="white"/>
+                    <path d="M52.1429 65V35H65V65H52.1429ZM35 65V35H47.8571V65H35ZM56.4286 60.7143H60.7143V39.2857H56.4286V60.7143ZM39.2857 60.7143H43.5714V39.2857H39.2857V60.7143Z" fill="#1C1B1F"/>
+                </svg>
+            </span>`;
             if (this.el()) {
                 this.el().title = 'Autoplay is off';
                 this.el().setAttribute('aria-label', 'Autoplay is off');
                 const controlText = this.el().querySelector('.vjs-control-text');
-                if (controlText) {
-                    controlText.textContent = 'Autoplay is off';
-                }
+                if (controlText) controlText.textContent = 'Autoplay is off';
+                console.log('✓ Autoplay tooltip updated to: "Autoplay is off"');
             }
         }
-    }
+
+        // Fade back in
+        this.iconSpan.style.opacity = '1';
+    }, 100);
+}
+
 
     handleClick() {
         // Toggle autoplay state
@@ -110,6 +123,7 @@ class AutoplayToggleButton extends Button {
         this.updateIcon();
 
         console.log('Autoplay toggled:', this.isAutoplayEnabled ? 'ON' : 'OFF');
+        console.log('✓ Tooltip should now show:', this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off');
 
         // Trigger custom event for other components to listen to
         this.player().trigger('autoplayToggle', { autoplay: this.isAutoplayEnabled });
@@ -119,6 +133,46 @@ class AutoplayToggleButton extends Button {
     setAutoplayState(enabled) {
         this.isAutoplayEnabled = enabled;
         this.updateIcon();
+    }
+
+    // Add touch support for mobile tooltips
+    addTouchSupport(button) {
+        let touchStartTime = 0;
+        let touchHandled = false;
+
+        // Touch start
+        button.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+            touchHandled = false;
+        }, { passive: true });
+
+        // Touch end
+        button.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            // Only show tooltip for quick taps (not swipes)
+            if (touchDuration < 500) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Show tooltip
+                button.classList.add('touch-active');
+                touchHandled = true;
+                
+                // Hide tooltip after delay
+                setTimeout(() => {
+                    button.classList.remove('touch-active');
+                }, 2000);
+            }
+        }, { passive: false });
+
+        // Click fallback for desktop
+        button.addEventListener('click', (e) => {
+            if (!touchHandled) {
+                // This is a desktop click, tooltip will show on hover
+                console.log('Desktop click on autoplay button');
+            }
+        });
     }
 }
 

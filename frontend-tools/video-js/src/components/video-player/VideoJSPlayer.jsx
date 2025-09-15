@@ -564,10 +564,34 @@ function VideoJSPlayer() {
                     },
                     siteUrl: '',
                     nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
+                    chapter_data: [
+                        { startTime: 0, endTime: 3, text: 'Introduction' },
+                        { startTime: 3, endTime: 5, text: 'Overview of Marine Life' },
+                        { startTime: 5, endTime: 10, text: 'Coral Reef Ecosystems' },
+                        { startTime: 10, endTime: 14, text: 'Deep Sea Creatures' },
+                    ],
                     chaptersData: [
-                        { startTime: 0, endTime: 5, text: 'Start111' },
-                        { startTime: 5, endTime: 10, text: 'Introduction - EuroHPC' },
-                        { startTime: 10, endTime: 15, text: 'Planning - EuroHPC' },
+                        { startTime: 0, endTime: 3, text: 'Introduction' },
+                        { startTime: 3, endTime: 5, text: 'Overview of Marine Life' },
+                        { startTime: 5, endTime: 10, text: 'Coral Reef Ecosystems' },
+                        { startTime: 10, endTime: 14, text: 'Deep Sea Creatures' },
+                        { startTime: 240, endTime: 320, text: 'Ocean Conservation' },
+                        { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
+                        { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
+                        { startTime: 480, endTime: 560, text: 'Sustainable Fishing' },
+                        { startTime: 560, endTime: 640, text: 'Research Methods' },
+                        { startTime: 640, endTime: 720, text: 'Future Challenges' },
+                        { startTime: 720, endTime: 800, text: 'Conclusion' },
+                        { startTime: 800, endTime: 880, text: 'Marine Biodiversity Hotspots' },
+                        { startTime: 880, endTime: 960, text: 'Underwater Photography' },
+                        { startTime: 960, endTime: 1040, text: 'Whale Migration Patterns' },
+                        { startTime: 1040, endTime: 1120, text: 'Plastic Pollution Crisis' },
+                        { startTime: 1120, endTime: 1200, text: 'Seagrass Meadows' },
+                        { startTime: 1200, endTime: 1280, text: 'Ocean Acidification' },
+                        { startTime: 1280, endTime: 1360, text: 'Marine Archaeology' },
+                        { startTime: 1360, endTime: 1440, text: 'Tidal Pool Ecosystems' },
+                        { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
+                        { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
                     ],
                 },
         []
@@ -575,12 +599,29 @@ function VideoJSPlayer() {
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
-    const chaptersData = mediaData.chaptersData;
-    /* [
-        { startTime: 0, endTime: 5, text: 'Start111' },
-        { startTime: 5, endTime: 10, text: 'Introduction - EuroHPC' },
-        { startTime: 10, endTime: 15, text: 'Planning - EuroHPC' },
-    ]; */
+    const chaptersData = mediaData.chaptersData ?? [
+        { startTime: 0, endTime: 30, text: 'Introduction' },
+        { startTime: 30, endTime: 90, text: 'Overview of Marine Life' },
+        { startTime: 90, endTime: 180, text: 'Coral Reef Ecosystems' },
+        { startTime: 180, endTime: 240, text: 'Deep Sea Creatures' },
+        { startTime: 240, endTime: 320, text: 'Ocean Conservation' },
+        { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
+        { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
+        { startTime: 480, endTime: 560, text: 'Sustainable Fishing' },
+        { startTime: 560, endTime: 640, text: 'Research Methods' },
+        { startTime: 640, endTime: 720, text: 'Future Challenges' },
+        { startTime: 720, endTime: 800, text: 'Conclusion' },
+        { startTime: 800, endTime: 880, text: 'Marine Biodiversity Hotspots' },
+        { startTime: 880, endTime: 960, text: 'Underwater Photography' },
+        { startTime: 960, endTime: 1040, text: 'Whale Migration Patterns' },
+        { startTime: 1040, endTime: 1120, text: 'Plastic Pollution Crisis' },
+        { startTime: 1120, endTime: 1200, text: 'Seagrass Meadows' },
+        { startTime: 1200, endTime: 1280, text: 'Ocean Acidification' },
+        { startTime: 1280, endTime: 1360, text: 'Marine Archaeology' },
+        { startTime: 1360, endTime: 1440, text: 'Tidal Pool Ecosystems' },
+        { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
+        { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
+    ];
 
     // Get video data from mediaData
     const currentVideo = useMemo(
@@ -677,6 +718,39 @@ function VideoJSPlayer() {
                 description: media.description,
             }));
     }, [mediaData]);
+
+    // Demo array for testing purposes
+    const demoSubtitleTracks = [
+        {
+            kind: 'subtitles',
+            src: '/sample-subtitles.vtt',
+            srclang: 'en',
+            label: 'English Subtitles',
+            default: false,
+        },
+        {
+            kind: 'subtitles',
+            src: '/sample-subtitles-greek.vtt',
+            srclang: 'el',
+            label: 'Greek Subtitles (Ελληνικά)',
+            default: false,
+        },
+    ];
+
+    // Get subtitle tracks from backend response or fallback based on environment
+    const backendSubtitles = mediaData?.data?.subtitles_info || [];
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    
+    const hasSubtitles = backendSubtitles.length > 0 || isDevelopment;
+    const subtitleTracks = hasSubtitles 
+        ? backendSubtitles.map(track => ({
+            kind: 'subtitles',
+            src: track.src,
+            srclang: track.srclang,
+            label: track.label,
+            default: false,
+        }))
+        : (isDevelopment ? demoSubtitleTracks : []);
 
     // Function to navigate to next video
     const goToNextVideo = () => {
@@ -915,7 +989,7 @@ function VideoJSPlayer() {
                             descriptionsButton: true,
 
                             // Subtitles (CC) button should be visible
-                            subtitlesButton: true,
+                            subtitlesButton: hasSubtitles ? true : false,
 
                             // Captions button (keep disabled to avoid duplicate with subtitles)
                             captionsButton: false,
@@ -1004,31 +1078,14 @@ function VideoJSPlayer() {
                         }
 
                         // BEGIN: Add subtitle tracks
-                        const subtitleTracks = [
-                            {
-                                kind: 'subtitles',
-                                src: '/sample-subtitles.vtt',
-                                srclang: 'en',
-                                label: 'English Subtitles',
-                                default: false,
-                            },
-                            {
-                                kind: 'subtitles',
-                                src: '/sample-subtitles-greek.vtt',
-                                srclang: 'el',
-                                label: 'Greek Subtitles (Ελληνικά)',
-                                default: false,
-                            },
-                        ];
+                        
 
-                        subtitleTracks.forEach((track) => {
+                        hasSubtitles && subtitleTracks.forEach((track) => {
                             playerRef.current.addRemoteTextTrack(track, false);
                         });
 
-                        // Apply saved subtitle preference with additional delay
-                        setTimeout(() => {
-                            userPreferences.current.applySubtitlePreference(playerRef.current);
-                        }, 1000);
+                        // Apply saved subtitle preference immediately
+                        userPreferences.current.applySubtitlePreference(playerRef.current);
                         // END: Add subtitle tracks
 
                         // BEGIN: Chapters Implementation
@@ -1071,7 +1128,7 @@ function VideoJSPlayer() {
                         // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
-                        if (mediaData?.nextLink) {
+                        if (mediaData?.nextLink || 1===1) { // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
                             console.log('mediaData.nextLink edw', mediaData.nextLink);
                             const nextVideoButton = new NextVideoButton(playerRef.current, {
                                 nextLink: mediaData.nextLink,
@@ -1154,8 +1211,8 @@ function VideoJSPlayer() {
                         // Make menus clickable instead of hover-only
                         setTimeout(() => {
                             const setupClickableMenus = () => {
-                                // Find all menu buttons (chapters, subtitles, etc.)
-                                const menuButtons = ['chaptersButton', 'subtitlesButton', 'playbackRateMenuButton'];
+                                // Find all menu buttons (subtitles, etc.) - exclude chaptersButton as it has custom overlay
+                                const menuButtons = ['subtitlesButton', 'playbackRateMenuButton'];
 
                                 menuButtons.forEach((buttonName) => {
                                     const button = controlBar.getChild(buttonName);
@@ -1206,6 +1263,102 @@ function VideoJSPlayer() {
                                         }
                                     }
                                 });
+
+                                // Add YouTube-like subtitles toggle with red underline
+                                const ccNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
+                                for (const n of ccNames) {
+                                    const cc = controlBar.getChild(n);
+                                    if (cc && cc.el()) {
+                                        const el = cc.el();
+                                        const menu = el.querySelector('.vjs-menu');
+                                        if (menu) menu.style.display = 'none';
+
+                                        const toggleSubs = (ev) => {
+                                            ev.preventDefault();
+                                            ev.stopPropagation();
+                                            const tracks = playerRef.current.textTracks();
+                                            let any = false;
+                                            for (let i = 0; i < tracks.length; i++) {
+                                                const t = tracks[i];
+                                                if (t.kind === 'subtitles' && t.mode === 'showing') { any = true; break; }
+                                            }
+                                            if (any) {
+                                                for (let i = 0; i < tracks.length; i++) {
+                                                    const t = tracks[i];
+                                                    if (t.kind === 'subtitles') t.mode = 'disabled';
+                                                }
+                                                el.classList.remove('vjs-subs-active');
+                                                // Do not change saved language on quick toggle off; save enabled=false
+                                                try { userPreferences.current.setPreference('subtitleEnabled', false, true); } catch (e) {}
+                                            } else {
+                                                // Show using previously chosen language only; do not change it
+                                                const preferred = userPreferences.current.getPreference('subtitleLanguage');
+                                                if (!preferred) {
+                                                    // If no language chosen yet, enable first available and save it
+                                                    let first = null;
+                                                    for (let i = 0; i < tracks.length; i++) {
+                                                        const t = tracks[i];
+                                                        if (t.kind === 'subtitles') { first = t.language; break; }
+                                                    }
+                                                    if (first) {
+                                                        for (let i = 0; i < tracks.length; i++) {
+                                                            const t = tracks[i];
+                                                            if (t.kind === 'subtitles') t.mode = t.language === first ? 'showing' : 'disabled';
+                                                        }
+                                                        try { userPreferences.current.setPreference('subtitleLanguage', first, true); } catch (e) {}
+                                                        try { userPreferences.current.setPreference('subtitleEnabled', true, true); } catch (e) {}
+                                                        el.classList.add('vjs-subs-active');
+                                                    }
+                                                    return;
+                                                }
+                                                let found = false;
+                                                for (let i = 0; i < tracks.length; i++) {
+                                                    const t = tracks[i];
+                                                    if (t.kind === 'subtitles') {
+                                                        const show = t.language === preferred;
+                                                        t.mode = show ? 'showing' : 'disabled';
+                                                        if (show) found = true;
+                                                    }
+                                                }
+                                                if (found) {
+                                                    el.classList.add('vjs-subs-active');
+                                                    try { userPreferences.current.setPreference('subtitleEnabled', true, true); } catch (e) {}
+                                                }
+                                            }
+                                        };
+
+                                        el.addEventListener('click', toggleSubs, { capture: true });
+                                        
+                                        // Add mobile touch support
+                                        el.addEventListener('touchend', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            toggleSubs(e);
+                                        }, { passive: false });
+
+                                        // Sync underline state on external changes
+                                        playerRef.current.on('texttrackchange', () => {
+                                            const tracks = playerRef.current.textTracks();
+                                            let any = false;
+                                            for (let i = 0; i < tracks.length; i++) {
+                                                const t = tracks[i];
+                                                if (t.kind === 'subtitles' && t.mode === 'showing') { any = true; break; }
+                                            }
+                                            if (any) el.classList.add('vjs-subs-active'); else el.classList.remove('vjs-subs-active');
+                                        });
+
+                                        // Initialize state immediately
+                                        const tracks = playerRef.current.textTracks();
+                                        let any = false;
+                                        for (let i = 0; i < tracks.length; i++) {
+                                            const t = tracks[i];
+                                            if (t.kind === 'subtitles' && t.mode === 'showing') { any = true; break; }
+                                        }
+                                        if (any) el.classList.add('vjs-subs-active');
+
+                                        break;
+                                    }
+                                }
                             };
 
                             setupClickableMenus();
@@ -1274,6 +1427,17 @@ function VideoJSPlayer() {
                             userPreferences: userPreferences.current,
                             qualities: availableQualities,
                         });
+
+                        // If qualities change per video (e.g., via MEDIA_DATA update), refresh menu
+                        try {
+                            playerRef.current.on('loadedmetadata', () => {
+                                if (customComponents.current.settingsMenu && customComponents.current.settingsMenu.setQualities) {
+                                    const md = typeof window !== 'undefined' ? window.MEDIA_DATA : null;
+                                    const newQualities = md?.data?.qualities || availableQualities;
+                                    customComponents.current.settingsMenu.setQualities(newQualities);
+                                }
+                            });
+                        } catch (e) {}
 
                         // END: Add Settings Menu Component
 
@@ -1525,10 +1689,18 @@ function VideoJSPlayer() {
 
                     playerRef.current.on('play', () => {
                         console.log('Video started playing');
+                        // Only show play indicator if not changing quality
+                        if (!playerRef.current.isChangingQuality) {
+                            customComponents.current.seekIndicator.show('play');
+                        }
                     });
 
                     playerRef.current.on('pause', () => {
                         console.log('Video paused');
+                        // Only show pause indicator if not changing quality
+                        if (!playerRef.current.isChangingQuality) {
+                            customComponents.current.seekIndicator.show('pause');
+                        }
                     });
 
                     // Store reference to end screen and autoplay countdown for cleanup
