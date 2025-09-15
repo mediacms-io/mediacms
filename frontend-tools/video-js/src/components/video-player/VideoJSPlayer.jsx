@@ -86,27 +86,10 @@ function VideoJSPlayer() {
                             "1080": {},
                             "1440": {},
                         },
-                        chapter_data: [
-                            {
-                                "startTime": 1.1,
-                                "endTime": 2.2,
-                                "text": "AAAAIntroduction",
-                            },
-                            {
-                                "startTime": 2.2,
-                                "endTime": 3.3,
-                                "text": "BBBXXX",
-                            },
-                            {
-                                "startTime": 3.3,
-                                "endTime": 4.3,
-                                "text": "DDDDXXXd",
-                            },
-                            {
-                                "startTime": 4.3,
-                                "endTime": 171,
-                                "text": "DDDDXXXd4aaaaaa3333",
-                            }
+                        __chapter_data: [
+                            { startTime: 0, endTime: 4, text: 'A1 test' },
+                            { startTime: 5, endTime: 10, text: 'A2 of Marine Life' },
+                            { startTime: 10, endTime: 15, text: 'A3 Reef Ecosystems' },
                         ],
                         related_media: [
                             {
@@ -651,7 +634,7 @@ function VideoJSPlayer() {
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
-    const chaptersData = mediaData?.data?.chapter_data ?? isDevelopment ? [
+    const chaptersData = mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0 ? mediaData?.data?.chapter_data : isDevelopment ? [
         { startTime: 0, endTime: 4, text: 'Introduction' },
         { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
         { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
@@ -675,6 +658,7 @@ function VideoJSPlayer() {
         { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
         { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
     ] : [];
+    // const chaptersData = [];
 
     // Get video data from mediaData
     const currentVideo = useMemo(
