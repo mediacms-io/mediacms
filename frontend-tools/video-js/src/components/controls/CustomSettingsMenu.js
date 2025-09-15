@@ -17,6 +17,7 @@ class CustomSettingsMenu extends Component {
     this.subtitlesSubmenu = null;
     this.userPreferences = options?.userPreferences || new UserPreferences();
     this.providedQualities = options?.qualities || null;
+    this.hasSubtitles = options?.hasSubtitles || false;
 
     // Bind methods
     this.createSettingsButton = this.createSettingsButton.bind(this);
@@ -153,10 +154,10 @@ class CustomSettingsMenu extends Component {
       activeQuality?.label ||
       (currentQuality ? String(currentQuality) : "Auto");
 
-    // Settings menu content
-    this.settingsOverlay.innerHTML = `
-    <div class="settings-header">Settings</div>
+    // Settings menu content - split into separate variables for maintainability
+    const settingsHeader = `<div class="settings-header">Settings</div>`;
     
+    const playbackSpeedSection = `
     <div class="settings-item" data-setting="playback-speed">
         <span class="settings-left">
             <span class="vjs-icon-placeholder settings-item-svg">
@@ -167,8 +168,9 @@ class CustomSettingsMenu extends Component {
             <span class="current-speed">${playbackRateLabel}</span>
             <span class="vjs-icon-placeholder vjs-icon-navigate-next"></span>
         </span>
-    </div>
+    </div>`;
     
+    const qualitySection = `
     <div class="settings-item" data-setting="quality">
         <span class="settings-left">
            <span class="vjs-icon-placeholder settings-item-svg">
@@ -179,8 +181,9 @@ class CustomSettingsMenu extends Component {
             <span class="current-quality">${qualityLabelHTML}</span>
             <span class="vjs-icon-placeholder vjs-icon-navigate-next"></span>
         </span>
-    </div>
+    </div>`;
 
+    const subtitlesSection = `
     <div class="settings-item" data-setting="subtitles">
         <span class="settings-left">
            <span class="vjs-icon-placeholder settings-item-svg">
@@ -191,8 +194,17 @@ class CustomSettingsMenu extends Component {
             <span class="current-subtitles">${currentSubtitleLabel}</span>
             <span class="vjs-icon-placeholder vjs-icon-navigate-next"></span>
         </span>
-    </div>
-`;
+    </div>`;
+
+    // Build the complete settings overlay
+    this.settingsOverlay.innerHTML = settingsHeader;
+    this.settingsOverlay.innerHTML += playbackSpeedSection;
+    this.settingsOverlay.innerHTML += qualitySection;
+
+    // Check if subtitles are available
+    if (this.hasSubtitles) {
+      this.settingsOverlay.innerHTML += subtitlesSection;
+    }
 
     // Create speed submenu
     this.createSpeedSubmenu();
@@ -459,13 +471,8 @@ class CustomSettingsMenu extends Component {
       return this.sortAndDecorateQualities(mapped, desiredOrder);
     }
 
-    // Default fallback
-    // Build full ordered list without src so UI is consistent; switching will require src in JSON
-    const fallback = desiredOrder.map((v) => ({
-      label: v === "auto" ? "Auto" : v,
-      value: v,
-    }));
-    return this.sortAndDecorateQualities(fallback, desiredOrder);
+    // Default fallback - return empty array if no valid sources found
+    return [];
   }
 
   sortAndDecorateQualities(list, desiredOrder) {
@@ -473,7 +480,11 @@ class CustomSettingsMenu extends Component {
       const i = desiredOrder.indexOf(String(val).toLowerCase());
       return i === -1 ? 999 : i;
     };
-    const decorated = list
+    
+    // Only include qualities that have actual sources
+    const validQualities = list.filter(q => q.src);
+    
+    const decorated = validQualities
       .map((q) => {
         const val = (q.value || q.label || "").toString().toLowerCase();
         const baseLabel = q.label || q.value || "";
@@ -485,20 +496,6 @@ class CustomSettingsMenu extends Component {
       })
       .sort((a, b) => orderIndex(a.value) - orderIndex(b.value));
 
-    // Ensure all desired labels appear at least once (even if not provided), for consistent menu
-    const have = new Set(decorated.map((q) => q.value));
-    desiredOrder.forEach((val) => {
-      if (!have.has(val)) {
-        const baseLabel = val === "auto" ? "Auto" : val;
-        const displayLabel =
-          val === "1080p"
-            ? `${baseLabel} <sup class="hd-badge">HD</sup>`
-            : baseLabel;
-        decorated.push({ label: baseLabel, value: val, displayLabel });
-      }
-    });
-    // Re-sort after pushing missing
-    decorated.sort((a, b) => orderIndex(a.value) - orderIndex(b.value));
     return decorated;
   }
 

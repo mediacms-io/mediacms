@@ -19,12 +19,29 @@ class CustomChaptersOverlay extends Component {
         this.createOverlay = this.createOverlay.bind(this);
         this.updateCurrentChapter = this.updateCurrentChapter.bind(this);
         this.toggleOverlay = this.toggleOverlay.bind(this);
+        this.formatTime = this.formatTime.bind(this);
+        this.getChapterTimeRange = this.getChapterTimeRange.bind(this);
 
         // Initialize after player is ready
         this.player().ready(() => {
             this.createOverlay();
             this.setupChaptersButton();
         });
+    }
+
+    formatTime(seconds) {
+        const totalSec = Math.max(0, Math.floor(seconds));
+        const hh = Math.floor(totalSec / 3600);
+        const mm = Math.floor((totalSec % 3600) / 60);
+        const ss = totalSec % 60;
+        
+        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    }
+
+    getChapterTimeRange(chapter) {
+        const startTime = this.formatTime(chapter.startTime);
+        const endTime = this.formatTime(chapter.endTime || chapter.startTime);
+        return `${startTime} - ${endTime}`;
     }
 
     createOverlay() {
@@ -46,9 +63,15 @@ class CustomChaptersOverlay extends Component {
             height: 100%;
             z-index: 9999;
             display: none;
-            pointer-events: none;
+            pointer-events: auto;
             background: rgba(0, 0, 0, 0.35);
         `;
+
+        this.overlay.addEventListener('click', (event) => {
+            if (event.target === this.overlay) {
+                this.closeOverlay();
+            }
+        });
 
         const container = document.createElement('div');
         container.className = 'video-chapter';
@@ -129,8 +152,10 @@ class CustomChaptersOverlay extends Component {
             sub.className = 'meta-sub';
             const dynamic = document.createElement('span');
             dynamic.className = 'meta-dynamic';
-            dynamic.textContent = this.channelName;
+            const chapterTimeRange = this.getChapterTimeRange(chapter);
+            dynamic.textContent = chapterTimeRange;
             dynamic.setAttribute('data-duration', timeStr);
+            dynamic.setAttribute('data-time-range', chapterTimeRange);
             sub.appendChild(dynamic);
             meta.appendChild(titleEl);
             meta.appendChild(sub);
@@ -215,7 +240,7 @@ class CustomChaptersOverlay extends Component {
             } else {
                 item.classList.remove('selected');
                 if (handle) handle.textContent = String(index + 1);
-                if (dynamic) dynamic.textContent = this.channelName;
+                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             }
         });
     }
@@ -232,9 +257,28 @@ class CustomChaptersOverlay extends Component {
             } else {
                 el.classList.remove('selected');
                 if (handle) handle.textContent = String(idx + 1);
-                if (dynamic) dynamic.textContent = this.channelName;
+                if (dynamic) {
+                    const timeRange = dynamic.getAttribute('data-time-range');
+                    if (timeRange) {
+                        dynamic.textContent = timeRange;
+                    } else {
+                        // Fallback: calculate time range from chapters data
+                        const chapter = this.chaptersData[idx];
+                        if (chapter) {
+                            dynamic.textContent = this.getChapterTimeRange(chapter);
+                        }
+                    }
+                }
             }
         });
+    }
+
+    closeOverlay() {
+        if (this.overlay) {
+            this.overlay.style.display = 'none';
+            const el = this.player().el();
+            if (el) el.classList.remove('chapters-open');
+        }
     }
 
     dispose() {
