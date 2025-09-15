@@ -44,19 +44,20 @@ class CustomChaptersOverlay extends Component {
             right: 0;
             width: 100%;
             height: 100%;
-            z-index: 1000;
+            z-index: 9999;
             display: none;
-            pointer-events: none; /* allow clicks only on inner panel */
+            pointer-events: none;
             background: rgba(0, 0, 0, 0.35);
         `;
 
-        // Build container
         const container = document.createElement('div');
         container.className = 'video-chapter';
-        container.style.pointerEvents = 'auto';
+        container.style.cssText = `
+            pointer-events: auto;
+            z-index: 9999999;
+        `;
         this.overlay.appendChild(container);
 
-        // Create header
         const header = document.createElement('div');
         header.className = 'chapter-head';
         container.appendChild(header);
@@ -73,7 +74,6 @@ class CustomChaptersOverlay extends Component {
         `;
         playlistTitle.appendChild(chapterTitle);
 
-        // Create close button
         const chapterClose = document.createElement('div');
         chapterClose.className = 'chapter-close';
         const closeBtn = document.createElement('button');
@@ -91,7 +91,6 @@ class CustomChaptersOverlay extends Component {
         chapterClose.appendChild(closeBtn);
         playlistTitle.appendChild(chapterClose);
 
-        // Create chapters list
         const body = document.createElement('div');
         body.className = 'chapter-body';
         container.appendChild(body);
@@ -100,7 +99,6 @@ class CustomChaptersOverlay extends Component {
         body.appendChild(list);
         this.chaptersList = list;
 
-        // Add chapters from data
         this.chaptersData.forEach((chapter, index) => {
             const li = document.createElement('li');
             const item = document.createElement('div');
@@ -116,7 +114,7 @@ class CustomChaptersOverlay extends Component {
 
             const meta = document.createElement('div');
             meta.className = 'thumbnail-meta';
-            // compute duration
+
             const totalSec = Math.max(0, Math.floor((chapter.endTime || chapter.startTime) - chapter.startTime));
             const hh = Math.floor(totalSec / 3600);
             const mm = Math.floor((totalSec % 3600) / 60);
@@ -124,6 +122,7 @@ class CustomChaptersOverlay extends Component {
             const timeStr = hh > 0
                 ? `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
                 : `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+
             const titleEl = document.createElement('h4');
             titleEl.textContent = chapter.text;
             const sub = document.createElement('div');
@@ -145,12 +144,14 @@ class CustomChaptersOverlay extends Component {
                 </svg>`;
             action.appendChild(btn);
 
-            // Click to seek
-            item.onclick = () => {
+            // Mobile & desktop click/touch
+            const seekFn = () => {
                 this.player().currentTime(chapter.startTime);
                 this.overlay.style.display = 'none';
                 this.updateActiveItem(index);
             };
+            item.addEventListener('click', seekFn);
+            item.addEventListener('touchstart', seekFn);
 
             anchor.appendChild(drag);
             anchor.appendChild(meta);
@@ -160,10 +161,8 @@ class CustomChaptersOverlay extends Component {
             this.chaptersList.appendChild(li);
         });
 
-        // Add to player
         playerEl.appendChild(this.overlay);
 
-        // Set up time update listener
         this.player().on('timeupdate', this.updateCurrentChapter);
 
         console.log('✓ Custom chapters overlay created');
@@ -172,9 +171,9 @@ class CustomChaptersOverlay extends Component {
     setupChaptersButton() {
         const chaptersButton = this.player().getChild('controlBar').getChild('chaptersButton');
         if (chaptersButton) {
-            // Override the click handler
-            chaptersButton.off('click'); // Remove default handler
+            chaptersButton.off('click');
             chaptersButton.on('click', this.toggleOverlay);
+            chaptersButton.on('touchstart', this.toggleOverlay); // mobile support
         }
     }
 
@@ -182,20 +181,17 @@ class CustomChaptersOverlay extends Component {
         if (!this.overlay) return;
 
         const el = this.player().el();
-        if (this.overlay.style.display === 'none' || !this.overlay.style.display) {
-            this.overlay.style.display = 'block';
-            if (el) el.classList.add('chapters-open');
-            // hide any open menus
-            try {
-                this.player().el().querySelectorAll('.vjs-menu').forEach((m) => {
-                    m.classList.remove('vjs-lock-showing');
-                    m.style.display = 'none';
-                });
-            } catch (e) {}
-        } else {
-            this.overlay.style.display = 'none';
-            if (el) el.classList.remove('chapters-open');
-        }
+        const isHidden = this.overlay.style.display === 'none' || !this.overlay.style.display;
+
+        this.overlay.style.display = isHidden ? 'block' : 'none';
+        if (el) el.classList.toggle('chapters-open', isHidden);
+
+        try {
+            this.player().el().querySelectorAll('.vjs-menu').forEach((m) => {
+                m.classList.remove('vjs-lock-showing');
+                m.style.display = 'none';
+            });
+        } catch (e) {}
     }
 
     updateCurrentChapter() {

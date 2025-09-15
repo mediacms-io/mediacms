@@ -26,12 +26,12 @@
 
 /* Settings overlay styling */
 .custom-settings-overlay {
-    border: 1px solid red;
+    border: 0;
     position: absolute;
     bottom: 60px;
     right: 20px;
-    width: 250px;
-    height: 400px;
+    width: 280px;
+    height: 350px;
     background: rgba(28, 28, 28, 0.95);
     color: white;
     border-radius: 7px;
@@ -39,36 +39,16 @@
     display: none;
     z-index: 1000;
     font-size: 14px;
-    overflow: visible;
+    overflow: auto;
 }
 
-/* Settings header */
-.settings-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-weight: bold;
-}
-
-/* Settings items */
-.settings-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.2s ease;
-}
+.settings-header {padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: bold;}
+.settings-item { padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: background 0.2s ease; gap:10px;}
+.settings-item .settings-left span{ display:flex;}
 .custom-settings-overlay .settings-left span.vjs-icon-placeholder {transform: inherit !important;}
-
-
-.settings-item:last-child {
-    border-bottom: none;
-}
-
-.settings-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
+.settings-item:last-child { border-bottom: none;}
+.settings-item:hover { background: rgba(255, 255, 255, 0.05);}
 
 /* Speed submenu */
 .speed-submenu {
@@ -94,6 +74,28 @@
     flex-direction: column;
 }
 
+/* Subtitles submenu styling mirrors speed/quality */
+.subtitles-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 28, 28, 0.95);
+    display: none;
+    flex-direction: column;
+}
+.subtitle-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+.subtitle-option:hover { background: rgba(255,255,255,0.05); }
+.subtitle-option.active { background: rgba(255,255,255,0.1); }
+
 /* Submenu header */
 .submenu-header {
     padding: 12px 16px;
@@ -101,10 +103,14 @@
     display: flex;
     align-items: center;
     cursor: pointer;
+    position: sticky;
+    top: 0;
+    background: rgba(28, 28, 28, 0.95);
+    z-index: 1;
 }
 
 .submenu-header:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(28, 28, 28, 1);
 }
 
 /* Speed options */
@@ -153,13 +159,13 @@
 .settings-right {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    text-align:right;
 }
-.vjs-icon-cog:before {
+/* .vjs-icon-cog:before {
     font-size: 20px !important;
     position: relative;
     top: -5px !important;
-}
+} */
 
 /* HD superscript badge for 1080p */
 sup.hd-badge {

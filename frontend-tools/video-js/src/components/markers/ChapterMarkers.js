@@ -90,73 +90,56 @@ class ChapterMarkers extends Component {
 
             // Style the floating tooltip
             Object.assign(this.tooltip.style, {
-                position: 'absolute',
-                background: 'rgba(0, 0, 0, 0.9)',
-                color: 'white',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
+                position: 'absolute',                
                 zIndex: '1000',
                 bottom: '45px',
                 transform: 'translateX(-50%)',
                 display: 'none',
-                minWidth: '200px',
-                maxWidth: '280px',
-                width: 'auto',
-                textAlign: 'center',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                minWidth: '160px',
+                maxWidth: '200px',
+                width: 'auto',                
             });
 
             // Create stable DOM structure to avoid trembling
             this.chapterTitle = videojs.dom.createEl('div', {
                 className: 'chapter-title',
             });
-            Object.assign(this.chapterTitle.style, {
-                fontWeight: 'bold',
-                marginBottom: '4px',
-                color: '#fff',
-            });
+            // Object.assign(this.chapterTitle.style, {
+            //     fontWeight: 'bold',
+            //     marginBottom: '4px',
+            //     color: '#fff',
+            // });
 
             this.chapterInfo = videojs.dom.createEl('div', {
                 className: 'chapter-info',
             });
-            Object.assign(this.chapterInfo.style, {
-                fontSize: '11px',
-                opacity: '0.8',
-                marginBottom: '2px',
-            });
+            // Object.assign(this.chapterInfo.style, {
+            //     fontSize: '11px',
+            //     opacity: '0.8',
+            //     marginBottom: '2px',
+            // });
 
             this.positionInfo = videojs.dom.createEl('div', {
                 className: 'position-info',
             });
-            Object.assign(this.positionInfo.style, {
-                fontSize: '10px',
-                opacity: '0.6',
-            });
+            // Object.assign(this.positionInfo.style, {
+            //     fontSize: '10px',
+            //     opacity: '0.6',
+            // });
 
             this.chapterImage = videojs.dom.createEl('div', {
                 className: 'chapter-image-sprite',
             });
-            Object.assign(this.chapterImage.style, {
-                width: '160px',
-                height: '90px',
-                marginTop: '8px',
-                borderRadius: '4px',
-                border: '1px solid rgba(255,255,255,0.1)',
+            Object.assign(this.chapterImage.style, {                
                 display: 'block',
-                overflow: 'hidden',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: 'auto',
+                overflow: 'hidden',                
             });
 
             // Append all elements to tooltip
             this.tooltip.appendChild(this.chapterTitle);
+            this.tooltip.appendChild(this.chapterImage);
             this.tooltip.appendChild(this.chapterInfo);
             this.tooltip.appendChild(this.positionInfo);
-            this.tooltip.appendChild(this.chapterImage);
         }
 
         // Add tooltip to seekBar if not already added

@@ -10,6 +10,7 @@ class UserPreferences {
             playbackRate: 1.0, // Normal speed
             quality: 'auto', // Auto quality
             subtitleLanguage: null, // No subtitles by default
+            subtitleEnabled: false, // Subtitles off by default
             muted: false,
             autoplay: false, // Autoplay disabled by default
         };
@@ -389,8 +390,9 @@ class UserPreferences {
      */
     applySubtitlePreference(player) {
         const savedLanguage = this.getPreference('subtitleLanguage');
+        const enabled = this.getPreference('subtitleEnabled');
 
-        if (savedLanguage) {
+        if (savedLanguage && enabled) {
             // Set flag to prevent auto-save during restoration
             this.isRestoringSubtitles = true;
             console.log('isRestoringSubtitles', this.isRestoringSubtitles);
@@ -427,6 +429,9 @@ class UserPreferences {
 
                         // Also update the menu UI to reflect the selection
                         this.updateSubtitleMenuUI(player, track);
+                        
+                        // Update subtitle button visual state immediately
+                        this.updateSubtitleButtonVisualState(player, true);
                         break;
                     }
                 }
@@ -439,8 +444,8 @@ class UserPreferences {
 
                 // If not found and we haven't tried too many times, try again
                 if (!found && attempt < 5) {
-                    console.log(`Subtitle language ${savedLanguage} not found, retrying in ${attempt * 200}ms...`);
-                    setTimeout(() => attemptToApplySubtitles(attempt + 1), attempt * 200);
+                    console.log(`Subtitle language ${savedLanguage} not found, retrying in ${attempt * 50}ms...`);
+                    setTimeout(() => attemptToApplySubtitles(attempt + 1), attempt * 50);
                 } else if (!found) {
                     console.warn('Could not find subtitle track for language:', savedLanguage);
                     // Clear flag even if not found
@@ -448,10 +453,54 @@ class UserPreferences {
                 }
             };
 
-            // Start attempting to apply subtitles
-            setTimeout(() => attemptToApplySubtitles(), 500);
+            // Start attempting to apply subtitles immediately
+            attemptToApplySubtitles();
         } else {
-            console.log('No saved subtitle language to apply');
+            // Ensure subtitles are off on load when not enabled
+            try {
+                const textTracks = player.textTracks();
+                for (let i = 0; i < textTracks.length; i++) {
+                    const track = textTracks[i];
+                    if (track.kind === 'subtitles') {
+                        track.mode = 'disabled';
+                    }
+                }
+                
+                // Update subtitle button visual state to show disabled
+                this.updateSubtitleButtonVisualState(player, false);
+                
+                // Update custom settings menu to show "Off" as selected
+                this.updateCustomSettingsMenuUI(player);
+            } catch (e) {}
+            console.log('No subtitle auto-apply on load (disabled or no language).');
+        }
+    }
+
+    /**
+     * Update subtitle button visual state (red underline)
+     * @param {Object} player - Video.js player instance
+     * @param {boolean} enabled - Whether subtitles are enabled
+     */
+    updateSubtitleButtonVisualState(player, enabled) {
+        try {
+            const controlBar = player.getChild('controlBar');
+            const subtitlesButton = controlBar.getChild('subtitlesButton');
+            
+            if (subtitlesButton && subtitlesButton.el()) {
+                const buttonEl = subtitlesButton.el();
+                
+                if (enabled) {
+                    buttonEl.classList.add('vjs-subs-active');
+                    console.log('✓ Added vjs-subs-active class to subtitle button');
+                } else {
+                    buttonEl.classList.remove('vjs-subs-active');
+                    console.log('✓ Removed vjs-subs-active class from subtitle button');
+                }
+            } else {
+                console.log('Subtitle button not found for visual state update');
+            }
+        } catch (error) {
+            console.error('Error updating subtitle button visual state:', error);
         }
     }
 
@@ -482,9 +531,42 @@ class UserPreferences {
                     }
                 });
             }
+
+            // Also update the custom settings menu if it exists
+            this.updateCustomSettingsMenuUI(player);
         } catch (error) {
             console.error('Error updating subtitle menu UI:', error);
         }
+    }
+
+    /**
+     * Update custom settings menu UI to reflect the current subtitle state
+     * @param {Object} player - Video.js player instance
+     */
+    updateCustomSettingsMenuUI(player) {
+        const attemptUpdate = (attempt = 1) => {
+            try {
+                // Find the custom settings menu component
+                const controlBar = player.getChild('controlBar');
+                const customSettingsMenu = controlBar.getChild('CustomSettingsMenu');
+                
+                if (customSettingsMenu && customSettingsMenu.refreshSubtitlesSubmenu) {
+                    console.log('Updating custom settings menu UI...');
+                    customSettingsMenu.refreshSubtitlesSubmenu();
+                } else if (attempt < 5) {
+                    // Retry after a short delay if menu not found
+                    console.log(`Custom settings menu not found, retrying in ${attempt * 200}ms... (attempt ${attempt})`);
+                    setTimeout(() => attemptUpdate(attempt + 1), attempt * 200);
+                } else {
+                    console.log('Custom settings menu not found after multiple attempts');
+                }
+            } catch (error) {
+                console.error('Error updating custom settings menu UI:', error);
+            }
+        };
+
+        // Start the update attempt
+        attemptUpdate();
     }
 
     /**
