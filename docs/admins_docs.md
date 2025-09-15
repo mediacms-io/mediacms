@@ -963,6 +963,8 @@ Select the SAML Configurations tab, create a new one and set:
 4. **Group mapping**: This creates groups associated with this IDP. Group ids as they come from SAML, associated with MediaCMS groups
 5. **Category Mapping**: This maps a group id (from SAML response) with a category in MediaCMS
 
+A full SAML deployment with [EntraID guide and troubleshooting steps is available here.](https://github.com/mediacms-io/mediacms/blob/main/docs/saml_entraid_setup.md). This guide can be used as reference for other IDPs too.
+
 ## 24. Identity Providers setup
 
 A separate Django app identity_providers has been added in order to facilitate a number of configurations related to different identity providers. If this is enabled, it gives the following options:
