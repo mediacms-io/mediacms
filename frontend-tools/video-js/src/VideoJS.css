@@ -10,15 +10,6 @@ html {
     text-decoration: none!important;
 }
 
-div.video-js.vjs-fluid {
- /*    border-radius: 12px !important;
-    overflow: hidden !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    outline: none !important; 
-    max-width:800px !important;
-    height:600px !important;    
-    padding:0 !important ; */
-}
 .video-js video {
     outline: none !important;
 }
@@ -41,9 +32,6 @@ div.video-js.vjs-fluid {
     height:48px;
 }
 
-
-
-/* Responsive video container */
 .video-container {
     width: 100%;
     max-width: 1200px;
@@ -78,43 +66,41 @@ div.video-js.vjs-fluid {
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% - 46px);
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.5);
     display: none;
     flex-direction: column;
-    justify-content: center; /* Center the content vertically */
+    justify-content: center;
     align-items: center;
     z-index: 1000;
-    padding: 20px 0;
-    box-sizing: border-box;
-    /* Remove overflow-y: auto to prevent scrollbar */
+    padding:0;
+    height:calc(100% - 46px);    
+    box-sizing: border-box;    
+        padding: 20px;
+    gap: 10px;
 }
 .vjs-related-videos-title {
     color: white;
     font-size: 24px;
-    margin-bottom: 20px;
+    line-height:24px;
+    padding:0;
+    margin: 0;
     text-align: center;
     font-weight: bold;
-    /* Ensure title doesn't interfere with centering */
     flex-shrink: 0;
 }
 .vjs-related-videos-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Default: 4 columns for large screens */
-    gap: 3px; /* Reduced gap like YouTube */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
     width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 16px;
     box-sizing: border-box;
-    align-content: center; /* Center the grid content */
     justify-items: center;
-    /* Ensure grid fits within video area */
-    max-height: calc(100vh - 200px); /* Limit height to fit within video area */
-    overflow: hidden; /* Hide videos that don't fit */
-    /* Center the entire grid within the video area */
+    overflow: hidden; 
     align-self: center;
     flex-shrink: 0;
+    height:calc(100% - 44px) ;
 }
 .vjs-related-video-item {
     position: relative;
@@ -127,7 +113,6 @@ div.video-js.vjs-fluid {
     /* aspect-ratio: 16/9; */
     width: 100%;
     max-width: 100%;
-    /* Remove min/max height constraints to let aspect-ratio handle sizing */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow like YouTube */
 }
 .vjs-related-video-item:hover {
@@ -307,33 +292,12 @@ div.video-js.vjs-fluid {
     }
 }
 
-/* Make menus clickable instead of hover-only */
-.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu {
-    display: none !important; /* Hide by default */
-}
-
+.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu { display: none !important; }
 .video-js .vjs-menu-button:not(.vjs-disabled).vjs-lock-showing .vjs-menu,
-.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu.vjs-lock-showing {
-    display: block !important; /* Show when clicked */
-}
-
-/* Disable hover effects on menu buttons */
-.video-js .vjs-menu-button:hover .vjs-menu {
-    display: none !important;
-}
-
-.video-js .vjs-menu-button.vjs-lock-showing:hover .vjs-menu {
-    display: block !important;
-}
-
-/* Ensure clicked menus stay visible */
-.video-js .vjs-menu.vjs-lock-showing {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Hide menus/tooltips when chapters overlay is open */
+.video-js .vjs-menu-button:not(.vjs-disabled) .vjs-menu.vjs-lock-showing { display: block !important;}
+.video-js .vjs-menu-button:hover .vjs-menu { display: none !important;}
+.video-js .vjs-menu-button.vjs-lock-showing:hover .vjs-menu { display: block !important;}
+.video-js .vjs-menu.vjs-lock-showing { display: block !important; opacity: 1 !important; visibility: visible !important;}
 .video-js.chapters-open .vjs-menu,
 .video-js.chapters-open .vjs-menu.vjs-lock-showing,
 .video-js.chapters-open .vjs-hover-display,
@@ -349,29 +313,22 @@ div.video-js.vjs-fluid {
     width:auto !important;
 }
 
-/* Hide only Captions (CC) icon; keep Subtitles icon visible */
 .video-js .vjs-captions-button,
 .video-js .vjs-subs-caps-button {
     display: none !important;
 }
-
-/* Hide the built-in Subtitles dropdown popup; we handle toggle ourselves */
 .video-js .vjs-subtitles-button .vjs-menu { 
     display: none !important; 
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
 }
-
-/* Ensure subtitle menu is completely hidden in all states */
 .video-js .vjs-subtitles-button .vjs-menu.vjs-lock-showing { 
     display: none !important; 
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
 }
-
-/* Fix subtitle positioning to prevent overlap with control bar - ALL SCREEN SIZES */
 .video-js .vjs-text-track-display {
     position: absolute !important;
     bottom: 6em !important; /* Position well above control bar */
@@ -383,140 +340,67 @@ div.video-js.vjs-fluid {
 }
 
 .video-js .vjs-text-track-cue {
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    text-align: center !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    font-size: 1.2em !important;
-    line-height: 1.4 !important;
-    color: #ffffff !important;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
-    font-family: Arial, sans-serif !important;
-    font-weight: 600 !important;
-    white-space: pre-line !important;
-    word-wrap: break-word !important;
-    max-width: 90% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    z-index: 11 !important; /* Ensure subtitle text appears on top */
+position: absolute !important;
+bottom: 0 !important;
+left: 0 !important;
+right: 0 !important;
+text-align: center !important;
+margin: 0 !important;
+padding: 0 !important;
+background: transparent !important;
+border: none !important;
+font-size: 1.2em !important;
+line-height: 1.4 !important;
+color: #ffffff !important;
+text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+font-family: Arial, sans-serif !important;
+font-weight: 600 !important;
+white-space: pre-line !important;
+word-wrap: break-word !important;
+max-width: 90% !important;
+margin-left: auto !important;
+margin-right: auto !important;
+z-index: 11 !important; /* Ensure subtitle text appears on top */
 }
 
 .video-js .vjs-text-track-cue > div {
-    background: rgba(0, 0, 0, 0.7) !important;
-    padding: 8px 12px !important;
-    border-radius: 4px !important;
-    display: inline-block !important;
-    margin: 2px 0 !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+background: rgba(0, 0, 0, 0.7) !important;
+padding: 8px 12px !important;
+border-radius: 4px !important;
+display: inline-block !important;
+margin: 2px 0 !important;
+max-width: 100% !important;
+box-sizing: border-box !important;
 }
 
-/* Fullscreen subtitle positioning */
-.video-js.vjs-fullscreen .vjs-text-track-display {
-    bottom: 8em !important; /* More space in fullscreen */
-}
-
-.video-js.vjs-fullscreen .vjs-text-track-cue {
-    font-size: 1.4em !important;
-    max-width: 85% !important;
-}
-
-.video-js.vjs-fullscreen .vjs-text-track-cue > div {
-    padding: 10px 16px !important;
-    font-size: 1em !important;
-}
-
-.video-js .vjs-subtitles-button .vjs-menu.vjs-lock-showing .vjs-menu-content { 
-    display: none !important; 
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-/* Hide the built-in Chapters dropdown popup; we handle toggle ourselves */
+.video-js.vjs-fullscreen .vjs-text-track-display { bottom: 8em !important;}
+.video-js.vjs-fullscreen .vjs-text-track-cue { font-size: 1.4em !important; max-width: 85% !important;}
+.video-js.vjs-fullscreen .vjs-text-track-cue > div { padding: 10px 16px !important; font-size: 1em !important;}
+.video-js .vjs-subtitles-button .vjs-menu.vjs-lock-showing .vjs-menu-content {  display: none !important;  visibility: hidden !important;
+opacity: 0 !important; pointer-events: none !important;}
 .video-js .vjs-chapters-button .vjs-menu { display: none !important; }
-
-/* Ensure chapters menu is hidden in all states */
 .video-js .vjs-chapters-button .vjs-menu.vjs-lock-showing { display: none !important; }
 .video-js .vjs-chapters-button .vjs-menu.vjs-lock-showing .vjs-menu-content { display: none !important; }
+.video-js .vjs-chapters-button .vjs-menu {  display: none !important;  visibility: hidden !important; opacity: 0 !important;
+pointer-events: none !important;}
+.video-js .vjs-subtitles-button {  position: relative;  cursor: pointer !important; pointer-events: auto !important;}
+.video-js button.vjs-subtitles-button { cursor: pointer !important; pointer-events: auto !important;
+touch-action: manipulation !important; -webkit-tap-highlight-color: transparent !important;}
+.video-js button.vjs-subtitles-button::before { content: ""; position: absolute;  left: 50%; transform:translateX(-50%); bottom: 6px;
+height: 3px; background: #e1002d; border-radius: 2px; width:0;  padding:0; transition: none !important; animation: none !important;
+-webkit-transition: none !important; -moz-transition: none !important; -o-transition: none !important;}
 
-/* Completely disable chapters menu functionality */
-.video-js .vjs-chapters-button .vjs-menu { 
-    display: none !important; 
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
+.video-js .vjs-subs-active button.vjs-subtitles-button::before { width:24px; transition: none !important;
+animation: none !important; -webkit-transition: none !important; -moz-transition: none !important; -o-transition: none !important;}
+.video-js button.vjs-subtitles-button { transition: none !important; animation: none !important; -webkit-transition: none !important;
+-moz-transition: none !important; -o-transition: none !important;}
 
-/* YouTube-like Subtitles icon active indicator (red underline) */
-.video-js .vjs-subtitles-button { 
-    position: relative; 
-    cursor: pointer !important;
-    pointer-events: auto !important;
-}
-
-.video-js button.vjs-subtitles-button {
-    cursor: pointer !important;
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
-}
-
-.video-js button.vjs-subtitles-button::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    transform:translateX(-50%);    
-    bottom: 6px;
-    height: 3px;
-    background: #e1002d;
-    border-radius: 2px;
-    width:0;
-    padding:0;
-    transition: none !important;
-    animation: none !important;
-    -webkit-transition: none !important;
-    -moz-transition: none !important;
-    -o-transition: none !important;
-}
-
-.video-js .vjs-subs-active button.vjs-subtitles-button::before {
-    width:24px;
-    transition: none !important;
-    animation: none !important;
-    -webkit-transition: none !important;
-    -moz-transition: none !important;
-    -o-transition: none !important;
-}
-
-/* Ensure subtitle button itself has no transitions */
-.video-js button.vjs-subtitles-button {
-    transition: none !important;
-    animation: none !important;
-    -webkit-transition: none !important;
-    -moz-transition: none !important;
-    -o-transition: none !important;
-}
-
-/* Hide default Video.js tooltips for autoplay button */
 .video-js .vjs-autoplay-toggle .vjs-hover-display,
 .video-js .vjs-autoplay-toggle .vjs-tooltip,
-.video-js .vjs-autoplay-toggle .vjs-tooltip-text {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
+.video-js .vjs-autoplay-toggle .vjs-tooltip-text { display: none !important; visibility: hidden !important;
+opacity: 0 !important; pointer-events: none !important;}
 
-/* Custom tooltip for autoplay toggle button */
-.video-js .vjs-autoplay-toggle {
-    position: relative;
-}
+.video-js .vjs-autoplay-toggle { position: relative;}
 
 .video-js .vjs-autoplay-toggle::after {
     content: attr(title);
@@ -542,288 +426,8 @@ div.video-js.vjs-fluid {
 }
 
 .video-js .vjs-autoplay-toggle:hover::after,
-.video-js .vjs-autoplay-toggle:focus::after {
-    opacity: 1;
-    visibility: visible;
-}
+.video-js .vjs-autoplay-toggle:focus::after { opacity: 1; visibility: visible;}
 
-
-
-
-/* Large desktop (1200px+) - 4x3 grid */
-@media(min-width: 1200px){
-    .vjs-related-videos-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 3px; /* Tighter spacing like YouTube */
-        padding: 20px;
-        max-height: calc(100vh - 220px); /* Ensure it fits within video area */
-    }
-}
-
-/* Desktop (1024px - 1199px) - 3x3 grid */
-@media(min-width: 1024px) and (max-width: 1199px){
-    .vjs-related-videos-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 3px; /* Tighter spacing like YouTube */
-        padding: 18px;
-        max-height: calc(100vh - 210px); /* Ensure it fits within video area */
-    }
-}
-
-/* Tablet (768px - 1023px) - 3x2 grid */
-@media(min-width: 768px) and (max-width: 1023px){
-    .vjs-related-videos-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 3px; /* Tighter spacing like YouTube */
-        padding: 14px;
-        max-height: calc(100vh - 200px); /* Ensure it fits within video area */
-    }
-    
-    /* Hide all custom tooltips on tablet screens */
-    .video-js .vjs-control:hover::after,
-    .video-js .vjs-control:focus::after,
-    .video-js .vjs-control:active::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-    
-    /* Hide specific control tooltips on tablet */
-    .video-js .vjs-play-control:hover::after,
-    .video-js .vjs-mute-control:hover::after,
-    .video-js .vjs-volume-panel:hover::after,
-    .video-js .vjs-fullscreen-control:hover::after,
-    .video-js .vjs-picture-in-picture-control:hover::after,
-    .video-js .vjs-settings-control:hover::after,
-    .video-js .vjs-chapters-control:hover::after,
-    .video-js .vjs-autoplay-toggle:hover::after,
-    .video-js .vjs-next-video-control:hover::after,
-    .video-js .vjs-remaining-time:hover::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-/* Responsive adjustments */
-@media (max-width: 767px) {
-     .video-js .vjs-autoplay-toggle.touch-active::after {
-        opacity: 1;
-        visibility: visible;
-    }
-     .video-js .vjs-autoplay-toggle::after {
-        font-size: 11px;
-        padding: 5px 8px;
-        margin-bottom: 6px;
-    }
-    .video-container {
-        padding: 0 15px;
-    }
-
-    .vjs-end-screen-overlay {
-        padding: 0;
-        height: calc(100% - 46px);
-    }
-
-    .vjs-related-video-thumbnail {
-        height: 100%;
-    }
-
-    .vjs-chapter-floating-tooltip {
-        font-size: 11px !important;
-    }
-
-    /* Mobile settings popup visibility */
-   
-
-
-    /* Mobile chapters popup visibility */
-    .custom-chapters-overlay .video-chapter {        
-        right: 10px ;
-        left: auto ;
-        width: 100% ;
-        max-width: calc(300px - 20px) ;
-        height: calc(100% - 40px) ;
-        max-height: calc(100% - 40px) ;
-        overflow: hidden ;
-        bottom: 40px;
-    }
-
-    /* Mobile settings button fixes */
-    .video-js .vjs-settings-button {
-        min-width: 44px !important;
-        height: 44px !important;
-        padding: 0 !important;
-        margin: 0 2px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
-        cursor: pointer !important;
-        z-index: 1000 !important;
-        pointer-events: auto !important;
-        position: relative !important;
-    }
-
-    .video-js .vjs-settings-button .vjs-icon-cog {
-        font-size: 20px !important;
-        width: 20px !important;
-        height: 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    /* Mobile touch improvements */
-    .video-js .vjs-control-bar .vjs-button {
-        touch-action: manipulation !important;
-        -webkit-tap-highlight-color: transparent !important;
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
-    }
-
-    /* Mobile settings menu items */
-    .custom-settings-overlay .settings-item {
-        padding:6px 16px ;
-        font-size:15px ;
-        touch-action: manipulation ;
-        line-height:18px;
-    }
-
-    .custom-settings-overlay .settings-header {
-        padding: 10px 16px ;
-        font-size: 18px ;
-        line-height:20px ;
-    }
-
-    /* Mobile submenu fixes */
-
-
-
-    /* Mobile chapters content adjustments */
-    .chapter-head {
-        padding:10px 15px ;
-    }
-
-    .chapter-title h3 a {
-        font-size: 15px !important;
-        line-height: 20px !important;
-        height:20px !important;
-    }
-
-    .chapter-title p {
-        font-size: 11px !important;
-        line-height: 14px !important;
-    }
-
-
-    .playlist-items a {
-        padding:10px 16px !important;
-        min-height: 58px !important;
-    }
-
-    .thumbnail-meta h4 {
-        font-size: 13px !important;
-        line-height: 18px !important;
-    }
-
-    .thumbnail-meta .meta-sub .meta-dynamic {
-        font-size: 11px !important;
-        line-height: 16px !important;
-    }
-}
-
-
-@media(max-width:767px){
-    body div.custom-settings-overlay{  bottom:40px; }
-    div.chapter-close button{ width:30px; height:30px;}
-    .vjs-related-videos-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 3px; /* Tighter spacing like YouTube */
-        padding: 10px;
-        max-height: calc(100vh - 180px); /* Ensure it fits within video area */
-    }
-    
-    /* Hide all custom tooltips on mobile screens */
-    .video-js .vjs-control:hover::after,
-    .video-js .vjs-control:focus::after,
-    .video-js .vjs-control:active::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-    
-    /* Hide specific control tooltips on mobile */
-    .video-js .vjs-play-control:hover::after,
-    .video-js .vjs-mute-control:hover::after,
-    .video-js .vjs-volume-panel:hover::after,
-    .video-js .vjs-fullscreen-control:hover::after,
-    .video-js .vjs-picture-in-picture-control:hover::after,
-    .video-js .vjs-settings-control:hover::after,
-    .video-js .vjs-chapters-control:hover::after,
-    .video-js .vjs-autoplay-toggle:hover::after,
-    .video-js .vjs-next-video-control:hover::after,
-    .video-js .vjs-remaining-time:hover::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-/* Small mobile responsive adjustments */
-@media (max-width: 480px) {
-    .video-container {
-        padding: 0 10px;
-    }
-
-    .vjs-related-videos-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 3px; /* Very tight spacing like YouTube mobile */
-        padding: 8px;
-        max-height: calc(100vh - 160px); /* Ensure it fits within video area */
-    }
-    
-    /* Hide all custom tooltips on small mobile screens */
-    .video-js .vjs-control:hover::after,
-    .video-js .vjs-control:focus::after,
-    .video-js .vjs-control:active::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-    
-    /* Hide specific control tooltips on small mobile */
-    .video-js .vjs-play-control:hover::after,
-    .video-js .vjs-mute-control:hover::after,
-    .video-js .vjs-volume-panel:hover::after,
-    .video-js .vjs-fullscreen-control:hover::after,
-    .video-js .vjs-picture-in-picture-control:hover::after,
-    .video-js .vjs-settings-control:hover::after,
-    .video-js .vjs-chapters-control:hover::after,
-    .video-js .vjs-autoplay-toggle:hover::after,
-    .video-js .vjs-next-video-control:hover::after,
-    .video-js .vjs-remaining-time:hover::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-    .vjs-end-screen-overlay {
-        padding: 0;
-        height: calc(100% - 46px);
-    }
-    .vjs-related-video-thumbnail {
-        height: 100%;
-    }
-    .video-js .vjs-settings-button .vjs-icon-cog {
-        font-size: 22px !important;
-        width: 22px !important;
-        height: 22px !important;
-    }
-}
-
-/* Settings Button - Base Styles */
 .video-js .vjs-settings-button {
     cursor: pointer !important;
     pointer-events: auto !important;
@@ -849,283 +453,75 @@ div.video-js.vjs-fluid {
     user-select: none !important;
 }
 
-.video-js .vjs-settings-button:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-}
+.video-js .vjs-settings-button:hover { background-color: rgba(255, 255, 255, 0.1) !important;}
+.video-js .vjs-settings-button:focus { outline: 2px solid #fff !important; outline-offset: 2px !important;}
 
-.video-js .vjs-settings-button:focus {
-    outline: 2px solid #fff !important;
-    outline-offset: 2px !important;
-}
+.video-js .vjs-settings-button .vjs-icon-cog { font-size: 18px !important; width: 18px !important; height: 18px !important;
+display: flex !important; align-items: center !important; justify-content: center !important;}
+.vjs-play-progress { background-color: #019932 !important;}
+.vjs-load-progress { background: rgba(255, 255, 255, 0.5) !important;}
+.vjs-progress-holder { background: rgba(255, 255, 255, 0.5) !important;}
 
-.video-js .vjs-settings-button .vjs-icon-cog {
-    font-size: 18px !important;
-    width: 18px !important;
-    height: 18px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
+.video-js .vjs-progress-control { position: absolute !important; bottom: 46px !important; left: 0 !important; right: 0 !important;
+width: 100% !important; height: 0 !important; z-index: 3 !important; padding: 0 !important; margin: 0 auto !important;}
+.video-js .vjs-control-bar .vjs-progress-control { display: none !important;}
+.video-js .vjs-progress-control.vjs-control { display: block !important;}
 
-
-
-/* Played portion, buffered portion, unplayed portion */
-.vjs-play-progress {
-    background-color: #019932 !important;
-}
-.vjs-load-progress {
-    background: rgba(255, 255, 255, 0.5) !important;
-}
-.vjs-progress-holder {
-    background: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Move progress control out of control bar and position it above */
-.video-js .vjs-progress-control {
-    position: absolute !important;
-    bottom: 46px !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: 0 !important;
-    z-index: 3 !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
-}
-
-/* Hide the original progress control from the control bar */
-.video-js .vjs-control-bar .vjs-progress-control {
-    display: none !important;
-}
-
-/* Optional: Ensure the progress control is visible */
-.video-js .vjs-progress-control.vjs-control {
-    display: block !important;
-}
-
-/* Make the seek bar thicker */
-/* .video-js .vjs-play-progress,
-.video-js .vjs-load-progress,
-.video-js .vjs-progress-holder {
-    height: 4px !important;
-} */
-
-/* Remove the semi-transparent background from control bar */
-
-
-
-/* Push specific buttons to the right */
-/* .video-js .vjs-playback-rate,
-.video-js .vjs-picture-in-picture-control,
-.video-js .vjs-fullscreen-control {
-    margin-left: auto !important;
-    order: 999 !important;
-}
-.video-js .vjs-picture-in-picture-control {
-    margin-left: 0 !important;
-}
-.video-js .vjs-fullscreen-control {
-    margin-left: 0 !important;
-} */
-
-/* Make all control bar icons bigger */
 .video-js .vjs-control-bar .vjs-icon-placeholder,
 .video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
-.video-js .vjs-control-bar [class*="vjs-icon-"] {
-    font-size: 1.5em !important;
-    /* transform: translateY(-28px) !important; */
-}
-/* .video-js .vjs-control-bar svg {
-    width: 3em !important;
-    height: 3em !important;
-    transform: translateY(-16px) !important;
-} */
+.video-js .vjs-control-bar [class*="vjs-icon-"] { font-size: 1.5em !important;}
 
-/******** BEGIN: Custom Remaining Time Styles *********/
-.vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
-    font-size: 14px !important; /* Increase font size */
-    font-weight: 500;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #fff;
-}
+.vjs-control-bar .custom-remaining-time .vjs-remaining-time-display { font-size: 14px !important; font-weight: 500; line-height: 1;
+display: flex; align-items: center; justify-content: center; height: 100%; color: #fff;}
+.vjs-mouse-display { z-index: 4 !important;}
+.vjs-slider-horizontal { top: -5px;}
+.video-js .vjs-spacer-control {flex: 1 !important; min-width: 1px !important; height: 100% !important;}
+.video-js .vjs-control-bar .vjs-control { flex: none !important;}
+.video-js .vjs-autoplay-toggle { margin-right: 10px !important;}
+.video-js .vjs-picture-in-picture-control { margin-left: 6px !important; }
+.vjs-seek-indicator { position: absolute !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
+z-index: 9999 !important; pointer-events: none !important; display: none !important; align-items: center !important; justify-content: center !important;
+opacity: 0 !important; visibility: hidden !important; transition: opacity 0.2s ease-in-out !important; }
+.vjs-seek-indicator-content { background: transparent !important; flex-direction: column !important; align-items: center !important;
+justify-content: center !important;}
+.vjs-seek-indicator-icon { position: relative !important; display: flex !important; align-items: center !important;
+justify-content: center !important; margin-bottom: 4px !important;}
+.seek-icon-container { display: flex !important; flex-direction: column !important; align-items: center !important;
+justify-content: center !important; animation: seekPulse 0.3s ease-out !important;}
 
-/* Ensure proper vertical alignment within control bar */
-/* .vjs-control-bar .custom-remaining-time {
-    top: -5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-} */
+.youtube-seek-container { display: flex !important; align-items: center !important; justify-content: center !important;
+animation: youtubeSeekPulse 0.3s ease-out !important;}
+.youtube-seek-circle { width: 80px !important; height: 80px !important; border-radius: 50% !important; -webkit-border-radius: 50% !important;
+-moz-border-radius: 50% !important; background: rgba(0, 0, 0, 0.8) !important; backdrop-filter: blur(10px) !important;
+-webkit-backdrop-filter: blur(10px) !important; display: flex !important; flex-direction: column !important; align-items: center !important;
+justify-content: center !important; padding: 0 !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+border: 1px solid rgba(255, 255, 255, 0.15) !important; box-sizing: border-box !important; overflow: hidden !important;}
 
-/********* END: Custom Remaining Time Styles *********/
-
-/* Volume Slider */
-.vjs-mouse-display {
-    z-index: 4 !important;
-}
-.vjs-slider-horizontal {
-    top: -5px;
-}
-
-
-/* Spacer element to push buttons to the right */
-.video-js .vjs-spacer-control {
-    flex: 1 !important;
-    min-width: 1px !important;
-    height: 100% !important;
-}
-
-/* Basic control bar styling - let JavaScript handle positioning */
-/* .video-js .vjs-control-bar {
-    display: flex !important;
-    /* gap: 6px !important; Consistent spacing between all control bar icons */
-    /* align-items: center !important;
-} */ 
-
-.video-js .vjs-control-bar .vjs-control {
-    /* Natural flex flow */
-    flex: none !important; /* Prevent controls from growing */
-}
-
-/* Specific spacing for autoplay and picture-in-picture buttons */
-.video-js .vjs-autoplay-toggle {
-    margin-right: 10px !important; /* Add spacing after autoplay button */
-}
-
-.video-js .vjs-picture-in-picture-control {
-    margin-left: 6px !important; /* Add spacing before picture-in-picture button */
-}
-
-/* Seek Indicator Styles */
-.vjs-seek-indicator {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: 9999 !important;
-    pointer-events: none !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transition: opacity 0.2s ease-in-out !important;
-}
-
-.vjs-seek-indicator-content {
-    background: transparent !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.vjs-seek-indicator-icon {
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-bottom: 4px !important;
-}
-
-.seek-icon-container {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    animation: seekPulse 0.3s ease-out !important;
-}
-
-/* YouTube-style seek indicator */
-.youtube-seek-container {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    animation: youtubeSeekPulse 0.3s ease-out !important;
-}
-
-.youtube-seek-circle {
-    width: 80px !important;
-    height: 80px !important;
-    border-radius: 50% !important;
-    -webkit-border-radius: 50% !important;
-    -moz-border-radius: 50% !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-}
-
-.youtube-seek-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-bottom: 4px !important;
-}
-
-.youtube-seek-icon svg {
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) !important;
-}
-
-.youtube-seek-time {
-    color: white !important;
-    font-size: 10px !important;
-    font-weight: 500 !important;
-    text-align: center !important;
-    line-height: 1.2 !important;
-    opacity: 0.9 !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
+.youtube-seek-icon {display: flex !important;  align-items: center !important; justify-content: center !important;
+margin-bottom: 4px !important;}
+.youtube-seek-icon svg {filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) !important;}
+.youtube-seek-time {color: white !important;font-size: 10px !important;font-weight: 500 !important; text-align: center !important; 
+line-height: 1.2 !important; opacity: 0.9 !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;}
 
 @keyframes youtubeSeekPulse {
     0% {
-        transform: scale(0.7);
-        opacity: 0.5;
+        transform: scale(0.7); opacity: 0.5;
     }
     50% {
-        transform: scale(1.05);
-        opacity: 0.9;
+        transform: scale(1.05); opacity: 0.9;
     }
     100% {
-        transform: scale(1);
-        opacity: 1;
+        transform: scale(1); opacity: 1;
     }
 }
 
-.seek-seconds {
-    color: white !important;
-    font-size: 16px !important;
-    font-weight: bold !important;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7) !important;
-    line-height: 1 !important;
-}
-
-/* Remove old animation - replaced with youtubeSeekPulse */
-
-.vjs-seek-indicator-text {
-    color: white !important;
-    font-size: 16px !important;
-    font-weight: 500 !important;
-    text-align: center !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
-}
+.seek-seconds { color: white !important; font-size: 16px !important; font-weight: bold !important;
+text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7) !important; line-height: 1 !important;}
+.vjs-seek-indicator-text { color: white !important; font-size: 16px !important; font-weight: 500 !important; 
+text-align: center !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;}
 button{cursor: pointer;}
 
-
-.video-js{ padding:0; height:100% !important;}
-
+.video-js{ padding:0; height:100% !important; border-radius:12px;}
 .video-chapter{ position:absolute; top:auto; bottom:60px; width:min(360px, calc(100% - 20px)); border:1px solid rgba(255, 255, 255, 0.12); border-radius:12px;
 height:calc(100% - 80px); background:rgba(18, 18, 18, 0.96); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); overflow:hidden;
 box-shadow: 0 12px 30px rgba(0,0,0,0.45); right:10px;}
@@ -1163,7 +559,6 @@ color:#fff; white-space:normal; max-height:40px; -webkit-line-clamp: 2; line-cla
 .thumbnail-action button{ border:0; background:transparent; color:#fff; opacity:0;}
 .playlist-items a:hover .thumbnail-action button{ opacity:1;}
 
-/* custom scrollbar for chapter list */
 .chapter-body::-webkit-scrollbar{ width:10px; }
 .chapter-body::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.18); border-radius:8px; }
 .chapter-body::-webkit-scrollbar-track{ background:transparent; }
@@ -1184,7 +579,6 @@ margin:0; width:0; transition:ease-in-out .5s !important; opacity:0;}
 
 .vjs-settings-button svg{ transition:ease-in-out .3s;}
 .vjs-settings-button.settings-clicked svg{ transform:rotate(30deg);}
-
 
 .video-js span.vjs-control-text{ position:absolute !important; bottom: 125%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); 
 color: white; padding: 6px 8px !important; border-radius: 3px; font-size: 13px; white-space: nowrap; opacity: 0; pointer-events: none; 
@@ -1207,15 +601,66 @@ height:30px; line-height:30px; overflow:hidden;}
 .vjs-chapter-floating-tooltip .position-info,
 .vjs-chapter-floating-tooltip .chapter-info{ font-size:15px; display:inline-block; margin:0 0 2px; line-height:normal; vertical-align:top; line-height:20px;}
 
-@media(max-width:1024px){
-    body div.custom-settings-overlay {height: calc(100% - 40px); max-height:300px;}
-}
 
 @media (pointer: coarse) {
     .video-js .vjs-volume-panel div.vjs-volume-control {width: auto; opacity: 1;}
 }
 
+
+@media(min-width: 1200px){
+    .vjs-related-videos-grid { grid-template-columns: repeat(4, 1fr);}
+}
+
+@media (max-width: 1199px) {
+  .vjs-related-video-item:nth-child(n + 10) { display: none;}
+}
+
+@media (max-width: 1139px) {
+  .vjs-related-video-item:nth-child(n + 7) { display: none;}
+}
+
+@media(min-width: 1024px) and (max-width: 1199px){
+    .vjs-related-videos-grid { grid-template-columns: repeat(3, 1fr);}
+}
+
+@media(min-width: 1025px) {
+    .video-js .vjs-text-track-display { bottom: 6em !important;}
+    .video-js .vjs-autoplay-toggle { margin-right: 12px !important;}
+    .video-js .vjs-picture-in-picture-control { margin-left: 12px !important;}
+    .video-js .vjs-text-track-cue { font-size: 1.2em !important; max-width: 90% !important;}
+    .video-js .vjs-text-track-cue > div { padding: 8px 12px !important; font-size: 1em !important;}
+    .video-js.vjs-fullscreen .vjs-text-track-display { bottom: 8em !important;}
+}
+
+@media(min-width: 768px) and (max-width: 1024px) {
+    .video-js .vjs-text-track-display { bottom: 7em !important;}    
+    .video-js .vjs-text-track-cue {font-size: 1.15em !important; max-width: 88% !important;}    
+    .video-js .vjs-text-track-cue > div { padding: 7px 11px !important; font-size: 0.95em !important;}    
+    .video-js.vjs-fullscreen .vjs-text-track-display { bottom: 9em !important;}
+    .vjs-related-videos-grid {grid-template-columns: repeat(3, 1fr);  }
+
+    .video-js .vjs-control:hover::after,
+    .video-js .vjs-control:focus::after,
+    .video-js .vjs-control:active::after { display: none !important; opacity: 0 !important; visibility: hidden !important;}
+    
+    .video-js .vjs-play-control:hover::after,
+    .video-js .vjs-mute-control:hover::after,
+    .video-js .vjs-volume-panel:hover::after,
+    .video-js .vjs-fullscreen-control:hover::after,
+    .video-js .vjs-picture-in-picture-control:hover::after,
+    .video-js .vjs-settings-control:hover::after,
+    .video-js .vjs-chapters-control:hover::after,
+    .video-js .vjs-autoplay-toggle:hover::after,
+    .video-js .vjs-next-video-control:hover::after,
+    .video-js .vjs-remaining-time:hover::after { display: none !important; opacity: 0 !important; visibility: hidden !important;    }
+}
+
+@media(max-width:1024px){
+    body div.custom-settings-overlay {height: calc(100% - 40px); max-height:300px;}
+}
+
 @media(max-width:767px){
+    .vjs-related-vdeo-item:nth-child(n + 5) { display: none;}    
     .vjs-chapters-button button.vjs-button, 
     .vjs-subtitles-button button.vjs-button, .video-js button.vjs-control {width:32px; height: 32px;}
     button.vjs-button > .vjs-icon-placeholder:before { line-height: 32px;}
@@ -1241,7 +686,77 @@ height:30px; line-height:30px; overflow:hidden;}
     .subtitles-submenu,
     .quality-submenu,
     .speed-submenu{ height:100%; overflow:auto;}
+    body div.custom-settings-overlay{  bottom:40px; }
+    div.chapter-close button{ width:30px; height:30px;}
+    .vjs-related-videos-grid { grid-template-columns: repeat(2, 1fr); }
+    
+    .video-js .vjs-control:hover::after,
+    .video-js .vjs-control:focus::after,
+    .video-js .vjs-control:active::after { display: none !important; opacity: 0 !important; visibility: hidden !important;}
+    
+    .video-js .vjs-play-control:hover::after,
+    .video-js .vjs-mute-control:hover::after,
+    .video-js .vjs-volume-panel:hover::after,
+    .video-js .vjs-fullscreen-control:hover::after,
+    .video-js .vjs-picture-in-picture-control:hover::after,
+    .video-js .vjs-settings-control:hover::after,
+    .video-js .vjs-chapters-control:hover::after,
+    .video-js .vjs-autoplay-toggle:hover::after,
+    .video-js .vjs-next-video-control:hover::after,
+    .video-js .vjs-remaining-time:hover::after { display: none !important; opacity: 0 !important; visibility: hidden !important;}
 
+    .video-js .vjs-autoplay-toggle.touch-active::after {opacity: 1; visibility: visible; }
+    .video-js .vjs-autoplay-toggle::after { font-size: 11px; padding: 5px 8px; margin-bottom: 6px; } 
+    .video-container {padding: 0 15px;}
+    .vjs-related-video-thumbnail {height: 100%; }
+    .vjs-chapter-floating-tooltip {font-size: 11px !important;}
+    .custom-chapters-overlay .video-chapter { right: 10px ; left: auto ; width: 100% ; max-width: calc(300px - 20px) ; height: calc(100% - 40px) ; 
+        max-height: calc(100% - 40px) ; overflow: hidden ; bottom: 40px; }
+    .video-js .vjs-settings-button { min-width: 44px !important; height: 44px !important; padding: 0 !important; margin: 0 2px !important; display: flex !important; 
+        align-items: center !important; justify-content: center !important; touch-action: manipulation !important; -webkit-tap-highlight-color: transparent !important; cursor: pointer !important; z-index: 1000 !important; pointer-events: auto !important; position: relative !important; }
+    .video-js .vjs-settings-button .vjs-icon-cog { font-size: 20px !important; width: 20px !important; height: 20px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+    .video-js .vjs-control-bar .vjs-button {touch-action: manipulation !important; -webkit-tap-highlight-color: transparent !important; -webkit-touch-callout: none !important; -webkit-user-select: none !important; user-select: none !important; }
+
+    .custom-settings-overlay .settings-item {padding:6px 16px ; font-size:15px ; touch-action: manipulation ; line-height:18px; }
+    .custom-settings-overlay .settings-header {padding: 10px 16px ; font-size: 18px ; line-height:20px ; }
+    .chapter-head {padding:10px 15px ;}
+    .chapter-title h3 a {font-size: 15px !important; line-height: 20px !important; height:20px !important; }
+    .chapter-title p {font-size: 11px !important; line-height: 14px !important; }
+    .playlist-items a {padding:10px 16px !important; min-height: 58px !important; }
+    .thumbnail-meta h4 {font-size: 13px !important; line-height: 18px !important; }
+    .thumbnail-meta .meta-sub .meta-dynamic {font-size: 11px !important; line-height: 16px !important; } 
+
+}
+
+@media (max-width: 574px) {
+  .vjs-related-video-item:nth-child(n + 3) { display: none;}
+}
+
+@media(max-width:480px){
+    .video-container { padding: 0 10px;}
+
+    .video-js .vjs-control:hover::after,
+    .video-js .vjs-control:focus::after,
+    .video-js .vjs-control:active::after { display: none !important; opacity: 0 !important; visibility: hidden !important;}
+
+    .video-js .vjs-play-control:hover::after,
+    .video-js .vjs-mute-control:hover::after,
+    .video-js .vjs-volume-panel:hover::after,
+    .video-js .vjs-fullscreen-control:hover::after,
+    .video-js .vjs-picture-in-picture-control:hover::after,
+    .video-js .vjs-settings-control:hover::after,
+    .video-js .vjs-chapters-control:hover::after,
+    .video-js .vjs-autoplay-toggle:hover::after,
+    .video-js .vjs-next-video-control:hover::after,
+    .video-js .vjs-remaining-time:hover::after { display: none !important; opacity: 0 !important; visibility: hidden !important;}
+
+    .vjs-related-video-thumbnail {height: 100%;}
+    .video-js .vjs-settings-button .vjs-icon-cog {font-size: 22px !important; width: 22px !important; height: 22px !important;}
+}
+
+@media (max-width: 439px) {
+    .vjs-related-video-item:nth-child(n + 2) { display: none;}  
+    .vjs-related-videos-grid { grid-template-columns: repeat(1, 1fr);}
 }
 
 @media(max-width:399px){
@@ -1249,109 +764,14 @@ height:30px; line-height:30px; overflow:hidden;}
     .vjs-subtitles-button button.vjs-button, .video-js button.vjs-control {width:28px; height: 28px;}
     button.vjs-button > .vjs-icon-placeholder:before { line-height: 28px;}
     .vjs-next-video-control svg{width:28px; height: 28px;}
-    .video-js div.vjs-control {height: 28px;}
-    
-    /* Small mobile spacing for autoplay and picture-in-picture buttons */
-    .video-js .vjs-autoplay-toggle {
-        margin-right: 4px !important; /* Even smaller spacing for small mobile */
-    }
-    
-    .video-js .vjs-picture-in-picture-control {
-        margin-left: 4px !important; /* Even smaller spacing for small mobile */
-    }
-    
-    /* Small mobile subtitle positioning adjustments - prevent overlap with control bar when cursor is in middle */
-    .video-js .vjs-text-track-display {
-        bottom: 7em !important; /* Extra safe margin for small mobile to prevent overlap */
-    }
-    
-    .video-js .vjs-text-track-cue {
-        font-size: 1em !important;
-        max-width: 98% !important;
-    }
-    
-    .video-js .vjs-text-track-cue > div {
-        padding: 4px 8px !important;
-        font-size: 0.85em !important;
-        background: rgba(0, 0, 0, 0.85) !important; /* Even stronger background for small mobile */
-    }
-    
-    /* Small mobile fullscreen adjustments */
-    .video-js.vjs-fullscreen .vjs-text-track-display {
-        bottom: 9em !important; /* Extra space in small mobile fullscreen */
-    }
-    
-    .video-js.vjs-fullscreen .vjs-text-track-cue {
-        font-size: 1.2em !important;
-        max-width: 95% !important;
-    }
-    
-    .video-js.vjs-fullscreen .vjs-text-track-cue > div {
-        padding: 6px 10px !important;
-        font-size: 0.9em !important;
-    }
-    
+    .video-js div.vjs-control {height: 28px;}    
+    .video-js .vjs-autoplay-toggle { margin-right: 4px !important; }    
+    .video-js .vjs-picture-in-picture-control { margin-left: 4px !important; }
+    .video-js .vjs-text-track-display { bottom: 7em !important; }    
+    .video-js .vjs-text-track-cue { font-size: 1em !important; max-width: 98% !important; } 
+    .video-js .vjs-text-track-cue > div { padding: 4px 8px !important; font-size: 0.85em !important; background: rgba(0, 0, 0, 0.85) !important; }    
+    .video-js.vjs-fullscreen .vjs-text-track-display { bottom: 9em !important; }    
+    .video-js.vjs-fullscreen .vjs-text-track-cue { font-size: 1.2em !important; max-width: 95% !important; }    
+    .video-js.vjs-fullscreen .vjs-text-track-cue > div { padding: 6px 10px !important; font-size: 0.9em !important; }    
     .vjs-button > .vjs-icon-placeholder:before { font-size: 1.4em !important;}
-}
-
-/* Tablet and medium screen adjustments - prevent overlap with control bar */
-@media(min-width: 768px) and (max-width: 1024px) {
-    .video-js .vjs-text-track-display {
-        bottom: 7em !important; /* Safe margin for tablet */
-    }
-    
-    /* Tablet spacing for autoplay and picture-in-picture buttons */
-    /* .video-js .vjs-autoplay-toggle { */
-        /* margin-right: 10px !important; Larger spacing for tablet */
-    /* } */
-    
-    /* .video-js .vjs-picture-in-picture-control { */
-        /* margin-left: 10px !important; Larger spacing for tablet */
-    /* } */
-    
-    .video-js .vjs-text-track-cue {
-        font-size: 1.15em !important;
-        max-width: 88% !important;
-    }
-    
-    .video-js .vjs-text-track-cue > div {
-        padding: 7px 11px !important;
-        font-size: 0.95em !important;
-    }
-    
-    /* Tablet fullscreen adjustments */
-    .video-js.vjs-fullscreen .vjs-text-track-display {
-        bottom: 9em !important;
-    }
-}
-
-/* Large screen adjustments - prevent overlap with control bar */
-@media(min-width: 1025px) {
-    .video-js .vjs-text-track-display {
-        bottom: 6em !important; /* Safe margin for large screens */
-    }
-    
-    /* Desktop spacing for autoplay and picture-in-picture buttons */
-    .video-js .vjs-autoplay-toggle {
-        margin-right: 12px !important; /* Largest spacing for desktop */
-    }
-    
-    .video-js .vjs-picture-in-picture-control {
-        margin-left: 12px !important; /* Largest spacing for desktop */
-    }
-    
-    .video-js .vjs-text-track-cue {
-        font-size: 1.2em !important;
-        max-width: 90% !important;
-    }
-    
-    .video-js .vjs-text-track-cue > div {
-        padding: 8px 12px !important;
-        font-size: 1em !important;
-    }
-    
-    /* Large screen fullscreen adjustments */
-    .video-js.vjs-fullscreen .vjs-text-track-display {
-        bottom: 8em !important;
-    }
 }

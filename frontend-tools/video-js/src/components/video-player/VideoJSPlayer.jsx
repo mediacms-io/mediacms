@@ -27,6 +27,63 @@ function VideoJSPlayer() {
                 ? window.MEDIA_DATA
                 : {
                     data: {
+                        __hls_info: {
+                            "master_file": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/master.m3u8",
+                            "480_iframe": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-1/iframes.m3u8",
+                            "720_iframe": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-2/iframes.m3u8",
+                            "240_iframe": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-3/iframes.m3u8",
+                            "360_iframe": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-4/iframes.m3u8",
+                            "480_playlist": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-1/stream.m3u8",
+                            "720_playlist": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-2/stream.m3u8",
+                            "240_playlist": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-3/stream.m3u8",
+                            "360_playlist": "http://localhost/media/hls/c868df836ac34688b876e741b58ada93/media-4/stream.m3u8"
+                        },
+                        __original_media_url: "http://localhost/media/original/user/admin/c868df836ac34688b876e741b58ada93.SampleVideo_1280x720_30mb.mp4",
+                        __encodings_info: {
+                            "144": {},
+                            "240": {
+                                "h264": {
+                                    "title": "h264-240",
+                                    "url": "http://localhost/media/encoded/2/admin/c868df836ac34688b876e741b58ada93.c868df836ac34688b876e741b58ada93.SampleVideo_1280x720_30mb.mp4.mp4",
+                                    "progress": 100,
+                                    "size": "8.2MB",
+                                    "encoding_id": 22,
+                                    "status": "success"
+                                }
+                            },
+                            "360": {
+                                "h264": {
+                                    "title": "h264-360",
+                                    "url": "http://localhost/media/encoded/3/admin/c868df836ac34688b876e741b58ada93.c868df836ac34688b876e741b58ada93.SampleVideo_1280x720_30mb.mp4.mp4",
+                                    "progress": 100,
+                                    "size": "12.3MB",
+                                    "encoding_id": 23,
+                                    "status": "success"
+                                }
+                            },
+                            "480": {
+                                "h264": {
+                                    "title": "h264-480",
+                                    "url": "http://localhost/media/encoded/13/admin/c868df836ac34688b876e741b58ada93.c868df836ac34688b876e741b58ada93.SampleVideo_1280x720_30mb.mp4.mp4",
+                                    "progress": 100,
+                                    "size": "17.4MB",
+                                    "encoding_id": 24,
+                                    "status": "success"
+                                }
+                            },
+                            "720": {
+                                "h264": {
+                                    "title": "h264-720",
+                                    "url": "http://localhost/media/encoded/10/admin/c868df836ac34688b876e741b58ada93.c868df836ac34688b876e741b58ada93.SampleVideo_1280x720_30mb.mp4.mp4",
+                                    "progress": 100,
+                                    "size": "27.4MB",
+                                    "encoding_id": 25,
+                                    "status": "success"
+                                }
+                            },
+                            "1080": {},
+                            "1440": {},
+                        },
                         related_media: [
                             {
                                 friendly_token: 'jgLkic37V',
@@ -564,18 +621,12 @@ function VideoJSPlayer() {
                     },
                     siteUrl: '',
                     nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
-                    chapter_data: [
-                        { startTime: 0, endTime: 3, text: 'Introduction' },
-                        { startTime: 3, endTime: 5, text: 'Overview of Marine Life' },
-                        { startTime: 5, endTime: 10, text: 'Coral Reef Ecosystems' },
-                        { startTime: 10, endTime: 14, text: 'Deep Sea Creatures' },
-                    ],
                     chaptersData: [
-                        { startTime: 0, endTime: 3, text: 'Introduction' },
-                        { startTime: 3, endTime: 5, text: 'Overview of Marine Life' },
-                        { startTime: 5, endTime: 10, text: 'Coral Reef Ecosystems' },
-                        { startTime: 10, endTime: 14, text: 'Deep Sea Creatures' },
-                        { startTime: 240, endTime: 320, text: 'Ocean Conservation' },
+                        { startTime: 0, endTime: 4, text: 'Introduction' },
+                        { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
+                        { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
+                        { startTime: 15, endTime: 20, text: 'Deep Sea Creatures' },
+                        { startTime: 20, endTime: 30, text: 'Ocean Conservation' },
                         { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
                         { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
                         { startTime: 480, endTime: 560, text: 'Sustainable Fishing' },
@@ -600,10 +651,11 @@ function VideoJSPlayer() {
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
     const chaptersData = mediaData.chaptersData ?? [
-        { startTime: 0, endTime: 30, text: 'Introduction' },
-        { startTime: 30, endTime: 90, text: 'Overview of Marine Life' },
-        { startTime: 90, endTime: 180, text: 'Coral Reef Ecosystems' },
-        { startTime: 180, endTime: 240, text: 'Deep Sea Creatures' },
+        { startTime: 0, endTime: 4, text: 'Introduction' },
+        { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
+        { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
+        { startTime: 15, endTime: 20, text: 'Deep Sea Creatures' },
+        { startTime: 20, endTime: 30, text: 'Ocean Conservation' },
         { startTime: 240, endTime: 320, text: 'Ocean Conservation' },
         { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
         { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
@@ -625,33 +677,102 @@ function VideoJSPlayer() {
 
     // Get video data from mediaData
     const currentVideo = useMemo(
-        () => ({
-            id: mediaData.data?.friendly_token || 'default-video',
-            title: mediaData.data?.title || 'Video',
-            poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
-            previewSprite: mediaData?.previewSprite || {},
-            related_media: mediaData.data?.related_media || [],
-            nextLink: mediaData?.nextLink || null,
-            sources: mediaData.data?.original_media_url
-                ? [
-                    {
-                        src: mediaData.siteUrl + mediaData.data.original_media_url,
-                        type: 'video/mp4',
-                    },
-                ]
-                : [
+        () => {
+            // Get video sources based on available data
+            const getVideoSources = () => {
+                // Check if HLS info is available and not empty
+                if (mediaData.data?.hls_info && mediaData.data.hls_info.master_file) {
+                    // Use master file as the primary source (auto quality)
+                    return [
+                        {
+                            src: mediaData.siteUrl + mediaData.data.hls_info.master_file,
+                            type: 'application/x-mpegURL', // HLS MIME type
+                            label: 'Auto',
+                        },
+                    ];
+                }
+
+                // Fallback to encoded qualities if available
+                if (mediaData.data?.encodings_info) {
+                    const sources = [];
+                    const encodings = mediaData.data.encodings_info;
+                    
+                    // Get available qualities dynamically from encodings_info
+                    const availableQualities = Object.keys(encodings)
+                        .filter(quality => encodings[quality] && encodings[quality].h264 && encodings[quality].h264.url)
+                        .sort((a, b) => parseInt(b) - parseInt(a)); // Sort descending (highest first)
+                    
+                    for (const quality of availableQualities) {
+                        sources.push({
+                            src: mediaData.siteUrl + encodings[quality].h264.url,
+                            type: 'video/mp4',
+                            label: `${quality}p`,
+                        });
+                    }
+                    
+                    if (sources.length > 0) {
+                        return sources;
+                    }
+                }
+
+                // Final fallback to original media URL or sample video
+                if (mediaData.data?.original_media_url) {
+                    return [
+                        {
+                            src: mediaData.siteUrl + mediaData.data.original_media_url,
+                            type: 'video/mp4',
+                        },
+                    ];
+                }
+
+                // Default sample video
+                return [
                     {
                         src: '/videos/sample-video.mp4',
                         type: 'video/mp4',
                     },
-                ],
-        }),
+                ];
+            };
+
+            return {
+                id: mediaData.data?.friendly_token || 'default-video',
+                title: mediaData.data?.title || 'Video',
+                poster: mediaData.siteUrl + mediaData.data?.poster_url || '',
+                previewSprite: mediaData?.previewSprite || {},
+                related_media: mediaData.data?.related_media || [],
+                nextLink: mediaData?.nextLink || null,
+                sources: getVideoSources(),
+            };
+        },
         [mediaData]
     );
 
-    // Compute available qualities. Prefer JSON (mediaData.data.qualities), otherwise build a full ordered list using the current source.
+    // Compute available qualities. Prefer JSON (mediaData.data.qualities), otherwise build from encodings_info or current source.
     const availableQualities = useMemo(() => {
-        const desiredOrder = ['auto', '144p', '240p', '360p', '480p', '720p', '1080p'];
+        // Generate desiredOrder dynamically based on available data
+        const generateDesiredOrder = () => {
+            const baseOrder = ['auto'];
+            
+            // Add qualities from encodings_info if available
+            if (mediaData.data?.encodings_info) {
+                const availableQualities = Object.keys(mediaData.data.encodings_info)
+                    .filter(quality => {
+                        const encoding = mediaData.data.encodings_info[quality];
+                        return encoding && encoding.h264 && encoding.h264.url;
+                    })
+                    .map(quality => `${quality}p`)
+                    .sort((a, b) => parseInt(a) - parseInt(b)); // Sort ascending
+                
+                baseOrder.push(...availableQualities);
+            } else {
+                // Fallback to standard order
+                baseOrder.push('144p', '240p', '360p', '480p', '720p', '1080p', '1440p', '2160p');
+            }
+            
+            return baseOrder;
+        };
+
+        const desiredOrder = generateDesiredOrder();
 
         const normalize = (arr) => {
             const norm = arr.map((q) => ({
@@ -660,20 +781,17 @@ function VideoJSPlayer() {
                 src: q.src || q.url || q.href,
                 type: q.type || 'video/mp4',
             }));
-            // ensure all desired present
-            const have = new Set(norm.map((q) => q.value));
-            desiredOrder.forEach((v) => {
-                if (!have.has(v)) {
-                    norm.push({ label: v === 'auto' ? 'Auto' : v, value: v });
-                }
-            });
-            // sort
+            
+            // Only include qualities that have actual sources
+            const validQualities = norm.filter(q => q.src);
+            
+            // sort based on desired order
             const idx = (v) => {
                 const i = desiredOrder.indexOf(String(v).toLowerCase());
                 return i === -1 ? 999 : i;
             };
-            norm.sort((a, b) => idx(a.value) - idx(b.value));
-            return norm;
+            validQualities.sort((a, b) => idx(a.value) - idx(b.value));
+            return validQualities;
         };
 
         const jsonList = mediaData?.data?.qualities;
@@ -681,17 +799,81 @@ function VideoJSPlayer() {
             return normalize(jsonList);
         }
 
-        // Build from current source
+        // If HLS is available, build qualities from HLS playlists
+        if (mediaData.data?.hls_info && mediaData.data.hls_info.master_file) {
+            const hlsInfo = mediaData.data.hls_info;
+            const qualities = [];
+
+            // Add master file as auto quality
+            qualities.push({
+                label: 'Auto',
+                value: 'auto',
+                src: mediaData.siteUrl + hlsInfo.master_file,
+                type: 'application/x-mpegURL',
+            });
+
+            // Add individual HLS playlists
+            Object.keys(hlsInfo).forEach(key => {
+                if (key.endsWith('_playlist')) {
+                    const quality = key.replace('_playlist', '');
+                    qualities.push({
+                        label: `${quality}p`,
+                        value: `${quality}p`,
+                        src: mediaData.siteUrl + hlsInfo[key],
+                        type: 'application/x-mpegURL',
+                    });
+                }
+            });
+
+            return normalize(qualities);
+        }
+
+        // Build from encodings_info if available
+        if (mediaData.data?.encodings_info) {
+            const encodings = mediaData.data.encodings_info;
+            const qualities = [];
+
+            // Add auto quality first
+            qualities.push({
+                label: 'Auto',
+                value: 'auto',
+                src: null, // Will use the highest available quality
+                type: 'video/mp4',
+            });
+
+            // Add available encoded qualities dynamically
+            Object.keys(encodings).forEach(quality => {
+                if (encodings[quality] && encodings[quality].h264 && encodings[quality].h264.url) {
+                    qualities.push({
+                        label: `${quality}p`,
+                        value: `${quality}p`,
+                        src: mediaData.siteUrl + encodings[quality].h264.url,
+                        type: 'video/mp4',
+                    });
+                }
+            });
+
+            if (qualities.length > 1) { // More than just auto
+                return normalize(qualities);
+            }
+        }
+
+        // Build from current source as fallback - only if we have a valid source
         const baseSrc = (currentVideo?.sources && currentVideo.sources[0]?.src) || null;
         const type = (currentVideo?.sources && currentVideo.sources[0]?.type) || 'video/mp4';
 
-        const buildFromBase = desiredOrder.map((v) => ({
-            label: v === 'auto' ? 'Auto' : v,
-            value: v,
-            src: baseSrc || undefined,
-            type,
-        }));
-        return normalize(buildFromBase);
+        if (baseSrc) {
+            const buildFromBase = [{
+                label: 'Auto',
+                value: 'auto',
+                src: baseSrc,
+                type,
+            }];
+            return normalize(buildFromBase);
+        }
+
+        // Return empty array if no valid sources found
+        return [];
     }, [mediaData, currentVideo]);
 
     // Get related videos from mediaData instead of static data
@@ -719,7 +901,7 @@ function VideoJSPlayer() {
             }));
     }, [mediaData]);
 
-    // Demo array for testing purposes
+     // Demo array for testing purposes
     const demoSubtitleTracks = [
         {
             kind: 'subtitles',
@@ -736,12 +918,12 @@ function VideoJSPlayer() {
             default: false,
         },
     ];
+    // const demoSubtitleTracks = []; // NO Subtitles. TODO: hide it on production
 
     // Get subtitle tracks from backend response or fallback based on environment
-    const backendSubtitles = mediaData?.data?.subtitles_info || [];
     const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-    
-    const hasSubtitles = backendSubtitles.length > 0 || isDevelopment;
+    const backendSubtitles = mediaData?.data?.subtitles_info || (isDevelopment ? demoSubtitleTracks : []);
+    const hasSubtitles = backendSubtitles.length > 0;
     const subtitleTracks = hasSubtitles 
         ? backendSubtitles.map(track => ({
             kind: 'subtitles',
@@ -750,7 +932,11 @@ function VideoJSPlayer() {
             label: track.label,
             default: false,
         }))
-        : (isDevelopment ? demoSubtitleTracks : []);
+        : [];
+
+    console.log('mediaData?.data?.thumbnail_time', mediaData?.data?.thumbnail_time);
+    console.log('mediaData?.data?.sprites_url', mediaData?.data?.sprites_url);
+    console.log('mediaData', mediaData);
 
     // Function to navigate to next video
     const goToNextVideo = () => {
@@ -1078,8 +1264,6 @@ function VideoJSPlayer() {
                         }
 
                         // BEGIN: Add subtitle tracks
-                        
-
                         hasSubtitles && subtitleTracks.forEach((track) => {
                             playerRef.current.addRemoteTextTrack(track, false);
                         });
@@ -1426,6 +1610,7 @@ function VideoJSPlayer() {
                         customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {
                             userPreferences: userPreferences.current,
                             qualities: availableQualities,
+                            hasSubtitles: hasSubtitles,
                         });
 
                         // If qualities change per video (e.g., via MEDIA_DATA update), refresh menu
