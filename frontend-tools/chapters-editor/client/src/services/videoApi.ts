@@ -30,8 +30,7 @@ interface AutoSaveResponse {
 // Auto-save API function
 export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Promise<AutoSaveResponse> => {
     try {
-        const response = await fetch(`/api/v1/media/${mediaId}/save_chapters`, {
-            // TODO: ask backend to add save_chapters endpoint
+        const response = await fetch(`/api/v1/media/${mediaId}/chapters`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),

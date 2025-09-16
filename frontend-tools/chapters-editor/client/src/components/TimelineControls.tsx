@@ -184,6 +184,7 @@ const TimelineControls = ({
                 endTime: formatDetailedTime(segment.endTime),
                 name: segment.name,
                 chapterTitle: segment.chapterTitle,
+                text: segment.chapterTitle,
             }));
 
             logger.debug('segments', segments);
