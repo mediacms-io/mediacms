@@ -539,6 +539,12 @@ white-space: nowrap; text-overflow: ellipsis; height: 28px; overflow: hidden; di
 .chapter-close button{ background:transparent; color:#fff; border: 0; width: 40px; height: 40px; padding: 0; display: flex;
 align-items: center; justify-content: center; border-radius:8px;}
 .chapter-close button:hover{ background:rgba(255,255,255,0.1);} 
+
+.settings-header{ display:flex; align-items:center; justify-content:space-between; position:relative;}
+.settings-close-btn{ background:transparent; color:#fff; border: 0; width: 32px; height: 32px; padding: 0; display: flex;
+align-items: center; justify-content: center; border-radius:6px; cursor:pointer;}
+.settings-close-btn:hover{ background:rgba(255,255,255,0.1);}
+
 .playlist-action-menu{ display:none; justify-content:space-between; gap:10px;}
 .playlist-action-menu button{ background:transparent; border: 0; width: 40px; height: 40px; padding: 0; display: flex;
 align-items: center; justify-content: center; align-items:center; border-radius:100px; }
@@ -596,10 +602,15 @@ overflow:visible !important; clip: initial !important;}
 .vjs-chapter-floating-tooltip{ text-align:center; width:160px !important; max-width:100% !important ; height:auto;}
 .chapter-image-sprite{width: 166px !important; max-width:100% !important; height: 96px; margin:0 auto 10px; 
 border-radius: 6px; border: 3px solid #FFF; }
-.vjs-chapter-floating-tooltip  .chapter-title{ font-size:24px; margin:0 0 10px; font-weight:700; text-overflow:ellipsis; white-space:nowrap; 
-height:30px; line-height:30px; overflow:hidden;}
+.vjs-chapter-floating-tooltip  .chapter-title{ font-size:16px; margin:0 0 10px; font-weight:700;  word-break: break-all; line-height:20px;}
 .vjs-chapter-floating-tooltip .position-info,
 .vjs-chapter-floating-tooltip .chapter-info{ font-size:15px; display:inline-block; margin:0 0 2px; line-height:normal; vertical-align:top; line-height:20px;}
+
+/* Sprite Preview Tooltip Styles - Match chapter styling */
+.vjs-sprite-preview-tooltip{ text-align:center; width:172px !important; max-width:100% !important ; height:auto;}
+
+.vjs-sprite-preview-tooltip .sprite-image-preview{ width: 166px !important; max-width:100% !important; height: 96px; margin:0 auto; 
+border-radius: 6px; border: 3px solid #FFF; }
 
 
 @media (pointer: coarse) {
