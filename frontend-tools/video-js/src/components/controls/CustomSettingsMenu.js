@@ -37,6 +37,7 @@ class CustomSettingsMenu extends Component {
       this.createSettingsButton();
       this.createSettingsOverlay();
       this.setupEventListeners();
+      this.restoreSubtitlePreference();
     });
   }
 
@@ -927,6 +928,35 @@ class CustomSettingsMenu extends Component {
 
     // Close only the subtitles submenu (keep overlay open)
     this.subtitlesSubmenu.style.display = 'none';
+  }
+
+  restoreSubtitlePreference() {
+    const savedLanguage = this.userPreferences.getPreference('subtitleLanguage');
+    
+    if (savedLanguage) {
+      setTimeout(() => {
+        const player = this.player();
+        const tracks = player.textTracks();
+        
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i];
+          if (track.kind === 'subtitles') {
+            track.mode = 'disabled';
+          }
+        }
+        
+
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i];
+          if (track.kind === 'subtitles' && track.language === savedLanguage) {
+            track.mode = 'showing';
+            console.log('✓ Restored subtitle preference:', savedLanguage, track.label);
+            this.refreshSubtitlesSubmenu();
+            break;
+          }
+        }
+      }, 500);
+    }
   }
 
   handleClickOutside(e) {

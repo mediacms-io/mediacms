@@ -97,6 +97,9 @@ class CustomChaptersOverlay extends Component {
         `;
         playlistTitle.appendChild(chapterTitle);
 
+        // Store reference to the current chapter span for dynamic updates
+        this.currentChapterSpan = chapterTitle.querySelector('span');
+
         const chapterClose = document.createElement('div');
         chapterClose.className = 'chapter-close';
         const closeBtn = document.createElement('button');
@@ -224,6 +227,7 @@ class CustomChaptersOverlay extends Component {
 
         const currentTime = this.player().currentTime();
         const chapterItems = this.chaptersList.querySelectorAll('.playlist-items');
+        let currentChapterIndex = -1;
 
         chapterItems.forEach((item, index) => {
             const chapter = this.chaptersData[index];
@@ -234,15 +238,21 @@ class CustomChaptersOverlay extends Component {
             const handle = item.querySelector('.playlist-drag-handle');
             const dynamic = item.querySelector('.meta-dynamic');
             if (isPlaying) {
+                currentChapterIndex = index;
                 item.classList.add('selected');
                 if (handle) handle.textContent = '▶';
-                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-duration') || '';
+                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             } else {
                 item.classList.remove('selected');
                 if (handle) handle.textContent = String(index + 1);
                 if (dynamic) dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             }
         });
+
+        // Update the header chapter number
+        if (this.currentChapterSpan && currentChapterIndex !== -1) {
+            this.currentChapterSpan.textContent = `${currentChapterIndex + 1} / ${this.chaptersData.length}`;
+        }
     }
 
     updateActiveItem(activeIndex) {
@@ -271,6 +281,11 @@ class CustomChaptersOverlay extends Component {
                 }
             }
         });
+
+        // Update the header chapter number
+        if (this.currentChapterSpan) {
+            this.currentChapterSpan.textContent = `${activeIndex + 1} / ${this.chaptersData.length}`;
+        }
     }
 
     closeOverlay() {
