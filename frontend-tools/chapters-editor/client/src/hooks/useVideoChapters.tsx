@@ -768,8 +768,9 @@ const useVideoChapters = () => {
 
             // Convert chapters to backend expected format
             const backendChapters = chapters.map((chapter) => ({
-                start: chapter.from,
-                title: chapter.name,
+                startTime: chapter.from,  
+                endTime: chapter.to,
+                text: chapter.name,
             }));
 
             // Create the API request body
