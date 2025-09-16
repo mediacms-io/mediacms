@@ -218,7 +218,7 @@ class ChapterMarkers extends Component {
             // Update text content without rebuilding DOM
             this.chapterTitle.textContent = currentChapter.text;
             this.chapterInfo.textContent = `Chapter: ${startTime} - ${endTime}`;
-            this.positionInfo.textContent = `Position: ${timeAtPosition}`;
+            // this.positionInfo.textContent = `Position: ${timeAtPosition}`;
 
             // Update sprite thumbnail
             this.updateSpriteThumbnail(currentTime);
