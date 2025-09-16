@@ -155,7 +155,15 @@ class CustomSettingsMenu extends Component {
       (currentQuality ? String(currentQuality) : "Auto");
 
     // Settings menu content - split into separate variables for maintainability
-    const settingsHeader = `<div class="settings-header">Settings</div>`;
+    const settingsHeader = `
+    <div class="settings-header">
+        <span>Settings</span>
+        <button class="settings-close-btn" aria-label="Close settings">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.7096 12L20.8596 20.15L20.1496 20.86L11.9996 12.71L3.84965 20.86L3.13965 20.15L11.2896 12L3.14965 3.85001L3.85965 3.14001L11.9996 11.29L20.1496 3.14001L20.8596 3.85001L12.7096 12Z" fill="currentColor"/>
+            </svg>
+        </button>
+    </div>`;
     
     const playbackSpeedSection = `
     <div class="settings-item" data-setting="playback-speed">
@@ -527,6 +535,29 @@ class CustomSettingsMenu extends Component {
   }
 
   setupEventListeners() {
+    // Close button functionality
+    const closeButton = this.settingsOverlay.querySelector('.settings-close-btn');
+    if (closeButton) {
+      const closeFunction = (e) => {
+        e.stopPropagation();
+        this.settingsOverlay.classList.remove("show");
+        this.settingsOverlay.style.display = "none";
+        this.speedSubmenu.style.display = "none";
+        if (this.qualitySubmenu) this.qualitySubmenu.style.display = "none";
+        if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = "none";
+        const btnEl = this.settingsButton?.el();
+        if (btnEl) {
+          btnEl.classList.remove("settings-clicked");
+        }
+      };
+
+      closeButton.addEventListener('click', closeFunction);
+      closeButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        closeFunction(e);
+      }, { passive: false });
+    }
+
     // Settings item clicks
     this.settingsOverlay.addEventListener("click", (e) => {
       e.stopPropagation();

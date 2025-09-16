@@ -6,6 +6,7 @@ import 'video.js/dist/video-js.css';
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
 import AutoplayCountdownOverlay from '../overlays/AutoplayCountdownOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
+import SpritePreview from '../markers/SpritePreview';
 import NextVideoButton from '../controls/NextVideoButton';
 import AutoplayToggleButton from '../controls/AutoplayToggleButton';
 import CustomRemainingTime from '../controls/CustomRemainingTime';
@@ -634,6 +635,10 @@ function VideoJSPlayer() {
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
+    // CONDITIONAL LOGIC: 
+    // - When chaptersData has content: Uses original ChapterMarkers with sprite preview
+    // - When chaptersData is empty: Uses separate SpritePreview component
+    // Toggle between these two lines to test both scenarios:
     const chaptersData = mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0 ? mediaData?.data?.chapter_data : isDevelopment ? [
         { startTime: 0, endTime: 4, text: 'Introduction' },
         { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
@@ -658,7 +663,7 @@ function VideoJSPlayer() {
         { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
         { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
     ] : [];
-    // const chaptersData = [];
+    // const chaptersData = [];  // NO CHAPTERS (uses separate SpritePreview)
 
     // Get video data from mediaData
     const currentVideo = useMemo(
@@ -1531,14 +1536,40 @@ function VideoJSPlayer() {
                             setupClickableMenus();
                         }, 1500);
 
-                        // BEGIN: Add chapter markers to progress control
+                        // BEGIN: Add chapter markers and sprite preview to progress control
                         if (progressControl && seekBar) {
-                            const chapterMarkers = new ChapterMarkers(playerRef.current, {
-                                previewSprite: mediaData.previewSprite,
-                            });
-                            seekBar.addChild(chapterMarkers);
+                            console.log('Setting up sprite preview and chapter markers...');
+                            console.log('mediaData.previewSprite:', mediaData.previewSprite);
+                            console.log('chaptersData:', chaptersData);
+                            
+                            // Check if we have chapters
+                            const hasChapters = chaptersData && chaptersData.length > 0;
+                            
+                            if (hasChapters) {
+                                // Use original ChapterMarkers with sprite functionality when chapters exist
+                                console.log('✓ Adding ChapterMarkers component with sprite functionality (chapters exist)');
+                                const chapterMarkers = new ChapterMarkers(playerRef.current, {
+                                    previewSprite: mediaData.previewSprite,
+                                });
+                                seekBar.addChild(chapterMarkers);
+                            } else if (mediaData.previewSprite) {
+                                // Use separate SpritePreview component only when no chapters but sprite data exists
+                                console.log('✓ Adding SpritePreview component (no chapters, but sprite data available)');
+                                const spritePreview = new SpritePreview(playerRef.current, {
+                                    previewSprite: mediaData.previewSprite,
+                                });
+                                seekBar.addChild(spritePreview);
+                                
+                                // Setup sprite preview hover functionality
+                                setTimeout(() => {
+                                    console.log('✓ Setting up sprite preview hover functionality');
+                                    spritePreview.setupProgressBarHover();
+                                }, 100);
+                            } else {
+                                console.log('✗ No chapters and no sprite data available');
+                            }
                         }
-                        // END: Add chapter markers to progress control
+                        // END: Add chapter markers and sprite preview to progress control
 
                         // BEGIN: Simple button layout fix - use CSS approach
                         setTimeout(() => {
