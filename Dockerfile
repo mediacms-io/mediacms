@@ -38,6 +38,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN apt-get update -y && \
     apt-get -y upgrade && \
     apt-get install --no-install-recommends -y \
+        curl \
         supervisor \
         nginx \
         imagemagick \
@@ -95,7 +96,8 @@ ENV ENABLE_UWSGI='yes' \
     ENABLE_CELERY_BEAT='yes' \
     ENABLE_CELERY_SHORT='yes' \
     ENABLE_CELERY_LONG='yes' \
-    ENABLE_MIGRATIONS='yes'
+    ENABLE_MIGRATIONS='yes' \
+    ENABLE_OLLAMA='no'
 
 EXPOSE 9000 80
 
@@ -106,8 +108,12 @@ CMD ["./deploy/docker/start.sh"]
 
 ############ FULL IMAGE ############
 FROM base AS full
+
+ENV ENABLE_OLLAMA='yes'
+
 COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
     chmod go+rwx /root/.cache/
 RUN uv pip install -r requirements-full.txt
+RUN curl -fsSL https://ollama.com/install.sh | sh

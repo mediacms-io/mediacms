@@ -11,6 +11,11 @@ else
     echo "There is no script $PRE_START_PATH"
 fi
 
+if [ X"$ENABLE_OLLAMA" = X"yes" ] ; then
+    echo "Starting ollama service in background..."
+    ollama serve &
+fi
+
 # Start Supervisor, with Nginx and uWSGI
 echo "Starting server using supervisord..."
 

@@ -69,3 +69,37 @@ if [ X"$ENABLE_CELERY_LONG" = X"yes" ] ; then
     cp deploy/docker/supervisord/supervisord-celery_long.conf /etc/supervisor/conf.d/supervisord-celery_long.conf
     rm /var/run/mediacms/* -f # remove any stale id, so that on forced restarts of celery workers there are no stale processes that prevent new ones
 fi
+
+if [ X"$ENABLE_OLLAMA" = X"yes" ] ; then
+    echo "Starting ollama to pull models..."
+    ollama serve &
+    OLLAMA_PID=$!
+    
+    # Wait for ollama to be ready
+    retries=10
+    echo "Waiting for ollama to start..."
+    while [ $retries -gt 0 ] && ! curl -s http://127.0.0.1:11434/ > /dev/null 2>&1; do
+        sleep 1
+        retries=$((retries-1))
+    done
+
+    if [ $retries -eq 0 ]; then
+        echo "Ollama did not start in time. Killing process."
+        kill $OLLAMA_PID
+        wait $OLLAMA_PID 2>/dev/null
+        echo "Failed to start ollama for model pulling. The main ollama service will be started later."
+    else
+        echo "Ollama is up. Checking for llama3.2 model."
+
+        if ! ollama list | grep -q "llama3.2"; then
+            echo "llama3.2 model not found, pulling it..."
+            ollama pull llama3.2
+        else
+            echo "llama3.2 model already exists."
+        fi
+
+        echo "Stopping temporary ollama service."
+        kill $OLLAMA_PID
+        wait $OLLAMA_PID 2>/dev/null
+    fi
+fi

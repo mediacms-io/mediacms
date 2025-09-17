@@ -17,3 +17,8 @@ build-frontend:
 test:
 	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
 
+build-base-image:
+	docker build -t mediacms/mediacms:latest --target base .
+
+build-full-image:
+	docker build -t mediacms/mediacms:full --target full .
