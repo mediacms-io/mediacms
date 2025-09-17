@@ -968,7 +968,7 @@ const TimelineControls = ({
     useEffect(() => {
         const loadSavedSegments = () => {
             // Get savedSegments directly from window.MEDIA_DATA
-            let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.savedSegments) || null;
+            let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || null;
 
             // If no saved segments, use default segments
             if (!savedData) {
