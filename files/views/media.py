@@ -132,7 +132,7 @@ class MediaList(APIView):
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
-            if self.request.user == user:
+            if self.request.user == user or is_mediacms_editor(self.request.user):
                 media = Media.objects.filter(user=user).prefetch_related("user").order_by("-add_date")
             else:
                 media = self._get_media_queryset(request, user)
@@ -159,6 +159,7 @@ class MediaList(APIView):
     )
     def post(self, request, format=None):
         # Add new media
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]

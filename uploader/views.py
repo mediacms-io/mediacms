@@ -8,8 +8,8 @@ from django.core.files import File
 from django.http import JsonResponse
 from django.views import generic
 
-from cms.permissions import user_allowed_to_upload
 from files.helpers import rm_file
+from files.methods import user_allowed_to_upload
 from files.models import Media
 
 from .fineuploader import ChunkedFineUploader

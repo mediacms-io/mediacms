@@ -8,8 +8,8 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-from cms.permissions import user_allowed_to_upload
 from cms.version import VERSION
+from files.methods import user_allowed_to_upload
 from users.models import User
 
 from .. import helpers
@@ -19,17 +19,32 @@ from ..forms import (
     MediaMetadataForm,
     MediaPublishForm,
     SubtitleForm,
+    WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_only
 from ..methods import (
+    can_transcribe_video,
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
+    is_media_allowed_type,
     is_mediacms_editor,
 )
 from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
+
+
+@login_required
+def record_screen(request):
+    """Record screen view"""
+
+    context = {}
+    context["can_add"] = user_allowed_to_upload(request)
+    can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
+    context["can_upload_exp"] = can_upload_exp
+
+    return render(request, "cms/record_screen.html", context)
 
 
 def about(request):
@@ -53,6 +68,7 @@ def add_subtitle(request):
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
         return HttpResponseRedirect("/")
+
     media = Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         return HttpResponseRedirect("/")
@@ -60,24 +76,41 @@ def add_subtitle(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
-    if request.method == "POST":
-        form = SubtitleForm(media, request.POST, request.FILES)
-        if form.is_valid():
-            subtitle = form.save()
-            new_subtitle = Subtitle.objects.filter(id=subtitle.id).first()
-            try:
-                new_subtitle.convert_to_srt()
-                messages.add_message(request, messages.INFO, "Subtitle was added!")
-                return HttpResponseRedirect(subtitle.media.get_absolute_url())
-            except:  # noqa: E722
-                new_subtitle.delete()
-                error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
-                form.add_error("subtitle_file", error_msg)
+    # Initialize variables
+    form = None
+    whisper_form = None
+    show_whisper_form = can_transcribe_video(request.user)
 
-    else:
-        form = SubtitleForm(media_item=media)
+    if request.method == "POST":
+        if 'submit' in request.POST:
+            form = SubtitleForm(media, request.POST, request.FILES, prefix="form")
+            if form.is_valid():
+                subtitle = form.save()
+                try:
+                    subtitle.convert_to_srt()
+                    messages.add_message(request, messages.INFO, "Caption was added!")
+                    return HttpResponseRedirect(subtitle.media.get_absolute_url())
+                except Exception as e:  # noqa
+                    subtitle.delete()
+                    error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
+                    form.add_error("subtitle_file", error_msg)
+
+        elif 'submit_whisper' in request.POST and show_whisper_form:
+            whisper_form = WhisperSubtitlesForm(request.user, request.POST, instance=media, prefix="whisper_form")
+            if whisper_form.is_valid():
+                whisper_form.save()
+                messages.add_message(request, messages.INFO, "Request for transcription was sent")
+                return HttpResponseRedirect(media.get_absolute_url())
+
+    # GET request or form invalid
+    if form is None:
+        form = SubtitleForm(media_item=media, prefix="form")
+
+    if show_whisper_form and whisper_form is None:
+        whisper_form = WhisperSubtitlesForm(request.user, instance=media, prefix="whisper_form")
+
     subtitles = media.subtitles.all()
-    context = {"media": media, "form": form, "subtitles": subtitles}
+    context = {"media_object": media, "form": form, "subtitles": subtitles, "whisper_form": whisper_form}
     return render(request, "cms/add_subtitle.html", context)
 
 
@@ -114,7 +147,7 @@ def edit_subtitle(request):
     elif request.method == "POST":
         confirm = request.GET.get("confirm", "").strip()
         if confirm == "true":
-            messages.add_message(request, messages.INFO, "Subtitle was deleted")
+            messages.add_message(request, messages.INFO, "Caption was deleted")
             redirect_url = subtitle.media.get_absolute_url()
             subtitle.delete()
             return HttpResponseRedirect(redirect_url)
@@ -123,7 +156,7 @@ def edit_subtitle(request):
         with open(subtitle.subtitle_file.path, "w") as ff:
             ff.write(subtitle_text)
 
-        messages.add_message(request, messages.INFO, "Subtitle was edited")
+        messages.add_message(request, messages.INFO, "Caption was edited")
         return HttpResponseRedirect(subtitle.media.get_absolute_url())
     return render(request, "cms/edit_subtitle.html", context)
 
@@ -236,6 +269,10 @@ def edit_media(request):
 
     if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
+
+    if not is_media_allowed_type(media):
+        return HttpResponseRedirect(media.get_absolute_url())
+
     if request.method == "POST":
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
@@ -571,9 +608,10 @@ def view_media(request):
             video_msg = "Media encoding hasn't started yet. Attempting to show the original video file"
         if media.encoding_status == "running":
             video_msg = "Media encoding is under processing. Attempting to show the original video file"
-        if video_msg:
+        if video_msg and media.user == request.user:
             messages.add_message(request, messages.INFO, video_msg)
 
+    context["is_media_allowed_type"] = is_media_allowed_type(media)
     return render(request, "cms/media.html", context)
 
 

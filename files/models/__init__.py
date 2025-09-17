@@ -6,7 +6,7 @@ from .license import License  # noqa: F401
 from .media import Media, MediaPermission  # noqa: F401
 from .playlist import Playlist, PlaylistMedia  # noqa: F401
 from .rating import Rating, RatingCategory  # noqa: F401
-from .subtitle import Language, Subtitle  # noqa: F401
+from .subtitle import Language, Subtitle, TranscriptionRequest  # noqa: F401
 from .utils import CODECS  # noqa: F401
 from .utils import ENCODE_EXTENSIONS  # noqa: F401
 from .utils import ENCODE_EXTENSIONS_KEYS  # noqa: F401

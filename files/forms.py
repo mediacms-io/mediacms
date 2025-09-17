@@ -1,6 +1,6 @@
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field, Layout, Submit
+from crispy_forms.layout import HTML, Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
@@ -35,7 +35,7 @@ class MediaMetadataForm(forms.ModelForm):
         widgets = {
             "new_tags": MultipleSelect(),
             "description": forms.Textarea(attrs={'rows': 4}),
-            "add_date": forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            "add_date": forms.DateTimeInput(attrs={'type': 'datetime-local', 'step': '1'}, format='%Y-%m-%dT%H:%M:%S'),
             "thumbnail_time": forms.NumberInput(attrs={'min': 0, 'step': 0.1}),
         }
         labels = {
@@ -118,14 +118,7 @@ class MediaPublishForm(forms.ModelForm):
 
     class Meta:
         model = Media
-        fields = (
-            "category",
-            "state",
-            "featured",
-            "reported_times",
-            "is_reviewed",
-            "allow_download",
-        )
+        fields = ("category", "state", "featured", "reported_times", "is_reviewed", "allow_download")
 
         widgets = {
             "category": MultipleSelect(),
@@ -134,6 +127,7 @@ class MediaPublishForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(MediaPublishForm, self).__init__(*args, **kwargs)
+
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
                 self.fields[field].disabled = True
@@ -220,16 +214,95 @@ class MediaPublishForm(forms.ModelForm):
         return media
 
 
+class WhisperSubtitlesForm(forms.ModelForm):
+    class Meta:
+        model = Media
+        fields = (
+            "allow_whisper_transcribe",
+            "allow_whisper_transcribe_and_translate",
+        )
+        labels = {
+            "allow_whisper_transcribe": "Transcription",
+            "allow_whisper_transcribe_and_translate": "English Translation",
+        }
+        help_texts = {
+            "allow_whisper_transcribe": "",
+            "allow_whisper_transcribe_and_translate": "",
+        }
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(WhisperSubtitlesForm, self).__init__(*args, **kwargs)
+
+        if self.instance.allow_whisper_transcribe:
+            self.fields['allow_whisper_transcribe'].widget.attrs['readonly'] = True
+            self.fields['allow_whisper_transcribe'].widget.attrs['disabled'] = True
+        if self.instance.allow_whisper_transcribe_and_translate:
+            self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['readonly'] = True
+            self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['disabled'] = True
+
+        both_readonly = self.instance.allow_whisper_transcribe and self.instance.allow_whisper_transcribe_and_translate
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('allow_whisper_transcribe'),
+            CustomField('allow_whisper_transcribe_and_translate'),
+        )
+
+        if not both_readonly:
+            self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
+        else:
+            # Optional: Add a disabled button with explanatory text
+            self.helper.layout.append(
+                FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">Cannot submit - both options are already enabled</small>'))
+            )
+
+    def clean_allow_whisper_transcribe(self):
+        # Ensure the field value doesn't change if it was originally True
+        if self.instance and self.instance.allow_whisper_transcribe:
+            return self.instance.allow_whisper_transcribe
+        return self.cleaned_data['allow_whisper_transcribe']
+
+    def clean_allow_whisper_transcribe_and_translate(self):
+        # Ensure the field value doesn't change if it was originally True
+        if self.instance and self.instance.allow_whisper_transcribe_and_translate:
+            return self.instance.allow_whisper_transcribe_and_translate
+        return self.cleaned_data['allow_whisper_transcribe_and_translate']
+
+
 class SubtitleForm(forms.ModelForm):
     class Meta:
         model = Subtitle
         fields = ["language", "subtitle_file"]
 
+        labels = {
+            "subtitle_file": "Upload Caption File",
+        }
+        help_texts = {
+            "subtitle_file": "SubRip (.srt) and WebVTT (.vtt) are supported file formats.",
+        }
+
     def __init__(self, media_item, *args, **kwargs):
         super(SubtitleForm, self).__init__(*args, **kwargs)
         self.instance.media = media_item
-        self.fields["subtitle_file"].help_text = "SubRip (.srt) and WebVTT (.vtt) are supported file formats."
-        self.fields["subtitle_file"].label = "Subtitle or Closed Caption File"
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('subtitle_file'),
+            CustomField('language'),
+        )
+
+        self.helper.layout.append(FormActions(Submit('submit', 'Submit', css_class='primaryAction')))
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block headtitle %}Record Screen - {{PORTAL_NAME}}{% endblock headtitle %}
+{% load custom_filters %}
+
+{% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
+
+
+{% if can_add %}
+
+<div class="custom-page-wrapper">
+    <h2>{{ "Record Screen" | custom_translate:LANGUAGE_CODE}}</h2>
+    <hr/>
+
+    <div style="text-align: center; padding: 40px 0;">
+        <p style="margin-bottom: 20px;">{{ "Click 'Start Recording' and select the screen or tab to record. Once recording is finished, click 'Stop Recording,' and the recording will be uploaded." | custom_translate:LANGUAGE_CODE}}</p>
+        <p style="margin-bottom: 20px;">{{ "This works in Chrome, Safari and Edge browsers." | custom_translate:LANGUAGE_CODE}}</p>
+        <button id="startBtn" class="qq-upload-button-selector" style="padding: 10px 20px; font-size: 16px; margin-right: 10px; cursor: pointer;">{{ "Start Recording" | custom_translate:LANGUAGE_CODE}}</button>
+        <button id="stopBtn" class="qq-upload-button-selector" disabled style="padding: 10px 20px; font-size: 16px; cursor: pointer;">{{ "Stop Recording" | custom_translate:LANGUAGE_CODE}}</button>
+        <div id="spinner" style="display: none; margin-top: 20px;">
+            <div class="spinner"></div>
+            <p>video is getting uploaded</p>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #09f;
+    animation: spin 1s ease infinite;
+    margin: 10px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(event) {
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const spinner = document.getElementById('spinner');
+
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    if (isMobileDevice()) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Camera recording is not supported in your browser.');
+            startBtn.disabled = true;
+            return;
+        }
+        document.querySelector('h2').textContent = 'Record Video';
+        document.querySelector('p').textContent = 'Click \'Start Recording\' to start recording from your camera. Once recording is finished, click \'Stop Recording,\' and the recording will be uploaded.';
+    } else {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            alert('Screen recording is not supported in your browser. Please try a modern browser on a desktop computer.');
+            startBtn.disabled = true;
+            return;
+        }
+    }
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+
+    startBtn.addEventListener('click', async () => {
+        try {
+            if (isMobileDevice()) {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } else {
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                audioStream.getAudioTracks().forEach(track => displayStream.addTrack(track));
+                stream = displayStream;
+            }
+
+            // When user stops sharing screen via browser UI
+            stream.getVideoTracks()[0].addEventListener('ended', () => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            });
+
+            const mimeTypes = [
+                'video/mp4',
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm',
+            ];
+            let supportedMimeType = '';
+            for (const mimeType of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mimeType)) {
+                    supportedMimeType = mimeType;
+                    break;
+                }
+            }
+
+            if (!supportedMimeType) {
+                console.error("No supported mimeType found for MediaRecorder");
+                alert("Your browser doesn't support any suitable video recording format.");
+                return;
+            }
+
+            mediaRecorder = new MediaRecorder(stream, { mimeType: supportedMimeType });
+
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstart = () => {
+                stopBtn.disabled = false;
+                startBtn.disabled = true;
+            };
+
+            mediaRecorder.onstop = () => {
+                stopBtn.disabled = true;
+                startBtn.disabled = false;
+                if(stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                const blob = new Blob(recordedChunks, { type: supportedMimeType });
+                recordedChunks = [];
+
+                uploadFile(blob);
+            };
+
+            mediaRecorder.start();
+        } catch (err) {
+            console.error("Error starting screen recording:", err);
+        }
+    });
+
+    stopBtn.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+    });
+
+    function getCSRFToken() {
+        var i, cookies, cookie, cookieVal = null;
+        if ( document.cookie && '' !== document.cookie ) {
+            cookies = document.cookie.split(';');
+            i = 0;
+            while( i < cookies.length ){
+                cookie = cookies[i].trim();
+                if ( 'csrftoken=' === cookie.substring(0, 10) ) {
+                    cookieVal = decodeURIComponent( cookie.substring(10) );
+                    break;
+                }
+                i += 1;
+            }
+        }
+        return cookieVal;
+    }
+
+    function uploadFile(blob) {
+        const formData = new FormData();
+        const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+        const recordingType = isMobileDevice() ? 'video-recording' : 'screen-recording';
+        const fileName = `${recordingType}-${new Date().toISOString().slice(0, 19).replace('T', '_').replace(/:/g, '-')}.${extension}`;
+        formData.append('media_file', blob, fileName);
+        formData.append('title', fileName);
+
+        spinner.style.display = 'block';
+
+        fetch('/api/v1/media', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.detail || 'Upload failed') });
+            }
+            return response.json();
+        })
+        .then(data => {
+            spinner.style.display = 'none';
+            console.log('Upload successful:', data);
+            if (data.friendly_token) {
+                window.location.href = '/view?m=' + data.friendly_token;
+            }
+        })
+        .catch(error => {
+            spinner.style.display = 'none';
+            console.error('Upload failed:', error);
+        });
+    }
+});
+</script>
+
+
+{% else %}
+
+    {{can_upload_exp}}
+    <br>
+    <a href='/contact'>Contact</a> portal owners for more information.
+
+{% endif %}
+
+{% endblock %}
