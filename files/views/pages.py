@@ -256,7 +256,7 @@ def video_chapters(request, friendly_token):
         return HttpResponseRedirect("/")
 
     try:
-        data = json.loads(request.body)["chapters"]
+        data = json.loads(request.body)["segments"]
         chapters = []
         for _, chapter_data in enumerate(data):
             start_time = chapter_data.get('startTime')

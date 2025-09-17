@@ -94,33 +94,7 @@ const useVideoChapters = () => {
                 // Check if we have existing chapters from the backend
                 const existingChapters =
                     (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) ||
-                    [
-                        /* {
-                        name: 'Chapter 1',
-                        from: '00:00:00',
-                        to: '00:00:03',
-                    },
-                    {
-                        name: 'Chapter 2',
-                        from: '00:00:03',
-                        to: '00:00:06',
-                    },
-                    {
-                        name: 'Chapter 3',
-                        from: '00:00:09',
-                        to: '00:00:12',
-                    },
-                    {
-                        name: 'Chapter 4',
-                        from: '00:00:15',
-                        to: '00:00:18',
-                    },
-                    {
-                        name: 'Chapter 5',
-                        from: '00:00:21',
-                        to: '00:00:24',
-                    }, */
-                    ];
+                    [];
 
                 if (existingChapters.length > 0) {
                     // Create segments from existing chapters
@@ -128,8 +102,8 @@ const useVideoChapters = () => {
                         const chapter = existingChapters[i];
 
                         // Parse time strings to seconds
-                        const startTime = parseTimeToSeconds(chapter.from);
-                        const endTime = parseTimeToSeconds(chapter.to);
+                        const startTime = parseTimeToSeconds(chapter.startTime);
+                        const endTime = parseTimeToSeconds(chapter.endTime);
 
                         // Generate thumbnail for this segment
                         const segmentThumbnail = await generateThumbnail(video, (startTime + endTime) / 2);
@@ -140,7 +114,7 @@ const useVideoChapters = () => {
                             startTime: startTime,
                             endTime: endTime,
                             thumbnail: segmentThumbnail,
-                            chapterTitle: chapter.name, // Set the chapter title from backend data
+                            chapterTitle: chapter.text,
                         };
 
                         initialSegments.push(segment);
@@ -768,7 +742,7 @@ const useVideoChapters = () => {
 
             // Convert chapters to backend expected format
             const backendChapters = chapters.map((chapter) => ({
-                startTime: chapter.from,  
+                startTime: chapter.from,
                 endTime: chapter.to,
                 text: chapter.name,
             }));
