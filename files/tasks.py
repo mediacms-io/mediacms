@@ -950,45 +950,6 @@ def update_encoding_size(encoding_id):
     return False
 
 
-@task(name="produce_video_chapters", queue="short_tasks")
-def produce_video_chapters(chapter_id):
-    # this is not used
-    return False
-    chapter_object = VideoChapterData.objects.filter(id=chapter_id).first()
-    if not chapter_object:
-        return False
-
-    media = chapter_object.media
-    video_path = media.media_file.path
-    output_folder = media.video_chapters_folder
-
-    chapters = chapter_object.data
-
-    width = 336
-    height = 188
-
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    results = []
-
-    for i, chapter in enumerate(chapters):
-        timestamp = chapter["start"]
-        title = chapter["title"]
-
-        output_filename = f"thumbnail_{i:02d}.jpg"  # noqa
-        output_path = os.path.join(output_folder, output_filename)
-
-        command = [settings.FFMPEG_COMMAND, "-y", "-ss", str(timestamp), "-i", video_path, "-vframes", "1", "-q:v", "2", "-s", f"{width}x{height}", output_path]
-        ret = run_command(command)  # noqa
-        if os.path.exists(output_path) and get_file_type(output_path) == "image":
-            results.append({"start": timestamp, "title": title, "thumbnail": output_path})
-
-    chapter_object.data = results
-    chapter_object.save(update_fields=["data"])
-    return True
-
-
 @task(name="post_trim_action", queue="short_tasks", soft_time_limit=600)
 def post_trim_action(friendly_token):
     """Perform post-processing actions after video trimming

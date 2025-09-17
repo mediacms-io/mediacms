@@ -259,17 +259,19 @@ def video_chapters(request, friendly_token):
         data = json.loads(request.body)["chapters"]
         chapters = []
         for _, chapter_data in enumerate(data):
-            start_time = chapter_data.get('start')
-            title = chapter_data.get('title')
-            if start_time and title:
+            start_time = chapter_data.get('startTime')
+            end_time = chapter_data.get('endTime')
+            text = chapter_data.get('text')
+            if start_time and end_time and text:
                 chapters.append(
                     {
-                        'start': start_time,
-                        'title': title,
+                        'startTime': start_time,
+                        'endTime': end_time,
+                        'text': text,
                     }
                 )
     except Exception as e:  # noqa
-        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with start and title'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, text'}, status=400)
 
     ret = handle_video_chapters(media, chapters)
 
