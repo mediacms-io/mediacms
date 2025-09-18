@@ -21,11 +21,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
     const customComponents = useRef({}); // Store custom components for cleanup
 
-    /* const isDevelopment =
-        process.env.NODE_ENV === 'development' ||
-        window.location.hostname === 'localhost' ||
-        window.location.hostname.includes('vercel.app'); */
-    const isDevelopment = false;
+    // Check if this is an embed player (disable next video and autoplay features)
+    const isEmbedPlayer = videoId === 'video-embed';
+
+    const enableDevEnvironment = true;
+    const isDevelopment = enableDevEnvironment || window.location.hostname.includes('vercel.app');
     console.log('isDevelopment', isDevelopment);
     console.log('window.location.hostname', window.location.hostname);
 
@@ -1841,7 +1841,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
-                        if (mediaData?.nextLink || 1 === 1) {
+                        if (!isEmbedPlayer && (mediaData?.nextLink || isDevelopment)) {
                             // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
                             const nextVideoButton = new NextVideoButton(playerRef.current, {
                                 nextLink: mediaData.nextLink,
@@ -1852,26 +1852,28 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // END: Implement custom next video button
 
                         // BEGIN: Implement autoplay toggle button - simplified
-                        try {
-                            const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
-                                userPreferences: userPreferences.current,
-                            });
-                            // Add it after the play button
-                            const fullscreenToggleIndex = controlBar.children().indexOf(fullscreenToggle);
-                            controlBar.addChild(autoplayToggleButton, {}, fullscreenToggleIndex - 1);
+                        if (!isEmbedPlayer) {
+                            try {
+                                const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
+                                    userPreferences: userPreferences.current,
+                                });
+                                // Add it after the play button
+                                const fullscreenToggleIndex = controlBar.children().indexOf(fullscreenToggle);
+                                controlBar.addChild(autoplayToggleButton, {}, fullscreenToggleIndex - 1);
 
-                            // Store reference for later use
-                            customComponents.current.autoplayToggleButton = autoplayToggleButton;
+                                // Store reference for later use
+                                customComponents.current.autoplayToggleButton = autoplayToggleButton;
 
-                            // Force update icon after adding to DOM to ensure correct display
-                            setTimeout(() => {
-                                autoplayToggleButton.updateIcon();
-                                console.log('✓ Autoplay toggle button icon updated after DOM insertion');
-                            }, 100);
+                                // Force update icon after adding to DOM to ensure correct display
+                                setTimeout(() => {
+                                    autoplayToggleButton.updateIcon();
+                                    console.log('✓ Autoplay toggle button icon updated after DOM insertion');
+                                }, 100);
 
-                            console.log('✓ Autoplay toggle button added successfully');
-                        } catch (error) {
-                            console.error('✗ Failed to add autoplay toggle button:', error);
+                                console.log('✓ Autoplay toggle button added successfully');
+                            } catch (error) {
+                                console.error('✗ Failed to add autoplay toggle button:', error);
+                            }
                         }
                         // END: Implement autoplay toggle button
 
@@ -2528,8 +2530,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         console.log('isAutoplayEnabled', isAutoplayEnabled);
                         console.log('hasNextVideo', hasNextVideo);
+                        console.log('isEmbedPlayer', isEmbedPlayer);
 
-                        if (isAutoplayEnabled && hasNextVideo) {
+                        if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
                             // Get next video data for countdown display - find the next video in related videos
                             let nextVideoData = {
                                 title: 'Next Video',
