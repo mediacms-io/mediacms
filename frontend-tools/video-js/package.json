@@ -9,7 +9,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "build:django": "vite build --config vite.video-js.config.ts --outDir ../../../static/video_js",
-        "format": "npx prettier --write client/src/**/*.{ts,tsx,css}"
+        "format": "npx prettier --write src/**/*.{js,jsx,css}"
     },
     "dependencies": {
         "react": "^19.1.0",
