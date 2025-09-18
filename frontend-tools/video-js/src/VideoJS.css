@@ -73,12 +73,12 @@ html {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
     padding: 0;
     height: calc(100% - 46px);
     box-sizing: border-box;
     padding: 20px;
     gap: 10px;
+    z-index: 4;
 }
 .vjs-related-videos-title {
     color: white;
