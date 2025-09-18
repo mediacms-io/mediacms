@@ -18,6 +18,9 @@ class CustomSettingsMenu extends Component {
     this.userPreferences = options?.userPreferences || new UserPreferences();
     this.providedQualities = options?.qualities || null;
     this.hasSubtitles = options?.hasSubtitles || false;
+    // Touch scroll detection (mobile)
+    this.isTouchScrolling = false;
+    this.touchStartY = 0;
 
     // Bind methods
     this.createSettingsButton = this.createSettingsButton.bind(this);
@@ -581,22 +584,34 @@ class CustomSettingsMenu extends Component {
       }
     });
 
-    // Mobile touch events for settings items
+    // Touch scroll detection for settingsOverlay
+    this.settingsOverlay.addEventListener('touchstart', (e) => {
+      this.touchStartY = e.touches[0].clientY;
+      this.isTouchScrolling = false;
+    }, { passive: true });
+    this.settingsOverlay.addEventListener('touchmove', (e) => {
+      const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
+      if (dy > 10) this.isTouchScrolling = true;
+    }, { passive: true });
+    // Mobile touch events for settings items (tap vs scroll)
     this.settingsOverlay.addEventListener("touchend", (e) => {
-      e.preventDefault();
       e.stopPropagation();
+      if (this.isTouchScrolling) { this.isTouchScrolling = false; return; }
 
       if (e.target.closest('[data-setting="playback-speed"]')) {
+        e.preventDefault();
         this.speedSubmenu.style.display = "flex";
         this.qualitySubmenu.style.display = "none";
       }
 
       if (e.target.closest('[data-setting="quality"]')) {
+        e.preventDefault();
         this.qualitySubmenu.style.display = "flex";
         this.speedSubmenu.style.display = "none";
       }
 
       if (e.target.closest('[data-setting="subtitles"]')) {
+        e.preventDefault();
         this.refreshSubtitlesSubmenu();
         this.subtitlesSubmenu.style.display = "flex";
         this.speedSubmenu.style.display = "none";
@@ -646,12 +661,22 @@ class CustomSettingsMenu extends Component {
       }
     });
 
-    // Mobile touch events for speed options
+    // Touch scroll detection for speed submenu
+    this.speedSubmenu.addEventListener('touchstart', (e) => {
+      this.touchStartY = e.touches[0].clientY;
+      this.isTouchScrolling = false;
+    }, { passive: true });
+    this.speedSubmenu.addEventListener('touchmove', (e) => {
+      const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
+      if (dy > 10) this.isTouchScrolling = true;
+    }, { passive: true });
+    // Mobile touch events for speed options (tap vs scroll)
     this.speedSubmenu.addEventListener("touchend", (e) => {
-      e.preventDefault();
       e.stopPropagation();
+      if (this.isTouchScrolling) { this.isTouchScrolling = false; return; }
       const speedOption = e.target.closest(".speed-option");
       if (speedOption) {
+        e.preventDefault();
         const speed = parseFloat(speedOption.dataset.speed);
         this.handleSpeedChange(speed, speedOption);
       }
@@ -666,12 +691,21 @@ class CustomSettingsMenu extends Component {
       }
     });
 
-    // Mobile touch events for quality options
+    this.qualitySubmenu.addEventListener('touchstart', (e) => {
+      this.touchStartY = e.touches[0].clientY;
+      this.isTouchScrolling = false;
+    }, { passive: true });
+    this.qualitySubmenu.addEventListener('touchmove', (e) => {
+      const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
+      if (dy > 10) this.isTouchScrolling = true;
+    }, { passive: true });
+    // Mobile touch events for quality options (tap vs scroll)
     this.qualitySubmenu.addEventListener("touchend", (e) => {
-      e.preventDefault();
       e.stopPropagation();
+      if (this.isTouchScrolling) { this.isTouchScrolling = false; return; }
       const qualityOption = e.target.closest(".quality-option");
       if (qualityOption) {
+        e.preventDefault();
         const value = qualityOption.dataset.quality;
         this.handleQualityChange(value, qualityOption);
       }
@@ -686,12 +720,22 @@ class CustomSettingsMenu extends Component {
       }
     });
 
-    // Mobile touch events for subtitle options
+    // Touch scroll detection for subtitles submenu
+    this.subtitlesSubmenu.addEventListener('touchstart', (e) => {
+      this.touchStartY = e.touches[0].clientY;
+      this.isTouchScrolling = false;
+    }, { passive: true });
+    this.subtitlesSubmenu.addEventListener('touchmove', (e) => {
+      const dy = Math.abs(e.touches[0].clientY - this.touchStartY);
+      if (dy > 10) this.isTouchScrolling = true;
+    }, { passive: true });
+    // Mobile touch events for subtitle options (tap vs scroll)
     this.subtitlesSubmenu.addEventListener('touchend', (e) => {
-      e.preventDefault();
       e.stopPropagation();
+      if (this.isTouchScrolling) { this.isTouchScrolling = false; return; }
       const opt = e.target.closest('.subtitle-option');
       if (opt) {
+        e.preventDefault();
         const lang = opt.dataset.lang || null;
         this.handleSubtitleChange(lang, opt);
       }
@@ -812,81 +856,150 @@ class CustomSettingsMenu extends Component {
       const currentTime = player.currentTime();
       const rate = player.playbackRate();
 
-      // Try to preserve active subtitle track
-      const textTracks = player.textTracks();
+      // Capture active subtitle language and existing remote tracks
       let activeSubtitleLang = null;
-      for (let i = 0; i < textTracks.length; i++) {
-        const track = textTracks[i];
-        if (track.kind === "subtitles" && track.mode === "showing") {
-          activeSubtitleLang = track.language;
-          break;
+      try {
+        const tt = player.textTracks();
+        for (let i = 0; i < tt.length; i++) {
+          const t = tt[i];
+          if (t.kind === 'subtitles' && t.mode === 'showing') {
+            activeSubtitleLang = t.language || t.srclang || null;
+            break;
+          }
         }
+      } catch (e) {}
+
+      // Persist active subtitle language so it survives reloads
+      if (activeSubtitleLang) {
+        this.userPreferences.setPreference('subtitleLanguage', activeSubtitleLang, true);
+        // Also mark subtitles as enabled so applySubtitlePreference() runs on load
+        this.userPreferences.setPreference('subtitleEnabled', true, true);
       }
 
+      // Prefer remoteTextTrackEls (have src reliably)
+      const subtitleTracksInfo = [];
+      try {
+        const els = player.remoteTextTrackEls ? player.remoteTextTrackEls() : [];
+        for (let i = 0; i < els.length; i++) {
+          const el = els[i];
+          // Only keep subtitle tracks
+          if ((el.kind || '').toLowerCase() === 'subtitles') {
+            subtitleTracksInfo.push({
+              kind: 'subtitles',
+              src: el.src,
+              srclang: el.srclang || (el.track && el.track.language) || '',
+              label: el.label || (el.track && el.track.label) || '',
+              default: !!el.default
+            });
+          }
+        }
+      } catch (e) {}
 
-      player.addClass("vjs-changing-resolution");
-      player.isChangingQuality = true; // Flag to prevent seek indicator during quality change
-      player.src({ src: selected.src, type: selected.type || "video/mp4" });
+      // Fallback: try TextTracks if no elements found and track.src exists
+      if (subtitleTracksInfo.length === 0) {
+        try {
+          const tt = player.textTracks();
+          for (let i = 0; i < tt.length; i++) {
+            const t = tt[i];
+            if (t.kind === 'subtitles' && t.src) {
+              subtitleTracksInfo.push({
+                kind: 'subtitles',
+                src: t.src,
+                srclang: t.language || '',
+                label: t.label || '',
+                default: false
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      player.addClass('vjs-changing-resolution');
+      player.isChangingQuality = true; // prevent seek indicator during quality change
+      player.src({ src: selected.src, type: selected.type || 'video/mp4' });
 
       if (wasPaused) {
         player.pause();
       }
 
-      const onLoaded = () => {
-        // Restore time, rate, subtitles
+      const finishRestore = () => {
+        // Re-add remote tracks
         try {
-          player.playbackRate(rate);
+          subtitleTracksInfo.forEach((trackInfo) => {
+            if (trackInfo && trackInfo.src) {
+              player.addRemoteTextTrack(trackInfo, false);
+            }
+          });
         } catch (e) {}
-        try {
-          if (!isNaN(currentTime)) player.currentTime(currentTime);
-        } catch (e) {}
-        // Play or pause based on previous state
+
+        // Restore time and rate
+        try { player.playbackRate(rate); } catch (e) {}
+        try { if (!isNaN(currentTime)) player.currentTime(currentTime); } catch (e) {}
+
+        // Resume state
         if (!wasPaused) {
           player.play().catch(() => {});
         } else {
           player.pause();
         }
 
-        // Restore subtitles
-        if (activeSubtitleLang) {
-          const tt = player.textTracks();
-          for (let i = 0; i < tt.length; i++) {
-            const t = tt[i];
-            if (t.kind === "subtitles") {
-              t.mode =
-                t.language === activeSubtitleLang ? "showing" : "disabled";
+        // Restore the previously active subtitle language
+        setTimeout(() => {
+          try {
+            const tt2 = player.textTracks();
+            let restored = false;
+            for (let i = 0; i < tt2.length; i++) {
+              const t = tt2[i];
+              if (t.kind === 'subtitles') {
+                const match = activeSubtitleLang && (t.language === activeSubtitleLang || t.srclang === activeSubtitleLang);
+                t.mode = match ? 'showing' : 'disabled';
+                if (match) restored = true;
+              }
             }
-          }
-        }
+            // If nothing restored but a preference exists, try to apply it
+            if (!restored) {
+              const pref = this.userPreferences.getPreference('subtitleLanguage');
+              if (pref) {
+                for (let i = 0; i < tt2.length; i++) {
+                  const t = tt2[i];
+                  if (t.kind === 'subtitles' && (t.language === pref || t.srclang === pref)) {
+                    t.mode = 'showing';
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (e) {}
+          // Sync UI
+          this.refreshSubtitlesSubmenu();
+          this.updateCurrentSubtitleDisplay();
+          player.trigger('texttrackchange');
+        }, 150);
 
         // Ensure Subtitles (CC) button remains visible after source switch
         try {
-          const controlBar = player.getChild("controlBar");
-          const names = [
-            "subtitlesButton",
-            "textTrackButton",
-            "subsCapsButton",
-          ];
+          const controlBar = player.getChild('controlBar');
+          const names = ['subtitlesButton','textTrackButton','subsCapsButton'];
           for (const n of names) {
             const btn = controlBar && controlBar.getChild(n);
             if (btn) {
-              if (typeof btn.show === "function") btn.show();
+              if (typeof btn.show === 'function') btn.show();
               const el = btn.el && btn.el();
-              if (el) {
-                el.style.display = "";
-                el.style.visibility = "";
-              }
+              if (el) { el.style.display = ''; el.style.visibility = ''; }
             }
           }
-        } catch (e) {
-          // noop
-        }
+        } catch (e) {}
 
-        player.removeClass("vjs-changing-resolution");
-        player.off("loadedmetadata", onLoaded);
+        player.removeClass('vjs-changing-resolution');
       };
 
-      player.on("loadedmetadata", onLoaded);
+      // Wait for metadata/data to be ready, then restore
+      const onLoadedMeta = () => {
+        player.off('loadedmetadata', onLoadedMeta);
+        // Some browsers need loadeddata to have text track list ready
+        player.one('loadeddata', finishRestore);
+      };
+      player.one('loadedmetadata', onLoadedMeta);
     }
 
     // Close only the quality submenu (keep overlay open)
@@ -909,6 +1022,7 @@ class CustomSettingsMenu extends Component {
 
     // Save preference via UserPreferences (force set)
     this.userPreferences.setPreference('subtitleLanguage', lang || null, true);
+    this.userPreferences.setPreference('subtitleEnabled', !!lang, true); // for iphones
 
     // Update UI selection
     this.subtitlesSubmenu.querySelectorAll('.subtitle-option').forEach((opt) => {
@@ -932,30 +1046,57 @@ class CustomSettingsMenu extends Component {
 
   restoreSubtitlePreference() {
     const savedLanguage = this.userPreferences.getPreference('subtitleLanguage');
-    
     if (savedLanguage) {
-      setTimeout(() => {
-        const player = this.player();
-        const tracks = player.textTracks();
-        
-        for (let i = 0; i < tracks.length; i++) {
-          const track = tracks[i];
-          if (track.kind === 'subtitles') {
-            track.mode = 'disabled';
+      const tryRestore = (attempt = 1) => {
+        try {
+          const player = this.player();
+          const tracks = player.textTracks();
+          const saved = String(savedLanguage || '').toLowerCase();
+          // First disable all subtitle tracks
+          for (let i = 0; i < tracks.length; i++) {
+            const t = tracks[i];
+            if (t.kind === 'subtitles') t.mode = 'disabled';
           }
-        }
-        
+          // Helper for robust language matching (language or srclang; en vs en-US)
+          const matches = (t) => {
+            const tl = String(t.language || t.srclang || '').toLowerCase();
+            if (!tl || !saved) return false;
+            return tl === saved || tl.startsWith(saved + '-') || saved.startsWith(tl + '-');
+          };
 
-        for (let i = 0; i < tracks.length; i++) {
-          const track = tracks[i];
-          if (track.kind === 'subtitles' && track.language === savedLanguage) {
-            track.mode = 'showing';
-            console.log('✓ Restored subtitle preference:', savedLanguage, track.label);
-            this.refreshSubtitlesSubmenu();
-            break;
+          let restored = false;
+          for (let i = 0; i < tracks.length; i++) {
+            const t = tracks[i];
+            if (t.kind === 'subtitles' && matches(t)) {
+              t.mode = 'showing';
+              restored = true;
+              // Persist enabled flag so iOS applies on next load
+              try { this.userPreferences.setPreference('subtitleEnabled', true, true); } catch (e) { }
+              // Refresh UI
+              this.refreshSubtitlesSubmenu();
+              this.updateCurrentSubtitleDisplay();
+              try { player.trigger('texttrackchange'); } catch (e) { }
+              break;
+            }
           }
+
+          if (!restored && attempt < 8) {
+            // Retry with incremental delay for iOS where tracks may not be ready
+            const delay = 150 * attempt;
+            setTimeout(() => tryRestore(attempt + 1), delay);
+          }
+        } catch (e) {
+          if (attempt < 8) setTimeout(() => tryRestore(attempt + 1), 150 * attempt);
         }
-      }, 500);
+      };
+      setTimeout(() => tryRestore(1), 300);
+      try {
+        const p = this.player();
+        const once = (ev) => p.one(ev, () => setTimeout(() => tryRestore(1), 50));
+        once('loadedmetadata');
+        once('loadeddata');
+        once('canplay');
+      } catch (e) { }
     }
   }
 
