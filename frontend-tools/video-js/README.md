@@ -4,22 +4,22 @@ A **comprehensive demonstration** of integrating **video.js** with **React** and
 
 ## 🚀 Features
 
--   ✅ **Complete Video.js Options Implementation** - Every available parameter documented and demonstrated
--   ✅ Video.js integration with React hooks
--   ✅ Responsive video player with breakpoints
--   ✅ Modern Vite build setup
--   ✅ Clean and modern UI
--   ✅ Comprehensive event handling and console logging
--   ✅ Sample video demonstration
--   ✅ **150+ Video.js Parameters** organized by category
--   ✅ **Multiple configuration examples** for different use cases
+- ✅ **Complete Video.js Options Implementation** - Every available parameter documented and demonstrated
+- ✅ Video.js integration with React hooks
+- ✅ Responsive video player with breakpoints
+- ✅ Modern Vite build setup
+- ✅ Clean and modern UI
+- ✅ Comprehensive event handling and console logging
+- ✅ Sample video demonstration
+- ✅ **150+ Video.js Parameters** organized by category
+- ✅ **Multiple configuration examples** for different use cases
 
 ## 🛠️ Technologies Used
 
--   **React 19** - UI library
--   **Vite 4.5.0** - Build tool and dev server (Node 16 compatible)
--   **Video.js 8.23.3** - HTML5 video player (latest version)
--   **JavaScript** - Programming language (no TypeScript)
+- **React 19** - UI library
+- **Vite 4.5.0** - Build tool and dev server (Node 16 compatible)
+- **Video.js 8.23.3** - HTML5 video player (latest version)
+- **JavaScript** - Programming language (no TypeScript)
 
 ## 📦 Installation
 
@@ -47,67 +47,67 @@ src/
 
 ### 🎬 Standard HTML5 Video Element Options
 
--   `autoplay` - Can be boolean, 'muted', 'play', or 'any'
--   `controls` - Show/hide player controls
--   `height` / `width` - Player dimensions
--   `loop` - Restart video when it ends
--   `muted` - Start with audio muted
--   `poster` - Poster image URL
--   `preload` - 'auto', 'metadata', or 'none'
--   `sources` - Array of video sources
+- `autoplay` - Can be boolean, 'muted', 'play', or 'any'
+- `controls` - Show/hide player controls
+- `height` / `width` - Player dimensions
+- `loop` - Restart video when it ends
+- `muted` - Start with audio muted
+- `poster` - Poster image URL
+- `preload` - 'auto', 'metadata', or 'none'
+- `sources` - Array of video sources
 
 ### ⚡ Video.js-Specific Options
 
--   `aspectRatio` - Maintains aspect ratio ('16:9', '4:3')
--   `audioOnlyMode` - Hide video-specific controls
--   `audioPosterMode` - Show poster persistently for audio
--   `breakpoints` - Responsive breakpoints configuration
--   `disablePictureInPicture` - Control PiP functionality
--   `enableDocumentPictureInPicture` - Chrome 116+ PiP
--   `enableSmoothSeeking` - Smoother seeking experience
--   `experimentalSvgIcons` - Use SVG icons instead of font
--   `fluid` - Responsive to container size
--   `fullscreen` - Fullscreen API options
--   `inactivityTimeout` - User inactive timeout in ms
--   `language` / `languages` - Localization
--   `liveui` / `liveTracker` - Live streaming features
--   `normalizeAutoplay` - Consistent autoplay behavior
--   `noUITitleAttributes` - Better accessibility
--   `playbackRates` - Speed control options
--   `playsinline` - iOS Safari behavior
--   `preferFullWindow` - iOS fullscreen alternative
--   `responsive` - Enable responsive breakpoints
--   `skipButtons` - Forward/backward skip controls
--   `spatialNavigation` - TV/remote control support
--   `techOrder` - Playback technology preference
--   `userActions` - Click, double-click, hotkeys configuration
+- `aspectRatio` - Maintains aspect ratio ('16:9', '4:3')
+- `audioOnlyMode` - Hide video-specific controls
+- `audioPosterMode` - Show poster persistently for audio
+- `breakpoints` - Responsive breakpoints configuration
+- `disablePictureInPicture` - Control PiP functionality
+- `enableDocumentPictureInPicture` - Chrome 116+ PiP
+- `enableSmoothSeeking` - Smoother seeking experience
+- `experimentalSvgIcons` - Use SVG icons instead of font
+- `fluid` - Responsive to container size
+- `fullscreen` - Fullscreen API options
+- `inactivityTimeout` - User inactive timeout in ms
+- `language` / `languages` - Localization
+- `liveui` / `liveTracker` - Live streaming features
+- `normalizeAutoplay` - Consistent autoplay behavior
+- `noUITitleAttributes` - Better accessibility
+- `playbackRates` - Speed control options
+- `playsinline` - iOS Safari behavior
+- `preferFullWindow` - iOS fullscreen alternative
+- `responsive` - Enable responsive breakpoints
+- `skipButtons` - Forward/backward skip controls
+- `spatialNavigation` - TV/remote control support
+- `techOrder` - Playback technology preference
+- `userActions` - Click, double-click, hotkeys configuration
 
 ### 🎛️ Component Options
 
--   `controlBar` - Complete control bar customization
-    -   Time displays (current, duration, remaining)
-    -   Progress control and seek bar
-    -   Volume control (horizontal/vertical)
-    -   Playback controls (play/pause)
-    -   Skip buttons (forward/backward)
-    -   Fullscreen and Picture-in-Picture
-    -   Subtitles, captions, audio tracks
-    -   Live streaming controls
--   `children` - Player child components array
+- `controlBar` - Complete control bar customization
+    - Time displays (current, duration, remaining)
+    - Progress control and seek bar
+    - Volume control (horizontal/vertical)
+    - Playback controls (play/pause)
+    - Skip buttons (forward/backward)
+    - Fullscreen and Picture-in-Picture
+    - Subtitles, captions, audio tracks
+    - Live streaming controls
+- `children` - Player child components array
 
 ### 🔧 Tech Options
 
--   `html5` - HTML5 technology specific options
-    -   `nativeControlsForTouch` - Touch device controls
-    -   `nativeAudioTracks` / `nativeVideoTracks` - Track handling
-    -   `nativeTextTracks` / `preloadTextTracks` - Subtitle handling
+- `html5` - HTML5 technology specific options
+    - `nativeControlsForTouch` - Touch device controls
+    - `nativeAudioTracks` / `nativeVideoTracks` - Track handling
+    - `nativeTextTracks` / `preloadTextTracks` - Subtitle handling
 
 ### 🚀 Advanced Options
 
--   `plugins` - Plugin initialization
--   `vtt.js` - Subtitle library URL
--   `id` - Player element ID
--   `posterImage` - Poster component control
+- `plugins` - Plugin initialization
+- `vtt.js` - Subtitle library URL
+- `id` - Player element ID
+- `posterImage` - Poster component control
 
 ## 🎮 Usage Examples
 
@@ -242,13 +242,9 @@ const handlePlayerReady = (player) => {
     player.on('play', () => console.log('Video started'));
     player.on('pause', () => console.log('Video paused'));
     player.on('volumechange', () => console.log('Volume:', player.volume()));
-    player.on('fullscreenchange', () =>
-        console.log('Fullscreen:', player.isFullscreen())
-    );
+    player.on('fullscreenchange', () => console.log('Fullscreen:', player.isFullscreen()));
     player.on('ratechange', () => console.log('Speed:', player.playbackRate()));
-    player.on('seeking', () =>
-        console.log('Seeking to:', player.currentTime())
-    );
+    player.on('seeking', () => console.log('Seeking to:', player.currentTime()));
 };
 ```
 
@@ -284,9 +280,9 @@ const handlePlayerReady = (player) => {
 
 ## 📝 Configuration Files
 
--   **`src/App.jsx`** - Complete implementation with all options
--   **`src/VideoJsOptionsReference.js`** - Detailed documentation of every option
--   **`src/VideoPlayer.jsx`** - React component wrapper
+- **`src/App.jsx`** - Complete implementation with all options
+- **`src/VideoJsOptionsReference.js`** - Detailed documentation of every option
+- **`src/VideoPlayer.jsx`** - React component wrapper
 
 ## 🚀 Development
 
@@ -313,29 +309,29 @@ npm run preview
 
 ## 📊 Statistics
 
--   **150+ Video.js Options** implemented and documented
--   **8 Option Categories** with detailed explanations
--   **5 Example Configurations** for different use cases
--   **10+ Keyboard Shortcuts** supported
--   **Responsive Breakpoints** for 7 different screen sizes
--   **20+ Event Listeners** with detailed logging
+- **150+ Video.js Options** implemented and documented
+- **8 Option Categories** with detailed explanations
+- **5 Example Configurations** for different use cases
+- **10+ Keyboard Shortcuts** supported
+- **Responsive Breakpoints** for 7 different screen sizes
+- **20+ Event Listeners** with detailed logging
 
 ## 📝 Notes
 
--   The demo uses a sample video from Video.js CDN
--   All player events are logged to the browser console with emojis
--   The component properly handles cleanup on unmount
--   Responsive design works on mobile and desktop
--   Compatible with Node.js 16+ (Vite downgraded for compatibility)
--   All options are documented with types, defaults, and descriptions
+- The demo uses a sample video from Video.js CDN
+- All player events are logged to the browser console with emojis
+- The component properly handles cleanup on unmount
+- Responsive design works on mobile and desktop
+- Compatible with Node.js 16+ (Vite downgraded for compatibility)
+- All options are documented with types, defaults, and descriptions
 
 ## 🔗 Useful Links
 
--   [Video.js Official Documentation](https://videojs.com/)
--   [Video.js Options Reference](https://videojs.com/guides/options/)
--   [Video.js Plugins](https://videojs.com/plugins/)
--   [React Integration Guide](https://videojs.com/guides/react/)
+- [Video.js Official Documentation](https://videojs.com/)
+- [Video.js Options Reference](https://videojs.com/guides/options/)
+- [Video.js Plugins](https://videojs.com/plugins/)
+- [React Integration Guide](https://videojs.com/guides/react/)
 
 ---
 
-**Happy coding!** 🎉 This implementation serves as a complete reference for video.js integration with React.
+**Happy coding!** 🎉 This implementation serves as a complete reference for video.js integration with React!
