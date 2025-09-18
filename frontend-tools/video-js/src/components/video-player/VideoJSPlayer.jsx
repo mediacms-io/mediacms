@@ -15,16 +15,17 @@ import CustomSettingsMenu from '../controls/CustomSettingsMenu';
 import SeekIndicator from '../controls/SeekIndicator';
 import UserPreferences from '../../utils/UserPreferences';
 
-function VideoJSPlayer() {
+function VideoJSPlayer({ videoId = 'default-video' }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
     const customComponents = useRef({}); // Store custom components for cleanup
 
-    const isDevelopment =
+    /* const isDevelopment =
         process.env.NODE_ENV === 'development' ||
         window.location.hostname === 'localhost' ||
-        window.location.hostname.includes('vercel.app');
+        window.location.hostname.includes('vercel.app'); */
+    const isDevelopment = false;
     console.log('isDevelopment', isDevelopment);
     console.log('window.location.hostname', window.location.hostname);
 
@@ -1483,7 +1484,7 @@ function VideoJSPlayer() {
                         },
 
                         // Player element ID
-                        id: undefined,
+                        id: mediaData.id,
 
                         // Milliseconds of inactivity before user considered inactive (0 = never)
                         inactivityTimeout: 2000,
@@ -2742,7 +2743,7 @@ function VideoJSPlayer() {
         };
     }, []);
 
-    return <video ref={videoRef} className="video-js vjs-default-skin" tabIndex="0" />;
+    return <video ref={videoRef} id={videoId} className="video-js vjs-default-skin" tabIndex="0" />;
 }
 
 export default VideoJSPlayer;
