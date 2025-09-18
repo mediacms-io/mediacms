@@ -14,6 +14,7 @@ class CustomChaptersOverlay extends Component {
         this.seriesTitle = options.seriesTitle || 'Chapters';
         this.channelName = options.channelName || '';
         this.thumbnail = options.thumbnail || '';
+        this.isScrolling = false;
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -119,6 +120,12 @@ class CustomChaptersOverlay extends Component {
 
         const body = document.createElement('div');
         body.className = 'chapter-body';
+        // Enable smooth touch scrolling on mobile devices
+        body.style.cssText += `
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            overscroll-behavior: contain;
+        `;
         container.appendChild(body);
 
         const list = document.createElement('ul');
@@ -172,14 +179,38 @@ class CustomChaptersOverlay extends Component {
                 </svg>`;
             action.appendChild(btn);
 
-            // Mobile & desktop click/touch
-            const seekFn = () => {
-                this.player().currentTime(chapter.startTime);
-                this.overlay.style.display = 'none';
-                this.updateActiveItem(index);
+            // Handle click and touch events properly
+            const seekFn = (e) => {
+                // Prevent default only for navigation, not scrolling
+                if (e.type === 'click' || (e.type === 'touchend' && !this.isScrolling)) {
+                    e.preventDefault();
+                    this.player().currentTime(chapter.startTime);
+                    this.overlay.style.display = 'none';
+                    this.updateActiveItem(index);
+                }
             };
+            
+            // Track scrolling state for touch devices
+            let touchStartY = 0;
+            let touchStartTime = 0;
+            
+            item.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+                this.isScrolling = false;
+            }, { passive: true });
+            
+            item.addEventListener('touchmove', (e) => {
+                const touchMoveY = e.touches[0].clientY;
+                const deltaY = Math.abs(touchMoveY - touchStartY);
+                // If user moved more than 10px vertically, consider it scrolling
+                if (deltaY > 10) {
+                    this.isScrolling = true;
+                }
+            }, { passive: true });
+            
+            item.addEventListener('touchend', seekFn, { passive: false });
             item.addEventListener('click', seekFn);
-            item.addEventListener('touchstart', seekFn);
 
             anchor.appendChild(drag);
             anchor.appendChild(meta);
