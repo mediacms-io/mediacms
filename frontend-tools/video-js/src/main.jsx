@@ -12,7 +12,7 @@ const mountComponents = () => {
         const root = createRoot(rootContainer);
         root.render(
             <StrictMode>
-                        <VideoJS />
+                <VideoJS />
             </StrictMode>
         );
     }
