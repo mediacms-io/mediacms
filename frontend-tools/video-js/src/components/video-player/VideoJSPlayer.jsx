@@ -24,9 +24,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     // Check if this is an embed player (disable next video and autoplay features)
     const isEmbedPlayer = videoId === 'video-embed';
 
-    const enableDevEnvironment = true;
-    const isDevelopment = enableDevEnvironment || window.location.hostname.includes('vercel.app');
-    console.log('isDevelopment', isDevelopment);
+    // Environment-based development mode configuration
+    const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
+    console.log('isDevMode', isDevMode);
     console.log('window.location.hostname', window.location.hostname);
 
     // Safely access window.MEDIA_DATA with fallback using useMemo
@@ -1060,7 +1060,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     const chaptersData =
         mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0
             ? mediaData?.data?.chapter_data
-            : isDevelopment
+            : isDevMode
               ? [
                     { startTime: 0, endTime: 4, text: 'Introduction' },
                     { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
@@ -1374,7 +1374,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     // const demoSubtitleTracks = []; // NO Subtitles. TODO: hide it on production
 
     // Get subtitle tracks from backend response or fallback based on environment
-    const backendSubtitles = mediaData?.data?.subtitles_info || (isDevelopment ? demoSubtitleTracks : []);
+    const backendSubtitles = mediaData?.data?.subtitles_info || (isDevMode ? demoSubtitleTracks : []);
     const hasSubtitles = backendSubtitles.length > 0;
     const subtitleTracks = hasSubtitles
         ? backendSubtitles.map((track) => ({
@@ -1841,7 +1841,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
-                        if (!isEmbedPlayer && (mediaData?.nextLink || isDevelopment)) {
+                        if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
                             // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
                             const nextVideoButton = new NextVideoButton(playerRef.current, {
                                 nextLink: mediaData.nextLink,
