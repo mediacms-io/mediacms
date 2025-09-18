@@ -392,7 +392,7 @@ class UserPreferences {
         const savedLanguage = this.getPreference('subtitleLanguage');
         const enabled = this.getPreference('subtitleEnabled');
 
-        if (savedLanguage && enabled) {
+        if (savedLanguage) {
             // Set flag to prevent auto-save during restoration
             this.isRestoringSubtitles = true;
             console.log('isRestoringSubtitles', this.isRestoringSubtitles);
@@ -418,21 +418,54 @@ class UserPreferences {
                     }
                 }
 
+                // Helper to match language robustly (handles en vs en-US, srclang fallback)
+                const matchesLang = (track, target) => {
+                    const tl = String(track.language || track.srclang || '').toLowerCase();
+                    const sl = String(target || '').toLowerCase();
+                    if (!tl || !sl) return false;
+                    return tl === sl || tl.startsWith(sl + '-') || sl.startsWith(tl + '-');
+                };
+
                 // Then enable the saved language
                 let found = false;
                 for (let i = 0; i < textTracks.length; i++) {
                     const track = textTracks[i];
-                    if (track.kind === 'subtitles' && track.language === savedLanguage) {
+                    if (track.kind === 'subtitles' && matchesLang(track, savedLanguage)) {
                         track.mode = 'showing';
                         console.log('✓ Applied saved subtitle language:', savedLanguage, track.label);
                         found = true;
 
                         // Also update the menu UI to reflect the selection
                         this.updateSubtitleMenuUI(player, track);
-                        
+
                         // Update subtitle button visual state immediately
                         this.updateSubtitleButtonVisualState(player, true);
+                        // Ensure enabled flips to true after successful restore
+                        this.setPreference('subtitleEnabled', true, true);
                         break;
+                    }
+                }
+
+                // Fallback: if not found but enabled is true, enable the first available subtitles track
+                if (!found && enabled) {
+                    for (let i = 0; i < textTracks.length; i++) {
+                        const track = textTracks[i];
+                        if (track.kind === 'subtitles') {
+                            track.mode = 'showing';
+                            console.log(
+                                'Fallback ✓ Enabled first available subtitles track:',
+                                track.label || track.language || track.srclang
+                            );
+                            // Save back the language we actually enabled for future precise matches
+                            const langToSave = track.language || track.srclang || null;
+                            if (langToSave) this.setPreference('subtitleLanguage', langToSave, true);
+                            // Ensure enabled flips to true after successful restore
+                            this.setPreference('subtitleEnabled', true, true);
+                            this.updateSubtitleMenuUI(player, track);
+                            this.updateSubtitleButtonVisualState(player, true);
+                            found = true;
+                            break;
+                        }
                     }
                 }
 
@@ -455,6 +488,20 @@ class UserPreferences {
 
             // Start attempting to apply subtitles immediately
             attemptToApplySubtitles();
+
+            // Also attempt when tracks are added/changed (iOS timing)
+            try {
+                const vEl =
+                    (player.tech_ && player.tech_.el_) ||
+                    (player.el && player.el().querySelector && player.el().querySelector('video'));
+                const ttList = vEl && vEl.textTracks;
+                if (ttList && typeof ttList.addEventListener === 'function') {
+                    const onAddTrack = () => setTimeout(() => attemptToApplySubtitles(1), 50);
+                    const onChange = () => setTimeout(() => attemptToApplySubtitles(1), 50);
+                    ttList.addEventListener('addtrack', onAddTrack, { once: true });
+                    ttList.addEventListener('change', onChange, { once: true });
+                }
+            } catch (e) {}
         } else {
             // Ensure subtitles are off on load when not enabled
             try {
@@ -465,10 +512,10 @@ class UserPreferences {
                         track.mode = 'disabled';
                     }
                 }
-                
+
                 // Update subtitle button visual state to show disabled
                 this.updateSubtitleButtonVisualState(player, false);
-                
+
                 // Update custom settings menu to show "Off" as selected
                 this.updateCustomSettingsMenuUI(player);
             } catch (e) {}
@@ -485,10 +532,10 @@ class UserPreferences {
         try {
             const controlBar = player.getChild('controlBar');
             const subtitlesButton = controlBar.getChild('subtitlesButton');
-            
+
             if (subtitlesButton && subtitlesButton.el()) {
                 const buttonEl = subtitlesButton.el();
-                
+
                 if (enabled) {
                     buttonEl.classList.add('vjs-subs-active');
                     console.log('✓ Added vjs-subs-active class to subtitle button');
@@ -549,13 +596,15 @@ class UserPreferences {
                 // Find the custom settings menu component
                 const controlBar = player.getChild('controlBar');
                 const customSettingsMenu = controlBar.getChild('CustomSettingsMenu');
-                
+
                 if (customSettingsMenu && customSettingsMenu.refreshSubtitlesSubmenu) {
                     console.log('Updating custom settings menu UI...');
                     customSettingsMenu.refreshSubtitlesSubmenu();
                 } else if (attempt < 5) {
                     // Retry after a short delay if menu not found
-                    console.log(`Custom settings menu not found, retrying in ${attempt * 200}ms... (attempt ${attempt})`);
+                    console.log(
+                        `Custom settings menu not found, retrying in ${attempt * 200}ms... (attempt ${attempt})`
+                    );
                     setTimeout(() => attemptUpdate(attempt + 1), attempt * 200);
                 } else {
                     console.log('Custom settings menu not found after multiple attempts');
