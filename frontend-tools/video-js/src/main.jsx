@@ -7,12 +7,24 @@ import VideoJS from './VideoJS.jsx';
 
 // Mount the components when the DOM is ready
 const mountComponents = () => {
-    const rootContainer = document.getElementById('video-js-root');
-    if (rootContainer) {
-        const root = createRoot(rootContainer);
-        root.render(
+    // Mount main video player
+    const rootContainerMain = document.getElementById('video-js-root-main');
+    if (rootContainerMain) {
+        const rootMain = createRoot(rootContainerMain);
+        rootMain.render(
             <StrictMode>
-                <VideoJS />
+                <VideoJS videoId="video-main" />
+            </StrictMode>
+        );
+    }
+
+    // Mount embed video player
+    const rootContainerEmbed = document.getElementById('video-js-root-embed');
+    if (rootContainerEmbed) {
+        const rootEmbed = createRoot(rootContainerEmbed);
+        rootEmbed.render(
+            <StrictMode>
+                <VideoJS videoId="video-embed" />
             </StrictMode>
         );
     }
