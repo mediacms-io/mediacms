@@ -770,6 +770,18 @@ button {
     padding: 0;
     height: 100% !important;
     border-radius: 12px;
+    outline: none; /* Remove default browser focus outline */
+}
+
+/* Custom focus styles for video player */
+.video-js:focus {
+    box-shadow: 0 0 0 3px rgba(25, 153, 50, 0.5);
+    border-radius: 12px;
+}
+
+/* Ensure video player is focusable */
+.video-js[tabindex] {
+    outline: none;
 }
 
 /* Fullscreen video-js player styles for embedded video player */
