@@ -56,11 +56,12 @@ export const EmbedPage: React.FC = () => {
           </div>
         </div>
       )}
+
       {loadedVideo && (
         <SiteConsumer>
-          {(site) => (
+        {(site) => (
             <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} containerStyles={containerStyles} />
-          )}
+          )} 
         </SiteConsumer>
       )}
     </div>
