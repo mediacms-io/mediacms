@@ -40,9 +40,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           poster_url:
                               'https://demo.mediacms.io/media/original/thumbnails/user/markos/7dedcb56bde9463dbc0766768a99be0f_C8E5GFY.20250605_110647.mp4.jpg',
                           chapter_data: [
-                              { startTime: '00:00:00.000', endTime: '00:00:24.295', text: 'A1 test' },
-                              { startTime: '00:00:24.295', endTime: '00:00:48.590', text: 'A2 of Marine Life' },
-                              { startTime: '00:00:48.590', endTime: '00:01:12.885', text: 'A3 Reef Ecosystems' },
+                              { startTime: '00:00:00.000', endTime: '00:00:24.295', chapterTitle: 'A1 test' },
+                              { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
+                              {
+                                  startTime: '00:00:48.590',
+                                  endTime: '00:01:12.885',
+                                  chapterTitle: 'A3 Reef Ecosystems',
+                              },
                           ],
                           related_media: [
                               {
@@ -1099,7 +1103,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             const convertedData = rawChaptersData.map((chapter) => ({
                 startTime: convertTimeStringToSeconds(chapter.startTime),
                 endTime: convertTimeStringToSeconds(chapter.endTime),
-                text: chapter.text,
+                chapterTitle: chapter.chapterTitle,
             }));
 
             return convertedData;
@@ -1113,32 +1117,32 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         }
         return isDevMode
             ? [
-                  { startTime: '00:00:00.000', endTime: '00:00:04.000', text: 'Introduction' },
-                  { startTime: '00:00:05.000', endTime: '00:00:10.000', text: 'Overview of Marine Life' },
-                  { startTime: '00:00:10.000', endTime: '00:00:15.000', text: 'Coral Reef Ecosystems' },
-                  { startTime: '00:00:15.000', endTime: '00:00:20.000', text: 'Deep Sea Creatures' },
-                  { startTime: '00:00:20.000', endTime: '00:00:30.000', text: 'Ocean Conservation' },
-                  { startTime: '00:00:24.000', endTime: '00:00:32.000', text: 'Ocean Conservation' },
-                  { startTime: '00:00:32.000', endTime: '00:00:40.000', text: 'Climate Change Impact' },
-                  { startTime: '00:00:40.000', endTime: '00:00:48.000', text: 'Marine Protected Areas' },
-                  { startTime: '00:00:48.000', endTime: '00:00:56.000', text: 'Sustainable Fishing' },
-                  { startTime: '00:00:56.000', endTime: '00:00:64.000', text: 'Research Methods' },
-                  { startTime: '00:00:64.000', endTime: '00:00:72.000', text: 'Future Challenges' },
-                  { startTime: '00:00:72.000', endTime: '00:00:80.000', text: 'Conclusion' },
-                  { startTime: '00:00:80.000', endTime: '00:00:88.000', text: 'Marine Biodiversity Hotspots' },
-                  { startTime: '00:00:88.000', endTime: '00:00:96.000', text: 'Underwater Photography' },
-                  { startTime: '00:00:96.000', endTime: '00:01:04.000', text: 'Whale Migration Patterns' },
-                  { startTime: '00:01:04.000', endTime: '00:01:12.000', text: 'Plastic Pollution Crisis' },
-                  { startTime: '00:01:12.000', endTime: '00:01:20.000', text: 'Seagrass Meadows' },
-                  { startTime: '00:01:20.000', endTime: '00:01:28.000', text: 'Ocean Acidification' },
-                  { startTime: '00:01:28.000', endTime: '00:01:36.000', text: 'Marine Archaeology' },
-                  { startTime: '00:01:28.000', endTime: '00:01:36.000', text: 'Tidal Pool Ecosystems' },
-                  { startTime: '00:01:36.000', endTime: '00:01:44.000', text: 'Commercial Aquaculture' },
-                  { startTime: '00:01:44.000', endTime: '00:01:52.000', text: 'Ocean Exploration Technology' },
+                  { startTime: '00:00:00.000', endTime: '00:00:04.000', chapterTitle: 'Introduction' },
+                  { startTime: '00:00:05.000', endTime: '00:00:10.000', chapterTitle: 'Overview of Marine Life' },
+                  { startTime: '00:00:10.000', endTime: '00:00:15.000', chapterTitle: 'Coral Reef Ecosystems' },
+                  { startTime: '00:00:15.000', endTime: '00:00:20.000', chapterTitle: 'Deep Sea Creatures' },
+                  { startTime: '00:00:20.000', endTime: '00:00:30.000', chapterTitle: 'Ocean Conservation' },
+                  { startTime: '00:00:24.000', endTime: '00:00:32.000', chapterTitle: 'Ocean Conservation' },
+                  { startTime: '00:00:32.000', endTime: '00:00:40.000', chapterTitle: 'Climate Change Impact' },
+                  { startTime: '00:00:40.000', endTime: '00:00:48.000', chapterTitle: 'Marine Protected Areas' },
+                  { startTime: '00:00:48.000', endTime: '00:00:56.000', chapterTitle: 'Sustainable Fishing' },
+                  { startTime: '00:00:56.000', endTime: '00:00:64.000', chapterTitle: 'Research Methods' },
+                  { startTime: '00:00:64.000', endTime: '00:00:72.000', chapterTitle: 'Future Challenges' },
+                  { startTime: '00:00:72.000', endTime: '00:00:80.000', chapterTitle: 'Conclusion' },
+                  { startTime: '00:00:80.000', endTime: '00:00:88.000', chapterTitle: 'Marine Biodiversity Hotspots' },
+                  { startTime: '00:00:88.000', endTime: '00:00:96.000', chapterTitle: 'Marine Biodiversity test' },
+                  { startTime: '00:00:96.000', endTime: '00:01:04.000', chapterTitle: 'Whale Migration Patterns' },
+                  { startTime: '00:01:04.000', endTime: '00:01:12.000', chapterTitle: 'Plastic Pollution Crisis' },
+                  { startTime: '00:01:12.000', endTime: '00:01:20.000', chapterTitle: 'Seagrass Meadows' },
+                  { startTime: '00:01:20.000', endTime: '00:01:28.000', chapterTitle: 'Ocean Acidification' },
+                  { startTime: '00:01:28.000', endTime: '00:01:36.000', chapterTitle: 'Marine Archaeology' },
+                  { startTime: '00:01:28.000', endTime: '00:01:36.000', chapterTitle: 'Tidal Pool Ecosystems' },
+                  { startTime: '00:01:36.000', endTime: '00:01:44.000', chapterTitle: 'Commercial Aquaculture' },
+                  { startTime: '00:01:44.000', endTime: '00:01:52.000', chapterTitle: 'Ocean Exploration Technology' },
               ].map((chapter) => ({
                   startTime: convertTimeStringToSeconds(chapter.startTime),
                   endTime: convertTimeStringToSeconds(chapter.endTime),
-                  text: chapter.text,
+                  chapterTitle: chapter.chapterTitle,
               }))
             : [];
     }, [mediaData?.data?.chapter_data, isDevMode, convertChaptersData]);

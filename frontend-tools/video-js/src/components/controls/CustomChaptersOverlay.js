@@ -35,7 +35,7 @@ class CustomChaptersOverlay extends Component {
         const hh = Math.floor(totalSec / 3600);
         const mm = Math.floor((totalSec % 3600) / 60);
         const ss = totalSec % 60;
-        
+
         return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
     }
 
@@ -152,12 +152,13 @@ class CustomChaptersOverlay extends Component {
             const hh = Math.floor(totalSec / 3600);
             const mm = Math.floor((totalSec % 3600) / 60);
             const ss = totalSec % 60;
-            const timeStr = hh > 0
-                ? `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
-                : `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+            const timeStr =
+                hh > 0
+                    ? `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+                    : `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 
             const titleEl = document.createElement('h4');
-            titleEl.textContent = chapter.text;
+            titleEl.textContent = chapter.chapterTitle;
             const sub = document.createElement('div');
             sub.className = 'meta-sub';
             const dynamic = document.createElement('span');
@@ -189,26 +190,34 @@ class CustomChaptersOverlay extends Component {
                     this.updateActiveItem(index);
                 }
             };
-            
+
             // Track scrolling state for touch devices
             let touchStartY = 0;
             let touchStartTime = 0;
-            
-            item.addEventListener('touchstart', (e) => {
-                touchStartY = e.touches[0].clientY;
-                touchStartTime = Date.now();
-                this.isScrolling = false;
-            }, { passive: true });
-            
-            item.addEventListener('touchmove', (e) => {
-                const touchMoveY = e.touches[0].clientY;
-                const deltaY = Math.abs(touchMoveY - touchStartY);
-                // If user moved more than 10px vertically, consider it scrolling
-                if (deltaY > 10) {
-                    this.isScrolling = true;
-                }
-            }, { passive: true });
-            
+
+            item.addEventListener(
+                'touchstart',
+                (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                    this.isScrolling = false;
+                },
+                { passive: true }
+            );
+
+            item.addEventListener(
+                'touchmove',
+                (e) => {
+                    const touchMoveY = e.touches[0].clientY;
+                    const deltaY = Math.abs(touchMoveY - touchStartY);
+                    // If user moved more than 10px vertically, consider it scrolling
+                    if (deltaY > 10) {
+                        this.isScrolling = true;
+                    }
+                },
+                { passive: true }
+            );
+
             item.addEventListener('touchend', seekFn, { passive: false });
             item.addEventListener('click', seekFn);
 
@@ -246,10 +255,13 @@ class CustomChaptersOverlay extends Component {
         if (el) el.classList.toggle('chapters-open', isHidden);
 
         try {
-            this.player().el().querySelectorAll('.vjs-menu').forEach((m) => {
-                m.classList.remove('vjs-lock-showing');
-                m.style.display = 'none';
-            });
+            this.player()
+                .el()
+                .querySelectorAll('.vjs-menu')
+                .forEach((m) => {
+                    m.classList.remove('vjs-lock-showing');
+                    m.style.display = 'none';
+                });
         } catch (e) {}
     }
 
@@ -272,11 +284,13 @@ class CustomChaptersOverlay extends Component {
                 currentChapterIndex = index;
                 item.classList.add('selected');
                 if (handle) handle.textContent = '▶';
-                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
+                if (dynamic)
+                    dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             } else {
                 item.classList.remove('selected');
                 if (handle) handle.textContent = String(index + 1);
-                if (dynamic) dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
+                if (dynamic)
+                    dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             }
         });
 
