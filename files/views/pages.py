@@ -260,7 +260,7 @@ def video_chapters(request, friendly_token):
         data = request_data.get("chapters")
         if not data:
             return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
-        
+
         chapters = []
         for _, chapter_data in enumerate(data):
             start_time = chapter_data.get('startTime')

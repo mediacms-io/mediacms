@@ -52,7 +52,6 @@ from .models import (
     Subtitle,
     Tag,
     TranscriptionRequest,
-    VideoChapterData,
     VideoTrimRequest,
 )
 
