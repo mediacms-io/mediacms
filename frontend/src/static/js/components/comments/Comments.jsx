@@ -9,9 +9,6 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PopupMain, UserThumbnail } from '../_shared';
 import { replaceString } from '../../utils/helpers/';
 
-import './videojs-markers.js';
-import './videojs.markers.css';
-import { enableMarkers, addMarker } from './videojs-markers_config.js';
 import { translateString } from '../../utils/helpers/';
 
 import './Comments.scss';
@@ -457,36 +454,8 @@ export default function CommentsList(props) {
     return text.replace(timeRegex, wrapTimestampWithAnchor);
   }
 
-  function setMentions(text) {
-    let sanitizedComment = text.split('@(_').join('<a href="/user/');
-    sanitizedComment = sanitizedComment.split('_)[_').join('">');
-    return sanitizedComment.split('_]').join('</a>');
-  }
 
-  function setTimestampAnchorsAndMarkers(text, videoPlayer) {
-    function wrapTimestampWithAnchor(match, string) {
-      let split = match.split(':'),
-        s = 0,
-        m = 1;
-      let searchParameters = new URLSearchParams(window.location.search);
 
-      while (split.length > 0) {
-        s += m * parseInt(split.pop(), 10);
-        m *= 60;
-      }
-      if (MediaCMS.features.media.actions.timestampTimebar) {
-        addMarker(videoPlayer, s, text);
-      }
-
-      searchParameters.set('t', s);
-      const wrapped =
-        '<a href="' + MediaPageStore.get('media-url').split('?')[0] + '?' + searchParameters + '">' + match + '</a>';
-      return wrapped;
-    }
-
-    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
-    return text.replace(timeRegex, wrapTimestampWithAnchor);
-  }
 
   function onCommentSubmit(commentId) {
     onCommentsLoad();
