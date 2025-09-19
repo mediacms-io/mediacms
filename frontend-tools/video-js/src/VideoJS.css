@@ -22,6 +22,20 @@ html {
     border-radius: 12px !important;
 }
 
+/* Fullscreen video styles for embedded video player */
+.video-js-root-embed .video-js video {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+}
+.video-js-root-embed .video-js .vjs-poster {
+    border-radius: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: cover !important;
+}
+
 .video-js div.vjs-control-bar {
     background: transparent !important;
     background-color: transparent !important;
@@ -41,9 +55,31 @@ html {
     padding: 0 20px;
     box-sizing: border-box;
 }
+
+/* Fullscreen styles for embedded video player */
+.video-js-root-embed .video-container {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
 .video-js.vjs-fluid {
     width: 100% !important;
     max-width: 100% !important;
+}
+
+/* Fullscreen fluid styles for embedded video player */
+.video-js-root-embed .video-js.vjs-fluid {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
 }
 .vjs-autoplay-toggle .vjs-autoplay-icon svg {
     width: 100%;
@@ -734,6 +770,32 @@ button {
     padding: 0;
     height: 100% !important;
     border-radius: 12px;
+}
+
+/* Fullscreen video-js player styles for embedded video player */
+.video-js-root-embed .video-js {
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0;
+    position: relative;
+}
+
+/* Prevent page scrolling when embed is active */
+.video-js-root-embed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background: #000;
+}
+
+html.video-js-root-embed-active,
+body.video-js-root-embed-active {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
 .video-chapter {
     position: absolute;

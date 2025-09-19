@@ -1047,6 +1047,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       },
                       siteUrl: '',
                       nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
+                      urlAutoplay: true,
                   },
         []
     );
@@ -1190,6 +1191,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
+            urlAutoplay: mediaData?.urlAutoplay || true,
             sources: getVideoSources(),
         };
     }, [mediaData]);
@@ -1419,13 +1421,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Player dimensions - removed for responsive design
                         // Autoplay behavior: Use 'muted' to comply with browser policies
-                        autoplay: 'play', // Set to true/false to show poster image initially (true/false, play, muted, any)
+                        autoplay: 'muted', // Auto-start muted to comply with browser policies (true/false, play, muted, any)
 
                         // Start video over when it ends
                         loop: false,
 
-                        // Start video muted
-                        muted: false,
+                        // Start video muted (check URL parameter or default)
+                        muted: mediaData.urlMuted || false,
 
                         // Poster image URL displayed before video starts
                         poster: currentVideo.poster,
@@ -1690,6 +1692,54 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Set up auto-save for preference changes
                         userPreferences.current.setupAutoSave(playerRef.current);
+
+                        // Expose the player instance globally for timestamp functionality
+                        if (typeof window !== 'undefined') {
+                            if (!window.videojsPlayers) {
+                                window.videojsPlayers = {};
+                            }
+                            window.videojsPlayers[videoId] = playerRef.current;
+                        }
+
+                        // Call the onPlayerInitCallback if provided via MEDIA_DATA
+                        if (mediaData.onPlayerInitCallback && typeof mediaData.onPlayerInitCallback === 'function') {
+                            mediaData.onPlayerInitCallback({ player: playerRef.current }, playerRef.current.el());
+                        }
+
+                        // Handle URL timestamp parameter
+                        if (mediaData.urlTimestamp !== null && mediaData.urlTimestamp >= 0) {
+                            const timestamp = mediaData.urlTimestamp;
+
+                            // Wait for video metadata to be loaded before seeking
+                            if (playerRef.current.readyState() >= 1) {
+                                // Metadata is already loaded, seek immediately
+                                if (timestamp < playerRef.current.duration()) {
+                                    playerRef.current.currentTime(timestamp);
+                                } else if (timestamp >= 0) {
+                                    playerRef.current.play();
+                                }
+                            } else {
+                                // Wait for metadata to load
+                                playerRef.current.one('loadedmetadata', () => {
+                                    if (timestamp >= 0 && timestamp < playerRef.current.duration()) {
+                                        playerRef.current.currentTime(timestamp);
+                                    } else if (timestamp >= 0) {
+                                        playerRef.current.play();
+                                    }
+                                });
+                            }
+                        }
+
+                        // Handle URL autoplay parameter or auto-start on page load
+                        if (mediaData?.urlAutoplay) {
+                            playerRef.current.play();
+                        } else {
+                            // Auto-start video on page load/reload (muted to comply with browser policies)
+                            playerRef.current.play().catch((error) => {
+                                console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
+                                // Fallback: ensure video is ready to play when user interacts
+                            });
+                        }
 
                         const setupMobilePlayPause = () => {
                             const playerEl = playerRef.current.el();
@@ -2268,14 +2318,18 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 const newTime = Math.min(currentTime + seekAmount, duration);
 
                                 playerRef.current.currentTime(newTime);
-                                customComponents.current.seekIndicator.show('forward', seekAmount);
+                                if (customComponents.current.seekIndicator) {
+                                    customComponents.current.seekIndicator.show('forward', seekAmount);
+                                }
                             } else if (event.key === 'ArrowLeft' || event.keyCode === 37) {
                                 event.preventDefault();
                                 const currentTime = playerRef.current.currentTime();
                                 const newTime = Math.max(currentTime - seekAmount, 0);
 
                                 playerRef.current.currentTime(newTime);
-                                customComponents.current.seekIndicator.show('backward', seekAmount);
+                                if (customComponents.current.seekIndicator) {
+                                    customComponents.current.seekIndicator.show('backward', seekAmount);
+                                }
                             }
                         };
 
@@ -2482,7 +2536,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     playerRef.current.on('play', () => {
                         console.log('Video started playing');
                         // Only show play indicator if not changing quality
-                        if (!playerRef.current.isChangingQuality) {
+                        if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('play');
                         }
                     });
@@ -2490,7 +2544,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     playerRef.current.on('pause', () => {
                         console.log('Video paused');
                         // Only show pause indicator if not changing quality
-                        if (!playerRef.current.isChangingQuality) {
+                        if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('pause');
                         }
                     });
