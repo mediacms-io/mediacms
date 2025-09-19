@@ -604,7 +604,9 @@ def handle_video_chapters(media, chapters):
     else:
         video_chapter = models.VideoChapterData.objects.create(media=media, data=chapters)
 
-    return media.chapter_data
+    return {
+        'chapters': media.chapter_data,
+    }
 
 
 def change_media_owner(media_id, new_user):
