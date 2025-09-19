@@ -49,7 +49,7 @@ class ChapterMarkers extends Component {
             this.chaptersData.push({
                 startTime: cue.startTime,
                 endTime: cue.endTime,
-                text: cue.text,
+                chapterTitle: cue.chapterTitle,
             });
         }
 
@@ -90,14 +90,14 @@ class ChapterMarkers extends Component {
 
             // Style the floating tooltip
             Object.assign(this.tooltip.style, {
-                position: 'absolute',                
+                position: 'absolute',
                 zIndex: '1000',
                 bottom: '45px',
                 transform: 'translateX(-50%)',
                 display: 'none',
                 minWidth: '160px',
                 maxWidth: '200px',
-                width: 'auto',                
+                width: 'auto',
             });
 
             // Create stable DOM structure to avoid trembling
@@ -130,9 +130,9 @@ class ChapterMarkers extends Component {
             this.chapterImage = videojs.dom.createEl('div', {
                 className: 'chapter-image-sprite',
             });
-            Object.assign(this.chapterImage.style, {                
+            Object.assign(this.chapterImage.style, {
                 display: 'block',
-                overflow: 'hidden',                
+                overflow: 'hidden',
             });
 
             // Append all elements to tooltip
@@ -213,10 +213,10 @@ class ChapterMarkers extends Component {
 
             const startTime = formatTime(currentChapter.startTime);
             const endTime = formatTime(currentChapter.endTime);
-            const timeAtPosition = formatTime(currentTime);
+            // const timeAtPosition = formatTime(currentTime);
 
             // Update text content without rebuilding DOM
-            this.chapterTitle.textContent = currentChapter.text;
+            this.chapterTitle.textContent = currentChapter.chapterTitle;
             this.chapterInfo.textContent = `Chapter: ${startTime} - ${endTime}`;
             // this.positionInfo.textContent = `Position: ${timeAtPosition}`;
 
@@ -344,7 +344,7 @@ class ChapterMarkers extends Component {
         const tooltip = videojs.dom.createEl('div', {
             className: 'vjs-chapter-marker-tooltip',
         });
-        tooltip.textContent = cue.text;
+        tooltip.textContent = cue.chapterTitle;
         marker.appendChild(tooltip);
 
         // Add click handler to jump to chapter
