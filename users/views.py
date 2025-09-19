@@ -205,6 +205,12 @@ class UserList(APIView):
         operation_description='Paginated listing of users',
     )
     def get(self, request, format=None):
+        if settings.CAN_SEE_MEMBERS_PAGE == "editors" and not is_mediacms_editor(request.user):
+            raise PermissionDenied("You do not have permission to view this page.")
+
+        if settings.CAN_SEE_MEMBERS_PAGE == "admins" and not request.user.is_superuser:
+            raise PermissionDenied("You do not have permission to view this page.")
+
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         users = User.objects.filter()
@@ -213,10 +219,56 @@ class UserList(APIView):
         if name:
             users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
 
+        if settings.USERS_NEEDS_TO_BE_APPROVED:
+            is_approved = request.GET.get("is_approved")
+            if is_approved == "true":
+                users = users.filter(is_approved=True)
+            elif is_approved == "false":
+                users = users.filter(Q(is_approved=False) | Q(is_approved__isnull=True))
+
         page = paginator.paginate_queryset(users, request)
 
         serializer = UserSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["username", "password", "email", "name"],
+            properties={
+                "username": openapi.Schema(type=openapi.TYPE_STRING),
+                "password": openapi.Schema(type=openapi.TYPE_STRING),
+                "email": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                "name": openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        tags=["Users"],
+        operation_summary="Create user",
+        operation_description="Create a new user. Only for managers.",
+        responses={201: UserSerializer},
+    )
+    def post(self, request, format=None):
+        if not is_mediacms_manager(request.user):
+            raise PermissionDenied("You do not have permission to create users.")
+
+        username = request.data.get("username")
+        password = request.data.get("password")
+        email = request.data.get("email")
+        name = request.data.get("name")
+
+        if not all([username, password, email, name]):
+            return Response({"detail": "username, password, email, and name are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=username).exists():
+            return Response({"detail": "A user with that username already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email=email).exists():
+            return Response({"detail": "A user with that email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(username=username, password=password, email=email, name=name)
+
+        serializer = UserSerializer(user, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserDetail(APIView):
@@ -284,27 +336,36 @@ class UserDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='action', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="action to perform ('change_password' or 'approve_user')"),
+            openapi.Parameter(name='password', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="new password (if action is 'change_password')"),
+        ],
         tags=['Users'],
-        operation_summary='Xto_be_written',
-        operation_description='to_be_written',
+        operation_summary='Update user details',
+        operation_description='Allows a user to change their password. Allows a manager to approve a user.',
     )
-    def put(self, request, uid, format=None):
-        # ADMIN
-        user = self.get_user(uid)
+    def put(self, request, username, format=None):
+        user = self.get_user(username)
         if isinstance(user, Response):
             return user
 
-        if not request.user.is_superuser:
-            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-
         action = request.data.get("action")
-        if action == "feature":
-            user.is_featured = True
+
+        if action == "change_password":
+            # Permission to edit user is already checked by self.get_user -> self.check_object_permissions
+            password = request.data.get("password")
+            if not password:
+                return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(password)
             user.save()
-        elif action == "unfeature":
-            user.is_featured = False
+
+        elif action == "approve_user":
+            if not is_mediacms_manager(request.user):
+                raise PermissionDenied("You do not have permission to approve users.")
+            user.is_approved = True
             user.save()
+        else:
+            return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = UserDetailSerializer(user, context={"request": request})
         return Response(serializer.data)

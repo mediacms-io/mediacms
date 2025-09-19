@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        read_only_fields = (
+        read_only_fields = [
             "date_added",
             "is_featured",
             "uid",
@@ -31,8 +31,8 @@ class UserSerializer(serializers.ModelSerializer):
             "is_editor",
             "is_manager",
             "email_is_verified",
-        )
-        fields = (
+        ]
+        fields = [
             "description",
             "date_added",
             "name",
@@ -45,7 +45,11 @@ class UserSerializer(serializers.ModelSerializer):
             "is_editor",
             "is_manager",
             "email_is_verified",
-        )
+        ]
+
+        if settings.USERS_NEEDS_TO_BE_APPROVED:
+            fields.append("is_approved")
+            read_only_fields.append("is_approved")
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

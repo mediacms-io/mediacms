@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
+import { useUser } from '../../utils/hooks/';
 import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
@@ -11,12 +12,19 @@ const filters = {
     { id: 'editor', title: 'Editor' },
     { id: 'manager', title: 'Manager' },
   ],
+  approved: [
+    { id: 'all', title: 'All' },
+    { id: 'true', title: 'Yes' },
+    { id: 'false', title: 'No' },
+  ],
 };
 
 export function ManageUsersFilters(props) {
+  const { userCan } = useUser();
   const [isHidden, setIsHidden] = useState(props.hidden);
 
   const [role, setFilterRole] = useState('all');
+  const [approved, setFilterApproved] = useState('all');
 
   const containerRef = useRef(null);
   const innerContainerRef = useRef(null);
@@ -30,6 +38,7 @@ export function ManageUsersFilters(props) {
   function onFilterSelect(ev) {
     const args = {
       role: role,
+      is_approved: approved,
     };
 
     switch (ev.currentTarget.getAttribute('filter')) {
@@ -37,6 +46,11 @@ export function ManageUsersFilters(props) {
         args.role = ev.currentTarget.getAttribute('value');
         props.onFiltersUpdate(args);
         setFilterRole(args.role);
+        break;
+      case 'approved':
+        args.is_approved = ev.currentTarget.getAttribute('value');
+        props.onFiltersUpdate(args);
+        setFilterApproved(args.is_approved);
         break;
     }
   }
@@ -60,6 +74,14 @@ export function ManageUsersFilters(props) {
             <FilterOptions id={'role'} options={filters.role} selected={role} onSelect={onFilterSelect} />
           </div>
         </div>
+        {userCan.usersNeedsToBeApproved ? (
+          <div className="mi-filter">
+            <div className="mi-filter-title">APPROVED</div>
+            <div className="mi-filter-options">
+              <FilterOptions id={'approved'} options={filters.approved} selected={approved} onSelect={onFilterSelect} />
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

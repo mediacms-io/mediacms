@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block headtitle %} | Account needs approval{% endblock headtitle %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+        <h1>Account Pending Approval</h1>
+        <p>Your account is currently pending approval from an administrator.</p>
+        <p><a href="{% url 'account_logout' %}">Logout</a></p>
+    </div>
+</div>
+{% endblock innercontent %}

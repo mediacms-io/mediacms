@@ -5,6 +5,7 @@ import { ManageCommentsItem } from '../../ManageItem/ManageCommentsItem';
 import { ManageMediaItemHeader } from '../../ManageItem/ManageMediaItemHeader';
 import { ManageUsersItemHeader } from '../../ManageItem/ManageUsersItemHeader';
 import { ManageCommentsItemHeader } from '../../ManageItem/ManageCommentsItemHeader';
+import { useUser } from '../../../../utils/hooks/';
 
 function useManageItem(props) {
   const itemData = props.item;
@@ -15,6 +16,8 @@ function useManageItem(props) {
     selectedRow: props.selectedRow,
     onProceedRemoval: props.onProceedRemoval,
     hideDeleteAction: props.hideDeleteAction,
+    onUserUpdate: props.onUserUpdate,
+    setMessage: props.setMessage,
   };
 
   return [itemData, itemProps];
@@ -44,6 +47,7 @@ function ListManageMediaItem(props) {
 }
 
 function ListManageUserItem(props) {
+  const { userCan } = useUser();
   const [itemData, itemProps] = useManageItem(props);
 
   const roles = [];
@@ -70,6 +74,8 @@ function ListManageUserItem(props) {
     has_roles: void 0 !== itemData.is_editor || void 0 !== itemData.is_manager,
     has_verified: void 0 !== itemData.email_is_verified,
     has_trusted: void 0 !== itemData.advancedUser,
+    is_approved: itemData.is_approved,
+    has_approved: userCan.usersNeedsToBeApproved && void 0 !== itemData.is_approved,
   };
 
   return <ManageUsersItem {...args} />;
@@ -99,6 +105,8 @@ function ListManageItem(props) {
     hideDeleteAction: false,
     onCheckRow: props.onCheckRow,
     onProceedRemoval: props.onProceedRemoval,
+    onUserUpdate: props.onUserUpdate,
+    setMessage: props.setMessage,
   };
 
   if ('media' === props.type) {
@@ -117,6 +125,7 @@ function ListManageItem(props) {
 }
 
 function ListManageItemHeader(props) {
+  const { userCan } = useUser();
   const args = {
     sort: props.sort,
     order: props.order,
@@ -134,6 +143,10 @@ function ListManageItemHeader(props) {
       props.items.length && (void 0 !== props.items[0].is_editor || void 0 !== props.items[0].is_manager);
     args.has_verified = props.items.length && void 0 !== props.items[0].email_is_verified;
     args.has_trusted = props.items.length && void 0 !== props.items[0].advancedUser;
+    args.has_approved =
+      userCan.usersNeedsToBeApproved &&
+      props.items.length &&
+      void 0 !== props.items[0].is_approved;
     return <ManageUsersItemHeader {...args} />;
   }
 

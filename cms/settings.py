@@ -128,6 +128,10 @@ USERS_CAN_SELF_REGISTER = True
 
 RESTRICTED_DOMAINS_FOR_USER_REGISTRATION = ["xxx.com", "emaildomainwhatever.com"]
 
+# by default users do not need to be approved. If this is set to True, then new users
+# will have to be approved before they can login successfully
+USERS_NEEDS_TO_BE_APPROVED = False
+
 # Comma separated list of domains:  ["organization.com", "private.organization.com", "org2.com"]
 # Empty list disables.
 ALLOWED_DOMAINS_FOR_USER_REGISTRATION = []
@@ -501,6 +505,10 @@ ALLOW_CUSTOM_MEDIA_URLS = False
 # Whether to allow anonymous users to list all users
 ALLOW_ANONYMOUS_USER_LISTING = True
 
+# Who can see the members page
+# valid choices are all, editors, admins
+CAN_SEE_MEMBERS_PAGE = "all"
+
 # Maximum number of media a user can upload
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 
@@ -516,6 +524,9 @@ USER_CAN_TRANSCRIBE_VIDEO = True
 
 # Whisper transcribe options - https://github.com/openai/whisper
 WHISPER_MODEL = "base"
+
+# show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
+SIDEBAR_FOOTER_TEXT = ""
 
 try:
     # keep a local_settings.py file for local overrides
@@ -558,3 +569,12 @@ except ImportError:
 if GLOBAL_LOGIN_REQUIRED:
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "django.contrib.auth.middleware.LoginRequiredMiddleware")
+
+
+if USERS_NEEDS_TO_BE_APPROVED:
+    AUTHENTICATION_BACKENDS = (
+        'cms.auth_backends.ApprovalBackend',
+        'allauth.account.auth_backends.AuthenticationBackend',
+    )
+    auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")

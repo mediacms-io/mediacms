@@ -519,6 +519,20 @@ ALLOW_ANONYMOUS_USER_LISTING = False
 When set to False, only logged-in users will be able to access the user listing API endpoint.
 
 
+### 5.27 Control who can see the members page
+
+By default `CAN_SEE_MEMBERS_PAGE = "all"` means that all registered users can see the members page. Other valid options are:
+
+- **editors**, only MediaCMS editors can view the page
+- **admins**, only MediaCMS admins can view the page
+
+
+### 5.28 Require user approval on registration
+
+By default, users do not require approval, so they can login immediately after registration (if registration is open). However, if the parameter `USERS_NEEDS_TO_BE_APPROVED` is set to `True`, they will first have to have their accounts approved by an administrator before they can successfully sign in.
+Administrators can approve users through the following ways: 1. through Django administration, 2. through the users management page, 3. through editing the profile page directly. In all cases, set 'Is approved' to True.
+
+
 ## 6. Manage pages
 to be written
 
