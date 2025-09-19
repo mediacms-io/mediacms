@@ -256,22 +256,26 @@ def video_chapters(request, friendly_token):
         return HttpResponseRedirect("/")
 
     try:
-        data = json.loads(request.body)["segments"]
+        request_data = json.loads(request.body)
+        data = request_data.get("chapters")
+        if not data:
+            return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
+        
         chapters = []
         for _, chapter_data in enumerate(data):
             start_time = chapter_data.get('startTime')
             end_time = chapter_data.get('endTime')
-            text = chapter_data.get('text')
-            if start_time and end_time and text:
+            chapter_title = chapter_data.get('chapterTitle')
+            if start_time and end_time and chapter_title:
                 chapters.append(
                     {
                         'startTime': start_time,
                         'endTime': end_time,
-                        'text': text,
+                        'chapterTitle': chapter_title,
                     }
                 )
     except Exception as e:  # noqa
-        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, text'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, chapterTitle'}, status=400)
 
     ret = handle_video_chapters(media, chapters)
 
