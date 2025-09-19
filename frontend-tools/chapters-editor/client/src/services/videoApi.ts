@@ -6,25 +6,24 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Auto-save interface
 interface AutoSaveRequest {
-    segments: {
+    chapters: {
         startTime: string;
         endTime: string;
-        name?: string;
+        chapterTitle?: string;
     }[];
 }
 
 interface AutoSaveResponse {
     success: boolean;
-    timestamp: string;
-    error?: string;
     status?: string;
-    media_id?: string;
-    segments?: {
+    timestamp: string;
+    chapters?: {
         startTime: string;
         endTime: string;
-        name: string;
+        chapterTitle: string;
     }[];
     updated_at?: string;
+    error?: string;
 }
 
 // Auto-save API function
@@ -35,6 +34,9 @@ export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Pro
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
         });
+
+        console.log('data edw', data);
+        console.log('response edw', response);
 
         logger.debug('response', response);
 
@@ -54,13 +56,13 @@ export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Pro
                     return {
                         success: false,
                         timestamp: new Date().toISOString(),
-                        error: errorData.error || 'Auto-save failed',
+                        error: errorData.error || 'Auto-save failed (videoApi.ts)',
                     };
                 } catch (parseError) {
                     return {
                         success: false,
                         timestamp: new Date().toISOString(),
-                        error: 'Auto-save failed',
+                        error: 'Auto-save failed (videoApi.ts)',
                     };
                 }
             }
@@ -68,21 +70,15 @@ export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Pro
 
         // Successful response
         const jsonResponse = await response.json();
+        console.log('jsonResponse edw', jsonResponse);
 
         // Check if the response has the expected format
-        if (jsonResponse.status === 'success') {
-            return {
-                success: true,
-                timestamp: jsonResponse.updated_at || new Date().toISOString(),
-                ...jsonResponse,
-            };
-        } else {
-            return {
-                success: false,
-                timestamp: new Date().toISOString(),
-                error: jsonResponse.error || 'Auto-save failed',
-            };
-        }
+        return {
+            success: true,
+            timestamp: jsonResponse.updated_at || new Date().toISOString(),
+            ...jsonResponse,
+        };
+
     } catch (error) {
         // For any fetch errors, return mock success response
         const timestamp = new Date().toISOString();
