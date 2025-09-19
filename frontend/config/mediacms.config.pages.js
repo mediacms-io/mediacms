@@ -19,12 +19,11 @@ const formatPage = (page) => {
     : page.component
     ? templates.renderPageContent({ page: { id: pageContentId, component: page.component } })
     : undefined;
-  const headLinks = [
-    { rel: 'preload', href: './static/lib/video-js/7.20.2/video.min.js', as: 'script' },
+
+   const headLinks = [
     ...(page.headLinks ? page.headLinks : []),
   ];
   const bodyScripts = [
-    { src: './static/lib/video-js/7.20.2/video.min.js' },
     ...(page.bodyScripts ? page.bodyScripts : []),
   ];
 
@@ -105,20 +104,6 @@ const PAGES = {
     title: 'Media',
     component: 'MediaPage',
     global: { mediaId: DEV_SAMPLE_DATA.media.videoId },
-  },
-  'media-video': {
-    buildExclude: true,
-    id: 'media-video',
-    title: 'Media - Video',
-    component: 'MediaVideoPage',
-    global: { mediaId: DEV_SAMPLE_DATA.media.videoId },
-  },
-  'media-audio': {
-    buildExclude: true,
-    id: 'media-audio',
-    title: 'Media - Audio',
-    component: 'MediaAudioPage',
-    global: { mediaId: DEV_SAMPLE_DATA.media.audioId },
   },
   'media-image': {
     buildExclude: true,
