@@ -217,60 +217,8 @@ export default class VideoViewer extends React.PureComponent {
 											<div class="sh-option share-email">\
 												<a href="mailto:?body=' +
                 mediaUrl +
-                '" title=""><span><i class="material-icons">email</i></span><span>Email</span></a>\
-											</div>\
-											<div class="sh-option share-fb">\
-												<a href="https://www.facebook.com/sharer.php?u=' +
-                mediaUrl +
-                '" title="" target="_blank"><span></span><span>Facebook</span></a>\
-											</div>\
-											<div class="sh-option share-tw">\
-												<a href="https://twitter.com/intent/tweet?url=' +
-                mediaUrl +
-                '" title="" target="_blank"><span></span><span>Twitter</span></a>\
-											</div>\
-											<div class="sh-option share-whatsapp">\
-												<a href="whatsapp://send?text=' +
-                mediaUrl +
-                '" title="" target="_blank" data-action="share/whatsapp/share"><span></span><span>WhatsApp</span></a>\
-											</div>\
-											<div class="sh-option share-telegram">\
-												<a href="https://t.me/share/url?url=' +
-                mediaUrl +
-                '&amp;text=' +
-                this.props.data.title +
-                '" title="" target="_blank"><span></span><span>Telegram</span></a>\
-											</div>\
-											<div class="sh-option share-linkedin">\
-													<a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=' +
-                mediaUrl +
-                '" title="" target="_blank"><span></span><span>LinkedIn</span></a>\
-											</div>\
-											<div class="sh-option share-reddit">\
-												<a href="https://reddit.com/submit?url=' +
-                mediaUrl +
-                '&amp;title=' +
-                this.props.data.title +
-                '" title="" target="_blank"><span></span><span>reddit</span></a>\
-											</div>\
-											<div class="sh-option share-tumblr">\
-												<a href="https://www.tumblr.com/widgets/share/tool?canonicalUrl=' +
-                mediaUrl +
-                '&amp;title=' +
-                this.props.data.title +
-                '" title="" target="_blank"><span></span><span>Tumblr</span></a>\
-											</div>\
-											<div class="sh-option share-pinterest">\
-												<a href="http://pinterest.com/pin/create/link/?url=' +
-                mediaUrl +
-                '" title="" target="_blank"><span></span><span>Pinterest</span></a>\
-											</div>\
-											<div class="sh-option share-more">\
-												<a href="' +
-                mediaUrl +
-                '" title="More" target="_blank"><span><i class="material-icons">more_horiz</i></span><span></span></a>\
-											</div>\
-										</div>\
+                '" title=""><span><i class="material-icons">email</i></span><span>Email1</span></a>\
+											</div></div>\
 									</div>\
 								</div>';
 
