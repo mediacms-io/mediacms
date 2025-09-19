@@ -55,12 +55,12 @@ const EditingTools = ({
             <div className="flex-container single-row">
                 {/* Left side - Play buttons group */}
                 <div className="button-group play-buttons-group">
-                    {/* Play Segments button */}
+                    {/* Play Chapters button */}
                     <button
                         className={`button segments-button`}
                         onClick={onPlaySegments}
                         data-tooltip={
-                            isPlayingSegments ? 'Stop segments playback' : 'Play segments in one continuous flow'
+                            isPlayingSegments ? 'Stop chapters playback' : 'Play chapters in one continuous flow'
                         }
                         style={{ fontSize: '0.875rem' }}
                     >

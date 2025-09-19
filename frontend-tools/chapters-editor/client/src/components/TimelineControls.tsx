@@ -2067,7 +2067,7 @@ const TimelineControls = ({
                     onClick={handleSegmentClick(segment.id)}
                 >
                     <div className="clip-segment-info">
-                        <div className="clip-segment-name">Segment {index + 1}</div>
+                        <div className="clip-segment-name">Chapter {index + 1}</div>
                         <div className="clip-segment-time">
                             {formatTime(segment.startTime)} - {formatTime(segment.endTime)}
                         </div>
@@ -2573,7 +2573,7 @@ const TimelineControls = ({
                     <span className="timeline-title-text">Timeline</span>
                 </div>
                 <div className="duration-time">
-                    Total Segments:{' '}
+                    Total Chapters:{' '}
                     <span>
                         {formatDetailedTime(
                             clipSegments.reduce((sum, segment) => sum + (segment.endTime - segment.startTime), 0)
