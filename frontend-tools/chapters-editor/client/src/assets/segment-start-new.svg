@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<svg height="32" viewBox="0 0 32 32" width="32" xmlns="http://www.w3.org/2000/svg">
+  <g data-name="1" id="_1">
+    <path d="M5,3V29a1,1,0,0,0,1,1H26a1,1,0,0,0,1-1V25H25v3H7V4H25V7h2V3a1,1,0,0,0-1-1H6A1,1,0,0,0,5,3Z"/>
+    <g transform="translate(28, 0) scale(-1, 1)">
+      <path d="M10.71,20.29,7.41,17H18V15H7.41l3.3-3.29L9.29,10.29l-5,5a1,1,0,0,0,0,1.42l5,5Z"/>
+    </g>
+  </g>
+</svg>

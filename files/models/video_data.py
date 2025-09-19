@@ -12,40 +12,19 @@ class VideoChapterData(models.Model):
     class Meta:
         unique_together = ['media']
 
-    def save(self, *args, **kwargs):
-        from .. import tasks
-
-        is_new = self.pk is None
-        if is_new or (not is_new and self._check_data_changed()):
-            super().save(*args, **kwargs)
-            tasks.produce_video_chapters.delay(self.pk)
-        else:
-            super().save(*args, **kwargs)
-
-    def _check_data_changed(self):
-        if self.pk:
-            old_instance = VideoChapterData.objects.get(pk=self.pk)
-            return old_instance.data != self.data
-        return False
-
     @property
     def chapter_data(self):
         # ensure response is consistent
         data = []
-        for item in self.data:
-            if item.get("start") and item.get("title"):
-                thumbnail = item.get("thumbnail")
-                if thumbnail:
-                    thumbnail = helpers.url_from_path(thumbnail)
-                else:
-                    thumbnail = "static/images/chapter_default.jpg"
-                data.append(
-                    {
-                        "start": item.get("start"),
-                        "title": item.get("title"),
-                        "thumbnail": thumbnail,
+        if self.data and isinstance(self.data, list):
+            for item in self.data:
+                if item.get("startTime") and item.get("endTime") and item.get("chapterTitle"):
+                    chapter_item = {
+                        'startTime': item.get("startTime"),
+                        'endTime': item.get("endTime"),
+                        'chapterTitle': item.get("chapterTitle"),
                     }
-                )
+                    data.append(chapter_item)
         return data
 
 

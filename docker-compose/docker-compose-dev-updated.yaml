@@ -33,7 +33,6 @@ services:
     volumes:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
       - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
-      - player_node_modules:/home/mediacms.io/mediacms/frontend/packages/player/node_modules
       - scripts_node_modules:/home/mediacms.io/mediacms/frontend/packages/scripts/node_modules
       - npm_global:/home/node/.npm-global
     working_dir: /home/mediacms.io/mediacms/frontend/
@@ -46,17 +45,14 @@ services:
       chown -R node:node /home/mediacms.io/mediacms/frontend &&
       echo 'Cleaning up node_modules...' &&
       find /home/mediacms.io/mediacms/frontend/node_modules -mindepth 1 -delete 2>/dev/null || true &&
-      find /home/mediacms.io/mediacms/frontend/packages/player/node_modules -mindepth 1 -delete 2>/dev/null || true &&
       find /home/mediacms.io/mediacms/frontend/packages/scripts/node_modules -mindepth 1 -delete 2>/dev/null || true &&
       chown -R node:node /home/mediacms.io/mediacms/frontend/node_modules &&
-      chown -R node:node /home/mediacms.io/mediacms/frontend/packages/player/node_modules &&
       chown -R node:node /home/mediacms.io/mediacms/frontend/packages/scripts/node_modules &&
       echo 'Switching to node user...' &&
       su node -c '
         export NPM_CONFIG_PREFIX=/home/node/.npm-global &&
         echo \"Setting up frontend...\" &&
         rm -f package-lock.json &&
-        rm -f packages/player/package-lock.json &&
         rm -f packages/scripts/package-lock.json &&
         echo \"Installing dependencies...\" &&
         npm install --legacy-peer-deps &&
@@ -68,10 +64,6 @@ services:
         npm install typescript@4.9.5 --save-dev --legacy-peer-deps &&
         npm install tslib@2.6.2 --save --legacy-peer-deps &&
         npm install rollup-plugin-typescript2@0.34.1 --save-dev --legacy-peer-deps &&
-        npm install --legacy-peer-deps &&
-        npm run build &&
-        cd ../.. &&
-        cd packages/player &&
         npm install --legacy-peer-deps &&
         npm run build &&
         cd ../.. &&
@@ -140,6 +132,5 @@ services:
 
 volumes:
   frontend_node_modules:
-  player_node_modules:
   scripts_node_modules:
   npm_global:
