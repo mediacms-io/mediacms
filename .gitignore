@@ -30,6 +30,4 @@ static/video_editor/videos/sample-video-37s.mp4
 .DS_Store
 static/video_editor/videos/sample-video-10m.mp4
 static/video_editor/videos/sample-video-10s.mp4
-/frontend-tools/chapters-editor/node_modules
-frontend-tools/chapters-editor/client/public/videos/sample-video.mp4
-frontend-tools/video-js/
+frontend-tools/video-js/public/videos/sample-video-white.mp4

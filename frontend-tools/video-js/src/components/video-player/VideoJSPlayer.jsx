@@ -26,9 +26,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
     // Environment-based development mode configuration
     const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
-    console.log('isDevMode', isDevMode);
-    console.log('window.location.hostname', window.location.hostname);
-
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
         () =>
@@ -40,7 +37,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           poster_url:
                               'https://demo.mediacms.io/media/original/thumbnails/user/markos/7dedcb56bde9463dbc0766768a99be0f_C8E5GFY.20250605_110647.mp4.jpg',
                           chapter_data: [
-                              { startTime: '00:00:00.000', endTime: '00:00:24.295', chapterTitle: 'A1 test' },
+                              { startTime: '00:00:00.000', endTime: '00:00:08.295', chapterTitle: 'A1 test' },
                               { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
                               {
                                   startTime: '00:00:48.590',
@@ -1052,6 +1049,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       siteUrl: '',
                       nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
                       urlAutoplay: true,
+                      urlMuted: false,
                   },
         []
     );
@@ -1083,22 +1081,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         return hours * 3600 + minutes * 60 + seconds;
     };
 
-    // Test the conversion function
-    if (isDevMode) {
-        console.log('Testing time conversion:');
-        console.log('00:00:24.295 ->', convertTimeStringToSeconds('00:00:24.295')); // Should be 24.295
-        console.log('00:01:30.500 ->', convertTimeStringToSeconds('00:01:30.500')); // Should be 90.5
-        console.log('01:00:00.000 ->', convertTimeStringToSeconds('01:00:00.000')); // Should be 3600
-    }
-
     // Convert chapters data from backend format to required format with memoization
     const convertChaptersData = useMemo(() => {
         return (rawChaptersData) => {
             if (!rawChaptersData || !Array.isArray(rawChaptersData)) {
                 return [];
             }
-
-            console.log('Converting raw chapters data:', rawChaptersData);
 
             const convertedData = rawChaptersData.map((chapter) => ({
                 startTime: convertTimeStringToSeconds(chapter.startTime),
@@ -1178,26 +1166,80 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         return 'video/mp4';
     };
 
+    // Get user's quality preference for dependency tracking
+    const userQualityPreference = userPreferences.current.getQualityPreference();
+
     // Get video data from mediaData
     const currentVideo = useMemo(() => {
-        // Get video sources based on available data
+        // Get video sources based on available data and user preferences
         const getVideoSources = () => {
+            // Use the extracted quality preference
+            const userQuality = userQualityPreference;
+
             // Check if HLS info is available and not empty
-            if (mediaData.data?.hls_info && mediaData.data.hls_info.master_file) {
-                // Use master file as the primary source (auto quality)
-                return [
-                    {
-                        src: mediaData.siteUrl + mediaData.data.hls_info.master_file,
-                        type: 'application/x-mpegURL', // HLS MIME type
-                        label: 'Auto',
-                    },
-                ];
+            if (mediaData.data?.hls_info) {
+                // If user prefers auto quality or master file doesn't exist for specific quality
+                if (userQuality === 'auto' && mediaData.data.hls_info.master_file) {
+                    return [
+                        {
+                            src: mediaData.siteUrl + mediaData.data.hls_info.master_file,
+                            type: 'application/x-mpegURL', // HLS MIME type
+                            label: 'Auto',
+                        },
+                    ];
+                }
+
+                // If user has selected a specific quality, try to use that playlist
+                if (userQuality !== 'auto') {
+                    const qualityKey = `${userQuality.replace('p', '')}_playlist`;
+                    if (mediaData.data.hls_info[qualityKey]) {
+                        return [
+                            {
+                                src: mediaData.data.hls_info[qualityKey],
+                                type: 'application/x-mpegURL', // HLS MIME type
+                                label: `${userQuality}p`,
+                            },
+                        ];
+                    }
+                }
+
+                // Fallback to master file if specific quality not available
+                if (mediaData.data.hls_info.master_file) {
+                    return [
+                        {
+                            src: mediaData.siteUrl + mediaData.data.hls_info.master_file,
+                            type: 'application/x-mpegURL', // HLS MIME type
+                            label: 'Auto',
+                        },
+                    ];
+                }
             }
 
             // Fallback to encoded qualities if available
             if (mediaData.data?.encodings_info) {
-                const sources = [];
                 const encodings = mediaData.data.encodings_info;
+                const userQuality = userQualityPreference;
+
+                // If user has selected a specific quality, try to use that encoding first
+                if (userQuality !== 'auto') {
+                    const qualityNumber = userQuality.replace('p', ''); // Remove 'p' from '240p' -> '240'
+                    if (
+                        encodings[qualityNumber] &&
+                        encodings[qualityNumber].h264 &&
+                        encodings[qualityNumber].h264.url
+                    ) {
+                        return [
+                            {
+                                src: encodings[qualityNumber].h264.url,
+                                type: getMimeType(encodings[qualityNumber].h264.url, mediaData.data?.media_type),
+                                label: `${qualityNumber}p`,
+                            },
+                        ];
+                    }
+                }
+
+                // If auto quality or specific quality not available, return all available qualities
+                const sources = [];
 
                 // Get available qualities dynamically from encodings_info
                 const availableQualities = Object.keys(encodings)
@@ -1231,14 +1273,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
             // Default sample video
             return [
-                /* {
-                    src: '/videos/sample-video.mp4',
-                    type: 'video/mp4',
-                }, */
                 {
+                    src: '/videos/sample-video-white.mp4',
+                    type: 'video/mp4',
+                },
+                /* {
                     src: '/videos/sample-video.mp3',
                     type: 'audio/mpeg',
-                },
+                }, */
             ];
         };
 
@@ -1250,9 +1292,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
             urlAutoplay: mediaData?.urlAutoplay || true,
+            urlMuted: mediaData?.urlMuted || false,
             sources: getVideoSources(),
         };
-    }, [mediaData]);
+    }, [mediaData, userQualityPreference]);
 
     // Compute available qualities. Prefer JSON (mediaData.data.qualities), otherwise build from encodings_info or current source.
     const availableQualities = useMemo(() => {
@@ -1446,14 +1489,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
           }))
         : [];
 
-    console.log('mediaData?.data?.thumbnail_time', mediaData?.data?.thumbnail_time);
-    console.log('mediaData?.data?.sprites_url', mediaData?.data?.sprites_url);
-    console.log('mediaData', mediaData);
-
     // Function to navigate to next video
     const goToNextVideo = () => {
-        console.log('Next video functionality disabled for single video mode');
-
         if (mediaData.onClickNextCallback && typeof mediaData.onClickNextCallback === 'function') {
             mediaData.onClickNextCallback();
         }
@@ -1464,7 +1501,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         if (videoRef.current && !playerRef.current) {
             // Check if element is already a Video.js player
             if (videoRef.current.player) {
-                // console.log('Video.js already initialized on this element');
                 return;
             }
 
@@ -1478,8 +1514,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         controls: true,
 
                         // Player dimensions - removed for responsive design
-                        // Autoplay behavior: Use 'muted' to comply with browser policies
-                        autoplay: 'muted', // Auto-start muted to comply with browser policies (true/false, play, muted, any)
+                        // Autoplay behavior: Try unmuted first, fallback to muted if needed
+                        autoplay: true, // Try unmuted autoplay first (true/false, play, muted, any)
 
                         // Start video over when it ends
                         loop: false,
@@ -1741,9 +1777,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     });
 
                     // Event listeners
-                    /* playerRef.current.on('ready', () => {
-                        console.log('Video.js player ready');
-                    }); */
                     playerRef.current.ready(() => {
                         // Apply user preferences to player
                         userPreferences.current.applyToPlayer(playerRef.current);
@@ -1788,15 +1821,89 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         }
 
-                        // Handle URL autoplay parameter or auto-start on page load
+                        // Detect if user has interacted with the page
+                        const hasUserInteracted = () => {
+                            // Check various indicators of user interaction
+                            return (
+                                document.hasFocus() ||
+                                document.visibilityState === 'visible' ||
+                                sessionStorage.getItem('userInteracted') === 'true'
+                            );
+                        };
+
+                        // Handle autoplay while respecting user's saved preferences
+                        const handleAutoplay = async () => {
+                            const userInteracted = hasUserInteracted();
+                            const savedMuteState = userPreferences.current.getPreference('muted');
+
+                            try {
+                                // Respect user's saved mute preference, but try unmuted if user interacted and hasn't explicitly muted
+                                if (!mediaData.urlMuted && userInteracted && savedMuteState !== true) {
+                                    playerRef.current.muted(false);
+                                }
+
+                                // First attempt: try to play with current mute state
+                                await playerRef.current.play();
+                            } catch (error) {
+                                // Fallback to muted autoplay unless user explicitly wants to stay unmuted
+                                if (!playerRef.current.muted()) {
+                                    try {
+                                        playerRef.current.muted(true);
+                                        await playerRef.current.play();
+
+                                        // Only try to restore sound if user hasn't explicitly saved mute=true
+                                        if (savedMuteState !== true) {
+                                            // Aggressively try to restore sound
+                                            const restoreSound = () => {
+                                                if (playerRef.current && !playerRef.current.isDisposed()) {
+                                                    playerRef.current.muted(false);
+                                                    playerRef.current.trigger('notify', '🔊 Sound enabled!');
+                                                }
+                                            };
+
+                                            // Try to restore sound immediately if user has interacted
+                                            if (userInteracted) {
+                                                setTimeout(restoreSound, 100);
+                                            } else {
+                                                // Show notification for manual interaction
+                                                setTimeout(() => {
+                                                    if (playerRef.current && !playerRef.current.isDisposed()) {
+                                                        playerRef.current.trigger(
+                                                            'notify',
+                                                            '🔇 Click anywhere to enable sound'
+                                                        );
+                                                    }
+                                                }, 1000);
+
+                                                // Set up interaction listeners
+                                                const enableSound = () => {
+                                                    restoreSound();
+                                                    // Mark user interaction for future videos
+                                                    sessionStorage.setItem('userInteracted', 'true');
+                                                    // Remove listeners
+                                                    document.removeEventListener('click', enableSound);
+                                                    document.removeEventListener('keydown', enableSound);
+                                                    document.removeEventListener('touchstart', enableSound);
+                                                };
+
+                                                document.addEventListener('click', enableSound, { once: true });
+                                                document.addEventListener('keydown', enableSound, { once: true });
+                                                document.addEventListener('touchstart', enableSound, { once: true });
+                                            }
+                                        }
+                                    } catch (mutedError) {
+                                        console.error('❌ Even muted autoplay was blocked:', mutedError.message);
+                                    }
+                                }
+                            }
+                        };
+
                         if (mediaData?.urlAutoplay) {
-                            playerRef.current.play();
+                            // Explicit autoplay requested via URL parameter
+                            handleAutoplay();
                         } else {
-                            // Auto-start video on page load/reload (muted to comply with browser policies)
-                            playerRef.current.play().catch((error) => {
-                                console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
-                                // Fallback: ensure video is ready to play when user interacts
-                            });
+                            // Auto-start video on page load/reload with fallback strategy
+                            handleAutoplay();
                         }
 
                         const setupMobilePlayPause = () => {
@@ -1857,18 +1964,28 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         const progressControl = controlBar.getChild('progressControl');
                         const seekBar = progressControl.getChild('seekBar');
                         const chaptersButton = controlBar.getChild('chaptersButton');
-                        const fullscreenToggle = controlBar.getChild('fullscreenToggle');
 
                         // Auto-play video when navigating from next button
                         const urlParams = new URLSearchParams(window.location.search);
                         const hasVideoParam = urlParams.get('m');
                         if (hasVideoParam) {
                             // Small delay to ensure everything is loaded
-                            setTimeout(() => {
+                            setTimeout(async () => {
                                 if (playerRef.current && !playerRef.current.isDisposed()) {
-                                    playerRef.current.play().catch((error) => {
-                                        console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
-                                    });
+                                    try {
+                                        await playerRef.current.play();
+                                    } catch (error) {
+                                        console.error('ℹ️ Browser prevented play:', error.message);
+                                        // Try muted playback as fallback
+                                        if (!playerRef.current.muted()) {
+                                            try {
+                                                playerRef.current.muted(true);
+                                                await playerRef.current.play();
+                                            } catch (mutedError) {
+                                                console.error('ℹ️ Even muted play was blocked:', mutedError.message);
+                                            }
+                                        }
+                                    }
                                 }
                             }, 100);
                         }
@@ -1918,7 +2035,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 const cue = new (window.VTTCue || window.TextTrackCue)(
                                     chapter.startTime,
                                     chapter.endTime,
-                                    chapter.text
+                                    chapter.chapterTitle
                                 );
                                 chaptersTrack.addCue(cue);
                             });
@@ -1965,9 +2082,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
                                     userPreferences: userPreferences.current,
                                 });
-                                // Add it after the play button
-                                const fullscreenToggleIndex = controlBar.children().indexOf(fullscreenToggle);
-                                controlBar.addChild(autoplayToggleButton, {}, fullscreenToggleIndex - 1);
+                                // Add it before the chapters button (or at a suitable position)
+                                const chaptersButtonIndex = controlBar.children().indexOf(chaptersButton);
+                                const insertIndex =
+                                    chaptersButtonIndex > 0 ? chaptersButtonIndex : controlBar.children().length - 3;
+                                controlBar.addChild(autoplayToggleButton, {}, insertIndex);
 
                                 // Store reference for later use
                                 customComponents.current.autoplayToggleButton = autoplayToggleButton;
@@ -1975,61 +2094,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 // Force update icon after adding to DOM to ensure correct display
                                 setTimeout(() => {
                                     autoplayToggleButton.updateIcon();
-                                    console.log('✓ Autoplay toggle button icon updated after DOM insertion');
                                 }, 100);
-
-                                console.log('✓ Autoplay toggle button added successfully');
                             } catch (error) {
                                 console.error('✗ Failed to add autoplay toggle button:', error);
                             }
                         }
                         // END: Implement autoplay toggle button
-
-                        // Remove duplicate captions button and move chapters to end
-                        /*  const cleanupControls = () => {
-                            // Log all current children for debugging
-                            const allChildren = controlBar.children();
-
-                            // Try to find and remove captions/subs-caps button (but keep subtitles)
-                            const possibleCaptionButtons = ['captionsButton', 'subsCapsButton'];
-                            possibleCaptionButtons.forEach((buttonName) => {
-                                const button = controlBar.getChild(buttonName);
-                                if (button) {
-                                    try {
-                                        controlBar.removeChild(button);
-                                        console.log(`✓ Removed ${buttonName}`);
-                                    } catch (e) {
-                                        console.log(`✗ Failed to remove ${buttonName}:`, e);
-                                    }
-                                }
-                            });
-
-                            // Alternative: hide buttons we can't remove
-                            allChildren.forEach((child, index) => {
-                                const name = (child.name_ || child.constructor.name || '').toLowerCase();
-                                if (name.includes('caption') && !name.includes('subtitle')) {
-                                    child.hide();
-                                    console.log(`✓ Hidden button at index ${index}: ${name}`);
-                                }
-                            });
-
-                            // Move chapters button to the very end
-                            const chaptersButton = controlBar.getChild('chaptersButton');
-                            if (chaptersButton) {
-                                try {
-                                    controlBar.removeChild(chaptersButton);
-                                    controlBar.addChild(chaptersButton);
-                                    console.log('✓ Chapters button moved to last position');
-                                } catch (e) {
-                                    console.log('✗ Failed to move chapters button:', e);
-                                }
-                            }
-                        }; */
-
-                        // Try multiple times with different delays
-                        /* setTimeout(cleanupControls, 200);
-                        setTimeout(cleanupControls, 500);
-                        setTimeout(cleanupControls, 1000); */
 
                         // Make menus clickable instead of hover-only
                         setTimeout(() => {
@@ -2057,8 +2127,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                 this.menu.show();
                                             }
                                         });
-
-                                        console.log(`✓ Made ${buttonName} clickable`);
                                     } else if (button) {
                                         // For buttons without menuButton_ property
                                         const buttonEl = button.el();
@@ -2081,8 +2149,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                     }
                                                 }
                                             });
-
-                                            console.log(`✓ Added click handler to ${buttonName}`);
                                         }
                                     }
                                 });
@@ -2232,27 +2298,17 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // BEGIN: Add chapter markers and sprite preview to progress control
                         if (progressControl && seekBar) {
-                            console.log('Setting up sprite preview and chapter markers...');
-                            console.log('mediaData.previewSprite:', mediaData.previewSprite);
-                            console.log('chaptersData:', chaptersData);
-
                             // Check if we have chapters
                             const hasChapters = chaptersData && chaptersData.length > 0;
 
                             if (hasChapters) {
                                 // Use original ChapterMarkers with sprite functionality when chapters exist
-                                console.log(
-                                    '✓ Adding ChapterMarkers component with sprite functionality (chapters exist)'
-                                );
                                 const chapterMarkers = new ChapterMarkers(playerRef.current, {
                                     previewSprite: mediaData.previewSprite,
                                 });
                                 seekBar.addChild(chapterMarkers);
                             } else if (mediaData.previewSprite) {
                                 // Use separate SpritePreview component only when no chapters but sprite data exists
-                                console.log(
-                                    '✓ Adding SpritePreview component (no chapters, but sprite data available)'
-                                );
                                 const spritePreview = new SpritePreview(playerRef.current, {
                                     previewSprite: mediaData.previewSprite,
                                 });
@@ -2260,19 +2316,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                                 // Setup sprite preview hover functionality
                                 setTimeout(() => {
-                                    console.log('✓ Setting up sprite preview hover functionality');
                                     spritePreview.setupProgressBarHover();
                                 }, 100);
-                            } else {
-                                console.log('✗ No chapters and no sprite data available');
                             }
                         }
                         // END: Add chapter markers and sprite preview to progress control
 
                         // BEGIN: Simple button layout fix - use CSS approach
                         setTimeout(() => {
-                            console.log('Setting up simplified button layout...');
-
                             // Add a simple spacer div using DOM manipulation (simpler approach)
                             const spacerDiv = document.createElement('div');
                             spacerDiv.className = 'vjs-spacer-control vjs-control';
@@ -2287,22 +2338,32 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 const durationEl = durationDisplay.el();
                                 const nextSibling = durationEl.nextSibling;
                                 controlBarEl.insertBefore(spacerDiv, nextSibling);
-                                console.log('✓ Simple spacer added after duration display');
                             }
                         }, 300);
                         // END: Simple button layout fix
 
-                        // BEGIN: Move chapters button after fullscreen toggle
-                        if (chaptersButton && fullscreenToggle) {
+                        // BEGIN: Move Picture-in-Picture and Fullscreen buttons to the very end
+                        setTimeout(() => {
                             try {
-                                const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
-                                controlBar.addChild(chaptersButton, {}, fullscreenIndex + 1);
-                                console.log('✓ Chapters button moved after fullscreen toggle');
+                                const pictureInPictureToggle = controlBar.getChild('pictureInPictureToggle');
+                                const fullscreenToggle = controlBar.getChild('fullscreenToggle');
+
+                                // Move Picture-in-Picture button to the very end (if it exists)
+                                if (pictureInPictureToggle) {
+                                    controlBar.removeChild(pictureInPictureToggle);
+                                    controlBar.addChild(pictureInPictureToggle);
+                                }
+
+                                // Move Fullscreen button to the very end (after PiP)
+                                if (fullscreenToggle) {
+                                    controlBar.removeChild(fullscreenToggle);
+                                    controlBar.addChild(fullscreenToggle);
+                                }
                             } catch (e) {
-                                console.log('✗ Failed to move chapters button:', e);
+                                console.error('✗ Failed to move PiP/Fullscreen buttons to end:', e);
                             }
-                        }
-                        // END: Move chapters button after fullscreen toggle
+                        }, 100);
+                        // END: Move Picture-in-Picture and Fullscreen buttons to the very end
 
                         // BEGIN: Add Chapters Overlay Component
                         if (chaptersData && chaptersData.length > 0) {
@@ -2312,8 +2373,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 channelName: 'Chapter',
                                 thumbnail: mediaData?.data?.thumbnail_url || mediaData?.data?.author_thumbnail || '',
                             });
-                        } else {
-                            console.log('⚠ No chapters data available for overlay');
                         }
                         // END: Add Chapters Overlay Component
 
@@ -2399,199 +2458,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         };
 
                         // END: Add custom arrow key seek functionality
-
-                        // Log current user preferences
-                        console.log('Current user preferences:', userPreferences.current.getPreferences());
-
-                        window.debugSubtitles = {
-                            showTracks: () => {
-                                const textTracks = playerRef.current.textTracks();
-                                console.log('=== Available Text Tracks ===');
-                                for (let i = 0; i < textTracks.length; i++) {
-                                    const track = textTracks[i];
-                                    console.log(
-                                        `${i}: ${track.kind} | ${track.language} | ${track.label} | mode: ${track.mode}`
-                                    );
-                                }
-                            },
-                            enableEnglish: () => {
-                                const textTracks = playerRef.current.textTracks();
-                                for (let i = 0; i < textTracks.length; i++) {
-                                    const track = textTracks[i];
-                                    if (track.kind === 'subtitles' && track.language === 'en') {
-                                        track.mode = 'showing';
-                                        console.log('Enabled English subtitles');
-                                        break;
-                                    }
-                                }
-                            },
-                            enableGreek: () => {
-                                const textTracks = playerRef.current.textTracks();
-                                for (let i = 0; i < textTracks.length; i++) {
-                                    const track = textTracks[i];
-                                    if (track.kind === 'subtitles' && track.language === 'el') {
-                                        track.mode = 'showing';
-                                        console.log('Enabled Greek subtitles');
-                                        break;
-                                    }
-                                }
-                            },
-                            disableAll: () => {
-                                const textTracks = playerRef.current.textTracks();
-                                for (let i = 0; i < textTracks.length; i++) {
-                                    const track = textTracks[i];
-                                    if (track.kind === 'subtitles') {
-                                        track.mode = 'disabled';
-                                    }
-                                }
-                                console.log('Disabled all subtitles');
-                            },
-                            getPrefs: () => {
-                                console.log('Saved preferences:', userPreferences.current.getPreferences());
-                            },
-                            reapplyPrefs: () => {
-                                userPreferences.current.applySubtitlePreference(playerRef.current);
-                            },
-                            showMenu: () => {
-                                const controlBar = playerRef.current.getChild('controlBar');
-
-                                // Try different button names
-                                const possibleNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
-                                let subtitlesButton = null;
-
-                                for (const name of possibleNames) {
-                                    const button = controlBar.getChild(name);
-                                    if (button) {
-                                        console.log(`Found subtitle button: ${name}`);
-                                        subtitlesButton = button;
-                                        break;
-                                    }
-                                }
-
-                                if (subtitlesButton && subtitlesButton.menu) {
-                                    console.log('=== Subtitle Menu Items ===');
-                                    subtitlesButton.menu.children_.forEach((item, index) => {
-                                        if (item.track) {
-                                            console.log(
-                                                `${index}: ${item.track.label} (${item.track.language}) - selected: ${item.selected()}`
-                                            );
-                                        } else {
-                                            console.log(
-                                                `${index}: ${item.label || 'Unknown'} - selected: ${item.selected()}`
-                                            );
-                                        }
-                                    });
-                                } else {
-                                    console.log('No subtitle menu found, checking DOM...');
-
-                                    // Check DOM for subtitle menu items
-                                    const menuItems = playerRef.current.el().querySelectorAll('.vjs-menu-item');
-                                    console.log(`Found ${menuItems.length} menu items in DOM`);
-
-                                    menuItems.forEach((item, index) => {
-                                        if (
-                                            item.textContent.toLowerCase().includes('subtitle') ||
-                                            item.textContent.toLowerCase().includes('caption') ||
-                                            item.textContent.toLowerCase().includes('off')
-                                        ) {
-                                            console.log(
-                                                `DOM item ${index}: ${item.textContent} - classes: ${item.className}`
-                                            );
-                                        }
-                                    });
-                                }
-                            },
-                            testMenuClick: (index) => {
-                                const controlBar = playerRef.current.getChild('controlBar');
-                                const possibleNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
-                                let subtitlesButton = null;
-
-                                for (const name of possibleNames) {
-                                    const button = controlBar.getChild(name);
-                                    if (button) {
-                                        subtitlesButton = button;
-                                        break;
-                                    }
-                                }
-
-                                if (subtitlesButton && subtitlesButton.menu && subtitlesButton.menu.children_[index]) {
-                                    const menuItem = subtitlesButton.menu.children_[index];
-                                    console.log('Simulating click on menu item:', index);
-                                    menuItem.handleClick();
-                                } else {
-                                    console.log('Menu item not found at index:', index, 'trying DOM approach...');
-
-                                    // Try DOM approach
-                                    const menuItems = playerRef.current.el().querySelectorAll('.vjs-menu-item');
-                                    const subtitleItems = Array.from(menuItems).filter(
-                                        (item) =>
-                                            item.textContent.toLowerCase().includes('subtitle') ||
-                                            item.textContent.toLowerCase().includes('caption') ||
-                                            item.textContent.toLowerCase().includes('off')
-                                    );
-
-                                    if (subtitleItems[index]) {
-                                        console.log('Clicking DOM element:', subtitleItems[index].textContent);
-                                        subtitleItems[index].click();
-                                    } else {
-                                        console.log('No DOM subtitle item found at index:', index);
-                                    }
-                                }
-                            },
-                            forceEnableEnglish: () => {
-                                console.log('Force enabling English subtitles...');
-                                const textTracks = playerRef.current.textTracks();
-                                for (let i = 0; i < textTracks.length; i++) {
-                                    const track = textTracks[i];
-                                    if (track.kind === 'subtitles') {
-                                        track.mode = track.language === 'en' ? 'showing' : 'disabled';
-                                    }
-                                }
-                                userPreferences.current.setPreference('subtitleLanguage', 'en');
-                                console.log('English subtitles enabled and saved');
-                            },
-                            watchSubtitleChanges: () => {
-                                console.log('👀 Watching subtitle preference changes...');
-                                const originalSetPreference = userPreferences.current.setPreference;
-                                userPreferences.current.setPreference = function (key, value) {
-                                    if (key === 'subtitleLanguage') {
-                                        console.log(`🎯 SUBTITLE CHANGE: ${value} at ${new Date().toISOString()}`);
-                                        console.trace('Change origin:');
-                                    }
-                                    return originalSetPreference.call(this, key, value);
-                                };
-                                console.log('Subtitle change monitoring activated');
-                            },
-                            checkRestorationFlag: () => {
-                                console.log('Restoration flag:', userPreferences.current.isRestoringSubtitles);
-                                console.log('Auto-save disabled:', userPreferences.current.subtitleAutoSaveDisabled);
-                            },
-                            forceSaveGreek: () => {
-                                console.log('🚀 Force saving Greek subtitle preference...');
-                                userPreferences.current.forceSetSubtitleLanguage('el');
-                                console.log('Check result:', userPreferences.current.getPreferences());
-                            },
-                            forceSaveEnglish: () => {
-                                console.log('🚀 Force saving English subtitle preference...');
-                                userPreferences.current.forceSetSubtitleLanguage('en');
-                                console.log('Check result:', userPreferences.current.getPreferences());
-                            },
-                            forceSaveNull: () => {
-                                console.log('🚀 Force saving null subtitle preference...');
-                                userPreferences.current.forceSetSubtitleLanguage(null);
-                                console.log('Check result:', userPreferences.current.getPreferences());
-                            },
-                        };
                     });
 
                     // Listen for next video event
                     playerRef.current.on('nextVideo', () => {
-                        console.log('Next video requested');
                         goToNextVideo();
                     });
 
                     playerRef.current.on('play', () => {
-                        console.log('Video started playing');
                         // Only show play indicator if not changing quality
                         if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('play');
@@ -2599,7 +2473,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     });
 
                     playerRef.current.on('pause', () => {
-                        console.log('Video paused');
                         // Only show pause indicator if not changing quality
                         if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('pause');
@@ -2611,9 +2484,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     let autoplayCountdown = null;
 
                     playerRef.current.on('ended', () => {
-                        console.log('Video ended');
-                        console.log('Available relatedVideos:', relatedVideos);
-
                         // Keep controls active after video ends
                         setTimeout(() => {
                             if (playerRef.current && !playerRef.current.isDisposed()) {
@@ -2631,17 +2501,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         }, 50);
 
-                        console.log('mediaData.previewSprite', mediaData.previewSprite);
-                        console.log('mediaData.nextLink', mediaData.nextLink);
-                        console.log('userPreferences', userPreferences);
-
                         // Check if autoplay is enabled and there's a next video
                         const isAutoplayEnabled = userPreferences.current.getAutoplayPreference();
                         const hasNextVideo = mediaData.nextLink !== null;
-
-                        console.log('isAutoplayEnabled', isAutoplayEnabled);
-                        console.log('hasNextVideo', hasNextVideo);
-                        console.log('isEmbedPlayer', isEmbedPlayer);
 
                         if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
                             // Get next video data for countdown display - find the next video in related videos
@@ -2680,11 +2542,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 nextVideoData: nextVideoData,
                                 countdownSeconds: 5,
                                 onPlayNext: () => {
-                                    console.log('Autoplay: Navigating to next video');
                                     goToNextVideo();
                                 },
                                 onCancel: () => {
-                                    console.log('Autoplay: User cancelled, showing related videos');
                                     // Hide countdown and show end screen instead
                                     if (autoplayCountdown) {
                                         playerRef.current.removeChild(autoplayCountdown);
@@ -2705,7 +2565,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         function showEndScreen() {
                             // Prevent creating multiple end screens
                             if (endScreen) {
-                                console.log('End screen already exists, removing previous one');
                                 playerRef.current.removeChild(endScreen);
                                 endScreen = null;
                             }
@@ -2753,35 +2612,23 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     });
 
                     playerRef.current.on('error', (error) => {
-                        console.error('Video.js error:', error);
+                        // console.error('Video.js error:', error);
                     });
 
                     playerRef.current.on('fullscreenchange', () => {
-                        console.log('Fullscreen changed:', playerRef.current.isFullscreen());
+                        // console.log('Fullscreen changed:', playerRef.current.isFullscreen());
                     });
 
                     playerRef.current.on('volumechange', () => {
-                        console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
+                        // console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
                     });
 
                     playerRef.current.on('ratechange', () => {
-                        console.log('Playback rate changed:', playerRef.current.playbackRate());
+                        // console.log('Playback rate changed:', playerRef.current.playbackRate());
                     });
 
                     playerRef.current.on('texttrackchange', () => {
-                        console.log('Text track changed');
-                        const textTracks = playerRef.current.textTracks();
-                        for (let i = 0; i < textTracks.length; i++) {
-                            console.log(
-                                'Track',
-                                i,
-                                ':',
-                                textTracks[i].kind,
-                                textTracks[i].label,
-                                'Mode:',
-                                textTracks[i].mode
-                            );
-                        }
+                        // console.log('Text track changed');
                     });
 
                     // Focus the player element so keyboard controls work
@@ -2793,7 +2640,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             const videoElement = playerRef.current.el();
                             videoElement.setAttribute('tabindex', '0');
                             videoElement.focus();
-                            console.log('Video player focused for keyboard controls');
 
                             // Add custom keyboard event handler for space key
                             const handleKeyPress = (event) => {
@@ -2828,15 +2674,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 document.removeEventListener('keydown', handleKeyPress);
                             };
                         }
-
-                        // Start playing the video immediately if autoplay is enabled
-                        if (playerRef.current.autoplay()) {
-                            playerRef.current.play().catch((error) => {
-                                console.log('ℹ️ Browser prevented autoplay (normal behavior):', error.message);
-                                // If autoplay fails, we can still focus the element
-                                // so the user can manually start and use keyboard controls
-                            });
-                        }
                     });
                 }
             }, 0);
@@ -2867,7 +2704,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 const videoElement = playerRef.current.el();
                 videoElement.setAttribute('tabindex', '0');
                 videoElement.focus();
-                console.log('Video element focused for keyboard controls');
             }
         };
 

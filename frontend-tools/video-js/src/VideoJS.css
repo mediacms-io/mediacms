@@ -46,6 +46,70 @@ html {
     justify-content: flex-start !important;
     padding: 0 12px;
     height: 48px;
+    /* position: relative !important; */
+}
+
+/* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
+.video-js::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.6) 25%,
+        rgba(0, 0, 0, 0.4) 50%,
+        rgba(0, 0, 0, 0.2) 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+}
+
+/* Show overlay when controls are active - YouTube style */
+.video-js.vjs-user-active::after,
+.video-js.vjs-paused::after,
+.video-js.vjs-ended::after {
+    opacity: 1;
+}
+
+/* Ensure control bar is above the overlay */
+.video-js .vjs-control-bar {
+    z-index: 6 !important;
+}
+
+/* Progress control above overlay */
+.video-js .vjs-progress-control.vjs-control {
+    z-index: 7 !important;
+}
+
+/* Clean white icons - overlay provides the contrast */
+.video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder::before {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Clean white time displays */
+.video-js .vjs-control-bar .vjs-time-control {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+    font-weight: 500 !important;
+}
+
+/* Keep original progress bar styling */
+
+/* Volume control visibility */
+.video-js .vjs-volume-control .vjs-volume-bar {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.video-js .vjs-volume-control .vjs-volume-level {
+    background: #ffffff !important;
 }
 
 .video-container {
@@ -93,6 +157,7 @@ html {
     align-items: center;
     justify-content: center;
     margin: auto;
+    display: none !important;
 }
 .vjs-next-video-control .vjs-icon-placeholder svg {
     width: 100%;
@@ -577,8 +642,7 @@ html {
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 .video-js .vjs-settings-button:focus {
-    outline: 2px solid #fff !important;
-    outline-offset: 2px !important;
+    outline: none !important;
 }
 
 .video-js .vjs-settings-button .vjs-icon-cog {

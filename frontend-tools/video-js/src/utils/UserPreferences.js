@@ -12,7 +12,7 @@ class UserPreferences {
             subtitleLanguage: null, // No subtitles by default
             subtitleEnabled: false, // Subtitles off by default
             muted: false,
-            autoplay: false, // Autoplay disabled by default
+            autoplay: true, // Autoplay disabled by default
         };
     }
 
@@ -43,7 +43,6 @@ class UserPreferences {
             const currentPrefs = this.getPreferences();
             const updatedPrefs = { ...currentPrefs, ...preferences };
             localStorage.setItem(this.storageKey, JSON.stringify(updatedPrefs));
-            console.log('User preferences saved:', updatedPrefs);
         } catch (error) {
             console.warn('Error saving user preferences to localStorage:', error);
         }
@@ -68,21 +67,13 @@ class UserPreferences {
     setPreference(key, value, forceSet = false) {
         // Add special logging for subtitle language changes
         if (key === 'subtitleLanguage') {
-            console.log(
-                `🔄 Setting subtitleLanguage: ${value} (restoring: ${this.isRestoringSubtitles}, autoSaveDisabled: ${this.subtitleAutoSaveDisabled}, forceSet: ${forceSet})`
-            );
-
             // Block subtitle language changes during restoration, but allow forced sets
             if (this.isRestoringSubtitles) {
-                console.log('🚫 BLOCKED: Subtitle language change during restoration');
                 return; // Don't save during restoration
             }
 
             // Allow forced sets even if auto-save is disabled (for direct user clicks)
             if (this.subtitleAutoSaveDisabled && !forceSet) {
-                console.log(
-                    '🚫 BLOCKED: Subtitle language change during auto-save disabled period (use forceSet=true to override)'
-                );
                 return; // Don't save if disabled unless forced
             }
 
@@ -97,7 +88,6 @@ class UserPreferences {
     resetPreferences() {
         try {
             localStorage.removeItem(this.storageKey);
-            console.log('User preferences reset to defaults');
         } catch (error) {
             console.warn('Error resetting user preferences:', error);
         }
@@ -112,12 +102,10 @@ class UserPreferences {
 
         // DISABLE subtitle auto-save completely during initial load
         this.subtitleAutoSaveDisabled = true;
-        console.log('🔒 Subtitle auto-save DISABLED during initial load');
 
         // Re-enable after 3 seconds to ensure everything has settled
         setTimeout(() => {
             this.subtitleAutoSaveDisabled = false;
-            console.log('🔓 Subtitle auto-save RE-ENABLED after initial load period');
         }, 3000);
 
         // Apply volume and mute state
@@ -133,11 +121,6 @@ class UserPreferences {
         if (typeof prefs.playbackRate === 'number' && prefs.playbackRate > 0) {
             player.playbackRate(prefs.playbackRate);
         }
-
-        // Apply subtitle language (will be handled separately for text tracks)
-        // Quality setting will be handled by the settings menu component
-
-        console.log('Applied user preferences to player:', prefs);
     }
 
     /**
@@ -160,7 +143,6 @@ class UserPreferences {
         player.on('texttrackchange', () => {
             // Skip saving if we're currently restoring subtitles
             if (this.isRestoringSubtitles) {
-                console.log('Skipping subtitle save - currently restoring preferences');
                 return;
             }
 
@@ -173,14 +155,8 @@ class UserPreferences {
                     const track = textTracks[i];
                     if (track.kind === 'subtitles' && track.mode === 'showing') {
                         activeLanguage = track.language;
-                        console.log('Active subtitle language detected:', activeLanguage);
                         break;
                     }
-                }
-
-                // If no subtitles are active, save null
-                if (!activeLanguage) {
-                    console.log('No subtitles active, saving null');
                 }
 
                 this.setPreference('subtitleLanguage', activeLanguage);
@@ -189,8 +165,6 @@ class UserPreferences {
 
         // Also hook into subtitle menu clicks directly
         this.setupSubtitleMenuListeners(player);
-
-        console.log('Auto-save preferences listeners set up');
     }
 
     /**
@@ -201,7 +175,6 @@ class UserPreferences {
         // Wait for the control bar to be ready
         setTimeout(() => {
             const controlBar = player.getChild('controlBar');
-            console.log('=== Searching for subtitle controls ===');
 
             // Check all possible subtitle button names
             const possibleNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton', 'textTrackButton'];
@@ -210,7 +183,6 @@ class UserPreferences {
             for (const name of possibleNames) {
                 const button = controlBar.getChild(name);
                 if (button) {
-                    console.log(`Found subtitle button: ${name}`);
                     subtitlesButton = button;
                     break;
                 }
@@ -218,26 +190,21 @@ class UserPreferences {
 
             // Also try to find by scanning all children
             if (!subtitlesButton) {
-                console.log('Scanning all control bar children...');
                 const children = controlBar.children();
-                children.forEach((child, index) => {
+                children.forEach((child) => {
                     const name = child.name_ || child.constructor.name || 'Unknown';
-                    console.log(`Child ${index}: ${name}`);
 
                     if (
                         name.toLowerCase().includes('subtitle') ||
                         name.toLowerCase().includes('caption') ||
                         name.toLowerCase().includes('text')
                     ) {
-                        console.log(`Potential subtitle button found: ${name}`);
                         subtitlesButton = child;
                     }
                 });
             }
 
             if (subtitlesButton) {
-                console.log('Found subtitles button, setting up menu listeners');
-
                 // Wait a bit more for the menu to be created
                 setTimeout(() => {
                     this.attachMenuItemListeners(player, subtitlesButton);
@@ -248,8 +215,6 @@ class UserPreferences {
                     this.attachMenuItemListeners(player, subtitlesButton);
                 }, 2000);
             } else {
-                console.log('No subtitles button found after exhaustive search');
-
                 // Try alternative approach - listen to DOM changes
                 this.setupDOMBasedListeners(player);
             }
@@ -261,8 +226,6 @@ class UserPreferences {
      * @param {Object} player - Video.js player instance
      */
     setupDOMBasedListeners(player) {
-        console.log('Setting up DOM-based subtitle listeners as fallback');
-
         // Wait for DOM to be ready
         setTimeout(() => {
             const playerEl = player.el();
@@ -277,8 +240,6 @@ class UserPreferences {
                         target.closest('.vjs-captions-menu-item') ||
                         (target.closest('.vjs-menu-item') && target.textContent.toLowerCase().includes('subtitle'))
                     ) {
-                        console.log('Subtitle menu item clicked via DOM listener:', target.textContent);
-
                         // Extract language from the clicked item
                         setTimeout(() => {
                             this.detectActiveSubtitleFromDOM(player, true); // Force set for user clicks
@@ -287,14 +248,11 @@ class UserPreferences {
 
                     // Also handle "captions off" clicks
                     if (target.closest('.vjs-menu-item') && target.textContent.toLowerCase().includes('off')) {
-                        console.log('Captions off clicked via DOM listener');
                         setTimeout(() => {
                             this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                         }, 200);
                     }
                 });
-
-                console.log('DOM-based subtitle listeners attached');
             }
         }, 1500);
     }
@@ -307,7 +265,6 @@ class UserPreferences {
     detectActiveSubtitleFromDOM(player, forceSet = false) {
         // Skip saving if we're currently restoring subtitles
         if (this.isRestoringSubtitles) {
-            console.log('Skipping DOM subtitle save - currently restoring preferences');
             return;
         }
 
@@ -318,7 +275,6 @@ class UserPreferences {
             const track = textTracks[i];
             if (track.kind === 'subtitles' && track.mode === 'showing') {
                 activeLanguage = track.language;
-                console.log('DOM detection - Active subtitle language:', activeLanguage, track.label);
                 break;
             }
         }
@@ -335,49 +291,37 @@ class UserPreferences {
         try {
             const menu = subtitlesButton.menu;
             if (menu && menu.children_) {
-                console.log('Found subtitle menu with', menu.children_.length, 'items');
-
-                menu.children_.forEach((menuItem, index) => {
+                menu.children_.forEach((menuItem) => {
                     if (menuItem.track) {
                         const track = menuItem.track;
-                        console.log(`Menu item ${index}: ${track.label} (${track.language})`);
 
                         // Override the handleClick method
                         const originalHandleClick = menuItem.handleClick.bind(menuItem);
                         menuItem.handleClick = () => {
-                            console.log('Subtitle menu item clicked:', track.label, track.language);
-
                             // Call original click handler
                             originalHandleClick();
 
                             // Save the preference after a short delay
                             setTimeout(() => {
                                 if (track.mode === 'showing') {
-                                    console.log('Saving subtitle preference:', track.language);
                                     this.setPreference('subtitleLanguage', track.language, true); // Force set for user clicks
                                 } else {
-                                    console.log('Subtitle disabled, saving null');
                                     this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                                 }
                             }, 100);
                         };
                     } else if (menuItem.label && menuItem.label.toLowerCase().includes('off')) {
                         // Handle "captions off" option
-                        console.log('Found captions off menu item');
                         const originalHandleClick = menuItem.handleClick.bind(menuItem);
                         menuItem.handleClick = () => {
-                            console.log('Captions off clicked');
                             originalHandleClick();
 
                             setTimeout(() => {
-                                console.log('Saving subtitle preference: null (off)');
                                 this.setPreference('subtitleLanguage', null, true); // Force set for user clicks
                             }, 100);
                         };
                     }
                 });
-            } else {
-                console.log('Could not find subtitle menu or menu items');
             }
         } catch (error) {
             console.error('Error setting up subtitle menu listeners:', error);
@@ -395,20 +339,9 @@ class UserPreferences {
         if (savedLanguage) {
             // Set flag to prevent auto-save during restoration
             this.isRestoringSubtitles = true;
-            console.log('isRestoringSubtitles', this.isRestoringSubtitles);
-
             // Multiple attempts with increasing delays to ensure text tracks are loaded
             const attemptToApplySubtitles = (attempt = 1) => {
                 const textTracks = player.textTracks();
-                console.log(`Subtitle application attempt ${attempt}, found ${textTracks.length} text tracks`);
-
-                // Log all available tracks for debugging
-                for (let i = 0; i < textTracks.length; i++) {
-                    const track = textTracks[i];
-                    console.log(
-                        `Track ${i}: kind=${track.kind}, language=${track.language}, label=${track.label}, mode=${track.mode}`
-                    );
-                }
 
                 // First, disable all subtitle tracks
                 for (let i = 0; i < textTracks.length; i++) {
@@ -432,7 +365,6 @@ class UserPreferences {
                     const track = textTracks[i];
                     if (track.kind === 'subtitles' && matchesLang(track, savedLanguage)) {
                         track.mode = 'showing';
-                        console.log('✓ Applied saved subtitle language:', savedLanguage, track.label);
                         found = true;
 
                         // Also update the menu UI to reflect the selection
@@ -452,10 +384,7 @@ class UserPreferences {
                         const track = textTracks[i];
                         if (track.kind === 'subtitles') {
                             track.mode = 'showing';
-                            console.log(
-                                'Fallback ✓ Enabled first available subtitles track:',
-                                track.label || track.language || track.srclang
-                            );
+
                             // Save back the language we actually enabled for future precise matches
                             const langToSave = track.language || track.srclang || null;
                             if (langToSave) this.setPreference('subtitleLanguage', langToSave, true);
@@ -472,12 +401,10 @@ class UserPreferences {
                 // Clear the restoration flag after a longer delay to ensure all events have settled
                 setTimeout(() => {
                     this.isRestoringSubtitles = false;
-                    console.log('✅ Subtitle restoration complete, auto-save re-enabled');
                 }, 600); // Increased to 3 seconds
 
                 // If not found and we haven't tried too many times, try again
                 if (!found && attempt < 5) {
-                    console.log(`Subtitle language ${savedLanguage} not found, retrying in ${attempt * 50}ms...`);
                     setTimeout(() => attemptToApplySubtitles(attempt + 1), attempt * 50);
                 } else if (!found) {
                     console.warn('Could not find subtitle track for language:', savedLanguage);
@@ -518,8 +445,9 @@ class UserPreferences {
 
                 // Update custom settings menu to show "Off" as selected
                 this.updateCustomSettingsMenuUI(player);
-            } catch (e) {}
-            console.log('No subtitle auto-apply on load (disabled or no language).');
+            } catch (e) {
+                console.error('Error applying subtitle preference:', e);
+            }
         }
     }
 
@@ -538,13 +466,9 @@ class UserPreferences {
 
                 if (enabled) {
                     buttonEl.classList.add('vjs-subs-active');
-                    console.log('✓ Added vjs-subs-active class to subtitle button');
                 } else {
                     buttonEl.classList.remove('vjs-subs-active');
-                    console.log('✓ Removed vjs-subs-active class from subtitle button');
                 }
-            } else {
-                console.log('Subtitle button not found for visual state update');
             }
         } catch (error) {
             console.error('Error updating subtitle button visual state:', error);
@@ -569,7 +493,6 @@ class UserPreferences {
                     if (menuItem.track) {
                         if (menuItem.track === activeTrack) {
                             menuItem.selected(true);
-                            console.log('Updated menu UI for:', menuItem.track.label);
                         } else {
                             menuItem.selected(false);
                         }
@@ -598,16 +521,11 @@ class UserPreferences {
                 const customSettingsMenu = controlBar.getChild('CustomSettingsMenu');
 
                 if (customSettingsMenu && customSettingsMenu.refreshSubtitlesSubmenu) {
-                    console.log('Updating custom settings menu UI...');
                     customSettingsMenu.refreshSubtitlesSubmenu();
                 } else if (attempt < 5) {
                     // Retry after a short delay if menu not found
-                    console.log(
-                        `Custom settings menu not found, retrying in ${attempt * 200}ms... (attempt ${attempt})`
-                    );
+
                     setTimeout(() => attemptUpdate(attempt + 1), attempt * 200);
-                } else {
-                    console.log('Custom settings menu not found after multiple attempts');
                 }
             } catch (error) {
                 console.error('Error updating custom settings menu UI:', error);
@@ -639,12 +557,10 @@ class UserPreferences {
      * @param {string} language - Subtitle language code
      */
     forceSetSubtitleLanguage(language) {
-        console.log(`🚀 FORCE SAVING subtitle language: ${language}`);
         const currentPrefs = this.getPreferences();
         const updatedPrefs = { ...currentPrefs, subtitleLanguage: language };
         try {
             localStorage.setItem(this.storageKey, JSON.stringify(updatedPrefs));
-            console.log('✅ Force saved subtitle language:', language);
         } catch (error) {
             console.error('❌ Error force saving subtitle language:', error);
         }
@@ -664,7 +580,6 @@ class UserPreferences {
      */
     setAutoplayPreference(autoplay) {
         this.setPreference('autoplay', autoplay);
-        console.log('Autoplay preference saved:', autoplay);
     }
 }
 

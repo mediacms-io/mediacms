@@ -47,7 +47,6 @@ class CustomChaptersOverlay extends Component {
 
     createOverlay() {
         if (!this.chaptersData || this.chaptersData.length === 0) {
-            console.log('⚠ No chapters data available for overlay');
             return;
         }
 
@@ -232,8 +231,6 @@ class CustomChaptersOverlay extends Component {
         playerEl.appendChild(this.overlay);
 
         this.player().on('timeupdate', this.updateCurrentChapter);
-
-        console.log('✓ Custom chapters overlay created');
     }
 
     setupChaptersButton() {

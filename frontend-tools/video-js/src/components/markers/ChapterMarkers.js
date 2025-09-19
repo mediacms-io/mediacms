@@ -49,7 +49,7 @@ class ChapterMarkers extends Component {
             this.chaptersData.push({
                 startTime: cue.startTime,
                 endTime: cue.endTime,
-                chapterTitle: cue.chapterTitle,
+                chapterTitle: cue.text,
             });
         }
 
@@ -217,17 +217,17 @@ class ChapterMarkers extends Component {
 
             // Update text content without rebuilding DOM
             this.chapterTitle.textContent = currentChapter.chapterTitle;
-            this.chapterInfo.textContent = `Chapter: ${startTime} - ${endTime}`;
+            this.chapterInfo.textContent = `${startTime} - ${endTime}`;
             // this.positionInfo.textContent = `Position: ${timeAtPosition}`;
 
             // Update sprite thumbnail
             this.updateSpriteThumbnail(currentTime);
             this.chapterImage.style.display = 'block';
         } else {
-            const timeAtPosition = this.formatTime(currentTime);
-            this.chapterTitle.textContent = 'No Chapter';
+            // const timeAtPosition = this.formatTime(currentTime);
+            this.chapterTitle.textContent = '';
             this.chapterInfo.textContent = '';
-            this.positionInfo.textContent = `Position: ${timeAtPosition}`;
+            // this.positionInfo.textContent = `Position: ${timeAtPosition}`;
 
             // Still show sprite thumbnail even when not in a chapter
             this.updateSpriteThumbnail(currentTime);
@@ -274,7 +274,6 @@ class ChapterMarkers extends Component {
         if (!this.previewSprite || !this.previewSprite.url) {
             // Hide image if no sprite data available
             this.chapterImage.style.display = 'none';
-            console.log('No sprite data available:', this.previewSprite);
             return;
         }
 
@@ -304,10 +303,6 @@ class ChapterMarkers extends Component {
         const xPos = -(frameCol * width);
         const yPos = -(frameRow * height);
 
-        console.log(
-            `Time: ${currentTime}s, Duration: ${this.player().duration()}s, Interval: ${frameInterval}s, Frame: ${frameIndex}/${maxFrames - 1}, Row: ${frameRow}, Col: ${frameCol}, Pos: ${xPos}px ${yPos}px, URL: ${url}`
-        );
-
         // Apply sprite background
         this.chapterImage.style.backgroundImage = `url("${url}")`;
         this.chapterImage.style.backgroundPosition = `${xPos}px ${yPos}px`;
@@ -321,7 +316,6 @@ class ChapterMarkers extends Component {
         if (frameIndex >= 3 && currentTime > 30) {
             const fallbackYPos = -(2 * height); // Frame 2 (20-30s range)
             this.chapterImage.style.backgroundPosition = `${xPos}px ${fallbackYPos}px`;
-            console.log(`Fallback: Using frame 2 instead of frame ${frameIndex} for time ${currentTime}s`);
         }
     }
 
