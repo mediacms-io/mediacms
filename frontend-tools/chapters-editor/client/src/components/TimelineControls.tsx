@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { formatTime, formatDetailedTime } from '../lib/timeUtils';
-import { generateThumbnail, generateSolidColor } from '../lib/videoUtils';
+import { generateSolidColor } from '../lib/videoUtils';
 import { Segment } from './ClipSegments';
 import Modal from './Modal';
 import { autoSaveVideo } from '../services/videoApi';
@@ -38,7 +38,7 @@ interface TimelineControlsProps {
     selectedSegmentId?: number | null;
     onSelectedSegmentChange?: (segmentId: number | null) => void;
     onSegmentUpdate?: (segmentId: number, updates: Partial<Segment>) => void;
-    onChapterSave?: (chapters: { name: string; from: string; to: string }[]) => void;
+    onChapterSave?: (chapters: { chapterTitle: string; from: string; to: string }[]) => void;
     onTrimStartChange: (time: number) => void;
     onTrimEndChange: (time: number) => void;
     onZoomChange: (level: number) => void;
@@ -104,7 +104,6 @@ const constrainTooltipPosition = (positionPercent: number) => {
 const TimelineControls = ({
     currentTime,
     duration,
-    thumbnails,
     trimStart,
     trimEnd,
     splitPoints,
@@ -167,11 +166,28 @@ const TimelineControls = ({
     const [isAutoSaving, setIsAutoSaving] = useState(false);
     const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
     const clipSegmentsRef = useRef(clipSegments);
+    
+    // Redirect timer refs
+    const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Keep clipSegmentsRef updated
     useEffect(() => {
         clipSegmentsRef.current = clipSegments;
     }, [clipSegments]);
+
+    // Function to cancel redirect timers
+    const cancelRedirect = useCallback(() => {
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+        }
+        if (redirectTimeoutRef.current) {
+            clearTimeout(redirectTimeoutRef.current);
+            redirectTimeoutRef.current = null;
+        }
+        logger.debug('Redirect cancelled by user');
+    }, []);
 
     // Auto-save function
     const performAutoSave = useCallback(async () => {
@@ -179,15 +195,13 @@ const TimelineControls = ({
             setIsAutoSaving(true);
 
             // Format segments data for API request - use ref to get latest segments
-            const segments = clipSegmentsRef.current.map((segment) => ({
-                startTime: formatDetailedTime(segment.startTime),
-                endTime: formatDetailedTime(segment.endTime),
-                name: segment.name,
-                chapterTitle: segment.chapterTitle,
-                text: segment.chapterTitle,
+            const chapters = clipSegmentsRef.current.map((chapter) => ({
+                startTime: formatDetailedTime(chapter.startTime),
+                endTime: formatDetailedTime(chapter.endTime),
+                chapterTitle: chapter.chapterTitle,
             }));
 
-            logger.debug('segments', segments);
+            logger.debug('chapters', chapters);
 
             const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
             // For testing, use '1234' if no mediaId is available
@@ -195,20 +209,22 @@ const TimelineControls = ({
 
             logger.debug('mediaId', finalMediaId);
 
-            if (!finalMediaId || segments.length === 0) {
+            if (!finalMediaId || chapters.length === 0) {
                 logger.debug('No mediaId or segments, skipping auto-save');
                 setIsAutoSaving(false);
                 return;
             }
 
-            logger.debug('Auto-saving segments:', { mediaId: finalMediaId, segments });
+            logger.debug('Auto-saving segments:', { mediaId: finalMediaId, chapters });
 
-            const response = await autoSaveVideo(finalMediaId, { segments });
+            const response = await autoSaveVideo(finalMediaId, { chapters });
 
-            if (response.success) {
+            console.log('response autoSaveVideo edw', response);
+
+            if (response.success === true) {
                 logger.debug('Auto-save successful');
                 // Format the timestamp for display
-                const date = new Date(response.timestamp);
+                const date = new Date(response.updated_at || new Date().toISOString());
                 const formattedTime = date
                     .toLocaleString('en-US', {
                         year: 'numeric',
@@ -224,10 +240,10 @@ const TimelineControls = ({
                 setLastAutoSaveTime(formattedTime);
                 logger.debug('Auto-save successful:', formattedTime);
             } else {
-                logger.error('Auto-save failed:', response.error);
+                logger.error('Auto-save failed: (TimelineControls.tsx)');
             }
         } catch (error) {
-            logger.error('Auto-save error:', error);
+            logger.error('Auto-save error: (TimelineControls.tsx)', error);
         } finally {
             setIsAutoSaving(false);
         }
@@ -255,6 +271,7 @@ const TimelineControls = ({
 
     // Update editing title when selected segment changes
     useEffect(() => {
+        console.log('edw selectedSegment', selectedSegment);
         if (selectedSegment) {
             setEditingChapterTitle(selectedSegment.chapterTitle || '');
         } else {
@@ -274,7 +291,7 @@ const TimelineControls = ({
     };
 
     // Handle save chapters
-    const handleSaveChapters = () => {
+    /* const handleSaveChapters = () => {
         if (!onChapterSave) return;
 
         // Convert segments to chapter format
@@ -286,10 +303,10 @@ const TimelineControls = ({
 
         onChapterSave(chapters);
         setChapterHasUnsavedChanges(false);
-    };
+    }; */
 
     // Helper function for time adjustment buttons to maintain playback state
-    const handleTimeAdjustment = (offsetSeconds: number) => (e: React.MouseEvent) => {
+   /*  const handleTimeAdjustment = (offsetSeconds: number) => (e: React.MouseEvent) => {
         e.stopPropagation();
 
         // Calculate new time based on offset (positive or negative)
@@ -313,7 +330,7 @@ const TimelineControls = ({
             videoRef.current.play();
             setIsPlayingSegment(true);
         }
-    };
+    }; */
 
     // Enhanced helper for continuous time adjustment when button is held down
     const handleContinuousTimeAdjustment = (offsetSeconds: number) => {
@@ -484,7 +501,7 @@ const TimelineControls = ({
             const chapters = clipSegments
                 .filter((segment) => segment.chapterTitle && segment.chapterTitle.trim())
                 .map((segment) => ({
-                    name: segment.chapterTitle || `Chapter ${segment.id}`,
+                    chapterTitle: segment.chapterTitle || `Chapter ${segment.id}`,
                     from: formatDetailedTime(segment.startTime),
                     to: formatDetailedTime(segment.endTime),
                 }));
@@ -969,12 +986,14 @@ const TimelineControls = ({
         const loadSavedSegments = () => {
             // Get savedSegments directly from window.MEDIA_DATA
             let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || null;
+            console.log('MEDIA_DATA edw1', (window as any).MEDIA_DATA);
+            console.log('savedData edw1', savedData);
 
             // If no saved segments, use default segments
-            if (!savedData) {
+           /*  if (!savedData) {
                 logger.debug('No saved segments found in MEDIA_DATA, using default segments');
                 savedData = {
-                    segments: [
+                    chapters: [
                         {
                             startTime: '00:00:00.000',
                             endTime: '00:00:10.000',
@@ -993,22 +1012,19 @@ const TimelineControls = ({
                     ],
                     updated_at: '2025-06-24 14:59:14',
                 };
-            }
-
-            logger.debug('Loading saved segments:', savedData);
+            } */
 
             try {
-                if (savedData && savedData.segments && savedData.segments.length > 0) {
+                if (savedData && savedData.chapters && savedData.chapters.length > 0) {
                     logger.debug('Found saved segments:', savedData);
+                    console.log('savedData edw', savedData);
 
                     // Convert the saved segments to the format expected by the component
-                    const convertedSegments: Segment[] = savedData.segments.map((seg: any, index: number) => ({
+                    const convertedSegments: Segment[] = savedData.chapters.map((seg: any   , index: number) => ({  
                         id: Date.now() + index, // Generate unique IDs
-                        name: seg.name || `Segment ${index + 1}`,
+                        chapterTitle: seg.chapterTitle || `Chapter ${index + 1}`,
                         startTime: parseTimeString(seg.startTime),
                         endTime: parseTimeString(seg.endTime),
-                        thumbnail: '',
-                        chapterTitle: seg.chapterTitle || '', // Preserve chapter title from saved data
                     }));
 
                     // Dispatch event to update segments
@@ -1187,34 +1203,6 @@ const TimelineControls = ({
             rightHandle.removeEventListener('mousedown', initDrag(false));
         };
     }, [duration, trimStart, trimEnd, onTrimStartChange, onTrimEndChange]);
-
-    // Render solid color backgrounds evenly spread across timeline
-    const renderThumbnails = () => {
-        // Create thumbnail sections even if we don't have actual thumbnail data
-        const numSections = thumbnails.length || 10; // Default to 10 sections if no thumbnails
-
-        return Array.from({ length: numSections }).map((_, index) => {
-            const segmentDuration = duration / numSections;
-            const segmentStartTime = index * segmentDuration;
-            const segmentEndTime = segmentStartTime + segmentDuration;
-            const midpointTime = (segmentStartTime + segmentEndTime) / 2;
-
-            // Get a solid color based on the segment position
-            const backgroundColor = generateSolidColor(midpointTime, duration);
-
-            return (
-                <div
-                    key={index}
-                    className="timeline-thumbnail"
-                    style={{
-                        width: `${100 / numSections}%`,
-                        backgroundColor: backgroundColor,
-                        // Remove background image and use solid color instead
-                    }}
-                />
-            );
-        });
-    };
 
     // Render split points
     const renderSplitPoints = () => {
@@ -1443,7 +1431,7 @@ const TimelineControls = ({
         }
 
         // Only process tooltip display if clicked on the timeline background or thumbnails, not on other UI elements
-        if (e.target === timelineRef.current || (e.target as HTMLElement).classList.contains('timeline-thumbnail')) {
+        if (e.target === timelineRef.current) {
             // Check if there's a segment at the clicked position
             if (segmentAtClickedTime) {
                 setSelectedSegmentId(segmentAtClickedTime.id);
@@ -1548,15 +1536,6 @@ const TimelineControls = ({
             const updatedTimelineRect = timelineRef.current.getBoundingClientRect();
             const position = Math.max(0, Math.min(1, (clientX - updatedTimelineRect.left) / updatedTimelineRect.width));
             const newTime = position * duration;
-
-            // Create a temporary segment with the current drag position to check against
-            const draggedSegment = {
-                id: segmentId,
-                startTime: isLeft ? newTime : originalStartTime,
-                endTime: isLeft ? originalEndTime : newTime,
-                name: '',
-                thumbnail: '',
-            };
 
             // Check if the current marker position intersects with where the segment will be
             const currentSegmentStart = isLeft ? newTime : originalStartTime;
@@ -2121,10 +2100,9 @@ const TimelineControls = ({
                 // Create a full video segment
                 const fullVideoSegment: Segment = {
                     id: Date.now(),
-                    name: 'Full Video',
+                    chapterTitle: 'Full Video',
                     startTime: 0,
                     endTime: duration,
-                    thumbnail: '',
                 };
 
                 // Create and dispatch the update event to replace all segments with the full video segment
@@ -2522,15 +2500,15 @@ const TimelineControls = ({
 
     // Add a useEffect for auto-redirection
     useEffect(() => {
-        let countdownInterval: NodeJS.Timeout;
-        let redirectTimeout: NodeJS.Timeout;
+        // Clear any existing timers first
+        cancelRedirect();
 
         if (showSuccessModal && redirectUrl) {
             // Start countdown timer
             let secondsLeft = 10;
 
             // Update the countdown every second
-            countdownInterval = setInterval(() => {
+            countdownIntervalRef.current = setInterval(() => {
                 secondsLeft--;
                 const countdownElement = document.querySelector('.countdown');
                 if (countdownElement) {
@@ -2538,32 +2516,28 @@ const TimelineControls = ({
                 }
 
                 if (secondsLeft <= 0) {
-                    clearInterval(countdownInterval);
+                    if (countdownIntervalRef.current) {
+                        clearInterval(countdownIntervalRef.current);
+                        countdownIntervalRef.current = null;
+                    }
                 }
             }, 1000);
 
             // Set redirect timeout
-            redirectTimeout = setTimeout(() => {
+            redirectTimeoutRef.current = setTimeout(() => {
                 // Redirect to the URL
                 logger.debug('Automatically redirecting to:', redirectUrl);
                 window.location.href = redirectUrl;
             }, 10000); // 10 seconds
         }
 
-        // Cleanup on unmount or when success modal closes
+        // Cleanup on unmount
         return () => {
-            if (countdownInterval) clearInterval(countdownInterval);
-            if (redirectTimeout) clearTimeout(redirectTimeout);
+            cancelRedirect();
         };
-    }, [showSuccessModal, redirectUrl]);
+    }, [showSuccessModal, redirectUrl, cancelRedirect]);
 
-    // Effect to handle redirect after success modal is closed
-    useEffect(() => {
-        if (!showSuccessModal && redirectUrl) {
-            logger.debug('Redirecting to:', redirectUrl);
-            window.location.href = redirectUrl;
-        }
-    }, [redirectUrl, saveType, showSuccessModal]);
+    // Note: Removed the conflicting redirect effect - redirect is now handled by cancelRedirect function
 
     return (
         <div className={`timeline-container-card ${isPlayingSegments ? 'segments-playback-mode' : ''}`}>
@@ -2664,9 +2638,6 @@ const TimelineControls = ({
 
                     {/* Split Points */}
                     {renderSplitPoints()}
-
-                    {/* Thumbnails */}
-                    {renderThumbnails()}
 
                     {/* Segment Tooltip */}
                     {selectedSegmentId !== null && (
@@ -3267,10 +3238,9 @@ const TimelineControls = ({
                                         // Create the new segment with a generic name
                                         const newSegment: Segment = {
                                             id: Date.now(),
-                                            name: `segment`,
+                                            chapterTitle: `segment`,
                                             startTime: segmentStartTime,
                                             endTime: segmentEndTime,
-                                            thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                         };
 
                                         // Add the new segment to existing segments
@@ -3376,10 +3346,9 @@ const TimelineControls = ({
                                             // Create a virtual "segment" for the cutaway area
                                             const cutawaySegment: Segment = {
                                                 id: -999, // Use a unique negative ID to indicate a virtual segment
-                                                name: 'Cutaway',
+                                                chapterTitle: 'Cutaway',
                                                 startTime: startTime,
                                                 endTime: endTime,
-                                                thumbnail: '',
                                             };
 
                                             // Seek to the start of the cutaway (true beginning of this cutaway area)
@@ -3616,249 +3585,6 @@ const TimelineControls = ({
                                     />
                                 </button>
 
-                                {/* Play/Pause button for empty space */}
-                                {/* <button
-                  className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'}`}
-                  data-tooltip={isPlaying ? "Pause playback" : "Play from here until next segment"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-
-                    if (videoRef.current) {
-                      if (isPlaying) {
-                        // If already playing, pause the video
-                        videoRef.current.pause();
-                        setIsPlayingSegment(false);
-                        // Reset continuePastBoundary when stopping playback
-                        setContinuePastBoundary(false);
-                        logger.debug("Pause clicked in empty space - resetting continuePastBoundary flag");
-                      } else {
-                        // Enable continuePastBoundary flag when user explicitly clicks play
-                        // This will allow playback to continue even if we're at segment boundary
-                        setContinuePastBoundary(true);
-                        logger.debug("Setting continuePastBoundary=true to allow playback through boundaries");
-
-                        // Find the current time and determine cutaway boundaries
-                        // For end, find the next segment after current position
-                        // Make sure we look for any segment that starts after our current position,
-                        // including the first segment if we're before it
-                        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-                        const currentTime = videoRef.current.currentTime;
-                        const nextSegment = sortedSegments.find(seg => seg.startTime > currentTime);
-
-                        // Check if we're at a segment boundary that we previously stopped at
-                        const isAtSegmentBoundary = nextSegment && Math.abs(currentTime - nextSegment.startTime) < 0.05;
-
-                        if (isAtSegmentBoundary && nextSegment) {
-                          // We're at the start of a segment - just continue into the segment rather than staying in cutaway
-                          logger.debug(`At segment boundary: Moving into segment ${nextSegment.id}`);
-
-                          // Update UI to show segment tooltip instead of empty space tooltip
-                          setSelectedSegmentId(nextSegment.id);
-                          setShowEmptySpaceTooltip(false);
-
-                          // Set this segment as the active segment for boundary checking
-                          setActiveSegment(nextSegment);
-
-                          // Play from this segment directly
-                          videoRef.current.play()
-                            .then(() => {
-                              setIsPlayingSegment(true);
-                              logger.debug("Playing from segment start after boundary");
-                            })
-                            .catch(err => {
-                              console.error("Error starting playback:", err);
-                            });
-
-                          return;  // Exit early as we've handled this special case
-                        }
-
-                        // Define end boundary (either next segment start or video end)
-                        const endTime = nextSegment ? nextSegment.startTime : duration;
-
-                        // Special handling for when we're already at a segment boundary
-                        // If we're at or extremely close to the segment boundary already,
-                        // we need to nudge the position slightly back to allow playback
-                        let adjustedCurrentTime = currentTime;
-
-                        if (nextSegment && Math.abs(currentTime - nextSegment.startTime) < 0.05) {
-                          logger.debug(`Already at boundary (${formatDetailedTime(currentTime)}), nudging position back slightly`);
-                          adjustedCurrentTime = Math.max(0, currentTime - 0.1); // Move 100ms back
-                          videoRef.current.currentTime = adjustedCurrentTime;
-                          onSeek(adjustedCurrentTime);
-                          logger.debug(`Position adjusted to ${formatDetailedTime(adjustedCurrentTime)}`);
-                        }
-
-                        // Create a virtual "segment" for the cutaway area
-                        const cutawaySegment: Segment = {
-                          id: -999, // Use a consistent negative ID for virtual segments
-                          name: "Cutaway",
-                          startTime: adjustedCurrentTime, // Use the potentially adjusted time
-                          endTime: endTime,
-                          thumbnail: ""
-                        };
-
-                        // IMPORTANT: First reset isPlayingSegment to false to ensure clean state
-                        setIsPlayingSegment(false);
-
-                        // Then set active segment for boundary checking
-                        // We use setTimeout to ensure this happens in the next tick
-                        // after the isPlayingSegment value is updated
-                        setTimeout(() => {
-                          setActiveSegment(cutawaySegment);
-                        }, 0);
-
-                        // Add a manual boundary check specifically for cutaway playback
-                        // This ensures we detect when we reach the next segment's start
-                        const checkCutawayBoundary = () => {
-                          if (!videoRef.current) return;
-
-                          // Check if we've entered a segment (i.e., reached a boundary)
-                          const currentPosition = videoRef.current.currentTime;
-                          const segments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-
-                          // Find the next segment we're approaching - use a wider detection range
-                          // to catch the boundary earlier
-                          const nextSegment = segments.find(seg => seg.startTime > currentPosition - 0.3);
-
-                          // Also check if we've entered a different segment - we need to detect this too
-                          const segmentAtCurrentTime = segments.find(
-                            seg => currentPosition >= seg.startTime && currentPosition <= seg.endTime
-                          );
-
-                          // If we've moved directly into a segment during playback, we need to update the active segment
-                          if (segmentAtCurrentTime && activeSegment?.id !== segmentAtCurrentTime.id) {
-                            logger.debug(`Entered segment ${segmentAtCurrentTime.id} during cutaway playback`);
-                            setActiveSegment(segmentAtCurrentTime);
-                            setSelectedSegmentId(segmentAtCurrentTime.id);
-                            setShowEmptySpaceTooltip(false);
-
-                            // Remove our boundary checker since we're now in a standard segment
-                            videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
-
-                            // Reset continuation flags
-                            setContinuePastBoundary(false);
-                            sessionStorage.removeItem('continuingPastSegment');
-                            return;
-                          }
-
-                          // We need to detect boundaries much earlier to allow for time to react
-                          // This is a key fix - we need to detect the boundary BEFORE we reach it
-                          // But don't stop if we're in continuePastBoundary mode
-                          const shouldStop = nextSegment &&
-                            (currentPosition >= nextSegment.startTime - 0.25) &&
-                            (currentPosition <= nextSegment.startTime + 0.1) &&
-                            !continuePastBoundary;
-
-                          // Add logging to show boundary check decisions
-                          if (nextSegment && (currentPosition >= nextSegment.startTime - 0.25) &&
-                              (currentPosition <= nextSegment.startTime + 0.1)) {
-                            logger.debug(`Approaching boundary at ${formatDetailedTime(nextSegment.startTime)}, continuePastBoundary=${continuePastBoundary}, willStop=${shouldStop}`);
-                          }
-
-                          // If we've entered a segment, stop at its boundary
-                          if (shouldStop && nextSegment) {
-                            logger.debug(`CUTAWAY MANUAL BOUNDARY CHECK: Current position ${formatDetailedTime(currentPosition)} approaching segment at ${formatDetailedTime(nextSegment.startTime)} (distance: ${Math.abs(currentPosition - nextSegment.startTime).toFixed(3)}s) - STOPPING`);
-
-                            videoRef.current.pause();
-                            // Force exact time position with high precision
-                            setTimeout(() => {
-                              if (videoRef.current) {
-                                // First seek directly to exact start time, no offset
-                                videoRef.current.currentTime = nextSegment.startTime;
-                                // Update UI immediately to match video position
-                                onSeek(nextSegment.startTime);
-                                // Also update tooltip time displays
-                                setDisplayTime(nextSegment.startTime);
-                                setClickedTime(nextSegment.startTime);
-
-                                // Reset continuePastBoundary when stopping at a boundary
-                                setContinuePastBoundary(false);
-
-                                // Update tooltip to show the segment at the boundary
-                                setSelectedSegmentId(nextSegment.id);
-                                setShowEmptySpaceTooltip(false);
-                                setActiveSegment(nextSegment);
-
-                                // Force multiple adjustments to ensure exact precision
-                                const verifyPosition = () => {
-                                  if (videoRef.current) {
-                                    // Always force the exact time in every verification
-                                    videoRef.current.currentTime = nextSegment.startTime;
-
-                                    // Make sure we update the UI to reflect the corrected position
-                                    onSeek(nextSegment.startTime);
-
-                                    // Update the displayTime and clickedTime state to match exact position
-                                    setDisplayTime(nextSegment.startTime);
-                                    setClickedTime(nextSegment.startTime);
-
-                                    logger.debug(`Position corrected to exact segment boundary: ${formatDetailedTime(videoRef.current.currentTime)} (target: ${formatDetailedTime(nextSegment.startTime)})`);
-                                  }
-                                };
-
-                                // Apply multiple correction attempts with increasing delays
-                                setTimeout(verifyPosition, 10);  // Immediate correction
-                                setTimeout(verifyPosition, 20);  // First correction
-                                setTimeout(verifyPosition, 50);  // Second correction
-                                setTimeout(verifyPosition, 100);  // Third correction
-                                setTimeout(verifyPosition, 200);  // Final correction
-
-                                // Also add event listeners to ensure position is corrected whenever video state changes
-                                videoRef.current.addEventListener('seeked', verifyPosition);
-                                videoRef.current.addEventListener('canplay', verifyPosition);
-                                videoRef.current.addEventListener('waiting', verifyPosition);
-
-                                // Remove these event listeners after a short time
-                                setTimeout(() => {
-                                  if (videoRef.current) {
-                                    videoRef.current.removeEventListener('seeked', verifyPosition);
-                                    videoRef.current.removeEventListener('canplay', verifyPosition);
-                                    videoRef.current.removeEventListener('waiting', verifyPosition);
-                                  }
-                                }, 300);
-                              }
-                            }, 10);
-                            setIsPlayingSegment(false);
-                            setActiveSegment(null);
-
-                            // Remove our boundary checker
-                            videoRef.current.removeEventListener('timeupdate', checkCutawayBoundary);
-                            return;
-                          }
-                        };
-
-                        // Start our manual boundary checker
-                        videoRef.current.addEventListener('timeupdate', checkCutawayBoundary);
-
-                        // Start playing from current position with boundary restrictions
-                        // Use a timeout to ensure active segment is set before playback starts
-                        setTimeout(() => {
-                          if (videoRef.current) {
-                            videoRef.current.play()
-                              .then(() => {
-                                setIsPlayingSegment(true);
-                                logger.debug("Play clicked in empty space - position:",
-                                  formatDetailedTime(currentTime),
-                                  "will stop at:", formatDetailedTime(endTime),
-                                  nextSegment ? `(start of segment ${nextSegment.id})` : "(end of video)"
-                                );
-                              })
-                              .catch(err => {
-                                console.error("Error starting playback:", err);
-                              });
-                          }
-                        }, 50);
-                      }
-                    }
-                  }}
-                >
-                  {isPlaying ? (
-                    <img src={pauseIcon} alt="Pause" style={{width: '24px', height: '24px'}} />
-                  ) : (
-                    <img src={playIcon} alt="Play" style={{width: '24px', height: '24px'}} />
-                  )}
-                </button> */}
-
                                 {/* Play/Pause button for empty space - Same as main play/pause button */}
                                 <button
                                     className={`tooltip-action-btn ${isPlaying ? 'pause' : 'play'} ${
@@ -3997,10 +3723,9 @@ const TimelineControls = ({
                                                 // We're in a gap, create a new segment from gap start to clicked time
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    name: 'segment',
+                                                    chapterTitle: 'segment',
                                                     startTime: gapStart,
                                                     endTime: clickedTime,
-                                                    thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                                 };
 
                                                 // Add the new segment to existing segments
@@ -4031,10 +3756,9 @@ const TimelineControls = ({
                                                 // Create a new segment from start of video to clicked time
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    name: 'segment',
+                                                    chapterTitle: 'segment',
                                                     startTime: 0,
                                                     endTime: clickedTime,
-                                                    thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                                 };
 
                                                 // Add the new segment to existing segments
@@ -4095,10 +3819,9 @@ const TimelineControls = ({
                                             // No segments exist; create a new segment from start to clicked time
                                             const newSegment: Segment = {
                                                 id: Date.now(),
-                                                name: 'segment',
+                                                chapterTitle: 'segment',
                                                 startTime: 0,
                                                 endTime: clickedTime,
-                                                thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                             };
 
                                             // Create and dispatch the update event
@@ -4214,10 +3937,9 @@ const TimelineControls = ({
                                                 // We're in a gap, create a new segment from clicked time to gap end
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    name: 'segment',
+                                                    chapterTitle: 'segment',
                                                     startTime: clickedTime,
                                                     endTime: gapEnd,
-                                                    thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                                 };
 
                                                 // Add the new segment to existing segments
@@ -4248,10 +3970,9 @@ const TimelineControls = ({
                                                     // Create a new segment from clicked time to first segment start
                                                     const newSegment: Segment = {
                                                         id: Date.now(),
-                                                        name: 'segment',
+                                                        chapterTitle: 'segment',
                                                         startTime: clickedTime,
                                                         endTime: sortedByStart[0].startTime,
-                                                        thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                                     };
 
                                                     // Add the new segment to existing segments
@@ -4283,10 +4004,9 @@ const TimelineControls = ({
                                                     // Create a new segment from clicked time to end of video
                                                     const newSegment: Segment = {
                                                         id: Date.now(),
-                                                        name: 'segment',
+                                                        chapterTitle: 'segment',
                                                         startTime: clickedTime,
                                                         endTime: duration,
-                                                        thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                                     };
 
                                                     // Add the new segment to existing segments
@@ -4347,10 +4067,9 @@ const TimelineControls = ({
                                             // No segments exist; create a new segment from clicked time to end
                                             const newSegment: Segment = {
                                                 id: Date.now(),
-                                                name: 'segment',
+                                                chapterTitle: 'segment',
                                                 startTime: clickedTime,
                                                 endTime: duration,
-                                                thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                                             };
 
                                             // Create and dispatch the update event
@@ -4760,7 +4479,10 @@ const TimelineControls = ({
                     {/* Success Modal */}
                     <Modal
                         isOpen={showSuccessModal}
-                        onClose={() => setShowSuccessModal(false)}
+                        onClose={() => {
+                            cancelRedirect();
+                            setShowSuccessModal(false);
+                        }}
                         title="Video Edited Successfully"
                     >
                         <div className="modal-success-content">

@@ -216,16 +216,6 @@
         align-items: center;
     }
 
-    .segment-thumbnail {
-        width: 4rem;
-        height: 2.25rem;
-        background-size: cover;
-        background-position: center;
-        border-radius: 0.25rem;
-        margin-right: 0.75rem;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
-    }
-
     .segment-info {
         display: flex;
         flex-direction: column;

@@ -3,11 +3,9 @@ import '../styles/ClipSegments.css';
 
 export interface Segment {
     id: number;
-    name: string;
+    chapterTitle: string;
     startTime: number;
     endTime: number;
-    thumbnail: string;
-    chapterTitle?: string;
 }
 
 interface ClipSegmentsProps {
@@ -48,10 +46,6 @@ const ClipSegments = ({ segments, selectedSegmentId }: ClipSegmentsProps) => {
                     className={`segment-item ${getSegmentColorClass(index)} ${selectedSegmentId === segment.id ? 'selected' : ''}`}
                 >
                     <div className="segment-content">
-                        <div
-                            className="segment-thumbnail"
-                            style={{ backgroundImage: `url(${segment.thumbnail})` }}
-                        ></div>
                         <div className="segment-info">
                             <div className="segment-title">
                                 {segment.chapterTitle ? (
