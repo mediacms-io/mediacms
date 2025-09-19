@@ -23,13 +23,13 @@ html {
 }
 
 /* Fullscreen video styles for embedded video player */
-.video-js-root-embed .video-js video {
+#page-embed .video-js-root-embed .video-js video {
     width: 100vw !important;
     height: 100vh !important;
     object-fit: cover !important;
     border-radius: 0 !important;
 }
-.video-js-root-embed .video-js .vjs-poster {
+#page-embed .video-js-root-embed .video-js .vjs-poster {
     border-radius: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
@@ -57,7 +57,7 @@ html {
 }
 
 /* Fullscreen styles for embedded video player */
-.video-js-root-embed .video-container {
+#page-embed .video-js-root-embed .video-container {
     width: 100vw;
     height: 100vh;
     max-width: none;
@@ -75,7 +75,7 @@ html {
 }
 
 /* Fullscreen fluid styles for embedded video player */
-.video-js-root-embed .video-js.vjs-fluid {
+#page-embed .video-js-root-embed .video-js.vjs-fluid {
     width: 100vw !important;
     height: 100vh !important;
     max-width: none !important;
@@ -785,7 +785,7 @@ button {
 }
 
 /* Fullscreen video-js player styles for embedded video player */
-.video-js-root-embed .video-js {
+#page-embed .video-js-root-embed .video-js {
     width: 100vw !important;
     height: 100vh !important;
     border-radius: 0;
@@ -793,7 +793,7 @@ button {
 }
 
 /* Prevent page scrolling when embed is active */
-.video-js-root-embed {
+#page-embed .video-js-root-embed {
     position: fixed;
     top: 0;
     left: 0;
@@ -803,12 +803,6 @@ button {
     background: #000;
 }
 
-html.video-js-root-embed-active,
-body.video-js-root-embed-active {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
 .video-chapter {
     position: absolute;
     top: auto;
