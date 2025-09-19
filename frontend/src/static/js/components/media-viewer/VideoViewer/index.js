@@ -4,7 +4,7 @@ import { VideoViewerActions } from '../../../utils/actions/';
 import { SiteContext, SiteConsumer } from '../../../utils/contexts/';
 import { PageStore, MediaPageStore, VideoViewerStore } from '../../../utils/stores/';
 import { addClassname, removeClassname, formatInnerLink } from '../../../utils/helpers/';
-import { BrowserCache, UpNextLoaderView, MediaDurationInfo, PlayerRecommendedMedia } from '../../../utils/classes/';
+import { BrowserCache, UpNextLoaderView, MediaDurationInfo } from '../../../utils/classes/';
 import {
     orderedSupportedVideoFormats,
     videoAvailableCodecsAndResolutions,
@@ -159,19 +159,10 @@ export default class VideoViewer extends React.PureComponent {
         this.onClickPrevious = this.onClickPrevious.bind(this);
         this.onStateUpdate = this.onStateUpdate.bind(this);
 
-        this.onVideoEnd = this.onVideoEnd.bind(this);
-        this.onVideoRestart = this.onVideoRestart.bind(this);
     }
 
     componentDidMount() {
         if (this.videoSources.length) {
-            this.recommendedMedia = this.props.data.related_media.length
-                ? new PlayerRecommendedMedia(
-                      this.props.data.related_media,
-                      this.props.inEmbed,
-                      !PageStore.get('config-media-item').displayViews
-                  )
-                : null;
 
             this.upNextLoaderView =
                 !this.props.inEmbed && this.props.data.related_media.length
@@ -323,36 +314,6 @@ export default class VideoViewer extends React.PureComponent {
         }
     }
 
-    componentWillUnmount() {
-        this.unsetRecommendedMedia();
-    }
-
-    initRecommendedMedia() {
-        if (null === this.recommendedMedia) {
-            return;
-        }
-
-        if (!this.props.inEmbed) {
-            this.recommendedMedia.init();
-        }
-
-        this.playerInstance.player.on('fullscreenchange', this.recommendedMedia.onResize);
-
-        PageStore.on('window_resize', this.recommendedMedia.onResize);
-
-        VideoViewerStore.on('changed_viewer_mode', this.recommendedMedia.onResize);
-    }
-
-    unsetRecommendedMedia() {
-        if (null === this.recommendedMedia) {
-            return;
-        }
-        this.playerInstance.player.off('fullscreenchange', this.recommendedMedia.onResize);
-        PageStore.removeListener('window_resize', this.recommendedMedia.onResize);
-        VideoViewerStore.removeListener('changed_viewer_mode', this.recommendedMedia.onResize);
-        this.recommendedMedia.destroy();
-    }
-
     onClickNext() {
         const playlistId = MediaPageStore.get('playlist-id');
 
@@ -423,87 +384,13 @@ export default class VideoViewer extends React.PureComponent {
         if (!this.props.inEmbed) {
             this.playerElem.parentNode.focus(); // Focus on player.
         }
-
-        if (null !== this.recommendedMedia) {
-            this.recommendedMedia.initWrappers(this.playerElem.parentNode);
-
-            if (this.props.inEmbed) {
-                this.playerInstance.player.one('pause', this.recommendedMedia.init);
-                this.initRecommendedMedia();
-            }
-        }
-
-        this.playerInstance.player.one('ended', this.onVideoEnd);
-    }
-
-    onVideoRestart() {
-        if (null !== this.recommendedMedia) {
-            this.recommendedMedia.updateDisplayType('inline');
-
-            if (this.props.inEmbed) {
-                this.playerInstance.player.one('pause', this.recommendedMedia.init);
-            }
-
-            this.playerInstance.player.one('ended', this.onVideoEnd);
-        }
-    }
-
-    onVideoEnd() {
-        if (null !== this.recommendedMedia) {
-            if (!this.props.inEmbed) {
-                this.initRecommendedMedia();
-            }
-
-            this.recommendedMedia.updateDisplayType('full');
-            this.playerInstance.player.one('playing', this.onVideoRestart);
-        }
-
-        const playlistId = this.props.inEmbed ? null : MediaPageStore.get('playlist-id');
-
-        if (playlistId) {
-            const moreMediaEl = document.querySelector('.video-player .more-media');
-            const actionsAnimEl = document.querySelector('.video-player .vjs-actions-anim');
-
-            this.upNextLoaderView.cancelTimer();
-
-            const nextMediaUrl = MediaPageStore.get('playlist-next-media-url');
-
-            if (nextMediaUrl) {
-                if (moreMediaEl) {
-                    moreMediaEl.style.display = 'none';
-                }
-
-                if (actionsAnimEl) {
-                    actionsAnimEl.style.display = 'none';
-                }
-
-                window.location.href = nextMediaUrl;
-            }
-
-            this.upNextLoaderView.hideTimerView();
-
-            return;
-        }
-
-        if (this.upNextLoaderView) {
-            if (PageStore.get('media-auto-play')) {
-                this.upNextLoaderView.startTimer();
-                this.playerInstance.player.one(
-                    'play',
-                    function () {
-                        this.upNextLoaderView.cancelTimer();
-                    }.bind(this)
-                );
-            } else {
-                this.upNextLoaderView.cancelTimer();
-            }
-        }
     }
 
     onUpdateMediaAutoPlay() {
         if (this.upNextLoaderView) {
             if (PageStore.get('media-auto-play')) {
-                this.upNextLoaderView.showTimerView(this.playerInstance.isEnded());
+                // non compatible with videojs 8
+                // this.upNextLoaderView.showTimerView(this.playerInstance.isEnded());
             } else {
                 this.upNextLoaderView.hideTimerView();
             }
@@ -552,12 +439,11 @@ export default class VideoViewer extends React.PureComponent {
                         ref="playerContainerInner"
                         style={this.props.containerStyles}
                     >
-                        {this.state.displayPlayer && null == MediaPageStore.get('media-load-error-type') ? (
+                        {/* this.state.displayPlayer && */ null == MediaPageStore.get('media-load-error-type') ? (
                             <div className="video-player" ref="videoJSPlayerWrapper" key="videoJSPlayerWrapper">
                                 <SiteConsumer>
                                     {(site) => {
                                         return React.createElement(VideoJSEmbed, {
-                                            nextLink: nextLink,
                                             data: this.props.data,
                                             playerVolume: this.browserCache.get('player-volume'),
                                             playerSoundMuted: this.browserCache.get('player-sound-muted'),
@@ -579,6 +465,7 @@ export default class VideoViewer extends React.PureComponent {
                                             inEmbed: this.props.inEmbed,
                                             hasTheaterMode: !this.props.inEmbed,
                                             hasNextLink: !!nextLink,
+                                            nextLink: nextLink,
                                             hasPreviousLink: !!previousLink,
                                             errorMessage: MediaPageStore.get('media-load-error-message'),
                                             onClickNextCallback: this.onClickNext,
@@ -592,59 +479,6 @@ export default class VideoViewer extends React.PureComponent {
                         ) : null}
                     </div>
                 </div>
-                {/* <div
-                    key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
-                    className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
-                    style={this.props.containerStyles}
-                    ref="playerContainer"
-                >
-                    <div
-                        className="player-container-inner"
-                        ref="playerContainerInner"
-                        style={this.props.containerStyles}
-                    >
-                        {this.state.displayPlayer && null !== MediaPageStore.get('media-load-error-type') ? (
-                            <VideoPlayerError errorMessage={MediaPageStore.get('media-load-error-message')} />
-                        ) : null}
-
-                        {this.state.displayPlayer && null == MediaPageStore.get('media-load-error-type') ? (
-                            <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
-                                <SiteConsumer>
-                                    {(site) => (
-                                        <VideoPlayer
-                                            playerVolume={this.browserCache.get('player-volume')}
-                                            playerSoundMuted={this.browserCache.get('player-sound-muted')}
-                                            videoQuality={this.browserCache.get('video-quality')}
-                                            videoPlaybackSpeed={parseInt(
-                                                this.browserCache.get('video-playback-speed'),
-                                                10
-                                            )}
-                                            inTheaterMode={this.browserCache.get('in-theater-mode')}
-                                            siteId={site.id}
-                                            siteUrl={site.url}
-                                            info={this.videoInfo}
-                                            cornerLayers={this.cornerLayers}
-                                            sources={this.videoSources}
-                                            poster={this.videoPoster}
-                                            previewSprite={previewSprite}
-                                            subtitlesInfo={this.props.data.subtitles_info}
-                                            enableAutoplay={!this.props.inEmbed}
-                                            inEmbed={this.props.inEmbed}
-                                            hasTheaterMode={!this.props.inEmbed}
-                                            hasNextLink={!!nextLink}
-                                            hasPreviousLink={!!previousLink}
-                                            errorMessage={MediaPageStore.get('media-load-error-message')}
-                                            onClickNextCallback={this.onClickNext}
-                                            onClickPreviousCallback={this.onClickPrevious}
-                                            onStateUpdateCallback={this.onStateUpdate}
-                                            onPlayerInitCallback={this.onPlayerInit}
-                                        />
-                                    )}
-                                </SiteConsumer>
-                            </div>
-                        ) : null}
-                    </div>
-                </div> */}
             </>
         );
     }
@@ -658,79 +492,3 @@ VideoViewer.defaultProps = {
 VideoViewer.propTypes = {
     inEmbed: PropTypes.bool,
 };
-
-function findGetParameter(parameterName) {
-    let result = null;
-    let tmp = [];
-    var items = location.search.substr(1).split('&');
-    for (let i = 0; i < items.length; i++) {
-        tmp = items[i].split('=');
-        if (tmp[0] === parameterName) {
-            result = decodeURIComponent(tmp[1]);
-        }
-    }
-    return result;
-}
-
-function handleCanvas(videoElem) {
-    // Make sure it's a video element
-
-    if (!videoElem || !videoElem.tagName || videoElem.tagName.toLowerCase() !== 'video') {
-        console.error('Invalid video element:', videoElem);
-        return;
-    }
-
-    const Player = videojs(videoElem);
-    Player.playsinline(true);
-
-    Player.on('loadedmetadata', function () {
-        const muted = parseInt(findGetParameter('muted'));
-        const autoplay = parseInt(findGetParameter('autoplay'));
-        const timestamp = parseInt(findGetParameter('t'));
-
-        // Handle timestamp clicks
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('video-timestamp')) {
-                e.preventDefault();
-                const timestamp = parseInt(e.target.dataset.timestamp, 10);
-
-                if (timestamp >= 0 && timestamp < Player.duration()) {
-                    Player.currentTime(timestamp);
-                } else if (timestamp >= 0) {
-                    Player.play();
-                }
-            }
-        });
-
-        if (muted == 1) {
-            Player.muted(true);
-        }
-
-        if (timestamp >= 0 && timestamp < Player.duration()) {
-            // Start the video from the given time
-            Player.currentTime(timestamp);
-        } else if (timestamp >= 0 && timestamp >= Player.duration()) {
-            // Restart the video if the given time is greater than the duration
-            Player.play();
-        }
-        if (autoplay === 1) {
-            Player.play();
-        }
-    });
-}
-
-const observer = new MutationObserver((mutations, me) => {
-    const playerContainer = document.querySelector('.video-js.vjs-mediacms');
-    if (playerContainer) {
-        const video = playerContainer.querySelector('video');
-        if (video) {
-            handleCanvas(video);
-            me.disconnect();
-        }
-    }
-});
-
-observer.observe(document, {
-    childList: true,
-    subtree: true,
-});
