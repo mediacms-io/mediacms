@@ -890,7 +890,7 @@ const useVideoChapters = () => {
         };
     }, [isPlayingSegments, currentSegmentIndex]);
 
-    // Handle play segments
+    // Handle play chapters
     const handlePlaySegments = () => {
         const video = videoRef.current;
         if (!video || clipSegments.length === 0) return;
