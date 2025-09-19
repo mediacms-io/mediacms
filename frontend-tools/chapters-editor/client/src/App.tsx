@@ -15,7 +15,6 @@ const App = () => {
         isPlaying,
         setIsPlaying,
         isMuted,
-        thumbnails,
         trimStart,
         trimEnd,
         splitPoints,
@@ -244,7 +243,6 @@ const App = () => {
                 <TimelineControls
                     currentTime={currentTime}
                     duration={duration}
-                    thumbnails={thumbnails}
                     trimStart={trimStart}
                     trimEnd={trimEnd}
                     splitPoints={splitPoints}

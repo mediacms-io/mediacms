@@ -176,15 +176,6 @@
   right: -4px;
 }
 
-.timeline-thumbnail {
-  height: 100%;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
-  position: relative;
-  display: inline-block;
-  background-size: cover;
-  background-position: center;
-}
-
 .split-point {
   position: absolute;
   width: 2px;

@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { generateThumbnail } from '@/lib/videoUtils';
 import { formatDetailedTime } from '@/lib/timeUtils';
 import logger from '@/lib/logger';
 import type { Segment } from '@/components/ClipSegments';
@@ -34,7 +33,6 @@ const useVideoChapters = () => {
     const [isMuted, setIsMuted] = useState(false);
 
     // Timeline state
-    const [thumbnails, setThumbnails] = useState<string[]>([]);
     const [trimStart, setTrimStart] = useState(0);
     const [trimEnd, setTrimEnd] = useState(0);
     const [splitPoints, setSplitPoints] = useState<number[]>([]);
@@ -105,30 +103,22 @@ const useVideoChapters = () => {
                         const startTime = parseTimeToSeconds(chapter.startTime);
                         const endTime = parseTimeToSeconds(chapter.endTime);
 
-                        // Generate thumbnail for this segment
-                        const segmentThumbnail = await generateThumbnail(video, (startTime + endTime) / 2);
-
                         const segment: Segment = {
                             id: i + 1,
-                            name: `segment-${i + 1}`,
+                            chapterTitle: chapter.chapterTitle,
                             startTime: startTime,
                             endTime: endTime,
-                            thumbnail: segmentThumbnail,
-                            chapterTitle: chapter.text,
                         };
 
                         initialSegments.push(segment);
                     }
                 } else {
-                    // Create a default segment that spans the entire video (fallback)
-                    const segmentThumbnail = await generateThumbnail(video, video.duration / 2);
 
                     const initialSegment: Segment = {
                         id: 1,
-                        name: 'segment',
+                        chapterTitle: 'segment',
                         startTime: 0,
                         endTime: video.duration,
-                        thumbnail: segmentThumbnail,
                     };
 
                     initialSegments = [initialSegment];
@@ -145,19 +135,6 @@ const useVideoChapters = () => {
                 setHistory([initialState]);
                 setHistoryPosition(0);
                 setClipSegments(initialSegments);
-
-                // Generate timeline thumbnails
-                const count = 6;
-                const interval = video.duration / count;
-                const placeholders: string[] = [];
-
-                for (let i = 0; i < count; i++) {
-                    const time = interval * i + interval / 2;
-                    const thumbnail = await generateThumbnail(video, time);
-                    placeholders.push(thumbnail);
-                }
-
-                setThumbnails(placeholders);
             };
 
             initializeEditor();
@@ -470,22 +447,18 @@ const useVideoChapters = () => {
 
                 newSegments.splice(segmentIndex, 1);
 
-                // Create first half of the split segment - no thumbnail needed
                 const firstHalf: Segment = {
                     id: Date.now(),
-                    name: `${segmentToSplit.name}-A`,
+                    chapterTitle: `${segmentToSplit.chapterTitle}-A`,
                     startTime: segmentToSplit.startTime,
                     endTime: timeToSplit,
-                    thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                 };
 
-                // Create second half of the split segment - no thumbnail needed
                 const secondHalf: Segment = {
                     id: Date.now() + 1,
-                    name: `${segmentToSplit.name}-B`,
+                    chapterTitle: `${segmentToSplit.chapterTitle}-B`,
                     startTime: timeToSplit,
                     endTime: segmentToSplit.endTime,
-                    thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                 };
 
                 // Add the new segments
@@ -513,13 +486,11 @@ const useVideoChapters = () => {
                     // If all segments are deleted, create a new full video segment
                     if (newSegments.length === 0 && videoRef.current) {
                         // Create a new default segment that spans the entire video
-                        // No need to generate a thumbnail - we'll use dynamic colors
                         const defaultSegment: Segment = {
                             id: Date.now(),
-                            name: 'segment',
+                            chapterTitle: 'segment',
                             startTime: 0,
                             endTime: videoRef.current.duration,
-                            thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                         };
 
                         // Reset the trim points as well
@@ -576,13 +547,11 @@ const useVideoChapters = () => {
                 const endTime = i < newSplitPoints.length ? newSplitPoints[i] : duration;
 
                 if (startTime < endTime) {
-                    // No need to generate thumbnails - we'll use dynamic colors
                     newSegments.push({
                         id: Date.now() + i,
-                        name: `Segment ${i + 1}`,
+                        chapterTitle: `Segment ${i + 1}`,
                         startTime,
                         endTime,
-                        thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
                     });
 
                     startTime = endTime;
@@ -603,13 +572,11 @@ const useVideoChapters = () => {
         // Create a new default segment that spans the entire video
         if (!videoRef.current) return;
 
-        // No need to generate thumbnails - we'll use dynamic colors
         const defaultSegment: Segment = {
             id: Date.now(),
-            name: 'segment',
+            chapterTitle: 'segment',
             startTime: 0,
             endTime: duration,
-            thumbnail: '', // Empty placeholder - we'll use dynamic colors instead
         };
 
         setClipSegments([defaultSegment]);
@@ -731,7 +698,7 @@ const useVideoChapters = () => {
     };
 
     // Handle saving chapters to database
-    const handleChapterSave = async (chapters: { name: string; from: string; to: string }[]) => {
+    const handleChapterSave = async (chapters: { chapterTitle: string; from: string; to: string }[]) => {
         try {
             // Get media ID from window.MEDIA_DATA
             const mediaId = (window as any).MEDIA_DATA?.mediaId;
@@ -744,7 +711,7 @@ const useVideoChapters = () => {
             const backendChapters = chapters.map((chapter) => ({
                 startTime: chapter.from,
                 endTime: chapter.to,
-                text: chapter.name,
+                chapterTitle: chapter.chapterTitle,
             }));
 
             // Create the API request body
@@ -931,7 +898,6 @@ const useVideoChapters = () => {
         setIsPlaying,
         isMuted,
         isPlayingSegments,
-        thumbnails,
         trimStart,
         trimEnd,
         splitPoints,
