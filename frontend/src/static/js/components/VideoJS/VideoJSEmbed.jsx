@@ -214,7 +214,8 @@ const VideoJSEmbed = ({
 
     return (
         <div className="video-js-wrapper" ref={containerRef}>
-            {inEmbed ? <div id="video-js-root-embed" className="video-js-root-embed" /> : <div id="video-js-root-main" className="video-js-root-main" />}
+            des an einai mesa sto modal i sto embed page prota
+           {/*  {inEmbed ? <div id="video-js-root-embed" className="video-js-root-embed" /> : <div id="video-js-root-main" className="video-js-root-main" />} */}
         </div>
     );
 };
