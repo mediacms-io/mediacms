@@ -24,7 +24,7 @@ class NextVideoButton extends Button {
 
         // Create SVG that matches Video.js icon dimensions
         iconSpan.innerHTML = `
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M14 34L28.1667 24L14 14V34ZM30.6667 14V34H34V14H30.6667Z" fill="currentColor"/>
         </svg>
 
@@ -44,7 +44,6 @@ class NextVideoButton extends Button {
     }
 
     handleClick() {
-        // console.log('NextVideoButton handleClick', this.nextLink);
         this.player().trigger('nextVideo');
     }
 }

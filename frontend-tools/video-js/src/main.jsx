@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import './VideoJS.css';
 
 import VideoJS from './VideoJS.jsx';
-// import ChapterList from './components/chapter/ChapterList.jsx';
 
 // Mount the components when the DOM is ready
 const mountComponents = () => {
@@ -16,7 +15,6 @@ const mountComponents = () => {
                 <VideoJS videoId="video-main" />
             </StrictMode>
         );
-        console.log('Mounted main VideoJS player');
     }
 
     // Mount embed video player
@@ -28,7 +26,6 @@ const mountComponents = () => {
                 <VideoJS videoId="video-embed" />
             </StrictMode>
         );
-        console.log('Mounted embed VideoJS player');
     }
 };
 
@@ -37,7 +34,6 @@ window.triggerVideoJSMount = mountComponents;
 
 // Listen for custom events to trigger mounting
 document.addEventListener('triggerVideoJSMount', () => {
-    console.log('Received triggerVideoJSMount event, attempting to mount VideoJS components...');
     mountComponents();
 });
 
@@ -52,7 +48,6 @@ if (document.readyState === 'loading') {
 setInterval(() => {
     const embedContainer = document.getElementById('video-js-root-embed');
     if (embedContainer && !embedContainer.hasChildNodes()) {
-        console.log('Found unmounted embed container during periodic check, mounting...');
         mountComponents();
     }
 }, 1000);
