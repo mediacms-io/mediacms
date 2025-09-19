@@ -45,7 +45,6 @@
     "@react-pdf-viewer/default-layout": "^3.9.0",
     "axios": "^1.8.2",
     "flux": "^4.0.4",
-    "mediacms-player": "file:packages/player",
     "normalize.css": "^8.0.1",
     "pdfjs-dist": "3.4.120",
     "react": "^17.0.2",
