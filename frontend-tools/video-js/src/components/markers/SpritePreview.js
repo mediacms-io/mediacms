@@ -33,7 +33,6 @@ class SpritePreview extends Component {
 
         // Only setup if we have sprite data
         if (!this.previewSprite || !this.previewSprite.url) {
-            console.log('No sprite data available for preview:', this.previewSprite);
             return;
         }
 
@@ -46,23 +45,23 @@ class SpritePreview extends Component {
 
             // Style the floating tooltip
             Object.assign(this.tooltip.style, {
-                position: 'absolute',                
+                position: 'absolute',
                 zIndex: '1000',
                 bottom: '45px',
                 transform: 'translateX(-50%)',
                 display: 'none',
                 minWidth: '172px', // Accommodate 166px image + 3px border on each side
                 maxWidth: '172px',
-                width: '172px',                
+                width: '172px',
             });
 
             // Create stable DOM structure
             this.spriteImage = videojs.dom.createEl('div', {
                 className: 'sprite-image-preview',
             });
-            Object.assign(this.spriteImage.style, {                
+            Object.assign(this.spriteImage.style, {
                 display: 'block',
-                overflow: 'hidden',                
+                overflow: 'hidden',
             });
 
             // Append sprite image to tooltip (no time info)
@@ -161,7 +160,6 @@ class SpritePreview extends Component {
         if (!this.previewSprite || !this.previewSprite.url) {
             // Hide image if no sprite data available
             this.spriteImage.style.display = 'none';
-            console.log('No sprite data available:', this.previewSprite);
             return;
         }
 
@@ -191,10 +189,6 @@ class SpritePreview extends Component {
         const xPos = -(frameCol * width);
         const yPos = -(frameRow * height);
 
-        console.log(
-            `Sprite Preview - Time: ${currentTime}s, Duration: ${this.player().duration()}s, Interval: ${frameInterval}s, Frame: ${frameIndex}/${maxFrames - 1}, Row: ${frameRow}, Col: ${frameCol}, Pos: ${xPos}px ${yPos}px, URL: ${url}`
-        );
-
         // Apply sprite background
         this.spriteImage.style.backgroundImage = `url("${url}")`;
         this.spriteImage.style.backgroundPosition = `${xPos}px ${yPos}px`;
@@ -211,7 +205,6 @@ class SpritePreview extends Component {
         if (frameIndex >= 3 && currentTime > 30) {
             const fallbackYPos = -(2 * height); // Frame 2 (20-30s range)
             this.spriteImage.style.backgroundPosition = `${xPos}px ${fallbackYPos}px`;
-            console.log(`Fallback: Using frame 2 instead of frame ${frameIndex} for time ${currentTime}s`);
         }
     }
 

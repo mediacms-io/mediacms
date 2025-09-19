@@ -118,8 +118,6 @@ class AutoplayCountdownOverlay extends Component {
                 this.handlePlayNext();
             }
         }, 1000);
-
-        console.log('Autoplay countdown started:', this.countdownSeconds, 'seconds');
     }
 
     stopCountdown() {
@@ -129,7 +127,6 @@ class AutoplayCountdownOverlay extends Component {
             this.countdownInterval = null;
         }
         this.hide();
-        console.log('Autoplay countdown stopped');
     }
 
     updateCountdownDisplay() {
@@ -140,7 +137,6 @@ class AutoplayCountdownOverlay extends Component {
     }
 
     handlePlayNext() {
-        console.log('Autoplay: Playing next video immediately');
         try {
             this.stopCountdown();
             this.onPlayNext();
@@ -150,7 +146,6 @@ class AutoplayCountdownOverlay extends Component {
     }
 
     handleCancel() {
-        console.log('Autoplay: Cancelled by user');
         try {
             this.stopCountdown();
             this.onCancel();

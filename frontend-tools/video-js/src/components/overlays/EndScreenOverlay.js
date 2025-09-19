@@ -14,12 +14,6 @@ class EndScreenOverlay extends Component {
 
         // Now set the instance property after super() completes
         this.relatedVideos = options && options.relatedVideos ? options.relatedVideos : [];
-
-        // console.log(
-        //     'EndScreenOverlay created with',
-        //     this.relatedVideos.length,
-        //     'related videos'
-        // );
     }
 
     createEl() {
@@ -29,12 +23,6 @@ class EndScreenOverlay extends Component {
         // Limit videos based on screen size to fit grid properly
         const maxVideos = this.getMaxVideosForScreen();
         const videosToShow = relatedVideos.slice(0, maxVideos);
-
-        // console.log(
-        //     'Creating end screen with',
-        //     videosToShow.length,
-        //     'related videos'
-        // );
 
         const overlay = super.createEl('div', {
             className: 'vjs-end-screen-overlay',
@@ -79,7 +67,7 @@ class EndScreenOverlay extends Component {
 
         // Use real YouTube thumbnail or fallback to placeholder
         const thumbnailSrc = video.thumbnail || this.getPlaceholderImage(video.title);
-        
+
         const thumbnail = videojs.dom.createEl('img', {
             className: 'vjs-related-video-thumbnail',
             src: thumbnailSrc,
@@ -88,7 +76,7 @@ class EndScreenOverlay extends Component {
             onerror: () => {
                 // Fallback to placeholder if image fails to load
                 thumbnail.src = this.getPlaceholderImage(video.title);
-            }
+            },
         });
 
         const overlay = videojs.dom.createEl('div', {
@@ -158,10 +146,18 @@ class EndScreenOverlay extends Component {
         // Generate a placeholder image using a service or create a data URL
         // For now, we'll use a simple colored placeholder based on the title
         const colors = [
-            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-            '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+            '#FF6B6B',
+            '#4ECDC4',
+            '#45B7D1',
+            '#96CEB4',
+            '#FFEAA7',
+            '#DDA0DD',
+            '#98D8C8',
+            '#F7DC6F',
+            '#BB8FCE',
+            '#85C1E9',
         ];
-        
+
         // Use title hash to consistently assign colors
         let hash = 0;
         for (let i = 0; i < title.length; i++) {
@@ -169,47 +165,47 @@ class EndScreenOverlay extends Component {
         }
         const colorIndex = Math.abs(hash) % colors.length;
         const color = colors[colorIndex];
-        
+
         // Create a simple placeholder with the first letter of the title
         const firstLetter = title.charAt(0).toUpperCase();
-        
+
         // Create a data URL for a simple placeholder image
         const canvas = document.createElement('canvas');
         canvas.width = 320;
         canvas.height = 180;
         const ctx = canvas.getContext('2d');
-        
+
         // Background
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, 320, 180);
-        
+
         // Add a subtle pattern
         ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         for (let i = 0; i < 20; i++) {
             ctx.fillRect(Math.random() * 320, Math.random() * 180, 2, 2);
         }
-        
+
         // Add the first letter
         ctx.fillStyle = 'white';
         ctx.font = 'bold 48px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(firstLetter, 160, 90);
-        
+
         return canvas.toDataURL();
     }
 
     getMaxVideosForScreen() {
         const width = window.innerWidth;
-        
+
         if (width >= 1200) {
             return 12; // 4x3 grid for large desktop
         } else if (width >= 1024) {
-            return 9;  // 3x3 grid for desktop
+            return 9; // 3x3 grid for desktop
         } else if (width >= 768) {
-            return 6;  // 3x2 grid for tablet
+            return 6; // 3x2 grid for tablet
         } else {
-            return 4;  // 2x2 grid for mobile
+            return 4; // 2x2 grid for mobile
         }
     }
 
@@ -221,7 +217,7 @@ class EndScreenOverlay extends Component {
                 author: 'Bro Code',
                 views: '2.1M views',
                 duration: 1800,
-                thumbnail: 'https://img.youtube.com/vi/dGcsHMXbSOA/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/dGcsHMXbSOA/maxresdefault.jpg',
             },
             {
                 id: 'sample2',
@@ -229,7 +225,7 @@ class EndScreenOverlay extends Component {
                 author: 'Tech Tutorials',
                 views: '850K views',
                 duration: 1200,
-                thumbnail: 'https://img.youtube.com/vi/WZQc7RUAg18/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/WZQc7RUAg18/maxresdefault.jpg',
             },
             {
                 id: 'sample3',
@@ -237,7 +233,7 @@ class EndScreenOverlay extends Component {
                 author: 'Web Dev Academy',
                 views: '1.2M views',
                 duration: 2400,
-                thumbnail: 'https://img.youtube.com/vi/0xMQfnTU6oo/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/0xMQfnTU6oo/maxresdefault.jpg',
             },
             {
                 id: 'sample4',
@@ -245,7 +241,7 @@ class EndScreenOverlay extends Component {
                 author: 'Code Master',
                 views: '650K views',
                 duration: 3600,
-                thumbnail: 'https://img.youtube.com/vi/fBNz6F-Cowg/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/fBNz6F-Cowg/maxresdefault.jpg',
             },
             {
                 id: 'sample5',
@@ -253,7 +249,7 @@ class EndScreenOverlay extends Component {
                 author: 'Frontend Pro',
                 views: '980K views',
                 duration: 2800,
-                thumbnail: 'https://img.youtube.com/vi/qZXt1Aom3Cs/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/qZXt1Aom3Cs/maxresdefault.jpg',
             },
             {
                 id: 'sample6',
@@ -261,7 +257,7 @@ class EndScreenOverlay extends Component {
                 author: 'Data Academy',
                 views: '1.5M views',
                 duration: 4200,
-                thumbnail: 'https://img.youtube.com/vi/ua-CiDNNj30/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/ua-CiDNNj30/maxresdefault.jpg',
             },
             {
                 id: 'sample7',
@@ -269,7 +265,7 @@ class EndScreenOverlay extends Component {
                 author: 'TypeScript Expert',
                 views: '720K views',
                 duration: 2100,
-                thumbnail: 'https://img.youtube.com/vi/BwuLxPH8IDs/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/BwuLxPH8IDs/maxresdefault.jpg',
             },
             {
                 id: 'sample8',
@@ -277,7 +273,7 @@ class EndScreenOverlay extends Component {
                 author: 'Database Pro',
                 views: '890K views',
                 duration: 1800,
-                thumbnail: 'https://img.youtube.com/vi/-56x56UppqQ/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/-56x56UppqQ/maxresdefault.jpg',
             },
             {
                 id: 'sample9',
@@ -285,7 +281,7 @@ class EndScreenOverlay extends Component {
                 author: 'DevOps Master',
                 views: '1.1M views',
                 duration: 3200,
-                thumbnail: 'https://img.youtube.com/vi/pTFZFxd4hOI/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/pTFZFxd4hOI/maxresdefault.jpg',
             },
             {
                 id: 'sample10',
@@ -293,7 +289,7 @@ class EndScreenOverlay extends Component {
                 author: 'Cloud Expert',
                 views: '1.3M views',
                 duration: 4500,
-                thumbnail: 'https://img.youtube.com/vi/ITcXLS3h2qU/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/ITcXLS3h2qU/maxresdefault.jpg',
             },
             {
                 id: 'sample11',
@@ -301,7 +297,7 @@ class EndScreenOverlay extends Component {
                 author: 'API Specialist',
                 views: '680K views',
                 duration: 2600,
-                thumbnail: 'https://img.youtube.com/vi/ed8SzALpx1Q/maxresdefault.jpg'
+                thumbnail: 'https://img.youtube.com/vi/ed8SzALpx1Q/maxresdefault.jpg',
             },
             {
                 id: 'sample12',
@@ -309,8 +305,8 @@ class EndScreenOverlay extends Component {
                 author: 'AI Academy',
                 views: '2.3M views',
                 duration: 5400,
-                thumbnail: 'https://img.youtube.com/vi/i_LwzRVP7bg/maxresdefault.jpg'
-            }
+                thumbnail: 'https://img.youtube.com/vi/i_LwzRVP7bg/maxresdefault.jpg',
+            },
         ];
     }
 

@@ -80,15 +80,6 @@ class CustomRemainingTime extends Component {
     }
 
     /**
-     * Add click handler for additional functionality
-     */
-    handleClick() {
-        // Example: Toggle between different time formats
-        console.log('Time display clicked');
-        // Could toggle between current/duration vs remaining time
-    }
-
-    /**
      * Component disposal cleanup
      */
     dispose() {

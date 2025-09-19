@@ -363,32 +363,19 @@ class CustomSettingsMenu extends Component {
             const player = this.player();
             const tracks = player.textTracks();
             let currentSubtitleLabel = 'Off';
-            let activeTrack = null;
 
             // Find the active subtitle track
             for (let i = 0; i < tracks.length; i++) {
                 const t = tracks[i];
                 if (t.kind === 'subtitles' && t.mode === 'showing') {
                     currentSubtitleLabel = t.label || t.language || 'Subtitles';
-                    activeTrack = t;
                     break;
                 }
             }
 
             const currentSubtitlesDisplay = this.settingsOverlay.querySelector('.current-subtitles');
             if (currentSubtitlesDisplay) {
-                const oldValue = currentSubtitlesDisplay.textContent;
                 currentSubtitlesDisplay.textContent = currentSubtitleLabel;
-
-                // Only log if the value actually changed
-                if (oldValue !== currentSubtitleLabel) {
-                    console.log(`Updated current subtitle display: "${oldValue}" → "${currentSubtitleLabel}"`);
-                    if (activeTrack) {
-                        console.log(
-                            `Active track details: language="${activeTrack.language}", label="${activeTrack.label}", mode="${activeTrack.mode}"`
-                        );
-                    }
-                }
             }
         } catch (error) {
             console.error('Error updating current subtitle display:', error);
@@ -402,7 +389,6 @@ class CustomSettingsMenu extends Component {
 
         // Listen for real-time subtitle changes
         this.player().on('texttrackchange', () => {
-            console.log('Text track changed - updating subtitle display');
             this.updateCurrentSubtitleDisplay();
             // Also refresh the subtitle submenu to show correct selection
             this.refreshSubtitlesSubmenu();
@@ -516,7 +502,6 @@ class CustomSettingsMenu extends Component {
                 const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
                 controlBar.removeChild(this.settingsButton);
                 controlBar.addChild(this.settingsButton, {}, fullscreenIndex + 1);
-                console.log('✓ Settings button positioned after fullscreen toggle');
             }, 50);
         }
     }
@@ -872,8 +857,6 @@ class CustomSettingsMenu extends Component {
 
         // Close only the speed submenu (keep overlay open)
         this.speedSubmenu.style.display = 'none';
-
-        console.log('Playback speed preference saved:', speed);
     }
 
     handleQualityChange(value, qualityOption) {
@@ -1063,8 +1046,6 @@ class CustomSettingsMenu extends Component {
 
         // Close only the quality submenu (keep overlay open)
         if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
-
-        console.log('Quality preference saved:', value);
     }
 
     handleSubtitleChange(lang, optionEl) {
