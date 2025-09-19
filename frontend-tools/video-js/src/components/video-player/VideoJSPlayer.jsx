@@ -39,10 +39,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           // COMMON
                           poster_url:
                               'https://demo.mediacms.io/media/original/thumbnails/user/markos/7dedcb56bde9463dbc0766768a99be0f_C8E5GFY.20250605_110647.mp4.jpg',
-                          __chapter_data: [
-                              { startTime: 0, endTime: 4, text: 'A1 test' },
-                              { startTime: 5, endTime: 10, text: 'A2 of Marine Life' },
-                              { startTime: 10, endTime: 15, text: 'A3 Reef Ecosystems' },
+                          chapter_data: [
+                              { startTime: '00:00:00.000', endTime: '00:00:24.295', text: 'A1 test' },
+                              { startTime: '00:00:24.295', endTime: '00:00:48.590', text: 'A2 of Marine Life' },
+                              { startTime: '00:00:48.590', endTime: '00:01:12.885', text: 'A3 Reef Ecosystems' },
                           ],
                           related_media: [
                               {
@@ -1057,37 +1057,91 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     // CONDITIONAL LOGIC:
     // - When chaptersData has content: Uses original ChapterMarkers with sprite preview
     // - When chaptersData is empty: Uses separate SpritePreview component
-    // Toggle between these two lines to test both scenarios:
-    const chaptersData =
-        mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0
-            ? mediaData?.data?.chapter_data
-            : isDevMode
-              ? [
-                    { startTime: 0, endTime: 4, text: 'Introduction' },
-                    { startTime: 5, endTime: 10, text: 'Overview of Marine Life' },
-                    { startTime: 10, endTime: 15, text: 'Coral Reef Ecosystems' },
-                    { startTime: 15, endTime: 20, text: 'Deep Sea Creatures' },
-                    { startTime: 20, endTime: 30, text: 'Ocean Conservation' },
-                    { startTime: 240, endTime: 320, text: 'Ocean Conservation' },
-                    { startTime: 320, endTime: 400, text: 'Climate Change Impact' },
-                    { startTime: 400, endTime: 480, text: 'Marine Protected Areas' },
-                    { startTime: 480, endTime: 560, text: 'Sustainable Fishing' },
-                    { startTime: 560, endTime: 640, text: 'Research Methods' },
-                    { startTime: 640, endTime: 720, text: 'Future Challenges' },
-                    { startTime: 720, endTime: 800, text: 'Conclusion' },
-                    { startTime: 800, endTime: 880, text: 'Marine Biodiversity Hotspots' },
-                    { startTime: 880, endTime: 960, text: 'Underwater Photography' },
-                    { startTime: 960, endTime: 1040, text: 'Whale Migration Patterns' },
-                    { startTime: 1040, endTime: 1120, text: 'Plastic Pollution Crisis' },
-                    { startTime: 1120, endTime: 1200, text: 'Seagrass Meadows' },
-                    { startTime: 1200, endTime: 1280, text: 'Ocean Acidification' },
-                    { startTime: 1280, endTime: 1360, text: 'Marine Archaeology' },
-                    { startTime: 1360, endTime: 1440, text: 'Tidal Pool Ecosystems' },
-                    { startTime: 1440, endTime: 1520, text: 'Commercial Aquaculture' },
-                    { startTime: 1520, endTime: 1600, text: 'Ocean Exploration Technology' },
-                ]
-              : [];
-    // const chaptersData = []; // NO CHAPTERS (uses separate SpritePreview)
+    // Utility function to convert time string (HH:MM:SS.mmm) to seconds
+    const convertTimeStringToSeconds = (timeString) => {
+        if (typeof timeString === 'number') {
+            return timeString; // Already in seconds
+        }
+
+        if (typeof timeString !== 'string') {
+            return 0;
+        }
+
+        const parts = timeString.split(':');
+        if (parts.length !== 3) {
+            return 0;
+        }
+
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        const seconds = parseFloat(parts[2]) || 0;
+
+        return hours * 3600 + minutes * 60 + seconds;
+    };
+
+    // Test the conversion function
+    if (isDevMode) {
+        console.log('Testing time conversion:');
+        console.log('00:00:24.295 ->', convertTimeStringToSeconds('00:00:24.295')); // Should be 24.295
+        console.log('00:01:30.500 ->', convertTimeStringToSeconds('00:01:30.500')); // Should be 90.5
+        console.log('01:00:00.000 ->', convertTimeStringToSeconds('01:00:00.000')); // Should be 3600
+    }
+
+    // Convert chapters data from backend format to required format with memoization
+    const convertChaptersData = useMemo(() => {
+        return (rawChaptersData) => {
+            if (!rawChaptersData || !Array.isArray(rawChaptersData)) {
+                return [];
+            }
+
+            console.log('Converting raw chapters data:', rawChaptersData);
+
+            const convertedData = rawChaptersData.map((chapter) => ({
+                startTime: convertTimeStringToSeconds(chapter.startTime),
+                endTime: convertTimeStringToSeconds(chapter.endTime),
+                text: chapter.text,
+            }));
+
+            return convertedData;
+        };
+    }, []);
+
+    // Memoized chapters data conversion
+    const chaptersData = useMemo(() => {
+        if (mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0) {
+            return convertChaptersData(mediaData?.data?.chapter_data);
+        }
+        return isDevMode
+            ? [
+                  { startTime: '00:00:00.000', endTime: '00:00:04.000', text: 'Introduction' },
+                  { startTime: '00:00:05.000', endTime: '00:00:10.000', text: 'Overview of Marine Life' },
+                  { startTime: '00:00:10.000', endTime: '00:00:15.000', text: 'Coral Reef Ecosystems' },
+                  { startTime: '00:00:15.000', endTime: '00:00:20.000', text: 'Deep Sea Creatures' },
+                  { startTime: '00:00:20.000', endTime: '00:00:30.000', text: 'Ocean Conservation' },
+                  { startTime: '00:00:24.000', endTime: '00:00:32.000', text: 'Ocean Conservation' },
+                  { startTime: '00:00:32.000', endTime: '00:00:40.000', text: 'Climate Change Impact' },
+                  { startTime: '00:00:40.000', endTime: '00:00:48.000', text: 'Marine Protected Areas' },
+                  { startTime: '00:00:48.000', endTime: '00:00:56.000', text: 'Sustainable Fishing' },
+                  { startTime: '00:00:56.000', endTime: '00:00:64.000', text: 'Research Methods' },
+                  { startTime: '00:00:64.000', endTime: '00:00:72.000', text: 'Future Challenges' },
+                  { startTime: '00:00:72.000', endTime: '00:00:80.000', text: 'Conclusion' },
+                  { startTime: '00:00:80.000', endTime: '00:00:88.000', text: 'Marine Biodiversity Hotspots' },
+                  { startTime: '00:00:88.000', endTime: '00:00:96.000', text: 'Underwater Photography' },
+                  { startTime: '00:00:96.000', endTime: '00:01:04.000', text: 'Whale Migration Patterns' },
+                  { startTime: '00:01:04.000', endTime: '00:01:12.000', text: 'Plastic Pollution Crisis' },
+                  { startTime: '00:01:12.000', endTime: '00:01:20.000', text: 'Seagrass Meadows' },
+                  { startTime: '00:01:20.000', endTime: '00:01:28.000', text: 'Ocean Acidification' },
+                  { startTime: '00:01:28.000', endTime: '00:01:36.000', text: 'Marine Archaeology' },
+                  { startTime: '00:01:28.000', endTime: '00:01:36.000', text: 'Tidal Pool Ecosystems' },
+                  { startTime: '00:01:36.000', endTime: '00:01:44.000', text: 'Commercial Aquaculture' },
+                  { startTime: '00:01:44.000', endTime: '00:01:52.000', text: 'Ocean Exploration Technology' },
+              ].map((chapter) => ({
+                  startTime: convertTimeStringToSeconds(chapter.startTime),
+                  endTime: convertTimeStringToSeconds(chapter.endTime),
+                  text: chapter.text,
+              }))
+            : [];
+    }, [mediaData?.data?.chapter_data, isDevMode, convertChaptersData]);
 
     // Helper function to determine MIME type based on file extension or media type
     const getMimeType = (url, mediaType) => {
@@ -2246,7 +2300,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         }
                         // END: Move chapters button after fullscreen toggle
 
-                        console.log('chaptersData', chaptersData);
                         // BEGIN: Add Chapters Overlay Component
                         if (chaptersData && chaptersData.length > 0) {
                             customComponents.current.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
@@ -2730,10 +2783,46 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // Focus the player element so keyboard controls work
                     // This ensures spacebar can pause/play the video
                     playerRef.current.ready(() => {
-                        // Focus the player element
+                        // Focus the player element and set up keyboard controls
                         if (playerRef.current.el()) {
-                            playerRef.current.el().focus();
+                            // Make the video element focusable
+                            const videoElement = playerRef.current.el();
+                            videoElement.setAttribute('tabindex', '0');
+                            videoElement.focus();
                             console.log('Video player focused for keyboard controls');
+
+                            // Add custom keyboard event handler for space key
+                            const handleKeyPress = (event) => {
+                                // Only handle space key when video element is focused or no other input is focused
+                                if (event.code === 'Space' || event.key === ' ') {
+                                    const activeElement = document.activeElement;
+                                    const isInputFocused =
+                                        activeElement &&
+                                        (activeElement.tagName === 'INPUT' ||
+                                            activeElement.tagName === 'TEXTAREA' ||
+                                            activeElement.contentEditable === 'true');
+
+                                    // Only prevent default and control video if no input is focused
+                                    if (!isInputFocused) {
+                                        event.preventDefault();
+                                        if (playerRef.current) {
+                                            if (playerRef.current.paused()) {
+                                                playerRef.current.play();
+                                            } else {
+                                                playerRef.current.pause();
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            // Add event listener to document for global space key handling
+                            document.addEventListener('keydown', handleKeyPress);
+
+                            // Store cleanup function
+                            customComponents.current.cleanupKeyboardHandler = () => {
+                                document.removeEventListener('keydown', handleKeyPress);
+                            };
                         }
 
                         // Start playing the video immediately if autoplay is enabled
@@ -2767,11 +2856,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         };
     }, []);
 
-    // Additional effect to ensure video gets focus for keyboard controls
+    // Additional effect to ensure video gets focus for keyboard controls on page load
     useEffect(() => {
         const focusVideo = () => {
             if (playerRef.current && playerRef.current.el()) {
-                playerRef.current.el().focus();
+                const videoElement = playerRef.current.el();
+                videoElement.setAttribute('tabindex', '0');
+                videoElement.focus();
                 console.log('Video element focused for keyboard controls');
             }
         };
@@ -2791,12 +2882,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         document.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('focus', handleWindowFocus);
 
-        // Initial focus attempt
-        setTimeout(focusVideo, 500);
+        // Multiple attempts to ensure focus on page load
+        const focusAttempts = [100, 500, 1000, 2000];
+        const timeouts = focusAttempts.map((delay) => setTimeout(focusVideo, delay));
 
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('focus', handleWindowFocus);
+            timeouts.forEach(clearTimeout);
         };
     }, []);
 
