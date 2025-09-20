@@ -54,6 +54,11 @@ def about(request):
     return render(request, "cms/about.html", context)
 
 
+def approval_required(request):
+    """User needs approval view"""
+    return render(request, "cms/user_needs_approval.html", {})
+
+
 def setlanguage(request):
     """Set Language view"""
 
@@ -516,6 +521,12 @@ def manage_comments(request):
 
 def members(request):
     """List members view"""
+
+    if settings.CAN_SEE_MEMBERS_PAGE == "editors" and not is_mediacms_editor(request.user):
+        return HttpResponseRedirect("/")
+
+    if settings.CAN_SEE_MEMBERS_PAGE == "admins" and not request.user.is_superuser:
+        return HttpResponseRedirect("/")
 
     context = {}
     return render(request, "cms/members.html", context)

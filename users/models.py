@@ -29,6 +29,7 @@ class User(AbstractUser):
     name = models.CharField("full name", max_length=250, db_index=True)
     date_added = models.DateTimeField("date added", default=timezone.now, db_index=True)
     is_featured = models.BooleanField("Is featured", default=False, db_index=True)
+    is_approved = models.BooleanField("Is approved", default=False, null=True, blank=True, db_index=True)
 
     title = models.CharField("Title", max_length=250, blank=True)
     advancedUser = models.BooleanField("advanced user", default=False, db_index=True)

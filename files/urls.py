@@ -110,6 +110,9 @@ urlpatterns = [
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+if settings.USERS_NEEDS_TO_BE_APPROVED:
+    urlpatterns.append(re_path(r"^approval_required", views.approval_required, name="approval_required"))
+
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
 

@@ -26,10 +26,22 @@ def stuff(request):
     ret["UPLOAD_MAX_SIZE"] = settings.UPLOAD_MAX_SIZE
     ret["UPLOAD_MAX_FILES_NUMBER"] = settings.UPLOAD_MAX_FILES_NUMBER
     ret["PRE_UPLOAD_MEDIA_MESSAGE"] = settings.PRE_UPLOAD_MEDIA_MESSAGE
+    ret["SIDEBAR_FOOTER_TEXT"] = settings.SIDEBAR_FOOTER_TEXT
     ret["POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY"] = settings.POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY
     ret["IS_MEDIACMS_ADMIN"] = request.user.is_superuser
     ret["IS_MEDIACMS_EDITOR"] = is_mediacms_editor(request.user)
     ret["IS_MEDIACMS_MANAGER"] = is_mediacms_manager(request.user)
+    ret["USERS_NEEDS_TO_BE_APPROVED"] = settings.USERS_NEEDS_TO_BE_APPROVED
+
+    can_see_members_page = False
+    if request.user.is_authenticated:
+        if settings.CAN_SEE_MEMBERS_PAGE == "all":
+            can_see_members_page = True
+        elif settings.CAN_SEE_MEMBERS_PAGE == "editors" and is_mediacms_editor(request.user):
+            can_see_members_page = True
+        elif settings.CAN_SEE_MEMBERS_PAGE == "admins" and request.user.is_superuser:
+            can_see_members_page = True
+    ret["CAN_SEE_MEMBERS_PAGE"] = can_see_members_page
     ret["ALLOW_RATINGS"] = settings.ALLOW_RATINGS
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE

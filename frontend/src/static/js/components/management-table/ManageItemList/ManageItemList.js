@@ -12,6 +12,89 @@ import { translateString } from '../../../utils/helpers/';
 
 import './ManageItemList.scss';
 
+function AddNewUser({ onUserAdded, setMessage }) {
+  const [popupRef, PopupContent, PopupTrigger] = usePopup();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+
+  function clearForm() {
+    setUsername('');
+    setPassword('');
+    setEmail('');
+    setName('');
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (setMessage) {
+      setMessage({ type: '', text: '' });
+    }
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('email', email);
+    formData.append('name', name);
+
+    fetch('/api/v1/users', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-CSRFToken': csrfToken() },
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+        return res.json().then((data) => {
+          throw new Error(data.detail || 'Failed to create user.');
+        });
+      })
+      .then(() => {
+        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'User created successfully.' }));
+        window.location.reload();
+      })
+      .catch((err) => {
+        if (setMessage) {
+          setMessage({ type: 'error', text: err.message });
+        }
+      });
+  }
+
+  return (
+    <div className="add-new-user-container">
+      <PopupTrigger contentRef={popupRef}>
+        <button className="add-new-user-btn">Add New User</button>
+      </PopupTrigger>
+      <PopupContent contentRef={popupRef} hideCallback={clearForm}>
+        <PopupMain>
+          <form onSubmit={handleSubmit}>
+            <div className="popup-message">
+              <span className="popup-message-title">Add New User</span>
+              <div className="popup-message-main">
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" required style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px' }} />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px' }} />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px' }} />
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" required style={{ width: '100%', padding: '8px', boxSizing: 'border-box', marginBottom: '10px' }} />
+              </div>
+            </div>
+            <hr />
+            <span className="popup-message-bottom">
+              <button type="button" className="button-link cancel-profile-removal" onClick={() => popupRef.current.tryToHide()}>CANCEL</button>
+              <button type="submit" className="button-link proceed-profile-removal">SUBMIT</button>
+            </span>
+          </form>
+        </PopupMain>
+      </PopupContent>
+    </div>
+  );
+}
+AddNewUser.propTypes = {
+  onUserAdded: PropTypes.func,
+  setMessage: PropTypes.func,
+};
+
 function useManageItemList(props, itemsListRef) {
   let previousItemsLength = 0;
 
@@ -440,6 +523,35 @@ export function ManageItemList(props) {
     onItemsLoad,
   ] = useManageItemListSync(props);
 
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  useEffect(() => {
+    const storedMessage = sessionStorage.getItem('user-management-message');
+    if (storedMessage) {
+      setMessage(JSON.parse(storedMessage));
+      sessionStorage.removeItem('user-management-message');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  function refreshList() {
+    if (props.onPageChange && parsedRequestUrl) {
+      const queryParams = new URLSearchParams(parsedRequestUrlQuery || '');
+      const currentPage = queryParams.get('page') || '1';
+      const clickedPageUrl = pageUrl(parsedRequestUrl, pageUrlQuery(parsedRequestUrlQuery, currentPage));
+      props.onPageChange(clickedPageUrl, currentPage);
+    } else {
+      // Fallback for when onPageChange is not available
+      setListHandler(new ManageItemsListHandler(props.pageItems, props.maxItems, props.requestUrl, onItemsCount, onItemsLoad));
+    }
+  }
+
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectedAllItems, setSelectedAllItems] = useState(false);
 
@@ -592,50 +704,60 @@ export function ManageItemList(props) {
 
     return () => {
       if (listHandler) {
-        listHandler.cancelAll();
+        // listHandler.cancelAll();
         setListHandler(null);
       }
     };
-  }, []);
+  }, [props.requestUrl]);
 
   return !countedItems ? (
     <PendingItemsList className={classname.listOuter} />
-  ) : !items.length ? null : (
+  ) : (
     <div className={classname.listOuter}>
-      <ManageItemsOptions
-        totalItems={totalItems}
-        pageItems={props.pageItems}
-        onPageButtonClick={onPageButtonClick}
-        query={parsedRequestUrlQuery || ''}
-        className="manage-items-options"
-        items={selectedItems}
-        pagesSize={listHandler.totalPages()}
-        onProceedRemoval={onBulkItemsRemoval}
-      />
+      {message.text && (
+        <div className={`message ${message.type === 'error' ? 'error' : 'success'}`}>{message.text}</div>
+      )}
+      {'users' === props.manageType && <AddNewUser onUserAdded={refreshList} setMessage={setMessage} />}
+      {!items.length ? null : (
+        <>
+          <ManageItemsOptions
+            totalItems={totalItems}
+            pageItems={props.pageItems}
+            onPageButtonClick={onPageButtonClick}
+            query={parsedRequestUrlQuery || ''}
+            className="manage-items-options"
+            items={selectedItems}
+            pagesSize={listHandler.totalPages()}
+            onProceedRemoval={onBulkItemsRemoval}
+          />
 
-      <div ref={itemsListWrapperRef} className="items-list-wrap">
-        <div ref={itemsListRef} className={classname.list}>
-          {renderManageItems(items, {
-            ...props,
-            onAllRowsCheck: onAllRowsCheck,
-            onRowCheck: onRowCheck,
-            selectedItems: selectedItems,
-            selectedAllItems: selectedAllItems,
-            onDelete: deleteItem,
-          })}
-        </div>
-      </div>
+          <div ref={itemsListWrapperRef} className="items-list-wrap">
+            <div ref={itemsListRef} className={classname.list}>
+              {renderManageItems(items, {
+                ...props,
+                onAllRowsCheck: onAllRowsCheck,
+                onRowCheck: onRowCheck,
+                selectedItems: selectedItems,
+                selectedAllItems: selectedAllItems,
+                onDelete: deleteItem,
+                onUserUpdate: refreshList,
+                setMessage: setMessage,
+              })}
+            </div>
+          </div>
 
-      <ManageItemsOptions
-        totalItems={totalItems}
-        pageItems={props.pageItems}
-        onPageButtonClick={onPageButtonClick}
-        query={parsedRequestUrlQuery || ''}
-        className="manage-items-options popup-on-top"
-        items={selectedItems}
-        pagesSize={listHandler.totalPages()}
-        onProceedRemoval={onBulkItemsRemoval}
-      />
+          <ManageItemsOptions
+            totalItems={totalItems}
+            pageItems={props.pageItems}
+            onPageButtonClick={onPageButtonClick}
+            query={parsedRequestUrlQuery || ''}
+            className="manage-items-options popup-on-top"
+            items={selectedItems}
+            pagesSize={listHandler.totalPages()}
+            onProceedRemoval={onBulkItemsRemoval}
+          />
+        </>
+      )}
     </div>
   );
 }
