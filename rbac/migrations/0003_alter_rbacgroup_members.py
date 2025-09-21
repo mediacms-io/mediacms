@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('rbac', '0002_alter_rbacgroup_uid'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
