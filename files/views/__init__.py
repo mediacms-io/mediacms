@@ -20,6 +20,7 @@ from .pages import edit_subtitle  # noqa: F401
 from .pages import edit_video  # noqa: F401
 from .pages import embed_media  # noqa: F401
 from .pages import featured_media  # noqa: F401
+from .pages import get_page  # noqa: F401
 from .pages import history  # noqa: F401
 from .pages import index  # noqa: F401
 from .pages import latest_media  # noqa: F401

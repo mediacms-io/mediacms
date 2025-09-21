@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from tinymce.widgets import TinyMCE
 
 from rbac.models import RBACGroup
 
@@ -13,8 +14,10 @@ from .models import (
     Encoding,
     Language,
     Media,
+    Page,
     Subtitle,
     Tag,
+    TinyMCEMedia,
     TranscriptionRequest,
     VideoTrimRequest,
 )
@@ -224,11 +227,39 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
     pass
 
 
+class PageAdminForm(forms.ModelForm):
+    description = forms.CharField(widget=TinyMCE())
+
+    def clean_description(self):
+        content = self.cleaned_data['description']
+        # Add sandbox attribute to all iframes
+        content = content.replace('<iframe ', '<iframe sandbox="allow-scripts allow-same-origin allow-presentation" ')
+        return content
+
+    class Meta:
+        model = Page
+        fields = "__all__"
+
+
+class PageAdmin(admin.ModelAdmin):
+    form = PageAdminForm
+
+
+@admin.register(TinyMCEMedia)
+class TinyMCEMediaAdmin(admin.ModelAdmin):
+    list_display = ['original_filename', 'file_type', 'uploaded_at', 'user']
+    list_filter = ['file_type', 'uploaded_at']
+    search_fields = ['original_filename']
+    readonly_fields = ['uploaded_at']
+    date_hierarchy = 'uploaded_at'
+
+
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Media, MediaAdmin)
 admin.site.register(Encoding, EncodingAdmin)
 admin.site.register(Category, CategoryAdmin)
+admin.site.register(Page, PageAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)

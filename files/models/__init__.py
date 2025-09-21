@@ -4,6 +4,7 @@ from .comment import Comment  # noqa: F401
 from .encoding import EncodeProfile, Encoding  # noqa: F401
 from .license import License  # noqa: F401
 from .media import Media, MediaPermission  # noqa: F401
+from .page import Page, TinyMCEMedia  # noqa: F401
 from .playlist import Playlist, PlaylistMedia  # noqa: F401
 from .rating import Rating, RatingCategory  # noqa: F401
 from .subtitle import Language, Subtitle, TranscriptionRequest  # noqa: F401

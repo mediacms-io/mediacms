@@ -289,6 +289,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "allauth.socialaccount.providers.saml",
     "saml_auth.apps.SamlAuthConfig",
+    "tinymce",
 ]
 
 MIDDLEWARE = [
@@ -472,6 +473,46 @@ LANGUAGES = [
 
 LANGUAGE_CODE = 'en'  # default language
 
+TINYMCE_DEFAULT_CONFIG = {
+    "theme": "silver",
+    "height": 500,
+    "resize": "both",
+    "menubar": "file edit view insert format tools table help",
+    "menu": {
+        "format": {
+            "title": "Format",
+            "items": "blocks | bold italic underline strikethrough superscript subscript code | " "fontfamily fontsize align lineheight | " "forecolor backcolor removeformat",
+        },
+    },
+    "plugins": "advlist,autolink,autosave,lists,link,image,charmap,print,preview,anchor,"
+    "searchreplace,visualblocks,code,fullscreen,insertdatetime,media,table,paste,directionality,"
+    "code,help,wordcount,emoticons,file,image,media",
+    "toolbar": "undo redo | code preview | blocks | "
+    "bold italic | alignleft aligncenter "
+    "alignright alignjustify ltr rtl | bullist numlist outdent indent | "
+    "removeformat | restoredraft help | image media",
+    "branding": False,  # remove branding
+    "promotion": False,  # remove promotion
+    "body_class": "page-main-inner custom-page-wrapper",  # class of the body element in tinymce
+    "block_formats": "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3;",
+    "formats": {  # customize h2 to always have emphasis-large class
+        "h2": {"block": "h2", "classes": "emphasis-large"},
+    },
+    "font_size_formats": "16px 18px 24px 32px",
+    "images_upload_url": "/tinymce/upload/",
+    "images_upload_handler": "tinymce.views.upload_image",
+    "automatic_uploads": True,
+    "file_picker_types": "image",
+    "paste_data_images": True,
+    "paste_as_text": False,
+    "paste_enable_default_filters": True,
+    "paste_word_valid_elements": "b,strong,i,em,h1,h2,h3,h4,h5,h6,p,br,a,ul,ol,li",
+    "paste_retain_style_properties": "all",
+    "paste_remove_styles": False,
+    "paste_merge_formats": True,
+    "sandbox_iframes": False,
+}
+
 SPRITE_NUM_SECS = 10
 # number of seconds for sprite image.
 # If you plan to change this, you must also follow the instructions on admins_docs.md
@@ -519,7 +560,12 @@ FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.26
 ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
 
 # transcription options
-# the full docker image needs to be used in order to be able to use transcription
+# the mediacms-full docker image needs to be used in order to be able to use transcription
+# if you are using the mediacms-full image, change USE_WHISPER_TRANSCRIBE to True
+USE_WHISPER_TRANSCRIBE = False
+
+# by default all users can request a video to be transcribed. If you want to
+# allow only editors, set this to False
 USER_CAN_TRANSCRIBE_VIDEO = True
 
 # Whisper transcribe options - https://github.com/openai/whisper
