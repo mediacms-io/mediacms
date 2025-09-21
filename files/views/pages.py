@@ -60,6 +60,12 @@ def record_screen(request):
 def about(request):
     """About view"""
 
+    page = Page.objects.filter(slug="about").first()
+    if page:
+        context = {}
+        context["page"] = page
+        return render(request, "cms/page.html", context)
+
     context = {"VERSION": VERSION}
     return render(request, "cms/about.html", context)
 
