@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.saml",
     "saml_auth.apps.SamlAuthConfig",
     "corsheaders",
+    "tinymce",
 ]
 
 MIDDLEWARE = [

@@ -4,7 +4,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.urls import path, re_path
 
-from . import management_views, views
+from . import management_views, tinymce_handlers, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
 friendly_token = r"(?P<friendly_token>[\w\-_]*)"
@@ -12,7 +12,6 @@ friendly_token = r"(?P<friendly_token>[\w\-_]*)"
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     re_path(r"^$", views.index),
-    re_path(r"^about", views.about, name="about"),
     re_path(r"^setlanguage", views.setlanguage, name="setlanguage"),
     re_path(r"^add_subtitle", views.add_subtitle, name="add_subtitle"),
     re_path(r"^edit_subtitle", views.edit_subtitle, name="edit_subtitle"),
@@ -108,7 +107,12 @@ urlpatterns = [
     re_path(r"^manage/comments$", views.manage_comments, name="manage_comments"),
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
+    # Media uploads in ADMIN created pages
+    re_path(r"^tinymce/upload/", tinymce_handlers.upload_image, name="tinymce_upload_image"),
+    re_path("^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
+    re_path(r"^about", views.about, name="about"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 if settings.USERS_NEEDS_TO_BE_APPROVED:
     urlpatterns.append(re_path(r"^approval_required", views.approval_required, name="approval_required"))

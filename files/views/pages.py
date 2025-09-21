@@ -31,8 +31,18 @@ from ..methods import (
     is_media_allowed_type,
     is_mediacms_editor,
 )
-from ..models import Category, Media, Playlist, Subtitle, Tag, VideoTrimRequest
+from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
+
+
+def get_page(request, slug):
+    context = {}
+    page = Page.objects.filter(slug=slug).first()
+    if page:
+        context["page"] = page
+    else:
+        return render(request, "404.html", context)
+    return render(request, "cms/page.html", context)
 
 
 @login_required

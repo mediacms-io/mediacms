@@ -7,6 +7,15 @@
 
 {% block innercontent %}
 
+<style>
+.user-action-form-inner {
+    max-width: 1000px;
+}
+.user-action-form-inner textarea {
+    min-height: 60vh;
+}
+</style>
+
 	{% if action == 'delete' %}
 
 	<div class="user-action-form-wrap">
