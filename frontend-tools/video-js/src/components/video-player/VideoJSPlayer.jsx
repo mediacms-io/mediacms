@@ -2411,9 +2411,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Store components reference for potential cleanup
 
-                        // BEGIN: Add custom arrow key seek functionality
-                        const handleKeyDown = (event) => {
-                            // Only handle if the player has focus or no input elements are focused
+                        // BEGIN: Add comprehensive keyboard event handling
+                        const handleAllKeyboardEvents = (event) => {
+                            // Only handle if no input elements are focused
                             const activeElement = document.activeElement;
                             const isInputFocused =
                                 activeElement &&
@@ -2425,6 +2425,20 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 return; // Don't interfere with input fields
                             }
 
+                            // Handle space key for play/pause
+                            if (event.code === 'Space' || event.key === ' ') {
+                                event.preventDefault();
+                                if (playerRef.current) {
+                                    if (playerRef.current.paused()) {
+                                        playerRef.current.play();
+                                    } else {
+                                        playerRef.current.pause();
+                                    }
+                                }
+                                return;
+                            }
+
+                            // Handle arrow keys for seeking
                             const seekAmount = 5; // 5 seconds
 
                             if (event.key === 'ArrowRight' || event.keyCode === 39) {
@@ -2450,14 +2464,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         };
 
                         // Add keyboard event listener to the document
-                        document.addEventListener('keydown', handleKeyDown);
+                        document.addEventListener('keydown', handleAllKeyboardEvents);
 
-                        // Store cleanup function
-                        customComponents.current.cleanupKeyboardHandler = () => {
-                            document.removeEventListener('keydown', handleKeyDown);
+                        // Store cleanup function for arrow keys
+                        customComponents.current.cleanupArrowKeyHandler = () => {
+                            document.removeEventListener('keydown', handleAllKeyboardEvents);
                         };
 
-                        // END: Add custom arrow key seek functionality
+                        // END: Add comprehensive keyboard event handling
                     });
 
                     // Listen for next video event
@@ -2632,48 +2646,40 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     });
 
                     // Focus the player element so keyboard controls work
-                    // This ensures spacebar can pause/play the video
+                    // This ensures keyboard events work properly in both normal and fullscreen modes
                     playerRef.current.ready(() => {
-                        // Focus the player element and set up keyboard controls
+                        // Focus the player element and set up focus handling
                         if (playerRef.current.el()) {
                             // Make the video element focusable
                             const videoElement = playerRef.current.el();
                             videoElement.setAttribute('tabindex', '0');
                             videoElement.focus();
+                        }
+                    });
 
-                            // Add custom keyboard event handler for space key
-                            const handleKeyPress = (event) => {
-                                // Only handle space key when video element is focused or no other input is focused
-                                if (event.code === 'Space' || event.key === ' ') {
-                                    const activeElement = document.activeElement;
-                                    const isInputFocused =
-                                        activeElement &&
-                                        (activeElement.tagName === 'INPUT' ||
-                                            activeElement.tagName === 'TEXTAREA' ||
-                                            activeElement.contentEditable === 'true');
+                    // Handle focus when entering/exiting fullscreen to ensure keyboard events work
+                    playerRef.current.on('fullscreenchange', () => {
+                        setTimeout(() => {
+                            if (playerRef.current && playerRef.current.el()) {
+                                const videoElement = playerRef.current.el();
+                                videoElement.setAttribute('tabindex', '0');
+                                videoElement.focus();
 
-                                    // Only prevent default and control video if no input is focused
-                                    if (!isInputFocused) {
-                                        event.preventDefault();
-                                        if (playerRef.current) {
-                                            if (playerRef.current.paused()) {
-                                                playerRef.current.play();
-                                            } else {
-                                                playerRef.current.pause();
-                                            }
-                                        }
+                                // In fullscreen mode, ensure the player container has focus
+                                if (playerRef.current.isFullscreen()) {
+                                    // Focus the fullscreen element to ensure keyboard events are captured
+                                    const fullscreenElement =
+                                        document.fullscreenElement ||
+                                        document.webkitFullscreenElement ||
+                                        document.mozFullScreenElement ||
+                                        document.msFullscreenElement;
+                                    if (fullscreenElement) {
+                                        fullscreenElement.setAttribute('tabindex', '0');
+                                        fullscreenElement.focus();
                                     }
                                 }
-                            };
-
-                            // Add event listener to document for global space key handling
-                            document.addEventListener('keydown', handleKeyPress);
-
-                            // Store cleanup function
-                            customComponents.current.cleanupKeyboardHandler = () => {
-                                document.removeEventListener('keydown', handleKeyPress);
-                            };
-                        }
+                            }
+                        }, 100); // Small delay to ensure fullscreen transition is complete
                     });
                 }
             }, 0);
@@ -2685,9 +2691,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
         // Cleanup function
         return () => {
-            // Clean up keyboard event listener if it exists
-            if (customComponents.current && customComponents.current.cleanupKeyboardHandler) {
-                customComponents.current.cleanupKeyboardHandler();
+            // Clean up keyboard event listeners if they exist
+            if (customComponents.current && customComponents.current.cleanupArrowKeyHandler) {
+                customComponents.current.cleanupArrowKeyHandler();
             }
 
             if (playerRef.current && !playerRef.current.isDisposed()) {
