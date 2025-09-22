@@ -857,6 +857,7 @@
     display: table;
     width: 100%;
     min-height: 40px;
+    z-index: 999;
 
     > * {
       display: table-cell;
