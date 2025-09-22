@@ -5,6 +5,7 @@ import 'video.js/dist/video-js.css';
 // Import the separated components
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
 import AutoplayCountdownOverlay from '../overlays/AutoplayCountdownOverlay';
+import EmbedInfoOverlay from '../overlays/EmbedInfoOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
 import SpritePreview from '../markers/SpritePreview';
 import NextVideoButton from '../controls/NextVideoButton';
@@ -34,6 +35,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 : {
                       data: {
                           // COMMON
+                          title: 'Modi tempora est quaerat numquam',
+                          author_name: 'Markos Gogoulos',
+                          author_profile: '/user/markos/',
+                          author_thumbnail: '/media/userlogos/2024/10/02/markos.jpeg',
+                          url: 'https://demo.mediacms.io/view?m=7dedcb56bde9463dbc0766768a99be0f',
                           poster_url:
                               'https://demo.mediacms.io/media/original/thumbnails/user/markos/7dedcb56bde9463dbc0766768a99be0f_C8E5GFY.20250605_110647.mp4.jpg',
                           chapter_data: [
@@ -1035,10 +1041,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                           // AUDIO
                           /*media_type: 'audio',
-                          original_media_url:
-                              'https://videojs.mediacms.io/media/original/user/markos/174be7a1ecb04850a6927a0af2887ccc.SizzlaHardGround.mp3',
-                          hls_info: {},
-                          encodings_info: {},*/
+                            original_media_url:
+                                'https://videojs.mediacms.io/media/original/user/markos/174be7a1ecb04850a6927a0af2887ccc.SizzlaHardGround.mp3',
+                            hls_info: {},
+                            encodings_info: {},*/
                       },
 
                       // other
@@ -1046,7 +1052,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           url: 'https://demo.mediacms.io/media/original/thumbnails/user/markos/fe4933d67b884d4da507dd60e77f7438.VID_20200909_141053.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: '',
+                      siteUrl: 'https://demo.mediacms.io',
                       nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
                       urlAutoplay: true,
                       urlMuted: false,
@@ -1287,6 +1293,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         return {
             id: mediaData.data?.friendly_token || 'default-video',
             title: mediaData.data?.title || 'Video',
+            author_name: mediaData.data?.author_name || 'Unknown',
+            author_profile: mediaData.data?.author_profile ? mediaData.siteUrl + mediaData.data.author_profile : '',
+            author_thumbnail: mediaData.data?.author_thumbnail
+                ? mediaData.siteUrl + mediaData.data.author_thumbnail
+                : '',
+            url: mediaData.data?.url ? mediaData.siteUrl + mediaData.data.url : '',
             poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
@@ -2375,6 +2387,18 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             });
                         }
                         // END: Add Chapters Overlay Component
+
+                        // BEGIN: Add Embed Info Overlay Component (for embed player only)
+                        if (isEmbedPlayer) {
+                            customComponents.current.embedInfoOverlay = new EmbedInfoOverlay(playerRef.current, {
+                                authorName: currentVideo.author_name,
+                                authorProfile: currentVideo.author_profile,
+                                authorThumbnail: currentVideo.author_thumbnail,
+                                videoTitle: currentVideo.title,
+                                videoUrl: currentVideo.url,
+                            });
+                        }
+                        // END: Add Embed Info Overlay Component
 
                         // BEGIN: Add Settings Menu Component
                         customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {

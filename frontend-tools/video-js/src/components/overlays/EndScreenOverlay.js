@@ -146,7 +146,7 @@ class EndScreenOverlay extends Component {
         // Generate a placeholder image using a service or create a data URL
         // For now, we'll use a simple colored placeholder based on the title
         const colors = [
-            '#FF6B6B',
+            '#009931',
             '#4ECDC4',
             '#45B7D1',
             '#96CEB4',
