@@ -839,7 +839,7 @@ button {
 
 /* Custom focus styles for video player */
 .video-js:focus {
-    box-shadow: 0 0 0 3px rgba(25, 153, 50, 0.5);
+    /* box-shadow: 0 0 0 3px rgba(25, 153, 50, 0.5); */
     border-radius: 0;
 }
 
