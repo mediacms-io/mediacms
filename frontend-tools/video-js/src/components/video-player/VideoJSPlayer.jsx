@@ -39,9 +39,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           author_name: 'Markos Gogoulos',
                           author_profile: '/user/markos/',
                           author_thumbnail: '/media/userlogos/2024/10/02/markos.jpeg',
-                          url: 'https://demo.mediacms.io/view?m=7dedcb56bde9463dbc0766768a99be0f',
+                          url: 'https://demo.mediacms.io/view?m=zK2nirNLC',
                           poster_url:
-                              'https://demo.mediacms.io/media/original/thumbnails/user/markos/7dedcb56bde9463dbc0766768a99be0f_C8E5GFY.20250605_110647.mp4.jpg',
+                              'https://demo.mediacms.io/media/original/thumbnails/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb_btbR39g.20250604_080632.mp4.jpg',
                           chapter_data: [
                               { startTime: '00:00:00.000', endTime: '00:00:08.295', chapterTitle: 'A1 test' },
                               { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
@@ -958,30 +958,19 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           // VIDEO
                           media_type: 'video',
                           original_media_url:
-                              'https://demo.mediacms.io/media/original/user/markos/7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4',
+                              '/media/original/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4',
                           hls_info: {
-                              master_file:
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/master.m3u8',
-                              '1080_iframe':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-1/iframes.m3u8',
-                              '720_iframe':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-2/iframes.m3u8',
-                              '360_iframe':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-3/iframes.m3u8',
-                              '240_iframe':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-4/iframes.m3u8',
-                              '480_iframe':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-5/iframes.m3u8',
-                              '1080_playlist':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-1/stream.m3u8',
-                              '720_playlist':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-2/stream.m3u8',
-                              '360_playlist':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-3/stream.m3u8',
-                              '240_playlist':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-4/stream.m3u8',
-                              '480_playlist':
-                                  'https://demo.mediacms.io/media/hls/7dedcb56bde9463dbc0766768a99be0f/media-5/stream.m3u8',
+                              master_file: '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/master.m3u8',
+                              '1080_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-1/iframes.m3u8',
+                              '720_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/iframes.m3u8',
+                              '360_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-3/iframes.m3u8',
+                              '240_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/iframes.m3u8',
+                              '480_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/iframes.m3u8',
+                              '1080_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-1/stream.m3u8',
+                              '720_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/stream.m3u8',
+                              '360_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-3/stream.m3u8',
+                              '240_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/stream.m3u8',
+                              '480_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/stream.m3u8',
                           },
                           encodings_info: {
                               2160: {},
@@ -989,50 +978,50 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               1080: {
                                   h264: {
                                       title: 'h264-1080',
-                                      url: 'https://demo.mediacms.io/media/encoded/7/markos/7dedcb56bde9463dbc0766768a99be0f.7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4.mp4',
+                                      url: '/media/encoded/7/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
                                       progress: 100,
-                                      size: '31.4MB',
-                                      encoding_id: 4688,
+                                      size: '16.1MB',
+                                      encoding_id: 4682,
                                       status: 'success',
                                   },
                               },
                               720: {
                                   h264: {
                                       title: 'h264-720',
-                                      url: 'https://demo.mediacms.io/media/encoded/10/markos/7dedcb56bde9463dbc0766768a99be0f.7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4.mp4',
+                                      url: '/media/encoded/10/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
                                       progress: 100,
-                                      size: '17.7MB',
-                                      encoding_id: 4687,
+                                      size: '7.8MB',
+                                      encoding_id: 4681,
                                       status: 'success',
                                   },
                               },
                               480: {
                                   h264: {
                                       title: 'h264-480',
-                                      url: 'https://demo.mediacms.io/media/encoded/13/markos/7dedcb56bde9463dbc0766768a99be0f.7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4.mp4',
+                                      url: '/media/encoded/13/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
                                       progress: 100,
-                                      size: '7.4MB',
-                                      encoding_id: 4686,
+                                      size: '4.5MB',
+                                      encoding_id: 4680,
                                       status: 'success',
                                   },
                               },
                               360: {
                                   h264: {
                                       title: 'h264-360',
-                                      url: 'https://demo.mediacms.io/media/encoded/3/markos/7dedcb56bde9463dbc0766768a99be0f.7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4.mp4',
+                                      url: '/media/encoded/3/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
                                       progress: 100,
-                                      size: '4.0MB',
-                                      encoding_id: 4685,
+                                      size: '2.9MB',
+                                      encoding_id: 4679,
                                       status: 'success',
                                   },
                               },
                               240: {
                                   h264: {
                                       title: 'h264-240',
-                                      url: 'https://demo.mediacms.io/media/encoded/2/markos/7dedcb56bde9463dbc0766768a99be0f.7dedcb56bde9463dbc0766768a99be0f.20250605_110647.mp4.mp4',
+                                      url: '/media/encoded/2/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
                                       progress: 100,
-                                      size: '2.7MB',
-                                      encoding_id: 4684,
+                                      size: '1.7MB',
+                                      encoding_id: 4678,
                                       status: 'success',
                                   },
                               },
@@ -1049,7 +1038,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                       // other
                       previewSprite: {
-                          url: 'https://demo.mediacms.io/media/original/thumbnails/user/markos/fe4933d67b884d4da507dd60e77f7438.VID_20200909_141053.mp4sprites.jpg',
+                          url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
                       siteUrl: 'https://demo.mediacms.io',
@@ -1268,7 +1257,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
             // Final fallback to original media URL or sample video
             if (mediaData.data?.original_media_url) {
-                const sourceUrl = mediaData.data.original_media_url;
+                const sourceUrl = mediaData.siteUrl + mediaData.data.original_media_url;
                 return [
                     {
                         src: sourceUrl,
@@ -1290,7 +1279,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             ];
         };
 
-        return {
+        const currentVideo = {
             id: mediaData.data?.friendly_token || 'default-video',
             title: mediaData.data?.title || 'Video',
             author_name: mediaData.data?.author_name || 'Unknown',
@@ -1298,8 +1287,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             author_thumbnail: mediaData.data?.author_thumbnail
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
-            url: mediaData.data?.url ? mediaData.siteUrl + mediaData.data.url : '',
-            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
+            url: mediaData.data?.url || '',
+            poster: mediaData.data?.poster_url || '',
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
@@ -1307,6 +1296,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             urlMuted: mediaData?.urlMuted || false,
             sources: getVideoSources(),
         };
+
+        return currentVideo;
     }, [mediaData, userQualityPreference]);
 
     // Compute available qualities. Prefer JSON (mediaData.data.qualities), otherwise build from encodings_info or current source.
