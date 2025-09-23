@@ -41,7 +41,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           author_thumbnail: '/media/userlogos/2024/10/02/markos.jpeg',
                           url: 'https://demo.mediacms.io/view?m=zK2nirNLC',
                           poster_url:
-                              'https://demo.mediacms.io/media/original/thumbnails/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb_btbR39g.20250604_080632.mp4.jpg',
+                              '/media/original/thumbnails/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb_btbR39g.20250604_080632.mp4.jpg',
                           chapter_data: [
                               { startTime: '00:00:00.000', endTime: '00:00:08.295', chapterTitle: 'A1 test' },
                               { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
@@ -1288,7 +1288,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
             url: mediaData.data?.url || '',
-            poster: mediaData.data?.poster_url || '',
+            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
             previewSprite: mediaData?.previewSprite || {},
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
