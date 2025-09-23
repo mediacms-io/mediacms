@@ -1,7 +1,7 @@
-@use 'sass:math';
-@use './includes/mixins' as *;
-@use './includes/theme_variables' as *;
-@import 'video.js/dist/video-js.css';
+@use "sass:math";
+@use "./includes/mixins" as *;
+@use "./includes/theme_variables" as *;
+@import "video.js/dist/video-js.css";
 
 @keyframes up-next-circle-countdown {
     from {
@@ -66,29 +66,30 @@
 
 .video-js.vjs-mediacms {
     // Enhanced styling for video player
-    border-radius: 12px !important;
+    border-radius: 0 !important;
     overflow: hidden !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     outline: none !important; /* Remove default focus outline */
 
     // Focus styles for keyboard controls
     &:focus {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+        box-shadow:
+            0 4px 12px rgba(0, 0, 0, 0.15),
             0 0 0 3px rgba(0, 122, 204, 0.3) !important;
     }
 
     video {
         outline: none !important;
-        border-radius: 12px !important;
+        border-radius: 0 !important;
     }
 
     .vjs-poster {
-        border-radius: 12px !important;
+        border-radius: 0 !important;
     }
 
     .vjs-control-bar {
-        border-bottom-left-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
     }
 
     .vjs-corner-layer.vjs-corner-top-left {
@@ -420,8 +421,8 @@
 
         > * ~ * {
             &:before {
-                content: '•';
-                content: '\2022';
+                content: "•";
+                content: "\2022";
                 margin: 0 4px;
             }
         }
@@ -451,7 +452,7 @@
         }
 
         &:before {
-            content: '';
+            content: "";
             position: absolute;
             top: -100%;
             left: -100%;
@@ -670,31 +671,11 @@
         .more-media-item-content {
             height: 100%;
             padding: 10px;
-            background-image: -moz-linear-gradient(
-                top,
-                rgba(#0c0c0c, 0.8) 0,
-                transparent 100px
-            );
-            background-image: -ms-linear-gradient(
-                top,
-                rgba(#0c0c0c, 0.8) 0,
-                transparent 100px
-            );
-            background-image: -o-linear-gradient(
-                top,
-                rgba(#0c0c0c, 0.8) 0,
-                transparent 100px
-            );
-            background-image: -webkit-linear-gradient(
-                top,
-                rgba(#0c0c0c, 0.8) 0,
-                transparent 100px
-            );
-            background-image: linear-gradient(
-                to bottom,
-                rgba(#0c0c0c, 0.8) 0,
-                transparent 100px
-            );
+            background-image: -moz-linear-gradient(top, rgba(#0c0c0c, 0.8) 0, transparent 100px);
+            background-image: -ms-linear-gradient(top, rgba(#0c0c0c, 0.8) 0, transparent 100px);
+            background-image: -o-linear-gradient(top, rgba(#0c0c0c, 0.8) 0, transparent 100px);
+            background-image: -webkit-linear-gradient(top, rgba(#0c0c0c, 0.8) 0, transparent 100px);
+            background-image: linear-gradient(to bottom, rgba(#0c0c0c, 0.8) 0, transparent 100px);
         }
 
         .more-media-item-content,
@@ -820,10 +801,7 @@
     .vjs-progress-control {
         .vjs-progress-holder {
             .vjs-play-progress {
-                background-color: var(
-                    --brand-color,
-                    var(--default-brand-color)
-                );
+                background-color: var(--brand-color, var(--default-brand-color));
 
                 &:before {
                     color: var(--brand-color, var(--default-brand-color));
@@ -1031,7 +1009,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(59, 89, 152);
-                    background-image: url('../../../images/social-media-icons/fb-logo.png');
+                    background-image: url("../../../images/social-media-icons/fb-logo.png");
                 }
             }
         }
@@ -1041,7 +1019,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(29, 161, 242);
-                    background-image: url('../../../images/social-media-icons/twitter-logo.png');
+                    background-image: url("../../../images/social-media-icons/twitter-logo.png");
                 }
             }
         }
@@ -1051,7 +1029,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(255, 69, 0);
-                    background-image: url('../../../images/social-media-icons/reddit-logo.png');
+                    background-image: url("../../../images/social-media-icons/reddit-logo.png");
                 }
             }
         }
@@ -1061,7 +1039,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(53, 70, 92);
-                    background-image: url('../../../images/social-media-icons/tumblr-logo.png');
+                    background-image: url("../../../images/social-media-icons/tumblr-logo.png");
                 }
             }
         }
@@ -1071,7 +1049,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(189, 8, 28);
-                    background-image: url('../../../images/social-media-icons/pinterest-logo.png');
+                    background-image: url("../../../images/social-media-icons/pinterest-logo.png");
                 }
             }
         }
@@ -1081,7 +1059,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(70, 128, 194);
-                    background-image: url('../../../images/social-media-icons/vk-logo.png');
+                    background-image: url("../../../images/social-media-icons/vk-logo.png");
                 }
             }
         }
@@ -1091,7 +1069,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(0, 119, 181);
-                    background-image: url('../../../images/social-media-icons/linkedin-logo.png');
+                    background-image: url("../../../images/social-media-icons/linkedin-logo.png");
                 }
             }
         }
@@ -1101,7 +1079,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(255, 130, 38);
-                    background-image: url('../../../images/social-media-icons/mix-logo.png');
+                    background-image: url("../../../images/social-media-icons/mix-logo.png");
                 }
             }
         }
@@ -1120,7 +1098,7 @@ button.share-video-btn {
             button {
                 > *:first-child {
                     background-color: rgb(37, 211, 102);
-                    background-image: url('../../../images/social-media-icons/whatsapp-logo.png');
+                    background-image: url("../../../images/social-media-icons/whatsapp-logo.png");
                 }
             }
         }
@@ -1131,7 +1109,7 @@ button.share-video-btn {
                 > *:first-child {
                     background-color: rgb(0, 136, 204);
                     background-position: 11px;
-                    background-image: url('../../../images/social-media-icons/telegram-logo.png');
+                    background-image: url("../../../images/social-media-icons/telegram-logo.png");
                 }
             }
         }
