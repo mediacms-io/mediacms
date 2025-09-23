@@ -16,10 +16,10 @@ html {
     outline: none !important;
 }
 .video-js .vjs-poster {
-    border-radius: 12px !important;
+    border-radius: 0 !important;
 }
 .video-js video {
-    border-radius: 12px !important;
+    border-radius: 0 !important;
 }
 
 /* Fullscreen video styles for embedded video player */
@@ -833,14 +833,14 @@ button {
 .video-js {
     padding: 0;
     height: 100% !important;
-    border-radius: 12px;
+    border-radius: 0;
     outline: none; /* Remove default browser focus outline */
 }
 
 /* Custom focus styles for video player */
 .video-js:focus {
     box-shadow: 0 0 0 3px rgba(25, 153, 50, 0.5);
-    border-radius: 12px;
+    border-radius: 0;
 }
 
 /* Ensure video player is focusable */
@@ -959,7 +959,7 @@ button {
     bottom: 60px;
     width: min(360px, calc(100% - 20px));
     border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
+    border-radius: 8px;
     height: calc(100% - 80px);
     background: rgba(18, 18, 18, 0.96);
     backdrop-filter: blur(6px);
