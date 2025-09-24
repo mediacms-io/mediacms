@@ -967,7 +967,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '240_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/iframes.m3u8',
                               '480_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/iframes.m3u8',
                               '1080_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-1/stream.m3u8',
-                              '720_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/stream.m3u8',
+                              '720_playlist':
+                                  'https://demo.mediacms.io/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/stream.m3u8',
                               '360_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-3/stream.m3u8',
                               '240_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/stream.m3u8',
                               '480_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/stream.m3u8',
@@ -1037,6 +1038,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       },
 
                       // other
+                      useRoundedCorners: false,
                       previewSprite: {
                           url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
@@ -1290,6 +1292,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             url: mediaData.data?.url || '',
             poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
             previewSprite: mediaData?.previewSprite || {},
+            useRoundedCorners: mediaData?.useRoundedCorners,
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
             urlAutoplay: mediaData?.urlAutoplay || true,
@@ -2754,7 +2757,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         };
     }, []);
 
-    return <video ref={videoRef} id={videoId} className="video-js vjs-default-skin" tabIndex="0" />;
+    return (
+        <video
+            ref={videoRef}
+            id={videoId}
+            className={`video-js vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
+            tabIndex="0"
+        />
+    );
 }
 
 export default VideoJSPlayer;
