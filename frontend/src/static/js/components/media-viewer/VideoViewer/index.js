@@ -13,8 +13,6 @@ import {
 // import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
 import VideoJSEmbed from '../../VideoJS/VideoJSEmbed';
 
-import '../VideoViewer.scss';
-
 function filterVideoEncoding(encoding_status) {
     switch (encoding_status) {
         case 'running_X':
