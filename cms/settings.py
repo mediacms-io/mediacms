@@ -105,6 +105,16 @@ USE_L10N = True
 USE_TZ = True
 SITE_ID = 1
 
+# these are the logos by default. SVG gets a priority
+# which means it will be used if available
+# if you want to override them, set the new paths here
+# and place the files on the static/images folder
+PORTAL_LOGO_DARK_SVG = "/static/images/logo_dark.svg"
+PORTAL_LOGO_DARK_PNG = "/static/images/logo_dark.png"
+PORTAL_LOGO_LIGHT_SVG = "/static/images/logo_light.svg"
+PORTAL_LOGO_LIGHT_PNG = "/static/images/logo_dark.png"
+
+
 # protection agains anonymous users
 # per ip address limit, for actions as like/dislike/report
 TIME_TO_ACTION_ANONYMOUS = 10 * 60
