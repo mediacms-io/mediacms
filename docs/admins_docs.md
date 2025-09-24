@@ -240,7 +240,12 @@ Docker Compose installation: edit `deploy/docker/local_settings.py`, make a chan
 
 ### 5.1 Change portal logo
 
-Set a new svg file for the white theme (`static/images/logo_dark.svg`) or the dark theme (`static/images/logo_light.svg`)
+Find the default svg files for the white theme on `static/images/logo_dark.svg` and for the dark theme on `static/images/logo_light.svg`
+You can specify new svg paths to override by editing the `PORTAL_LOGO_DARK_SVG` and `PORTAL_LOGO_LIGHT_SVG` variables in `settings.py`.
+
+You can also use custom pngs, by setting the variables `PORTAL_LOGO_DARK_PNG` and `PORTAL_LOGO_LIGHT_PNG` in `settings.py`. The svg files have priority over png files, so if both are set, svg files will be used.
+
+In any case, make sure the files are placed on the static/images folder.
 
 ### 5.2 Set global portal title
 
