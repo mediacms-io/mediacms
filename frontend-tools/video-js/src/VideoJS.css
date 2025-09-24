@@ -12,14 +12,25 @@ html {
     text-decoration: none !important;
 }
 
+.video-js.video-js-rounded-corners,
+.video-js.video-js-rounded-corners.vjs-has-started,
+.video-js.video-js-rounded-corners.vjs-fullscreen,
+.video-js.video-js-rounded-corners.vjs-paused,
+.video-js.video-js-rounded-corners.vjs-ended,
+.video-js.video-js-rounded-corners.chapters-open {
+    /*  background-color: transparent !important; */
+    outline: none !important;
+    border-radius: 12px !important;
+}
+
 .video-js video {
     outline: none !important;
 }
-.video-js .vjs-poster {
-    border-radius: 0 !important;
+.video-js.video-js-rounded-corners .vjs-poster {
+    border-radius: 12px !important;
 }
-.video-js video {
-    border-radius: 0 !important;
+.video-js.video-js-rounded-corners video {
+    border-radius: 12px !important;
 }
 
 /* Fullscreen video styles for embedded video player */
@@ -50,7 +61,7 @@ html {
 }
 
 /* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
-.video-js::after {
+.video-js.video-js-rounded-corners::after {
     content: "";
     position: absolute;
     bottom: 0;
@@ -72,9 +83,11 @@ html {
 }
 
 /* Show overlay when controls are active - YouTube style */
-.video-js.vjs-user-active::after,
-.video-js.vjs-paused::after,
-.video-js.vjs-ended::after {
+.video-js.video-js-rounded-corners.vjs-user-active::after,
+.video-js.video-js-rounded-corners.vjs-paused::after,
+.video-js.video-js-rounded-corners.vjs-ended::after {
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
     opacity: 1;
 }
 
@@ -833,14 +846,7 @@ button {
 .video-js {
     padding: 0;
     height: 100% !important;
-    border-radius: 0;
     outline: none; /* Remove default browser focus outline */
-}
-
-/* Custom focus styles for video player */
-.video-js:focus {
-    /* box-shadow: 0 0 0 3px rgba(25, 153, 50, 0.5); */
-    border-radius: 0;
 }
 
 /* Ensure video player is focusable */
@@ -1558,6 +1564,10 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
     .vjs-chapter-floating-tooltip {
         font-size: 11px !important;
+    }
+    .video-js.video-js-rounded-corners .custom-chapters-overlay {
+        border-bottom-left-radius: 12px !important;
+        border-bottom-right-radius: 12px !important;
     }
     .custom-chapters-overlay .video-chapter {
         right: 10px;
