@@ -28,4 +28,9 @@
 		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="preload" as="style">
 		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="stylesheet">
 
+		{% for css_path in EXTRA_CSS_PATHS %}
+		<link href="{{ css_path }}?v={{ VERSION }}" rel="preload" as="style">
+		<link href="{{ css_path }}?v={{ VERSION }}" rel="stylesheet">
+		{% endfor %}
+
 		<link href="{% static "js/_commons.js" %}?v={{ VERSION }}" rel="preload" as="script">
