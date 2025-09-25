@@ -1100,10 +1100,69 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         };
     }, []);
 
+    // Helper function to check if chapters represent a meaningful chapter structure
+    // Returns false if there's only one chapter covering the entire video duration with a generic title
+    const hasRealChapters = useMemo(() => {
+        return (rawChaptersData, videoDuration) => {
+            if (!rawChaptersData || !Array.isArray(rawChaptersData) || rawChaptersData.length === 0) {
+                return false;
+            }
+
+            // If there's more than one chapter, assume it's a real chapter structure
+            if (rawChaptersData.length > 1) {
+                return true;
+            }
+
+            // If there's only one chapter, check if it's a generic segment marker
+            if (rawChaptersData.length === 1) {
+                const chapter = rawChaptersData[0];
+                const startTime = convertTimeStringToSeconds(chapter.startTime);
+                const endTime = convertTimeStringToSeconds(chapter.endTime);
+
+                // Check if it's a generic segment with common auto-generated titles
+                const isGenericTitle = chapter.chapterTitle
+                    ?.toLowerCase()
+                    .match(/^(segment|video|full video|chapter|part)$/);
+
+                // If we have video duration info, check if this single chapter spans the whole video
+                if (videoDuration && videoDuration > 0) {
+                    // Allow for small timing differences (1 second tolerance)
+                    const tolerance = 1;
+                    const isFullVideo = startTime <= tolerance && Math.abs(endTime - videoDuration) <= tolerance;
+
+                    // Only hide if it's both full video AND has a generic title
+                    if (isFullVideo && isGenericTitle) {
+                        return false;
+                    }
+
+                    // If it doesn't span the full video, it's a real chapter
+                    if (!isFullVideo) {
+                        return true;
+                    }
+                }
+
+                // Fallback: If start time is 0 and the title is generic, assume it's not a real chapter
+                if (startTime === 0 && isGenericTitle) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+    }, []);
+
     // Memoized chapters data conversion
     const chaptersData = useMemo(() => {
         if (mediaData?.data?.chapter_data && mediaData?.data?.chapter_data.length > 0) {
-            return convertChaptersData(mediaData?.data?.chapter_data);
+            const videoDuration = mediaData?.data?.duration || null;
+
+            // Check if we have real chapters or just a single segment
+            if (hasRealChapters(mediaData.data.chapter_data, videoDuration)) {
+                return convertChaptersData(mediaData?.data?.chapter_data);
+            } else {
+                // Return empty array if it's just a single segment covering the whole video
+                return [];
+            }
         }
         return isDevMode
             ? [
@@ -1135,7 +1194,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                   chapterTitle: chapter.chapterTitle,
               }))
             : [];
-    }, [mediaData?.data?.chapter_data, isDevMode, convertChaptersData]);
+    }, [mediaData?.data?.chapter_data, mediaData?.data?.duration, isDevMode, convertChaptersData, hasRealChapters]);
 
     // Helper function to determine MIME type based on file extension or media type
     const getMimeType = (url, mediaType) => {
@@ -1751,8 +1810,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Custom control spacer
                             customControlSpacer: true,
 
-                            // Chapters menu button (moved after subtitles/captions)
-                            chaptersButton: true,
+                            // Chapters menu button (only show if we have real chapters)
+                            chaptersButton: chaptersData && chaptersData.length > 0,
                         },
 
                         // ===== HTML5 TECH OPTIONS =====
@@ -2095,7 +2154,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     userPreferences: userPreferences.current,
                                 });
                                 // Add it before the chapters button (or at a suitable position)
-                                const chaptersButtonIndex = controlBar.children().indexOf(chaptersButton);
+                                const chaptersButtonIndex = chaptersButton
+                                    ? controlBar.children().indexOf(chaptersButton)
+                                    : -1;
                                 const insertIndex =
                                     chaptersButtonIndex > 0 ? chaptersButtonIndex : controlBar.children().length - 3;
                                 controlBar.addChild(autoplayToggleButton, {}, insertIndex);
