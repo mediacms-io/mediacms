@@ -26,9 +26,6 @@ A modern browser-based chapter editing tool built with React and TypeScript that
 - React 18
 - TypeScript
 - Vite
-- Tailwind CSS
-- Express (for development server)
-- Drizzle ORM
 
 ## Installation
 
