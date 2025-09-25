@@ -1767,11 +1767,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
-    background: rgba(0, 0, 0, 0.7) !important;
     padding: 8px 12px !important;
-    border-radius: 8px !important;
-    backdrop-filter: blur(4px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     max-width: calc(100% - 40px) !important;
     box-sizing: border-box !important;
     transition: opacity 0.3s ease-in-out !important;
@@ -1822,7 +1818,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 .vjs-embed-info-overlay .embed-title-container a:hover {
-    color: #009931 !important;
+    color: #ccc !important;
 }
 
 /* Responsive styles for smaller screens */
