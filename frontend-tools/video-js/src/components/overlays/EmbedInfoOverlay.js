@@ -39,11 +39,7 @@ class EmbedInfoOverlay extends Component {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.7);
             padding: 8px 12px;
-            border-radius: 8px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
             max-width: calc(100% - 40px);
             box-sizing: border-box;
             transition: opacity 0.3s ease-in-out;
@@ -148,7 +144,7 @@ class EmbedInfoOverlay extends Component {
 
             // Add hover effect
             titleLink.addEventListener('mouseenter', () => {
-                titleLink.style.color = '#009931';
+                titleLink.style.color = '#ccc';
             });
 
             titleLink.addEventListener('mouseleave', () => {
@@ -190,24 +186,34 @@ class EmbedInfoOverlay extends Component {
         // Show/hide with controls
         player.on('useractive', () => {
             overlay.style.opacity = '1';
+            overlay.style.visibility = 'visible';
         });
 
         player.on('userinactive', () => {
-            overlay.style.opacity = '0.7';
+            overlay.style.opacity = '0';
+            overlay.style.visibility = 'hidden';
         });
 
         // Always show when paused
         player.on('pause', () => {
             overlay.style.opacity = '1';
+            overlay.style.visibility = 'visible';
         });
 
         // Hide during fullscreen controls fade
         player.on('fullscreenchange', () => {
             setTimeout(() => {
                 if (player.isFullscreen()) {
-                    overlay.style.opacity = player.userActive() ? '1' : '0.7';
+                    if (player.userActive()) {
+                        overlay.style.opacity = '1';
+                        overlay.style.visibility = 'visible';
+                    } else {
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    }
                 } else {
                     overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible';
                 }
             }, 100);
         });
