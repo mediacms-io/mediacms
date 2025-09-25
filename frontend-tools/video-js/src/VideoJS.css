@@ -12,12 +12,12 @@ html {
     text-decoration: none !important;
 }
 
-.video-js.video-js-rounded-corners,
-.video-js.video-js-rounded-corners.vjs-has-started,
-.video-js.video-js-rounded-corners.vjs-fullscreen,
-.video-js.video-js-rounded-corners.vjs-paused,
-.video-js.video-js-rounded-corners.vjs-ended,
-.video-js.video-js-rounded-corners.chapters-open {
+.video-js-root-main .video-js.video-js-rounded-corners,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-paused,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-ended,
+.video-js-root-main .video-js.video-js-rounded-corners.chapters-open {
     /*  background-color: transparent !important; */
     outline: none !important;
     border-radius: 12px !important;
@@ -26,10 +26,10 @@ html {
 .video-js video {
     outline: none !important;
 }
-.video-js.video-js-rounded-corners .vjs-poster {
+.video-js-root-main .video-js.video-js-rounded-corners .vjs-poster {
     border-radius: 12px !important;
 }
-.video-js.video-js-rounded-corners video {
+.video-js-root-main .video-js.video-js-rounded-corners video {
     border-radius: 12px !important;
 }
 
@@ -61,7 +61,7 @@ html {
 }
 
 /* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
-.video-js.video-js-rounded-corners::after {
+.video-js-root-main .video-js.video-js-rounded-corners::after {
     content: "";
     position: absolute;
     bottom: 0;
@@ -83,9 +83,9 @@ html {
 }
 
 /* Show overlay when controls are active - YouTube style */
-.video-js.video-js-rounded-corners.vjs-user-active::after,
-.video-js.video-js-rounded-corners.vjs-paused::after,
-.video-js.video-js-rounded-corners.vjs-ended::after {
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-user-active::after,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-paused::after,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-ended::after {
     border-bottom-left-radius: 12px !important;
     border-bottom-right-radius: 12px !important;
     opacity: 1;
@@ -1572,7 +1572,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
     .vjs-chapter-floating-tooltip {
         font-size: 11px !important;
     }
-    .video-js.video-js-rounded-corners .custom-chapters-overlay {
+    .video-js-root-main .video-js.video-js-rounded-corners .custom-chapters-overlay {
         border-bottom-left-radius: 12px !important;
         border-bottom-right-radius: 12px !important;
     }
