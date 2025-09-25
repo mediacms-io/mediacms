@@ -215,8 +215,12 @@ class ChapterMarkers extends Component {
             const endTime = formatTime(currentChapter.endTime);
             // const timeAtPosition = formatTime(currentTime);
 
-            // Update text content without rebuilding DOM
-            this.chapterTitle.textContent = currentChapter.chapterTitle;
+            // Update text content without rebuilding DOM - truncate if too long
+            const truncatedTitle =
+                currentChapter.chapterTitle.length > 30
+                    ? currentChapter.chapterTitle.substring(0, 30) + '...'
+                    : currentChapter.chapterTitle;
+            this.chapterTitle.textContent = truncatedTitle;
             this.chapterInfo.textContent = `${startTime} - ${endTime}`;
             // this.positionInfo.textContent = `Position: ${timeAtPosition}`;
 
@@ -338,7 +342,9 @@ class ChapterMarkers extends Component {
         const tooltip = videojs.dom.createEl('div', {
             className: 'vjs-chapter-marker-tooltip',
         });
-        tooltip.textContent = cue.chapterTitle;
+        // Truncate tooltip text if too long
+        const truncatedTooltipTitle = cue.text.length > 30 ? cue.text.substring(0, 30) + '...' : cue.text;
+        tooltip.textContent = truncatedTooltipTitle;
         marker.appendChild(tooltip);
 
         // Add click handler to jump to chapter
