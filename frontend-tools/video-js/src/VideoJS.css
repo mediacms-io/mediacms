@@ -1283,6 +1283,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
 
 .vjs-volume-panel {
     gap: 5px;
+    z-index: 1000 !important;
 }
 .video-js .vjs-play-progress.vjs-slider-bar + .vjs-time-tooltip {
     padding: 0;
