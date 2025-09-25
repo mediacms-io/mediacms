@@ -1039,6 +1039,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                       // other
                       useRoundedCorners: false,
+                      isPlayList: true,
                       previewSprite: {
                           url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
@@ -1293,6 +1294,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
             previewSprite: mediaData?.previewSprite || {},
             useRoundedCorners: mediaData?.useRoundedCorners,
+            isPlayList: mediaData?.isPlayList,
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
             urlAutoplay: mediaData?.urlAutoplay || true,
@@ -2538,56 +2540,70 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         const hasNextVideo = mediaData.nextLink !== null;
 
                         if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
-                            // Get next video data for countdown display - find the next video in related videos
-                            let nextVideoData = {
-                                title: 'Next Video',
-                                author: '',
-                                duration: 0,
-                                thumbnail: '',
-                            };
+                            // If it's a playlist, skip countdown and play directly
+                            if (currentVideo.isPlayList) {
+                                // Clean up any existing overlays
+                                if (endScreen) {
+                                    playerRef.current.removeChild(endScreen);
+                                    endScreen = null;
+                                }
+                                if (autoplayCountdown) {
+                                    playerRef.current.removeChild(autoplayCountdown);
+                                    autoplayCountdown = null;
+                                }
 
-                            // Try to find the next video by URL matching or just use the first related video
-                            if (relatedVideos.length > 0) {
-                                // For now, use the first related video as the next video
-                                // In a real implementation, you might want to find the specific next video
-                                const nextVideo = relatedVideos[0];
-                                nextVideoData = {
-                                    title: nextVideo.title || 'Next Video',
-                                    author: nextVideo.author || '',
-                                    duration: nextVideo.duration || 0,
-                                    thumbnail: nextVideo.thumbnail || '',
+                                // Play next video directly without countdown
+                                goToNextVideo();
+                            } else {
+                                // Get next video data for countdown display - find the next video in related videos
+                                let nextVideoData = {
+                                    title: 'Next Video',
+                                    author: '',
+                                    duration: 0,
+                                    thumbnail: '',
                                 };
-                            }
 
-                            // Clean up any existing overlays
-                            if (endScreen) {
-                                playerRef.current.removeChild(endScreen);
-                                endScreen = null;
-                            }
-                            if (autoplayCountdown) {
-                                playerRef.current.removeChild(autoplayCountdown);
-                                autoplayCountdown = null;
-                            }
+                                // Try to find the next video by URL matching or just use the first related video
+                                if (relatedVideos.length > 0) {
+                                    const nextVideo = relatedVideos[0];
+                                    nextVideoData = {
+                                        title: nextVideo.title || 'Next Video',
+                                        author: nextVideo.author || '',
+                                        duration: nextVideo.duration || 0,
+                                        thumbnail: nextVideo.thumbnail || '',
+                                    };
+                                }
 
-                            // Show autoplay countdown
-                            autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
-                                nextVideoData: nextVideoData,
-                                countdownSeconds: 5,
-                                onPlayNext: () => {
-                                    goToNextVideo();
-                                },
-                                onCancel: () => {
-                                    // Hide countdown and show end screen instead
-                                    if (autoplayCountdown) {
-                                        playerRef.current.removeChild(autoplayCountdown);
-                                        autoplayCountdown = null;
-                                    }
-                                    showEndScreen();
-                                },
-                            });
+                                // Clean up any existing overlays
+                                if (endScreen) {
+                                    playerRef.current.removeChild(endScreen);
+                                    endScreen = null;
+                                }
+                                if (autoplayCountdown) {
+                                    playerRef.current.removeChild(autoplayCountdown);
+                                    autoplayCountdown = null;
+                                }
 
-                            playerRef.current.addChild(autoplayCountdown);
-                            autoplayCountdown.startCountdown();
+                                // Show autoplay countdown
+                                autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
+                                    nextVideoData: nextVideoData,
+                                    countdownSeconds: 500,
+                                    onPlayNext: () => {
+                                        goToNextVideo();
+                                    },
+                                    onCancel: () => {
+                                        // Hide countdown and show end screen instead
+                                        if (autoplayCountdown) {
+                                            playerRef.current.removeChild(autoplayCountdown);
+                                            autoplayCountdown = null;
+                                        }
+                                        showEndScreen();
+                                    },
+                                });
+
+                                playerRef.current.addChild(autoplayCountdown);
+                                autoplayCountdown.startCountdown();
+                            }
                         } else {
                             // Autoplay disabled or no next video - show regular end screen
                             showEndScreen();
