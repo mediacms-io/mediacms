@@ -38,9 +38,9 @@ class AutoplayToggleButton extends Button {
 
         // Set initial icon state directly
         if (this.isAutoplayEnabled) {
-            this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
+            this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
         } else {
-            this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
+            this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
         }
 
         // Create control text span
@@ -67,7 +67,7 @@ class AutoplayToggleButton extends Button {
         // After fade-out complete, update innerHTML and fade back in
         setTimeout(() => {
             if (this.isAutoplayEnabled) {
-                this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
+                this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
                 if (this.el()) {
                     this.el().title = 'Autoplay is on';
                     this.el().setAttribute('aria-label', 'Autoplay is on');
@@ -75,7 +75,7 @@ class AutoplayToggleButton extends Button {
                     if (controlText) controlText.textContent = 'Autoplay is on';
                 }
             } else {
-                this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
+                this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
                 if (this.el()) {
                     this.el().title = 'Autoplay is off';
                     this.el().setAttribute('aria-label', 'Autoplay is off');
