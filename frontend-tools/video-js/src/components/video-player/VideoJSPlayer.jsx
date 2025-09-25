@@ -43,7 +43,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           poster_url:
                               '/media/original/thumbnails/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb_btbR39g.20250604_080632.mp4.jpg',
                           chapter_data: [
-                              { startTime: '00:00:00.000', endTime: '00:00:08.295', chapterTitle: 'A1 test' },
+                              {
+                                  startTime: '00:00:00.000',
+                                  endTime: '00:00:08.295',
+                                  chapterTitle: 'A1 Lorem ipsum dolor sit amet consectetur adipisicing elit.',
+                              },
                               { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
                               {
                                   startTime: '00:00:48.590',
