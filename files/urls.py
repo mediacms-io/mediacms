@@ -115,7 +115,7 @@ urlpatterns = [
 
 
 if settings.USERS_NEEDS_TO_BE_APPROVED:
-    urlpatterns.append(re_path(r"^approval_required", views.approval_required, name="approval_required"))
+    urlpatterns.append(re_path(r"^approval_required/", views.approval_required, name="approval_required"))
 
 if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
