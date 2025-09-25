@@ -83,6 +83,7 @@
     gap: 3px;
     position: relative;
     z-index: 2500; /* Higher z-index to ensure buttons appear above other elements */
+    margin-top: 5px;
 }
 
 .tooltip-action-btn {
