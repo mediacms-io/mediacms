@@ -1,4 +1,6 @@
 import videojs from 'video.js';
+import autoPlayIconUrl from '../../assets/icons/autoplay-video-js-play.svg';
+import autoPauseIconUrl from '../../assets/icons/autoplay-video-js-pause.svg';
 
 const Button = videojs.getComponent('Button');
 
@@ -36,9 +38,9 @@ class AutoplayToggleButton extends Button {
 
         // Set initial icon state directly
         if (this.isAutoplayEnabled) {
-            this.iconSpan.innerHTML = `<span style="font-size: 1.2em; color: #ff4444;">●</span>`;
+            this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
         } else {
-            this.iconSpan.innerHTML = `<span style="font-size: 1.2em; color: #ccc;">○</span>`;
+            this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
         }
 
         // Create control text span
@@ -65,13 +67,7 @@ class AutoplayToggleButton extends Button {
         // After fade-out complete, update innerHTML and fade back in
         setTimeout(() => {
             if (this.isAutoplayEnabled) {
-                this.iconSpan.innerHTML = `<span style="transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ff4444;">
-                <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect y="18" width="180" height="64" rx="32" fill="white"/>
-                    <rect x="98" width="100" height="100" rx="50" fill="white"/>
-                    <path d="M133 69L163 50L133 31V69ZM138.455 59.0929V40.9071L152.773 50L138.455 59.0929Z" fill="#1C1B1F"/>
-                </svg>
-            </span>`;
+                this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
                 if (this.el()) {
                     this.el().title = 'Autoplay is on';
                     this.el().setAttribute('aria-label', 'Autoplay is on');
@@ -79,13 +75,7 @@ class AutoplayToggleButton extends Button {
                     if (controlText) controlText.textContent = 'Autoplay is on';
                 }
             } else {
-                this.iconSpan.innerHTML = `<span style="transform: inherit !important; margin: 20px 0 0; font-size: 1.2em; color: #ccc;">
-                <svg width="198" height="100" viewBox="0 0 198 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="18" y="18" width="180" height="64" rx="32" fill="white"/>
-                    <rect width="100" height="100" rx="50" fill="white"/>
-                    <path d="M52.1429 65V35H65V65H52.1429ZM35 65V35H47.8571V65H35ZM56.4286 60.7143H60.7143V39.2857H56.4286V60.7143ZM39.2857 60.7143H43.5714V39.2857H39.2857V60.7143Z" fill="#1C1B1F"/>
-                </svg>
-            </span>`;
+                this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
                 if (this.el()) {
                     this.el().title = 'Autoplay is off';
                     this.el().setAttribute('aria-label', 'Autoplay is off');

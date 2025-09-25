@@ -163,6 +163,13 @@ html {
     height: 100%;
     display: block;
 }
+.vjs-autoplay-toggle.vjs-control.vjs-button,
+.vjs-picture-in-picture-control.vjs-control.vjs-button,
+.vjs-settings-button.vjs-control.vjs-button {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
 .vjs-next-video-control .vjs-icon-placeholder {
     width: 1.2em;
     height: 1.2em;
@@ -636,7 +643,6 @@ html {
     min-width: 32px !important;
     height: 32px !important;
     padding: 0 !important;
-    margin: 0 2px !important;
     border: none !important;
     background: transparent !important;
     color: inherit !important;
