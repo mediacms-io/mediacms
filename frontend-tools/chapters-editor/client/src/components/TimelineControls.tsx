@@ -167,27 +167,12 @@ const TimelineControls = ({
     const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
     const clipSegmentsRef = useRef(clipSegments);
     
-    // Redirect timer refs
-    const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Keep clipSegmentsRef updated
     useEffect(() => {
         clipSegmentsRef.current = clipSegments;
     }, [clipSegments]);
 
-    // Function to cancel redirect timers
-    const cancelRedirect = useCallback(() => {
-        if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-            countdownIntervalRef.current = null;
-        }
-        if (redirectTimeoutRef.current) {
-            clearTimeout(redirectTimeoutRef.current);
-            redirectTimeoutRef.current = null;
-        }
-        logger.debug('Redirect cancelled by user');
-    }, []);
 
     // Auto-save function
     const performAutoSave = useCallback(async () => {
@@ -2498,44 +2483,6 @@ const TimelineControls = ({
         }
     }, [redirectUrl, saveType, showSuccessModal]);
 
-    // Add a useEffect for auto-redirection
-    useEffect(() => {
-        // Clear any existing timers first
-        cancelRedirect();
-
-        if (showSuccessModal && redirectUrl) {
-            // Start countdown timer
-            let secondsLeft = 10;
-
-            // Update the countdown every second
-            countdownIntervalRef.current = setInterval(() => {
-                secondsLeft--;
-                const countdownElement = document.querySelector('.countdown');
-                if (countdownElement) {
-                    countdownElement.textContent = secondsLeft.toString();
-                }
-
-                if (secondsLeft <= 0) {
-                    if (countdownIntervalRef.current) {
-                        clearInterval(countdownIntervalRef.current);
-                        countdownIntervalRef.current = null;
-                    }
-                }
-            }, 1000);
-
-            // Set redirect timeout
-            redirectTimeoutRef.current = setTimeout(() => {
-                // Redirect to the URL
-                logger.debug('Automatically redirecting to:', redirectUrl);
-                window.location.href = redirectUrl;
-            }, 10000); // 10 seconds
-        }
-
-        // Cleanup on unmount
-        return () => {
-            cancelRedirect();
-        };
-    }, [showSuccessModal, redirectUrl, cancelRedirect]);
 
     // Note: Removed the conflicting redirect effect - redirect is now handled by cancelRedirect function
 
@@ -4480,7 +4427,6 @@ const TimelineControls = ({
                     <Modal
                         isOpen={showSuccessModal}
                         onClose={() => {
-                            cancelRedirect();
                             setShowSuccessModal(false);
                         }}
                         title="Video Edited Successfully"
@@ -4491,13 +4437,11 @@ const TimelineControls = ({
               </p> */}
 
                             <p className="modal-message text-center redirect-message">
-                                You will be redirected to your{' '}
+                                <span style={{ fontWeight: 'bold' }}>Your chapters have been saved successfully!</span><br />
                                 <a href={redirectUrl} className="media-page-link" style={mediaPageLinkStyles}>
-                                    media page
+                                    Click here to navigate to the media page
                                 </a>
-                                {' in '}
-                                <span className="countdown">10</span> seconds. Your chapters have been saved
-                                successfully.
+                                {' '}or close this window to continue editing the chapters.
                             </p>
                         </div>
                     </Modal>
