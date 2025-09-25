@@ -16,6 +16,7 @@ import React, { useEffect, useRef } from 'react';
 const VideoJSEmbed = ({
     data,
     useRoundedCorners,
+    isPlayList,
     playerVolume,
     playerSoundMuted,
     videoQuality,
@@ -66,6 +67,7 @@ const VideoJSEmbed = ({
             window.MEDIA_DATA = {
                 data: data || {}, 
                 useRoundedCorners: useRoundedCorners,
+                isPlayList: isPlayList,
                 playerVolume: playerVolume || 0.5,
                 playerSoundMuted: playerSoundMuted || (urlMuted === '1'),
                 videoQuality: videoQuality || 'auto',
