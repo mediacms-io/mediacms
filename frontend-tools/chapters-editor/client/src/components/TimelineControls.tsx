@@ -204,8 +204,6 @@ const TimelineControls = ({
 
             const response = await autoSaveVideo(finalMediaId, { chapters });
 
-            console.log('response autoSaveVideo edw', response);
-
             if (response.success === true) {
                 logger.debug('Auto-save successful');
                 // Format the timestamp for display
@@ -256,7 +254,6 @@ const TimelineControls = ({
 
     // Update editing title when selected segment changes
     useEffect(() => {
-        console.log('edw selectedSegment', selectedSegment);
         if (selectedSegment) {
             setEditingChapterTitle(selectedSegment.chapterTitle || '');
         } else {
@@ -971,38 +968,10 @@ const TimelineControls = ({
         const loadSavedSegments = () => {
             // Get savedSegments directly from window.MEDIA_DATA
             let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || null;
-            console.log('MEDIA_DATA edw1', (window as any).MEDIA_DATA);
-            console.log('savedData edw1', savedData);
-
-            // If no saved segments, use default segments
-           /*  if (!savedData) {
-                logger.debug('No saved segments found in MEDIA_DATA, using default segments');
-                savedData = {
-                    chapters: [
-                        {
-                            startTime: '00:00:00.000',
-                            endTime: '00:00:10.000',
-                            chapterTitle: 'Chapter 1 (from saved data)',
-                        },
-                        {
-                            startTime: '00:00:12.000',
-                            endTime: '00:00:17.000',
-                            chapterTitle: 'Chapter 2 (from saved data)',
-                        },
-                        {
-                            startTime: '00:00:20.000',
-                            endTime: '00:00:30.000',
-                            chapterTitle: 'Chapter 3 (from saved data)',
-                        },
-                    ],
-                    updated_at: '2025-06-24 14:59:14',
-                };
-            } */
 
             try {
                 if (savedData && savedData.chapters && savedData.chapters.length > 0) {
                     logger.debug('Found saved segments:', savedData);
-                    console.log('savedData edw', savedData);
 
                     // Convert the saved segments to the format expected by the component
                     const convertedSegments: Segment[] = savedData.chapters.map((seg: any   , index: number) => ({  

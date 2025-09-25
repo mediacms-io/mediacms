@@ -35,9 +35,6 @@ export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Pro
             body: JSON.stringify(data),
         });
 
-        console.log('data edw', data);
-        console.log('response edw', response);
-
         logger.debug('response', response);
 
         if (!response.ok) {
@@ -70,7 +67,6 @@ export const autoSaveVideo = async (mediaId: string, data: AutoSaveRequest): Pro
 
         // Successful response
         const jsonResponse = await response.json();
-        console.log('jsonResponse edw', jsonResponse);
 
         // Check if the response has the expected format
         return {
