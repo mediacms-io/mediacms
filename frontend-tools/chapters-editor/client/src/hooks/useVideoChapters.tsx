@@ -719,8 +719,6 @@ const useVideoChapters = () => {
                 chapters: backendChapters,
             };
 
-            console.log('Saving chapters:', requestData);
-
             // Make API call to save chapters
             const csrfToken = getCsrfToken();
             const headers: Record<string, string> = {
@@ -743,7 +741,6 @@ const useVideoChapters = () => {
             }
 
             const result = await response.json();
-            console.log('Chapters saved successfully:', result);
 
             // Mark as saved - no unsaved changes
             setHasUnsavedChanges(false);
