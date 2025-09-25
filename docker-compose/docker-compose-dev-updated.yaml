@@ -34,46 +34,34 @@ services:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
       - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
       - scripts_node_modules:/home/mediacms.io/mediacms/frontend/packages/scripts/node_modules
-      - npm_global:/home/node/.npm-global
+      - npm_cache:/home/node/.npm
     working_dir: /home/mediacms.io/mediacms/frontend/
     command: >
       bash -c "
-      echo 'Setting up npm global directory...' &&
-      mkdir -p /home/node/.npm-global &&
-      chown -R node:node /home/node/.npm-global &&
-      echo 'Setting up permissions...' &&
-      chown -R node:node /home/mediacms.io/mediacms/frontend &&
-      echo 'Cleaning up node_modules...' &&
-      find /home/mediacms.io/mediacms/frontend/node_modules -mindepth 1 -delete 2>/dev/null || true &&
-      find /home/mediacms.io/mediacms/frontend/packages/scripts/node_modules -mindepth 1 -delete 2>/dev/null || true &&
-      chown -R node:node /home/mediacms.io/mediacms/frontend/node_modules &&
-      chown -R node:node /home/mediacms.io/mediacms/frontend/packages/scripts/node_modules &&
-      echo 'Switching to node user...' &&
-      su node -c '
-        export NPM_CONFIG_PREFIX=/home/node/.npm-global &&
-        echo \"Setting up frontend...\" &&
-        rm -f package-lock.json &&
-        rm -f packages/scripts/package-lock.json &&
-        echo \"Installing dependencies...\" &&
-        npm install --legacy-peer-deps &&
-        echo \"Setting up workspaces...\" &&
-        npm install -g npm@latest &&
+      echo 'Checking dependencies...' &&
+      if [ ! -f node_modules/.install-complete ]; then
+        echo 'First-time setup or dependencies changed, installing...' &&
+        npm install --legacy-peer-deps --cache /home/node/.npm &&
         cd packages/scripts &&
-        npm install --legacy-peer-deps &&
-        npm install rollup@2.79.1 --save-dev --legacy-peer-deps &&
-        npm install typescript@4.9.5 --save-dev --legacy-peer-deps &&
-        npm install tslib@2.6.2 --save --legacy-peer-deps &&
-        npm install rollup-plugin-typescript2@0.34.1 --save-dev --legacy-peer-deps &&
-        npm install --legacy-peer-deps &&
+        npm install --legacy-peer-deps --cache /home/node/.npm &&
         npm run build &&
         cd ../.. &&
-        echo \"Starting development server...\" &&
-        npm run start
-      '"
+        touch node_modules/.install-complete &&
+        echo 'Dependencies installed successfully'
+      else
+        echo 'Dependencies already installed, skipping installation...' &&
+        if [ ! -d packages/scripts/dist ]; then
+          echo 'Building scripts package...' &&
+          cd packages/scripts &&
+          npm run build &&
+          cd ../..
+        fi
+      fi &&
+      echo 'Starting development server...' &&
+      npm run start
+      "
     env_file:
       - ${PWD}/frontend/.env
-    environment:
-      - NPM_CONFIG_PREFIX=/home/node/.npm-global
     ports:
       - "8088:8088"
     depends_on:
@@ -133,4 +121,4 @@ services:
 volumes:
   frontend_node_modules:
   scripts_node_modules:
-  npm_global:
+  npm_cache:
