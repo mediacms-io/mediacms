@@ -113,6 +113,18 @@ class AutoplayToggleButton extends Button {
 
     // Add touch support for mobile tooltips
     addTouchSupport(button) {
+        // Check if device is touch-enabled
+        const isTouchDevice =
+            this.options_.isTouchDevice ||
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0;
+
+        // Only add touch tooltip support on actual touch devices
+        if (!isTouchDevice) {
+            return;
+        }
+
         let touchStartTime = 0;
         let touchHandled = false;
 
@@ -132,19 +144,20 @@ class AutoplayToggleButton extends Button {
             (e) => {
                 const touchDuration = Date.now() - touchStartTime;
 
-                // Only show tooltip for quick taps (not swipes)
-                if (touchDuration < 500) {
+                // Only show tooltip for quick taps (not swipes) and only on mobile screens
+                const isMobileScreen = window.innerWidth <= 767;
+                if (touchDuration < 500 && isMobileScreen) {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    // Show tooltip
+                    // Show tooltip briefly
                     button.classList.add('touch-active');
                     touchHandled = true;
 
-                    // Hide tooltip after delay
+                    // Hide tooltip after shorter delay on mobile
                     setTimeout(() => {
                         button.classList.remove('touch-active');
-                    }, 2000);
+                    }, 1500);
                 }
             },
             { passive: false }

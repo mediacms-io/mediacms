@@ -8,6 +8,28 @@ html {
     box-sizing: inherit;
 }
 
+/* Global tooltip disabling for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    /* Disable all CSS-based tooltips on touch devices */
+    .video-js .vjs-control:hover::after,
+    .video-js .vjs-control:focus::after,
+    .video-js .vjs-control:active::after,
+    .video-js button.vjs-button:hover span.vjs-control-text,
+    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip,
+    .vjs-chapter-floating-tooltip,
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Exception: Allow intentional touch-activated tooltips */
+    .video-js .vjs-autoplay-toggle.touch-active::after {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+}
+
 .playlist-items a {
     text-decoration: none !important;
 }
@@ -1342,6 +1364,56 @@ button.vjs-button > .vjs-icon-placeholder:before {
         width: auto;
         opacity: 1;
     }
+
+    /* Disable all tooltips on touch devices */
+    .video-js .vjs-control:hover::after,
+    .video-js .vjs-control:focus::after,
+    .video-js .vjs-control:active::after {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    .video-js .vjs-play-control:hover::after,
+    .video-js .vjs-mute-control:hover::after,
+    .video-js .vjs-volume-panel:hover::after,
+    .video-js .vjs-fullscreen-control:hover::after,
+    .video-js .vjs-picture-in-picture-control:hover::after,
+    .video-js .vjs-settings-control:hover::after,
+    .video-js .vjs-chapters-control:hover::after,
+    .video-js .vjs-autoplay-toggle:hover::after,
+    .video-js .vjs-next-video-control:hover::after,
+    .video-js .vjs-remaining-time:hover::after {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable Video.js native control text tooltips on touch devices */
+    .video-js button.vjs-button:hover span.vjs-control-text {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter marker tooltips on touch devices */
+    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter floating tooltips on touch devices */
+    .vjs-chapter-floating-tooltip,
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Exception: Allow touch-activated autoplay tooltip on touch devices */
+    .video-js .vjs-autoplay-toggle.touch-active::after {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
 }
 
 @media (min-width: 1200px) {
@@ -1410,6 +1482,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         grid-template-columns: repeat(3, 1fr);
     }
 
+    /* Disable all tooltips on tablets */
     .video-js .vjs-control:hover::after,
     .video-js .vjs-control:focus::after,
     .video-js .vjs-control:active::after {
@@ -1428,6 +1501,26 @@ button.vjs-button > .vjs-icon-placeholder:before {
     .video-js .vjs-autoplay-toggle:hover::after,
     .video-js .vjs-next-video-control:hover::after,
     .video-js .vjs-remaining-time:hover::after {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable Video.js native control text tooltips on tablets */
+    .video-js button.vjs-button:hover span.vjs-control-text {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter marker tooltips on tablets */
+    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter floating tooltips on tablets */
+    .vjs-chapter-floating-tooltip,
+    .vjs-sprite-preview-tooltip {
         display: none !important;
         opacity: 0 !important;
         visibility: hidden !important;
@@ -1531,6 +1624,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         grid-template-columns: repeat(2, 1fr);
     }
 
+    /* Disable all tooltips on mobile */
     .video-js .vjs-control:hover::after,
     .video-js .vjs-control:focus::after,
     .video-js .vjs-control:active::after {
@@ -1554,6 +1648,27 @@ button.vjs-button > .vjs-icon-placeholder:before {
         visibility: hidden !important;
     }
 
+    /* Disable Video.js native control text tooltips on mobile */
+    .video-js button.vjs-button:hover span.vjs-control-text {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter marker tooltips on mobile */
+    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter floating tooltips on mobile */
+    .vjs-chapter-floating-tooltip,
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Exception: Allow touch-activated autoplay tooltip on mobile */
     .video-js .vjs-autoplay-toggle.touch-active::after {
         opacity: 1;
         visibility: visible;
@@ -1568,9 +1683,6 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
     .vjs-related-video-thumbnail {
         height: 100%;
-    }
-    .vjs-chapter-floating-tooltip {
-        font-size: 11px !important;
     }
     .video-js-root-main .video-js.video-js-rounded-corners .custom-chapters-overlay {
         border-bottom-left-radius: 12px !important;
@@ -1665,6 +1777,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         padding: 0 10px;
     }
 
+    /* Disable all tooltips on small mobile screens */
     .video-js .vjs-control:hover::after,
     .video-js .vjs-control:focus::after,
     .video-js .vjs-control:active::after {
@@ -1683,6 +1796,26 @@ button.vjs-button > .vjs-icon-placeholder:before {
     .video-js .vjs-autoplay-toggle:hover::after,
     .video-js .vjs-next-video-control:hover::after,
     .video-js .vjs-remaining-time:hover::after {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable Video.js native control text tooltips on small mobile */
+    .video-js button.vjs-button:hover span.vjs-control-text {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter marker tooltips on small mobile */
+    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* Disable chapter floating tooltips on small mobile */
+    .vjs-chapter-floating-tooltip,
+    .vjs-sprite-preview-tooltip {
         display: none !important;
         opacity: 0 !important;
         visibility: hidden !important;

@@ -25,6 +25,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     // Check if this is an embed player (disable next video and autoplay features)
     const isEmbedPlayer = videoId === 'video-embed';
 
+    // Utility function to detect touch devices
+    const isTouchDevice = useMemo(() => {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    }, []);
+
     // Environment-based development mode configuration
     const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
     // Safely access window.MEDIA_DATA with fallback using useMemo
@@ -2152,6 +2157,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             try {
                                 const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
                                     userPreferences: userPreferences.current,
+                                    isTouchDevice: isTouchDevice,
                                 });
                                 // Add it before the chapters button (or at a suitable position)
                                 const chaptersButtonIndex = chaptersButton
@@ -2378,16 +2384,19 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 // Use original ChapterMarkers with sprite functionality when chapters exist
                                 const chapterMarkers = new ChapterMarkers(playerRef.current, {
                                     previewSprite: mediaData.previewSprite,
+                                    isTouchDevice: isTouchDevice,
                                 });
                                 seekBar.addChild(chapterMarkers);
-                            } else if (mediaData.previewSprite) {
+                            } else if (mediaData.previewSprite && !isTouchDevice) {
                                 // Use separate SpritePreview component only when no chapters but sprite data exists
+                                // Skip on touch devices to avoid unwanted tooltips
                                 const spritePreview = new SpritePreview(playerRef.current, {
                                     previewSprite: mediaData.previewSprite,
+                                    isTouchDevice: isTouchDevice,
                                 });
                                 seekBar.addChild(spritePreview);
 
-                                // Setup sprite preview hover functionality
+                                // Setup sprite preview hover functionality (only on non-touch devices)
                                 setTimeout(() => {
                                     spritePreview.setupProgressBarHover();
                                 }, 100);
@@ -2466,6 +2475,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             userPreferences: userPreferences.current,
                             qualities: availableQualities,
                             hasSubtitles: hasSubtitles,
+                            isTouchDevice: isTouchDevice,
                         });
 
                         // If qualities change per video (e.g., via MEDIA_DATA update), refresh menu

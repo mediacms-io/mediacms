@@ -73,6 +73,18 @@ class ChapterMarkers extends Component {
     }
 
     setupProgressBarHover() {
+        // Check if device is touch-enabled (tablet/mobile)
+        const isTouchDevice =
+            this.options_.isTouchDevice ||
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0;
+
+        // Skip tooltip setup on touch devices
+        if (isTouchDevice) {
+            return;
+        }
+
         const progressControl = this.player().getChild('controlBar').getChild('progressControl');
         if (!progressControl) return;
 

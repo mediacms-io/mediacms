@@ -183,6 +183,10 @@ class EmbedInfoOverlay extends Component {
         const player = this.player();
         const overlay = this.el();
 
+        // Check if device is touch-enabled
+        const isTouchDevice =
+            'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
         // Show/hide with controls
         player.on('useractive', () => {
             overlay.style.opacity = '1';
@@ -190,8 +194,15 @@ class EmbedInfoOverlay extends Component {
         });
 
         player.on('userinactive', () => {
-            overlay.style.opacity = '0';
-            overlay.style.visibility = 'hidden';
+            // On touch devices, keep overlay visible longer or don't hide it as aggressively
+            if (isTouchDevice) {
+                // Keep visible on touch devices when user inactive
+                overlay.style.opacity = '0.8';
+                overlay.style.visibility = 'visible';
+            } else {
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+            }
         });
 
         // Always show when paused
