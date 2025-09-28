@@ -1517,6 +1517,24 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 767px) {
+    /* Remove rounded corners on mobile screens */
+    .video-js-root-main .video-js.video-js-rounded-corners,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-paused,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-ended,
+    .video-js-root-main .video-js.video-js-rounded-corners.chapters-open {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners .vjs-poster {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners video {
+        border-radius: 0 !important;
+    }
+
     /* Move seekbar up by 10px on mobile to prevent accidental button touches */
     .video-js .vjs-progress-control {
         bottom: 56px !important; /* Move up 10px from original 46px */
@@ -1760,6 +1778,24 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 480px) {
+    /* Remove rounded corners on small mobile screens */
+    .video-js-root-main .video-js.video-js-rounded-corners,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-paused,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-ended,
+    .video-js-root-main .video-js.video-js-rounded-corners.chapters-open {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners .vjs-poster {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners video {
+        border-radius: 0 !important;
+    }
+
     /* Move seekbar up by 10px on small mobile to prevent accidental button touches */
     .video-js .vjs-progress-control {
         bottom: 56px !important; /* Move up 10px from original 46px */
