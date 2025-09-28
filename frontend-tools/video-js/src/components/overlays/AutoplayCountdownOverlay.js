@@ -14,7 +14,7 @@ class AutoplayCountdownOverlay extends Component {
         this.onCancel = options.onCancel || (() => {});
 
         this.currentCountdown = this.countdownSeconds;
-        this.countdownInterval = null;
+        this.startTime = null;
         this.isActive = false;
 
         // Bind methods
@@ -32,57 +32,38 @@ class AutoplayCountdownOverlay extends Component {
 
         // Get next video title or fallback
         const nextVideoTitle = this.nextVideoData?.title || 'Next Video';
-        const nextVideoThumbnail = this.nextVideoData?.thumbnail || '';
 
         overlay.innerHTML = `
             <div class="autoplay-countdown-content">
-                <div class="autoplay-countdown-header">
-                    <h3>Up next in <span class="countdown-timer">${this.countdownSeconds}</span></h3>
-                </div>
+                <div class="countdown-label">Up Next</div>
                 
-                <div class="autoplay-countdown-video-info">
-                    ${
-                        nextVideoThumbnail
-                            ? `<div class="next-video-thumbnail">
-                        <img src="${nextVideoThumbnail}" alt="${nextVideoTitle}" />
-                        <div class="play-overlay">
-                            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </div>
-                    </div>`
-                            : ''
-                    }
-                    <div class="next-video-details">
-                        <h4 class="next-video-title">${nextVideoTitle}</h4>
-                        ${this.nextVideoData?.author ? `<p class="next-video-author">${this.nextVideoData.author}</p>` : ''}
-                        ${this.nextVideoData?.duration ? `<p class="next-video-duration">${this.formatDuration(this.nextVideoData.duration)}</p>` : ''}
-                    </div>
+                <div class="next-video-title">${nextVideoTitle}</div>
+                ${this.nextVideoData?.author ? `<div class="next-video-author">${this.nextVideoData.author}</div>` : ''}
+                
+                <div class="circular-countdown">
+                    <svg class="countdown-circle" viewBox="0 0 100 100" width="100" height="100">
+                        <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.2)" stroke-width="3" fill="none"/>
+                        <circle class="countdown-progress" cx="50" cy="50" r="45" stroke="white" stroke-width="3" fill="none" 
+                                stroke-dasharray="282.74" stroke-dashoffset="282.74" transform="rotate(-90 50 50)"/>
+                        <g class="play-icon">
+                            <circle cx="50" cy="50" r="20" fill="rgba(255,255,255,0.9)" stroke="none"/>
+                            <path d="M45 40l15 10-15 10z" fill="#000"/>
+                        </g>
+                    </svg>
                 </div>
 
-                <div class="autoplay-countdown-actions">
-                    <button class="autoplay-play-button" type="button">
-                        <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" fill="currentColor">
-                            <path d="M8 5v14l11-7z"/>
-                        </svg>
-                        Play Now
-                    </button>
-                    <button class="autoplay-cancel-button" type="button">
-                        <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" fill="currentColor">
-                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                        </svg>
-                        Cancel
-                    </button>
-                </div>
+                <span class="autoplay-cancel-button">
+                    CANCEL
+                </span>
             </div>
         `;
 
         // Add event listeners with explicit binding
-        const playButton = overlay.querySelector('.autoplay-play-button');
+        const circularCountdown = overlay.querySelector('.circular-countdown');
         const cancelButton = overlay.querySelector('.autoplay-cancel-button');
 
-        if (playButton) {
-            playButton.addEventListener('click', (e) => {
+        if (circularCountdown) {
+            circularCountdown.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.handlePlayNext();
             });
@@ -104,35 +85,48 @@ class AutoplayCountdownOverlay extends Component {
     startCountdown() {
         this.isActive = true;
         this.currentCountdown = this.countdownSeconds;
+        this.startTime = Date.now();
+
+        // Show immediately and start countdown without delay
         this.show();
         this.updateCountdownDisplay();
 
-        // Start countdown interval
-        this.countdownInterval = setInterval(() => {
-            this.currentCountdown--;
+        // Use requestAnimationFrame for smooth animation
+        const animate = () => {
+            if (!this.isActive) return;
+
+            const elapsed = (Date.now() - this.startTime) / 1000;
+            this.currentCountdown = Math.max(0, this.countdownSeconds - elapsed);
             this.updateCountdownDisplay();
 
             if (this.currentCountdown <= 0) {
                 this.stopCountdown();
                 // Auto-play next video when countdown reaches 0
                 this.handlePlayNext();
+            } else {
+                requestAnimationFrame(animate);
             }
-        }, 1000);
+        };
+
+        // Start the animation
+        requestAnimationFrame(animate);
     }
 
     stopCountdown() {
         this.isActive = false;
-        if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
-            this.countdownInterval = null;
-        }
         this.hide();
     }
 
     updateCountdownDisplay() {
-        const timerElement = this.el().querySelector('.countdown-timer');
-        if (timerElement) {
-            timerElement.textContent = this.currentCountdown;
+        const progressCircle = this.el().querySelector('.countdown-progress');
+        if (progressCircle) {
+            // Calculate progress (282.74 is the circumference of the circle with radius 45)
+            const circumference = 2 * Math.PI * 45; // 282.74
+            const progress = (this.countdownSeconds - this.currentCountdown) / this.countdownSeconds;
+            const offset = circumference - circumference * progress;
+
+            // Apply the animation
+            progressCircle.style.strokeDashoffset = offset;
         }
     }
 
@@ -157,8 +151,12 @@ class AutoplayCountdownOverlay extends Component {
     show() {
         if (this.el()) {
             this.el().style.display = 'flex';
-            // Add animation class for smooth entrance
-            this.el().classList.add('autoplay-countdown-show');
+            // Force immediate display and add animation class
+            requestAnimationFrame(() => {
+                if (this.el()) {
+                    this.el().classList.add('autoplay-countdown-show');
+                }
+            });
         }
     }
 
@@ -190,29 +188,15 @@ class AutoplayCountdownOverlay extends Component {
         // Re-render the content if the overlay exists
         if (this.el()) {
             const nextVideoTitle = this.nextVideoData?.title || 'Next Video';
-            const nextVideoThumbnail = this.nextVideoData?.thumbnail || '';
+            const titleElement = this.el().querySelector('.next-video-title');
+            const authorElement = this.el().querySelector('.next-video-author');
 
-            const videoInfoElement = this.el().querySelector('.autoplay-countdown-video-info');
-            if (videoInfoElement) {
-                videoInfoElement.innerHTML = `
-                    ${
-                        nextVideoThumbnail
-                            ? `<div class="next-video-thumbnail">
-                        <img src="${nextVideoThumbnail}" alt="${nextVideoTitle}" />
-                        <div class="play-overlay">
-                            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                        </div>
-                    </div>`
-                            : ''
-                    }
-                    <div class="next-video-details">
-                        <h4 class="next-video-title">${nextVideoTitle}</h4>
-                        ${this.nextVideoData?.author ? `<p class="next-video-author">${this.nextVideoData.author}</p>` : ''}
-                        ${this.nextVideoData?.duration ? `<p class="next-video-duration">${this.formatDuration(this.nextVideoData.duration)}</p>` : ''}
-                    </div>
-                `;
+            if (titleElement) {
+                titleElement.textContent = nextVideoTitle;
+            }
+
+            if (authorElement && this.nextVideoData?.author) {
+                authorElement.textContent = this.nextVideoData.author;
             }
         }
     }

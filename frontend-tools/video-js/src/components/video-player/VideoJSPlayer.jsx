@@ -1046,8 +1046,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       },
 
                       // other
-                      useRoundedCorners: true,
-                      isPlayList: true,
+                      useRoundedCorners: false,
+                      isPlayList: false,
                       previewSprite: {
                           url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
@@ -1685,7 +1685,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         notSupportedMessage: undefined,
 
                         // Prevent title attributes on UI elements for better accessibility
-                        noUITitleAttributes: false,
+                        noUITitleAttributes: true,
 
                         // Array of playback speed options (e.g., [0.5, 1, 1.5, 2])
                         playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
@@ -1834,6 +1834,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                             // Preload text tracks
                             preloadTextTracks: true,
+
+                            // Play inline
+                            playsinline: true,
                         },
 
                         // ===== COMPONENT CONFIGURATION =====
@@ -1981,7 +1984,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             handleAutoplay();
                         }
 
-                        const setupMobilePlayPause = () => {
+                        /* const setupMobilePlayPause = () => {
                             const playerEl = playerRef.current.el();
                             const videoEl = playerEl.querySelector('video');
 
@@ -2049,8 +2052,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 videoEl.addEventListener('touchstart', handleTouchStart, { passive: true });
                                 videoEl.addEventListener('touchend', handleTouchEnd, { passive: false });
                             }
-                        };
-                        setTimeout(setupMobilePlayPause, 100);
+                        }; */
+                        //setTimeout(setupMobilePlayPause, 100);
 
                         // Get control bar and its children
                         const controlBar = playerRef.current.getChild('controlBar');
@@ -2526,7 +2529,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Store components reference for potential cleanup
 
                         // BEGIN: Fix Android seekbar touch functionality
-                        if (isTouchDevice) {
+                        /*  if (isTouchDevice) {
                             setTimeout(() => {
                                 const progressControl = playerRef.current
                                     .getChild('controlBar')
@@ -2616,7 +2619,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     }
                                 }
                             }, 500);
-                        }
+                        } */
                         // END: Fix Android seekbar touch functionality
 
                         // BEGIN: Add comprehensive keyboard event handling
@@ -2772,10 +2775,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     autoplayCountdown = null;
                                 }
 
-                                // Show autoplay countdown
+                                // Show autoplay countdown immediately
                                 autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
                                     nextVideoData: nextVideoData,
-                                    countdownSeconds: 500,
+                                    countdownSeconds: 5,
                                     onPlayNext: () => {
                                         goToNextVideo();
                                     },
@@ -2790,7 +2793,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 });
 
                                 playerRef.current.addChild(autoplayCountdown);
-                                autoplayCountdown.startCountdown();
+                                // Start countdown immediately without any delay
+                                setTimeout(() => {
+                                    if (autoplayCountdown && !autoplayCountdown.isDisposed()) {
+                                        autoplayCountdown.startCountdown();
+                                    }
+                                }, 0);
                             }
                         } else {
                             // Autoplay disabled or no next video - show regular end screen

@@ -1,11 +1,11 @@
-/* Autoplay Countdown Overlay Styles */
+/* Minimal Circular Countdown Overlay */
 .vjs-autoplay-countdown-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% - 46px); /* Account for control bar */
-    background: rgba(0, 0, 0, 0.85);
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -13,9 +13,8 @@
     z-index: 100000;
     padding: 20px;
     box-sizing: border-box;
-    backdrop-filter: blur(4px);
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.2s ease-out;
 }
 
 .vjs-autoplay-countdown-overlay.autoplay-countdown-show {
@@ -23,522 +22,174 @@
 }
 
 .autoplay-countdown-content {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.9));
-    border-radius: 20px;
-    padding: 50px;
-    max-width: 480px;
-    width: 100%;
     text-align: center;
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.4),
-        0 8px 32px rgba(0, 0, 0, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(20px);
-    position: relative;
-    overflow: hidden;
-}
-
-.autoplay-countdown-content::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-}
-
-.autoplay-countdown-content::after {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 0, 0, 0.05) 0%, transparent 70%);
-    animation: backgroundPulse 4s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes backgroundPulse {
-    0%,
-    100% {
-        opacity: 0.3;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.6;
-        transform: scale(1.1);
-    }
-}
-
-.autoplay-countdown-header {
-    position: relative;
-    z-index: 2;
-}
-
-.autoplay-countdown-header h3 {
-    color: #fff;
-    font-size: 26px;
-    font-weight: 400;
-    margin: 0 0 10px 0;
-    line-height: 1.3;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-.autoplay-countdown-header h3 span {
-    font-weight: 700;
-}
-
-.autoplay-countdown-video-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-    margin: 0 0 50px;
-}
-
-.next-video-thumbnail {
-    flex-shrink: 0;
-    width: 180px;
-    height: 101px;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #333;
-    position: relative;
-    box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.4),
-        0 4px 16px rgba(0, 0, 0, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease;
-}
-
-.next-video-thumbnail:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow:
-        0 16px 40px rgba(0, 0, 0, 0.5),
-        0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.next-video-thumbnail img {
+    gap: 12px;
+    max-width: 350px;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
 }
 
-.play-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 50%;
-    width: 64px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    transition: all 0.3s ease;
-    box-shadow:
-        0 8px 24px rgba(0, 0, 0, 0.5),
-        0 4px 16px rgba(0, 0, 0, 0.3);
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-}
-
-.play-overlay:hover {
-    background: rgba(0, 0, 0, 0.9);
-    transform: translate(-50%, -50%) scale(1.1);
-    box-shadow:
-        0 12px 32px rgba(0, 0, 0, 0.6),
-        0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.play-overlay svg {
-    margin-left: 4px;
-    width: 28px;
-    height: 28px;
-}
-
-.next-video-details {
-    flex-grow: 1;
-    min-width: 0;
-    text-align: center;
+.countdown-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .next-video-title {
-    color: #999;
+    color: #fff;
     font-size: 18px;
-    font-weight: 500;
-    margin: 0 0;
-    line-height: 1.4;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 0.5px;
-}
-
-.next-video-author {
-    color: #bbb;
-    font-size: 16px;
-    margin: 0 0 8px 0;
-    line-height: 1.3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 500;
-}
-
-.next-video-duration {
-    color: #999;
-    font-size: 14px;
-    margin: 0;
-    line-height: 1.2;
-    font-weight: 500;
-}
-
-.autoplay-countdown-actions {
-    display: flex;
-    gap: 24px;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-    padding: 0;
-    margin-top: 8px;
-}
-
-button.autoplay-play-button,
-button.autoplay-cancel-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 140px;
-    height: 48px;
-    position: relative;
-    overflow: hidden;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    line-height: 1;
-    white-space: nowrap;
-    box-shadow:
-        0 6px 20px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     text-align: center;
 }
 
-button.autoplay-play-button {
-    background: linear-gradient(135deg, #ff0000, #e60000);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.next-video-author {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    font-weight: 400;
+    margin: -8px 0 0 0;
+    line-height: 1.2;
 }
 
-.autoplay-play-button::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
+.circular-countdown {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    margin: 10px 0;
 }
 
-.autoplay-play-button:hover {
-    background: linear-gradient(135deg, #ff1a1a, #cc0000);
-    transform: translateY(-2px);
-    box-shadow:
-        0 8px 25px rgba(255, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+.circular-countdown:hover {
+    transform: scale(1.05);
 }
 
-.autoplay-play-button:hover::before {
-    left: 100%;
+.countdown-circle {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
-.autoplay-play-button:active {
-    transform: translateY(-1px);
-    box-shadow:
-        0 4px 15px rgba(255, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+.countdown-progress {
+    stroke-linecap: round;
+    stroke-dasharray: 282.74;
+    stroke-dashoffset: 282.74;
+}
+
+.play-icon {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.circular-countdown:hover .play-icon circle {
+    fill: rgba(255, 255, 255, 1);
+}
+
+.circular-countdown:hover .play-icon path {
+    fill: #000;
 }
 
 .autoplay-cancel-button {
-    background: linear-gradient(135deg, #404040, #2a2a2a);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow:
-        0 6px 20px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
 }
 
 .autoplay-cancel-button:hover {
-    background: linear-gradient(135deg, #505050, #3a3a3a);
-    transform: translateY(-2px);
-    box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.autoplay-cancel-button:active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
     transform: translateY(-1px);
-    box-shadow:
-        0 4px 15px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.autoplay-play-button svg,
-.autoplay-cancel-button svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-    position: relative;
-    z-index: 1;
-    display: block;
-    margin: 0;
-    padding: 0;
-    vertical-align: middle;
-}
-
-.autoplay-play-button:hover svg {
-    transform: scale(1.05);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-.autoplay-cancel-button svg {
-    width: 16px;
-    height: 16px;
-}
-
-.autoplay-cancel-button:hover svg {
-    transform: scale(1.05) rotate(90deg);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-.autoplay-play-button span,
-.autoplay-cancel-button span {
-    display: inline-block;
-    vertical-align: middle;
-    line-height: 1;
-    font-size: inherit;
-    font-weight: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    position: relative;
-    z-index: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    height: auto;
-    align-self: center;
-}
-
-/* Ensure perfect alignment of button content */
-.autoplay-play-button > *,
-.autoplay-cancel-button > * {
-    vertical-align: middle;
-    display: inline-block;
-}
-
-/* Fix any baseline alignment issues */
-.autoplay-play-button,
-.autoplay-cancel-button {
-    align-items: center;
-    justify-content: center;
-}
-
-/* Ensure text and icons are perfectly aligned */
-.autoplay-play-button svg,
-.autoplay-cancel-button svg {
-    vertical-align: middle;
-    display: inline-block;
-}
-
-/* Autoplay Toggle Button Styles */
-/* .vjs-autoplay-toggle {
-    width: 3em !important;
-    height: 3em !important;
-    flex: none;
-    padding: 0 !important;
-    margin: 0 4px !important;
-    line-height: 3em !important;
-    position: relative;
-} */
-
-/* .vjs-autoplay-toggle .vjs-autoplay-icon {
-    width: 1.2em;
-    height: 1.2em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: auto;
-} */
-
-.vjs-autoplay-toggle .vjs-autoplay-icon svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-/* Responsive design */
+/* Mobile Responsive */
 @media (max-width: 767px) {
-    .autoplay-countdown-video-info {
-        margin-bottom: 20px;
-    }
     .autoplay-countdown-content {
-        padding: 24px;
-        max-width: 400px;
+        gap: 8px;
+        max-width: 280px;
     }
 
-    .autoplay-countdown-header h3 {
-        font-size: 20px;
-    }
-
-    .next-video-thumbnail {
-        width: 140px;
-        height: 78px;
-    }
-
-    .play-overlay {
-        width: 48px;
-        height: 48px;
-    }
-
-    .play-overlay svg {
-        width: 20px;
-        height: 20px;
+    .countdown-label {
+        font-size: 13px;
+        margin: 0;
     }
 
     .next-video-title {
-        font-size: 18px;
+        font-size: 16px;
+        margin: 0 0 8px 0;
     }
 
     .next-video-author {
-        font-size: 14px;
+        font-size: 13px;
+        margin: -6px 0 0 0;
     }
 
-    .autoplay-play-button,
+    .circular-countdown {
+        margin: 4px 0;
+    }
+
+    .circular-countdown svg {
+        width: 80px;
+        height: 80px;
+    }
+
     .autoplay-cancel-button {
-        padding: 12px 24px;
-        font-size: 14px;
-        min-width: 120px;
-        height: 44px;
-        gap: 6px;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .autoplay-play-button svg {
-        width: 16px;
-        height: 16px;
-        vertical-align: middle;
-    }
-
-    .autoplay-cancel-button svg {
-        width: 14px;
-        height: 14px;
-        vertical-align: middle;
+        padding: 8px 20px;
+        font-size: 12px;
+        margin-top: 4px;
     }
 }
 
 @media (max-width: 480px) {
     .autoplay-countdown-content {
-        padding: 20px;
-        max-width: 350px;
+        gap: 6px;
+        max-width: 260px;
     }
 
-    .autoplay-countdown-header h3 {
-        font-size: 18px;
-    }
-
-    .countdown-timer {
-        font-size: 24px;
-        padding: 10px 16px;
-    }
-
-    .autoplay-countdown-video-info {
-        gap: 16px;
-    }
-
-    .next-video-thumbnail {
-        width: 120px;
-        height: 68px;
-    }
-
-    .play-overlay {
-        width: 40px;
-        height: 40px;
-    }
-
-    .play-overlay svg {
-        width: 16px;
-        height: 16px;
+    .countdown-label {
+        font-size: 12px;
+        margin: 0;
     }
 
     .next-video-title {
-        font-size: 16px;
+        font-size: 15px;
+        margin: 0 0 6px 0;
     }
 
     .next-video-author {
-        font-size: 13px;
+        font-size: 12px;
+        margin: -4px 0 0 0;
     }
 
-    .autoplay-countdown-actions {
-        gap: 5px;
-        padding: 0;
-    }
-    button.autoplay-play-button,
-    button.autoplay-cancel-button {
-        padding: 10px 20px;
-        width: 120px;
-        height: 40px;
-        min-width: 120px;
+    .circular-countdown {
+        margin: 2px 0;
     }
 
-    .autoplay-play-button,
+    .circular-countdown svg {
+        width: 70px;
+        height: 70px;
+    }
+
     .autoplay-cancel-button {
-        width: 100%;
-        min-width: 100%;
-        height: 46px;
-        gap: 6px;
-        padding: 10px 20px;
-        font-size: 13px;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .autoplay-play-button svg {
-        width: 14px;
-        height: 14px;
-        vertical-align: middle;
-    }
-
-    .autoplay-cancel-button svg {
-        width: 12px;
-        height: 12px;
-        vertical-align: middle;
+        padding: 6px 16px;
+        font-size: 11px;
+        margin-top: 2px;
     }
 }
