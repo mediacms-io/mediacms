@@ -46,7 +46,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           author_thumbnail: '/media/userlogos/2024/10/02/markos.jpeg',
                           url: 'https://demo.mediacms.io/view?m=zK2nirNLC',
                           poster_url:
-                              '/media/original/thumbnails/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb_btbR39g.20250604_080632.mp4.jpg',
+                              '/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3_8hguMHx.19990812hd_1920_1080_30fps.mp4.jpg',
                           chapter_data: [
                               {
                                   startTime: '00:00:00.000',
@@ -967,20 +967,19 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           // VIDEO
                           media_type: 'video',
                           original_media_url:
-                              '/media/original/user/markos/6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4',
+                              '/media/original/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4',
                           hls_info: {
-                              master_file: '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/master.m3u8',
-                              '1080_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-1/iframes.m3u8',
-                              '720_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/iframes.m3u8',
-                              '360_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-3/iframes.m3u8',
-                              '240_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/iframes.m3u8',
-                              '480_iframe': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/iframes.m3u8',
-                              '1080_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-1/stream.m3u8',
-                              '720_playlist':
-                                  'https://demo.mediacms.io/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-2/stream.m3u8',
-                              '360_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-3/stream.m3u8',
-                              '240_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-4/stream.m3u8',
-                              '480_playlist': '/media/hls/6497e960081b4b8abddcf4cbdf2bf4eb/media-5/stream.m3u8',
+                              master_file: '/media/hls/2ca18fadeef8475eae513c12cc0830d3/master.m3u8',
+                              '1080_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-1/iframes.m3u8',
+                              '720_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-2/iframes.m3u8',
+                              '480_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-3/iframes.m3u8',
+                              '360_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-4/iframes.m3u8',
+                              '240_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-5/iframes.m3u8',
+                              '1080_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-1/stream.m3u8',
+                              '720_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-2/stream.m3u8',
+                              '480_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-3/stream.m3u8',
+                              '360_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-4/stream.m3u8',
+                              '240_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-5/stream.m3u8',
                           },
                           encodings_info: {
                               2160: {},
@@ -1053,8 +1052,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: 'https://demo.mediacms.io',
-                      nextLink: 'https://demo.mediacms.io/view?m=YjGJafibO',
+                      siteUrl: 'https://deic.mediacms.io',
+                      nextLink: 'https://deic.mediacms.io/view?m=YjGJafibO',
                       urlAutoplay: true,
                       urlMuted: false,
                   },
@@ -1261,7 +1260,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     if (mediaData.data.hls_info[qualityKey]) {
                         return [
                             {
-                                src: mediaData.data.hls_info[qualityKey],
+                                src: mediaData.siteUrl + mediaData.data.hls_info[qualityKey],
                                 type: 'application/x-mpegURL', // HLS MIME type
                                 label: `${userQuality}p`,
                             },
