@@ -242,16 +242,14 @@ html {
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    height: calc(100% - 46px);
+    background: rgba(0, 0, 0, 0.7);
     display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 0;
-    height: calc(100% - 46px);
-    box-sizing: border-box;
     padding: 20px;
-    gap: 10px;
+    box-sizing: border-box;
     z-index: 4;
 }
 .vjs-related-videos-title {
@@ -267,31 +265,32 @@ html {
 .vjs-related-videos-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
+    gap: 20px;
     width: 100%;
     max-width: 100%;
     margin: 0;
     box-sizing: border-box;
-    justify-items: center;
+    justify-items: stretch;
+    align-items: stretch;
+    justify-content: center;
+    align-content: center;
     overflow: hidden;
-    align-self: center;
-    flex-shrink: 0;
-    height: calc(100% - 44px);
+    height: auto;
+    grid-gap: 20px; /* Fallback for older browsers */
 }
 .vjs-related-video-item {
     position: relative;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 8px;
     overflow: hidden;
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease;
     background: #1a1a1a;
     border: 1px solid #333;
-    /* aspect-ratio: 16/9; */
+    aspect-ratio: 16/9;
     width: 100%;
-    max-width: 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow like YouTube */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .vjs-related-video-item:hover {
     transform: translateY(-2px);
@@ -1401,6 +1400,9 @@ button.vjs-button > .vjs-icon-placeholder:before {
 @media (min-width: 1200px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        height: auto;
+        max-height: none;
     }
 }
 
@@ -1410,15 +1412,25 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 }
 
-@media (max-width: 1139px) {
-    .vjs-related-video-item:nth-child(n + 7) {
-        display: none;
+@media (max-width: 1100px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
     }
 }
 
+/* iPad Pro and larger tablets */
 @media (min-width: 1024px) and (max-width: 1199px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        height: auto;
+        max-height: none;
+    }
+
+    /* Allow up to 9 videos on larger tablets */
+    .vjs-related-video-item:nth-child(n + 10) {
+        display: none;
     }
 }
 
@@ -1445,9 +1457,24 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 }
 
-@media (min-width: 768px) and (max-width: 1024px) {
+/* Large tablets like iPad Pro */
+@media (min-width: 900px) and (max-width: 1024px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        height: auto;
+        max-height: none;
+    }
+
+    /* Allow up to 9 videos on large tablets */
+    .vjs-related-video-item:nth-child(n + 10) {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 899px) {
     .video-js .vjs-text-track-display {
-        bottom: 7em !important;
+        bottom: 8em !important;
     }
     .video-js .vjs-text-track-cue {
         font-size: 1.15em !important;
@@ -1462,6 +1489,21 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
     .vjs-related-videos-grid {
         grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        height: auto;
+        max-height: none;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 16px;
+        justify-content: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    /* Allow up to 9 videos on regular tablets */
+    .vjs-related-video-item:nth-child(n + 10) {
+        display: none;
     }
 
     /* Disable all tooltips on tablets */
@@ -1540,7 +1582,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         bottom: 56px !important; /* Move up 10px from original 46px */
     }
 
-    .vjs-related-vdeo-item:nth-child(n + 5) {
+    .vjs-related-video-item:nth-child(n + 5) {
         display: none;
     }
     .vjs-chapters-button button.vjs-button,
@@ -1627,6 +1669,21 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 16px !important;
+        grid-gap: 16px !important;
+        max-height: 70vh;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 12px;
+        justify-content: flex-start;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .vjs-related-video-item:nth-child(n + 5) {
+        display: none;
     }
 
     /* Disable all tooltips on mobile */
@@ -1772,8 +1829,23 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 574px) {
-    .vjs-related-video-item:nth-child(n + 3) {
+    .vjs-related-video-item:nth-child(n + 5) {
         display: none;
+    }
+
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 14px !important;
+        grid-gap: 14px !important;
+        max-height: 65vh;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 10px;
+        justify-content: flex-start;
+        padding-top: 15px;
+        padding-bottom: 15px;
     }
 }
 
@@ -1860,11 +1932,22 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 439px) {
-    .vjs-related-video-item:nth-child(n + 2) {
+    .vjs-related-video-item:nth-child(n + 5) {
         display: none;
     }
     .vjs-related-videos-grid {
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 12px !important;
+        grid-gap: 12px !important;
+        max-height: 60vh;
+    }
+
+    .vjs-end-screen-overlay {
+        padding: 8px;
+        justify-content: flex-start;
+        padding-top: 10px;
+        padding-bottom: 10px;
     }
 }
 
