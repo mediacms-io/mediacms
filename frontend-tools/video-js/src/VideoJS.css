@@ -23,6 +23,37 @@ html {
         visibility: hidden !important;
     }
 
+    /* Simple fix: Move seekbar up by 10px on touch devices */
+    .video-js .vjs-progress-control {
+        bottom: 56px !important; /* Move up 10px from original 46px */
+    }
+
+    /* Make seekbar more touch-friendly on Android */
+    .video-js .vjs-progress-holder {
+        touch-action: pan-x !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    .video-js .vjs-seek-bar {
+        touch-action: pan-x !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    /* Prevent big play button from interfering with seekbar on touch devices */
+    .video-js .vjs-big-play-button {
+        pointer-events: auto !important;
+        z-index: 1 !important; /* Lower than seekbar */
+    }
+
+    .video-js .vjs-progress-control {
+        z-index: 10 !important; /* Higher than big play button */
+        pointer-events: auto !important;
+    }
+
     /* Exception: Allow intentional touch-activated tooltips */
     .video-js .vjs-autoplay-toggle.touch-active::after {
         opacity: 1 !important;
@@ -744,6 +775,7 @@ html {
 .vjs-slider-horizontal {
     top: -5px;
 }
+
 .video-js .vjs-spacer-control {
     flex: 1 !important;
     min-width: 1px !important;
@@ -1364,56 +1396,6 @@ button.vjs-button > .vjs-icon-placeholder:before {
         width: auto;
         opacity: 1;
     }
-
-    /* Disable all tooltips on touch devices */
-    .video-js .vjs-control:hover::after,
-    .video-js .vjs-control:focus::after,
-    .video-js .vjs-control:active::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    .video-js .vjs-play-control:hover::after,
-    .video-js .vjs-mute-control:hover::after,
-    .video-js .vjs-volume-panel:hover::after,
-    .video-js .vjs-fullscreen-control:hover::after,
-    .video-js .vjs-picture-in-picture-control:hover::after,
-    .video-js .vjs-settings-control:hover::after,
-    .video-js .vjs-chapters-control:hover::after,
-    .video-js .vjs-autoplay-toggle:hover::after,
-    .video-js .vjs-next-video-control:hover::after,
-    .video-js .vjs-remaining-time:hover::after {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable Video.js native control text tooltips on touch devices */
-    .video-js button.vjs-button:hover span.vjs-control-text {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable chapter marker tooltips on touch devices */
-    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable chapter floating tooltips on touch devices */
-    .vjs-chapter-floating-tooltip,
-    .vjs-sprite-preview-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Exception: Allow touch-activated autoplay tooltip on touch devices */
-    .video-js .vjs-autoplay-toggle.touch-active::after {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
 }
 
 @media (min-width: 1200px) {
@@ -1535,6 +1517,11 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 767px) {
+    /* Move seekbar up by 10px on mobile to prevent accidental button touches */
+    .video-js .vjs-progress-control {
+        bottom: 56px !important; /* Move up 10px from original 46px */
+    }
+
     .vjs-related-vdeo-item:nth-child(n + 5) {
         display: none;
     }
@@ -1773,6 +1760,11 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 480px) {
+    /* Move seekbar up by 10px on small mobile to prevent accidental button touches */
+    .video-js .vjs-progress-control {
+        bottom: 56px !important; /* Move up 10px from original 46px */
+    }
+
     .video-container {
         padding: 0 10px;
     }

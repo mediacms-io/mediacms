@@ -1047,7 +1047,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       },
 
                       // other
-                      useRoundedCorners: false,
+                      useRoundedCorners: true,
                       isPlayList: true,
                       previewSprite: {
                           url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
@@ -1998,14 +1998,27 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     touchStartTime = Date.now();
                                     const touch = e.touches[0];
                                     touchStartPos = { x: touch.clientX, y: touch.clientY };
+
+                                    // Check if touch is in seekbar area
+                                    const progressControl = playerRef.current
+                                        .getChild('controlBar')
+                                        ?.getChild('progressControl');
+                                    if (progressControl && progressControl.el()) {
+                                        const progressRect = progressControl.el().getBoundingClientRect();
+                                        const isInSeekbarArea =
+                                            touch.clientY >= progressRect.top && touch.clientY <= progressRect.bottom;
+                                        if (isInSeekbarArea) {
+                                            playerRef.current.seekbarTouching = true;
+                                        }
+                                    }
                                 };
 
                                 const handleTouchEnd = (e) => {
                                     const touchEndTime = Date.now();
                                     const touchDuration = touchEndTime - touchStartTime;
 
-                                    // Only handle if it's a quick tap
-                                    if (touchDuration < 500) {
+                                    // Only handle if it's a quick tap and we're not touching the seekbar
+                                    if (touchDuration < 500 && !playerRef.current.seekbarTouching) {
                                         const touch = e.changedTouches[0];
                                         const touchEndPos = { x: touch.clientX, y: touch.clientY };
                                         const distance = Math.sqrt(
@@ -2025,6 +2038,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                             }
                                         }
                                     }
+
+                                    // Always clear seekbar touching flag at the end
+                                    setTimeout(() => {
+                                        if (playerRef.current) {
+                                            playerRef.current.seekbarTouching = false;
+                                        }
+                                    }, 50);
                                 };
 
                                 videoEl.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -2506,6 +2526,100 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Store components reference for potential cleanup
 
+                        // BEGIN: Fix Android seekbar touch functionality
+                        if (isTouchDevice) {
+                            setTimeout(() => {
+                                const progressControl = playerRef.current
+                                    .getChild('controlBar')
+                                    ?.getChild('progressControl');
+                                const seekBar = progressControl?.getChild('seekBar');
+
+                                if (seekBar && seekBar.el()) {
+                                    const seekBarEl = seekBar.el();
+                                    const progressHolder = seekBarEl.querySelector('.vjs-progress-holder');
+
+                                    if (progressHolder) {
+                                        let isDragging = false;
+
+                                        const handleTouchStart = (e) => {
+                                            isDragging = true;
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent event from reaching video element
+                                            playerRef.current.userActive(true);
+
+                                            // Mark that we're interacting with seekbar to prevent play/pause
+                                            playerRef.current.seekbarTouching = true;
+
+                                            // Temporarily disable big play button
+                                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                                            if (bigPlayButton && bigPlayButton.el()) {
+                                                bigPlayButton.el().style.pointerEvents = 'none';
+                                                bigPlayButton.el().style.touchAction = 'none';
+                                            }
+                                        };
+
+                                        const handleTouchMove = (e) => {
+                                            if (!isDragging) return;
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent event from reaching video element
+
+                                            const touch = e.touches[0];
+                                            const rect = progressHolder.getBoundingClientRect();
+                                            const percentage = Math.max(
+                                                0,
+                                                Math.min(1, (touch.clientX - rect.left) / rect.width)
+                                            );
+                                            const duration = playerRef.current.duration();
+
+                                            if (duration && !isNaN(duration)) {
+                                                const newTime = percentage * duration;
+                                                playerRef.current.currentTime(newTime);
+                                            }
+                                        };
+
+                                        const handleTouchEnd = (e) => {
+                                            isDragging = false;
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent event from reaching video element
+
+                                            // Re-enable big play button
+                                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                                            if (bigPlayButton && bigPlayButton.el()) {
+                                                setTimeout(() => {
+                                                    bigPlayButton.el().style.pointerEvents = '';
+                                                    bigPlayButton.el().style.touchAction = '';
+                                                }, 200);
+                                            }
+
+                                            // Clear the seekbar touching flag after a longer delay to prevent conflicts
+                                            setTimeout(() => {
+                                                if (playerRef.current) {
+                                                    playerRef.current.seekbarTouching = false;
+                                                }
+                                            }, 300);
+                                        };
+
+                                        // Add touch event listeners specifically for Android
+                                        progressHolder.addEventListener('touchstart', handleTouchStart, {
+                                            passive: false,
+                                        });
+                                        progressHolder.addEventListener('touchmove', handleTouchMove, {
+                                            passive: false,
+                                        });
+                                        progressHolder.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+                                        // Store cleanup function
+                                        customComponents.current.cleanupSeekbarTouch = () => {
+                                            progressHolder.removeEventListener('touchstart', handleTouchStart);
+                                            progressHolder.removeEventListener('touchmove', handleTouchMove);
+                                            progressHolder.removeEventListener('touchend', handleTouchEnd);
+                                        };
+                                    }
+                                }
+                            }, 500);
+                        }
+                        // END: Fix Android seekbar touch functionality
+
                         // BEGIN: Add comprehensive keyboard event handling
                         const handleAllKeyboardEvents = (event) => {
                             // Only handle if no input elements are focused
@@ -2803,6 +2917,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             // Clean up keyboard event listeners if they exist
             if (customComponents.current && customComponents.current.cleanupArrowKeyHandler) {
                 customComponents.current.cleanupArrowKeyHandler();
+            }
+
+            // Clean up seekbar touch handlers if they exist
+            if (customComponents.current && customComponents.current.cleanupSeekbarTouch) {
+                customComponents.current.cleanupSeekbarTouch();
             }
 
             if (playerRef.current && !playerRef.current.isDisposed()) {
