@@ -28,12 +28,6 @@ class EndScreenOverlay extends Component {
             className: 'vjs-end-screen-overlay',
         });
 
-        // Create title
-        const title = videojs.dom.createEl('div', {
-            className: 'vjs-related-videos-title',
-        });
-        title.textContent = 'More Videos';
-
         // Create grid container
         const grid = videojs.dom.createEl('div', {
             className: 'vjs-related-videos-grid',
@@ -54,7 +48,6 @@ class EndScreenOverlay extends Component {
             });
         }
 
-        overlay.appendChild(title);
         overlay.appendChild(grid);
 
         return overlay;
