@@ -17,7 +17,7 @@ function shareOptionsList() {
   while (i < socialMedia.length) {
     switch (socialMedia[i]) {
       case 'embed':
-        if ('video' === MediaPageStore.get('media-data').media_type) {
+        if ('video' === MediaPageStore.get('media-data').media_type || 'audio' === MediaPageStore.get('media-data').media_type) {
           ret[socialMedia[i]] = {};
         }
         break;
