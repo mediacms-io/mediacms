@@ -129,7 +129,21 @@ class EndScreenOverlay extends Component {
 
         // Add click handler
         item.addEventListener('click', () => {
-            window.location.href = `/view?m=${video.id}`;
+            // Check if this is an embed player - use multiple methods for reliability
+            const playerId = this.player().id() || this.player().options_.id;
+            const isEmbedPlayer =
+                playerId === 'video-embed' ||
+                window.location.pathname.includes('/embed') ||
+                window.location.search.includes('embed') ||
+                window.parent !== window; // Most reliable check for iframe
+
+            if (isEmbedPlayer) {
+                // Open in new tab/window for embed players
+                window.open(`/view?m=${video.id}`, '_blank', 'noopener,noreferrer');
+            } else {
+                // Navigate in same window for regular players
+                window.location.href = `/view?m=${video.id}`;
+            }
         });
 
         return item;
