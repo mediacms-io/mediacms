@@ -1590,7 +1590,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Player dimensions - removed for responsive design
                         // Autoplay behavior: Try unmuted first, fallback to muted if needed
-                        autoplay: true, // Try unmuted autoplay first (true/false, play, muted, any)
+                        // For embed players, disable autoplay to show poster
+                        autoplay: isEmbedPlayer ? false : true, // Try unmuted autoplay first (true/false, play, muted, any)
 
                         // Start video over when it ends
                         loop: false,
@@ -1658,7 +1659,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         id: mediaData.id,
 
                         // Milliseconds of inactivity before user considered inactive (0 = never)
-                        inactivityTimeout: 2000,
+                        // For embed players, use longer timeout to keep controls visible
+                        inactivityTimeout: isEmbedPlayer ? 5000 : 2000,
 
                         // Language code for player (e.g., 'en', 'es', 'fr')
                         language: 'en',
@@ -1976,12 +1978,107 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         };
 
-                        if (mediaData?.urlAutoplay) {
-                            // Explicit autoplay requested via URL parameter
-                            handleAutoplay();
+                        // Skip autoplay for embed players to show poster
+                        if (!isEmbedPlayer) {
+                            if (mediaData?.urlAutoplay) {
+                                // Explicit autoplay requested via URL parameter
+                                handleAutoplay();
+                            } else {
+                                // Auto-start video on page load/reload with fallback strategy
+                                handleAutoplay();
+                            }
                         } else {
-                            // Auto-start video on page load/reload with fallback strategy
-                            handleAutoplay();
+                            // For embed players, setup clean appearance with hidden controls
+                            setTimeout(() => {
+                                const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                                const controlBar = playerRef.current.getChild('controlBar');
+
+                                if (bigPlayButton) {
+                                    bigPlayButton.show();
+                                    // Ensure big play button is prominently displayed in center
+                                    const bigPlayEl = bigPlayButton.el();
+                                    if (bigPlayEl) {
+                                        bigPlayEl.style.display = 'block';
+                                        bigPlayEl.style.visibility = 'visible';
+                                        bigPlayEl.style.opacity = '1';
+                                        // Make it more prominent for embed
+                                        bigPlayEl.style.zIndex = '10';
+                                    }
+                                }
+
+                                if (controlBar) {
+                                    // Hide controls by default for embed players
+                                    controlBar.hide();
+                                    const controlBarEl = controlBar.el();
+                                    if (controlBarEl) {
+                                        controlBarEl.style.opacity = '0';
+                                        controlBarEl.style.visibility = 'hidden';
+                                        controlBarEl.style.transition = 'opacity 0.3s ease';
+                                    }
+                                }
+
+                                // Fix potential duplicate image issue by ensuring proper poster/video layering
+                                const embedPlayerEl = playerRef.current.el();
+                                const videoEl = embedPlayerEl.querySelector('video');
+                                const posterEl = embedPlayerEl.querySelector('.vjs-poster');
+
+                                if (videoEl && posterEl) {
+                                    // Ensure video is behind poster when paused
+                                    videoEl.style.opacity = '0';
+                                    posterEl.style.zIndex = '1';
+                                    posterEl.style.position = 'absolute';
+                                    posterEl.style.top = '0';
+                                    posterEl.style.left = '0';
+                                    posterEl.style.width = '100%';
+                                    posterEl.style.height = '100%';
+                                }
+
+                                // Set player to inactive state to hide controls initially
+                                playerRef.current.userActive(false);
+
+                                // Setup hover behavior to show/hide controls for embed
+                                if (embedPlayerEl) {
+                                    const showControls = () => {
+                                        if (controlBar) {
+                                            controlBar.show();
+                                            const controlBarEl = controlBar.el();
+                                            if (controlBarEl) {
+                                                controlBarEl.style.opacity = '1';
+                                                controlBarEl.style.visibility = 'visible';
+                                            }
+                                        }
+                                        playerRef.current.userActive(true);
+                                    };
+
+                                    const hideControls = () => {
+                                        // Only hide if video is paused (embed behavior)
+                                        if (playerRef.current.paused()) {
+                                            if (controlBar) {
+                                                const controlBarEl = controlBar.el();
+                                                if (controlBarEl) {
+                                                    controlBarEl.style.opacity = '0';
+                                                    controlBarEl.style.visibility = 'hidden';
+                                                }
+                                                setTimeout(() => {
+                                                    if (playerRef.current.paused()) {
+                                                        controlBar.hide();
+                                                    }
+                                                }, 300);
+                                            }
+                                            playerRef.current.userActive(false);
+                                        }
+                                    };
+
+                                    embedPlayerEl.addEventListener('mouseenter', showControls);
+                                    embedPlayerEl.addEventListener('mouseleave', hideControls);
+
+                                    // Store cleanup function
+                                    customComponents.current.embedControlsCleanup = () => {
+                                        embedPlayerEl.removeEventListener('mouseenter', showControls);
+                                        embedPlayerEl.removeEventListener('mouseleave', hideControls);
+                                    };
+                                }
+                            }, 100);
                         }
 
                         /* const setupMobilePlayPause = () => {
@@ -2063,29 +2160,34 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         const seekBar = progressControl.getChild('seekBar');
                         const chaptersButton = controlBar.getChild('chaptersButton');
 
-                        // Auto-play video when navigating from next button
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const hasVideoParam = urlParams.get('m');
-                        if (hasVideoParam) {
-                            // Small delay to ensure everything is loaded
-                            setTimeout(async () => {
-                                if (playerRef.current && !playerRef.current.isDisposed()) {
-                                    try {
-                                        await playerRef.current.play();
-                                    } catch (error) {
-                                        console.error('ℹ️ Browser prevented play:', error.message);
-                                        // Try muted playback as fallback
-                                        if (!playerRef.current.muted()) {
-                                            try {
-                                                playerRef.current.muted(true);
-                                                await playerRef.current.play();
-                                            } catch (mutedError) {
-                                                console.error('ℹ️ Even muted play was blocked:', mutedError.message);
+                        // Auto-play video when navigating from next button (skip for embed players)
+                        if (!isEmbedPlayer) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const hasVideoParam = urlParams.get('m');
+                            if (hasVideoParam) {
+                                // Small delay to ensure everything is loaded
+                                setTimeout(async () => {
+                                    if (playerRef.current && !playerRef.current.isDisposed()) {
+                                        try {
+                                            await playerRef.current.play();
+                                        } catch (error) {
+                                            console.error('ℹ️ Browser prevented play:', error.message);
+                                            // Try muted playback as fallback
+                                            if (!playerRef.current.muted()) {
+                                                try {
+                                                    playerRef.current.muted(true);
+                                                    await playerRef.current.play();
+                                                } catch (mutedError) {
+                                                    console.error(
+                                                        'ℹ️ Even muted play was blocked:',
+                                                        mutedError.message
+                                                    );
+                                                }
                                             }
                                         }
                                     }
-                                }
-                            }, 100);
+                                }, 100);
+                            }
                         }
 
                         // BEGIN: Add subtitle tracks
@@ -2695,12 +2797,50 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('play');
                         }
+
+                        // For embed players, ensure video becomes visible when playing
+                        if (isEmbedPlayer) {
+                            const playerEl = playerRef.current.el();
+                            const videoEl = playerEl.querySelector('video');
+                            const posterEl = playerEl.querySelector('.vjs-poster');
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+
+                            if (videoEl) {
+                                videoEl.style.opacity = '1';
+                            }
+                            if (posterEl) {
+                                posterEl.style.opacity = '0';
+                            }
+                            // Hide big play button when video starts playing
+                            if (bigPlayButton) {
+                                bigPlayButton.hide();
+                            }
+                        }
                     });
 
                     playerRef.current.on('pause', () => {
                         // Only show pause indicator if not changing quality
                         if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
                             customComponents.current.seekIndicator.show('pause');
+                        }
+
+                        // For embed players, show poster when paused at beginning
+                        if (isEmbedPlayer && playerRef.current.currentTime() === 0) {
+                            const playerEl = playerRef.current.el();
+                            const videoEl = playerEl.querySelector('video');
+                            const posterEl = playerEl.querySelector('.vjs-poster');
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+
+                            if (videoEl) {
+                                videoEl.style.opacity = '0';
+                            }
+                            if (posterEl) {
+                                posterEl.style.opacity = '1';
+                            }
+                            // Show big play button when paused at beginning
+                            if (bigPlayButton) {
+                                bigPlayButton.show();
+                            }
                         }
                     });
 
@@ -2709,6 +2849,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     let autoplayCountdown = null;
 
                     playerRef.current.on('ended', () => {
+                        // For embed players, show big play button when video ends
+                        if (isEmbedPlayer) {
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                            if (bigPlayButton) {
+                                bigPlayButton.show();
+                            }
+                        }
+
                         // Keep controls active after video ends
                         setTimeout(() => {
                             if (playerRef.current && !playerRef.current.isDisposed()) {
@@ -2929,6 +3077,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             // Clean up seekbar touch handlers if they exist
             if (customComponents.current && customComponents.current.cleanupSeekbarTouch) {
                 customComponents.current.cleanupSeekbarTouch();
+            }
+
+            // Clean up embed controls event listeners if they exist
+            if (customComponents.current && customComponents.current.embedControlsCleanup) {
+                customComponents.current.embedControlsCleanup();
             }
 
             if (playerRef.current && !playerRef.current.isDisposed()) {
