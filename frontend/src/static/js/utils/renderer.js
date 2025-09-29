@@ -55,6 +55,10 @@ export function renderPage(idSelector, PageComponent) {
       appSidebar
     );
   }
+
+  if (document.body.classList.contains('js-loading')) {
+    document.body.classList.remove('js-loading');
+  }
 }
 
 export function renderEmbedPage(idSelector, PageComponent) {
@@ -62,5 +66,9 @@ export function renderEmbedPage(idSelector, PageComponent) {
 
   if (appContent && PageComponent) {
     ReactDOM.render(<PageComponent />, appContent);
+  }
+
+  if (document.body.classList.contains('js-loading')) {
+    document.body.classList.remove('js-loading');
   }
 }

@@ -32,12 +32,17 @@
         </style>
         {% endif %}
 
+        <style>
+            .js-loading .page-main-wrap {
+                visibility: hidden;
+            }
+        </style>
         
     {% endblock head %}
 
 </head>
 
-<body>
+<body class="js-loading">
 
     {% block beforecontent %}{% endblock %}
 
