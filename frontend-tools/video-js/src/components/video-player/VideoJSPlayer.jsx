@@ -43,7 +43,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           title: 'Modi tempora est quaerat numquam',
                           author_name: 'Markos Gogoulos',
                           author_profile: '/user/markos/',
-                          author_thumbnail: '/media/userlogos/2024/10/02/markos.jpeg',
+                          author_thumbnail: '/media/userlogos/user.jpg',
                           url: 'https://demo.mediacms.io/view?m=zK2nirNLC',
                           poster_url:
                               '/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3_8hguMHx.19990812hd_1920_1080_30fps.mp4.jpg',

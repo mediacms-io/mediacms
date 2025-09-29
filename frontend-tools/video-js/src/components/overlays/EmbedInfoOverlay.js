@@ -183,51 +183,43 @@ class EmbedInfoOverlay extends Component {
         const player = this.player();
         const overlay = this.el();
 
-        // Check if device is touch-enabled
-        const isTouchDevice =
-            'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-
-        // Show/hide with controls
-        player.on('useractive', () => {
-            overlay.style.opacity = '1';
-            overlay.style.visibility = 'visible';
-        });
-
-        player.on('userinactive', () => {
-            // On touch devices, keep overlay visible longer or don't hide it as aggressively
-            if (isTouchDevice) {
-                // Keep visible on touch devices when user inactive
-                overlay.style.opacity = '0.8';
+        // Function to show overlay only when video is paused/stopped
+        const updateOverlayVisibility = () => {
+            if (player.paused() || player.ended()) {
+                // Show overlay when paused or ended
+                overlay.style.opacity = '1';
                 overlay.style.visibility = 'visible';
             } else {
+                // Hide overlay when playing
                 overlay.style.opacity = '0';
                 overlay.style.visibility = 'hidden';
             }
-        });
+        };
 
-        // Always show when paused
+        // Show overlay when video is paused
         player.on('pause', () => {
-            overlay.style.opacity = '1';
-            overlay.style.visibility = 'visible';
+            updateOverlayVisibility();
         });
 
-        // Hide during fullscreen controls fade
-        player.on('fullscreenchange', () => {
-            setTimeout(() => {
-                if (player.isFullscreen()) {
-                    if (player.userActive()) {
-                        overlay.style.opacity = '1';
-                        overlay.style.visibility = 'visible';
-                    } else {
-                        overlay.style.opacity = '0';
-                        overlay.style.visibility = 'hidden';
-                    }
-                } else {
-                    overlay.style.opacity = '1';
-                    overlay.style.visibility = 'visible';
-                }
-            }, 100);
+        // Hide overlay when video starts playing
+        player.on('play', () => {
+            updateOverlayVisibility();
         });
+
+        // Show overlay when video ends
+        player.on('ended', () => {
+            updateOverlayVisibility();
+        });
+
+        // Show overlay when player is ready (initially paused)
+        player.on('ready', () => {
+            updateOverlayVisibility();
+        });
+
+        // Initial state check
+        setTimeout(() => {
+            updateOverlayVisibility();
+        }, 100);
     }
 
     // Method to update overlay content if needed
