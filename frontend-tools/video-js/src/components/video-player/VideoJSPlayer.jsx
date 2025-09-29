@@ -2775,7 +2775,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     autoplayCountdown = null;
                                 }
 
-                                // Show autoplay countdown immediately
+                                // Show autoplay countdown immediately!
                                 autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
                                     nextVideoData: nextVideoData,
                                     countdownSeconds: 5,
