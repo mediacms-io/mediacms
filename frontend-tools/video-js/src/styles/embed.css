@@ -176,3 +176,17 @@
     margin: 0 !important;
     padding: 0 !important;
 }
+
+/* ===== EMBED-SPECIFIC CONTROLS HIDING FOR INITIAL STATE ===== */
+/* Hide seekbar and controls when poster is displayed (before first play) in embed mode */
+#page-embed .video-js-root-embed .video-js:not(.vjs-has-started) .vjs-control-bar {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+#page-embed .video-js-root-embed .video-js:not(.vjs-has-started) .vjs-progress-control {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
