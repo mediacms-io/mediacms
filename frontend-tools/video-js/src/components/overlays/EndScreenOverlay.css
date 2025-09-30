@@ -71,7 +71,6 @@
 .vjs-related-video-item {
     position: relative;
     cursor: pointer;
-    border-radius: 8px;
     overflow: hidden;
     transition:
         transform 0.2s ease,
@@ -81,6 +80,11 @@
     aspect-ratio: 16/9;
     width: 100%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Apply rounded corners only when useRoundedCorners is true */
+.video-js.video-js-rounded-corners .vjs-related-video-item {
+    border-radius: 8px;
 }
 
 .vjs-related-video-item:hover {
@@ -140,18 +144,18 @@
 
 .vjs-related-video-author {
     font-size: 12px;
-    color: #ccc;
+    color: #fff;
 }
 
 .vjs-related-video-views {
     font-size: 12px;
-    color: #aaa;
+    color: #fff;
 }
 
 .vjs-related-video-author::after {
     content: "•";
     margin-left: 8px;
-    color: #666;
+    color: #fff;
 }
 
 .vjs-related-video-duration {
@@ -163,9 +167,13 @@
     padding: 2px 6px;
     font-size: 11px;
     font-weight: bold;
-    border-radius: 2px;
     opacity: 0;
     transition: opacity 0.3s ease;
+}
+
+/* Apply rounded corners to duration badge only when useRoundedCorners is true */
+.video-js.video-js-rounded-corners .vjs-related-video-duration {
+    border-radius: 2px;
 }
 
 .vjs-related-video-item:hover .vjs-related-video-duration {
