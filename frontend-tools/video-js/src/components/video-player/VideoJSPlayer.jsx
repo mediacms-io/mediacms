@@ -2085,7 +2085,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }, 100);
                         }
 
-                        /* const setupMobilePlayPause = () => {
+                        const setupMobilePlayPause = () => {
                             const playerEl = playerRef.current.el();
                             const videoEl = playerEl.querySelector('video');
 
@@ -2134,10 +2134,23 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                             e.preventDefault();
                                             e.stopPropagation();
 
+                                            // Check if controls are currently visible by examining control bar
+                                            const controlBar = playerRef.current.getChild('controlBar');
+                                            const controlBarEl = controlBar ? controlBar.el() : null;
+                                            const isControlsVisible =
+                                                controlBarEl &&
+                                                window.getComputedStyle(controlBarEl).opacity !== '0' &&
+                                                window.getComputedStyle(controlBarEl).visibility !== 'hidden';
+
                                             if (playerRef.current.paused()) {
+                                                // Always play if video is paused
                                                 playerRef.current.play();
-                                            } else {
+                                            } else if (isControlsVisible) {
+                                                // Only pause if controls are actually visible
                                                 playerRef.current.pause();
+                                            } else {
+                                                // If controls are not visible, just show them (trigger user activity)
+                                                playerRef.current.userActive(true);
                                             }
                                         }
                                     }
@@ -2153,8 +2166,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 videoEl.addEventListener('touchstart', handleTouchStart, { passive: true });
                                 videoEl.addEventListener('touchend', handleTouchEnd, { passive: false });
                             }
-                        }; */
-                        //setTimeout(setupMobilePlayPause, 100);
+                        };
+                        setTimeout(setupMobilePlayPause, 100);
 
                         // Get control bar and its children
                         const controlBar = playerRef.current.getChild('controlBar');
