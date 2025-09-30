@@ -138,6 +138,26 @@ html {
     z-index: 6 !important;
 }
 
+/* Dark background overlay when controls are visible to improve readability on bright videos */
+.video-js.vjs-user-active::before,
+.video-js.vjs-paused::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    z-index: 2;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Hide the dark overlay when user is inactive */
+.video-js.vjs-user-inactive:not(.vjs-paused)::before {
+    opacity: 0;
+}
+
 /* Progress control above overlay */
 .video-js .vjs-progress-control.vjs-control {
     z-index: 7 !important;
