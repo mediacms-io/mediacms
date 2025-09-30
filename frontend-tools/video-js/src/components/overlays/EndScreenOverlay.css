@@ -5,13 +5,13 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 100px); /* Leave space for seekbar and controls */
     background: #000000;
     display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 20px 20px 95px 20px; /* Bottom padding to avoid seekbar and controls */
+    padding: 20px;
     box-sizing: border-box;
     z-index: 9999; /* Maximum z-index to cover absolutely everything */
     overflow: hidden; /* No scrollbar, fit content within available space */
@@ -182,7 +182,7 @@
 .vjs-related-videos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    gap: 2px;
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -194,6 +194,9 @@
     overflow: hidden;
     height: 100%;
     flex: 1; /* Fill available space */
+    grid-row-gap: 2px;
+    grid-column-gap: 2px;
+    grid-auto-rows: 1fr; /* Make all rows equal height */
 }
 
 .vjs-related-video-item {
@@ -338,50 +341,72 @@
 @media (max-width: 1200px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
+        gap: 2px;
+        grid-row-gap: 2px;
+        grid-column-gap: 2px;
+        grid-auto-rows: 1fr;
     }
 
     .vjs-end-screen-overlay {
-        padding: 15px 15px 8px 15px;
+        padding: 15px;
+        height: calc(100% - 95px);
     }
 }
 
 @media (max-width: 900px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 10px;
+        gap: 2px;
+        grid-row-gap: 2px;
+        grid-column-gap: 2px;
+        grid-auto-rows: 1fr;
     }
 
     .vjs-end-screen-overlay {
-        padding: 10px 10px 5px 10px;
-        height: calc(100% - 85px);
+        padding: 10px;
+        height: calc(100% - 90px);
     }
 }
 
 @media (max-width: 600px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 2px;
+        grid-row-gap: 2px;
+        grid-column-gap: 2px;
+        grid-auto-rows: 1fr;
     }
 
     .vjs-end-screen-overlay {
-        padding: 8px;
-        height: calc(100% - 75px);
+        padding: 5px;
+        height: calc(100% - 60px);
+        justify-content: flex-start;
+        padding-top: 10px;
     }
 
     .vjs-related-video-item {
-        min-height: 80px;
+        min-height: 60px;
     }
 }
 
 @media (max-width: 400px) {
     .vjs-related-videos-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2px;
+        grid-row-gap: 2px;
+        grid-column-gap: 2px;
+        grid-auto-rows: 1fr;
+    }
+
+    .vjs-end-screen-overlay {
+        height: calc(100% - 60px);
+        padding: 5px;
+        justify-content: flex-start;
+        padding-top: 10px;
     }
 
     .vjs-related-video-item {
-        min-height: 60px;
+        min-height: 50px;
     }
 }
 
