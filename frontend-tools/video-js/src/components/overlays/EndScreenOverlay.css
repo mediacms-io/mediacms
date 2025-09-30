@@ -6,7 +6,7 @@
     left: 0;
     width: 100%;
     height: calc(100% - 46px);
-    background: rgba(0, 0, 0, 0.7);
+    background: #000000;
     display: none;
     flex-direction: column;
     justify-content: center;
@@ -14,6 +14,30 @@
     padding: 20px;
     box-sizing: border-box;
     z-index: 4;
+}
+
+/* Hide poster image when video ends and end screen is shown */
+.video-js.vjs-ended .vjs-poster {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Make control bar and seekbar background black when video ends */
+.video-js.vjs-ended .vjs-control-bar {
+    background: #000000 !important;
+    background-color: #000000 !important;
+    background-image: none !important;
+}
+
+.video-js.vjs-ended .vjs-progress-control {
+    background: #000000 !important;
+    background-color: #000000 !important;
+}
+
+/* Also ensure the gradient overlay is black when ended */
+.video-js.vjs-ended::after {
+    background: linear-gradient(transparent, #000000) !important;
 }
 
 .vjs-related-videos-title {
