@@ -2624,6 +2624,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // BEGIN: Add Seek Indicator Component
                         customComponents.current.seekIndicator = new SeekIndicator(playerRef.current, {
                             seekAmount: 5, // 5 seconds seek amount
+                            isEmbedPlayer: isEmbedPlayer, // Pass embed mode flag
                         });
                         // Add the component but ensure it's hidden initially
                         playerRef.current.addChild(customComponents.current.seekIndicator);

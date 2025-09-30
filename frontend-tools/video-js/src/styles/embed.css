@@ -142,3 +142,37 @@
 #page-embed .video-js-root-embed .video-js.vjs-user-inactive:not(.vjs-paused):not(.vjs-ended) .vjs-progress-control {
     opacity: 0 !important;
 }
+
+/* ===== EMBED-SPECIFIC SEEK INDICATOR POSITIONING ===== */
+/* Ensure play icon (SeekIndicator) stays centered in embed view regardless of window size */
+#page-embed .video-js-root-embed .video-js .vjs-seek-indicator {
+    position: fixed !important;
+    top: 50vh !important;
+    left: 50vw !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10000 !important;
+    pointer-events: none !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease-in-out !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ===== EMBED-SPECIFIC BIG PLAY BUTTON POSITIONING ===== */
+/* Ensure big play button stays centered in embed view regardless of window size */
+#page-embed .video-js-root-embed .video-js .vjs-big-play-button {
+    position: fixed !important;
+    top: 50vh !important;
+    left: 50vw !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 1000 !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}

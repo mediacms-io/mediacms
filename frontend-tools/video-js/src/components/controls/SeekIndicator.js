@@ -8,6 +8,7 @@ class SeekIndicator extends Component {
     constructor(player, options) {
         super(player, options);
         this.seekAmount = options.seekAmount || 5; // Default seek amount in seconds
+        this.isEmbedPlayer = options.isEmbedPlayer || false; // Store embed mode flag
         this.showTimeout = null;
     }
 
@@ -173,22 +174,24 @@ class SeekIndicator extends Component {
         // Clear any text content in the text element
         textEl.textContent = '';
 
-        // Force show the element with YouTube-style positioning
+        // Use fixed positioning relative to viewport
         el.style.cssText = `
-            position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 99999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: none !important;
-            width: auto !important;
-            height: auto !important;
-        `;
+                position: fixed !important;
+                top: 50vh !important;
+                left: 50vw !important;
+                transform: translate(-50%, -50%) !important;
+                z-index: 10000 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: none !important;
+                width: auto !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            `;
 
         // Auto-hide after 1 second
         this.showTimeout = setTimeout(() => {
