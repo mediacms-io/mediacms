@@ -1726,6 +1726,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         userActions: {
                             // Enable/disable or customize click behavior
                             click: true,
+                            tap: true,
 
                             // Enable/disable or customize double-click behavior (fullscreen toggle)
                             doubleClick: true,

@@ -167,9 +167,9 @@
 /* ===== EMBED-SPECIFIC BIG PLAY BUTTON POSITIONING ===== */
 /* Ensure big play button stays centered in embed view regardless of window size */
 #page-embed .video-js-root-embed .video-js .vjs-big-play-button {
-    position: fixed !important;
-    top: 50vh !important;
-    left: 50vw !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
     transform: translate(-50%, -50%) !important;
     z-index: 1000 !important;
     pointer-events: auto !important;

@@ -174,11 +174,11 @@ class SeekIndicator extends Component {
         // Clear any text content in the text element
         textEl.textContent = '';
 
-        // Use fixed positioning relative to viewport
+        // Position relative to video player container, not viewport
         el.style.cssText = `
-                position: fixed !important;
-                top: 50vh !important;
-                left: 50vw !important;
+                position: absolute !important;
+                top: 50% !important;
+                left: 50% !important;
                 transform: translate(-50%, -50%) !important;
                 z-index: 10000 !important;
                 display: flex !important;
