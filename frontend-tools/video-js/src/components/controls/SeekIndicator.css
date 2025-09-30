@@ -65,6 +65,39 @@
     overflow: hidden !important;
 }
 
+/* Responsive sizing for mobile devices */
+@media (max-width: 768px) {
+    .vjs-seek-indicator {
+        top: calc(50% - 30px) !important; /* Move up slightly to avoid seekbar on tablet */
+    }
+
+    .youtube-seek-circle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+
+    .youtube-seek-icon svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .vjs-seek-indicator {
+        top: calc(50% - 40px) !important; /* Move up more to avoid seekbar on mobile */
+    }
+
+    .youtube-seek-circle {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .youtube-seek-icon svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+}
+
 .youtube-seek-icon {
     display: flex !important;
     align-items: center !important;

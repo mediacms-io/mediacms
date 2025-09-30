@@ -2102,14 +2102,16 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     const touch = e.touches[0];
                                     touchStartPos = { x: touch.clientX, y: touch.clientY };
 
-                                    // Check if touch is in seekbar area
+                                    // Check if touch is in seekbar area or the zone above it
                                     const progressControl = playerRef.current
                                         .getChild('controlBar')
                                         ?.getChild('progressControl');
                                     if (progressControl && progressControl.el()) {
                                         const progressRect = progressControl.el().getBoundingClientRect();
+                                        const seekbarDeadZone = 8; // Only 8px above seekbar is protected for easier seeking
                                         const isInSeekbarArea =
-                                            touch.clientY >= progressRect.top && touch.clientY <= progressRect.bottom;
+                                            touch.clientY >= progressRect.top - seekbarDeadZone &&
+                                            touch.clientY <= progressRect.bottom;
                                         if (isInSeekbarArea) {
                                             playerRef.current.seekbarTouching = true;
                                         }
@@ -2142,15 +2144,40 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                 window.getComputedStyle(controlBarEl).opacity !== '0' &&
                                                 window.getComputedStyle(controlBarEl).visibility !== 'hidden';
 
+                                            // Check if center play/pause icon is visible and if tap is on it
+                                            const seekIndicator = customComponents.current.seekIndicator;
+                                            const seekIndicatorEl = seekIndicator ? seekIndicator.el() : null;
+                                            const isSeekIndicatorVisible =
+                                                seekIndicatorEl &&
+                                                window.getComputedStyle(seekIndicatorEl).opacity !== '0' &&
+                                                window.getComputedStyle(seekIndicatorEl).visibility !== 'hidden' &&
+                                                window.getComputedStyle(seekIndicatorEl).display !== 'none';
+
+                                            let isTapOnCenterIcon = false;
+                                            if (seekIndicatorEl && isSeekIndicatorVisible) {
+                                                const iconRect = seekIndicatorEl.getBoundingClientRect();
+                                                isTapOnCenterIcon =
+                                                    touch.clientX >= iconRect.left &&
+                                                    touch.clientX <= iconRect.right &&
+                                                    touch.clientY >= iconRect.top &&
+                                                    touch.clientY <= iconRect.bottom;
+                                            }
+
                                             if (playerRef.current.paused()) {
                                                 // Always play if video is paused
                                                 playerRef.current.play();
+                                            } else if (isTapOnCenterIcon) {
+                                                // Pause if tapping on center icon (highest priority)
+                                                playerRef.current.pause();
                                             } else if (isControlsVisible) {
-                                                // Only pause if controls are actually visible
+                                                // Pause if controls are visible and not touching seekbar area
                                                 playerRef.current.pause();
                                             } else {
-                                                // If controls are not visible, just show them (trigger user activity)
+                                                // If controls are not visible, show them AND show center pause icon
                                                 playerRef.current.userActive(true);
+                                                if (seekIndicator) {
+                                                    seekIndicator.showMobilePauseIcon();
+                                                }
                                             }
                                         }
                                     }

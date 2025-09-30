@@ -26,9 +26,9 @@ html {
         visibility: hidden !important;
     }
 
-    /* Simple fix: Move seekbar up by 10px on touch devices */
+    /* Simple fix: Move seekbar closer to controls on touch devices */
     .video-js .vjs-progress-control {
-        bottom: 56px !important; /* Move up 10px from original 46px */
+        bottom: 44px !important; /* Much closer to control bar - minimal gap */
     }
 
     /* Make seekbar more touch-friendly on Android */
@@ -551,9 +551,9 @@ button.vjs-button > .vjs-icon-placeholder:before {
         border-radius: 0 !important;
     }
 
-    /* Move seekbar up by 10px on small mobile to prevent accidental button touches */
+    /* Move seekbar closer to controls on small mobile */
     .video-js .vjs-progress-control {
-        bottom: 56px !important; /* Move up 10px from original 46px */
+        bottom: 44px !important; /* Much closer to control bar - minimal gap */
     }
 
     .video-container {

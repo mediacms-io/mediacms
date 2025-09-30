@@ -106,7 +106,7 @@
     }
 
     #page-embed .video-js-root-embed .video-js .vjs-progress-control {
-        bottom: 56px !important; /* Adjust for larger control bar */
+        bottom: 44px !important; /* Much closer to control bar - minimal gap */
         margin: 0 !important;
         padding: 0 !important;
     }
