@@ -1,0 +1,12 @@
+/* ===== CUSTOM REMAINING TIME STYLES ===== */
+
+.vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+    font-size: 14px !important;
+    font-weight: 500;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #fff;
+}

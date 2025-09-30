@@ -1,5 +1,6 @@
 // components/controls/CustomChaptersOverlay.js
 import videojs from 'video.js';
+import './CustomChaptersOverlay.css';
 
 // Get the Component base class from Video.js
 const Component = videojs.getComponent('Component');

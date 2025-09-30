@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import './AutoplayToggleButton.css';
 import autoPlayIconUrl from '../../assets/icons/autoplay-video-js-play.svg';
 import autoPauseIconUrl from '../../assets/icons/autoplay-video-js-pause.svg';
 

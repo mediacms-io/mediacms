@@ -1,5 +1,6 @@
 // components/controls/CustomRemainingTime.js
 import videojs from 'video.js';
+import './CustomRemainingTime.css';
 
 // Get the Component base class from Video.js
 const Component = videojs.getComponent('Component');

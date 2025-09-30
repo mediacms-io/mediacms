@@ -1,0 +1,64 @@
+/* ===== SPRITE PREVIEW STYLES ===== */
+
+.vjs-sprite-preview-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Sprite Preview Tooltip Styles - Match chapter styling */
+.vjs-sprite-preview-tooltip {
+    text-align: center;
+    width: 172px !important;
+    max-width: 100% !important ;
+    height: auto;
+}
+
+.vjs-sprite-preview-tooltip .sprite-image-preview {
+    width: 166px !important;
+    max-width: 100% !important;
+    height: 96px;
+    margin: 0 auto;
+    border-radius: 6px;
+    border: 3px solid #fff;
+}
+
+/* Disable sprite preview tooltips on touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 899px) {
+    /* Disable sprite preview tooltips on tablets */
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Disable sprite preview tooltips on mobile */
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Disable sprite preview tooltips on small mobile */
+    .vjs-sprite-preview-tooltip {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+}

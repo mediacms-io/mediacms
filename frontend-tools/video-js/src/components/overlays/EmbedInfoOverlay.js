@@ -1,5 +1,6 @@
 // components/overlays/EmbedInfoOverlay.js
 import videojs from 'video.js';
+import './EmbedInfoOverlay.css';
 
 // Get the Component base class from Video.js
 const Component = videojs.getComponent('Component');

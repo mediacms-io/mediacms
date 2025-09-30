@@ -1,0 +1,128 @@
+/* ===== SETTINGS BUTTON STYLES ===== */
+
+.video-js .vjs-settings-button {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    color: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+.video-js .vjs-settings-button:hover {
+    background: none !important;
+}
+
+.video-js .vjs-settings-button:focus {
+    outline: none !important;
+}
+
+.video-js .vjs-settings-button .vjs-icon-cog {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.video-js .vjs-control-bar .settings-item-svg {
+    display: flex;
+}
+
+.video-js .vjs-control-bar .settings-item-svg svg {
+    width: auto !important;
+    height: auto !important;
+    transform: inherit !important;
+}
+
+.vjs-settings-button svg {
+    transition: ease-in-out 0.3s;
+}
+
+.vjs-settings-button.settings-clicked svg {
+    transform: rotate(30deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    body div.custom-settings-overlay {
+        height: calc(100% - 40px);
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 767px) {
+    .video-js .vjs-settings-button {
+        min-width: 44px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        margin: 0 2px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+        cursor: pointer !important;
+        z-index: 1000 !important;
+        pointer-events: auto !important;
+        position: relative !important;
+    }
+
+    .video-js .vjs-settings-button .vjs-icon-cog {
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .video-js .vjs-control-bar .vjs-button {
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    .custom-settings-overlay .settings-item {
+        padding: 6px 16px;
+        font-size: 15px;
+        touch-action: manipulation;
+        line-height: 18px;
+    }
+
+    .custom-settings-overlay .settings-header {
+        padding: 10px 16px;
+        font-size: 18px;
+        line-height: 20px;
+    }
+
+    body div.custom-settings-overlay {
+        bottom: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .video-js .vjs-settings-button .vjs-icon-cog {
+        font-size: 22px !important;
+        width: 22px !important;
+        height: 22px !important;
+    }
+}

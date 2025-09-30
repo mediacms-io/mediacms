@@ -1,6 +1,7 @@
 // components/controls/CustomSettingsMenu.js
 import videojs from 'video.js';
 import './CustomSettingsMenu.css';
+import './SettingsButton.css';
 import UserPreferences from '../../utils/UserPreferences';
 
 // Get the Component base class from Video.js

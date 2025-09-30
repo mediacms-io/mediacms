@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import './SeekIndicator.css';
 
 const Component = videojs.getComponent('Component');
 

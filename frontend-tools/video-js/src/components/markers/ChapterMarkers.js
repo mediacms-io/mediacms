@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import './ChapterMarkers.css';
 
 const Component = videojs.getComponent('Component');
 

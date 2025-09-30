@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import './EndScreenOverlay.css';
 
 const Component = videojs.getComponent('Component');
 

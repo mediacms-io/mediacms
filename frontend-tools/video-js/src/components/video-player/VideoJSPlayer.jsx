@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import '../../VideoJS.css';
+import '../../styles/embed.css';
+import '../controls/SubtitlesButton.css';
 
 // Import the separated components
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
@@ -53,10 +56,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                   endTime: '00:00:08.295',
                                   chapterTitle: 'A1 Lorem ipsum dolor sit amet consectetur adipisicing elit.',
                               },
-                              { startTime: '00:00:24.295', endTime: '00:00:48.590', chapterTitle: 'A2 of Marine Life' },
+                              { startTime: '00:00:08.295', endTime: '00:00:15.590', chapterTitle: 'A2 of Marine Life' },
                               {
-                                  startTime: '00:00:48.590',
-                                  endTime: '00:01:12.885',
+                                  startTime: '00:00:15.590',
+                                  endTime: '00:00:22.885',
                                   chapterTitle: 'A3 Reef Ecosystems',
                               },
                           ],

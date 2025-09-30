@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import './NextVideoButton.css';
 
 const Button = videojs.getComponent('Button');
 
