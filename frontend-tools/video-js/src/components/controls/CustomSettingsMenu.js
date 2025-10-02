@@ -494,17 +494,8 @@ class CustomSettingsMenu extends Component {
     }
 
     positionButton() {
-        const controlBar = this.player().getChild('controlBar');
-        const fullscreenToggle = controlBar.getChild('fullscreenToggle');
-
-        if (this.settingsButton && fullscreenToggle) {
-            // Small delay to ensure all buttons are created
-            setTimeout(() => {
-                const fullscreenIndex = controlBar.children().indexOf(fullscreenToggle);
-                controlBar.removeChild(this.settingsButton);
-                controlBar.addChild(this.settingsButton, {}, fullscreenIndex + 1);
-            }, 50);
-        }
+        // CSS flexbox order handles positioning - no manual repositioning needed
+        // The settings button will be positioned according to the order property in CSS
     }
 
     setupEventListeners() {

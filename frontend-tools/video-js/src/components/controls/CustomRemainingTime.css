@@ -9,4 +9,43 @@
     justify-content: center;
     height: 100%;
     color: #fff;
+    white-space: nowrap;
+    padding: 0 4px;
+}
+
+.vjs-control-bar .custom-remaining-time {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+}
+
+/* Responsive time display sizing */
+@media (max-width: 767px) {
+    .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+        font-size: 11px !important;
+        padding: 0 2px;
+    }
+}
+
+@media (max-width: 500px) {
+    .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+        font-size: 9px !important;
+        padding: 0 1px;
+        letter-spacing: -0.3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+        font-size: 9px !important;
+        padding: 0 1px;
+        letter-spacing: -0.3px;
+    }
+}
+
+@media (max-width: 399px) {
+    .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
+        font-size: 8px !important;
+        padding: 0;
+        letter-spacing: -0.5px;
+    }
 }
