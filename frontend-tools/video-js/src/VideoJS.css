@@ -28,7 +28,7 @@ html {
 
     /* Simple fix: Move seekbar closer to controls on touch devices */
     .video-js .vjs-progress-control {
-        bottom: 44px !important; /* Much closer to control bar - minimal gap */
+        bottom: 58px !important; /* Moved up to prevent overlap with controls */
     }
 
     /* Make seekbar more touch-friendly on Android */
@@ -102,9 +102,95 @@ html {
     /* position: relative !important; */
 }
 
+/* Global control order for all screens */
+.video-js .vjs-play-control {
+    order: 0 !important;
+}
+
+/* Play button wrapper styling */
+.video-js .vjs-play-wrapper {
+    order: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.video-js .vjs-play-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Next video button wrapper styling */
+.video-js .vjs-next-video-wrapper {
+    order: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.video-js .vjs-next-video-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.video-js .vjs-control {
+    height: auto !important;
+ 
+}
+.video-js .vjs-next-video-control {
+    order: 1 !important;
+}
+
+.video-js .vjs-volume-panel {
+    order: 2 !important;
+}
+
+.video-js .custom-remaining-time {
+    order: 3 !important;
+}
+
+.video-js .vjs-spacer-control {
+    order: 4 !important;
+}
+
+.video-js .vjs-autoplay-toggle {
+    order: 5 !important;
+}
+
+.video-js .vjs-chapters-button {
+    order: 6 !important;
+}
+
+.video-js .vjs-subs-caps-button,
+.video-js .vjs-subtitles-button {
+    order: 7 !important;
+}
+
+.video-js .vjs-settings-button {
+    order: 8 !important;
+}
+
+.video-js .vjs-picture-in-picture-control {
+    order: 9 !important;
+}
+
+.video-js .vjs-fullscreen-control {
+    order: 10 !important;
+}
+
 /* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
 .video-js-root-main .video-js.video-js-rounded-corners::after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: 0;
     left: 0;
@@ -141,7 +227,7 @@ html {
 /* Dark background overlay when controls are visible to improve readability on bright videos */
 .video-js.vjs-user-active::before,
 .video-js.vjs-paused::before {
-    content: "";
+    content: '';
     position: absolute;
     bottom: 0;
     left: 0;
@@ -176,6 +262,11 @@ html {
     font-weight: 500 !important;
 }
 
+@media (hover: hover) and (pointer: fine) {
+    .vjs-volume-control.vjs-control {
+        top: 17px !important;
+    }
+}
 /* Volume control visibility */
 .video-js .vjs-volume-control .vjs-volume-bar {
     background: rgba(255, 255, 255, 0.3) !important;
@@ -191,6 +282,14 @@ html {
     margin: 0 auto;
     padding: 0 20px;
     box-sizing: border-box;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.video-js-root-main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .video-js.vjs-fluid {
@@ -207,17 +306,18 @@ html {
 }
 .vjs-progress-holder {
     background: rgba(255, 255, 255, 0.5) !important;
+
 }
 
 .video-js .vjs-progress-control {
     position: absolute !important;
-    bottom: 46px !important;
+    bottom: 42px !important; /* Moved up to prevent overlap with controls */
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    height: 0 !important;
+    height: 28px !important; /* Much larger height for better grab area */
     z-index: 3 !important;
-    padding: 0 !important;
+    padding: 8px 0 !important; /* More padding above for easier grabbing */
     margin: 0 auto !important;
 }
 .video-js .vjs-control-bar .vjs-progress-control {
@@ -229,7 +329,7 @@ html {
 
 .video-js .vjs-control-bar .vjs-icon-placeholder,
 .video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
-.video-js .vjs-control-bar [class*="vjs-icon-"] {
+.video-js .vjs-control-bar [class*='vjs-icon-'] {
     font-size: 1.5em !important;
 }
 
@@ -241,15 +341,18 @@ html {
 }
 
 .video-js .vjs-spacer-control {
-    flex: 1 !important;
+    flex: 1 1 auto !important;
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
     min-width: 1px !important;
     height: 100% !important;
 }
 .video-js .vjs-control-bar .vjs-spacer-control {
-    margin-left: auto;
+    margin-left: auto !important;
 }
 .video-js .vjs-control-bar .vjs-control {
-    flex: none !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-autoplay-toggle {
@@ -405,21 +508,22 @@ button {
     padding: 0;
 }
 
-/* Button sizes and layouts */
+/* Button sizes and layouts - reduced size to minimize clickable area */
 .video-js div.vjs-control {
     width: auto;
 }
 .vjs-chapters-button button.vjs-button,
 .vjs-subtitles-button button.vjs-button,
 .video-js button.vjs-control {
-    width: 48px;
-    height: 48px;
+    width: 36px !important; /* Reduced from 48px to minimize clickable area */
+    height: 36px !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0 !important;
 }
 button.vjs-button > .vjs-icon-placeholder:before {
-    line-height: 48px;
+    line-height: 36px;
     transition: ease-in-out 0.5s;
 }
 
@@ -439,14 +543,41 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (pointer: coarse) {
+    /* Hide volume bar on touch devices - only show mute button */
     .video-js .vjs-volume-panel div.vjs-volume-control {
-        width: auto;
-        opacity: 1;
+        width: 0 !important;
+        opacity: 0 !important;
+        display: none !important;
+    }
+    
+    /* Ensure mute button is still visible and functional */
+    .video-js .vjs-volume-panel .vjs-mute-control {
+        display: flex !important;
+        opacity: 1 !important;
     }
 }
 
 /* Mobile responsive adjustments */
 @media (max-width: 767px) {
+    /* Hide volume bar on mobile devices */
+    .video-js .vjs-volume-panel div.vjs-volume-control {
+        width: 0 !important;
+        opacity: 0 !important;
+        display: none !important;
+    }
+    /* Smaller big play button on mobile */
+    .video-js .vjs-big-play-button {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 2.5em !important;
+        border-radius: 50% !important;
+    }
+
+    .video-js .vjs-big-play-button .vjs-icon-placeholder:before {
+        font-size: 1.2em !important;
+        line-height: 60px !important;
+    }
+
     /* Remove rounded corners on mobile screens */
     .video-js-root-main .video-js.video-js-rounded-corners,
     .video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
@@ -465,9 +596,9 @@ button.vjs-button > .vjs-icon-placeholder:before {
         border-radius: 0 !important;
     }
 
-    /* Move seekbar up by 10px on mobile to prevent accidental button touches */
+    /* Move seekbar closer to controls on mobile */
     .video-js .vjs-progress-control {
-        bottom: 56px !important; /* Move up 10px from original 46px */
+        bottom: 52px !important; /* Moved up to prevent overlap with controls */
     }
 
     .vjs-chapters-button button.vjs-button,
@@ -487,7 +618,28 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
     .video-js div.vjs-control-bar {
         padding: 0 2px;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 2px !important;
     }
+
+    /* Enforce flexbox on mobile for consistent layout */
+    .video-js .vjs-control-bar .vjs-control {
+        flex: 0 0 auto !important;
+    }
+
+    /* Allow time display to shrink if needed */
+    .video-js .vjs-control-bar .custom-remaining-time {
+        flex: 0 1 auto !important;
+        min-width: fit-content !important;
+    }
+
+    .video-js .vjs-spacer-control {
+        flex: 1 1 auto !important;
+        flex-grow: 1 !important;
+        min-width: 8px !important;
+    }
+
     .video-js .vjs-autoplay-toggle {
         margin-right: 6px !important;
     }
@@ -552,6 +704,75 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 }
 
+@media (max-width: 500px) {
+    /* Hide volume bar on small screens */
+    .video-js .vjs-volume-panel div.vjs-volume-control {
+        width: 0 !important;
+        opacity: 0 !important;
+        display: none !important;
+    }
+    
+    /* Compact buttons for small screens */
+    .vjs-chapters-button button.vjs-button,
+    .vjs-subtitles-button button.vjs-button,
+    .video-js button.vjs-control {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    button.vjs-button > .vjs-icon-placeholder:before {
+        line-height: 26px !important;
+    }
+    .video-js div.vjs-control {
+        height: 26px !important;
+    }
+    .vjs-button > .vjs-icon-placeholder:before {
+        font-size: 1.3em !important;
+    }
+
+    .video-js div.vjs-control-bar {
+        padding: 0 1px !important;
+        gap: 0px !important;
+        height: 40px !important;
+    }
+
+    .video-js .vjs-autoplay-toggle {
+        margin-right: 2px !important;
+    }
+
+    /* Move seekbar very close to controls - minimal gap */
+    .video-js .vjs-progress-control {
+        bottom: 28px !important; /* Moved up to prevent overlap with controls */
+    }
+
+    /* Hide controls to make room for time display on small screens */
+    .video-js .vjs-picture-in-picture-control {
+        display: none !important;
+    }
+
+    .video-js .vjs-descriptions-button {
+        display: none !important;
+    }
+
+    .video-js .vjs-audio-button {
+        display: none !important;
+    }
+
+    /* Ensure time display is visible and has priority */
+    .video-js .custom-remaining-time {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0 !important;
+        min-width: fit-content !important;
+    }
+
+    .video-js .custom-remaining-time .vjs-remaining-time-display {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
 @media (max-width: 480px) {
     /* Remove rounded corners on small mobile screens */
     .video-js-root-main .video-js.video-js-rounded-corners,
@@ -569,11 +790,6 @@ button.vjs-button > .vjs-icon-placeholder:before {
 
     .video-js-root-main .video-js.video-js-rounded-corners video {
         border-radius: 0 !important;
-    }
-
-    /* Move seekbar closer to controls on small mobile */
-    .video-js .vjs-progress-control {
-        bottom: 44px !important; /* Much closer to control bar - minimal gap */
     }
 
     .video-container {
@@ -612,6 +828,12 @@ button.vjs-button > .vjs-icon-placeholder:before {
 }
 
 @media (max-width: 399px) {
+    /* Hide volume bar on very small screens */
+    .video-js .vjs-volume-panel div.vjs-volume-control {
+        width: 0 !important;
+        opacity: 0 !important;
+        display: none !important;
+    }
     .vjs-chapters-button button.vjs-button,
     .vjs-subtitles-button button.vjs-button,
     .video-js button.vjs-control {
@@ -624,6 +846,29 @@ button.vjs-button > .vjs-icon-placeholder:before {
     .video-js div.vjs-control {
         height: 28px;
     }
+
+    .video-js div.vjs-control-bar {
+        padding: 0 1px;
+        gap: 1px !important;
+    }
+
+    /* Enforce flexbox on very small screens */
+    .video-js .vjs-control-bar .vjs-control {
+        flex: 0 0 auto !important;
+    }
+
+    /* Allow time display to shrink more on very small screens */
+    .video-js .vjs-control-bar .custom-remaining-time {
+        flex: 0 1 auto !important;
+        min-width: fit-content !important;
+    }
+
+    .video-js .vjs-spacer-control {
+        flex: 1 1 auto !important;
+        flex-grow: 1 !important;
+        min-width: 4px !important;
+    }
+
     .video-js .vjs-autoplay-toggle {
         margin-right: 4px !important;
     }
