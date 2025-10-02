@@ -287,9 +287,39 @@ html {
     position: relative !important;
 }
 
-.video-js .vjs-control {
-    height: auto !important;
+/* Fullscreen button wrapper styling */
+.video-js .vjs-fullscreen-wrapper {
+    order: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
+
+.video-js .vjs-fullscreen-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Center the fullscreen button inside its wrapper */
+.video-js .vjs-fullscreen-wrapper .vjs-fullscreen-control {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+}
+
 .video-js .vjs-next-video-control {
     order: 1 !important;
 }

@@ -2755,6 +2755,24 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         }, 100); // Small delay to ensure pip button is available
 
+                        // Wrap fullscreen button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            const fullscreenControl = controlBar?.getChild('fullscreenToggle');
+                            if (fullscreenControl) {
+                                const fullscreenButtonEl = fullscreenControl.el();
+                                if (fullscreenButtonEl) {
+                                    const fullscreenWrapper = document.createElement('div');
+                                    fullscreenWrapper.className =
+                                        'vjs-fullscreen-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the fullscreen button and move button inside
+                                    fullscreenButtonEl.parentNode.insertBefore(fullscreenWrapper, fullscreenButtonEl);
+                                    fullscreenWrapper.appendChild(fullscreenButtonEl);
+                                }
+                            }
+                        }, 100); // Small delay to ensure fullscreen button is available
+
                         // END: Add Settings Menu Component
 
                         // BEGIN: Add Seek Indicator Component
