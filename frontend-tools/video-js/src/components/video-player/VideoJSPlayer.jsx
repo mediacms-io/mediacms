@@ -2716,6 +2716,27 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             });
                         } catch (e) {}
 
+                        // Wrap settings button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            if (
+                                controlBar &&
+                                customComponents.current.settingsMenu &&
+                                customComponents.current.settingsMenu.settingsButton
+                            ) {
+                                const settingsButtonEl = customComponents.current.settingsMenu.settingsButton.el();
+                                if (settingsButtonEl) {
+                                    const settingsWrapper = document.createElement('div');
+                                    settingsWrapper.className =
+                                        'vjs-settings-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the settings button and move button inside
+                                    settingsButtonEl.parentNode.insertBefore(settingsWrapper, settingsButtonEl);
+                                    settingsWrapper.appendChild(settingsButtonEl);
+                                }
+                            }
+                        }, 200); // Longer delay to ensure settings button is fully created
+
                         // END: Add Settings Menu Component
 
                         // BEGIN: Add Seek Indicator Component
