@@ -2384,6 +2384,20 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 setTimeout(() => {
                                     autoplayToggleButton.updateIcon();
                                 }, 100);
+
+                                // Wrap autoplay toggle button in custom div container
+                                setTimeout(() => {
+                                    const autoplayButtonEl = autoplayToggleButton.el();
+                                    if (autoplayButtonEl) {
+                                        const autoplayWrapper = document.createElement('div');
+                                        autoplayWrapper.className =
+                                            'vjs-autoplay-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                        // Insert wrapper before the autoplay button and move button inside
+                                        autoplayButtonEl.parentNode.insertBefore(autoplayWrapper, autoplayButtonEl);
+                                        autoplayWrapper.appendChild(autoplayButtonEl);
+                                    }
+                                }, 150); // Slightly longer delay to ensure button is fully rendered and updated
                             } catch (error) {
                                 console.error('✗ Failed to add autoplay toggle button:', error);
                             }

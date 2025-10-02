@@ -161,6 +161,24 @@ html {
     background: rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Autoplay toggle wrapper styling */
+.video-js .vjs-autoplay-wrapper {
+    order: 5 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.video-js .vjs-autoplay-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
 .video-js .vjs-control {
     height: auto !important;
 }
@@ -372,7 +390,7 @@ html {
 }
 
 .video-js .vjs-autoplay-toggle {
-    margin-right: 10px !important;
+    margin-right: 0px !important;
 }
 .video-js .vjs-picture-in-picture-control {
     margin-left: 6px !important;
@@ -657,7 +675,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 
     .video-js .vjs-autoplay-toggle {
-        margin-right: 6px !important;
+        margin-right: 0px !important;
     }
     .video-js .vjs-picture-in-picture-control {
         margin-left: 6px !important;
@@ -752,7 +770,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 
     .video-js .vjs-autoplay-toggle {
-        margin-right: 2px !important;
+        margin-right: 0px !important;
     }
 
     /* Move seekbar very close to controls - minimal gap */
@@ -886,7 +904,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 
     .video-js .vjs-autoplay-toggle {
-        margin-right: 4px !important;
+        margin-right: 0px !important;
     }
     .video-js .vjs-picture-in-picture-control {
         margin-left: 4px !important;
@@ -925,7 +943,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         bottom: 6em !important;
     }
     .video-js .vjs-autoplay-toggle {
-        margin-right: 12px !important;
+        margin-right: 0px !important;
     }
     .video-js .vjs-picture-in-picture-control {
         margin-left: 12px !important;
