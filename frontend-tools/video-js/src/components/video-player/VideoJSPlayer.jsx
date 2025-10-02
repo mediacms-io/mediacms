@@ -2737,6 +2737,24 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         }, 200); // Longer delay to ensure settings button is fully created
 
+                        // Wrap picture-in-picture button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            const pipControl = controlBar?.getChild('pictureInPictureToggle');
+                            if (pipControl) {
+                                const pipButtonEl = pipControl.el();
+                                if (pipButtonEl) {
+                                    const pipWrapper = document.createElement('div');
+                                    pipWrapper.className =
+                                        'vjs-pip-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the pip button and move button inside
+                                    pipButtonEl.parentNode.insertBefore(pipWrapper, pipButtonEl);
+                                    pipWrapper.appendChild(pipButtonEl);
+                                }
+                            }
+                        }, 100); // Small delay to ensure pip button is available
+
                         // END: Add Settings Menu Component
 
                         // BEGIN: Add Seek Indicator Component

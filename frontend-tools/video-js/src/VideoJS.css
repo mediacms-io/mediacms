@@ -119,6 +119,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-play-wrapper:hover {
@@ -137,6 +140,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-next-video-wrapper:hover {
@@ -155,6 +161,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: auto !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-volume-wrapper:hover {
@@ -173,6 +182,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-autoplay-wrapper:hover {
@@ -191,6 +203,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-chapters-button.vjs-menu-button:hover {
@@ -209,6 +224,9 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-subtitles-button.vjs-menu-button:hover {
@@ -227,10 +245,46 @@ html {
     padding: 2px !important;
     margin: 0 2px !important;
     transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
 }
 
 .video-js .vjs-settings-wrapper:hover {
     background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Picture-in-picture button wrapper styling */
+.video-js .vjs-pip-wrapper {
+    order: 9 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0 !important;
+}
+
+.video-js .vjs-pip-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Center the pip button inside its wrapper */
+.video-js .vjs-pip-wrapper .vjs-picture-in-picture-control {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
 }
 
 .video-js .vjs-control {
