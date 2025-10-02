@@ -15,14 +15,14 @@
     top: 0;
     width: 2px;
     height: 100%;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 193, 7, 0.8); /* Golden yellow color */
     pointer-events: auto;
     cursor: pointer;
     transition: background 0.2s ease;
 }
 
 .vjs-chapter-marker:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 193, 7, 1); /* Solid golden yellow on hover */
     width: 3px;
 }
 
