@@ -21,31 +21,35 @@
 /* Responsive time display sizing */
 @media (max-width: 767px) {
     .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
-        font-size: 11px !important;
-        padding: 0 2px;
+        font-size: 13px !important;
+        padding: 0 3px;
+        font-weight: 600 !important;
     }
 }
 
 @media (max-width: 500px) {
     .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
-        font-size: 9px !important;
-        padding: 0 1px;
-        letter-spacing: -0.3px;
+        font-size: 12px !important;
+        padding: 0 2px;
+        letter-spacing: -0.2px;
+        font-weight: 600 !important;
     }
 }
 
 @media (max-width: 480px) {
     .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
-        font-size: 9px !important;
-        padding: 0 1px;
-        letter-spacing: -0.3px;
+        font-size: 11px !important;
+        padding: 0 2px;
+        letter-spacing: -0.2px;
+        font-weight: 600 !important;
     }
 }
 
 @media (max-width: 399px) {
     .vjs-control-bar .custom-remaining-time .vjs-remaining-time-display {
-        font-size: 8px !important;
-        padding: 0;
-        letter-spacing: -0.5px;
+        font-size: 10px !important;
+        padding: 0 1px;
+        letter-spacing: -0.3px;
+        font-weight: 600 !important;
     }
 }

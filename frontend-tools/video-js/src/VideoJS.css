@@ -320,6 +320,15 @@ html {
     position: relative !important;
 }
 
+/* Reduce gap between pip and fullscreen buttons */
+.video-js .vjs-pip-wrapper {
+    margin-right: 0px !important;
+}
+
+.video-js .vjs-fullscreen-wrapper {
+    margin-left: 0px !important;
+}
+
 /* Center the settings button inside its wrapper */
 .video-js .vjs-settings-wrapper .vjs-settings-button {
     display: flex !important;
@@ -337,6 +346,21 @@ html {
 .video-js .vjs-settings-wrapper .vjs-settings-button svg {
     width: 46px !important;
     height: 46px !important;
+}
+
+/* Ensure consistent alignment and spacing for all control wrappers */
+.video-js .vjs-play-wrapper,
+.video-js .vjs-next-video-wrapper,
+.video-js .vjs-volume-wrapper,
+.video-js .vjs-autoplay-wrapper,
+.video-js .vjs-chapters-button.vjs-menu-button,
+.video-js .vjs-subtitles-button.vjs-menu-button,
+.video-js .vjs-settings-wrapper,
+.video-js .vjs-pip-wrapper,
+.video-js .vjs-fullscreen-wrapper {
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
 }
 
 .video-js .vjs-next-video-control {
@@ -796,6 +820,68 @@ button.vjs-button > .vjs-icon-placeholder:before {
         bottom: 52px !important; /* Moved up to prevent overlap with controls */
     }
 
+    /* Consistent wrapper spacing and alignment on mobile */
+    .video-js .vjs-play-wrapper,
+    .video-js .vjs-next-video-wrapper,
+    .video-js .vjs-volume-wrapper,
+    .video-js .vjs-autoplay-wrapper,
+    .video-js .vjs-chapters-button.vjs-menu-button,
+    .video-js .vjs-subtitles-button.vjs-menu-button,
+    .video-js .vjs-settings-wrapper,
+    .video-js .vjs-pip-wrapper,
+    .video-js .vjs-fullscreen-wrapper {
+        padding: 0px !important;
+        margin: 0 1px !important;
+        width: 32px !important;
+        height: 32px !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Ensure buttons inside wrappers are properly sized on mobile */
+    .video-js .vjs-play-wrapper .vjs-play-control,
+    .video-js .vjs-next-video-wrapper .vjs-next-video-control,
+    .video-js .vjs-autoplay-wrapper .vjs-autoplay-toggle,
+    .video-js .vjs-chapters-button.vjs-menu-button button,
+    .video-js .vjs-subtitles-button.vjs-menu-button button,
+    .video-js .vjs-settings-wrapper .vjs-settings-button,
+    .video-js .vjs-pip-wrapper .vjs-picture-in-picture-control,
+    .video-js .vjs-fullscreen-wrapper .vjs-fullscreen-control {
+        width: 32px !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Fix play button icon vertical alignment to match other icons */
+    .video-js .vjs-play-wrapper .vjs-play-control .vjs-icon-placeholder {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        height: 100% !important;
+        line-height: 1 !important;
+        position: absolute !important;
+        top: 48% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    .video-js .vjs-play-wrapper .vjs-play-control .vjs-icon-placeholder:before {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        vertical-align: middle !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .vjs-chapters-button button.vjs-button,
     .vjs-subtitles-button button.vjs-button,
     .video-js button.vjs-control {
@@ -905,6 +991,20 @@ button.vjs-button > .vjs-icon-placeholder:before {
         width: 0 !important;
         opacity: 0 !important;
         display: none !important;
+    }
+
+    /* Hide subtitles button on small screens to make room for fullscreen */
+    .video-js .vjs-subtitles-button.vjs-menu-button,
+    .video-js .vjs-subs-caps-button {
+        display: none !important;
+    }
+
+    /* Reduce spacing for first three controls on small screens */
+    .video-js .vjs-play-wrapper,
+    .video-js .vjs-next-video-wrapper,
+    .video-js .vjs-volume-wrapper {
+        margin: 0 0.5px !important;
+        padding: 0 !important;
     }
 
     /* Compact buttons for small screens */
@@ -1028,6 +1128,20 @@ button.vjs-button > .vjs-icon-placeholder:before {
         width: 0 !important;
         opacity: 0 !important;
         display: none !important;
+    }
+
+    /* Hide subtitles button on very small screens to make room for fullscreen */
+    .video-js .vjs-subtitles-button.vjs-menu-button,
+    .video-js .vjs-subs-caps-button {
+        display: none !important;
+    }
+
+    /* Further reduce spacing for first three controls on very small screens */
+    .video-js .vjs-play-wrapper,
+    .video-js .vjs-next-video-wrapper,
+    .video-js .vjs-volume-wrapper {
+        margin: 0 0px !important;
+        padding: 0 !important;
     }
     .vjs-chapters-button button.vjs-button,
     .vjs-subtitles-button button.vjs-button,
