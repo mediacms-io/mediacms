@@ -1800,7 +1800,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             playbackRateMenuButton: false,
 
                             // Descriptions button
-                            descriptionsButton: true,
+                            descriptionsButton: false,
 
                             // Subtitles (CC) button should be visible
                             subtitlesButton: hasSubtitles ? true : false,
@@ -1809,16 +1809,16 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             captionsButton: false,
 
                             // Audio track button
-                            audioTrackButton: true,
+                            audioTrackButton: false,
 
                             // Live display
-                            liveDisplay: true,
+                            liveDisplay: false,
 
                             // Seek to live button
-                            seekToLive: true,
+                            seekToLive: false,
 
                             // Custom control spacer
-                            customControlSpacer: true,
+                            customControlSpacer: false,
 
                             // Chapters menu button (only show if we have real chapters)
                             chaptersButton: chaptersData && chaptersData.length > 0,
@@ -1829,14 +1829,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Force native controls for touch devices
                             nativeControlsForTouch: false,
 
-                            // Use native audio tracks instead of emulated
-                            nativeAudioTracks: true,
+                            // Use native audio tracks instead of emulated - disabled for consistency
+                            nativeAudioTracks: false,
 
-                            // Use native text tracks instead of emulated
-                            nativeTextTracks: true,
+                            // Use native text tracks instead of emulated - disabled for consistency
+                            nativeTextTracks: false,
 
-                            // Use native video tracks instead of emulated
-                            nativeVideoTracks: true,
+                            // Use native video tracks instead of emulated - disabled for consistency
+                            nativeVideoTracks: false,
 
                             // Preload text tracks
                             preloadTextTracks: true,
@@ -2293,6 +2293,16 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         }, 500); */
 
+                        // BEGIN: Wrap play button in custom div container
+                        const playButtonEl = playToggle.el();
+                        const playButtonWrapper = document.createElement('div');
+                        playButtonWrapper.className = 'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+                        
+                        // Insert wrapper before the play button and move play button inside
+                        playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
+                        playButtonWrapper.appendChild(playButtonEl);
+                        // END: Wrap play button in custom div container
+
                         // BEGIN: Implement custom time display component
                         const customRemainingTime = new CustomRemainingTime(playerRef.current, {
                             displayNegative: false,
@@ -2300,13 +2310,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             customSuffix: '',
                         });
 
-                        // Insert it in the desired position (e.g., after current time display)
-                        if (currentTimeDisplay) {
-                            const currentTimeIndex = controlBar.children().indexOf(currentTimeDisplay);
-                            controlBar.addChild(customRemainingTime, {}, currentTimeIndex + 1);
-                        } else {
-                            controlBar.addChild(customRemainingTime, {}, 2);
-                        }
+                        // Insert it early in control bar - right after play button for priority
+                        const playToggleIndex = controlBar.children().indexOf(playToggle);
+                        controlBar.addChild(customRemainingTime, {}, playToggleIndex + 1);
+                        
+                        // Store reference for cleanup
+                        customComponents.current.customRemainingTime = customRemainingTime;
                         // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
@@ -2316,7 +2325,20 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 nextLink: mediaData.nextLink,
                             });
                             const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
-                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1);
+                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 2); // After time display
+                            
+                            // Wrap next video button in custom div container
+                            setTimeout(() => {
+                                const nextVideoButtonEl = nextVideoButton.el();
+                                if (nextVideoButtonEl) {
+                                    const nextVideoWrapper = document.createElement('div');
+                                    nextVideoWrapper.className = 'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+                                    
+                                    // Insert wrapper before the next video button and move button inside
+                                    nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
+                                    nextVideoWrapper.appendChild(nextVideoButtonEl);
+                                }
+                            }, 100); // Small delay to ensure button is fully rendered
                         }
                         // END: Implement custom next video button
 
@@ -2837,6 +2859,30 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         goToNextVideo();
                     });
 
+                    // Simple solution: Force controls to hide periodically when video is playing
+                    const forceHideInterval = setInterval(() => {
+                        if (playerRef.current && !playerRef.current.paused() && !playerRef.current.ended()) {
+                            // Check if any menus are open
+                            const isMenuOpen =
+                                document.querySelector('.vjs-settings-overlay.show') ||
+                                document.querySelector('.vjs-menu-button-popup.vjs-lock-showing') ||
+                                document.querySelector('.vjs-texttrack-settings') ||
+                                document.querySelector('.vjs-menu.vjs-lock-showing');
+
+                            // Only force hide if no menus are open and user has been active for too long
+                            if (
+                                !isMenuOpen &&
+                                playerRef.current.userActivity_ &&
+                                Date.now() - playerRef.current.userActivity_ > (isEmbedPlayer ? 5500 : 2500)
+                            ) {
+                                playerRef.current.userActive(false);
+                            }
+                        }
+                    }, 1000); // Check every second
+
+                    // Store interval for cleanup
+                    customComponents.current.forceHideInterval = forceHideInterval;
+
                     playerRef.current.on('play', () => {
                         // Only show play indicator if not changing quality
                         if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
@@ -3127,6 +3173,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             // Clean up embed controls event listeners if they exist
             if (customComponents.current && customComponents.current.embedControlsCleanup) {
                 customComponents.current.embedControlsCleanup();
+            }
+
+            // Clean up force hide interval if it exists
+            if (customComponents.current && customComponents.current.forceHideInterval) {
+                clearInterval(customComponents.current.forceHideInterval);
             }
 
             if (playerRef.current && !playerRef.current.isDisposed()) {
