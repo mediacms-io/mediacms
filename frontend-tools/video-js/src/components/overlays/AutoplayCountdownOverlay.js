@@ -34,6 +34,12 @@ class AutoplayCountdownOverlay extends Component {
         const nextVideoTitle = this.nextVideoData?.title || 'Next Video';
 
         overlay.innerHTML = `
+            <button class="autoplay-close-button" aria-label="Cancel autoplay" title="Cancel">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
             <div class="autoplay-countdown-content">
                 <div class="countdown-label">Up Next</div>
                 
@@ -61,6 +67,7 @@ class AutoplayCountdownOverlay extends Component {
         // Add event listeners with explicit binding
         const circularCountdown = overlay.querySelector('.circular-countdown');
         const cancelButton = overlay.querySelector('.autoplay-cancel-button');
+        const closeButton = overlay.querySelector('.autoplay-close-button');
 
         if (circularCountdown) {
             circularCountdown.addEventListener('click', (e) => {
@@ -71,6 +78,13 @@ class AutoplayCountdownOverlay extends Component {
 
         if (cancelButton) {
             cancelButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleCancel();
+            });
+        }
+
+        if (closeButton) {
+            closeButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.handleCancel();
             });
