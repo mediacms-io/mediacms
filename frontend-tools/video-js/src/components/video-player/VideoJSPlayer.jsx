@@ -34,7 +34,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     }, []);
 
     // Environment-based development mode configuration
-    const isDevMode = false; // import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
+    const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
         () =>
@@ -50,17 +50,17 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           url: 'https://videojs.mediacms.io/view?m=meivs1H3R',
                           poster_url:
                               '/media/original/thumbnails/user/markos/d6ae9093cb1648529432f38ee1198200_6BfyhyM.video.mp4.jpg',
-                          chapter_data: [],
-                          __chapter_data: [
+
+                          chapter_data: [
                               {
                                   startTime: '00:00:00.000',
-                                  endTime: '00:00:08.295',
+                                  endTime: '00:00:02.295',
                                   chapterTitle: 'A1 Lorem ipsum dolor sit amet consectetur adipisicing elit.',
                               },
-                              { startTime: '00:00:08.295', endTime: '00:00:15.590', chapterTitle: 'A2 of Marine Life' },
+                              { startTime: '00:00:02.295', endTime: '00:00:04.590', chapterTitle: 'A2 of Marine Life' },
                               {
-                                  startTime: '00:00:15.590',
-                                  endTime: '00:00:22.885',
+                                  startTime: '00:00:04.590',
+                                  endTime: '00:00:06.885',
                                   chapterTitle: 'A3 Reef Ecosystems',
                               },
                           ],
