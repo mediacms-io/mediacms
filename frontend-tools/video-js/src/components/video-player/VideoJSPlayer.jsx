@@ -2296,8 +2296,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // BEGIN: Wrap play button in custom div container
                         const playButtonEl = playToggle.el();
                         const playButtonWrapper = document.createElement('div');
-                        playButtonWrapper.className = 'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-                        
+                        playButtonWrapper.className =
+                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
                         // Insert wrapper before the play button and move play button inside
                         playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
                         playButtonWrapper.appendChild(playButtonEl);
@@ -2313,7 +2314,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Insert it early in control bar - right after play button for priority
                         const playToggleIndex = controlBar.children().indexOf(playToggle);
                         controlBar.addChild(customRemainingTime, {}, playToggleIndex + 1);
-                        
+
                         // Store reference for cleanup
                         customComponents.current.customRemainingTime = customRemainingTime;
                         // END: Implement custom time display component
@@ -2326,14 +2327,15 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             });
                             const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
                             controlBar.addChild(nextVideoButton, {}, playToggleIndex + 2); // After time display
-                            
+
                             // Wrap next video button in custom div container
                             setTimeout(() => {
                                 const nextVideoButtonEl = nextVideoButton.el();
                                 if (nextVideoButtonEl) {
                                     const nextVideoWrapper = document.createElement('div');
-                                    nextVideoWrapper.className = 'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-                                    
+                                    nextVideoWrapper.className =
+                                        'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
                                     // Insert wrapper before the next video button and move button inside
                                     nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
                                     nextVideoWrapper.appendChild(nextVideoButtonEl);
@@ -2341,6 +2343,24 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }, 100); // Small delay to ensure button is fully rendered
                         }
                         // END: Implement custom next video button
+
+                        // BEGIN: Wrap volume panel in custom div container
+                        setTimeout(() => {
+                            const volumePanel = controlBar.getChild('volumePanel');
+                            if (volumePanel) {
+                                const volumePanelEl = volumePanel.el();
+                                if (volumePanelEl) {
+                                    const volumeWrapper = document.createElement('div');
+                                    volumeWrapper.className =
+                                        'vjs-volume-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the volume panel and move panel inside
+                                    volumePanelEl.parentNode.insertBefore(volumeWrapper, volumePanelEl);
+                                    volumeWrapper.appendChild(volumePanelEl);
+                                }
+                            }
+                        }, 100); // Small delay to ensure volume panel is fully rendered
+                        // END: Wrap volume panel in custom div container
 
                         // BEGIN: Implement autoplay toggle button - simplified
                         if (!isEmbedPlayer) {

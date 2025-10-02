@@ -143,9 +143,26 @@ html {
     background: rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Volume panel wrapper styling */
+.video-js .vjs-volume-wrapper {
+    order: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.video-js .vjs-volume-wrapper:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
 .video-js .vjs-control {
     height: auto !important;
- 
 }
 .video-js .vjs-next-video-control {
     order: 1 !important;
@@ -190,7 +207,7 @@ html {
 
 /* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
 .video-js-root-main .video-js.video-js-rounded-corners::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -227,7 +244,7 @@ html {
 /* Dark background overlay when controls are visible to improve readability on bright videos */
 .video-js.vjs-user-active::before,
 .video-js.vjs-paused::before {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -306,7 +323,6 @@ html {
 }
 .vjs-progress-holder {
     background: rgba(255, 255, 255, 0.5) !important;
-
 }
 
 .video-js .vjs-progress-control {
@@ -329,7 +345,7 @@ html {
 
 .video-js .vjs-control-bar .vjs-icon-placeholder,
 .video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder,
-.video-js .vjs-control-bar [class*='vjs-icon-'] {
+.video-js .vjs-control-bar [class*="vjs-icon-"] {
     font-size: 1.5em !important;
 }
 
@@ -549,7 +565,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         opacity: 0 !important;
         display: none !important;
     }
-    
+
     /* Ensure mute button is still visible and functional */
     .video-js .vjs-volume-panel .vjs-mute-control {
         display: flex !important;
@@ -711,7 +727,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
         opacity: 0 !important;
         display: none !important;
     }
-    
+
     /* Compact buttons for small screens */
     .vjs-chapters-button button.vjs-button,
     .vjs-subtitles-button button.vjs-button,
