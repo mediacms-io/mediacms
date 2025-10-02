@@ -320,6 +320,25 @@ html {
     position: relative !important;
 }
 
+/* Center the settings button inside its wrapper */
+.video-js .vjs-settings-wrapper .vjs-settings-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Increase settings button SVG icon size by 2px */
+.video-js .vjs-settings-wrapper .vjs-settings-button svg {
+    width: 46px !important;
+    height: 46px !important;
+}
+
 .video-js .vjs-next-video-control {
     order: 1 !important;
 }
@@ -697,6 +716,10 @@ button {
 button.vjs-button > .vjs-icon-placeholder:before {
     line-height: 36px;
     transition: ease-in-out 0.5s;
+}
+.vjs-icon-chapters:before,
+.video-js .vjs-chapters-button .vjs-icon-placeholder:before {
+    font-size: 2.1em !important;
 }
 
 .video-js .vjs-volume-panel div.vjs-volume-control {
