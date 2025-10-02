@@ -34,7 +34,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     }, []);
 
     // Environment-based development mode configuration
-    const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
+    const isDevMode = false; // import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
     // Safely access window.MEDIA_DATA with fallback using useMemo
     const mediaData = useMemo(
         () =>
@@ -47,10 +47,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           author_name: 'Markos Gogoulos',
                           author_profile: '/user/markos/',
                           author_thumbnail: '/media/userlogos/user.jpg',
-                          url: 'https://demo.mediacms.io/view?m=zK2nirNLC',
+                          url: 'https://videojs.mediacms.io/view?m=meivs1H3R',
                           poster_url:
-                              '/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3_8hguMHx.19990812hd_1920_1080_30fps.mp4.jpg',
-                          chapter_data: [
+                              '/media/original/thumbnails/user/markos/d6ae9093cb1648529432f38ee1198200_6BfyhyM.video.mp4.jpg',
+                          chapter_data: [],
+                          __chapter_data: [
                               {
                                   startTime: '00:00:00.000',
                                   endTime: '00:00:08.295',
@@ -969,75 +970,85 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                           // VIDEO
                           media_type: 'video',
-                          original_media_url:
-                              '/media/original/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4',
+                          original_media_url: '/media/original/user/markos/d6ae9093cb1648529432f38ee1198200.video.mp4',
                           hls_info: {
-                              master_file: '/media/hls/2ca18fadeef8475eae513c12cc0830d3/master.m3u8',
-                              '1080_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-1/iframes.m3u8',
-                              '720_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-2/iframes.m3u8',
-                              '480_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-3/iframes.m3u8',
-                              '360_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-4/iframes.m3u8',
-                              '240_iframe': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-5/iframes.m3u8',
-                              '1080_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-1/stream.m3u8',
-                              '720_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-2/stream.m3u8',
-                              '480_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-3/stream.m3u8',
-                              '360_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-4/stream.m3u8',
-                              '240_playlist': '/media/hls/2ca18fadeef8475eae513c12cc0830d3/media-5/stream.m3u8',
+                              master_file: '/media/hls/d6ae9093cb1648529432f38ee1198200/master.m3u8',
+                              '144_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-1/iframes.m3u8',
+                              '240_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-2/iframes.m3u8',
+                              '360_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-3/iframes.m3u8',
+                              '480_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-4/iframes.m3u8',
+                              '720_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-5/iframes.m3u8',
+                              '1080_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-6/iframes.m3u8',
+                              '144_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-1/stream.m3u8',
+                              '240_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-2/stream.m3u8',
+                              '360_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-3/stream.m3u8',
+                              '480_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-4/stream.m3u8',
+                              '720_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-5/stream.m3u8',
+                              '1080_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-6/stream.m3u8',
                           },
                           encodings_info: {
-                              2160: {},
-                              1440: {},
-                              1080: {
+                              144: {
                                   h264: {
-                                      title: 'h264-1080',
-                                      url: '/media/encoded/7/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
+                                      title: 'h264-144',
+                                      url: '/media/encoded/23/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '16.1MB',
-                                      encoding_id: 4682,
-                                      status: 'success',
-                                  },
-                              },
-                              720: {
-                                  h264: {
-                                      title: 'h264-720',
-                                      url: '/media/encoded/10/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
-                                      progress: 100,
-                                      size: '7.8MB',
-                                      encoding_id: 4681,
-                                      status: 'success',
-                                  },
-                              },
-                              480: {
-                                  h264: {
-                                      title: 'h264-480',
-                                      url: '/media/encoded/13/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
-                                      progress: 100,
-                                      size: '4.5MB',
-                                      encoding_id: 4680,
-                                      status: 'success',
-                                  },
-                              },
-                              360: {
-                                  h264: {
-                                      title: 'h264-360',
-                                      url: '/media/encoded/3/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
-                                      progress: 100,
-                                      size: '2.9MB',
-                                      encoding_id: 4679,
+                                      size: '0.3MB',
+                                      encoding_id: 1,
                                       status: 'success',
                                   },
                               },
                               240: {
                                   h264: {
                                       title: 'h264-240',
-                                      url: '/media/encoded/2/markos/6497e960081b4b8abddcf4cbdf2bf4eb.6497e960081b4b8abddcf4cbdf2bf4eb.20250604_080632.mp4.mp4',
+                                      url: '/media/encoded/2/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '1.7MB',
-                                      encoding_id: 4678,
+                                      size: '0.6MB',
+                                      encoding_id: 2,
                                       status: 'success',
                                   },
                               },
-                              144: {},
+                              360: {
+                                  h264: {
+                                      title: 'h264-360',
+                                      url: '/media/encoded/3/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
+                                      progress: 100,
+                                      size: '0.8MB',
+                                      encoding_id: 3,
+                                      status: 'success',
+                                  },
+                              },
+                              480: {
+                                  h264: {
+                                      title: 'h264-480',
+                                      url: '/media/encoded/13/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
+                                      progress: 100,
+                                      size: '1.5MB',
+                                      encoding_id: 4,
+                                      status: 'success',
+                                  },
+                              },
+                              720: {
+                                  h264: {
+                                      title: 'h264-720',
+                                      url: '/media/encoded/10/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
+                                      progress: 100,
+                                      size: '3.5MB',
+                                      encoding_id: 5,
+                                      status: 'success',
+                                  },
+                              },
+                              1080: {
+                                  h264: {
+                                      title: 'h264-1080',
+                                      url: '/media/encoded/7/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
+                                      progress: 100,
+                                      size: '6.4MB',
+                                      encoding_id: 6,
+                                      status: 'success',
+                                  },
+                              },
+                              1440: {},
+                              2160: {},
                           },
 
                           // AUDIO
@@ -1052,11 +1063,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       useRoundedCorners: false,
                       isPlayList: false,
                       previewSprite: {
-                          url: 'https://deic.mediacms.io/media/original/thumbnails/user/thorkild/2ca18fadeef8475eae513c12cc0830d3.19990812hd_1920_1080_30fps.mp4sprites.jpg',
+                          url: 'https://videojs.mediacms.io/media/original/thumbnails/user/markos/d6ae9093cb1648529432f38ee1198200.video.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: 'https://deic.mediacms.io',
-                      nextLink: 'https://deic.mediacms.io/view?m=YjGJafibO',
+                      siteUrl: 'https://videojs.mediacms.io',
+                      nextLink: 'https://videojs.mediacms.io/view?m=YjGJafibO',
                       urlAutoplay: true,
                       urlMuted: false,
                   },
