@@ -179,6 +179,24 @@ html {
     background: rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Chapters button wrapper styling */
+.video-js .vjs-chapters-button.vjs-menu-button {
+    order: 6 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 2px !important;
+    margin: 0 2px !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.video-js .vjs-chapters-button.vjs-menu-button:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
 .video-js .vjs-control {
     height: auto !important;
 }
