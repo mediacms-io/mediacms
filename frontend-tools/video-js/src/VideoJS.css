@@ -817,7 +817,7 @@ button.vjs-button > .vjs-icon-placeholder:before {
 
     /* Move seekbar closer to controls on mobile */
     .video-js .vjs-progress-control {
-        bottom: 52px !important; /* Moved up to prevent overlap with controls */
+        bottom: 42px !important; /* Moved up to prevent overlap with controls */
     }
 
     /* Consistent wrapper spacing and alignment on mobile */
