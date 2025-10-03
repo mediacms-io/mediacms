@@ -498,14 +498,14 @@ html {
     margin: 0 auto;
     padding: 0 20px;
     box-sizing: border-box;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent both horizontal and vertical scrollbars */
     position: relative;
 }
 
 .video-js-root-main {
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent both horizontal and vertical scrollbars */
 }
 
 .video-js.vjs-fluid {
@@ -593,6 +593,7 @@ button {
     padding: 0;
     height: 100% !important;
     outline: none; /* Remove default browser focus outline */
+    overflow: hidden; /* Prevent scrollbars on the video player itself */
 }
 
 /* Ensure video player is focusable */

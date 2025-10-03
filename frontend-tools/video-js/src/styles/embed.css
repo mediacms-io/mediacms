@@ -44,12 +44,14 @@
     height: 100vh !important;
     border-radius: 0;
     position: relative;
+    overflow: hidden; /* Prevent scrollbars in embed video player */
 }
 
 /* Prevent page scrolling when embed is active */
 #page-embed .video-js-root-embed {
     position: fixed;
     top: 0;
+    overflow: hidden; /* Prevent scrollbars in embed mode */
 }
 
 /* Sticky controls for embed player - always at bottom of window */
