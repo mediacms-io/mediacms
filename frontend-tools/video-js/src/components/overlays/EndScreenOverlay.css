@@ -53,41 +53,94 @@
     justify-content: center !important; /* Center the grid vertically */
 }
 
-/* Small embed height optimization - 2 items horizontally for better title readability */
-@media (max-height: 500px) {
-    #page-embed .video-js-root-embed .vjs-related-videos-grid {
+/* Small player size optimization - 2 items horizontally for better title readability */
+/* This applies to both embed and regular players when they're small */
+.vjs-end-screen-overlay.vjs-small-player .vjs-related-videos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: 1fr !important;
+    gap: 20px !important;
+    max-width: 600px; /* Limit width for better proportions */
+}
+
+.vjs-end-screen-overlay.vjs-small-player {
+    height: calc(100% - 60px) !important;
+    padding: 30px !important;
+}
+
+/* Hide items beyond the first 2 for small players */
+.vjs-end-screen-overlay.vjs-small-player .vjs-related-video-item:nth-child(n + 3) {
+    display: none !important;
+}
+
+/* Embed-specific adjustments for small sizes */
+#page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay.vjs-small-player {
+    height: calc(100vh - 60px) !important;
+    padding: 80px 30px 30px 30px !important;
+}
+
+/* Fallback media query for cases where class detection might not work */
+@media (max-height: 500px), (max-width: 600px) {
+    .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         grid-template-rows: 1fr !important;
         gap: 20px !important;
-        max-width: 600px; /* Limit width for better proportions */
+        max-width: 600px;
+    }
+
+    .vjs-end-screen-overlay {
+        height: calc(100% - 60px) !important;
+        padding: 30px !important;
+    }
+
+    .vjs-related-video-item:nth-child(n + 3) {
+        display: none !important;
     }
 
     #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
         height: calc(100vh - 60px) !important;
         padding: 80px 30px 30px 30px !important;
     }
-
-    /* Hide items beyond the first 2 */
-    #page-embed .video-js-root-embed .vjs-related-video-item:nth-child(n + 3) {
-        display: none !important;
-    }
 }
 
-/* Very small embed height - further optimize spacing */
-@media (max-height: 400px) {
-    #page-embed .video-js-root-embed .vjs-related-videos-grid {
+/* Very small player size - further optimize spacing (class-based detection) */
+.vjs-end-screen-overlay.vjs-very-small-player .vjs-related-videos-grid {
+    gap: 15px !important;
+    max-width: 500px !important;
+}
+
+.vjs-end-screen-overlay.vjs-very-small-player {
+    height: calc(100% - 50px) !important;
+    padding: 25px !important;
+}
+
+.vjs-end-screen-overlay.vjs-very-small-player .vjs-related-video-item {
+    min-height: 80px !important;
+}
+
+#page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay.vjs-very-small-player {
+    height: calc(100vh - 50px) !important;
+    padding: 60px 25px 25px 25px !important;
+}
+
+/* Fallback media query for very small sizes */
+@media (max-height: 400px), (max-width: 400px) {
+    .vjs-related-videos-grid {
         gap: 15px !important;
-        max-width: 500px;
+        max-width: 500px !important;
+    }
+
+    .vjs-end-screen-overlay {
+        height: calc(100% - 50px) !important;
+        padding: 25px !important;
+    }
+
+    .vjs-related-video-item {
+        min-height: 80px !important;
     }
 
     #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
         height: calc(100vh - 50px) !important;
         padding: 60px 25px 25px 25px !important;
-    }
-
-    /* Ensure only 2 items and optimize their size */
-    #page-embed .video-js-root-embed .vjs-related-video-item {
-        min-height: 80px !important;
     }
 }
 

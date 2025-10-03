@@ -25,8 +25,22 @@ class EndScreenOverlay extends Component {
         const maxVideos = this.getMaxVideosForScreen();
         const videosToShow = relatedVideos.slice(0, maxVideos);
 
+        // Determine if player is small and add appropriate class
+        const playerEl = this.player().el();
+        const playerWidth = playerEl ? playerEl.offsetWidth : window.innerWidth;
+        const playerHeight = playerEl ? playerEl.offsetHeight : window.innerHeight;
+        const isSmallPlayer = playerHeight <= 500 || playerWidth <= 600;
+        const isVerySmallPlayer = playerHeight <= 400 || playerWidth <= 400;
+
+        let overlayClasses = 'vjs-end-screen-overlay';
+        if (isVerySmallPlayer) {
+            overlayClasses += ' vjs-very-small-player vjs-small-player';
+        } else if (isSmallPlayer) {
+            overlayClasses += ' vjs-small-player';
+        }
+
         const overlay = super.createEl('div', {
-            className: 'vjs-end-screen-overlay',
+            className: overlayClasses,
         });
 
         // Create grid container
@@ -207,8 +221,10 @@ class EndScreenOverlay extends Component {
     }
 
     getMaxVideosForScreen() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        // Get actual player dimensions instead of window dimensions
+        const playerEl = this.player().el();
+        const playerWidth = playerEl ? playerEl.offsetWidth : window.innerWidth;
+        const playerHeight = playerEl ? playerEl.offsetHeight : window.innerHeight;
 
         // Check if this is an embed player
         const playerId = this.player().id() || this.player().options_.id;
@@ -217,19 +233,21 @@ class EndScreenOverlay extends Component {
             document.getElementById('page-embed') ||
             window.location.pathname.includes('embed');
 
-        // For embed players with small height, limit to 2 items for better readability
-        if (isEmbedPlayer && height <= 500) {
-            return 2; // 2x1 grid for small embed heights
+        // For small player sizes, limit to 2 items for better readability
+        // This works for both embed and regular players when they're small
+        if (playerHeight <= 500 || playerWidth <= 600) {
+            return 2; // 2x1 grid for small player sizes
         }
 
-        if (width >= 1200) {
-            return 12; // 4x3 grid for large desktop
-        } else if (width >= 1024) {
-            return 9; // 3x3 grid for desktop
-        } else if (width >= 768) {
-            return 6; // 3x2 grid for tablet
+        // Use player width for responsive decisions
+        if (playerWidth >= 1200) {
+            return 12; // 4x3 grid for large player
+        } else if (playerWidth >= 1024) {
+            return 9; // 3x3 grid for desktop-sized player
+        } else if (playerWidth >= 768) {
+            return 6; // 3x2 grid for tablet-sized player
         } else {
-            return 4; // 2x2 grid for mobile
+            return 4; // 2x2 grid for mobile-sized player
         }
     }
 
