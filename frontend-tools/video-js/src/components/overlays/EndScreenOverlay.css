@@ -5,16 +5,16 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100% - 100px); /* Leave space for seekbar and controls */
+    height: calc(100% - 80px); /* Reduce reserved space for seekbar */
     background: #000000;
     display: none;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* Center the grid vertically */
     align-items: center;
-    padding: 20px;
+    padding: 40px 40px 40px 40px; /* Equal visual margins on all sides */
     box-sizing: border-box;
-    z-index: 9999; /* Maximum z-index to cover absolutely everything */
-    overflow: hidden; /* No scrollbar, fit content within available space */
+    z-index: 9999;
+    overflow: hidden;
 }
 
 /* Hide poster image when video ends and end screen is shown */
@@ -46,15 +46,54 @@
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
-    height: 100vh !important;
-    z-index: 99999 !important;
+    height: calc(100vh - 80px) !important; /* Reduce reserved space for controls */
+    z-index: 9998 !important; /* Below controls but above video */
     display: flex !important;
-    padding-top: 80px !important; /* Add top padding to avoid covering title/avatar */
+    padding: 120px 40px 40px 40px !important; /* Top padding for embed info + equal visual margins */
+    justify-content: center !important; /* Center the grid vertically */
+}
+
+/* Small embed height optimization - 2 items horizontally for better title readability */
+@media (max-height: 500px) {
+    #page-embed .video-js-root-embed .vjs-related-videos-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-template-rows: 1fr !important;
+        gap: 20px !important;
+        max-width: 600px; /* Limit width for better proportions */
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 60px) !important;
+        padding: 80px 30px 30px 30px !important;
+    }
+
+    /* Hide items beyond the first 2 */
+    #page-embed .video-js-root-embed .vjs-related-video-item:nth-child(n + 3) {
+        display: none !important;
+    }
+}
+
+/* Very small embed height - further optimize spacing */
+@media (max-height: 400px) {
+    #page-embed .video-js-root-embed .vjs-related-videos-grid {
+        gap: 15px !important;
+        max-width: 500px;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 50px) !important;
+        padding: 60px 25px 25px 25px !important;
+    }
+
+    /* Ensure only 2 items and optimize their size */
+    #page-embed .video-js-root-embed .vjs-related-video-item {
+        min-height: 80px !important;
+    }
 }
 
 /* Ensure controls stay visible over the black background */
 .video-js.vjs-ended .vjs-control-bar {
-    z-index: 100000 !important;
+    z-index: 10000 !important;
     position: absolute !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -66,9 +105,9 @@
 }
 
 .video-js.vjs-ended .vjs-progress-control {
-    z-index: 0 !important;
+    z-index: 10001 !important;
     position: absolute !important;
-    /* bottom: 48px !important; */
+    bottom: 48px !important;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
@@ -84,7 +123,7 @@
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;
-    z-index: 100000 !important;
+    z-index: 10000 !important;
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -96,7 +135,7 @@
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;
-    z-index: 100000 !important;
+    z-index: 10001 !important;
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -104,7 +143,7 @@
 
 /* Ensure embed info overlay (title/avatar) stays visible when ended */
 #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-embed-info-overlay {
-    z-index: 100001 !important;
+    z-index: 10002 !important;
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -182,21 +221,17 @@
 .vjs-related-videos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2px;
+    gap: 16px;
     width: 100%;
     max-width: 100%;
-    margin: 0;
+    margin: 0; /* Remove margin since parent handles centering */
     box-sizing: border-box;
     justify-items: stretch;
     align-items: stretch;
     justify-content: center;
-    align-content: start;
+    align-content: center; /* Center grid content */
     overflow: hidden;
-    height: 100%;
-    flex: 1; /* Fill available space */
-    grid-row-gap: 2px;
-    grid-column-gap: 2px;
-    grid-auto-rows: 1fr; /* Make all rows equal height */
+    grid-auto-rows: 1fr;
 }
 
 .vjs-related-video-item {
@@ -259,6 +294,11 @@
     opacity: 1;
 }
 
+/* Show overlay by default on touch devices - match default hover behavior exactly */
+.vjs-related-video-item.vjs-touch-device .vjs-related-video-overlay {
+    opacity: 1;
+}
+
 .vjs-related-video-title {
     font-size: 14px;
     font-weight: bold;
@@ -312,6 +352,11 @@
     opacity: 1;
 }
 
+/* Show duration by default on touch devices */
+.vjs-related-video-item.vjs-touch-device .vjs-related-video-duration {
+    opacity: 1;
+}
+
 .video-js.vjs-ended .vjs-control-bar {
     opacity: 1 !important;
     pointer-events: auto !important;
@@ -341,72 +386,78 @@
 @media (max-width: 1200px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 2px;
-        grid-row-gap: 2px;
-        grid-column-gap: 2px;
-        grid-auto-rows: 1fr;
+        gap: 14px;
     }
 
     .vjs-end-screen-overlay {
-        padding: 15px;
-        height: calc(100% - 95px);
+        height: calc(100% - 70px);
+        padding: 35px;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 70px) !important;
+        padding: 115px 35px 35px 35px !important;
     }
 }
 
 @media (max-width: 900px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 2px;
-        grid-row-gap: 2px;
-        grid-column-gap: 2px;
-        grid-auto-rows: 1fr;
+        gap: 12px;
     }
 
     .vjs-end-screen-overlay {
-        padding: 10px;
-        height: calc(100% - 90px);
+        height: calc(100% - 60px);
+        padding: 30px;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 60px) !important;
+        padding: 110px 30px 30px 30px !important;
     }
 }
 
 @media (max-width: 600px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 2px;
-        grid-row-gap: 2px;
-        grid-column-gap: 2px;
-        grid-auto-rows: 1fr;
+        gap: 10px;
     }
 
     .vjs-end-screen-overlay {
-        padding: 5px;
-        height: calc(100% - 60px);
-        justify-content: flex-start;
-        padding-top: 10px;
+        height: calc(100% - 50px);
+        padding: 25px;
+        justify-content: center;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 50px) !important;
+        padding: 105px 25px 25px 25px !important;
     }
 
     .vjs-related-video-item {
-        min-height: 60px;
+        min-height: 80px;
     }
 }
 
 @media (max-width: 400px) {
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 2px;
-        grid-row-gap: 2px;
-        grid-column-gap: 2px;
-        grid-auto-rows: 1fr;
+        gap: 8px;
     }
 
     .vjs-end-screen-overlay {
-        height: calc(100% - 60px);
-        padding: 5px;
-        justify-content: flex-start;
-        padding-top: 10px;
+        height: calc(100% - 40px);
+        padding: 20px;
+        justify-content: center;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 40px) !important;
+        padding: 100px 20px 20px 20px !important;
     }
 
     .vjs-related-video-item {
-        min-height: 50px;
+        min-height: 70px;
     }
 }
 
@@ -431,8 +482,16 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 20px;
-        height: auto;
-        max-height: none;
+    }
+
+    .vjs-end-screen-overlay {
+        height: calc(100% - 80px);
+        padding: 40px;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 80px) !important;
+        padding: 120px 40px 40px 40px !important;
     }
 }
 
@@ -454,8 +513,6 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 16px;
-        height: auto;
-        max-height: none;
     }
 
     /* Allow up to 9 videos on larger tablets */
@@ -469,8 +526,6 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 16px;
-        height: auto;
-        max-height: none;
     }
 
     /* Allow up to 9 videos on large tablets */
@@ -483,15 +538,17 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 14px;
-        height: auto;
-        max-height: none;
     }
 
     .vjs-end-screen-overlay {
-        padding: 16px;
+        height: calc(100% - 60px);
+        padding: 30px;
         justify-content: center;
-        padding-top: 20px;
-        padding-bottom: 20px;
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 60px) !important;
+        padding: 110px 30px 30px 30px !important;
     }
 
     /* Allow up to 9 videos on regular tablets */
@@ -508,20 +565,18 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: repeat(2, 1fr);
-        gap: 16px !important;
-        grid-gap: 16px !important;
-        max-height: 70vh;
+        gap: 12px;
     }
 
     .vjs-end-screen-overlay {
         padding: 12px;
-        justify-content: flex-start;
-        padding-top: 20px;
-        padding-bottom: 20px;
+        justify-content: center;
+        height: calc(100% - 105px);
     }
 
-    .vjs-related-video-item:nth-child(n + 5) {
-        display: none;
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 105px) !important;
+        padding: 80px 12px 12px 12px !important;
     }
 
     .vjs-related-video-thumbnail {
@@ -537,16 +592,18 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: repeat(2, 1fr);
-        gap: 14px !important;
-        grid-gap: 14px !important;
-        max-height: 65vh;
+        gap: 10px;
     }
 
     .vjs-end-screen-overlay {
         padding: 10px;
-        justify-content: flex-start;
-        padding-top: 15px;
-        padding-bottom: 15px;
+        justify-content: center;
+        height: calc(100% - 100px);
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 100px) !important;
+        padding: 80px 10px 10px 10px !important;
     }
 }
 
@@ -557,16 +614,18 @@
     .vjs-related-videos-grid {
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: repeat(2, 1fr);
-        gap: 12px !important;
-        grid-gap: 12px !important;
-        max-height: 60vh;
+        gap: 8px;
     }
 
     .vjs-end-screen-overlay {
         padding: 8px;
-        justify-content: flex-start;
-        padding-top: 10px;
-        padding-bottom: 10px;
+        justify-content: center;
+        height: calc(100% - 98px);
+    }
+
+    #page-embed .video-js-root-embed .video-js.vjs-ended .vjs-end-screen-overlay {
+        height: calc(100vh - 98px) !important;
+        padding: 80px 8px 8px 8px !important;
     }
 }
 

@@ -55,8 +55,11 @@ class EndScreenOverlay extends Component {
     }
 
     createVideoItem(video) {
+        // Detect touch device
+        const isTouchDevice = this.isTouchDevice();
+
         const item = videojs.dom.createEl('div', {
-            className: 'vjs-related-video-item',
+            className: isTouchDevice ? 'vjs-related-video-item vjs-touch-device' : 'vjs-related-video-item',
         });
 
         // Use real YouTube thumbnail or fallback to placeholder
@@ -205,6 +208,19 @@ class EndScreenOverlay extends Component {
 
     getMaxVideosForScreen() {
         const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Check if this is an embed player
+        const playerId = this.player().id() || this.player().options_.id;
+        const isEmbedPlayer =
+            playerId === 'video-embed' ||
+            document.getElementById('page-embed') ||
+            window.location.pathname.includes('embed');
+
+        // For embed players with small height, limit to 2 items for better readability
+        if (isEmbedPlayer && height <= 500) {
+            return 2; // 2x1 grid for small embed heights
+        }
 
         if (width >= 1200) {
             return 12; // 4x3 grid for large desktop
@@ -316,6 +332,16 @@ class EndScreenOverlay extends Component {
                 thumbnail: 'https://img.youtube.com/vi/i_LwzRVP7bg/maxresdefault.jpg',
             },
         ];
+    }
+
+    isTouchDevice() {
+        // Multiple methods to detect touch devices
+        return (
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0 ||
+            window.matchMedia('(pointer: coarse)').matches
+        );
     }
 
     show() {
