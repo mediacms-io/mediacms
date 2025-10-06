@@ -6,6 +6,13 @@
     line-height: 1;
 }
 
+/* SVG icon styles for autoplay button - match VideoJS icon dimensions */
+.vjs-autoplay-toggle .vjs-autoplay-icon svg {
+    width: 2.5em;
+    height: 2.5em;
+    display: block;
+}
+
 /* Use play icon when autoplay is OFF (clicking will turn it ON) */
 .vjs-autoplay-toggle .vjs-icon-play:before {
     content: "\f101"; /* VideoJS play icon */
@@ -18,6 +25,13 @@
 
 .video-js .vjs-autoplay-toggle {
     position: relative;
+}
+
+/* Remove focus outline/border */
+.video-js .vjs-autoplay-toggle:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .video-js .vjs-autoplay-toggle .vjs-hover-display,
