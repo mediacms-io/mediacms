@@ -1,12 +1,9 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
-//import 'video.js/dist/video-js.css';
+import 'video.js/dist/video-js.css';
 // import '../../VideoJS.css';
-// import '../../styles/embed.css';
-// import '../controls/SubtitlesButton.css';
-import './VideoJSPlayerNew.css';
-import './VideoJSPlayerRoundedCorners.css';
-import '../controls/ButtonTooltips.css';
+import '../../styles/embed.css';
+//import '../controls/SubtitlesButton.css';
 
 // Import the separated components
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
@@ -21,157 +18,12 @@ import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
 import SeekIndicator from '../controls/SeekIndicator';
 import UserPreferences from '../../utils/UserPreferences';
-import TestButton from '../controls/TestButton';
-import { AutoplayHandler } from '../../utils/AutoplayHandler';
-import { OrientationHandler } from '../../utils/OrientationHandler';
-import { EndScreenHandler } from '../../utils/EndScreenHandler';
-import KeyboardHandler from '../../utils/KeyboardHandler';
-import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 
-// Function to enable tooltips for all standard VideoJS buttons
-const enableStandardButtonTooltips = (player) => {
-    // Wait a bit for all components to be initialized
-    setTimeout(() => {
-        const controlBar = player.getChild('controlBar');
-        if (!controlBar) return;
-
-        // Define tooltip mappings for standard VideoJS buttons
-        const buttonTooltips = {
-            playToggle: () => (player.paused() ? 'Play' : 'Pause'),
-            // muteToggle: () => (player.muted() ? 'Unmute' : 'Mute'), // Removed - no tooltip for mute/volume
-            // volumePanel: 'Volume', // Removed - no tooltip for volume
-            fullscreenToggle: () => (player.isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'),
-            pictureInPictureToggle: 'Picture-in-picture',
-            subtitlesButton: 'Subtitles/CC',
-            chaptersButton: 'Chapters',
-            audioTrackButton: 'Audio tracks',
-            playbackRateMenuButton: 'Playback speed',
-            // currentTimeDisplay: 'Current time', // Removed - no tooltip for time
-            // durationDisplay: 'Duration', // Removed - no tooltip for duration
-        };
-
-        // Apply tooltips to each button
-        Object.keys(buttonTooltips).forEach((buttonName) => {
-            const button = controlBar.getChild(buttonName);
-            if (button && button.el()) {
-                const buttonEl = button.el();
-                const tooltipText =
-                    typeof buttonTooltips[buttonName] === 'function'
-                        ? buttonTooltips[buttonName]()
-                        : buttonTooltips[buttonName];
-
-                buttonEl.setAttribute('title', tooltipText);
-                buttonEl.setAttribute('aria-label', tooltipText);
-
-                // Add touch tooltip support for mobile devices
-                addTouchTooltipSupport(buttonEl);
-
-                // For dynamic tooltips (play/pause, fullscreen), update on state change
-                if (buttonName === 'playToggle') {
-                    player.on('play', () => {
-                        buttonEl.setAttribute('title', 'Pause');
-                        buttonEl.setAttribute('aria-label', 'Pause');
-                    });
-                    player.on('pause', () => {
-                        buttonEl.setAttribute('title', 'Play');
-                        buttonEl.setAttribute('aria-label', 'Play');
-                    });
-                } else if (buttonName === 'fullscreenToggle') {
-                    player.on('fullscreenchange', () => {
-                        const tooltip = player.isFullscreen() ? 'Exit fullscreen' : 'Fullscreen';
-                        buttonEl.setAttribute('title', tooltip);
-                        buttonEl.setAttribute('aria-label', tooltip);
-                    });
-                }
-            }
-        });
-
-        // Remove title attributes from volume-related elements to prevent blank tooltips
-        const removeVolumeTooltips = () => {
-            const volumeElements = [
-                controlBar.getChild('volumePanel'),
-                controlBar.getChild('muteToggle'),
-                controlBar.getChild('volumeControl'),
-            ];
-
-            volumeElements.forEach((element) => {
-                if (element && element.el()) {
-                    const el = element.el();
-                    el.removeAttribute('title');
-                    el.removeAttribute('aria-label');
-
-                    // Also remove from any child elements
-                    const childElements = el.querySelectorAll('*');
-                    childElements.forEach((child) => {
-                        child.removeAttribute('title');
-                    });
-                }
-            });
-        };
-
-        // Run immediately and also after a short delay
-        removeVolumeTooltips();
-        setTimeout(removeVolumeTooltips, 100);
-    }, 500); // Delay to ensure all components are ready
-};
-
-// Helper function to add touch tooltip support
-const addTouchTooltipSupport = (element) => {
-    // Check if device is touch-enabled
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-
-    // Only add touch tooltip support on actual touch devices
-    if (!isTouchDevice) {
-        return;
-    }
-
-    let touchStartTime = 0;
-    let tooltipTimeout = null;
-
-    // Touch start
-    element.addEventListener(
-        'touchstart',
-        () => {
-            touchStartTime = Date.now();
-        },
-        { passive: true }
-    );
-
-    // Touch end
-    element.addEventListener(
-        'touchend',
-        () => {
-            const touchDuration = Date.now() - touchStartTime;
-
-            // Only show tooltip for quick taps (not swipes)
-            if (touchDuration < 300) {
-                // Don't prevent default for most buttons to maintain functionality
-
-                // Show tooltip briefly
-                element.classList.add('touch-tooltip-active');
-
-                // Clear any existing timeout
-                if (tooltipTimeout) {
-                    clearTimeout(tooltipTimeout);
-                }
-
-                // Hide tooltip after delay
-                tooltipTimeout = setTimeout(() => {
-                    element.classList.remove('touch-tooltip-active');
-                }, 2000);
-            }
-        },
-        { passive: true }
-    );
-};
-
-function VideoJSPlayerNew({ videoId = 'default-video' }) {
+function VideoJSPlayer({ videoId = 'default-video' }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
     const customComponents = useRef({}); // Store custom components for cleanup
-    const keyboardHandler = useRef(null); // Keyboard handler instance
-    const playbackEventHandler = useRef(null); // Playback event handler instance
 
     // Check if this is an embed player (disable next video and autoplay features)
     const isEmbedPlayer = videoId === 'video-embed';
@@ -195,10 +47,10 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                           author_name: 'Markos Gogoulos',
                           author_profile: '/user/markos/',
                           author_thumbnail: '/media/userlogos/user.jpg',
-                          url: 'https://demo.mediacms.io/view?m=elygiagorgechania',
+                          url: 'https://videojs.mediacms.io/view?m=meivs1H3R',
                           poster_url:
-                              '/media/original/thumbnails/user/markos/c1ab03cab3bb46b5854a5e217cfe3013_3mGZ15f.VID_20230813_144422.mp4.jpg',
-                          ___chapter_data: [],
+                              '/media/original/thumbnails/user/markos/d6ae9093cb1648529432f38ee1198200_6BfyhyM.video.mp4.jpg',
+
                           chapter_data: [
                               {
                                   startTime: '00:00:00.000',
@@ -1118,85 +970,80 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
 
                           // VIDEO
                           media_type: 'video',
-                          original_media_url:
-                              '/media/original/user/markos/f371a6b2c157451d924bc4f612bf2667.Pexels_Videos_2079217_1.mp4',
-
+                          original_media_url: '/media/original/user/markos/d6ae9093cb1648529432f38ee1198200.video.mp4',
                           hls_info: {
-                              master_file: '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/master.m3u8',
-                              '240_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/iframes.m3u8',
-                              '480_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-2/iframes.m3u8',
-                              '1080_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-3/iframes.m3u8',
-                              '360_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-4/iframes.m3u8',
-                              '720_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-5/iframes.m3u8',
-                              '240_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/stream.m3u8',
-                              '480_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-2/stream.m3u8',
-                              '1080_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-3/stream.m3u8',
-                              '360_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-4/stream.m3u8',
-                              '720_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-5/stream.m3u8',
+                              master_file: '/media/hls/d6ae9093cb1648529432f38ee1198200/master.m3u8',
+                              '144_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-1/iframes.m3u8',
+                              '240_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-2/iframes.m3u8',
+                              '360_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-3/iframes.m3u8',
+                              '480_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-4/iframes.m3u8',
+                              '720_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-5/iframes.m3u8',
+                              '1080_iframe': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-6/iframes.m3u8',
+                              '144_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-1/stream.m3u8',
+                              '240_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-2/stream.m3u8',
+                              '360_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-3/stream.m3u8',
+                              '480_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-4/stream.m3u8',
+                              '720_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-5/stream.m3u8',
+                              '1080_playlist': '/media/hls/d6ae9093cb1648529432f38ee1198200/media-6/stream.m3u8',
                           },
-
-                          /*  hls_info: {
-                              master_file: '/media/hls/f371a6b2c157451d924bc4f612bf2667/master.m3u8',
-                              '1080_iframe': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-1/iframes.m3u8',
-                              '720_iframe': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-2/iframes.m3u8',
-                              '480_iframe': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-3/iframes.m3u8',
-                              '360_iframe': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-4/iframes.m3u8',
-                              '240_iframe': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-5/iframes.m3u8',
-                              '1080_playlist': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-1/stream.m3u8',
-                              '720_playlist': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-2/stream.m3u8',
-                              '480_playlist': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-3/stream.m3u8',
-                              '360_playlist': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-4/stream.m3u8',
-                              '240_playlist': '/media/hls/f371a6b2c157451d924bc4f612bf2667/media-5/stream.m3u8',
-                          }, */
                           encodings_info: {
-                              144: {},
+                              144: {
+                                  h264: {
+                                      title: 'h264-144',
+                                      url: '/media/encoded/23/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
+                                      progress: 100,
+                                      size: '0.3MB',
+                                      encoding_id: 1,
+                                      status: 'success',
+                                  },
+                              },
                               240: {
                                   h264: {
                                       title: 'h264-240',
-                                      url: '/media/encoded/2/markos/c1ab03cab3bb46b5854a5e217cfe3013.c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4.mp4',
+                                      url: '/media/encoded/2/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '2.2MB',
-                                      encoding_id: 4940,
+                                      size: '0.6MB',
+                                      encoding_id: 2,
                                       status: 'success',
                                   },
                               },
                               360: {
                                   h264: {
                                       title: 'h264-360',
-                                      url: '/media/encoded/3/markos/c1ab03cab3bb46b5854a5e217cfe3013.c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4.mp4',
+                                      url: '/media/encoded/3/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '3.3MB',
-                                      encoding_id: 4941,
+                                      size: '0.8MB',
+                                      encoding_id: 3,
                                       status: 'success',
                                   },
                               },
                               480: {
                                   h264: {
                                       title: 'h264-480',
-                                      url: '/media/encoded/13/markos/c1ab03cab3bb46b5854a5e217cfe3013.c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4.mp4',
+                                      url: '/media/encoded/13/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '6.0MB',
-                                      encoding_id: 4942,
+                                      size: '1.5MB',
+                                      encoding_id: 4,
                                       status: 'success',
                                   },
                               },
                               720: {
                                   h264: {
                                       title: 'h264-720',
-                                      url: '/media/encoded/10/markos/c1ab03cab3bb46b5854a5e217cfe3013.c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4.mp4',
+                                      url: '/media/encoded/10/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '17.8MB',
-                                      encoding_id: 4943,
+                                      size: '3.5MB',
+                                      encoding_id: 5,
                                       status: 'success',
                                   },
                               },
                               1080: {
                                   h264: {
                                       title: 'h264-1080',
-                                      url: '/media/encoded/7/markos/c1ab03cab3bb46b5854a5e217cfe3013.c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4.mp4',
+                                      url: '/media/encoded/7/markos/d6ae9093cb1648529432f38ee1198200.d6ae9093cb1648529432f38ee1198200.video.mp4.mp4',
                                       progress: 100,
-                                      size: '37.2MB',
-                                      encoding_id: 4944,
+                                      size: '6.4MB',
+                                      encoding_id: 6,
                                       status: 'success',
                                   },
                               },
@@ -1213,14 +1060,14 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                       },
 
                       // other
-                      useRoundedCorners: true,
+                      useRoundedCorners: false,
                       isPlayList: false,
                       previewSprite: {
-                          url: 'https://demo.mediacms.io/media/original/thumbnails/user/markos/c1ab03cab3bb46b5854a5e217cfe3013.VID_20230813_144422.mp4sprites.jpg',
+                          url: 'https://videojs.mediacms.io/media/original/thumbnails/user/markos/d6ae9093cb1648529432f38ee1198200.video.mp4sprites.jpg',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: 'https://demo.mediacms.io',
-                      nextLink: 'https://demo.mediacms.io/view?m=elygiagorgechania',
+                      siteUrl: 'https://videojs.mediacms.io',
+                      nextLink: 'https://videojs.mediacms.io/view?m=YjGJafibO',
                       urlAutoplay: true,
                       urlMuted: false,
                   },
@@ -1746,1024 +1593,960 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                 return;
             }
 
-            //const timer = setTimeout(() => {
-            // Double-check that we still don't have a player and element exists
-            if (!playerRef.current && videoRef.current && !videoRef.current.player) {
-                playerRef.current = videojs(videoRef.current, {
-                    // ===== STANDARD <video> ELEMENT OPTIONS =====
+            const timer = setTimeout(() => {
+                // Double-check that we still don't have a player and element exists
+                if (!playerRef.current && videoRef.current && !videoRef.current.player) {
+                    playerRef.current = videojs(videoRef.current, {
+                        // ===== STANDARD <video> ELEMENT OPTIONS =====
 
-                    // Controls whether player has user-interactive controls
-                    controls: true,
+                        // Controls whether player has user-interactive controls
+                        controls: true,
 
-                    // Player dimensions - removed for responsive design
-                    // Autoplay behavior: Try unmuted first, fallback to muted if needed
-                    // For embed players, disable autoplay to show poster
-                    autoplay: isEmbedPlayer ? false : true, // Try unmuted autoplay first (true/false, play, muted, any)
+                        // Player dimensions - removed for responsive design
+                        // Autoplay behavior: Try unmuted first, fallback to muted if needed
+                        // For embed players, disable autoplay to show poster
+                        autoplay: isEmbedPlayer ? false : true, // Try unmuted autoplay first (true/false, play, muted, any)
 
-                    // Start video over when it ends
-                    loop: false,
+                        // Start video over when it ends
+                        loop: false,
 
-                    // Start video muted (check URL parameter or default)
-                    muted: mediaData.urlMuted || false,
+                        // Start video muted (check URL parameter or default)
+                        muted: mediaData.urlMuted || false,
 
-                    // Poster image URL displayed before video starts
-                    poster: currentVideo.poster,
+                        // Poster image URL displayed before video starts
+                        poster: currentVideo.poster,
 
-                    // Preload behavior: 'auto', 'metadata', 'none'
-                    preload: 'auto',
+                        // Preload behavior: 'auto', 'metadata', 'none'
+                        preload: 'auto',
 
-                    // Video sources from current video
-                    sources: currentVideo.sources,
+                        // Video sources from current video
+                        sources: currentVideo.sources,
 
-                    // ===== VIDEO.JS-SPECIFIC OPTIONS =====
+                        // ===== VIDEO.JS-SPECIFIC OPTIONS =====
 
-                    // Aspect ratio for fluid mode (e.g., '16:9', '4:3')
-                    aspectRatio: '16:9',
+                        // Aspect ratio for fluid mode (e.g., '16:9', '4:3')
+                        aspectRatio: '16:9',
 
-                    // Hide all components except control bar for audio-only mode
-                    audioOnlyMode: false,
+                        // Hide all components except control bar for audio-only mode
+                        audioOnlyMode: false,
 
-                    // Display poster persistently for audio poster mode
-                    audioPosterMode: mediaData.data?.media_type === 'audio',
+                        // Display poster persistently for audio poster mode
+                        audioPosterMode: mediaData.data?.media_type === 'audio',
 
-                    // Prevent autoSetup for elements with data-setup attribute
-                    autoSetup: undefined,
+                        // Prevent autoSetup for elements with data-setup attribute
+                        autoSetup: undefined,
 
-                    // Custom breakpoints for responsive design
-                    breakpoints: {
-                        /* tiny: 210,
-                        xsmall: 320,
-                        small: 425,
-                        medium: 768,
-                        large: 1440,
-                        xlarge: 2560,
-                        huge: 2561, */
-                        tiny: 300,
-                        xsmall: 400,
-                        small: 500,
-                        medium: 600,
-                        large: 700,
-                        xlarge: 800,
-                        huge: 900,
-                    },
-
-                    // Disable picture-in-picture mode
-                    disablePictureInPicture: false,
-
-                    // Enable document picture-in-picture API
-                    enableDocumentPictureInPicture: false,
-
-                    // Enable smooth seeking experience
-                    enableSmoothSeeking: true,
-
-                    // Use experimental SVG icons instead of font icons
-                    experimentalSvgIcons: true,
-
-                    // Make player scale to fit container
-                    fluid: true,
-
-                    // Fullscreen options
-                    fullscreen: {
-                        options: {
-                            navigationUI: 'hide',
+                        // Custom breakpoints for responsive design
+                        breakpoints: {
+                            tiny: 210,
+                            xsmall: 320,
+                            small: 425,
+                            medium: 768,
+                            large: 1440,
+                            xlarge: 2560,
+                            huge: 2561,
                         },
-                    },
 
-                    // Player element ID
-                    id: mediaData.id,
+                        // Disable picture-in-picture mode
+                        disablePictureInPicture: false,
 
-                    // Milliseconds of inactivity before user considered inactive (0 = never)
-                    // For embed players, use longer timeout to keep controls visible
-                    inactivityTimeout: isEmbedPlayer ? 5000 : 2000,
+                        // Enable document picture-in-picture API
+                        enableDocumentPictureInPicture: false,
 
-                    // Language code for player (e.g., 'en', 'es', 'fr')
-                    language: 'en',
+                        // Enable smooth seeking experience
+                        enableSmoothSeeking: false,
 
-                    // Custom language definitions
-                    languages: {},
+                        // Use experimental SVG icons instead of font icons
+                        experimentalSvgIcons: false,
 
-                    // Enable live UI with progress bar and live edge button
-                    liveui: true,
+                        // Make player scale to fit container
+                        fluid: true,
 
-                    // Live tracker options
-                    liveTracker: {
-                        trackingThreshold: 1, // Seconds threshold for showing live UI
-                        liveTolerance: 3, // Seconds tolerance for being "live"
-                    },
-
-                    // Force native controls for touch devices
-                    nativeControlsForTouch: true,
-
-                    // Ensures consistent autoplay behavior across browsers (prevents unexpected blocking or auto-play issues)
-                    normalizeAutoplay: true,
-
-                    // Custom message when media cannot be played
-                    notSupportedMessage: undefined,
-
-                    // Prevent title attributes on UI elements for better accessibility
-                    noUITitleAttributes: true,
-
-                    // Array of playback speed options (e.g., [0.5, 1, 1.5, 2])
-                    playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
-
-                    // Prefer non-fullscreen playback on mobile
-                    playsinline: true,
-
-                    // Plugin initialization options
-                    plugins: {},
-
-                    // Control poster image display
-                    posterImage: true,
-
-                    // Prefer full window over fullscreen on some devices
-                    preferFullWindow: false,
-
-                    // Enable responsive player based on breakpoints
-                    responsive: true,
-
-                    // Restore element when player is disposed
-                    restoreEl: false,
-
-                    // Suppress "not supported" error until user interaction
-                    suppressNotSupportedError: false,
-
-                    // Allow techs to override poster
-                    techCanOverridePoster: false,
-
-                    // Order of preferred playback technologies
-                    techOrder: ['html5'],
-
-                    // User interaction options
-                    userActions: {
-                        // Enable/disable or customize click behavior
-                        click: true,
-                        tap: true,
-
-                        // Enable/disable or customize double-click behavior (fullscreen toggle)
-                        doubleClick: true,
-
-                        hotkeys: true,
-                        // Hotkey configuration
-                        /*  hotkeys: {
-                            // Function to override fullscreen key (default: 'f')
-                            fullscreenKey: function (event) {
-                                return event.which === 70; // 'f' key
+                        // Fullscreen options
+                        fullscreen: {
+                            options: {
+                                navigationUI: 'hide',
                             },
+                        },
 
-                            // Function to override mute key (default: 'm')
-                            muteKey: function (event) {
-                                return event.which === 77; // 'm' key
-                            },
+                        // Player element ID
+                        id: mediaData.id,
 
-                            // Function to override play/pause key (default: 'k' and Space)
-                            playPauseKey: function (event) {
-                                return event.which === 75 || event.which === 32; // 'k' or Space
-                            },
+                        // Milliseconds of inactivity before user considered inactive (0 = never)
+                        // For embed players, use longer timeout to keep controls visible
+                        inactivityTimeout: isEmbedPlayer ? 5000 : 2000,
 
-                            // Custom seek functions for arrow keys
-                            seekForwardKey: function (event) {
-                                return event.which === 39; // Right arrow key
-                            },
+                        // Language code for player (e.g., 'en', 'es', 'fr')
+                        language: 'en',
 
-                            seekBackwardKey: function (event) {
-                                return event.which === 37; // Left arrow key
-                            },
-                        }, */
-                    },
+                        // Custom language definitions
+                        languages: {},
 
-                    // URL to vtt.js for WebVTT support
-                    // 'vtt.js': undefined,
+                        // Enable live UI with progress bar and live edge button
+                        liveui: false,
 
-                    // Spatial navigation for smart TV/remote control navigation
-                    spatialNavigation: {
-                        enabled: true,
-                        horizontalSeek: true,
-                    },
+                        // Live tracker options
+                        liveTracker: {
+                            trackingThreshold: 20, // Seconds threshold for showing live UI
+                            liveTolerance: 15, // Seconds tolerance for being "live"
+                        },
 
-                    // ===== CONTROL BAR OPTIONS =====
-                    controlBar: {
-                        playToggle: true,
-                        progressControl: true,
-                        /* progressControl: {
-                            seekBar: {
-                                timeTooltip: {
-                                    // Customize TimeTooltip behavior
-                                    displayNegative: false, // Don't show negative time
+                        // Force native controls for touch devices
+                        nativeControlsForTouch: false,
+
+                        // Ensures consistent autoplay behavior across browsers (prevents unexpected blocking or auto-play issues)
+                        normalizeAutoplay: true,
+
+                        // Custom message when media cannot be played
+                        notSupportedMessage: undefined,
+
+                        // Prevent title attributes on UI elements for better accessibility
+                        noUITitleAttributes: true,
+
+                        // Array of playback speed options (e.g., [0.5, 1, 1.5, 2])
+                        playbackRates: [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
+
+                        // Prefer non-fullscreen playback on mobile
+                        playsinline: true,
+
+                        // Plugin initialization options
+                        plugins: {},
+
+                        // Control poster image display
+                        posterImage: true,
+
+                        // Prefer full window over fullscreen on some devices
+                        preferFullWindow: false,
+
+                        // Enable responsive player based on breakpoints
+                        responsive: true,
+
+                        // Restore element when player is disposed
+                        restoreEl: false,
+
+                        // Suppress "not supported" error until user interaction
+                        suppressNotSupportedError: false,
+
+                        // Allow techs to override poster
+                        techCanOverridePoster: false,
+
+                        // Order of preferred playback technologies
+                        techOrder: ['html5'],
+
+                        // User interaction options
+                        userActions: {
+                            // Enable/disable or customize click behavior
+                            click: true,
+                            tap: true,
+
+                            // Enable/disable or customize double-click behavior (fullscreen toggle)
+                            doubleClick: true,
+
+                            // Hotkey configuration
+                            hotkeys: {
+                                // Function to override fullscreen key (default: 'f')
+                                fullscreenKey: function (event) {
+                                    return event.which === 70; // 'f' key
+                                },
+
+                                // Function to override mute key (default: 'm')
+                                muteKey: function (event) {
+                                    return event.which === 77; // 'm' key
+                                },
+
+                                // Function to override play/pause key (default: 'k' and Space)
+                                playPauseKey: function (event) {
+                                    return event.which === 75 || event.which === 32; // 'k' or Space
+                                },
+
+                                // Custom seek functions for arrow keys
+                                seekForwardKey: function (event) {
+                                    return event.which === 39; // Right arrow key
+                                },
+
+                                seekBackwardKey: function (event) {
+                                    return event.which === 37; // Left arrow key
                                 },
                             },
-                        }, */
-                        // Remaining time display configuration
-                        currentTimeDisplay: false,
-                        durationDisplay: false,
-                        remainingTimeDisplay: false,
-
-                        // Volume panel configuration
-                        volumePanel: {
-                            inline: false, // Display volume control inline
-                            vertical: true, // Use horizontal volume slider
                         },
 
-                        // Custom control spacer
-                        customControlSpacer: true,
+                        // URL to vtt.js for WebVTT support
+                        'vtt.js': undefined,
 
-                        // Fullscreen toggle button
-                        fullscreenToggle: true,
+                        // Spatial navigation for smart TV/remote control navigation
+                        spatialNavigation: {
+                            enabled: false,
+                            horizontalSeek: false,
+                        },
 
-                        // Picture-in-picture toggle button
-                        pictureInPictureToggle: isTouchDevice ? false : true,
+                        // ===== CONTROL BAR OPTIONS =====
+                        controlBar: {
+                            progressControl: {
+                                seekBar: {
+                                    timeTooltip: {
+                                        // Customize TimeTooltip behavior
+                                        displayNegative: false, // Don't show negative time
+                                    },
+                                },
+                            },
+                            // Remaining time display configuration
+                            remainingTimeDisplay: false,
+                            /* remainingTimeDisplay: {
+                                displayNegative: true,
+                            }, */
 
-                        // Remove default playback speed dropdown from control bar
-                        playbackRateMenuButton: false,
+                            // Volume panel configuration
+                            volumePanel: {
+                                inline: true, // Display volume control inline
+                                vertical: false, // Use horizontal volume slider
+                            },
 
-                        // Descriptions button
-                        descriptionsButton: false,
+                            // Fullscreen toggle button
+                            fullscreenToggle: true,
 
-                        // Subtitles (CC) button should be visible
-                        subtitlesButton: hasSubtitles && !isTouchDevice ? true : false,
+                            // Picture-in-picture toggle button
+                            pictureInPictureToggle: true,
 
-                        // Captions button (keep disabled to avoid duplicate with subtitles)
-                        captionsButton: false,
-                        subsCapsButton: false,
+                            // Remove default playback speed dropdown from control bar
+                            playbackRateMenuButton: false,
 
-                        // Audio track button
-                        audioTrackButton: true,
+                            // Descriptions button
+                            descriptionsButton: false,
 
-                        // Live display
-                        liveDisplay: false,
+                            // Subtitles (CC) button should be visible
+                            subtitlesButton: hasSubtitles ? true : false,
 
-                        // Seek to live button
-                        seekToLive: false,
+                            // Captions button (keep disabled to avoid duplicate with subtitles)
+                            captionsButton: false,
 
-                        // Chapters menu button (only show if we have real chapters)
-                        chaptersButton: chaptersData && chaptersData.length > 0,
-                    },
+                            // Audio track button
+                            audioTrackButton: false,
 
-                    // ===== HTML5 TECH OPTIONS =====
-                    html5: {
-                        // Force native controls for touch devices
-                        nativeControlsForTouch: true,
+                            // Live display
+                            liveDisplay: false,
 
-                        // Use native audio tracks instead of emulated - disabled for consistency
-                        nativeAudioTracks: true,
+                            // Seek to live button
+                            seekToLive: false,
 
-                        // Use native text tracks instead of emulated - disabled for consistency
-                        nativeTextTracks: true,
+                            // Custom control spacer
+                            customControlSpacer: false,
 
-                        // Use native video tracks instead of emulated - disabled for consistency
-                        nativeVideoTracks: true,
+                            // Chapters menu button (only show if we have real chapters)
+                            chaptersButton: chaptersData && chaptersData.length > 0,
+                        },
 
-                        // Preload text tracks
-                        preloadTextTracks: true,
+                        // ===== HTML5 TECH OPTIONS =====
+                        html5: {
+                            // Force native controls for touch devices
+                            nativeControlsForTouch: false,
 
-                        // Play inline
-                        playsinline: true,
-                    },
+                            // Use native audio tracks instead of emulated - disabled for consistency
+                            nativeAudioTracks: false,
 
-                    // ===== COMPONENT CONFIGURATION =====
-                    children: [
-                        'mediaLoader',
-                        'posterImage',
-                        'textTrackDisplay',
-                        'loadingSpinner',
-                        'bigPlayButton',
-                        'liveTracker',
-                        'controlBar',
-                        'errorDisplay',
-                        'textTrackSettings',
-                        'resizeManager',
-                    ],
-                });
+                            // Use native text tracks instead of emulated - disabled for consistency
+                            nativeTextTracks: false,
 
-                // Event listeners
-                playerRef.current.ready(() => {
-                    // Apply user preferences to player
-                    userPreferences.current.applyToPlayer(playerRef.current);
+                            // Use native video tracks instead of emulated - disabled for consistency
+                            nativeVideoTracks: false,
 
-                    // Set up auto-save for preference changes
-                    userPreferences.current.setupAutoSave(playerRef.current);
+                            // Preload text tracks
+                            preloadTextTracks: true,
 
-                    // Enable tooltips for all standard VideoJS buttons
-                    enableStandardButtonTooltips(playerRef.current);
+                            // Play inline
+                            playsinline: true,
+                        },
 
-                    // ADD TEST BUTTON HERE - after basic setup, before other components
-                    const testButton = new TestButton(playerRef.current, {});
-                    playerRef.current.addChild(testButton);
-                    customComponents.current.testButton = testButton; // Store for cleanup
-
-                    // Setup orientation handling for touch devices
-                    const orientationHandler = new OrientationHandler(playerRef.current, isTouchDevice);
-                    orientationHandler.setupOrientationHandling();
-                    customComponents.current.orientationHandler = orientationHandler; // Store for cleanup
-
-                    // Setup end screen handling
-                    const endScreenHandler = new EndScreenHandler(playerRef.current, {
-                        isEmbedPlayer,
-                        userPreferences: userPreferences.current,
-                        mediaData,
-                        currentVideo,
-                        relatedVideos,
-                        goToNextVideo,
+                        // ===== COMPONENT CONFIGURATION =====
+                        children: [
+                            'mediaLoader',
+                            'posterImage',
+                            'textTrackDisplay',
+                            'loadingSpinner',
+                            'bigPlayButton',
+                            'liveTracker',
+                            'controlBar',
+                            'errorDisplay',
+                            'textTrackSettings',
+                            'resizeManager',
+                        ],
                     });
-                    customComponents.current.endScreenHandler = endScreenHandler; // Store for cleanup
 
-                    // Inside your ready callback, replace the existing handleAutoplay code with:
-                    const autoplayHandler = new AutoplayHandler(playerRef.current, mediaData, userPreferences.current);
+                    // Event listeners
+                    playerRef.current.ready(() => {
+                        // Apply user preferences to player
+                        userPreferences.current.applyToPlayer(playerRef.current);
 
-                    // Expose the player instance globally for timestamp functionality
-                    if (typeof window !== 'undefined') {
-                        if (!window.videojsPlayers) {
-                            window.videojsPlayers = {};
-                        }
-                        window.videojsPlayers[videoId] = playerRef.current;
-                    }
+                        // Set up auto-save for preference changes
+                        userPreferences.current.setupAutoSave(playerRef.current);
 
-                    // Call the onPlayerInitCallback if provided via MEDIA_DATA
-                    if (mediaData.onPlayerInitCallback && typeof mediaData.onPlayerInitCallback === 'function') {
-                        mediaData.onPlayerInitCallback({ player: playerRef.current }, playerRef.current.el());
-                    }
-
-                    // Handle URL timestamp parameter
-                    if (mediaData.urlTimestamp !== null && mediaData.urlTimestamp >= 0) {
-                        const timestamp = mediaData.urlTimestamp;
-
-                        // Wait for video metadata to be loaded before seeking
-                        if (playerRef.current.readyState() >= 1) {
-                            // Metadata is already loaded, seek immediately
-                            if (timestamp < playerRef.current.duration()) {
-                                playerRef.current.currentTime(timestamp);
-                            } else if (timestamp >= 0) {
-                                playerRef.current.play();
+                        // Expose the player instance globally for timestamp functionality
+                        if (typeof window !== 'undefined') {
+                            if (!window.videojsPlayers) {
+                                window.videojsPlayers = {};
                             }
-                        } else {
-                            // Wait for metadata to load
-                            playerRef.current.one('loadedmetadata', () => {
-                                if (timestamp >= 0 && timestamp < playerRef.current.duration()) {
+                            window.videojsPlayers[videoId] = playerRef.current;
+                        }
+
+                        // Call the onPlayerInitCallback if provided via MEDIA_DATA
+                        if (mediaData.onPlayerInitCallback && typeof mediaData.onPlayerInitCallback === 'function') {
+                            mediaData.onPlayerInitCallback({ player: playerRef.current }, playerRef.current.el());
+                        }
+
+                        // Handle URL timestamp parameter
+                        if (mediaData.urlTimestamp !== null && mediaData.urlTimestamp >= 0) {
+                            const timestamp = mediaData.urlTimestamp;
+
+                            // Wait for video metadata to be loaded before seeking
+                            if (playerRef.current.readyState() >= 1) {
+                                // Metadata is already loaded, seek immediately
+                                if (timestamp < playerRef.current.duration()) {
                                     playerRef.current.currentTime(timestamp);
                                 } else if (timestamp >= 0) {
                                     playerRef.current.play();
                                 }
-                            });
-                        }
-                    }
-
-                    /* // Detect if user has interacted with the page
-                    const hasUserInteracted = () => {
-                        // Check various indicators of user interaction
-                        return (
-                            document.hasFocus() ||
-                            document.visibilityState === 'visible' ||
-                            sessionStorage.getItem('userInteracted') === 'true'
-                        );
-                    };
-
-                    // Handle autoplay while respecting user's saved preferences
-                    const handleAutoplay = async () => {
-                        const userInteracted = hasUserInteracted();
-                        const savedMuteState = userPreferences.current.getPreference('muted');
-
-                        try {
-                            // Respect user's saved mute preference, but try unmuted if user interacted and hasn't explicitly muted
-                            if (!mediaData.urlMuted && userInteracted && savedMuteState !== true) {
-                                playerRef.current.muted(false);
+                            } else {
+                                // Wait for metadata to load
+                                playerRef.current.one('loadedmetadata', () => {
+                                    if (timestamp >= 0 && timestamp < playerRef.current.duration()) {
+                                        playerRef.current.currentTime(timestamp);
+                                    } else if (timestamp >= 0) {
+                                        playerRef.current.play();
+                                    }
+                                });
                             }
+                        }
 
-                            // First attempt: try to play with current mute state
-                            await playerRef.current.play();
-                        } catch (error) {
-                            // Fallback to muted autoplay unless user explicitly wants to stay unmuted
-                            if (!playerRef.current.muted()) {
-                                try {
-                                    playerRef.current.muted(true);
-                                    await playerRef.current.play();
+                        // Detect if user has interacted with the page
+                        const hasUserInteracted = () => {
+                            // Check various indicators of user interaction
+                            return (
+                                document.hasFocus() ||
+                                document.visibilityState === 'visible' ||
+                                sessionStorage.getItem('userInteracted') === 'true'
+                            );
+                        };
 
-                                    // Only try to restore sound if user hasn't explicitly saved mute=true
-                                    if (savedMuteState !== true) {
-                                        // Aggressively try to restore sound
-                                        const restoreSound = () => {
-                                            if (playerRef.current && !playerRef.current.isDisposed()) {
-                                                playerRef.current.muted(false);
-                                                playerRef.current.trigger('notify', '🔊 Sound enabled!');
-                                            }
-                                        };
+                        // Handle autoplay while respecting user's saved preferences
+                        const handleAutoplay = async () => {
+                            const userInteracted = hasUserInteracted();
+                            const savedMuteState = userPreferences.current.getPreference('muted');
 
-                                        // Try to restore sound immediately if user has interacted
-                                        if (userInteracted) {
-                                            setTimeout(restoreSound, 100);
-                                        } else {
-                                            // Show notification for manual interaction
-                                            setTimeout(() => {
+                            try {
+                                // Respect user's saved mute preference, but try unmuted if user interacted and hasn't explicitly muted
+                                if (!mediaData.urlMuted && userInteracted && savedMuteState !== true) {
+                                    playerRef.current.muted(false);
+                                }
+
+                                // First attempt: try to play with current mute state
+                                await playerRef.current.play();
+                            } catch (error) {
+                                // Fallback to muted autoplay unless user explicitly wants to stay unmuted
+                                if (!playerRef.current.muted()) {
+                                    try {
+                                        playerRef.current.muted(true);
+                                        await playerRef.current.play();
+
+                                        // Only try to restore sound if user hasn't explicitly saved mute=true
+                                        if (savedMuteState !== true) {
+                                            // Aggressively try to restore sound
+                                            const restoreSound = () => {
                                                 if (playerRef.current && !playerRef.current.isDisposed()) {
-                                                    playerRef.current.trigger(
-                                                        'notify',
-                                                        '🔇 Click anywhere to enable sound'
-                                                    );
+                                                    playerRef.current.muted(false);
+                                                    playerRef.current.trigger('notify', '🔊 Sound enabled!');
                                                 }
-                                            }, 1000);
-
-                                            // Set up interaction listeners
-                                            const enableSound = () => {
-                                                restoreSound();
-                                                // Mark user interaction for future videos
-                                                sessionStorage.setItem('userInteracted', 'true');
-                                                // Remove listeners
-                                                document.removeEventListener('click', enableSound);
-                                                document.removeEventListener('keydown', enableSound);
-                                                document.removeEventListener('touchstart', enableSound);
                                             };
 
-                                            document.addEventListener('click', enableSound, { once: true });
-                                            document.addEventListener('keydown', enableSound, { once: true });
-                                            document.addEventListener('touchstart', enableSound, { once: true });
+                                            // Try to restore sound immediately if user has interacted
+                                            if (userInteracted) {
+                                                setTimeout(restoreSound, 100);
+                                            } else {
+                                                // Show notification for manual interaction
+                                                setTimeout(() => {
+                                                    if (playerRef.current && !playerRef.current.isDisposed()) {
+                                                        playerRef.current.trigger(
+                                                            'notify',
+                                                            '🔇 Click anywhere to enable sound'
+                                                        );
+                                                    }
+                                                }, 1000);
+
+                                                // Set up interaction listeners
+                                                const enableSound = () => {
+                                                    restoreSound();
+                                                    // Mark user interaction for future videos
+                                                    sessionStorage.setItem('userInteracted', 'true');
+                                                    // Remove listeners
+                                                    document.removeEventListener('click', enableSound);
+                                                    document.removeEventListener('keydown', enableSound);
+                                                    document.removeEventListener('touchstart', enableSound);
+                                                };
+
+                                                document.addEventListener('click', enableSound, { once: true });
+                                                document.addEventListener('keydown', enableSound, { once: true });
+                                                document.addEventListener('touchstart', enableSound, { once: true });
+                                            }
                                         }
+                                    } catch (mutedError) {
+                                        console.error('❌ Even muted autoplay was blocked:', mutedError.message);
                                     }
-                                } catch (mutedError) {
-                                    console.error('❌ Even muted autoplay was blocked:', mutedError.message);
                                 }
                             }
-                        }
-                    }; */
+                        };
 
-                    // Skip autoplay for embed players to show poster
-                    if (!isEmbedPlayer) {
-                        /* if (mediaData?.urlAutoplay) {
-                            // Explicit autoplay requested via URL parameter
-                            autoplayHandler.handleAutoplay();
+                        // Skip autoplay for embed players to show poster
+                        if (!isEmbedPlayer) {
+                            if (mediaData?.urlAutoplay) {
+                                // Explicit autoplay requested via URL parameter
+                                handleAutoplay();
+                            } else {
+                                // Auto-start video on page load/reload with fallback strategy
+                                handleAutoplay();
+                            }
                         } else {
-                            // Auto-start video on page load/reload with fallback strategy
-                            autoplayHandler.handleAutoplay();
-                        } */
-                        autoplayHandler.handleAutoplay();
-                    } else {
-                        // For embed players, setup clean appearance with hidden controls
-                        /*  setTimeout(() => {
-                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                            const controlBar = playerRef.current.getChild('controlBar');
+                            // For embed players, setup clean appearance with hidden controls
+                            setTimeout(() => {
+                                const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                                const controlBar = playerRef.current.getChild('controlBar');
 
-                            if (bigPlayButton) {
-                                bigPlayButton.show();
-                                // Ensure big play button is prominently displayed in center
-                                const bigPlayEl = bigPlayButton.el();
-                                if (bigPlayEl) {
-                                    bigPlayEl.style.display = 'block';
-                                    bigPlayEl.style.visibility = 'visible';
-                                    bigPlayEl.style.opacity = '1';
-                                    // Make it more prominent for embed
-                                    bigPlayEl.style.zIndex = '10';
-                                }
-                            }
-
-                            if (controlBar) {
-                                // Hide controls by default for embed players
-                                controlBar.hide();
-                                const controlBarEl = controlBar.el();
-                                if (controlBarEl) {
-                                    controlBarEl.style.opacity = '0';
-                                    controlBarEl.style.visibility = 'hidden';
-                                    controlBarEl.style.transition = 'opacity 0.3s ease';
-                                }
-                            }
-
-                            // Fix potential duplicate image issue by ensuring proper poster/video layering
-                            const embedPlayerEl = playerRef.current.el();
-                            const videoEl = embedPlayerEl.querySelector('video');
-                            const posterEl = embedPlayerEl.querySelector('.vjs-poster');
-
-                            if (videoEl && posterEl) {
-                                // Ensure video is behind poster when paused
-                                videoEl.style.opacity = '0';
-                                posterEl.style.zIndex = '1';
-                                posterEl.style.position = 'absolute';
-                                posterEl.style.top = '0';
-                                posterEl.style.left = '0';
-                                posterEl.style.width = '100%';
-                                posterEl.style.height = '100%';
-                            }
-
-                            // Set player to inactive state to hide controls initially
-                            playerRef.current.userActive(false);
-
-                            // Setup hover behavior to show/hide controls for embed
-                            if (embedPlayerEl) {
-                                const showControls = () => {
-                                    if (controlBar) {
-                                        controlBar.show();
-                                        const controlBarEl = controlBar.el();
-                                        if (controlBarEl) {
-                                            controlBarEl.style.opacity = '1';
-                                            controlBarEl.style.visibility = 'visible';
-                                        }
+                                if (bigPlayButton) {
+                                    bigPlayButton.show();
+                                    // Ensure big play button is prominently displayed in center
+                                    const bigPlayEl = bigPlayButton.el();
+                                    if (bigPlayEl) {
+                                        bigPlayEl.style.display = 'block';
+                                        bigPlayEl.style.visibility = 'visible';
+                                        bigPlayEl.style.opacity = '1';
+                                        // Make it more prominent for embed
+                                        bigPlayEl.style.zIndex = '10';
                                     }
-                                    playerRef.current.userActive(true);
-                                };
+                                }
 
-                                const hideControls = () => {
-                                    // Only hide if video is paused (embed behavior)
-                                    if (playerRef.current.paused()) {
+                                if (controlBar) {
+                                    // Hide controls by default for embed players
+                                    controlBar.hide();
+                                    const controlBarEl = controlBar.el();
+                                    if (controlBarEl) {
+                                        controlBarEl.style.opacity = '0';
+                                        controlBarEl.style.visibility = 'hidden';
+                                        controlBarEl.style.transition = 'opacity 0.3s ease';
+                                    }
+                                }
+
+                                // Fix potential duplicate image issue by ensuring proper poster/video layering
+                                const embedPlayerEl = playerRef.current.el();
+                                const videoEl = embedPlayerEl.querySelector('video');
+                                const posterEl = embedPlayerEl.querySelector('.vjs-poster');
+
+                                if (videoEl && posterEl) {
+                                    // Ensure video is behind poster when paused
+                                    videoEl.style.opacity = '0';
+                                    posterEl.style.zIndex = '1';
+                                    posterEl.style.position = 'absolute';
+                                    posterEl.style.top = '0';
+                                    posterEl.style.left = '0';
+                                    posterEl.style.width = '100%';
+                                    posterEl.style.height = '100%';
+                                }
+
+                                // Set player to inactive state to hide controls initially
+                                playerRef.current.userActive(false);
+
+                                // Setup hover behavior to show/hide controls for embed
+                                if (embedPlayerEl) {
+                                    const showControls = () => {
                                         if (controlBar) {
+                                            controlBar.show();
                                             const controlBarEl = controlBar.el();
                                             if (controlBarEl) {
-                                                controlBarEl.style.opacity = '0';
-                                                controlBarEl.style.visibility = 'hidden';
+                                                controlBarEl.style.opacity = '1';
+                                                controlBarEl.style.visibility = 'visible';
                                             }
-                                            setTimeout(() => {
-                                                if (playerRef.current.paused()) {
-                                                    controlBar.hide();
-                                                }
-                                            }, 300);
                                         }
-                                        playerRef.current.userActive(false);
-                                    }
-                                };
+                                        playerRef.current.userActive(true);
+                                    };
 
-                                embedPlayerEl.addEventListener('mouseenter', showControls);
-                                embedPlayerEl.addEventListener('mouseleave', hideControls);
-
-                                // Store cleanup function
-                                customComponents.current.embedControlsCleanup = () => {
-                                    embedPlayerEl.removeEventListener('mouseenter', showControls);
-                                    embedPlayerEl.removeEventListener('mouseleave', hideControls);
-                                };
-                            }
-                        }, 100); */
-                    }
-
-                    /* const setupMobilePlayPause = () => {
-                        const playerEl = playerRef.current.el();
-                        const videoEl = playerEl.querySelector('video');
-
-                        if (videoEl) {
-                            // Remove default touch handling that might interfere
-                            videoEl.style.touchAction = 'manipulation';
-
-                            // Add mobile-specific touch event handlers
-                            let touchStartTime = 0;
-                            let touchStartPos = { x: 0, y: 0 };
-
-                            const handleTouchStart = (e) => {
-                                touchStartTime = Date.now();
-                                const touch = e.touches[0];
-                                touchStartPos = { x: touch.clientX, y: touch.clientY };
-
-                                // Check if touch is in seekbar area or the zone above it
-                                const progressControl = playerRef.current
-                                    .getChild('controlBar')
-                                    ?.getChild('progressControl');
-                                if (progressControl && progressControl.el()) {
-                                    const progressRect = progressControl.el().getBoundingClientRect();
-                                    const seekbarDeadZone = 8; // Only 8px above seekbar is protected for easier seeking
-                                    const isInSeekbarArea =
-                                        touch.clientY >= progressRect.top - seekbarDeadZone &&
-                                        touch.clientY <= progressRect.bottom;
-                                    if (isInSeekbarArea) {
-                                        playerRef.current.seekbarTouching = true;
-                                    }
-                                }
-                            };
-
-                            const handleTouchEnd = (e) => {
-                                const touchEndTime = Date.now();
-                                const touchDuration = touchEndTime - touchStartTime;
-
-                                // Only handle if it's a quick tap and we're not touching the seekbar
-                                if (touchDuration < 500 && !playerRef.current.seekbarTouching) {
-                                    const touch = e.changedTouches[0];
-                                    const touchEndPos = { x: touch.clientX, y: touch.clientY };
-                                    const distance = Math.sqrt(
-                                        Math.pow(touchEndPos.x - touchStartPos.x, 2) +
-                                            Math.pow(touchEndPos.y - touchStartPos.y, 2)
-                                    );
-
-                                    // Only trigger if it's a tap (not a swipe)
-                                    if (distance < 50) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-
-                                        // Check if controls are currently visible by examining control bar
-                                        const controlBar = playerRef.current.getChild('controlBar');
-                                        const controlBarEl = controlBar ? controlBar.el() : null;
-                                        const isControlsVisible =
-                                            controlBarEl &&
-                                            window.getComputedStyle(controlBarEl).opacity !== '0' &&
-                                            window.getComputedStyle(controlBarEl).visibility !== 'hidden';
-
-                                        // Check if center play/pause icon is visible and if tap is on it
-                                        const seekIndicator = customComponents.current.seekIndicator;
-                                        const seekIndicatorEl = seekIndicator ? seekIndicator.el() : null;
-                                        const isSeekIndicatorVisible =
-                                            seekIndicatorEl &&
-                                            window.getComputedStyle(seekIndicatorEl).opacity !== '0' &&
-                                            window.getComputedStyle(seekIndicatorEl).visibility !== 'hidden' &&
-                                            window.getComputedStyle(seekIndicatorEl).display !== 'none';
-
-                                        let isTapOnCenterIcon = false;
-                                        if (seekIndicatorEl && isSeekIndicatorVisible) {
-                                            const iconRect = seekIndicatorEl.getBoundingClientRect();
-                                            isTapOnCenterIcon =
-                                                touch.clientX >= iconRect.left &&
-                                                touch.clientX <= iconRect.right &&
-                                                touch.clientY >= iconRect.top &&
-                                                touch.clientY <= iconRect.bottom;
-                                        }
-
+                                    const hideControls = () => {
+                                        // Only hide if video is paused (embed behavior)
                                         if (playerRef.current.paused()) {
-                                            // Always play if video is paused
-                                            playerRef.current.play();
-                                        } else if (isTapOnCenterIcon) {
-                                            // Pause if tapping on center icon (highest priority)
-                                            playerRef.current.pause();
-                                        } else if (isControlsVisible) {
-                                            // Pause if controls are visible and not touching seekbar area
-                                            playerRef.current.pause();
-                                        } else {
-                                            // If controls are not visible, show them AND show center pause icon
-                                            playerRef.current.userActive(true);
-                                            if (seekIndicator) {
-                                                seekIndicator.showMobilePauseIcon();
+                                            if (controlBar) {
+                                                const controlBarEl = controlBar.el();
+                                                if (controlBarEl) {
+                                                    controlBarEl.style.opacity = '0';
+                                                    controlBarEl.style.visibility = 'hidden';
+                                                }
+                                                setTimeout(() => {
+                                                    if (playerRef.current.paused()) {
+                                                        controlBar.hide();
+                                                    }
+                                                }, 300);
                                             }
+                                            playerRef.current.userActive(false);
                                         }
-                                    }
-                                }
+                                    };
 
-                                // Always clear seekbar touching flag at the end
-                                setTimeout(() => {
-                                    if (playerRef.current) {
-                                        playerRef.current.seekbarTouching = false;
-                                    }
-                                }, 50);
-                            };
+                                    embedPlayerEl.addEventListener('mouseenter', showControls);
+                                    embedPlayerEl.addEventListener('mouseleave', hideControls);
 
-                            videoEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-                            videoEl.addEventListener('touchend', handleTouchEnd, { passive: false });
-                        }
-                    };
-                    setTimeout(setupMobilePlayPause, 100); */
-
-                    // Get control bar and its children
-                    const controlBar = playerRef.current.getChild('controlBar');
-                    // const fullscreenToggle = controlBar.getChild('fullscreenToggle');
-                    const playToggle = controlBar.getChild('playToggle');
-                    const volumePanel = controlBar.getChild('volumePanel');
-                    // const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
-                    const progressControl = controlBar.getChild('progressControl');
-                    const seekBar = progressControl?.getChild('seekBar');
-                    // const chaptersButton = controlBar.getChild('chaptersButton');
-
-                    // Debug: Check if progress control exists and is visible on touch devices
-                    /* if (isTouchDevice) {
-                        console.log('🔍 Touch device detected - Progress control debug:');
-                        console.log('- progressControl exists:', !!progressControl);
-                        console.log('- progressControl element:', progressControl?.el());
-                        console.log('- progressControl visible:', progressControl?.el()?.style.display !== 'none');
-                        console.log('- seekBar exists:', !!seekBar);
-                        console.log('- seekBar element:', seekBar?.el());
-
-                        if (progressControl?.el()) {
-                            const progressEl = progressControl.el();
-                            console.log('- progressControl computed styles:', {
-                                display: window.getComputedStyle(progressEl).display,
-                                visibility: window.getComputedStyle(progressEl).visibility,
-                                opacity: window.getComputedStyle(progressEl).opacity,
-                                position: window.getComputedStyle(progressEl).position,
-                                bottom: window.getComputedStyle(progressEl).bottom,
-                            });
-
-                            // Force show progress control on touch devices
-                            console.log('🔧 Forcing progress control to be visible on touch device...');
-                            progressEl.style.display = 'block';
-                            progressEl.style.visibility = 'visible';
-                            progressEl.style.opacity = '1';
-                            progressEl.style.position = 'absolute';
-                            progressEl.style.bottom = '42px';
-                            progressEl.style.left = '0';
-                            progressEl.style.right = '0';
-                            progressEl.style.width = '100%';
-                            progressEl.style.zIndex = '10';
-                            progressEl.style.pointerEvents = 'auto';
-
-                            // Also ensure the progress control component is shown
-                            if (progressControl.show) {
-                                progressControl.show();
-                            }
-                        }
-                    }
- */
-                    // Remove from current position
-                    // controlBar.removeChild(fullscreenToggle);
-
-                    // Auto-play video when navigating from next button (skip for embed players)
-                    if (!isEmbedPlayer) {
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const hasVideoParam = urlParams.get('m');
-                        if (hasVideoParam) {
-                            // Small delay to ensure everything is loaded
-                            setTimeout(async () => {
-                                if (playerRef.current && !playerRef.current.isDisposed()) {
-                                    try {
-                                        await playerRef.current.play();
-                                    } catch (error) {
-                                        console.error('ℹ️ Browser prevented play:', error.message);
-                                        // Try muted playback as fallback
-                                        if (!playerRef.current.muted()) {
-                                            try {
-                                                playerRef.current.muted(true);
-                                                await playerRef.current.play();
-                                            } catch (mutedError) {
-                                                console.error('ℹ️ Even muted play was blocked:', mutedError.message);
-                                            }
-                                        }
-                                    }
+                                    // Store cleanup function
+                                    customComponents.current.embedControlsCleanup = () => {
+                                        embedPlayerEl.removeEventListener('mouseenter', showControls);
+                                        embedPlayerEl.removeEventListener('mouseleave', hideControls);
+                                    };
                                 }
                             }, 100);
                         }
-                    }
 
-                    // BEGIN: Add subtitle tracks
-                    if (hasSubtitles) {
-                        try {
-                            const savedLang = userPreferences.current.getPreference('subtitleLanguage');
-                            const enabled = userPreferences.current.getPreference('subtitleEnabled');
-                            const matchLang = (t, target) => {
-                                const tl = String(t.srclang || t.language || '').toLowerCase();
-                                const sl = String(target || '').toLowerCase();
-                                if (!tl || !sl) return false;
-                                return tl === sl || tl.startsWith(sl + '-') || sl.startsWith(tl + '-');
-                            };
-                            const tracksToAdd = subtitleTracks.map((t) => ({
-                                ...t,
-                                // Hint iOS by marking default on the matched track when enabled
-                                default: !!(enabled && savedLang && matchLang(t, savedLang)),
-                            }));
-                            tracksToAdd.forEach((track) => {
-                                playerRef.current.addRemoteTextTrack(track, false);
-                            });
-                        } catch {
-                            // Fallback: add as-is
-                            subtitleTracks.forEach((track) => {
-                                playerRef.current.addRemoteTextTrack(track, false);
-                            });
-                        }
-                    }
+                        const setupMobilePlayPause = () => {
+                            const playerEl = playerRef.current.el();
+                            const videoEl = playerEl.querySelector('video');
 
-                    // Apply saved subtitle preference immediately and on key readiness events
-                    userPreferences.current.applySubtitlePreference(playerRef.current);
-                    playerRef.current.one('loadeddata', () =>
-                        userPreferences.current.applySubtitlePreference(playerRef.current)
-                    );
-                    playerRef.current.one('canplay', () =>
-                        userPreferences.current.applySubtitlePreference(playerRef.current)
-                    );
-                    // END: Add subtitle tracks
+                            if (videoEl) {
+                                // Remove default touch handling that might interfere
+                                videoEl.style.touchAction = 'manipulation';
 
-                    // BEGIN: Chapters Implementation
-                    if (chaptersData && chaptersData.length > 0) {
-                        const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
-                        // Add cues to the chapters track
-                        chaptersData.forEach((chapter) => {
-                            const cue = new (window.VTTCue || window.TextTrackCue)(
-                                chapter.startTime,
-                                chapter.endTime,
-                                chapter.chapterTitle
-                            );
-                            chaptersTrack.addCue(cue);
-                        });
-                    }
+                                // Add mobile-specific touch event handlers
+                                let touchStartTime = 0;
+                                let touchStartPos = { x: 0, y: 0 };
 
-                    // Force chapter markers update after chapters are loaded
-                    /* setTimeout(() => {
-                        if (chapterMarkers && chapterMarkers.updateChapterMarkers) {
-                            chapterMarkers.updateChapterMarkers();
-                        }
-                    }, 500); */
-                    // END: Chapters Implementation
+                                const handleTouchStart = (e) => {
+                                    touchStartTime = Date.now();
+                                    const touch = e.touches[0];
+                                    touchStartPos = { x: touch.clientX, y: touch.clientY };
 
-                    // BEGIN: Wrap play button in custom div container
-                    // const playButtonEl = playToggle.el();
-                    // const playButtonWrapper = document.createElement('div');
-                    /* playButtonWrapper.className =
-                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
-
-                    // Insert wrapper before the play button and move play button inside
-                    // playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
-                    // playButtonWrapper.appendChild(playButtonEl);
-                    // END: Wrap play button in custom div container
-
-                    // BEGIN: Implement custom next video button
-                    if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
-                        // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
-                        const nextVideoButton = new NextVideoButton(playerRef.current, {
-                            nextLink: mediaData.nextLink,
-                        });
-                        const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
-                        controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1); // After time display
-
-                        // Wrap next video button in custom div container
-                        // setTimeout(() => {
-                        //     const nextVideoButtonEl = nextVideoButton.el();
-                        //     if (nextVideoButtonEl) {
-                        //         const nextVideoWrapper = document.createElement('div');
-                        //         /*  nextVideoWrapper.className =
-                        //             'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
-
-                        //         // Insert wrapper before the next video button and move button inside
-                        //         nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
-                        //         nextVideoWrapper.appendChild(nextVideoButtonEl);
-                        //     }
-                        // }, 2000); // Small delay to ensure button is fully rendered
-                    }
-                    // END: Implement custom next video button
-
-                    // BEGIN: Implement custom time display component
-                    const customRemainingTime = new CustomRemainingTime(playerRef.current, {
-                        displayNegative: false,
-                        customPrefix: '',
-                        customSuffix: '',
-                    });
-                    const volumePanelIndex = controlBar.children().indexOf(volumePanel);
-                    controlBar.addChild(customRemainingTime, {}, volumePanelIndex + 1);
-                    customComponents.current.customRemainingTime = customRemainingTime;
-                    // END: Implement custom time display component
-
-                    // BEGIN: Wrap volume panel in custom div container
-                    /* setTimeout(() => {
-                        const volumePanel = controlBar.getChild('volumePanel');
-                        if (volumePanel) {
-                            const volumePanelEl = volumePanel.el();
-                            if (volumePanelEl) {
-                                const volumeWrapper = document.createElement('div');
-                                volumeWrapper.className =
-                                    'vjs-volume-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the volume panel and move panel inside
-                                volumePanelEl.parentNode.insertBefore(volumeWrapper, volumePanelEl);
-                                volumeWrapper.appendChild(volumePanelEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure volume panel is fully rendered */
-                    // END: Wrap volume panel in custom div container
-
-                    // BEGIN: Implement autoplay toggle button - simplified
-                    if (!isEmbedPlayer) {
-                        try {
-                            // BEGIN: Implement custom time display component
-                            /*                const customRemainingTime = new CustomRemainingTime(playerRef.current, {
-                                displayNegative: false,
-                                customPrefix: '',
-                                customSuffix: '',
-                            });
-                            const playToggleIndex = controlBar.children().indexOf(playToggle);
-                            controlBar.addChild(customRemainingTime, {}, playToggleIndex + 2);
-                            customComponents.current.customRemainingTime = customRemainingTime;
-                            // END: Implement custom time display component
- */
-
-                            const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
-                                userPreferences: userPreferences.current,
-                                isTouchDevice: isTouchDevice,
-                            });
-                            // Add it before the chapters button (or at a suitable position)
-                            /* const chaptersButtonIndex = chaptersButton
-                                ? controlBar.children().indexOf(chaptersButton)
-                                : -1;
-                            const insertIndex =
-                                chaptersButtonIndex > 0 ? chaptersButtonIndex : controlBar.children().length - 3; */
-                            controlBar.addChild(autoplayToggleButton, {}, 11);
-
-                            // Store reference for later use
-                            customComponents.current.autoplayToggleButton = autoplayToggleButton;
-
-                            // Force update icon after adding to DOM to ensure correct display
-                            setTimeout(() => {
-                                autoplayToggleButton.updateIcon();
-                            }, 0);
-
-                            // Wrap autoplay toggle button in custom div container
-                            /*  setTimeout(() => {
-                                const autoplayButtonEl = autoplayToggleButton.el();
-                                if (autoplayButtonEl) {
-                                    const autoplayWrapper = document.createElement('div');
-                                    autoplayWrapper.className =
-                                        'vjs-autoplay-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                    // Insert wrapper before the autoplay button and move button inside
-                                    autoplayButtonEl.parentNode.insertBefore(autoplayWrapper, autoplayButtonEl);
-                                    // autoplayWrapper.appendChild(autoplayButtonEl);
-                                }
-                            }, 150); // Slightly longer delay to ensure button is fully rendered and updated */
-                        } catch (error) {
-                            console.error('✗ Failed to add autoplay toggle button:', error);
-                        }
-                    }
-                    // END: Implement autoplay toggle button
-
-                    // Make menus clickable instead of hover-only
-                    /*  setTimeout(() => {
-                        const setupClickableMenus = () => {
-                            // Find all menu buttons (subtitles, etc.) - exclude chaptersButton as it has custom overlay
-                            const menuButtons = ['subtitlesButton', 'playbackRateMenuButton'];
-
-                            menuButtons.forEach((buttonName) => {
-                                const button = controlBar.getChild(buttonName);
-                                if (button && button.menuButton_) {
-                                    // Override the menu button behavior
-                                    const menuButton = button.menuButton_;
-
-                                    // Disable hover events
-                                    menuButton.off('mouseenter');
-                                    menuButton.off('mouseleave');
-
-                                    // Add click-to-toggle behavior
-                                    menuButton.on('click', function () {
-                                        if (this.menu.hasClass('vjs-lock-showing')) {
-                                            this.menu.removeClass('vjs-lock-showing');
-                                            this.menu.hide();
-                                        } else {
-                                            this.menu.addClass('vjs-lock-showing');
-                                            this.menu.show();
+                                    // Check if touch is in seekbar area or the zone above it
+                                    const progressControl = playerRef.current
+                                        .getChild('controlBar')
+                                        ?.getChild('progressControl');
+                                    if (progressControl && progressControl.el()) {
+                                        const progressRect = progressControl.el().getBoundingClientRect();
+                                        const seekbarDeadZone = 8; // Only 8px above seekbar is protected for easier seeking
+                                        const isInSeekbarArea =
+                                            touch.clientY >= progressRect.top - seekbarDeadZone &&
+                                            touch.clientY <= progressRect.bottom;
+                                        if (isInSeekbarArea) {
+                                            playerRef.current.seekbarTouching = true;
                                         }
-                                    });
-                                } else if (button) {
-                                    // For buttons without menuButton_ property
-                                    const buttonEl = button.el();
-                                    if (buttonEl) {
-                                        // Add click handler to show/hide menu
-                                        buttonEl.addEventListener('click', function (e) {
+                                    }
+                                };
+
+                                const handleTouchEnd = (e) => {
+                                    const touchEndTime = Date.now();
+                                    const touchDuration = touchEndTime - touchStartTime;
+
+                                    // Only handle if it's a quick tap and we're not touching the seekbar
+                                    if (touchDuration < 500 && !playerRef.current.seekbarTouching) {
+                                        const touch = e.changedTouches[0];
+                                        const touchEndPos = { x: touch.clientX, y: touch.clientY };
+                                        const distance = Math.sqrt(
+                                            Math.pow(touchEndPos.x - touchStartPos.x, 2) +
+                                                Math.pow(touchEndPos.y - touchStartPos.y, 2)
+                                        );
+
+                                        // Only trigger if it's a tap (not a swipe)
+                                        if (distance < 50) {
                                             e.preventDefault();
                                             e.stopPropagation();
 
-                                            const menu = buttonEl.querySelector('.vjs-menu');
-                                            if (menu) {
-                                                if (menu.style.display === 'block') {
-                                                    menu.style.display = 'none';
-                                                } else {
-                                                    // Hide other menus first
-                                                    document.querySelectorAll('.vjs-menu').forEach((m) => {
-                                                        if (m !== menu) m.style.display = 'none';
-                                                    });
-                                                    menu.style.display = 'block';
+                                            // Check if controls are currently visible by examining control bar
+                                            const controlBar = playerRef.current.getChild('controlBar');
+                                            const controlBarEl = controlBar ? controlBar.el() : null;
+                                            const isControlsVisible =
+                                                controlBarEl &&
+                                                window.getComputedStyle(controlBarEl).opacity !== '0' &&
+                                                window.getComputedStyle(controlBarEl).visibility !== 'hidden';
+
+                                            // Check if center play/pause icon is visible and if tap is on it
+                                            const seekIndicator = customComponents.current.seekIndicator;
+                                            const seekIndicatorEl = seekIndicator ? seekIndicator.el() : null;
+                                            const isSeekIndicatorVisible =
+                                                seekIndicatorEl &&
+                                                window.getComputedStyle(seekIndicatorEl).opacity !== '0' &&
+                                                window.getComputedStyle(seekIndicatorEl).visibility !== 'hidden' &&
+                                                window.getComputedStyle(seekIndicatorEl).display !== 'none';
+
+                                            let isTapOnCenterIcon = false;
+                                            if (seekIndicatorEl && isSeekIndicatorVisible) {
+                                                const iconRect = seekIndicatorEl.getBoundingClientRect();
+                                                isTapOnCenterIcon =
+                                                    touch.clientX >= iconRect.left &&
+                                                    touch.clientX <= iconRect.right &&
+                                                    touch.clientY >= iconRect.top &&
+                                                    touch.clientY <= iconRect.bottom;
+                                            }
+
+                                            if (playerRef.current.paused()) {
+                                                // Always play if video is paused
+                                                playerRef.current.play();
+                                            } else if (isTapOnCenterIcon) {
+                                                // Pause if tapping on center icon (highest priority)
+                                                playerRef.current.pause();
+                                            } else if (isControlsVisible) {
+                                                // Pause if controls are visible and not touching seekbar area
+                                                playerRef.current.pause();
+                                            } else {
+                                                // If controls are not visible, show them AND show center pause icon
+                                                playerRef.current.userActive(true);
+                                                if (seekIndicator) {
+                                                    seekIndicator.showMobilePauseIcon();
                                                 }
                                             }
-                                        });
+                                        }
                                     }
-                                }
-                            });
 
-                            // Add YouTube-like subtitles toggle with red underline
-                            const ccNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
-                            for (const n of ccNames) {
-                                const cc = controlBar.getChild(n);
-                                if (cc && cc.el()) {
-                                    const el = cc.el();
-                                    const menu = el.querySelector('.vjs-menu');
-                                    if (menu) menu.style.display = 'none';
+                                    // Always clear seekbar touching flag at the end
+                                    setTimeout(() => {
+                                        if (playerRef.current) {
+                                            playerRef.current.seekbarTouching = false;
+                                        }
+                                    }, 50);
+                                };
 
-                                    const toggleSubs = (ev) => {
-                                        ev.preventDefault();
-                                        ev.stopPropagation();
-                                        const tracks = playerRef.current.textTracks();
-                                        let any = false;
-                                        for (let i = 0; i < tracks.length; i++) {
-                                            const t = tracks[i];
-                                            if (t.kind === 'subtitles' && t.mode === 'showing') {
-                                                any = true;
-                                                break;
+                                videoEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+                                videoEl.addEventListener('touchend', handleTouchEnd, { passive: false });
+                            }
+                        };
+                        setTimeout(setupMobilePlayPause, 100);
+
+                        // Get control bar and its children
+                        const controlBar = playerRef.current.getChild('controlBar');
+                        const playToggle = controlBar.getChild('playToggle');
+                        const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
+                        const progressControl = controlBar.getChild('progressControl');
+                        const seekBar = progressControl.getChild('seekBar');
+                        const chaptersButton = controlBar.getChild('chaptersButton');
+
+                        // Auto-play video when navigating from next button (skip for embed players)
+                        if (!isEmbedPlayer) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const hasVideoParam = urlParams.get('m');
+                            if (hasVideoParam) {
+                                // Small delay to ensure everything is loaded
+                                setTimeout(async () => {
+                                    if (playerRef.current && !playerRef.current.isDisposed()) {
+                                        try {
+                                            await playerRef.current.play();
+                                        } catch (error) {
+                                            console.error('ℹ️ Browser prevented play:', error.message);
+                                            // Try muted playback as fallback
+                                            if (!playerRef.current.muted()) {
+                                                try {
+                                                    playerRef.current.muted(true);
+                                                    await playerRef.current.play();
+                                                } catch (mutedError) {
+                                                    console.error(
+                                                        'ℹ️ Even muted play was blocked:',
+                                                        mutedError.message
+                                                    );
+                                                }
                                             }
                                         }
-                                        if (any) {
+                                    }
+                                }, 100);
+                            }
+                        }
+
+                        // BEGIN: Add subtitle tracks
+                        if (hasSubtitles) {
+                            try {
+                                const savedLang = userPreferences.current.getPreference('subtitleLanguage');
+                                const enabled = userPreferences.current.getPreference('subtitleEnabled');
+                                const matchLang = (t, target) => {
+                                    const tl = String(t.srclang || t.language || '').toLowerCase();
+                                    const sl = String(target || '').toLowerCase();
+                                    if (!tl || !sl) return false;
+                                    return tl === sl || tl.startsWith(sl + '-') || sl.startsWith(tl + '-');
+                                };
+                                const tracksToAdd = subtitleTracks.map((t) => ({
+                                    ...t,
+                                    // Hint iOS by marking default on the matched track when enabled
+                                    default: !!(enabled && savedLang && matchLang(t, savedLang)),
+                                }));
+                                tracksToAdd.forEach((track) => {
+                                    playerRef.current.addRemoteTextTrack(track, false);
+                                });
+                            } catch (e) {
+                                // Fallback: add as-is
+                                subtitleTracks.forEach((track) => {
+                                    playerRef.current.addRemoteTextTrack(track, false);
+                                });
+                            }
+                        }
+
+                        // Apply saved subtitle preference immediately and on key readiness events
+                        userPreferences.current.applySubtitlePreference(playerRef.current);
+                        playerRef.current.one('loadeddata', () =>
+                            userPreferences.current.applySubtitlePreference(playerRef.current)
+                        );
+                        playerRef.current.one('canplay', () =>
+                            userPreferences.current.applySubtitlePreference(playerRef.current)
+                        );
+                        // END: Add subtitle tracks
+
+                        // BEGIN: Chapters Implementation
+                        if (chaptersData && chaptersData.length > 0) {
+                            const chaptersTrack = playerRef.current.addTextTrack('chapters', 'Chapters', 'en');
+                            // Add cues to the chapters track
+                            chaptersData.forEach((chapter) => {
+                                const cue = new (window.VTTCue || window.TextTrackCue)(
+                                    chapter.startTime,
+                                    chapter.endTime,
+                                    chapter.chapterTitle
+                                );
+                                chaptersTrack.addCue(cue);
+                            });
+                        }
+                        // END: Chapters Implementation
+
+                        // Force chapter markers update after chapters are loaded
+                        /* setTimeout(() => {
+                            if (chapterMarkers && chapterMarkers.updateChapterMarkers) {
+                                chapterMarkers.updateChapterMarkers();
+                            }
+                        }, 500); */
+
+                        // BEGIN: Wrap play button in custom div container
+                        const playButtonEl = playToggle.el();
+                        const playButtonWrapper = document.createElement('div');
+                        /* playButtonWrapper.className =
+                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
+
+                        // Insert wrapper before the play button and move play button inside
+                        // playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
+                        // playButtonWrapper.appendChild(playButtonEl);
+                        // END: Wrap play button in custom div container
+
+                        // BEGIN: Implement custom next video button
+                        if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
+                            // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
+                            const nextVideoButton = new NextVideoButton(playerRef.current, {
+                                nextLink: mediaData.nextLink,
+                            });
+                            const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
+                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1); // After time display
+
+                            // Wrap next video button in custom div container
+                            // setTimeout(() => {
+                            //     const nextVideoButtonEl = nextVideoButton.el();
+                            //     if (nextVideoButtonEl) {
+                            //         const nextVideoWrapper = document.createElement('div');
+                            //         /*  nextVideoWrapper.className =
+                            //             'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
+
+                            //         // Insert wrapper before the next video button and move button inside
+                            //         nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
+                            //         nextVideoWrapper.appendChild(nextVideoButtonEl);
+                            //     }
+                            // }, 2000); // Small delay to ensure button is fully rendered
+                        }
+                        // END: Implement custom next video button
+
+                        // BEGIN: Implement custom time display component
+                        const customRemainingTime = new CustomRemainingTime(playerRef.current, {
+                            displayNegative: false,
+                            customPrefix: '',
+                            customSuffix: '',
+                        });
+                        const playToggleIndex = controlBar.children().indexOf(playToggle);
+                        controlBar.addChild(customRemainingTime, {}, playToggleIndex + 2);
+                        customComponents.current.customRemainingTime = customRemainingTime;
+                        // END: Implement custom time display component
+
+                        // BEGIN: Wrap volume panel in custom div container
+                        setTimeout(() => {
+                            const volumePanel = controlBar.getChild('volumePanel');
+                            if (volumePanel) {
+                                const volumePanelEl = volumePanel.el();
+                                if (volumePanelEl) {
+                                    const volumeWrapper = document.createElement('div');
+                                    volumeWrapper.className =
+                                        'vjs-volume-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the volume panel and move panel inside
+                                    volumePanelEl.parentNode.insertBefore(volumeWrapper, volumePanelEl);
+                                    volumeWrapper.appendChild(volumePanelEl);
+                                }
+                            }
+                        }, 100); // Small delay to ensure volume panel is fully rendered
+                        // END: Wrap volume panel in custom div container
+
+                        // BEGIN: Implement autoplay toggle button - simplified
+                        if (!isEmbedPlayer) {
+                            try {
+                                const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
+                                    userPreferences: userPreferences.current,
+                                    isTouchDevice: isTouchDevice,
+                                });
+                                // Add it before the chapters button (or at a suitable position)
+                                const chaptersButtonIndex = chaptersButton
+                                    ? controlBar.children().indexOf(chaptersButton)
+                                    : -1;
+                                const insertIndex =
+                                    chaptersButtonIndex > 0 ? chaptersButtonIndex : controlBar.children().length - 3;
+                                controlBar.addChild(autoplayToggleButton, {}, insertIndex);
+
+                                // Store reference for later use
+                                customComponents.current.autoplayToggleButton = autoplayToggleButton;
+
+                                // Force update icon after adding to DOM to ensure correct display
+                                setTimeout(() => {
+                                    autoplayToggleButton.updateIcon();
+                                }, 100);
+
+                                // Wrap autoplay toggle button in custom div container
+                                setTimeout(() => {
+                                    const autoplayButtonEl = autoplayToggleButton.el();
+                                    if (autoplayButtonEl) {
+                                        const autoplayWrapper = document.createElement('div');
+                                        autoplayWrapper.className =
+                                            'vjs-autoplay-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                        // Insert wrapper before the autoplay button and move button inside
+                                        autoplayButtonEl.parentNode.insertBefore(autoplayWrapper, autoplayButtonEl);
+                                        autoplayWrapper.appendChild(autoplayButtonEl);
+                                    }
+                                }, 150); // Slightly longer delay to ensure button is fully rendered and updated
+                            } catch (error) {
+                                console.error('✗ Failed to add autoplay toggle button:', error);
+                            }
+                        }
+                        // END: Implement autoplay toggle button
+
+                        // Make menus clickable instead of hover-only
+                        setTimeout(() => {
+                            const setupClickableMenus = () => {
+                                // Find all menu buttons (subtitles, etc.) - exclude chaptersButton as it has custom overlay
+                                const menuButtons = ['subtitlesButton', 'playbackRateMenuButton'];
+
+                                menuButtons.forEach((buttonName) => {
+                                    const button = controlBar.getChild(buttonName);
+                                    if (button && button.menuButton_) {
+                                        // Override the menu button behavior
+                                        const menuButton = button.menuButton_;
+
+                                        // Disable hover events
+                                        menuButton.off('mouseenter');
+                                        menuButton.off('mouseleave');
+
+                                        // Add click-to-toggle behavior
+                                        menuButton.on('click', function () {
+                                            if (this.menu.hasClass('vjs-lock-showing')) {
+                                                this.menu.removeClass('vjs-lock-showing');
+                                                this.menu.hide();
+                                            } else {
+                                                this.menu.addClass('vjs-lock-showing');
+                                                this.menu.show();
+                                            }
+                                        });
+                                    } else if (button) {
+                                        // For buttons without menuButton_ property
+                                        const buttonEl = button.el();
+                                        if (buttonEl) {
+                                            // Add click handler to show/hide menu
+                                            buttonEl.addEventListener('click', function (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+
+                                                const menu = buttonEl.querySelector('.vjs-menu');
+                                                if (menu) {
+                                                    if (menu.style.display === 'block') {
+                                                        menu.style.display = 'none';
+                                                    } else {
+                                                        // Hide other menus first
+                                                        document.querySelectorAll('.vjs-menu').forEach((m) => {
+                                                            if (m !== menu) m.style.display = 'none';
+                                                        });
+                                                        menu.style.display = 'block';
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+
+                                // Add YouTube-like subtitles toggle with red underline
+                                const ccNames = ['subtitlesButton', 'captionsButton', 'subsCapsButton'];
+                                for (const n of ccNames) {
+                                    const cc = controlBar.getChild(n);
+                                    if (cc && cc.el()) {
+                                        const el = cc.el();
+                                        const menu = el.querySelector('.vjs-menu');
+                                        if (menu) menu.style.display = 'none';
+
+                                        const toggleSubs = (ev) => {
+                                            ev.preventDefault();
+                                            ev.stopPropagation();
+                                            const tracks = playerRef.current.textTracks();
+                                            let any = false;
                                             for (let i = 0; i < tracks.length; i++) {
                                                 const t = tracks[i];
-                                                if (t.kind === 'subtitles') t.mode = 'disabled';
+                                                if (t.kind === 'subtitles' && t.mode === 'showing') {
+                                                    any = true;
+                                                    break;
+                                                }
                                             }
-                                            el.classList.remove('vjs-subs-active');
-                                            // Do not change saved language on quick toggle off; save enabled=false
-                                            try {
-                                                userPreferences.current.setPreference('subtitleEnabled', false, true);
-                                            } catch (e) {}
-                                        } else {
-                                            // Show using previously chosen language only; do not change it
-                                            const preferred = userPreferences.current.getPreference('subtitleLanguage');
-                                            if (!preferred) {
-                                                // If no language chosen yet, enable first available and save it
-                                                let first = null;
+                                            if (any) {
+                                                for (let i = 0; i < tracks.length; i++) {
+                                                    const t = tracks[i];
+                                                    if (t.kind === 'subtitles') t.mode = 'disabled';
+                                                }
+                                                el.classList.remove('vjs-subs-active');
+                                                // Do not change saved language on quick toggle off; save enabled=false
+                                                try {
+                                                    userPreferences.current.setPreference(
+                                                        'subtitleEnabled',
+                                                        false,
+                                                        true
+                                                    );
+                                                } catch (e) {}
+                                            } else {
+                                                // Show using previously chosen language only; do not change it
+                                                const preferred =
+                                                    userPreferences.current.getPreference('subtitleLanguage');
+                                                if (!preferred) {
+                                                    // If no language chosen yet, enable first available and save it
+                                                    let first = null;
+                                                    for (let i = 0; i < tracks.length; i++) {
+                                                        const t = tracks[i];
+                                                        if (t.kind === 'subtitles') {
+                                                            first = t.language;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (first) {
+                                                        for (let i = 0; i < tracks.length; i++) {
+                                                            const t = tracks[i];
+                                                            if (t.kind === 'subtitles')
+                                                                t.mode = t.language === first ? 'showing' : 'disabled';
+                                                        }
+                                                        try {
+                                                            userPreferences.current.setPreference(
+                                                                'subtitleLanguage',
+                                                                first,
+                                                                true
+                                                            );
+                                                        } catch (e) {}
+                                                        try {
+                                                            userPreferences.current.setPreference(
+                                                                'subtitleEnabled',
+                                                                true,
+                                                                true
+                                                            );
+                                                        } catch (e) {}
+                                                        el.classList.add('vjs-subs-active');
+                                                    }
+                                                    return;
+                                                }
+                                                let found = false;
                                                 for (let i = 0; i < tracks.length; i++) {
                                                     const t = tracks[i];
                                                     if (t.kind === 'subtitles') {
-                                                        first = t.language;
-                                                        break;
+                                                        const show = t.language === preferred;
+                                                        t.mode = show ? 'showing' : 'disabled';
+                                                        if (show) found = true;
                                                     }
                                                 }
-                                                if (first) {
-                                                    for (let i = 0; i < tracks.length; i++) {
-                                                        const t = tracks[i];
-                                                        if (t.kind === 'subtitles')
-                                                            t.mode = t.language === first ? 'showing' : 'disabled';
-                                                    }
-                                                    try {
-                                                        userPreferences.current.setPreference(
-                                                            'subtitleLanguage',
-                                                            first,
-                                                            true
-                                                        );
-                                                    } catch (e) {}
+                                                if (found) {
+                                                    el.classList.add('vjs-subs-active');
                                                     try {
                                                         userPreferences.current.setPreference(
                                                             'subtitleEnabled',
@@ -2771,47 +2554,39 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                                                             true
                                                         );
                                                     } catch (e) {}
-                                                    el.classList.add('vjs-subs-active');
                                                 }
-                                                return;
                                             }
-                                            let found = false;
+                                        };
+
+                                        el.addEventListener('click', toggleSubs, { capture: true });
+
+                                        // Add mobile touch support
+                                        el.addEventListener(
+                                            'touchend',
+                                            (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleSubs(e);
+                                            },
+                                            { passive: false }
+                                        );
+
+                                        // Sync underline state on external changes
+                                        playerRef.current.on('texttrackchange', () => {
+                                            const tracks = playerRef.current.textTracks();
+                                            let any = false;
                                             for (let i = 0; i < tracks.length; i++) {
                                                 const t = tracks[i];
-                                                if (t.kind === 'subtitles') {
-                                                    const show = t.language === preferred;
-                                                    t.mode = show ? 'showing' : 'disabled';
-                                                    if (show) found = true;
+                                                if (t.kind === 'subtitles' && t.mode === 'showing') {
+                                                    any = true;
+                                                    break;
                                                 }
                                             }
-                                            if (found) {
-                                                el.classList.add('vjs-subs-active');
-                                                try {
-                                                    userPreferences.current.setPreference(
-                                                        'subtitleEnabled',
-                                                        true,
-                                                        true
-                                                    );
-                                                } catch (e) {}
-                                            }
-                                        }
-                                    };
+                                            if (any) el.classList.add('vjs-subs-active');
+                                            else el.classList.remove('vjs-subs-active');
+                                        });
 
-                                    el.addEventListener('click', toggleSubs, { capture: true });
-
-                                    // Add mobile touch support
-                                    el.addEventListener(
-                                        'touchend',
-                                        (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            toggleSubs(e);
-                                        },
-                                        { passive: false }
-                                    );
-
-                                    // Sync underline state on external changes
-                                    playerRef.current.on('texttrackchange', () => {
+                                        // Initialize state immediately
                                         const tracks = playerRef.current.textTracks();
                                         let any = false;
                                         for (let i = 0; i < tracks.length; i++) {
@@ -2822,211 +2597,206 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                                             }
                                         }
                                         if (any) el.classList.add('vjs-subs-active');
-                                        else el.classList.remove('vjs-subs-active');
-                                    });
 
-                                    // Initialize state immediately
-                                    const tracks = playerRef.current.textTracks();
-                                    let any = false;
-                                    for (let i = 0; i < tracks.length; i++) {
-                                        const t = tracks[i];
-                                        if (t.kind === 'subtitles' && t.mode === 'showing') {
-                                            any = true;
-                                            break;
-                                        }
+                                        break;
                                     }
-                                    if (any) el.classList.add('vjs-subs-active');
+                                }
+                            };
 
-                                    break;
+                            setupClickableMenus();
+                        }, 1500);
+
+                        // BEGIN: Add chapter markers and sprite preview to progress control
+                        if (progressControl && seekBar) {
+                            // Check if we have chapters
+                            const hasChapters = chaptersData && chaptersData.length > 0;
+
+                            if (hasChapters) {
+                                // Use original ChapterMarkers with sprite functionality when chapters exist
+                                const chapterMarkers = new ChapterMarkers(playerRef.current, {
+                                    previewSprite: mediaData.previewSprite,
+                                    isTouchDevice: isTouchDevice,
+                                });
+                                seekBar.addChild(chapterMarkers);
+                            } else if (mediaData.previewSprite && !isTouchDevice) {
+                                // Use separate SpritePreview component only when no chapters but sprite data exists
+                                // Skip on touch devices to avoid unwanted tooltips
+                                const spritePreview = new SpritePreview(playerRef.current, {
+                                    previewSprite: mediaData.previewSprite,
+                                    isTouchDevice: isTouchDevice,
+                                });
+                                seekBar.addChild(spritePreview);
+
+                                // Setup sprite preview hover functionality (only on non-touch devices)
+                                setTimeout(() => {
+                                    spritePreview.setupProgressBarHover();
+                                }, 100);
+                            }
+                        }
+                        // END: Add chapter markers and sprite preview to progress control
+
+                        // BEGIN: Simple button layout fix - use CSS approach
+                        setTimeout(() => {
+                            // Add a simple spacer div using DOM manipulation (simpler approach)
+                            const spacerDiv = document.createElement('div');
+                            spacerDiv.className = 'vjs-spacer-control vjs-control';
+                            spacerDiv.style.flex = '1';
+                            spacerDiv.style.minWidth = '1px';
+                            spacerDiv.style.height = '100%';
+
+                            // Find insertion point after duration display
+                            const durationDisplay = controlBar.getChild('durationDisplay');
+                            if (durationDisplay && durationDisplay.el()) {
+                                const controlBarEl = controlBar.el();
+                                const durationEl = durationDisplay.el();
+                                const nextSibling = durationEl.nextSibling;
+                                controlBarEl.insertBefore(spacerDiv, nextSibling);
+                            }
+                        }, 300);
+                        // END: Simple button layout fix
+
+                        // BEGIN: Move Picture-in-Picture and Fullscreen buttons to the very end
+                        setTimeout(() => {
+                            try {
+                                const pictureInPictureToggle = controlBar.getChild('pictureInPictureToggle');
+                                const fullscreenToggle = controlBar.getChild('fullscreenToggle');
+
+                                // Move Picture-in-Picture button to the very end (if it exists)
+                                if (pictureInPictureToggle) {
+                                    controlBar.removeChild(pictureInPictureToggle);
+                                    controlBar.addChild(pictureInPictureToggle);
+                                }
+
+                                // Move Fullscreen button to the very end (after PiP)
+                                if (fullscreenToggle) {
+                                    controlBar.removeChild(fullscreenToggle);
+                                    controlBar.addChild(fullscreenToggle);
+                                }
+                            } catch (e) {
+                                console.error('✗ Failed to move PiP/Fullscreen buttons to end:', e);
+                            }
+                        }, 100);
+                        // END: Move Picture-in-Picture and Fullscreen buttons to the very end
+
+                        // BEGIN: Add Chapters Overlay Component
+                        if (chaptersData && chaptersData.length > 0) {
+                            customComponents.current.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
+                                chaptersData: chaptersData,
+                                seriesTitle: mediaData?.data?.title || 'Chapters',
+                                channelName: 'Chapter',
+                                thumbnail: mediaData?.data?.thumbnail_url || mediaData?.data?.author_thumbnail || '',
+                            });
+                        }
+                        // END: Add Chapters Overlay Component
+
+                        // BEGIN: Add Embed Info Overlay Component (for embed player only)
+                        if (isEmbedPlayer) {
+                            customComponents.current.embedInfoOverlay = new EmbedInfoOverlay(playerRef.current, {
+                                authorName: currentVideo.author_name,
+                                authorProfile: currentVideo.author_profile,
+                                authorThumbnail: currentVideo.author_thumbnail,
+                                videoTitle: currentVideo.title,
+                                videoUrl: currentVideo.url,
+                            });
+                        }
+                        // END: Add Embed Info Overlay Component
+
+                        // BEGIN: Add Settings Menu Component
+                        customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {
+                            userPreferences: userPreferences.current,
+                            qualities: availableQualities,
+                            hasSubtitles: hasSubtitles,
+                            isTouchDevice: isTouchDevice,
+                        });
+
+                        // If qualities change per video (e.g., via MEDIA_DATA update), refresh menu
+                        try {
+                            playerRef.current.on('loadedmetadata', () => {
+                                if (
+                                    customComponents.current.settingsMenu &&
+                                    customComponents.current.settingsMenu.setQualities
+                                ) {
+                                    const md = typeof window !== 'undefined' ? window.MEDIA_DATA : null;
+                                    const newQualities = md?.data?.qualities || availableQualities;
+                                    customComponents.current.settingsMenu.setQualities(newQualities);
+                                }
+                            });
+                        } catch (e) {}
+
+                        // Wrap settings button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            if (
+                                controlBar &&
+                                customComponents.current.settingsMenu &&
+                                customComponents.current.settingsMenu.settingsButton
+                            ) {
+                                const settingsButtonEl = customComponents.current.settingsMenu.settingsButton.el();
+                                if (settingsButtonEl) {
+                                    const settingsWrapper = document.createElement('div');
+                                    settingsWrapper.className =
+                                        'vjs-settings-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the settings button and move button inside
+                                    settingsButtonEl.parentNode.insertBefore(settingsWrapper, settingsButtonEl);
+                                    settingsWrapper.appendChild(settingsButtonEl);
                                 }
                             }
-                        };
+                        }, 200); // Longer delay to ensure settings button is fully created
 
-                        // setupClickableMenus();
-                    }, 1500); */
+                        // Wrap picture-in-picture button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            const pipControl = controlBar?.getChild('pictureInPictureToggle');
+                            if (pipControl) {
+                                const pipButtonEl = pipControl.el();
+                                if (pipButtonEl) {
+                                    const pipWrapper = document.createElement('div');
+                                    pipWrapper.className =
+                                        'vjs-pip-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
 
-                    // BEGIN: Add chapter markers and sprite preview to progress control
-                    if (progressControl && seekBar) {
-                        // Check if we have chapters
-                        const hasChapters = chaptersData && chaptersData.length > 0;
-
-                        if (hasChapters) {
-                            // Use original ChapterMarkers with sprite functionality when chapters exist
-                            const chapterMarkers = new ChapterMarkers(playerRef.current, {
-                                previewSprite: mediaData.previewSprite,
-                                isTouchDevice: isTouchDevice,
-                            });
-                            seekBar.addChild(chapterMarkers);
-                        } else if (mediaData.previewSprite && !isTouchDevice) {
-                            // Use separate SpritePreview component only when no chapters but sprite data exists
-                            // Skip on touch devices to avoid unwanted tooltips
-                            const spritePreview = new SpritePreview(playerRef.current, {
-                                previewSprite: mediaData.previewSprite,
-                                isTouchDevice: isTouchDevice,
-                            });
-                            seekBar.addChild(spritePreview);
-
-                            // Setup sprite preview hover functionality (only on non-touch devices)
-                            setTimeout(() => {
-                                spritePreview.setupProgressBarHover();
-                            }, 100);
-                        }
-                    }
-                    // END: Add chapter markers and sprite preview to progress control
-
-                    // BEGIN: Simple button layout fix - use CSS approach
-                    /* setTimeout(() => {
-                        // Add a simple spacer div using DOM manipulation (simpler approach)
-                        const spacerDiv = document.createElement('div');
-                        spacerDiv.className = 'vjs-spacer-control vjs-control';
-                        spacerDiv.style.flex = '1';
-                        spacerDiv.style.minWidth = '1px';
-                        spacerDiv.style.height = '100%';
-
-                        // Find insertion point after duration display
-                        const durationDisplay = controlBar.getChild('durationDisplay');
-                        if (durationDisplay && durationDisplay.el()) {
-                            const controlBarEl = controlBar.el();
-                            const durationEl = durationDisplay.el();
-                            const nextSibling = durationEl.nextSibling;
-                            controlBarEl.insertBefore(spacerDiv, nextSibling);
-                        }
-                    }, 300); */
-                    // END: Simple button layout fix
-
-                    // BEGIN: Move Picture-in-Picture and Fullscreen buttons to the very end
-                    setTimeout(() => {
-                        try {
-                            const pictureInPictureToggle = controlBar.getChild('pictureInPictureToggle');
-                            const fullscreenToggle = controlBar.getChild('fullscreenToggle');
-
-                            // Move Picture-in-Picture button to the very end (if it exists)
-                            if (pictureInPictureToggle) {
-                                controlBar.removeChild(pictureInPictureToggle);
-                                controlBar.addChild(pictureInPictureToggle);
+                                    // Insert wrapper before the pip button and move button inside
+                                    pipButtonEl.parentNode.insertBefore(pipWrapper, pipButtonEl);
+                                    pipWrapper.appendChild(pipButtonEl);
+                                }
                             }
+                        }, 100); // Small delay to ensure pip button is available
 
-                            // Move Fullscreen button to the very end (after PiP)
-                            if (fullscreenToggle) {
-                                controlBar.removeChild(fullscreenToggle);
-                                controlBar.addChild(fullscreenToggle);
+                        // Wrap fullscreen button in custom div container
+                        setTimeout(() => {
+                            const controlBar = playerRef.current.getChild('controlBar');
+                            const fullscreenControl = controlBar?.getChild('fullscreenToggle');
+                            if (fullscreenControl) {
+                                const fullscreenButtonEl = fullscreenControl.el();
+                                if (fullscreenButtonEl) {
+                                    const fullscreenWrapper = document.createElement('div');
+                                    fullscreenWrapper.className =
+                                        'vjs-fullscreen-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+
+                                    // Insert wrapper before the fullscreen button and move button inside
+                                    fullscreenButtonEl.parentNode.insertBefore(fullscreenWrapper, fullscreenButtonEl);
+                                    fullscreenWrapper.appendChild(fullscreenButtonEl);
+                                }
                             }
-                        } catch (e) {
-                            console.error('✗ Failed to move PiP/Fullscreen buttons to end:', e);
-                        }
-                    });
-                    // END: Move Picture-in-Picture and Fullscreen buttons to the very end
+                        }, 100); // Small delay to ensure fullscreen button is available
 
-                    // BEGIN: Add Chapters Overlay Component
-                    if (chaptersData && chaptersData.length > 0) {
-                        customComponents.current.chaptersOverlay = new CustomChaptersOverlay(playerRef.current, {
-                            chaptersData: chaptersData,
-                            seriesTitle: mediaData?.data?.title || 'Chapters',
-                            channelName: 'Chapter',
-                            thumbnail: mediaData?.data?.thumbnail_url || mediaData?.data?.author_thumbnail || '',
+                        // END: Add Settings Menu Component
+
+                        // BEGIN: Add Seek Indicator Component
+                        customComponents.current.seekIndicator = new SeekIndicator(playerRef.current, {
+                            seekAmount: 5, // 5 seconds seek amount
+                            isEmbedPlayer: isEmbedPlayer, // Pass embed mode flag
                         });
-                    }
-                    // END: Add Chapters Overlay Component
+                        // Add the component but ensure it's hidden initially
+                        playerRef.current.addChild(customComponents.current.seekIndicator);
 
-                    // BEGIN: Add Embed Info Overlay Component (for embed player only)
-                    if (isEmbedPlayer) {
-                        customComponents.current.embedInfoOverlay = new EmbedInfoOverlay(playerRef.current, {
-                            authorName: currentVideo.author_name,
-                            authorProfile: currentVideo.author_profile,
-                            authorThumbnail: currentVideo.author_thumbnail,
-                            videoTitle: currentVideo.title,
-                            videoUrl: currentVideo.url,
-                        });
-                    }
-                    // END: Add Embed Info Overlay Component
+                        customComponents.current.seekIndicator.hide(); // Explicitly hide on creation
+                        // END: Add Seek Indicator Component
 
-                    // BEGIN: Add Settings Menu Component
-                    customComponents.current.settingsMenu = new CustomSettingsMenu(playerRef.current, {
-                        userPreferences: userPreferences.current,
-                        qualities: availableQualities,
-                        hasSubtitles: hasSubtitles,
-                        isTouchDevice: isTouchDevice,
-                    });
+                        // Store components reference for potential cleanup
 
-                    // If qualities change per video (e.g., via MEDIA_DATA update), refresh menu
-                    try {
-                        playerRef.current.on('loadedmetadata', () => {
-                            if (
-                                customComponents.current.settingsMenu &&
-                                customComponents.current.settingsMenu.setQualities
-                            ) {
-                                const md = typeof window !== 'undefined' ? window.MEDIA_DATA : null;
-                                const newQualities = md?.data?.qualities || availableQualities;
-                                customComponents.current.settingsMenu.setQualities(newQualities);
-                            }
-                        });
-                    } catch {
-                        // Ignore errors when setting up settings menu quality updates
-                    }
-
-                    // Wrap settings button in custom div container
-                    /*  setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        if (
-                            controlBar &&
-                            customComponents.current.settingsMenu &&
-                            customComponents.current.settingsMenu.settingsButton
-                        ) {
-                            const settingsButtonEl = customComponents.current.settingsMenu.settingsButton.el();
-                            if (settingsButtonEl) {
-                                const settingsWrapper = document.createElement('div');
-                                settingsWrapper.className =
-                                    'vjs-settings-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the settings button and move button inside
-                                settingsButtonEl.parentNode.insertBefore(settingsWrapper, settingsButtonEl);
-                                settingsWrapper.appendChild(settingsButtonEl);
-                            }
-                        }
-                    }, 200); // Longer delay to ensure settings button is fully created */
-
-                    // Wrap picture-in-picture button in custom div container
-                    /*  setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const pipControl = controlBar?.getChild('pictureInPictureToggle');
-                        if (pipControl) {
-                            const pipButtonEl = pipControl.el();
-                            if (pipButtonEl) {
-                                const pipWrapper = document.createElement('div');
-                                pipWrapper.className =
-                                    'vjs-pip-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the pip button and move button inside
-                                pipButtonEl.parentNode.insertBefore(pipWrapper, pipButtonEl);
-                                pipWrapper.appendChild(pipButtonEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure pip button is available */
-
-                    // Wrap fullscreen button in custom div container
-                    /* setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const fullscreenControl = controlBar?.getChild('fullscreenToggle');
-                        if (fullscreenControl) {
-                            const fullscreenButtonEl = fullscreenControl.el();
-                            if (fullscreenButtonEl) {
-                                const fullscreenWrapper = document.createElement('div');
-                                fullscreenWrapper.className =
-                                    'vjs-fullscreen-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the fullscreen button and move button inside
-                                fullscreenButtonEl.parentNode.insertBefore(fullscreenWrapper, fullscreenButtonEl);
-                                fullscreenWrapper.appendChild(fullscreenButtonEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure fullscreen button is available */
-
-                    // END: Add Settings Menu Component
-
-                    // Store components reference for potential cleanup
-
-                    // BEGIN: Fix Android seekbar touch functionality
-                    /*  if (isTouchDevice) {
+                        // BEGIN: Fix Android seekbar touch functionality
+                        /*  if (isTouchDevice) {
                             setTimeout(() => {
                                 const progressControl = playerRef.current
                                     .getChild('controlBar')
@@ -3076,10 +2846,10 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                                             }
                                         };
 
-                                        const handleTouchEnd = () => {
+                                        const handleTouchEnd = (e) => {
                                             isDragging = false;
-                                            // e.preventDefault();
-                                            // e.stopPropagation(); // Prevent event from reaching video element
+                                            e.preventDefault();
+                                            e.stopPropagation(); // Prevent event from reaching video element
 
                                             // Re-enable big play button
                                             const bigPlayButton = playerRef.current.getChild('bigPlayButton');
@@ -3117,308 +2887,380 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                                 }
                             }, 500);
                         } */
-                    // END: Fix Android seekbar touch functionality
+                        // END: Fix Android seekbar touch functionality
 
-                    // BEGIN: Initialize keyboard handler
-                    keyboardHandler.current = new KeyboardHandler(
-                        playerRef,
-                        customComponents,
-                        { seekAmount: 5 } // 5 seconds seek amount
-                    );
-                    keyboardHandler.current.init();
+                        // BEGIN: Add comprehensive keyboard event handling
+                        const handleAllKeyboardEvents = (event) => {
+                            // Only handle if no input elements are focused
+                            const activeElement = document.activeElement;
+                            const isInputFocused =
+                                activeElement &&
+                                (activeElement.tagName === 'INPUT' ||
+                                    activeElement.tagName === 'TEXTAREA' ||
+                                    activeElement.contentEditable === 'true');
 
-                    // Store cleanup function for keyboard handler
-                    customComponents.current.cleanupKeyboardHandler = () => {
-                        if (keyboardHandler.current) {
-                            keyboardHandler.current.destroy();
-                            keyboardHandler.current = null;
-                        }
-                    };
-                    // END: Initialize keyboard handler
-                });
+                            if (isInputFocused) {
+                                return; // Don't interfere with input fields
+                            }
 
-                // Listen for next video event
-                playerRef.current.on('nextVideo', () => {
-                    goToNextVideo();
-                });
+                            // Handle space key for play/pause
+                            if (event.code === 'Space' || event.key === ' ') {
+                                event.preventDefault();
+                                if (playerRef.current) {
+                                    if (playerRef.current.paused()) {
+                                        playerRef.current.play();
+                                    } else {
+                                        playerRef.current.pause();
+                                    }
+                                }
+                                return;
+                            }
 
-                // BEGIN: Add Seek Indicator Component
-                customComponents.current.seekIndicator = new SeekIndicator(playerRef.current, {
-                    seekAmount: 5, // 5 seconds seek amount
-                    isEmbedPlayer: isEmbedPlayer, // Pass embed mode flag
-                });
-                // Add the component but ensure it's hidden initially
-                playerRef.current.addChild(customComponents.current.seekIndicator);
+                            // Handle arrow keys for seeking
+                            const seekAmount = 5; // 5 seconds
 
-                customComponents.current.seekIndicator.hide(); // Explicitly hide on creation
-                // END: Add Seek Indicator Component
+                            if (event.key === 'ArrowRight' || event.keyCode === 39) {
+                                event.preventDefault();
+                                const currentTime = playerRef.current.currentTime();
+                                const duration = playerRef.current.duration();
+                                const newTime = Math.min(currentTime + seekAmount, duration);
 
-                // BEGIN: Initialize playback event handler
-                playbackEventHandler.current = new PlaybackEventHandler(playerRef, customComponents, {
-                    isEmbedPlayer: isEmbedPlayer,
-                    showSeekIndicators: true,
-                });
-                playbackEventHandler.current.init();
+                                playerRef.current.currentTime(newTime);
+                                if (customComponents.current.seekIndicator) {
+                                    customComponents.current.seekIndicator.show('forward', seekAmount);
+                                }
+                            } else if (event.key === 'ArrowLeft' || event.keyCode === 37) {
+                                event.preventDefault();
+                                const currentTime = playerRef.current.currentTime();
+                                const newTime = Math.max(currentTime - seekAmount, 0);
 
-                // Store cleanup function for playback event handler
-                customComponents.current.cleanupPlaybackEventHandler = () => {
-                    if (playbackEventHandler.current) {
-                        playbackEventHandler.current.destroy();
-                        playbackEventHandler.current = null;
-                    }
-                };
-                // END: Initialize playback event handler
-
-                // Store reference to end screen and autoplay countdown for cleanup
-                /* let endScreen = null;
-                let autoplayCountdown = null;
-
-                
-
-                playerRef.current.on('ended', () => {
-                    // For embed players, show big play button when video ends
-                    if (isEmbedPlayer) {
-                        const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                        if (bigPlayButton) {
-                            bigPlayButton.show();
-                        }
-                    }
-
-                    // Keep controls active after video ends
-                    setTimeout(() => {
-                        if (playerRef.current && !playerRef.current.isDisposed()) {
-                            // Remove vjs-ended class if it disables controls
-                            const playerEl = playerRef.current.el();
-                            if (playerEl) {
-                                // Keep the visual ended state but ensure controls work
-                                const controlBar = playerRef.current.getChild('controlBar');
-                                if (controlBar) {
-                                    controlBar.show();
-                                    controlBar.el().style.opacity = '1';
-                                    controlBar.el().style.pointerEvents = 'auto';
+                                playerRef.current.currentTime(newTime);
+                                if (customComponents.current.seekIndicator) {
+                                    customComponents.current.seekIndicator.show('backward', seekAmount);
                                 }
                             }
+                        };
+
+                        // Add keyboard event listener to the document
+                        document.addEventListener('keydown', handleAllKeyboardEvents);
+
+                        // Store cleanup function for arrow keys
+                        customComponents.current.cleanupArrowKeyHandler = () => {
+                            document.removeEventListener('keydown', handleAllKeyboardEvents);
+                        };
+
+                        // END: Add comprehensive keyboard event handling
+                    });
+
+                    // Listen for next video event
+                    playerRef.current.on('nextVideo', () => {
+                        goToNextVideo();
+                    });
+
+                    // Simple solution: Force controls to hide periodically when video is playing
+                    const forceHideInterval = setInterval(() => {
+                        if (playerRef.current && !playerRef.current.paused() && !playerRef.current.ended()) {
+                            // Check if any menus are open
+                            const isMenuOpen =
+                                document.querySelector('.vjs-settings-overlay.show') ||
+                                document.querySelector('.vjs-menu-button-popup.vjs-lock-showing') ||
+                                document.querySelector('.vjs-texttrack-settings') ||
+                                document.querySelector('.vjs-menu.vjs-lock-showing');
+
+                            // Only force hide if no menus are open and user has been active for too long
+                            if (
+                                !isMenuOpen &&
+                                playerRef.current.userActivity_ &&
+                                Date.now() - playerRef.current.userActivity_ > (isEmbedPlayer ? 5500 : 2500)
+                            ) {
+                                playerRef.current.userActive(false);
+                            }
                         }
-                    }, 50);
+                    }, 1000); // Check every second
 
-                    // Check if autoplay is enabled and there's a next video
-                    const isAutoplayEnabled = userPreferences.current.getAutoplayPreference();
-                    const hasNextVideo = mediaData.nextLink !== null;
+                    // Store interval for cleanup
+                    customComponents.current.forceHideInterval = forceHideInterval;
 
-                    if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
-                        // If it's a playlist, skip countdown and play directly
-                        if (currentVideo.isPlayList) {
-                            // Clean up any existing overlays
-                            if (endScreen) {
-                                playerRef.current.removeChild(endScreen);
-                                endScreen = null;
+                    playerRef.current.on('play', () => {
+                        // Only show play indicator if not changing quality
+                        if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
+                            customComponents.current.seekIndicator.show('play');
+                        }
+
+                        // For embed players, ensure video becomes visible when playing
+                        if (isEmbedPlayer) {
+                            const playerEl = playerRef.current.el();
+                            const videoEl = playerEl.querySelector('video');
+                            const posterEl = playerEl.querySelector('.vjs-poster');
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+
+                            if (videoEl) {
+                                videoEl.style.opacity = '1';
                             }
-                            if (autoplayCountdown) {
-                                playerRef.current.removeChild(autoplayCountdown);
-                                autoplayCountdown = null;
+                            if (posterEl) {
+                                posterEl.style.opacity = '0';
                             }
-
-                            // Play next video directly without countdown
-                            goToNextVideo();
-                        } else {
-                            // Get next video data for countdown display - find the next video in related videos
-                            let nextVideoData = {
-                                title: 'Next Video',
-                                author: '',
-                                duration: 0,
-                                thumbnail: '',
-                            };
-
-                            // Try to find the next video by URL matching or just use the first related video
-                            if (relatedVideos.length > 0) {
-                                const nextVideo = relatedVideos[0];
-                                nextVideoData = {
-                                    title: nextVideo.title || 'Next Video',
-                                    author: nextVideo.author || '',
-                                    duration: nextVideo.duration || 0,
-                                    thumbnail: nextVideo.thumbnail || '',
-                                };
+                            // Hide big play button when video starts playing
+                            if (bigPlayButton) {
+                                bigPlayButton.hide();
                             }
+                        }
+                    });
 
-                            // Clean up any existing overlays
-                            if (endScreen) {
-                                playerRef.current.removeChild(endScreen);
-                                endScreen = null;
-                            }
-                            if (autoplayCountdown) {
-                                playerRef.current.removeChild(autoplayCountdown);
-                                autoplayCountdown = null;
-                            }
+                    playerRef.current.on('pause', () => {
+                        // Only show pause indicator if not changing quality
+                        if (!playerRef.current.isChangingQuality && customComponents.current.seekIndicator) {
+                            customComponents.current.seekIndicator.show('pause');
+                        }
 
-                            // Show autoplay countdown immediately!
-                            autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
-                                nextVideoData: nextVideoData,
-                                countdownSeconds: 5,
-                                onPlayNext: () => {
-                                    goToNextVideo();
-                                },
-                                onCancel: () => {
-                                    // Hide countdown and show end screen instead
-                                    if (autoplayCountdown) {
-                                        playerRef.current.removeChild(autoplayCountdown);
-                                        autoplayCountdown = null;
+                        // For embed players, show poster when paused at beginning
+                        if (isEmbedPlayer && playerRef.current.currentTime() === 0) {
+                            const playerEl = playerRef.current.el();
+                            const videoEl = playerEl.querySelector('video');
+                            const posterEl = playerEl.querySelector('.vjs-poster');
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+
+                            if (videoEl) {
+                                videoEl.style.opacity = '0';
+                            }
+                            if (posterEl) {
+                                posterEl.style.opacity = '1';
+                            }
+                            // Show big play button when paused at beginning
+                            if (bigPlayButton) {
+                                bigPlayButton.show();
+                            }
+                        }
+                    });
+
+                    // Store reference to end screen and autoplay countdown for cleanup
+                    let endScreen = null;
+                    let autoplayCountdown = null;
+
+                    playerRef.current.on('ended', () => {
+                        // For embed players, show big play button when video ends
+                        if (isEmbedPlayer) {
+                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
+                            if (bigPlayButton) {
+                                bigPlayButton.show();
+                            }
+                        }
+
+                        // Keep controls active after video ends
+                        setTimeout(() => {
+                            if (playerRef.current && !playerRef.current.isDisposed()) {
+                                // Remove vjs-ended class if it disables controls
+                                const playerEl = playerRef.current.el();
+                                if (playerEl) {
+                                    // Keep the visual ended state but ensure controls work
+                                    const controlBar = playerRef.current.getChild('controlBar');
+                                    if (controlBar) {
+                                        controlBar.show();
+                                        controlBar.el().style.opacity = '1';
+                                        controlBar.el().style.pointerEvents = 'auto';
                                     }
-                                    showEndScreen();
-                                },
+                                }
+                            }
+                        }, 50);
+
+                        // Check if autoplay is enabled and there's a next video
+                        const isAutoplayEnabled = userPreferences.current.getAutoplayPreference();
+                        const hasNextVideo = mediaData.nextLink !== null;
+
+                        if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
+                            // If it's a playlist, skip countdown and play directly
+                            if (currentVideo.isPlayList) {
+                                // Clean up any existing overlays
+                                if (endScreen) {
+                                    playerRef.current.removeChild(endScreen);
+                                    endScreen = null;
+                                }
+                                if (autoplayCountdown) {
+                                    playerRef.current.removeChild(autoplayCountdown);
+                                    autoplayCountdown = null;
+                                }
+
+                                // Play next video directly without countdown
+                                goToNextVideo();
+                            } else {
+                                // Get next video data for countdown display - find the next video in related videos
+                                let nextVideoData = {
+                                    title: 'Next Video',
+                                    author: '',
+                                    duration: 0,
+                                    thumbnail: '',
+                                };
+
+                                // Try to find the next video by URL matching or just use the first related video
+                                if (relatedVideos.length > 0) {
+                                    const nextVideo = relatedVideos[0];
+                                    nextVideoData = {
+                                        title: nextVideo.title || 'Next Video',
+                                        author: nextVideo.author || '',
+                                        duration: nextVideo.duration || 0,
+                                        thumbnail: nextVideo.thumbnail || '',
+                                    };
+                                }
+
+                                // Clean up any existing overlays
+                                if (endScreen) {
+                                    playerRef.current.removeChild(endScreen);
+                                    endScreen = null;
+                                }
+                                if (autoplayCountdown) {
+                                    playerRef.current.removeChild(autoplayCountdown);
+                                    autoplayCountdown = null;
+                                }
+
+                                // Show autoplay countdown immediately!
+                                autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
+                                    nextVideoData: nextVideoData,
+                                    countdownSeconds: 5,
+                                    onPlayNext: () => {
+                                        goToNextVideo();
+                                    },
+                                    onCancel: () => {
+                                        // Hide countdown and show end screen instead
+                                        if (autoplayCountdown) {
+                                            playerRef.current.removeChild(autoplayCountdown);
+                                            autoplayCountdown = null;
+                                        }
+                                        showEndScreen();
+                                    },
+                                });
+
+                                playerRef.current.addChild(autoplayCountdown);
+                                // Start countdown immediately without any delay
+                                setTimeout(() => {
+                                    if (autoplayCountdown && !autoplayCountdown.isDisposed()) {
+                                        autoplayCountdown.startCountdown();
+                                    }
+                                }, 0);
+                            }
+                        } else {
+                            // Autoplay disabled or no next video - show regular end screen
+                            showEndScreen();
+                        }
+
+                        // Function to show the regular end screen
+                        function showEndScreen() {
+                            // Prevent creating multiple end screens
+                            if (endScreen) {
+                                playerRef.current.removeChild(endScreen);
+                                endScreen = null;
+                            }
+
+                            // Show end screen with related videos
+                            endScreen = new EndScreenOverlay(playerRef.current, {
+                                relatedVideos: relatedVideos,
                             });
 
-                            playerRef.current.addChild(autoplayCountdown);
-                            // Start countdown immediately without any delay
-                            setTimeout(() => {
-                                if (autoplayCountdown && !autoplayCountdown.isDisposed()) {
-                                    autoplayCountdown.startCountdown();
-                                }
-                            }, 0);
-                        }
-                    } else {
-                        // Autoplay disabled or no next video - show regular end screen
-                        showEndScreen();
-                    }
+                            // Also store the data directly on the component as backup
+                            endScreen.relatedVideos = relatedVideos;
 
-                    // Function to show the regular end screen
-                    function showEndScreen() {
-                        // Prevent creating multiple end screens
+                            playerRef.current.addChild(endScreen);
+                            endScreen.show();
+                        }
+                    });
+
+                    // Hide end screen and autoplay countdown when user wants to replay
+                    playerRef.current.on('play', () => {
                         if (endScreen) {
-                            playerRef.current.removeChild(endScreen);
-                            endScreen = null;
+                            endScreen.hide();
                         }
+                        if (autoplayCountdown) {
+                            autoplayCountdown.stopCountdown();
+                        }
+                    });
 
-                        // Show end screen with related videos
-                        endScreen = new EndScreenOverlay(playerRef.current, {
-                            relatedVideos: relatedVideos,
-                        });
+                    // Hide end screen and autoplay countdown when user seeks
+                    playerRef.current.on('seeking', () => {
+                        if (endScreen) {
+                            endScreen.hide();
+                        }
+                        if (autoplayCountdown) {
+                            autoplayCountdown.stopCountdown();
+                        }
+                    });
 
-                        // Also store the data directly on the component as backup
-                        endScreen.relatedVideos = relatedVideos;
+                    // Handle replay button functionality
+                    playerRef.current.on('replay', () => {
+                        if (endScreen) {
+                            endScreen.hide();
+                        }
+                        playerRef.current.currentTime(0);
+                        playerRef.current.play();
+                    });
 
-                        playerRef.current.addChild(endScreen);
-                        endScreen.show();
-                    }
-                }); */
+                    playerRef.current.on('error', (error) => {
+                        // console.error('Video.js error:', error);
+                    });
 
-                // Hide end screen and autoplay countdown when user wants to replay
-                /* playerRef.current.on('play', () => {
-                    console.log('play');
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                }); */
+                    playerRef.current.on('fullscreenchange', () => {
+                        // console.log('Fullscreen changed:', playerRef.current.isFullscreen());
+                    });
 
-                /* const hideEndScreenAndStopCountdown = () => {
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                };
+                    playerRef.current.on('volumechange', () => {
+                        // console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
+                    });
 
-                playerRef.current.on('play', hideEndScreenAndStopCountdown);
-                playerRef.current.on('seeking', hideEndScreenAndStopCountdown); */
+                    playerRef.current.on('ratechange', () => {
+                        // console.log('Playback rate changed:', playerRef.current.playbackRate());
+                    });
 
-                // Hide end screen and autoplay countdown when user seeks
-                /*   playerRef.current.on('seeking', () => { // TODO: after the end screen is implemented stop countdown
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                }); */
+                    playerRef.current.on('texttrackchange', () => {
+                        // console.log('Text track changed');
+                    });
 
-                // Handle replay button functionality
-                /*  playerRef.current.on('replay', () => {
-                    alert('replay');
-                    console.log('replay');
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    playerRef.current.currentTime(0);
-                    playerRef.current.play();
-                }); */
-
-                // playerRef.current.on('error', (error) => {
-                //     // console.error('Video.js error:', error);
-                // });
-
-                // playerRef.current.on('fullscreenchange', () => {
-                //     // console.log('Fullscreen changed:', playerRef.current.isFullscreen());
-                // });
-
-                // playerRef.current.on('volumechange', () => {
-                //     console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
-                // });
-
-                // playerRef.current.on('ratechange', () => {
-                //     // console.log('Playback rate changed:', playerRef.current.playbackRate());
-                // });
-
-                // playerRef.current.on('texttrackchange', () => {
-                //     // console.log('Text track changed');
-                // });
-
-                // Focus the player element so keyboard controls work
-                // This ensures keyboard events work properly in both normal and fullscreen modes
-                playerRef.current.ready(() => {
-                    // Focus the player element and set up focus handling
-                    if (playerRef.current.el()) {
-                        // Make the video element focusable
-                        const videoElement = playerRef.current.el();
-                        videoElement.setAttribute('tabindex', '0');
-                        videoElement.focus();
-                    }
-                });
-
-                // Handle focus when entering/exiting fullscreen to ensure keyboard events work
-                /*  playerRef.current.on('fullscreenchange', () => {
-                    setTimeout(() => {
-                        if (playerRef.current && playerRef.current.el()) {
+                    // Focus the player element so keyboard controls work
+                    // This ensures keyboard events work properly in both normal and fullscreen modes
+                    playerRef.current.ready(() => {
+                        // Focus the player element and set up focus handling
+                        if (playerRef.current.el()) {
+                            // Make the video element focusable
                             const videoElement = playerRef.current.el();
                             videoElement.setAttribute('tabindex', '0');
                             videoElement.focus();
+                        }
+                    });
 
-                            // In fullscreen mode, ensure the player container has focus
-                            if (playerRef.current.isFullscreen()) {
-                                // Focus the fullscreen element to ensure keyboard events are captured
-                                const fullscreenElement =
-                                    document.fullscreenElement ||
-                                    document.webkitFullscreenElement ||
-                                    document.mozFullScreenElement ||
-                                    document.msFullscreenElement;
-                                if (fullscreenElement) {
-                                    fullscreenElement.setAttribute('tabindex', '0');
-                                    fullscreenElement.focus();
+                    // Handle focus when entering/exiting fullscreen to ensure keyboard events work
+                    playerRef.current.on('fullscreenchange', () => {
+                        setTimeout(() => {
+                            if (playerRef.current && playerRef.current.el()) {
+                                const videoElement = playerRef.current.el();
+                                videoElement.setAttribute('tabindex', '0');
+                                videoElement.focus();
+
+                                // In fullscreen mode, ensure the player container has focus
+                                if (playerRef.current.isFullscreen()) {
+                                    // Focus the fullscreen element to ensure keyboard events are captured
+                                    const fullscreenElement =
+                                        document.fullscreenElement ||
+                                        document.webkitFullscreenElement ||
+                                        document.mozFullScreenElement ||
+                                        document.msFullscreenElement;
+                                    if (fullscreenElement) {
+                                        fullscreenElement.setAttribute('tabindex', '0');
+                                        fullscreenElement.focus();
+                                    }
                                 }
                             }
-                        }
-                    }, 100); // Small delay to ensure fullscreen transition is complete
-                }); */
-            }
-            //}, 0);
+                        }, 100); // Small delay to ensure fullscreen transition is complete
+                    });
+                }
+            }, 0);
 
-            /* return () => {
+            return () => {
                 clearTimeout(timer);
-            }; */
+            };
         }
 
         // Cleanup function
-        /*  return () => {
+        return () => {
             // Clean up keyboard event listeners if they exist
-            if (customComponents.current && customComponents.current.cleanupKeyboardHandler) {
-                customComponents.current.cleanupKeyboardHandler();
-            }
-
-            // Clean up playback event handlers if they exist
-            if (customComponents.current && customComponents.current.cleanupPlaybackEventHandler) {
-                customComponents.current.cleanupPlaybackEventHandler();
+            if (customComponents.current && customComponents.current.cleanupArrowKeyHandler) {
+                customComponents.current.cleanupArrowKeyHandler();
             }
 
             // Clean up seekbar touch handlers if they exist
@@ -3440,11 +3282,11 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
                 playerRef.current.dispose();
                 playerRef.current = null;
             }
-        }; */
+        };
     }, []);
 
     // Additional effect to ensure video gets focus for keyboard controls on page load
-    /* useEffect(() => {
+    useEffect(() => {
         const focusVideo = () => {
             if (playerRef.current && playerRef.current.el()) {
                 const videoElement = playerRef.current.el();
@@ -3477,47 +3319,16 @@ function VideoJSPlayerNew({ videoId = 'default-video' }) {
             window.removeEventListener('focus', handleWindowFocus);
             timeouts.forEach(clearTimeout);
         };
-    }, []); */
+    }, []);
 
     return (
         <video
             ref={videoRef}
             id={videoId}
-            controls={true}
-            className={`video-js vjs-fluid vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
-            preload="auto"
-            poster={currentVideo.poster}
+            className={`video-js vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
             tabIndex="0"
-        >
-            {/* <source src="/videos/sample-video.mp4" type="video/mp4" />
-            <source src="/videos/sample-video.webm" type="video/webm" /> */}
-            <p className="vjs-no-js">
-                To view this video please enable JavaScript, and consider upgrading to a web browser that
-                <a href="https://videojs.com/html5-video-support/" target="_blank">
-                    supports HTML5 video
-                </a>
-            </p>
-
-            {/* Add subtitle tracks */}
-            {/*   {subtitleTracks &&
-                subtitleTracks.map((track, index) => (
-                    <track
-                        key={index}
-                        kind={track.kind}
-                        src={track.src}
-                        srcLang={track.srclang}
-                        label={track.label}
-                        default={track.default}
-                    />
-                ))}
-
-            <track kind="chapters" src="/sample-chapters.vtt" /> */}
-            {/* Add chapters track */}
-            {/*  {chaptersData &&
-                chaptersData.length > 0 &&
-                (console.log('chaptersData', chaptersData), (<track kind="chapters" src="/sample-chapters.vtt" />))} */}
-        </video>
+        />
     );
 }
 
-export default VideoJSPlayerNew;
+// export default VideoJSPlayer;
