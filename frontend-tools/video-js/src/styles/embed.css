@@ -1,11 +1,6 @@
 /* ===== EMBED PLAYER STYLES ===== */
 /* YouTube-style embed player with fullscreen poster */
 
-/* Black background for embed page to eliminate white space */
-#page-embed {
-    background-color: #000 !important;
-}
-
 /* Fullscreen poster image - fills entire iframe */
 #page-embed .video-js-root-embed .video-js .vjs-poster {
     position: absolute !important;
