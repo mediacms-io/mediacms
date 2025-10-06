@@ -43,7 +43,7 @@ class EmbedInfoOverlay extends Component {
             padding: 8px 12px;
             max-width: calc(100% - 40px);
             box-sizing: border-box;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
             opacity: 1;
             visibility: visible;
         `;
@@ -186,14 +186,24 @@ class EmbedInfoOverlay extends Component {
         const player = this.player();
         const overlay = this.el();
 
-        // YouTube-style behavior: show only on initial state and when paused
+        // Sync overlay visibility with control bar visibility
         const updateOverlayVisibility = () => {
-            if (!player.hasStarted() || player.paused() || player.ended()) {
-                // Show overlay when not started, paused, or ended
+            const controlBar = player.getChild('controlBar');
+
+            if (!player.hasStarted()) {
+                // Show overlay when video hasn't started (poster is showing) - like before
+                overlay.style.opacity = '1';
+                overlay.style.visibility = 'visible';
+            } else if (player.paused() || player.ended()) {
+                // Always show overlay when paused or ended
+                overlay.style.opacity = '1';
+                overlay.style.visibility = 'visible';
+            } else if (player.userActive()) {
+                // Show overlay when user is active (controls are visible)
                 overlay.style.opacity = '1';
                 overlay.style.visibility = 'visible';
             } else {
-                // Hide overlay when playing (YouTube behavior)
+                // Hide overlay when user is inactive (controls are hidden)
                 overlay.style.opacity = '0';
                 overlay.style.visibility = 'hidden';
             }
@@ -204,12 +214,12 @@ class EmbedInfoOverlay extends Component {
             updateOverlayVisibility();
         });
 
-        // Hide overlay when video starts playing (YouTube behavior)
+        // Update overlay when video starts playing
         player.on('play', () => {
             updateOverlayVisibility();
         });
 
-        // Hide overlay when video actually starts (first play)
+        // Update overlay when video actually starts (first play)
         player.on('playing', () => {
             updateOverlayVisibility();
         });
@@ -219,16 +229,17 @@ class EmbedInfoOverlay extends Component {
             updateOverlayVisibility();
         });
 
-        // Show overlay when player is ready (initially paused)
+        // Show overlay when player is ready
         player.on('ready', () => {
             updateOverlayVisibility();
         });
 
-        // Show/hide overlay based on user activity (controls visibility)
+        // Show overlay when user becomes active (controls show)
         player.on('useractive', () => {
             updateOverlayVisibility();
         });
 
+        // Hide overlay when user becomes inactive (controls hide)
         player.on('userinactive', () => {
             updateOverlayVisibility();
         });
