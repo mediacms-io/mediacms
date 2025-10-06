@@ -43,7 +43,7 @@ export class AutoplayHandler {
                         this.restoreSound(userInteracted);
                     }
                 } catch (mutedError) {
-                    console.error('❌ Even muted autoplay was blocked:', mutedError.message);
+                    // console.error('❌ Even muted autoplay was blocked:', mutedError.message);
                 }
             }
         }
