@@ -3,7 +3,7 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 //import 'video.js/dist/video-js.css';
 // import '../../VideoJS.css';
-// import '../../styles/embed.css';
+import '../../styles/embed.css';
 // import '../controls/SubtitlesButton.css';
 import './VideoJSPlayer.css';
 import './VideoJSPlayerRoundedCorners.css';

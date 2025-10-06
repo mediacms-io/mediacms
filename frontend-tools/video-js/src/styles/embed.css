@@ -1,193 +1,74 @@
 /* ===== EMBED PLAYER STYLES ===== */
-/* Styles specific to #page-embed and embedded video players */
+/* YouTube-style embed player with fullscreen poster */
 
-/* Fullscreen video styles for embedded video player */
-#page-embed .video-js-root-embed .video-js video {
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: cover !important;
-    border-radius: 0 !important;
-}
-
+/* Fullscreen poster image - fills entire iframe */
 #page-embed .video-js-root-embed .video-js .vjs-poster {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
     border-radius: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: cover !important;
+    /* z-index: 1 !important; */
+    display: block !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: #000 !important;
 }
 
-/* Fullscreen styles for embedded video player */
-#page-embed .video-js-root-embed .video-container {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
+/* Fullscreen video element - maintain aspect ratio */
+#page-embed .video-js-root-embed .video-js video {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+    background-color: #000 !important;
+}
+
+/* Fullscreen video player container */
+#page-embed .video-js-root-embed .video-js {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+    border-radius: 0 !important;
+}
+
+/* Root embed container */
+#page-embed .video-js-root-embed {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Page embed container */
+#page-embed {
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
+    overflow: hidden;
 }
 
-/* Fullscreen fluid styles for embedded video player */
-#page-embed .video-js-root-embed .video-js.vjs-fluid {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-}
-
-/* Fullscreen video-js player styles for embedded video player */
-#page-embed .video-js-root-embed .video-js {
-    width: 100vw !important;
-    height: 100vh !important;
-    border-radius: 0;
-    position: relative;
-    overflow: hidden; /* Prevent scrollbars in embed video player */
-}
-
-/* Prevent page scrolling when embed is active */
-#page-embed .video-js-root-embed {
-    position: fixed;
-    top: 0;
-    overflow: hidden; /* Prevent scrollbars in embed mode */
-}
-
-/* Sticky controls for embed player - always at bottom of window */
-#page-embed .video-js-root-embed .video-js .vjs-control-bar {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    z-index: 1001 !important;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    padding: 0 12px !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* Ensure progress bar is also sticky for embed player */
-#page-embed .video-js-root-embed .video-js .vjs-progress-control {
-    position: fixed !important;
-    bottom: 48px !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    z-index: 1000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-}
-
-/* Ensure gradient overlay extends to full window width for embed */
-#page-embed .video-js-root-embed .video-js::after {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    height: 120px !important;
-    z-index: 999 !important;
-}
-
-/* Mobile optimizations for embed player sticky controls */
-@media (max-width: 768px) {
-    #page-embed .video-js-root-embed .video-js .vjs-control-bar {
-        height: 56px !important; /* Larger touch target on mobile */
-        padding: 0 16px !important; /* More padding for touch */
-        margin: 0 !important;
-        border: none !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        background-image: none !important;
-    }
-
-    #page-embed .video-js-root-embed .video-js .vjs-progress-control {
-        bottom: 44px !important; /* Much closer to control bar - minimal gap */
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Ensure controls don't interfere with mobile browser chrome */
-    #page-embed .video-js-root-embed .video-js .vjs-control-bar {
-        padding-bottom: env(safe-area-inset-bottom, 0) !important;
-    }
-}
-
-/* Ensure controls are always visible when user is active (embed only) */
-#page-embed .video-js-root-embed .video-js.vjs-user-active .vjs-control-bar,
-#page-embed .video-js-root-embed .video-js.vjs-paused .vjs-control-bar,
-#page-embed .video-js-root-embed .video-js.vjs-ended .vjs-control-bar {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0) !important;
-}
-
-/* Smooth transitions for control visibility */
-#page-embed .video-js-root-embed .video-js .vjs-control-bar {
-    transition:
-        opacity 0.3s ease,
-        transform 0.3s ease !important;
-}
-
-/* Hide controls when user is inactive (but keep them sticky) */
-#page-embed .video-js-root-embed .video-js.vjs-user-inactive:not(.vjs-paused):not(.vjs-ended) .vjs-control-bar {
-    opacity: 0 !important;
-    transform: translateY(100%) !important;
-}
-
-#page-embed .video-js-root-embed .video-js.vjs-user-inactive:not(.vjs-paused):not(.vjs-ended) .vjs-progress-control {
-    opacity: 0 !important;
-}
-
-/* ===== EMBED-SPECIFIC SEEK INDICATOR POSITIONING ===== */
-/* Ensure play icon (SeekIndicator) stays centered in embed view regardless of window size */
-#page-embed .video-js-root-embed .video-js .vjs-seek-indicator {
-    position: fixed !important;
-    top: 50vh !important;
-    left: 50vw !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: 10000 !important;
-    pointer-events: none !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transition: opacity 0.2s ease-in-out !important;
-    width: auto !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-/* ===== EMBED-SPECIFIC BIG PLAY BUTTON POSITIONING ===== */
-/* Ensure big play button stays centered in embed view regardless of window size */
-#page-embed .video-js-root-embed .video-js .vjs-big-play-button {
+/* Big play button - only show when video hasn't started */
+#page-embed .video-js-root-embed .video-js:not(.vjs-has-started) .vjs-big-play-button {
     position: absolute !important;
     top: 50% !important;
     left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: 1000 !important;
-    pointer-events: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    /* transform: translate(-50%, -50%) !important; */
+    z-index: 10 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-/* ===== EMBED-SPECIFIC CONTROLS HIDING FOR INITIAL STATE ===== */
-/* Hide seekbar and controls when poster is displayed (before first play) in embed mode */
-#page-embed .video-js-root-embed .video-js:not(.vjs-has-started) .vjs-control-bar {
-    display: none !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-}
-
-#page-embed .video-js-root-embed .video-js:not(.vjs-has-started) .vjs-progress-control {
+/* Hide big play button after video has started */
+#page-embed .video-js-root-embed .video-js.vjs-has-started .vjs-big-play-button {
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
