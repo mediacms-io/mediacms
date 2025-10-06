@@ -6,11 +6,11 @@
     position: relative;
 }
 
-.video-js .vjs-control-bar .vjs-control:last-child::after {
+/* .video-js .vjs-control-bar .vjs-control:last-child::after {
     left: auto;
     right: 0;
 }
-
+ */
 /* Universal tooltip styling for all buttons */
 .video-js .vjs-control-bar .vjs-control::after {
     content: attr(title);
