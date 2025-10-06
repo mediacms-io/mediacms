@@ -86,13 +86,6 @@ export class EndScreenHandler {
                         const progressControl = controlBar.getChild('progressControl');
                         if (progressControl) {
                             progressControl.show();
-                            progressControl.el().style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-
-                            // Also style the progress holder for seamless look
-                            const progressHolder = progressControl.el().querySelector('.vjs-progress-holder');
-                            if (progressHolder) {
-                                progressHolder.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-                            }
                         }
                     }
                 }
