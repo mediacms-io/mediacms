@@ -1,6 +1,4 @@
-// components/controls/CustomRemainingTime.js
 import videojs from 'video.js';
-import './CustomRemainingTime.css';
 
 // Get the Component base class from Video.js
 const Component = videojs.getComponent('Component');
@@ -31,16 +29,69 @@ class CustomRemainingTime extends Component {
      */
     createEl() {
         const el = videojs.dom.createEl('div', {
-            className: 'vjs-remaining-time vjs-time-control vjs-control custom-remaining-time',
+            className: 'vjs-remaining-time vjs-time-control vjs-control',
         });
 
         // Add ARIA accessibility
         el.innerHTML = `
-            <span class="vjs-control-text" role="presentation">Time Display&nbsp;</span>
-            <span class="vjs-remaining-time-display" role="presentation">0:00 / 0:00</span>
+            <span class="vjs-remaining-time-display" role="timer" aria-live="off">0:00 / 0:00</span>
         `;
 
         return el;
+    }
+
+    /**
+     * Add touch tooltip support for mobile devices
+     */
+    addTouchTooltipSupport(element) {
+        // Check if device is touch-enabled
+        const isTouchDevice =
+            'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
+        // Only add touch tooltip support on actual touch devices
+        if (!isTouchDevice) {
+            return;
+        }
+
+        let touchStartTime = 0;
+        let tooltipTimeout = null;
+
+        // Touch start
+        element.addEventListener(
+            'touchstart',
+            () => {
+                touchStartTime = Date.now();
+            },
+            { passive: true }
+        );
+
+        // Touch end
+        element.addEventListener(
+            'touchend',
+            (e) => {
+                const touchDuration = Date.now() - touchStartTime;
+
+                // Only show tooltip for quick taps (not swipes)
+                if (touchDuration < 300) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Show tooltip briefly
+                    element.classList.add('touch-tooltip-active');
+
+                    // Clear any existing timeout
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                    }
+
+                    // Hide tooltip after delay
+                    tooltipTimeout = setTimeout(() => {
+                        element.classList.remove('touch-tooltip-active');
+                    }, 2000);
+                }
+            },
+            { passive: false }
+        );
     }
 
     /**
@@ -90,7 +141,7 @@ class CustomRemainingTime extends Component {
 }
 
 // Set component name for Video.js
-CustomRemainingTime.prototype.controlText_ = 'Time Display';
+CustomRemainingTime.prototype.controlText_ = '';
 
 // Register the component with Video.js
 videojs.registerComponent('CustomRemainingTime', CustomRemainingTime);

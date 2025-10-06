@@ -1,9 +1,19 @@
 /* ===== AUTOPLAY TOGGLE BUTTON STYLES ===== */
 
-.vjs-autoplay-toggle .vjs-autoplay-icon svg {
-    width: 100%;
-    height: 100%;
-    display: block;
+/* Font icon styles for autoplay button */
+.vjs-autoplay-toggle .vjs-icon-placeholder:before {
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+/* Use play icon when autoplay is OFF (clicking will turn it ON) */
+.vjs-autoplay-toggle .vjs-icon-play:before {
+    content: "\f101"; /* VideoJS play icon */
+}
+
+/* Use pause icon when autoplay is ON (clicking will turn it OFF) */
+.vjs-autoplay-toggle .vjs-icon-pause:before {
+    content: "\f103"; /* VideoJS pause icon */
 }
 
 .video-js .vjs-autoplay-toggle {

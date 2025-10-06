@@ -63,7 +63,7 @@ class SpritePreview extends Component {
                 bottom: '45px',
                 transform: 'translateX(-50%)',
                 display: 'none',
-                minWidth: '172px', // Accommodate 166px image + 3px border on each side
+                minWidth: '172px',
                 maxWidth: '172px',
                 width: '172px',
             });

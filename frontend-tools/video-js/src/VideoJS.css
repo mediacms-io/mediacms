@@ -515,14 +515,6 @@ html {
     background: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Hide HLS buffer segment boundaries while keeping overall load progress */
-/* Target only the HLS buffer segment divs (they have data-start and data-end attributes) */
-.vjs-load-progress > div[data-start][data-end] {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
 .video-js .vjs-progress-control {
     position: absolute !important;
     bottom: 42px !important; /* Moved up to prevent overlap with controls */

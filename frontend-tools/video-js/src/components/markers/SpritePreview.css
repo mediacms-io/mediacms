@@ -26,39 +26,3 @@
     border-radius: 6px;
     border: 3px solid #fff;
 }
-
-/* Disable sprite preview tooltips on touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .vjs-sprite-preview-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 899px) {
-    /* Disable sprite preview tooltips on tablets */
-    .vjs-sprite-preview-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (max-width: 767px) {
-    /* Disable sprite preview tooltips on mobile */
-    .vjs-sprite-preview-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (max-width: 480px) {
-    /* Disable sprite preview tooltips on small mobile */
-    .vjs-sprite-preview-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}

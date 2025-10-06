@@ -1,5 +1,6 @@
 // Export all Video.js components
 export { default as VideoJSPlayer } from './video-player/VideoJSPlayer';
+export { default as VideoJSPlayerNew } from './video-player/VideoJSPlayerNew';
 export { default as EndScreenOverlay } from './overlays/EndScreenOverlay';
 export { default as AutoplayCountdownOverlay } from './overlays/AutoplayCountdownOverlay';
 export { default as ChapterMarkers } from './markers/ChapterMarkers';

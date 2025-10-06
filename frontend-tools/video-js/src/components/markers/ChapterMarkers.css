@@ -63,21 +63,28 @@
     width: 166px !important;
     max-width: 100% !important;
     height: 96px;
-    margin: 0 auto 10px;
+    margin: 10px auto 10px;
     border-radius: 6px;
     border: 3px solid #fff;
 }
 
 .vjs-chapter-floating-tooltip .chapter-title {
     font-size: 16px;
-    margin: 0 0 10px;
-    font-weight: 700;
+    margin: 0 0 5px;
     word-break: break-all;
     line-height: 20px;
 }
 
-.vjs-chapter-floating-tooltip .position-info,
 .vjs-chapter-floating-tooltip .chapter-info {
+    font-size: 15px;
+    display: inline-block;
+    margin: 0 0 5px;
+    line-height: normal;
+    vertical-align: top;
+    line-height: 20px;
+}
+
+.vjs-chapter-floating-tooltip .position-info {
     font-size: 15px;
     display: inline-block;
     margin: 0 0 2px;
@@ -94,65 +101,5 @@
     to {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
-    }
-}
-
-/* Disable chapter marker tooltips on touch devices */
-@media (hover: none) and (pointer: coarse) {
-    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    .vjs-chapter-floating-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (min-width: 768px) and (max-width: 899px) {
-    /* Disable chapter marker tooltips on tablets */
-    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable chapter floating tooltips on tablets */
-    .vjs-chapter-floating-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (max-width: 767px) {
-    /* Disable chapter marker tooltips on mobile */
-    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable chapter floating tooltips on mobile */
-    .vjs-chapter-floating-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-}
-
-@media (max-width: 480px) {
-    /* Disable chapter marker tooltips on small mobile */
-    .vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Disable chapter floating tooltips on small mobile */
-    .vjs-chapter-floating-tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        visibility: hidden !important;
     }
 }

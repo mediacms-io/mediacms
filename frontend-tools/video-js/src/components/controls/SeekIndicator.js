@@ -1,5 +1,5 @@
 import videojs from 'video.js';
-import './SeekIndicator.css';
+// import './SeekIndicator.css';
 
 const Component = videojs.getComponent('Component');
 
@@ -10,6 +10,17 @@ class SeekIndicator extends Component {
         this.seekAmount = options.seekAmount || 5; // Default seek amount in seconds
         this.isEmbedPlayer = options.isEmbedPlayer || false; // Store embed mode flag
         this.showTimeout = null;
+
+        // Detect touch devices - if touch is supported, native browser controls will handle icons
+        this.isTouchDevice = this.detectTouchDevice();
+    }
+
+    /**
+     * Detect if the device supports touch
+     * @returns {boolean} True if touch is supported
+     */
+    detectTouchDevice() {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
     }
 
     createEl() {
@@ -39,6 +50,11 @@ class SeekIndicator extends Component {
      * @param {number} seconds - Number of seconds to seek (only used for forward/backward)
      */
     show(direction, seconds = this.seekAmount) {
+        // Skip showing icons on touch devices as native browser controls handle them
+        if (this.isTouchDevice) {
+            return;
+        }
+
         const el = this.el();
         const iconEl = el.querySelector('.vjs-seek-indicator-icon');
         const textEl = el.querySelector('.vjs-seek-indicator-text');
@@ -230,6 +246,11 @@ class SeekIndicator extends Component {
      * Show pause icon for mobile (uses 500ms from main show method)
      */
     showMobilePauseIcon() {
+        // Skip showing icons on touch devices as native browser controls handle them
+        if (this.isTouchDevice) {
+            return;
+        }
+
         this.show('pause-mobile'); // This will auto-hide after 500ms
 
         // Make the icon clickable for mobile

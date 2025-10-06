@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import '../../VideoJS.css';
+// import '../../VideoJS.css';
 import '../../styles/embed.css';
-import '../controls/SubtitlesButton.css';
+//import '../controls/SubtitlesButton.css';
 
 // Import the separated components
 import EndScreenOverlay from '../overlays/EndScreenOverlay';
@@ -2307,28 +2307,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // BEGIN: Wrap play button in custom div container
                         const playButtonEl = playToggle.el();
                         const playButtonWrapper = document.createElement('div');
-                        playButtonWrapper.className =
-                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+                        /* playButtonWrapper.className =
+                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
 
                         // Insert wrapper before the play button and move play button inside
-                        playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
-                        playButtonWrapper.appendChild(playButtonEl);
+                        // playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
+                        // playButtonWrapper.appendChild(playButtonEl);
                         // END: Wrap play button in custom div container
-
-                        // BEGIN: Implement custom time display component
-                        const customRemainingTime = new CustomRemainingTime(playerRef.current, {
-                            displayNegative: false,
-                            customPrefix: '',
-                            customSuffix: '',
-                        });
-
-                        // Insert it early in control bar - right after play button for priority
-                        const playToggleIndex = controlBar.children().indexOf(playToggle);
-                        controlBar.addChild(customRemainingTime, {}, playToggleIndex + 1);
-
-                        // Store reference for cleanup
-                        customComponents.current.customRemainingTime = customRemainingTime;
-                        // END: Implement custom time display component
 
                         // BEGIN: Implement custom next video button
                         if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
@@ -2337,23 +2322,34 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 nextLink: mediaData.nextLink,
                             });
                             const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
-                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 2); // After time display
+                            controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1); // After time display
 
                             // Wrap next video button in custom div container
-                            setTimeout(() => {
-                                const nextVideoButtonEl = nextVideoButton.el();
-                                if (nextVideoButtonEl) {
-                                    const nextVideoWrapper = document.createElement('div');
-                                    nextVideoWrapper.className =
-                                        'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
+                            // setTimeout(() => {
+                            //     const nextVideoButtonEl = nextVideoButton.el();
+                            //     if (nextVideoButtonEl) {
+                            //         const nextVideoWrapper = document.createElement('div');
+                            //         /*  nextVideoWrapper.className =
+                            //             'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
 
-                                    // Insert wrapper before the next video button and move button inside
-                                    nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
-                                    nextVideoWrapper.appendChild(nextVideoButtonEl);
-                                }
-                            }, 100); // Small delay to ensure button is fully rendered
+                            //         // Insert wrapper before the next video button and move button inside
+                            //         nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
+                            //         nextVideoWrapper.appendChild(nextVideoButtonEl);
+                            //     }
+                            // }, 2000); // Small delay to ensure button is fully rendered
                         }
                         // END: Implement custom next video button
+
+                        // BEGIN: Implement custom time display component
+                        const customRemainingTime = new CustomRemainingTime(playerRef.current, {
+                            displayNegative: false,
+                            customPrefix: '',
+                            customSuffix: '',
+                        });
+                        const playToggleIndex = controlBar.children().indexOf(playToggle);
+                        controlBar.addChild(customRemainingTime, {}, playToggleIndex + 2);
+                        customComponents.current.customRemainingTime = customRemainingTime;
+                        // END: Implement custom time display component
 
                         // BEGIN: Wrap volume panel in custom div container
                         setTimeout(() => {

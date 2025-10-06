@@ -1,7 +1,5 @@
 import videojs from 'video.js';
-import './AutoplayToggleButton.css';
-import autoPlayIconUrl from '../../assets/icons/autoplay-video-js-play.svg';
-import autoPauseIconUrl from '../../assets/icons/autoplay-video-js-pause.svg';
+// import './AutoplayToggleButton.css';
 
 const Button = videojs.getComponent('Button');
 
@@ -9,6 +7,20 @@ const Button = videojs.getComponent('Button');
 class AutoplayToggleButton extends Button {
     constructor(player, options) {
         super(player, options);
+
+        // Check if this is a touch device - don't create button on touch devices
+        const isTouchDevice =
+            options.isTouchDevice ||
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0;
+
+        if (isTouchDevice) {
+            // Hide the button on touch devices
+            this.hide();
+            return;
+        }
+
         this.userPreferences = options.userPreferences;
         // Get autoplay preference from localStorage, default to false if not set
         if (this.userPreferences) {
@@ -31,18 +43,14 @@ class AutoplayToggleButton extends Button {
             'aria-label': this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off',
         });
 
-        // Create simple text-based icon for now to ensure it works
+        // Create icon placeholder using VideoJS icon system
         this.iconSpan = videojs.dom.createEl('span', {
             'aria-hidden': 'true',
-            className: 'vjs-autoplay-icon',
+            className: 'vjs-icon-placeholder vjs-autoplay-icon',
         });
 
-        // Set initial icon state directly
-        if (this.isAutoplayEnabled) {
-            this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
-        } else {
-            this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
-        }
+        // Set initial icon state using font icons
+        this.updateIconClass();
 
         // Create control text span
         const controlTextSpan = videojs.dom.createEl('span', {
@@ -60,29 +68,33 @@ class AutoplayToggleButton extends Button {
         return button;
     }
 
+    updateIconClass() {
+        // Remove existing icon classes
+        this.iconSpan.className = 'vjs-icon-placeholder vjs-autoplay-icon';
+
+        // Add appropriate icon class based on state
+        if (this.isAutoplayEnabled) {
+            this.iconSpan.classList.add('vjs-icon-spinner');
+        } else {
+            this.iconSpan.classList.add('vjs-icon-play-circle');
+        }
+    }
+
     updateIcon() {
         // Add transition and start fade-out
         this.iconSpan.style.transition = 'opacity 0.1s ease';
         this.iconSpan.style.opacity = '0';
 
-        // After fade-out complete, update innerHTML and fade back in
+        // After fade-out complete, update icon class and fade back in
         setTimeout(() => {
-            if (this.isAutoplayEnabled) {
-                this.iconSpan.innerHTML = `<img src="${autoPauseIconUrl}" alt="Autoplay on" style="width: 26px; height: 26px;" />`;
-                if (this.el()) {
-                    this.el().title = 'Autoplay is on';
-                    this.el().setAttribute('aria-label', 'Autoplay is on');
-                    const controlText = this.el().querySelector('.vjs-control-text');
-                    if (controlText) controlText.textContent = 'Autoplay is on';
-                }
-            } else {
-                this.iconSpan.innerHTML = `<img src="${autoPlayIconUrl}" alt="Autoplay off" style="width: 26px; height: 26px;" />`;
-                if (this.el()) {
-                    this.el().title = 'Autoplay is off';
-                    this.el().setAttribute('aria-label', 'Autoplay is off');
-                    const controlText = this.el().querySelector('.vjs-control-text');
-                    if (controlText) controlText.textContent = 'Autoplay is off';
-                }
+            this.updateIconClass();
+
+            if (this.el()) {
+                this.el().title = this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off';
+                this.el().setAttribute('aria-label', this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off');
+                const controlText = this.el().querySelector('.vjs-control-text');
+                if (controlText)
+                    controlText.textContent = this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off';
             }
 
             // Fade back in
@@ -127,14 +139,12 @@ class AutoplayToggleButton extends Button {
         }
 
         let touchStartTime = 0;
-        let touchHandled = false;
 
         // Touch start
         button.addEventListener(
             'touchstart',
-            (e) => {
+            () => {
                 touchStartTime = Date.now();
-                touchHandled = false;
             },
             { passive: true }
         );
@@ -153,7 +163,6 @@ class AutoplayToggleButton extends Button {
 
                     // Show tooltip briefly
                     button.classList.add('touch-active');
-                    touchHandled = true;
 
                     // Hide tooltip after shorter delay on mobile
                     setTimeout(() => {

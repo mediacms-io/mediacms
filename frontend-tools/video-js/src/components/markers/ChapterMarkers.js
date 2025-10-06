@@ -105,7 +105,7 @@ class ChapterMarkers extends Component {
             Object.assign(this.tooltip.style, {
                 position: 'absolute',
                 zIndex: '1000',
-                bottom: '45px',
+                bottom: '25px',
                 transform: 'translateX(-50%)',
                 display: 'none',
                 minWidth: '160px',
@@ -148,10 +148,10 @@ class ChapterMarkers extends Component {
                 overflow: 'hidden',
             });
 
-            // Append all elements to tooltip
+            // Append all elements to tooltip - duration after title, then image
             this.tooltip.appendChild(this.chapterTitle);
-            this.tooltip.appendChild(this.chapterImage);
             this.tooltip.appendChild(this.chapterInfo);
+            this.tooltip.appendChild(this.chapterImage);
             this.tooltip.appendChild(this.positionInfo);
         }
 

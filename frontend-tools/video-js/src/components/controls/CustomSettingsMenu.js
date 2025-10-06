@@ -1,7 +1,7 @@
 // components/controls/CustomSettingsMenu.js
 import videojs from 'video.js';
 import './CustomSettingsMenu.css';
-import './SettingsButton.css';
+// import './SettingsButton.css';
 import UserPreferences from '../../utils/UserPreferences';
 
 // Get the Component base class from Video.js
@@ -53,18 +53,25 @@ class CustomSettingsMenu extends Component {
         // Create settings button
         this.settingsButton = controlBar.addChild('button', {
             controlText: 'Settings',
-            className: 'vjs-settings-button settings-clicked',
+            className: 'vjs-settings-button vjs-control vjs-button settings-clicked',
         });
 
         // Style the settings button (gear icon)
         const settingsButtonEl = this.settingsButton.el();
         settingsButtonEl.innerHTML = `
-            <span><svg height="100%" version="1.1" viewBox="0 0 36 36" width="100%"><use class="ytp-svg-shadow" xlink:href="#ytp-id-19"></use><path d="m 23.94,18.78 c .03,-0.25 .05,-0.51 .05,-0.78 0,-0.27 -0.02,-0.52 -0.05,-0.78 l 1.68,-1.32 c .15,-0.12 .19,-0.33 .09,-0.51 l -1.6,-2.76 c -0.09,-0.17 -0.31,-0.24 -0.48,-0.17 l -1.99,.8 c -0.41,-0.32 -0.86,-0.58 -1.35,-0.78 l -0.30,-2.12 c -0.02,-0.19 -0.19,-0.33 -0.39,-0.33 l -3.2,0 c -0.2,0 -0.36,.14 -0.39,.33 l -0.30,2.12 c -0.48,.2 -0.93,.47 -1.35,.78 l -1.99,-0.8 c -0.18,-0.07 -0.39,0 -0.48,.17 l -1.6,2.76 c -0.10,.17 -0.05,.39 .09,.51 l 1.68,1.32 c -0.03,.25 -0.05,.52 -0.05,.78 0,.26 .02,.52 .05,.78 l -1.68,1.32 c -0.15,.12 -0.19,.33 -0.09,.51 l 1.6,2.76 c .09,.17 .31,.24 .48,.17 l 1.99,-0.8 c .41,.32 .86,.58 1.35,.78 l .30,2.12 c .02,.19 .19,.33 .39,.33 l 3.2,0 c .2,0 .36,-0.14 .39,-0.33 l .30,-2.12 c .48,-0.2 .93,-0.47 1.35,-0.78 l 1.99,.8 c .18,.07 .39,0 .48,-0.17 l 1.6,-2.76 c .09,-0.17 .05,-0.39 -0.09,-0.51 l -1.68,-1.32 0,0 z m -5.94,2.01 c -1.54,0 -2.8,-1.25 -2.8,-2.8 0,-1.54 1.25,-2.8 2.8,-2.8 1.54,0 2.8,1.25 2.8,2.8 0,1.54 -1.25,2.8 -2.8,2.8 l 0,0 z" fill="#fff" id="ytp-id-19"></path></svg></span>
+            <span class="vjs-icon-placeholder vjs-icon-cog"></span>
             <span class="vjs-control-text">Settings</span>
         `;
 
+        // Add tooltip attributes
+        settingsButtonEl.setAttribute('title', 'Settings');
+        settingsButtonEl.setAttribute('aria-label', 'Settings');
+
         // Position the settings button at the end of the control bar
         this.positionButton();
+
+        // Add touch tooltip support
+        this.addTouchTooltipSupport(settingsButtonEl);
 
         // Add mobile touch handling and unified click handling
         const buttonEl = this.settingsButton.el();
@@ -1152,6 +1159,57 @@ class CustomSettingsMenu extends Component {
                 btnEl.classList.remove('settings-clicked');
             }
         }
+    }
+
+    // Add touch tooltip support for mobile devices
+    addTouchTooltipSupport(button) {
+        // Check if device is touch-enabled
+        const isTouchDevice =
+            'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+
+        // Only add touch tooltip support on actual touch devices
+        if (!isTouchDevice) {
+            return;
+        }
+
+        let touchStartTime = 0;
+        let tooltipTimeout = null;
+
+        // Touch start
+        button.addEventListener(
+            'touchstart',
+            () => {
+                touchStartTime = Date.now();
+            },
+            { passive: true }
+        );
+
+        // Touch end
+        button.addEventListener(
+            'touchend',
+            (e) => {
+                const touchDuration = Date.now() - touchStartTime;
+
+                // Only show tooltip for quick taps (not swipes)
+                if (touchDuration < 300) {
+                    // Don't prevent default here as it might interfere with the settings menu
+
+                    // Show tooltip briefly
+                    button.classList.add('touch-tooltip-active');
+
+                    // Clear any existing timeout
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                    }
+
+                    // Hide tooltip after delay
+                    tooltipTimeout = setTimeout(() => {
+                        button.classList.remove('touch-tooltip-active');
+                    }, 2000);
+                }
+            },
+            { passive: true }
+        );
     }
 
     dispose() {
