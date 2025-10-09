@@ -32,7 +32,7 @@ const PlayerConfig = {
         height: 3,
 
         // Font size in em units
-        fontSize: 26,
+        fontSize: 16,
     },
 };
 
