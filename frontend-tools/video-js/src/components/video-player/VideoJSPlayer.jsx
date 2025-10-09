@@ -2491,48 +2491,44 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     const seekBar = progressControl?.getChild('seekBar');
 
                     // BEGIN: Apply control bar styling from config (always applied)
-                    setTimeout(() => {
-                        const controlBarEl = controlBar?.el();
-                        if (controlBarEl) {
-                            // Style control bar using config values
-                            controlBarEl.style.height = `${PlayerConfig.controlBar.height}em`;
-                            controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}px`;
-                            controlBarEl.style.backgroundColor = PlayerConfig.controlBar.backgroundColor;
+                    const controlBarEl = controlBar?.el();
+                    if (controlBarEl) {
+                        // Style control bar using config values
+                        controlBarEl.style.height = `${PlayerConfig.controlBar.height}em`;
+                        controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}px`;
+                        controlBarEl.style.backgroundColor = PlayerConfig.controlBar.backgroundColor;
 
-                            // Apply same line height to time-related controls
-                            const timeControls = controlBarEl.querySelectorAll('.vjs-time-control');
-                            timeControls.forEach((timeControl) => {
-                                timeControl.style.lineHeight = `${PlayerConfig.controlBar.height}em`;
-                            });
-                        }
-                    }, 100);
+                        // Apply same line height to time-related controls
+                        const timeControls = controlBarEl.querySelectorAll('.vjs-time-control');
+                        timeControls.forEach((timeControl) => {
+                            timeControl.style.lineHeight = `${PlayerConfig.controlBar.height}em`;
+                        });
+                    }
                     // END: Apply control bar styling from config
 
                     // BEGIN: Apply progress bar colors from config (always applied)
-                    setTimeout(() => {
-                        const progressControl = playerRef.current.getChild('controlBar')?.getChild('progressControl');
-                        const progressEl = progressControl?.el();
-
-                        if (progressEl) {
-                            // Style the progress holder and bars with config colors
-                            const progressHolder = progressEl.querySelector('.vjs-progress-holder');
-                            if (progressHolder) {
-                                progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
-                            }
-
-                            // Style the play progress bar (the filled part)
-                            const playProgress = progressEl.querySelector('.vjs-play-progress');
-                            if (playProgress) {
-                                playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
-                            }
-
-                            // Style the load progress bar (buffered part)
-                            const loadProgress = progressEl.querySelector('.vjs-load-progress');
-                            if (loadProgress) {
-                                loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
-                            }
+                    const progressEl = progressControl?.el();
+                    console.log('progressEl', progressEl);
+                    if (progressEl) {
+                        // Style the progress holder and bars with config colors
+                        const progressHolder = progressEl.querySelector('.vjs-progress-holder');
+                        if (progressHolder) {
+                            progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
                         }
-                    }, 150);
+
+                        // Style the play progress bar (the filled part)
+                        const playProgress = progressEl.querySelector('.vjs-play-progress');
+                        if (playProgress) {
+                            console.log('playProgress', playProgress);
+                            playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
+                        }
+
+                        // Style the load progress bar (buffered part)
+                        const loadProgress = progressEl.querySelector('.vjs-load-progress');
+                        if (loadProgress) {
+                            loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
+                        }
+                    }
                     // END: Apply progress bar colors from config
 
                     // Determine the actual position based on device type and config
@@ -2549,8 +2545,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     const actualPosition = getActualPosition();
 
                     // BEGIN: Move progress bar below control bar (native touch style)
-                    if (actualPosition === 'bottom' || actualPosition === 'top') {
-                        setTimeout(() => {
+                    setTimeout(() => {
+                        if (actualPosition === 'bottom' || actualPosition === 'top') {
                             if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
                                 const progressEl = progressControl.el();
                                 const controlBarEl = controlBar.el();
@@ -2619,6 +2615,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 playerRef.current.on('useractive', syncProgressVisibility);
                                 playerRef.current.on('userinactive', syncProgressVisibility);
 
+                                // Initial sync
+                                syncProgressVisibility();
                                 // Initial sync - hide until video starts
                                 progressEl.style.opacity = '0';
                                 progressEl.style.visibility = 'hidden';
@@ -2638,8 +2636,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     playerRef.current.off('userinactive', syncProgressVisibility);
                                 };
                             }
-                        }, 100);
-                    }
+                        }
+                    }, 100);
 
                     // END: Move progress bar below control bar
 
