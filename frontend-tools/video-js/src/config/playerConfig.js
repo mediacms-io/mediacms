@@ -4,14 +4,20 @@
  */
 
 const PlayerConfig = {
-    nativeControlsForTouch: true,
+    nativeControlsForTouch: false,
 
     // Progress bar configuration
     progressBar: {
-        // Position: 'top' or 'bottom'
+        // Position for non-touch devices: 'default', 'top', or 'bottom'
+        // 'default' - use Video.js default positioning (inside control bar)
         // 'top' - progress bar above control bar
-        // 'bottom' - progress bar below control bar (default/native style)
-        position: 'default',
+        // 'bottom' - progress bar below control bar
+        nonTouchPosition: 'default',
+
+        // Position for touch devices: 'top' or 'bottom' (no 'default' option)
+        // 'top' - progress bar above control bar
+        // 'bottom' - progress bar below control bar (native touch style)
+        touchPosition: 'bottom',
 
         // Progress bar color (hex, rgb, or CSS color name)
         color: '#019932',

@@ -2516,8 +2516,21 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     }, 100);
                     // END: Apply control bar styling from config
 
+                    // Determine the actual position based on device type and config
+                    const getActualPosition = () => {
+                        if (isTouchDevice) {
+                            // Touch devices: only 'top' or 'bottom' allowed
+                            return PlayerConfig.progressBar.touchPosition;
+                        } else {
+                            // Non-touch devices: 'default', 'top', or 'bottom' allowed
+                            return PlayerConfig.progressBar.nonTouchPosition;
+                        }
+                    };
+
+                    const actualPosition = getActualPosition();
+
                     // BEGIN: Move progress bar below control bar (native touch style)
-                    if (PlayerConfig.progressBar.position === 'bottom' || PlayerConfig.progressBar.position === 'top') {
+                    if (actualPosition === 'bottom' || actualPosition === 'top') {
                         setTimeout(() => {
                             if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
                                 const progressEl = progressControl.el();
@@ -2539,13 +2552,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 // Insert wrapper before control bar
                                 controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
 
-                                // Position elements based on config
-                                if (PlayerConfig.progressBar.position === 'top') {
+                                // Position elements based on actual resolved position
+                                if (actualPosition === 'top') {
                                     // Progress bar above control bar
                                     wrapper.appendChild(progressEl);
                                     wrapper.appendChild(controlBarEl);
                                 } else {
-                                    // Progress bar below control bar (default/native style)
+                                    // Progress bar below control bar (bottom/native style)
                                     wrapper.appendChild(controlBarEl);
                                     wrapper.appendChild(progressEl);
                                 }
@@ -2797,12 +2810,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // END: Implement custom time display component
 
                     // BEGIN: Add spacer to push right-side buttons to the right
-                    if (
-                        controlBar &&
-                        customRemainingTime &&
-                        customRemainingTime.el() &&
-                        (PlayerConfig.progressBar.position === 'top' || PlayerConfig.progressBar.position === 'bottom')
-                    ) {
+                    if (controlBar && customRemainingTime && customRemainingTime.el()) {
                         // Create spacer element
                         const spacer = document.createElement('div');
                         spacer.className = 'vjs-spacer-control vjs-control';
