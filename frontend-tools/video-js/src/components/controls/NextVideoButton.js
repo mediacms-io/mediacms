@@ -1,4 +1,5 @@
 import videojs from 'video.js';
+import PlayerConfig from '../../config/playerConfig';
 // import './NextVideoButton.css';
 
 const Button = videojs.getComponent('Button');
@@ -36,7 +37,7 @@ class NextVideoButton extends Button {
         // Create custom icon span with SVG
         const customIconSpan = videojs.dom.createEl('span');
         customIconSpan.innerHTML = `
-        <svg width="11" height="11" viewBox="14 14 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${PlayerConfig.controlBar.fontSize}" height="${PlayerConfig.controlBar.fontSize}" viewBox="14 14 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M14 34L28.1667 24L14 14V34ZM30.6667 14V34H34V14H30.6667Z" fill="currentColor"></path>
         </svg>`;
 
