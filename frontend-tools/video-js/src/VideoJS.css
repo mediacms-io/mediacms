@@ -469,6 +469,15 @@ html {
     font-weight: 500 !important;
 }
 
+/* Force CustomRemainingTime to always be visible on all screen sizes */
+.video-js .custom-remaining-time,
+.video-js .vjs-remaining-time {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+}
+
 @media (hover: hover) and (pointer: fine) {
     .vjs-volume-control.vjs-control {
         top: 17px !important;
@@ -1045,7 +1054,8 @@ button.vjs-button > .vjs-icon-placeholder:before {
     }
 
     /* Ensure time display is visible and has priority */
-    .video-js .custom-remaining-time {
+    .video-js .custom-remaining-time,
+    .video-js .vjs-remaining-time {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -1053,7 +1063,8 @@ button.vjs-button > .vjs-icon-placeholder:before {
         min-width: fit-content !important;
     }
 
-    .video-js .custom-remaining-time .vjs-remaining-time-display {
+    .video-js .custom-remaining-time .vjs-remaining-time-display,
+    .video-js .vjs-remaining-time .vjs-remaining-time-display {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
