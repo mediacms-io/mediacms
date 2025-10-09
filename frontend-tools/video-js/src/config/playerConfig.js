@@ -12,7 +12,7 @@ const PlayerConfig = {
         // 'default' - use Video.js default positioning (inside control bar)
         // 'top' - progress bar above control bar
         // 'bottom' - progress bar below control bar
-        nonTouchPosition: 'top',
+        nonTouchPosition: 'bottom',
 
         // Position for touch devices: 'top' or 'bottom' (no 'default' option)
         // 'top' - progress bar above control bar

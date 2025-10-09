@@ -2546,96 +2546,106 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // BEGIN: Move progress bar below control bar (native touch style)
                     setTimeout(() => {
-                        if (actualPosition === 'bottom' || actualPosition === 'top') {
-                            if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
-                                const progressEl = progressControl.el();
-                                const controlBarEl = controlBar.el();
-                                controlBarEl.style.gap = 0;
+                        if (
+                            (actualPosition === 'bottom' || actualPosition === 'top') &&
+                            progressControl &&
+                            progressControl.el() &&
+                            controlBar &&
+                            controlBar.el()
+                        ) {
+                            const progressEl = progressControl.el();
+                            const controlBarEl = controlBar.el();
+                            controlBarEl.style.gap = 0;
+                            controlBarEl.style.background = 'none';
+                            progressEl.style.background = 'none';
 
-                                // Remove progress control from control bar
-                                controlBar.removeChild(progressControl);
+                            // Remove progress control from control bar
+                            controlBar.removeChild(progressControl);
 
-                                // Create a wrapper div that will hold both progress and control bar
-                                const wrapper = document.createElement('div');
-                                wrapper.className = 'vjs-controls-wrapper';
-                                wrapper.style.position = 'absolute';
-                                wrapper.style.bottom = '0';
-                                wrapper.style.left = '0';
-                                wrapper.style.right = '0';
-                                wrapper.style.width = '100%';
+                            // Create a wrapper div that will hold both progress and control bar
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'vjs-controls-wrapper';
+                            wrapper.style.position = 'absolute';
+                            wrapper.style.bottom = '0';
+                            wrapper.style.left = '0';
+                            wrapper.style.right = '0';
+                            wrapper.style.width = '100%';
 
-                                // Insert wrapper before control bar
-                                controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
+                            // Insert wrapper before control bar
+                            controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
 
-                                // Position elements based on actual resolved position
-                                if (actualPosition === 'top') {
-                                    // Progress bar above control bar
-                                    wrapper.appendChild(progressEl);
-                                    wrapper.appendChild(controlBarEl);
+                            // Position elements based on actual resolved position
+                            if (actualPosition === 'top') {
+                                // Progress bar above control bar
+                                wrapper.appendChild(progressEl);
+                                wrapper.appendChild(controlBarEl);
+                            } else {
+                                // Progress bar below control bar (bottom/native style)
+                                wrapper.appendChild(controlBarEl);
+                                wrapper.appendChild(progressEl);
+                            }
+
+                            // Style the progress control using config values
+                            progressEl.style.position = 'relative';
+                            progressEl.style.width = '100%';
+                            progressEl.style.height = '15px';
+                            progressEl.style.margin = '8px 0'; // Add top and bottom margin
+                            progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
+                            progressEl.style.display = 'block';
+                            progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
+                            progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
+
+                            // Style control bar positioning
+                            controlBarEl.style.position = 'relative';
+                            controlBarEl.style.width = '100%';
+
+                            // Store reference for cleanup
+                            customComponents.current.movedProgressControl = progressControl;
+                            customComponents.current.controlsWrapper = wrapper;
+
+                            // Hide/show progress bar with control bar based on user activity
+
+                            const syncProgressVisibility = () => {
+                                const isControlBarVisible =
+                                    controlBar.hasClass('vjs-visible') ||
+                                    !playerRef.current.hasClass('vjs-user-inactive');
+
+                                if (isControlBarVisible) {
+                                    progressEl.style.opacity = '1';
+                                    progressEl.style.visibility = 'visible';
                                 } else {
-                                    // Progress bar below control bar (bottom/native style)
-                                    wrapper.appendChild(controlBarEl);
-                                    wrapper.appendChild(progressEl);
+                                    progressEl.style.opacity = '0';
+                                    progressEl.style.visibility = 'hidden';
                                 }
+                            };
 
-                                // Style the progress control using config values
-                                progressEl.style.position = 'relative';
-                                progressEl.style.width = '100%';
-                                progressEl.style.height = '15px';
-                                progressEl.style.margin = '8px 0'; // Add top and bottom margin
-                                progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
-                                progressEl.style.display = 'block';
-                                progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
-                                progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
+                            // Listen to user activity events
+                            playerRef.current.on('useractive', syncProgressVisibility);
+                            playerRef.current.on('userinactive', syncProgressVisibility);
 
-                                // Style control bar positioning
-                                controlBarEl.style.position = 'relative';
-                                controlBarEl.style.width = '100%';
+                            // Initial sync
+                            syncProgressVisibility();
 
-                                // Store reference for cleanup
-                                customComponents.current.movedProgressControl = progressControl;
-                                customComponents.current.controlsWrapper = wrapper;
-
-                                // Hide/show progress bar with control bar based on user activity
-                                const syncProgressVisibility = () => {
-                                    const isControlBarVisible =
-                                        controlBar.hasClass('vjs-visible') ||
-                                        !playerRef.current.hasClass('vjs-user-inactive');
-
-                                    if (isControlBarVisible) {
-                                        progressEl.style.opacity = '1';
-                                        progressEl.style.visibility = 'visible';
-                                    } else {
-                                        progressEl.style.opacity = '0';
-                                        progressEl.style.visibility = 'hidden';
-                                    }
-                                };
-
-                                // Listen to user activity events
-                                playerRef.current.on('useractive', syncProgressVisibility);
-                                playerRef.current.on('userinactive', syncProgressVisibility);
-
-                                // Initial sync
-                                syncProgressVisibility();
+                            if (isEmbedPlayer) {
                                 // Initial sync - hide until video starts
                                 progressEl.style.opacity = '0';
                                 progressEl.style.visibility = 'hidden';
-
-                                // Show when video starts
-                                const showOnPlay = () => {
-                                    syncProgressVisibility();
-                                    playerRef.current.off('play', showOnPlay);
-                                    playerRef.current.off('seeking', showOnPlay);
-                                };
-                                playerRef.current.on('play', showOnPlay);
-                                playerRef.current.on('seeking', showOnPlay);
-
-                                // Store cleanup function
-                                customComponents.current.cleanupProgressVisibility = () => {
-                                    playerRef.current.off('useractive', syncProgressVisibility);
-                                    playerRef.current.off('userinactive', syncProgressVisibility);
-                                };
                             }
+
+                            // Show when video starts
+                            const showOnPlay = () => {
+                                syncProgressVisibility();
+                                playerRef.current.off('play', showOnPlay);
+                                playerRef.current.off('seeking', showOnPlay);
+                            };
+                            playerRef.current.on('play', showOnPlay);
+                            playerRef.current.on('seeking', showOnPlay);
+
+                            // Store cleanup function
+                            customComponents.current.cleanupProgressVisibility = () => {
+                                playerRef.current.off('useractive', syncProgressVisibility);
+                                playerRef.current.off('userinactive', syncProgressVisibility);
+                            };
                         }
                     }, 100);
 
