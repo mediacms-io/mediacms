@@ -2119,14 +2119,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         'errorDisplay',
                         'textTrackSettings',
                         'resizeManager',
-
-                        'playToggle',
-                        //'volumePanel',
-                        'currentTimeDisplay',
-                        'timeDivider',
-                        'durationDisplay',
-                        // Remove progressControl from here
-                        'fullscreenToggle',
                     ],
                 });
 
