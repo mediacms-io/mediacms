@@ -2516,6 +2516,33 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     }, 100);
                     // END: Apply control bar styling from config
 
+                    // BEGIN: Apply progress bar colors from config (always applied)
+                    setTimeout(() => {
+                        const progressControl = playerRef.current.getChild('controlBar')?.getChild('progressControl');
+                        const progressEl = progressControl?.el();
+
+                        if (progressEl) {
+                            // Style the progress holder and bars with config colors
+                            const progressHolder = progressEl.querySelector('.vjs-progress-holder');
+                            if (progressHolder) {
+                                progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
+                            }
+
+                            // Style the play progress bar (the filled part)
+                            const playProgress = progressEl.querySelector('.vjs-play-progress');
+                            if (playProgress) {
+                                playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
+                            }
+
+                            // Style the load progress bar (buffered part)
+                            const loadProgress = progressEl.querySelector('.vjs-load-progress');
+                            if (loadProgress) {
+                                loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
+                            }
+                        }
+                    }, 150);
+                    // END: Apply progress bar colors from config
+
                     // Determine the actual position based on device type and config
                     const getActualPosition = () => {
                         if (isTouchDevice) {
@@ -2576,26 +2603,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 // Style control bar positioning
                                 controlBarEl.style.position = 'relative';
                                 controlBarEl.style.width = '100%';
-
-                                // Style the progress holder and bars with config colors
-                                const progressHolder = progressEl.querySelector('.vjs-progress-holder');
-                                if (progressHolder) {
-                                    progressHolder.style.height = '100%';
-                                    progressHolder.style.margin = '0';
-                                    progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
-                                }
-
-                                // Style the play progress bar (the filled part)
-                                const playProgress = progressEl.querySelector('.vjs-play-progress');
-                                if (playProgress) {
-                                    playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
-                                }
-
-                                // Style the load progress bar (buffered part)
-                                const loadProgress = progressEl.querySelector('.vjs-load-progress');
-                                if (loadProgress) {
-                                    loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
-                                }
 
                                 // Store reference for cleanup
                                 customComponents.current.movedProgressControl = progressControl;
@@ -2810,7 +2817,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // END: Implement custom time display component
 
                     // BEGIN: Add spacer to push right-side buttons to the right
-                    if (controlBar && customRemainingTime && customRemainingTime.el()) {
+                    if (
+                        controlBar &&
+                        customRemainingTime &&
+                        customRemainingTime.el() &&
+                        PlayerConfig.progressBar.nonTouchPosition !== 'default'
+                    ) {
                         // Create spacer element
                         const spacer = document.createElement('div');
                         spacer.className = 'vjs-spacer-control vjs-control';

@@ -17,7 +17,7 @@ const PlayerConfig = {
         // Position for touch devices: 'top' or 'bottom' (no 'default' option)
         // 'top' - progress bar above control bar
         // 'bottom' - progress bar below control bar (native touch style)
-        touchPosition: 'bottom',
+        touchPosition: 'top',
 
         // Progress bar color (hex, rgb, or CSS color name)
         color: '#019932',
@@ -32,7 +32,7 @@ const PlayerConfig = {
     // Control bar configuration
     controlBar: {
         // Background color
-        backgroundColor: '#FF00000', // 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
 
         // Height in em units
         height: 3,
