@@ -20,6 +20,18 @@ const PlayerConfig = {
         // Loaded buffer color
         bufferColor: 'rgba(255, 255, 255, 0.5)',
     },
+
+    // Control bar configuration
+    controlBar: {
+        // Background color
+        backgroundColor: '#FF00000', // 'rgba(0, 0, 0, 0.7)',
+
+        // Height in em units
+        height: 3,
+
+        // Font size in em units
+        fontSize: 1.5,
+    },
 };
 
 export default PlayerConfig;

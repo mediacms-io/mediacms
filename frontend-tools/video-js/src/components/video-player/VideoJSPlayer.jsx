@@ -2510,6 +2510,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
                             const progressEl = progressControl.el();
                             const controlBarEl = controlBar.el();
+                            controlBarEl.style.gap = 0;
 
                             // Remove progress control from control bar
                             controlBar.removeChild(progressControl);
@@ -2547,9 +2548,18 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
                             progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
 
-                            // Style control bar
+                            // Style control bar using config values
                             controlBarEl.style.position = 'relative';
                             controlBarEl.style.width = '100%';
+                            controlBarEl.style.height = `${PlayerConfig.controlBar.height}em`;
+                            controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}em`;
+                            controlBarEl.style.backgroundColor = PlayerConfig.controlBar.backgroundColor;
+
+                            // Apply same line height to time-related controls
+                            const timeControls = controlBarEl.querySelectorAll('.vjs-time-control');
+                            timeControls.forEach((timeControl) => {
+                                timeControl.style.lineHeight = `${PlayerConfig.controlBar.height}em`;
+                            });
 
                             // Style the progress holder and bars with config colors
                             const progressHolder = progressEl.querySelector('.vjs-progress-holder');
