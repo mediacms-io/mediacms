@@ -1831,10 +1831,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 return;
             }
 
-            const useNative = false; // /iPad|iPhone|iPod|Android/.test(navigator.userAgent);
-            console.log('useNative', useNative);
-            console.log('navigator.userAgent', navigator.userAgent);
-
             //const timer = setTimeout(() => {
             // Double-check that we still don't have a player and element exists
             if (!playerRef.current && videoRef.current && !videoRef.current.player) {
@@ -1942,7 +1938,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     },
 
                     // Force native controls for touch devices
-                    nativeControlsForTouch: useNative, //true,
+                    nativeControlsForTouch: PlayerConfig.nativeControlsForTouch,
 
                     // Ensures consistent autoplay behavior across browsers (prevents unexpected blocking or auto-play issues)
                     normalizeAutoplay: true,
@@ -2093,7 +2089,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // ===== HTML5 TECH OPTIONS =====
                     html5: {
                         // Force native controls for touch devices
-                        nativeControlsForTouch: useNative, //true,
+                        nativeControlsForTouch: PlayerConfig.nativeControlsForTouch,
 
                         // Use native audio tracks instead of emulated - disabled for consistency
                         nativeAudioTracks: true,
@@ -2502,57 +2498,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     const progressControl = controlBar.getChild('progressControl');
                     const seekBar = progressControl?.getChild('seekBar');
 
-                    // BEGIN: Move progress bar below control bar (native touch style)
+                    // BEGIN: Apply control bar styling from config (always applied)
                     setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const progressControl = controlBar?.getChild('progressControl');
-
-                        if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
-                            const progressEl = progressControl.el();
-                            const controlBarEl = controlBar.el();
-                            controlBarEl.style.gap = 0;
-
-                            // Remove progress control from control bar
-                            controlBar.removeChild(progressControl);
-
-                            // Create a wrapper div that will hold both progress and control bar
-                            const wrapper = document.createElement('div');
-                            wrapper.className = 'vjs-controls-wrapper';
-                            wrapper.style.position = 'absolute';
-                            wrapper.style.bottom = '0';
-                            wrapper.style.left = '0';
-                            wrapper.style.right = '0';
-                            wrapper.style.width = '100%';
-
-                            // Insert wrapper before control bar
-                            controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
-
-                            // Position elements based on config
-                            if (PlayerConfig.progressBar.position === 'top') {
-                                // Progress bar above control bar
-                                wrapper.appendChild(progressEl);
-                                wrapper.appendChild(controlBarEl);
-                            } else {
-                                // Progress bar below control bar (default/native style)
-                                wrapper.appendChild(controlBarEl);
-                                wrapper.appendChild(progressEl);
-                            }
-
-                            // Style the progress control using config values
-                            progressEl.style.position = 'relative';
-                            progressEl.style.width = '100%';
-                            progressEl.style.height = '15px';
-                            progressEl.style.margin = '8px 0'; // Add top and bottom margin
-                            progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
-                            progressEl.style.display = 'block';
-                            progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
-                            progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
-
+                        const controlBarEl = controlBar?.el();
+                        if (controlBarEl) {
                             // Style control bar using config values
-                            controlBarEl.style.position = 'relative';
-                            controlBarEl.style.width = '100%';
                             controlBarEl.style.height = `${PlayerConfig.controlBar.height}em`;
-                            controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}em`;
+                            controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}px`;
                             controlBarEl.style.backgroundColor = PlayerConfig.controlBar.backgroundColor;
 
                             // Apply same line height to time-related controls
@@ -2560,60 +2512,113 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             timeControls.forEach((timeControl) => {
                                 timeControl.style.lineHeight = `${PlayerConfig.controlBar.height}em`;
                             });
-
-                            // Style the progress holder and bars with config colors
-                            const progressHolder = progressEl.querySelector('.vjs-progress-holder');
-                            if (progressHolder) {
-                                progressHolder.style.height = '100%';
-                                progressHolder.style.margin = '0';
-                                progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
-                            }
-
-                            // Style the play progress bar (the filled part)
-                            const playProgress = progressEl.querySelector('.vjs-play-progress');
-                            if (playProgress) {
-                                playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
-                            }
-
-                            // Style the load progress bar (buffered part)
-                            const loadProgress = progressEl.querySelector('.vjs-load-progress');
-                            if (loadProgress) {
-                                loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
-                            }
-
-                            // Store reference for cleanup
-                            customComponents.current.movedProgressControl = progressControl;
-                            customComponents.current.controlsWrapper = wrapper;
-
-                            // Hide/show progress bar with control bar based on user activity
-                            const syncProgressVisibility = () => {
-                                const isControlBarVisible =
-                                    controlBar.hasClass('vjs-visible') ||
-                                    !playerRef.current.hasClass('vjs-user-inactive');
-
-                                if (isControlBarVisible) {
-                                    progressEl.style.opacity = '1';
-                                    progressEl.style.visibility = 'visible';
-                                } else {
-                                    progressEl.style.opacity = '0';
-                                    progressEl.style.visibility = 'hidden';
-                                }
-                            };
-
-                            // Listen to user activity events
-                            playerRef.current.on('useractive', syncProgressVisibility);
-                            playerRef.current.on('userinactive', syncProgressVisibility);
-
-                            // Initial sync
-                            syncProgressVisibility();
-
-                            // Store cleanup function
-                            customComponents.current.cleanupProgressVisibility = () => {
-                                playerRef.current.off('useractive', syncProgressVisibility);
-                                playerRef.current.off('userinactive', syncProgressVisibility);
-                            };
                         }
                     }, 100);
+                    // END: Apply control bar styling from config
+
+                    // BEGIN: Move progress bar below control bar (native touch style)
+                    if (PlayerConfig.progressBar.position === 'bottom' || PlayerConfig.progressBar.position === 'top') {
+                        setTimeout(() => {
+                            if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
+                                const progressEl = progressControl.el();
+                                const controlBarEl = controlBar.el();
+                                controlBarEl.style.gap = 0;
+
+                                // Remove progress control from control bar
+                                controlBar.removeChild(progressControl);
+
+                                // Create a wrapper div that will hold both progress and control bar
+                                const wrapper = document.createElement('div');
+                                wrapper.className = 'vjs-controls-wrapper';
+                                wrapper.style.position = 'absolute';
+                                wrapper.style.bottom = '0';
+                                wrapper.style.left = '0';
+                                wrapper.style.right = '0';
+                                wrapper.style.width = '100%';
+
+                                // Insert wrapper before control bar
+                                controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
+
+                                // Position elements based on config
+                                if (PlayerConfig.progressBar.position === 'top') {
+                                    // Progress bar above control bar
+                                    wrapper.appendChild(progressEl);
+                                    wrapper.appendChild(controlBarEl);
+                                } else {
+                                    // Progress bar below control bar (default/native style)
+                                    wrapper.appendChild(controlBarEl);
+                                    wrapper.appendChild(progressEl);
+                                }
+
+                                // Style the progress control using config values
+                                progressEl.style.position = 'relative';
+                                progressEl.style.width = '100%';
+                                progressEl.style.height = '15px';
+                                progressEl.style.margin = '8px 0'; // Add top and bottom margin
+                                progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
+                                progressEl.style.display = 'block';
+                                progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
+                                progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
+
+                                // Style control bar positioning
+                                controlBarEl.style.position = 'relative';
+                                controlBarEl.style.width = '100%';
+
+                                // Style the progress holder and bars with config colors
+                                const progressHolder = progressEl.querySelector('.vjs-progress-holder');
+                                if (progressHolder) {
+                                    progressHolder.style.height = '100%';
+                                    progressHolder.style.margin = '0';
+                                    progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
+                                }
+
+                                // Style the play progress bar (the filled part)
+                                const playProgress = progressEl.querySelector('.vjs-play-progress');
+                                if (playProgress) {
+                                    playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
+                                }
+
+                                // Style the load progress bar (buffered part)
+                                const loadProgress = progressEl.querySelector('.vjs-load-progress');
+                                if (loadProgress) {
+                                    loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
+                                }
+
+                                // Store reference for cleanup
+                                customComponents.current.movedProgressControl = progressControl;
+                                customComponents.current.controlsWrapper = wrapper;
+
+                                // Hide/show progress bar with control bar based on user activity
+                                const syncProgressVisibility = () => {
+                                    const isControlBarVisible =
+                                        controlBar.hasClass('vjs-visible') ||
+                                        !playerRef.current.hasClass('vjs-user-inactive');
+
+                                    if (isControlBarVisible) {
+                                        progressEl.style.opacity = '1';
+                                        progressEl.style.visibility = 'visible';
+                                    } else {
+                                        progressEl.style.opacity = '0';
+                                        progressEl.style.visibility = 'hidden';
+                                    }
+                                };
+
+                                // Listen to user activity events
+                                playerRef.current.on('useractive', syncProgressVisibility);
+                                playerRef.current.on('userinactive', syncProgressVisibility);
+
+                                // Initial sync
+                                syncProgressVisibility();
+
+                                // Store cleanup function
+                                customComponents.current.cleanupProgressVisibility = () => {
+                                    playerRef.current.off('useractive', syncProgressVisibility);
+                                    playerRef.current.off('userinactive', syncProgressVisibility);
+                                };
+                            }
+                        }, 100);
+                    }
+
                     // END: Move progress bar below control bar
 
                     // Debug: Check if progress control exists and is visible on touch devices
@@ -2790,6 +2795,35 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     controlBar.addChild(customRemainingTime, {}, volumePanelIndex + 1);
                     customComponents.current.customRemainingTime = customRemainingTime;
                     // END: Implement custom time display component
+
+                    // BEGIN: Add spacer to push right-side buttons to the right
+                    if (
+                        controlBar &&
+                        customRemainingTime &&
+                        customRemainingTime.el() &&
+                        (PlayerConfig.progressBar.position === 'top' || PlayerConfig.progressBar.position === 'bottom')
+                    ) {
+                        // Create spacer element
+                        const spacer = document.createElement('div');
+                        spacer.className = 'vjs-spacer-control vjs-control';
+                        spacer.style.flex = '1';
+                        spacer.style.minWidth = '1px';
+
+                        // Insert spacer right after the time display
+                        const controlBarEl = controlBar.el();
+                        const timeDisplayEl = customRemainingTime.el();
+                        const nextSibling = timeDisplayEl.nextSibling;
+
+                        if (nextSibling) {
+                            controlBarEl.insertBefore(spacer, nextSibling);
+                        } else {
+                            controlBarEl.appendChild(spacer);
+                        }
+
+                        // Store reference for cleanup
+                        customComponents.current.spacer = spacer;
+                    }
+                    // END: Add spacer
 
                     // BEGIN: Wrap volume panel in custom div container
                     /* setTimeout(() => {

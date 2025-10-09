@@ -4,12 +4,14 @@
  */
 
 const PlayerConfig = {
+    nativeControlsForTouch: true,
+
     // Progress bar configuration
     progressBar: {
         // Position: 'top' or 'bottom'
         // 'top' - progress bar above control bar
         // 'bottom' - progress bar below control bar (default/native style)
-        position: 'top',
+        position: 'default',
 
         // Progress bar color (hex, rgb, or CSS color name)
         color: '#019932',
@@ -30,7 +32,7 @@ const PlayerConfig = {
         height: 3,
 
         // Font size in em units
-        fontSize: 1.5,
+        fontSize: 26,
     },
 };
 
