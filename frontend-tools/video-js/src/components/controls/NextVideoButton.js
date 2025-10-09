@@ -29,6 +29,7 @@ class NextVideoButton extends Button {
             'aria-label': 'Next Video',
             'aria-disabled': 'false',
         });
+        button.style.width = '2.5em';
 
         // Create the icon placeholder span (Video.js standard structure)
         const iconPlaceholder = videojs.dom.createEl('span', {
