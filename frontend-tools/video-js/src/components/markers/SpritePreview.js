@@ -36,8 +36,22 @@ class SpritePreview extends Component {
             return;
         }
 
-        const progressControl = this.player().getChild('controlBar').getChild('progressControl');
-        if (!progressControl) return;
+        // Try to get progress control from control bar first, then from moved location
+        let progressControl = this.player().getChild('controlBar').getChild('progressControl');
+        console.log('SpritePreview: progressControl from controlBar:', progressControl);
+
+        // If not found in control bar, it might have been moved to a wrapper
+        if (!progressControl) {
+            // Look for moved progress control in custom components
+            const customComponents = this.player().customComponents || {};
+            progressControl = customComponents.movedProgressControl;
+            console.log('SpritePreview: progressControl from customComponents:', progressControl);
+        }
+
+        if (!progressControl) {
+            console.log('SpritePreview: No progress control found!');
+            return;
+        }
 
         const seekBar = progressControl.getChild('seekBar');
         if (!seekBar) return;
@@ -229,7 +243,14 @@ class SpritePreview extends Component {
 
     dispose() {
         // Clean up event listeners
-        const progressControl = this.player().getChild('controlBar')?.getChild('progressControl');
+        let progressControl = this.player().getChild('controlBar')?.getChild('progressControl');
+
+        // If not found in control bar, it might have been moved to a wrapper
+        if (!progressControl) {
+            const customComponents = this.player().customComponents || {};
+            progressControl = customComponents.movedProgressControl;
+        }
+
         if (progressControl) {
             const progressControlEl = progressControl.el();
             progressControlEl.removeEventListener('mouseenter', this.handleMouseEnter);

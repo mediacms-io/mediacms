@@ -86,7 +86,16 @@ class ChapterMarkers extends Component {
             return;
         }
 
-        const progressControl = this.player().getChild('controlBar').getChild('progressControl');
+        // Try to get progress control from control bar first, then from moved location
+        let progressControl = this.player().getChild('controlBar').getChild('progressControl');
+
+        // If not found in control bar, it might have been moved to a wrapper
+        if (!progressControl) {
+            // Look for moved progress control in custom components
+            const customComponents = this.player().customComponents || {};
+            progressControl = customComponents.movedProgressControl;
+        }
+
         if (!progressControl) return;
 
         const seekBar = progressControl.getChild('seekBar');
@@ -375,7 +384,14 @@ class ChapterMarkers extends Component {
 
     dispose() {
         // Clean up event listeners
-        const progressControl = this.player().getChild('controlBar')?.getChild('progressControl');
+        let progressControl = this.player().getChild('controlBar')?.getChild('progressControl');
+
+        // If not found in control bar, it might have been moved to a wrapper
+        if (!progressControl) {
+            const customComponents = this.player().customComponents || {};
+            progressControl = customComponents.movedProgressControl;
+        }
+
         if (progressControl) {
             const progressControlEl = progressControl.el();
             progressControlEl.removeEventListener('mouseenter', this.handleMouseEnter);

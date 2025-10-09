@@ -2603,6 +2603,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             customComponents.current.movedProgressControl = progressControl;
                             customComponents.current.controlsWrapper = wrapper;
 
+                            // Also store on player instance for sprite preview access
+                            playerRef.current.customComponents = customComponents.current;
+
                             // Hide/show progress bar with control bar based on user activity
 
                             const syncProgressVisibility = () => {
