@@ -337,7 +337,7 @@ class UserDetail(APIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter(name='action', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="action to perform ('change_password' or 'approve_user')"),
+            openapi.Parameter(name='action', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="action to perform ('change_password' or 'approve_user' or 'disapprove_user')"),
             openapi.Parameter(name='password', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="new password (if action is 'change_password')"),
         ],
         tags=['Users'],
@@ -363,6 +363,11 @@ class UserDetail(APIView):
             if not is_mediacms_manager(request.user):
                 raise PermissionDenied("You do not have permission to approve users.")
             user.is_approved = True
+            user.save()
+        elif action == "disapprove_user":
+            if not is_mediacms_manager(request.user):
+                raise PermissionDenied("You do not have permission to approve users.")
+            user.is_approved = False
             user.save()
         else:
             return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
