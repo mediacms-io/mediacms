@@ -9,6 +9,15 @@ class NextVideoButton extends Button {
     constructor(player, options) {
         super(player, options);
         // this.nextLink = options.nextLink || '';
+        // Check if this is a touch device
+        const isTouchDevice =
+            options.isTouchDevice ||
+            'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0;
+
+        // Store the appropriate font size based on device type
+        this.iconSize = isTouchDevice ? PlayerConfig.controlBar.mobileFontSize : PlayerConfig.controlBar.fontSize;
     }
 
     createEl() {
@@ -36,10 +45,12 @@ class NextVideoButton extends Button {
 
         // Create custom icon span with SVG
         const customIconSpan = videojs.dom.createEl('span');
-        customIconSpan.innerHTML = `
-        <svg width="${PlayerConfig.controlBar.fontSize}" height="${PlayerConfig.controlBar.fontSize}" viewBox="14 14 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 34L28.1667 24L14 14V34ZM30.6667 14V34H34V14H30.6667Z" fill="currentColor"></path>
-        </svg>`;
+        setTimeout(() => {
+            customIconSpan.innerHTML = `
+            <svg width="${this.iconSize}" height="${this.iconSize}" viewBox="14 14 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 34L28.1667 24L14 14V34ZM30.6667 14V34H34V14H30.6667Z" fill="currentColor"></path>
+            </svg>`;
+        }, 0);
 
         // Append spans to button in Video.js standard order
         button.appendChild(iconPlaceholder);

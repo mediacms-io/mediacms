@@ -2495,7 +2495,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     if (controlBarEl) {
                         // Style control bar using config values
                         controlBarEl.style.height = `${PlayerConfig.controlBar.height}em`;
-                        controlBarEl.style.fontSize = `${PlayerConfig.controlBar.fontSize}px`;
+                        controlBarEl.style.fontSize = `${isTouchDevice ? PlayerConfig.controlBar.mobileFontSize : PlayerConfig.controlBar.fontSize}px`;
                         controlBarEl.style.backgroundColor = PlayerConfig.controlBar.backgroundColor;
 
                         // Apply same line height to time-related controls
@@ -2784,7 +2784,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
                         // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
                         const nextVideoButton = new NextVideoButton(playerRef.current, {
-                            nextLink: mediaData.nextLink,
+                            isTouchDevice: isTouchDevice,
                         });
                         const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
                         controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1); // After time display
