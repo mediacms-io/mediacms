@@ -22,7 +22,7 @@ import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
 import SeekIndicator from '../controls/SeekIndicator';
 import UserPreferences from '../../utils/UserPreferences';
-import TestButton from '../controls/TestButton';
+import PlayerConfig from '../../config/playerConfig';
 import { AutoplayHandler } from '../../utils/AutoplayHandler';
 import { OrientationHandler } from '../../utils/OrientationHandler';
 import { EndScreenHandler } from '../../utils/EndScreenHandler';
@@ -1831,6 +1831,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 return;
             }
 
+            const useNative = false; // /iPad|iPhone|iPod|Android/.test(navigator.userAgent);
+            console.log('useNative', useNative);
+            console.log('navigator.userAgent', navigator.userAgent);
+
             //const timer = setTimeout(() => {
             // Double-check that we still don't have a player and element exists
             if (!playerRef.current && videoRef.current && !videoRef.current.player) {
@@ -1938,7 +1942,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     },
 
                     // Force native controls for touch devices
-                    nativeControlsForTouch: true,
+                    nativeControlsForTouch: useNative, //true,
 
                     // Ensures consistent autoplay behavior across browsers (prevents unexpected blocking or auto-play issues)
                     normalizeAutoplay: true,
@@ -1982,11 +1986,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // User interaction options
                     userActions: {
                         // Enable/disable or customize click behavior
-                        click: true,
-                        tap: true,
+                        // click: true,
+                        // tap: true,
 
-                        // Enable/disable or customize double-click behavior (fullscreen toggle)
-                        doubleClick: true,
+                        // // Enable/disable or customize double-click behavior (fullscreen toggle)
+                        // doubleClick: true,
 
                         hotkeys: true,
                         // Hotkey configuration
@@ -2029,7 +2033,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // ===== CONTROL BAR OPTIONS =====
                     controlBar: {
                         playToggle: true,
-                        progressControl: true,
+                        progressControl: {
+                            seekBar: {},
+                        },
                         /* progressControl: {
                             seekBar: {
                                 timeTooltip: {
@@ -2087,7 +2093,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // ===== HTML5 TECH OPTIONS =====
                     html5: {
                         // Force native controls for touch devices
-                        nativeControlsForTouch: true,
+                        nativeControlsForTouch: useNative, //true,
 
                         // Use native audio tracks instead of emulated - disabled for consistency
                         nativeAudioTracks: true,
@@ -2117,6 +2123,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         'errorDisplay',
                         'textTrackSettings',
                         'resizeManager',
+
+                        'playToggle',
+                        //'volumePanel',
+                        'currentTimeDisplay',
+                        'timeDivider',
+                        'durationDisplay',
+                        // Remove progressControl from here
+                        'fullscreenToggle',
                     ],
                 });
 
@@ -2130,11 +2144,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // Enable tooltips for all standard VideoJS buttons
                     enableStandardButtonTooltips(playerRef.current);
-
-                    // ADD TEST BUTTON HERE - after basic setup, before other components
-                    const testButton = new TestButton(playerRef.current, {});
-                    playerRef.current.addChild(testButton);
-                    customComponents.current.testButton = testButton; // Store for cleanup
 
                     // Setup orientation handling for touch devices
                     const orientationHandler = new OrientationHandler(playerRef.current, isTouchDevice);
@@ -2492,7 +2501,110 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // const currentTimeDisplay = controlBar.getChild('currentTimeDisplay');
                     const progressControl = controlBar.getChild('progressControl');
                     const seekBar = progressControl?.getChild('seekBar');
-                    // const chaptersButton = controlBar.getChild('chaptersButton');
+
+                    // BEGIN: Move progress bar below control bar (native touch style)
+                    setTimeout(() => {
+                        const controlBar = playerRef.current.getChild('controlBar');
+                        const progressControl = controlBar?.getChild('progressControl');
+
+                        if (progressControl && progressControl.el() && controlBar && controlBar.el()) {
+                            const progressEl = progressControl.el();
+                            const controlBarEl = controlBar.el();
+
+                            // Remove progress control from control bar
+                            controlBar.removeChild(progressControl);
+
+                            // Create a wrapper div that will hold both progress and control bar
+                            const wrapper = document.createElement('div');
+                            wrapper.className = 'vjs-controls-wrapper';
+                            wrapper.style.position = 'absolute';
+                            wrapper.style.bottom = '0';
+                            wrapper.style.left = '0';
+                            wrapper.style.right = '0';
+                            wrapper.style.width = '100%';
+
+                            // Insert wrapper before control bar
+                            controlBarEl.parentNode.insertBefore(wrapper, controlBarEl);
+
+                            // Position elements based on config
+                            if (PlayerConfig.progressBar.position === 'top') {
+                                // Progress bar above control bar
+                                wrapper.appendChild(progressEl);
+                                wrapper.appendChild(controlBarEl);
+                            } else {
+                                // Progress bar below control bar (default/native style)
+                                wrapper.appendChild(controlBarEl);
+                                wrapper.appendChild(progressEl);
+                            }
+
+                            // Style the progress control using config values
+                            progressEl.style.position = 'relative';
+                            progressEl.style.width = '100%';
+                            progressEl.style.height = '15px';
+                            progressEl.style.margin = '8px 0'; // Add top and bottom margin
+                            progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
+                            progressEl.style.display = 'block';
+                            progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
+                            progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width
+
+                            // Style control bar
+                            controlBarEl.style.position = 'relative';
+                            controlBarEl.style.width = '100%';
+
+                            // Style the progress holder and bars with config colors
+                            const progressHolder = progressEl.querySelector('.vjs-progress-holder');
+                            if (progressHolder) {
+                                progressHolder.style.height = '100%';
+                                progressHolder.style.margin = '0';
+                                progressHolder.style.backgroundColor = PlayerConfig.progressBar.trackColor;
+                            }
+
+                            // Style the play progress bar (the filled part)
+                            const playProgress = progressEl.querySelector('.vjs-play-progress');
+                            if (playProgress) {
+                                playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
+                            }
+
+                            // Style the load progress bar (buffered part)
+                            const loadProgress = progressEl.querySelector('.vjs-load-progress');
+                            if (loadProgress) {
+                                loadProgress.style.backgroundColor = PlayerConfig.progressBar.bufferColor;
+                            }
+
+                            // Store reference for cleanup
+                            customComponents.current.movedProgressControl = progressControl;
+                            customComponents.current.controlsWrapper = wrapper;
+
+                            // Hide/show progress bar with control bar based on user activity
+                            const syncProgressVisibility = () => {
+                                const isControlBarVisible =
+                                    controlBar.hasClass('vjs-visible') ||
+                                    !playerRef.current.hasClass('vjs-user-inactive');
+
+                                if (isControlBarVisible) {
+                                    progressEl.style.opacity = '1';
+                                    progressEl.style.visibility = 'visible';
+                                } else {
+                                    progressEl.style.opacity = '0';
+                                    progressEl.style.visibility = 'hidden';
+                                }
+                            };
+
+                            // Listen to user activity events
+                            playerRef.current.on('useractive', syncProgressVisibility);
+                            playerRef.current.on('userinactive', syncProgressVisibility);
+
+                            // Initial sync
+                            syncProgressVisibility();
+
+                            // Store cleanup function
+                            customComponents.current.cleanupProgressVisibility = () => {
+                                playerRef.current.off('useractive', syncProgressVisibility);
+                                playerRef.current.off('userinactive', syncProgressVisibility);
+                            };
+                        }
+                    }, 100);
+                    // END: Move progress bar below control bar
 
                     // Debug: Check if progress control exists and is visible on touch devices
                     /* if (isTouchDevice) {
