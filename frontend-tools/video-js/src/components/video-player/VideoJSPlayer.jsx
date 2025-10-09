@@ -2813,7 +2813,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         controlBar &&
                         customRemainingTime &&
                         customRemainingTime.el() &&
-                        PlayerConfig.progressBar.nonTouchPosition !== 'default'
+                        (PlayerConfig.progressBar.nonTouchPosition !== 'default' || isTouchDevice)
                     ) {
                         // Create spacer element
                         const spacer = document.createElement('div');
