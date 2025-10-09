@@ -65,7 +65,7 @@ const enableStandardButtonTooltips = (player) => {
                 buttonEl.setAttribute('aria-label', tooltipText);
 
                 // Add touch tooltip support for mobile devices
-                addTouchTooltipSupport(buttonEl);
+                //addTouchTooltipSupport(buttonEl);
 
                 // For dynamic tooltips (play/pause, fullscreen), update on state change
                 if (buttonName === 'playToggle') {
