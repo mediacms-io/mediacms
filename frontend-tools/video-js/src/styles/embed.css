@@ -76,9 +76,10 @@
 
 /* ===== EMBED CONTROL BAR POSITIONING ===== */
 /* Sticky controls for embed player - always at bottom of window */
-#page-embed .video-js-root-embed .video-js .vjs-control-bar {
+/* #page-embed .video-js-root-embed .video-js .vjs-control-bar {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
 }
+ */

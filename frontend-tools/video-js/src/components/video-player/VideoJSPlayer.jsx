@@ -2619,8 +2619,18 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                 playerRef.current.on('useractive', syncProgressVisibility);
                                 playerRef.current.on('userinactive', syncProgressVisibility);
 
-                                // Initial sync
-                                syncProgressVisibility();
+                                // Initial sync - hide until video starts
+                                progressEl.style.opacity = '0';
+                                progressEl.style.visibility = 'hidden';
+
+                                // Show when video starts
+                                const showOnPlay = () => {
+                                    syncProgressVisibility();
+                                    playerRef.current.off('play', showOnPlay);
+                                    playerRef.current.off('seeking', showOnPlay);
+                                };
+                                playerRef.current.on('play', showOnPlay);
+                                playerRef.current.on('seeking', showOnPlay);
 
                                 // Store cleanup function
                                 customComponents.current.cleanupProgressVisibility = () => {
