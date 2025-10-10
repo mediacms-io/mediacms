@@ -3,7 +3,7 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 // import '../../VideoJS.css';
 import '../../styles/embed.css';
-// import '../controls/SubtitlesButton.css';
+import '../controls/SubtitlesButton.css';
 import './VideoJSPlayer.css';
 import './VideoJSPlayerRoundedCorners.css';
 import '../controls/ButtonTooltips.css';
@@ -42,8 +42,8 @@ const enableStandardButtonTooltips = (player) => {
             // volumePanel: 'Volume', // Removed - no tooltip for volume
             fullscreenToggle: () => (player.isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'),
             pictureInPictureToggle: 'Picture-in-picture',
-            subtitlesButton: 'Subtitles/CC',
-            captionsButton: '',
+            subtitlesButton: '',
+            captionsButton: 'Captions',
             subsCapsButton: '',
             chaptersButton: 'Chapters',
             audioTrackButton: 'Audio tracks',
@@ -1176,7 +1176,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           media_type: 'video',
                           original_media_url:
                               '/media/original/user/markos/db52140de7204022a1e5f08e078b4ec6.UniversityofCopenhagenMærskTower.mp4',
-                          _hls_info: {
+                          hls_info: {
                               master_file: '/media/hls/5073e97457004961a163c5b504e2d7e8/master.m3u8',
                               '240_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-1/iframes.m3u8',
                               '480_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-2/iframes.m3u8',
@@ -1189,7 +1189,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '144_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-4/stream.m3u8',
                               '360_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-5/stream.m3u8',
                           },
-                          hls_info: {},
+                          // hls_info: {},
                           /* hls_info: {
                               master_file: '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/master.m3u8',
                               '240_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/iframes.m3u8',
@@ -2116,7 +2116,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         descriptionsButton: false,
 
                         // Subtitles (CC) button should be visible
-                        subtitlesButton: false, // hasSubtitles && !isTouchDevice ? true : false,
+                        subtitlesButton: hasSubtitles ? true : false, // hasSubtitles && !isTouchDevice ? true : false,
 
                         // Captions button (keep disabled to avoid duplicate with subtitles)
                         captionsButton: hasSubtitles ? true : false,
@@ -2989,7 +2989,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // END: Implement autoplay toggle button
 
                     // Make menus clickable instead of hover-only
-                    /*  setTimeout(() => {
+                    setTimeout(() => {
                         const setupClickableMenus = () => {
                             // Find all menu buttons (subtitles, etc.) - exclude chaptersButton as it has custom overlay
                             const menuButtons = ['subtitlesButton', 'playbackRateMenuButton'];
@@ -3049,54 +3049,149 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                     const menu = el.querySelector('.vjs-menu');
                                     if (menu) menu.style.display = 'none';
 
-                                    const toggleSubs = (ev) => {
-                                        ev.preventDefault();
-                                        ev.stopPropagation();
-                                        const tracks = playerRef.current.textTracks();
-                                        let any = false;
-                                        for (let i = 0; i < tracks.length; i++) {
-                                            const t = tracks[i];
-                                            if (t.kind === 'subtitles' && t.mode === 'showing') {
-                                                any = true;
-                                                break;
+                                    // Different behavior for subtitles button - open settings menu directly
+                                    if (n === 'subtitlesButton') {
+                                        // Subtitles button opens settings menu directly to subtitles
+                                        const openSubtitlesSettings = (ev) => {
+                                            ev.preventDefault();
+                                            ev.stopPropagation();
+
+                                            // Open settings menu directly to subtitles submenu
+                                            if (
+                                                customComponents.current.settingsMenu &&
+                                                customComponents.current.settingsMenu.openSubtitlesMenu
+                                            ) {
+                                                customComponents.current.settingsMenu.openSubtitlesMenu();
                                             }
-                                        }
-                                        if (any) {
+                                        };
+
+                                        el.addEventListener('click', openSubtitlesSettings, { capture: true });
+
+                                        // Add mobile touch support for subtitles button
+                                        el.addEventListener(
+                                            'touchend',
+                                            (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                openSubtitlesSettings(e);
+                                            },
+                                            { passive: false }
+                                        );
+
+                                        // Apply red underline based on localStorage subtitleEnabled
+                                        const updateSubtitleButtonState = () => {
+                                            const subtitleEnabled =
+                                                userPreferences.current.getPreference('subtitleEnabled');
+                                            if (subtitleEnabled) {
+                                                el.classList.add('vjs-subs-active');
+                                            } else {
+                                                el.classList.remove('vjs-subs-active');
+                                            }
+                                        };
+
+                                        // Initial state
+                                        updateSubtitleButtonState();
+
+                                        // Listen for subtitle changes to update the red underline
+                                        playerRef.current.on('texttrackchange', updateSubtitleButtonState);
+
+                                        // Listen for custom subtitle state changes from settings menu
+                                        const handleSubtitleStateChange = () => {
+                                            updateSubtitleButtonState();
+                                        };
+                                        window.addEventListener('subtitleStateChanged', handleSubtitleStateChange);
+
+                                        // Also listen for storage changes to update button state
+                                        const handleStorageChange = () => {
+                                            updateSubtitleButtonState();
+                                        };
+                                        window.addEventListener('storage', handleStorageChange);
+
+                                        // Clean up event listeners when player is disposed
+                                        playerRef.current.on('dispose', () => {
+                                            window.removeEventListener(
+                                                'subtitleStateChanged',
+                                                handleSubtitleStateChange
+                                            );
+                                            window.removeEventListener('storage', handleStorageChange);
+                                        });
+                                    } else {
+                                        // Other buttons (captions, subsCaps) keep the original toggle behavior
+                                        const toggleSubs = (ev) => {
+                                            ev.preventDefault();
+                                            ev.stopPropagation();
+                                            const tracks = playerRef.current.textTracks();
+                                            let any = false;
                                             for (let i = 0; i < tracks.length; i++) {
                                                 const t = tracks[i];
-                                                if (t.kind === 'subtitles') t.mode = 'disabled';
+                                                if (t.kind === 'subtitles' && t.mode === 'showing') {
+                                                    any = true;
+                                                    break;
+                                                }
                                             }
-                                            el.classList.remove('vjs-subs-active');
-                                            // Do not change saved language on quick toggle off; save enabled=false
-                                            try {
-                                                userPreferences.current.setPreference('subtitleEnabled', false, true);
-                                            } catch (e) {}
-                                        } else {
-                                            // Show using previously chosen language only; do not change it
-                                            const preferred = userPreferences.current.getPreference('subtitleLanguage');
-                                            if (!preferred) {
-                                                // If no language chosen yet, enable first available and save it
-                                                let first = null;
+                                            if (any) {
+                                                for (let i = 0; i < tracks.length; i++) {
+                                                    const t = tracks[i];
+                                                    if (t.kind === 'subtitles') t.mode = 'disabled';
+                                                }
+                                                el.classList.remove('vjs-subs-active');
+                                                // Do not change saved language on quick toggle off; save enabled=false
+                                                try {
+                                                    userPreferences.current.setPreference(
+                                                        'subtitleEnabled',
+                                                        false,
+                                                        true
+                                                    );
+                                                } catch (e) {}
+                                            } else {
+                                                // Show using previously chosen language only; do not change it
+                                                const preferred =
+                                                    userPreferences.current.getPreference('subtitleLanguage');
+                                                if (!preferred) {
+                                                    // If no language chosen yet, enable first available and save it
+                                                    let first = null;
+                                                    for (let i = 0; i < tracks.length; i++) {
+                                                        const t = tracks[i];
+                                                        if (t.kind === 'subtitles') {
+                                                            first = t.language;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (first) {
+                                                        for (let i = 0; i < tracks.length; i++) {
+                                                            const t = tracks[i];
+                                                            if (t.kind === 'subtitles')
+                                                                t.mode = t.language === first ? 'showing' : 'disabled';
+                                                        }
+                                                        try {
+                                                            userPreferences.current.setPreference(
+                                                                'subtitleLanguage',
+                                                                first,
+                                                                true
+                                                            );
+                                                        } catch (e) {}
+                                                        try {
+                                                            userPreferences.current.setPreference(
+                                                                'subtitleEnabled',
+                                                                true,
+                                                                true
+                                                            );
+                                                        } catch (e) {}
+                                                        el.classList.add('vjs-subs-active');
+                                                    }
+                                                    return;
+                                                }
+                                                let found = false;
                                                 for (let i = 0; i < tracks.length; i++) {
                                                     const t = tracks[i];
                                                     if (t.kind === 'subtitles') {
-                                                        first = t.language;
-                                                        break;
+                                                        const show = t.language === preferred;
+                                                        t.mode = show ? 'showing' : 'disabled';
+                                                        if (show) found = true;
                                                     }
                                                 }
-                                                if (first) {
-                                                    for (let i = 0; i < tracks.length; i++) {
-                                                        const t = tracks[i];
-                                                        if (t.kind === 'subtitles')
-                                                            t.mode = t.language === first ? 'showing' : 'disabled';
-                                                    }
-                                                    try {
-                                                        userPreferences.current.setPreference(
-                                                            'subtitleLanguage',
-                                                            first,
-                                                            true
-                                                        );
-                                                    } catch (e) {}
+                                                if (found) {
+                                                    el.classList.add('vjs-subs-active');
                                                     try {
                                                         userPreferences.current.setPreference(
                                                             'subtitleEnabled',
@@ -3104,44 +3199,23 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                             true
                                                         );
                                                     } catch (e) {}
-                                                    el.classList.add('vjs-subs-active');
-                                                }
-                                                return;
-                                            }
-                                            let found = false;
-                                            for (let i = 0; i < tracks.length; i++) {
-                                                const t = tracks[i];
-                                                if (t.kind === 'subtitles') {
-                                                    const show = t.language === preferred;
-                                                    t.mode = show ? 'showing' : 'disabled';
-                                                    if (show) found = true;
                                                 }
                                             }
-                                            if (found) {
-                                                el.classList.add('vjs-subs-active');
-                                                try {
-                                                    userPreferences.current.setPreference(
-                                                        'subtitleEnabled',
-                                                        true,
-                                                        true
-                                                    );
-                                                } catch (e) {}
-                                            }
-                                        }
-                                    };
+                                        };
 
-                                    el.addEventListener('click', toggleSubs, { capture: true });
+                                        el.addEventListener('click', toggleSubs, { capture: true });
 
-                                    // Add mobile touch support
-                                    el.addEventListener(
-                                        'touchend',
-                                        (e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            toggleSubs(e);
-                                        },
-                                        { passive: false }
-                                    );
+                                        // Add mobile touch support for subtitles button
+                                        el.addEventListener(
+                                            'touchend',
+                                            (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleSubs(e);
+                                            },
+                                            { passive: false }
+                                        );
+                                    }
 
                                     // Sync underline state on external changes
                                     playerRef.current.on('texttrackchange', () => {
@@ -3175,8 +3249,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             }
                         };
 
-                        // setupClickableMenus();
-                    }, 1500); */
+                        setupClickableMenus();
+                    }, 1500);
 
                     // BEGIN: Add chapter markers and sprite preview to progress control
                     if (progressControl && seekBar) {

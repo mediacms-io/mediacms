@@ -819,6 +819,7 @@ class CustomSettingsMenu extends Component {
 
         this.speedSubmenu.style.display = 'none'; // Hide submenu when main menu toggles
         if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
+        if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
         const btnEl = this.settingsButton?.el();
         if (btnEl) {
             if (!isVisible) {
@@ -826,6 +827,28 @@ class CustomSettingsMenu extends Component {
             } else {
                 btnEl.classList.remove('settings-clicked');
             }
+        }
+    }
+
+    // Method to open settings directly to subtitles submenu
+    openSubtitlesMenu() {
+        // First ensure settings overlay is visible
+        this.settingsOverlay.classList.add('show');
+        this.settingsOverlay.style.display = 'block';
+
+        // Hide other submenus and show subtitles submenu
+        this.speedSubmenu.style.display = 'none';
+        if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
+        if (this.subtitlesSubmenu) {
+            this.subtitlesSubmenu.style.display = 'flex';
+            // Refresh the submenu to ensure it's up to date
+            this.refreshSubtitlesSubmenu();
+        }
+
+        // Mark settings button as active
+        const btnEl = this.settingsButton?.el();
+        if (btnEl) {
+            btnEl.classList.add('settings-clicked');
         }
     }
 
@@ -1062,6 +1085,12 @@ class CustomSettingsMenu extends Component {
         this.userPreferences.setPreference('subtitleLanguage', lang || null, true);
         this.userPreferences.setPreference('subtitleEnabled', !!lang, true); // for iphones
 
+        // Trigger a custom event to notify other components about subtitle state change
+        const subtitleChangeEvent = new CustomEvent('subtitleStateChanged', {
+            detail: { enabled: !!lang, language: lang },
+        });
+        window.dispatchEvent(subtitleChangeEvent);
+
         // Update UI selection
         this.subtitlesSubmenu.querySelectorAll('.subtitle-option').forEach((opt) => {
             opt.classList.remove('active');
@@ -1078,8 +1107,16 @@ class CustomSettingsMenu extends Component {
         const currentSubtitlesDisplay = this.settingsOverlay.querySelector('.current-subtitles');
         if (currentSubtitlesDisplay) currentSubtitlesDisplay.textContent = label;
 
-        // Close only the subtitles submenu (keep overlay open)
+        // Close the entire settings overlay after subtitle selection
+        this.settingsOverlay.classList.remove('show');
+        this.settingsOverlay.style.display = 'none';
         this.subtitlesSubmenu.style.display = 'none';
+
+        // Remove active state from settings button
+        const btnEl = this.settingsButton?.el();
+        if (btnEl) {
+            btnEl.classList.remove('settings-clicked');
+        }
     }
 
     restoreSubtitlePreference() {
