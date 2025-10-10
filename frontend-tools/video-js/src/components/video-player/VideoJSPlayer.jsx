@@ -43,6 +43,8 @@ const enableStandardButtonTooltips = (player) => {
             fullscreenToggle: () => (player.isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'),
             pictureInPictureToggle: 'Picture-in-picture',
             subtitlesButton: 'Subtitles/CC',
+            captionsButton: 'Captions',
+            subsCapsButton: 'Subtitles/CC',
             chaptersButton: 'Chapters',
             audioTrackButton: 'Audio tracks',
             playbackRateMenuButton: 'Playback speed',
@@ -59,6 +61,12 @@ const enableStandardButtonTooltips = (player) => {
                     typeof buttonTooltips[buttonName] === 'function'
                         ? buttonTooltips[buttonName]()
                         : buttonTooltips[buttonName];
+
+                // Skip empty tooltips
+                if (!tooltipText || tooltipText.trim() === '') {
+                    console.log('Empty tooltip for button:', buttonName, tooltipText);
+                    return;
+                }
 
                 buttonEl.setAttribute('title', tooltipText);
                 buttonEl.setAttribute('aria-label', tooltipText);
@@ -2061,11 +2069,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         descriptionsButton: false,
 
                         // Subtitles (CC) button should be visible
-                        subtitlesButton: hasSubtitles && !isTouchDevice ? true : false,
+                        subtitlesButton: false, // hasSubtitles && !isTouchDevice ? true : false,
 
                         // Captions button (keep disabled to avoid duplicate with subtitles)
-                        captionsButton: false,
-                        subsCapsButton: false,
+                        captionsButton: hasSubtitles ? true : false,
+                        subsCapsButton: hasSubtitles ? true : false,
 
                         // Audio track button
                         audioTrackButton: true,

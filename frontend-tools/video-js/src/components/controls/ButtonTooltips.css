@@ -6,8 +6,8 @@
     position: relative;
 }
 
-/* Universal tooltip styling for all buttons */
-.video-js .vjs-control-bar .vjs-control::after {
+/* Universal tooltip styling for all buttons - only show when title is not empty */
+.video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
     position: absolute;
     bottom: 100%;
@@ -40,8 +40,8 @@
 
 /* Show tooltip on hover and focus for desktop */
 @media (hover: hover) and (pointer: fine) {
-    .video-js .vjs-control-bar .vjs-control:hover::after,
-    .video-js .vjs-control-bar .vjs-control:focus::after {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]):hover::after,
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]):focus::after {
         opacity: 1;
         visibility: visible;
         transform: translateX(-50%) translateY(-2px);
@@ -49,47 +49,50 @@
 }
 
 /* Specific button tooltips - override content when needed */
-.video-js .vjs-play-control::after {
+.video-js .vjs-play-control[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-mute-control::after {
+.video-js .vjs-mute-control[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-fullscreen-control::after {
+.video-js .vjs-fullscreen-control[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-picture-in-picture-toggle::after {
+.video-js .vjs-picture-in-picture-toggle[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-subtitles-button::after {
+.video-js .vjs-subtitles-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+.video-js .vjs-subs-caps-button[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-chapters-button::after {
+.video-js .vjs-chapters-button[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
 /* Custom button tooltips */
-.video-js .vjs-autoplay-toggle::after {
+.video-js .vjs-autoplay-toggle[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-next-video-button::after {
+.video-js .vjs-next-video-button[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
-.video-js .vjs-settings-button::after {
+.video-js .vjs-settings-button[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
     left: auto !important;
     right: 0 !important;
     transform: translateX(-10px) !important;
 }
 
-.video-js .vjs-remaining-time::after {
+.video-js .vjs-remaining-time[title]:not([title=""]):not([title=" "])::after {
     content: attr(title);
 }
 
@@ -101,7 +104,7 @@
     }
 
     /* Show tooltip when touch-active class is added */
-    .video-js .vjs-control-bar .vjs-control.touch-tooltip-active::after {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
         display: block;
         opacity: 1;
         visibility: visible;
@@ -111,7 +114,7 @@
 
 /* Tablet-specific adjustments */
 @media (min-width: 768px) and (max-width: 1024px) and (hover: none) {
-    .video-js .vjs-control-bar .vjs-control.touch-tooltip-active::after {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
         font-size: 14px;
         padding: 10px 14px;
     }
@@ -119,7 +122,7 @@
 
 /* Mobile-specific adjustments */
 @media (max-width: 767px) {
-    .video-js .vjs-control-bar .vjs-control.touch-tooltip-active::after {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
         font-size: 12px;
         padding: 6px 10px;
         margin-bottom: 8px;

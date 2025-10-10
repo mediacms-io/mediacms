@@ -19,7 +19,6 @@ class EndScreenOverlay extends Component {
     // Method to update related videos after initialization
     setRelatedVideos(videos) {
         this.relatedVideos = videos || [];
-        console.log('Updated relatedVideos:', this.relatedVideos);
     }
 
     createEl() {
@@ -62,7 +61,6 @@ class EndScreenOverlay extends Component {
 
         // Get videos to show - access directly from options during createEl
         const relatedVideos = this.options_?.relatedVideos || this.relatedVideos || [];
-        console.log('createGrid relatedVideos:', relatedVideos);
 
         const videosToShow =
             relatedVideos.length > 0
