@@ -1250,7 +1250,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           media_type: 'video',
                           original_media_url:
                               '/media/original/user/markos/db52140de7204022a1e5f08e078b4ec6.UniversityofCopenhagenMærskTower.mp4',
-                          hls_info: {
+                          _hls_info: {
                               master_file: '/media/hls/5073e97457004961a163c5b504e2d7e8/master.m3u8',
                               '240_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-1/iframes.m3u8',
                               '480_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-2/iframes.m3u8',
@@ -1263,7 +1263,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '144_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-4/stream.m3u8',
                               '360_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-5/stream.m3u8',
                           },
-                          // hls_info: {},
+                          hls_info: {},
                           /* hls_info: {
                               master_file: '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/master.m3u8',
                               '240_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/iframes.m3u8',
@@ -2731,26 +2731,19 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Also store on player instance for sprite preview access
                             playerRef.current.customComponents = customComponents.current;
 
-                            // Keep progress bar always visible like the control bar
+                            // Hide/show progress bar with control bar based on user activity
+
                             const syncProgressVisibility = () => {
                                 const isControlBarVisible =
                                     controlBar.hasClass('vjs-visible') ||
                                     !playerRef.current.hasClass('vjs-user-inactive');
 
-                                // Always show progress bar when control bar is visible
                                 if (isControlBarVisible) {
                                     progressEl.style.opacity = '1';
                                     progressEl.style.visibility = 'visible';
                                 } else {
-                                    // For embed players, hide with controls. For regular players, keep visible
-                                    if (isEmbedPlayer) {
-                                        progressEl.style.opacity = '0';
-                                        progressEl.style.visibility = 'hidden';
-                                    } else {
-                                        // Keep progress bar visible even when controls are hidden
-                                        progressEl.style.opacity = '1';
-                                        progressEl.style.visibility = 'visible';
-                                    }
+                                    progressEl.style.opacity = '0';
+                                    progressEl.style.visibility = 'hidden';
                                 }
                             };
 
@@ -2758,14 +2751,18 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             playerRef.current.on('useractive', syncProgressVisibility);
                             playerRef.current.on('userinactive', syncProgressVisibility);
 
-                            // Initial sync - show progress bar immediately
-                            progressEl.style.opacity = '1';
-                            progressEl.style.visibility = 'visible';
+                            // Initial sync
+                            syncProgressVisibility();
 
-                            // Show when video starts (ensure it's always visible)
+                            // if (isEmbedPlayer) {
+                            // Initial sync - hide until video starts
+                            progressEl.style.opacity = '0';
+                            progressEl.style.visibility = 'hidden';
+                            // }
+
+                            // Show when video starts
                             const showOnPlay = () => {
-                                progressEl.style.opacity = '1';
-                                progressEl.style.visibility = 'visible';
+                                syncProgressVisibility();
                                 playerRef.current.off('play', showOnPlay);
                                 playerRef.current.off('seeking', showOnPlay);
                             };
