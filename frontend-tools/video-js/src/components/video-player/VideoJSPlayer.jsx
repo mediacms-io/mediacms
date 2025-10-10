@@ -2843,6 +2843,15 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         spacer.style.flex = '1';
                         spacer.style.minWidth = '1px';
 
+                        // Remove background and style the spacer to be transparent
+                        spacer.style.background = 'transparent';
+                        spacer.style.backgroundColor = 'transparent';
+                        spacer.style.border = 'none';
+                        spacer.style.outline = 'none';
+                        spacer.style.boxShadow = 'none';
+                        spacer.style.opacity = '0';
+                        spacer.style.pointerEvents = 'none';
+
                         // Insert spacer right after the time display
                         const controlBarEl = controlBar.el();
                         const timeDisplayEl = customRemainingTime.el();
