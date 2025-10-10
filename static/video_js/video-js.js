@@ -705,7 +705,7 @@ ${ku(e)}`),i.map&&!i.map.bytes&&(this.logger_("going to request init segment."),
             `).join("");this.qualitySubmenu.innerHTML=s+o,this.settingsOverlay.appendChild(this.qualitySubmenu)}createSubtitlesSubmenu(){this.subtitlesSubmenu=document.createElement("div"),this.subtitlesSubmenu.className="subtitles-submenu";const e=`
             <div class="submenu-header">
                 <span style="margin-right: 8px;">←</span>
-                <span>Subtitles/CC</span>
+                <span>Captions</span>
             </div>
         `;this.subtitlesSubmenu.innerHTML=e+'<div class="submenu-body"></div>',this.settingsOverlay.appendChild(this.subtitlesSubmenu),this.refreshSubtitlesSubmenu()}refreshSubtitlesSubmenu(){if(!this.subtitlesSubmenu)return;const e=this.subtitlesSubmenu.querySelector(".submenu-body");if(!e)return;const s=this.player().textTracks();let o=null;for(let c=0;c<s.length;c++){const f=s[c];if(f.kind==="subtitles"&&f.mode==="showing"){o=f.language;break}}const l=[];l.push({label:"Off",lang:null});for(let c=0;c<s.length;c++){const f=s[c];f.kind==="subtitles"&&l.push({label:f.label||f.language||`Track ${c}`,lang:f.language,track:f})}e.innerHTML=l.map(c=>`
         <div class="subtitle-option ${c.lang===o?"active":""}" data-lang="${c.lang||""}">
