@@ -1495,7 +1495,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     ];
                 }
 
-                console.log('userQuality', userQuality);
                 // If user has selected a specific quality, try to use that playlist
                 if (userQuality !== 'auto') {
                     const qualityKey = `${userQuality.replace('p', '')}_playlist`;
@@ -1526,7 +1525,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             if (mediaData.data?.encodings_info) {
                 const encodings = mediaData.data.encodings_info;
                 const userQuality = userQualityPreference;
-                console.log('userQuality edw', userQuality);
                 // If user has selected a specific quality, try to use that encoding first
                 if (userQuality !== 'auto') {
                     const qualityNumber = userQuality.replace('p', ''); // Remove 'p' from '240p' -> '240'
@@ -1559,10 +1557,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     .filter((quality) => encodings[quality] && encodings[quality].h264 && encodings[quality].h264.url)
                     .sort((a, b) => parseInt(b) - parseInt(a)); // Sort descending (highest first)
 
-                console.log('availableQualities', availableQualities);
                 for (const quality of availableQualities) {
                     const sourceUrl = encodings[quality].h264.url;
-                    console.log('sourceUrl', sourceUrl);
                     sources.push({
                         src: sourceUrl,
                         type: getMimeType(sourceUrl, mediaData.data?.media_type),
@@ -1578,7 +1574,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             // Final fallback to original media URL or sample video
             if (mediaData.data?.original_media_url) {
                 const sourceUrl = mediaData.siteUrl + mediaData.data.original_media_url;
-                console.log('sourceUrl', sourceUrl);
                 return [
                     {
                         src: sourceUrl,
@@ -2507,7 +2502,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // BEGIN: Apply progress bar colors from config (always applied)
                     const progressEl = progressControl?.el();
-                    console.log('progressEl', progressEl);
                     if (progressEl) {
                         // Style the progress holder and bars with config colors
                         const progressHolder = progressEl.querySelector('.vjs-progress-holder');
@@ -2518,7 +2512,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Style the play progress bar (the filled part)
                         const playProgress = progressEl.querySelector('.vjs-play-progress');
                         if (playProgress) {
-                            console.log('playProgress', playProgress);
                             playProgress.style.backgroundColor = PlayerConfig.progressBar.color;
                         }
 
