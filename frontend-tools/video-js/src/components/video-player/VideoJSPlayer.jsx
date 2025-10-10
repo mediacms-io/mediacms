@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-//import 'video.js/dist/video-js.css';
 // import '../../VideoJS.css';
 import '../../styles/embed.css';
 // import '../controls/SubtitlesButton.css';
@@ -1982,11 +1981,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     // User interaction options
                     userActions: {
                         // Enable/disable or customize click behavior
-                        // click: true,
-                        // tap: true,
+                        click: true,
+                        tap: true,
 
                         // // Enable/disable or customize double-click behavior (fullscreen toggle)
-                        // doubleClick: true,
+                        doubleClick: true,
 
                         hotkeys: true,
                         // Hotkey configuration
@@ -2556,8 +2555,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             const progressEl = progressControl.el();
                             const controlBarEl = controlBar.el();
                             controlBarEl.style.gap = 0;
-                            // controlBarEl.style.background = 'none';
-                            // progressEl.style.background = 'none';
+                            controlBarEl.style.background = 'none';
+                            progressEl.style.background = 'none';
+                            // controlBarEl.style.background = 'yellow';
+                            // progressEl.style.background = 'red';
 
                             // Remove progress control from control bar
                             controlBar.removeChild(progressControl);
@@ -2589,8 +2590,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             progressEl.style.position = 'relative';
                             progressEl.style.width = '100%';
                             progressEl.style.height = '15px';
-                            progressEl.style.margin = '8px 0'; // Add top and bottom margin
-                            progressEl.style.padding = '5px 10px'; // Add left and right padding/gap
+                            progressEl.style.margin = '0 0'; // Add top and bottom margin
+                            progressEl.style.padding = '5px 0'; // Add left and right padding/gap
                             progressEl.style.display = 'block';
                             progressEl.style.transition = 'opacity 0.3s, visibility 0.3s'; // Smooth transition
                             progressEl.style.boxSizing = 'border-box'; // Ensure padding doesn't increase width

@@ -1,6 +1,4 @@
 /* ===== VIDEO.JS ROUNDED CORNERS STYLES ===== */
-/* Extracted from VideoJS.css for modular import */
-
 .video-js-root-main .video-js.video-js-rounded-corners,
 .video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
 .video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
@@ -19,36 +17,9 @@
 .video-js-root-main .video-js.video-js-rounded-corners video {
     border-radius: 12px !important;
 }
-
-/* YouTube-style bottom gradient overlay - covers entire video bottom when controls active */
-/* .video-js-root-main .video-js.video-js-rounded-corners::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 120px;
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.8) 0%,
-        rgba(0, 0, 0, 0.6) 25%,
-        rgba(0, 0, 0, 0.4) 50%,
-        rgba(0, 0, 0, 0.2) 75%,
-        transparent 100%
-    );
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 2;
-} */
-
-/* Show overlay when controls are active - YouTube style */
-.video-js-root-main .video-js.video-js-rounded-corners.vjs-user-active::after,
-.video-js-root-main .video-js.video-js-rounded-corners.vjs-paused::after,
-.video-js-root-main .video-js.video-js-rounded-corners.vjs-ended::after {
+.video-js-root-main .video-js.video-js-rounded-corners .vjs-control-bar {
     border-bottom-left-radius: 12px !important;
     border-bottom-right-radius: 12px !important;
-    opacity: 1;
 }
 
 /* Mobile responsive adjustments */
