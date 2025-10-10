@@ -16,6 +16,10 @@ class CustomChaptersOverlay extends Component {
         this.channelName = options.channelName || '';
         this.thumbnail = options.thumbnail || '';
         this.isScrolling = false;
+        this.isMobile = this.detectMobile();
+        this.touchStartTime = 0;
+        this.touchThreshold = 150; // ms for tap vs scroll detection
+        this.isSmallScreen = window.innerWidth <= 480;
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -23,12 +27,58 @@ class CustomChaptersOverlay extends Component {
         this.toggleOverlay = this.toggleOverlay.bind(this);
         this.formatTime = this.formatTime.bind(this);
         this.getChapterTimeRange = this.getChapterTimeRange.bind(this);
+        this.detectMobile = this.detectMobile.bind(this);
+        this.handleMobileInteraction = this.handleMobileInteraction.bind(this);
+        this.setupResizeListener = this.setupResizeListener.bind(this);
+        this.handleResize = this.handleResize.bind(this);
 
         // Initialize after player is ready
         this.player().ready(() => {
             this.createOverlay();
             this.setupChaptersButton();
+            this.setupResizeListener();
         });
+    }
+
+    detectMobile() {
+        return (
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+            window.matchMedia('(hover: none) and (pointer: coarse)').matches
+        );
+    }
+
+    handleMobileInteraction(event, chapter, index) {
+        if (!this.isMobile) return;
+
+        event.preventDefault();
+
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+
+        // Seek to chapter and close overlay
+        this.player().currentTime(chapter.startTime);
+        this.overlay.style.display = 'none';
+        this.updateActiveItem(index);
+
+        const el = this.player().el();
+        if (el) el.classList.remove('chapters-open');
+    }
+
+    setupResizeListener() {
+        this.handleResize = () => {
+            this.isSmallScreen = window.innerWidth <= 480;
+        };
+
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('orientationchange', this.handleResize);
+    }
+
+    handleResize() {
+        // Update small screen detection on resize/orientation change
+        this.isSmallScreen = window.innerWidth <= 480;
     }
 
     formatTime(seconds) {
@@ -125,7 +175,25 @@ class CustomChaptersOverlay extends Component {
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
             overscroll-behavior: contain;
+            scroll-behavior: smooth;
         `;
+
+        // Add mobile-specific scroll optimization
+        if (this.isMobile) {
+            body.style.cssText += `
+                scroll-snap-type: y proximity;
+                overscroll-behavior-y: contain;
+            `;
+
+            // For very small screens, add momentum scrolling optimization
+            if (this.isSmallScreen) {
+                body.style.cssText += `
+                    scroll-padding-top: 5px;
+                    scroll-padding-bottom: 5px;
+                `;
+            }
+        }
+
         container.appendChild(body);
 
         const list = document.createElement('ul');
@@ -180,46 +248,81 @@ class CustomChaptersOverlay extends Component {
                 </svg>`;
             action.appendChild(btn);
 
-            // Handle click and touch events properly
-            const seekFn = (e) => {
-                // Prevent default only for navigation, not scrolling
-                if (e.type === 'click' || (e.type === 'touchend' && !this.isScrolling)) {
+            // Enhanced mobile touch handling
+            if (this.isMobile) {
+                let touchStartY = 0;
+                let touchStartTime = 0;
+                let touchMoved = false;
+
+                item.addEventListener(
+                    'touchstart',
+                    (e) => {
+                        touchStartY = e.touches[0].clientY;
+                        touchStartTime = Date.now();
+                        touchMoved = false;
+                        this.isScrolling = false;
+
+                        // Add visual feedback
+                        item.style.transform = 'scale(0.98)';
+                        item.style.transition = 'transform 0.1s ease';
+                    },
+                    { passive: true }
+                );
+
+                item.addEventListener(
+                    'touchmove',
+                    (e) => {
+                        const touchMoveY = e.touches[0].clientY;
+                        const deltaY = Math.abs(touchMoveY - touchStartY);
+                        // Use smaller threshold for very small screens to be more sensitive
+                        const scrollThreshold = this.isSmallScreen ? 5 : 8;
+
+                        if (deltaY > scrollThreshold) {
+                            touchMoved = true;
+                            this.isScrolling = true;
+                            // Remove visual feedback when scrolling
+                            item.style.transform = '';
+                        }
+                    },
+                    { passive: true }
+                );
+
+                item.addEventListener(
+                    'touchend',
+                    (e) => {
+                        const touchEndTime = Date.now();
+                        const touchDuration = touchEndTime - touchStartTime;
+
+                        // Reset visual feedback
+                        item.style.transform = '';
+
+                        // Only trigger if it's a quick tap (not a scroll)
+                        // Use shorter threshold for small screens to feel more responsive
+                        const tapThreshold = this.isSmallScreen ? 120 : this.touchThreshold;
+                        if (!touchMoved && touchDuration < tapThreshold) {
+                            this.handleMobileInteraction(e, chapter, index);
+                        }
+                    },
+                    { passive: false }
+                );
+
+                item.addEventListener(
+                    'touchcancel',
+                    () => {
+                        // Reset visual feedback on cancel
+                        item.style.transform = '';
+                    },
+                    { passive: true }
+                );
+            } else {
+                // Desktop click handling
+                item.addEventListener('click', (e) => {
                     e.preventDefault();
                     this.player().currentTime(chapter.startTime);
                     this.overlay.style.display = 'none';
                     this.updateActiveItem(index);
-                }
-            };
-
-            // Track scrolling state for touch devices
-            let touchStartY = 0;
-            let touchStartTime = 0;
-
-            item.addEventListener(
-                'touchstart',
-                (e) => {
-                    touchStartY = e.touches[0].clientY;
-                    touchStartTime = Date.now();
-                    this.isScrolling = false;
-                },
-                { passive: true }
-            );
-
-            item.addEventListener(
-                'touchmove',
-                (e) => {
-                    const touchMoveY = e.touches[0].clientY;
-                    const deltaY = Math.abs(touchMoveY - touchStartY);
-                    // If user moved more than 10px vertically, consider it scrolling
-                    if (deltaY > 10) {
-                        this.isScrolling = true;
-                    }
-                },
-                { passive: true }
-            );
-
-            item.addEventListener('touchend', seekFn, { passive: false });
-            item.addEventListener('click', seekFn);
+                });
+            }
 
             anchor.appendChild(drag);
             anchor.appendChild(meta);
@@ -238,8 +341,17 @@ class CustomChaptersOverlay extends Component {
         const chaptersButton = this.player().getChild('controlBar').getChild('chaptersButton');
         if (chaptersButton) {
             chaptersButton.off('click');
-            chaptersButton.on('click', this.toggleOverlay);
-            chaptersButton.on('touchstart', this.toggleOverlay); // mobile support
+            chaptersButton.off('touchstart');
+
+            if (this.isMobile) {
+                // Enhanced mobile button handling
+                chaptersButton.on('touchstart', (e) => {
+                    e.preventDefault();
+                    this.toggleOverlay();
+                });
+            } else {
+                chaptersButton.on('click', this.toggleOverlay);
+            }
         }
     }
 
@@ -251,6 +363,24 @@ class CustomChaptersOverlay extends Component {
 
         this.overlay.style.display = isHidden ? 'block' : 'none';
         if (el) el.classList.toggle('chapters-open', isHidden);
+
+        // Add haptic feedback on mobile when opening
+        if (this.isMobile && isHidden && navigator.vibrate) {
+            navigator.vibrate(30);
+        }
+
+        // Prevent body scroll on mobile when overlay is open
+        if (this.isMobile) {
+            if (isHidden) {
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+            } else {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
+        }
 
         try {
             this.player()
@@ -336,6 +466,13 @@ class CustomChaptersOverlay extends Component {
             this.overlay.style.display = 'none';
             const el = this.player().el();
             if (el) el.classList.remove('chapters-open');
+
+            // Restore body scroll on mobile
+            if (this.isMobile) {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
         }
     }
 
@@ -345,6 +482,20 @@ class CustomChaptersOverlay extends Component {
         }
         const el = this.player().el();
         if (el) el.classList.remove('chapters-open');
+
+        // Restore body scroll on mobile when disposing
+        if (this.isMobile) {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+
+        // Clean up event listeners
+        if (this.handleResize) {
+            window.removeEventListener('resize', this.handleResize);
+            window.removeEventListener('orientationchange', this.handleResize);
+        }
+
         super.dispose();
     }
 }

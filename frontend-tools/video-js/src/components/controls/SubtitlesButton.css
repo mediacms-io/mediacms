@@ -63,7 +63,7 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 6px;
+    bottom: 3px;
     height: 3px;
     background: #e1002d;
     border-radius: 2px;
@@ -77,7 +77,7 @@
 }
 
 .video-js .vjs-subs-active button.vjs-subtitles-button::before {
-    width: 24px;
+    width: 20px;
     transition: none !important;
     animation: none !important;
     -webkit-transition: none !important;

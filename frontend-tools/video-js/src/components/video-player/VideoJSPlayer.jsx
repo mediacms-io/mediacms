@@ -265,6 +265,81 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                   endTime: '00:00:06.885',
                                   chapterTitle: 'A3 Reef Ecosystems',
                               },
+                              {
+                                  startTime: '00:00:06.885',
+                                  endTime: '00:00:09.180',
+                                  chapterTitle: 'A4 Coral Formation and Growth',
+                              },
+                              {
+                                  startTime: '00:00:09.180',
+                                  endTime: '00:00:11.475',
+                                  chapterTitle: 'A5 Tropical Fish Species',
+                              },
+                              {
+                                  startTime: '00:00:11.475',
+                                  endTime: '00:00:13.770',
+                                  chapterTitle: 'A6 Ocean Current Patterns',
+                              },
+                              {
+                                  startTime: '00:00:13.770',
+                                  endTime: '00:00:16.065',
+                                  chapterTitle: 'A7 Deep Sea Exploration',
+                              },
+                              {
+                                  startTime: '00:00:16.065',
+                                  endTime: '00:00:18.360',
+                                  chapterTitle: 'A8 Marine Conservation Efforts',
+                              },
+                              {
+                                  startTime: '00:00:18.360',
+                                  endTime: '00:00:20.655',
+                                  chapterTitle: 'A9 Underwater Photography Techniques',
+                              },
+                              {
+                                  startTime: '00:00:20.655',
+                                  endTime: '00:00:22.950',
+                                  chapterTitle: 'A10 Plankton and Microscopic Life',
+                              },
+                              {
+                                  startTime: '00:00:22.950',
+                                  endTime: '00:00:25.245',
+                                  chapterTitle: 'A11 Whale Migration Routes',
+                              },
+                              {
+                                  startTime: '00:00:25.245',
+                                  endTime: '00:00:27.540',
+                                  chapterTitle: 'A12 Tidal Pool Ecosystems',
+                              },
+                              {
+                                  startTime: '00:00:27.540',
+                                  endTime: '00:00:29.835',
+                                  chapterTitle: 'A13 Submarine Technology',
+                              },
+                              {
+                                  startTime: '00:00:29.835',
+                                  endTime: '00:00:32.130',
+                                  chapterTitle: 'A14 Ocean Pollution Impact',
+                              },
+                              {
+                                  startTime: '00:00:32.130',
+                                  endTime: '00:00:34.425',
+                                  chapterTitle: 'A15 Bioluminescent Creatures',
+                              },
+                              {
+                                  startTime: '00:00:34.425',
+                                  endTime: '00:00:36.720',
+                                  chapterTitle: 'A16 Seaweed and Kelp Forests',
+                              },
+                              {
+                                  startTime: '00:00:36.720',
+                                  endTime: '00:00:39.015',
+                                  chapterTitle: 'A17 Marine Food Chain Dynamics',
+                              },
+                              {
+                                  startTime: '00:00:39.015',
+                                  endTime: '00:00:41.310',
+                                  chapterTitle: 'A18 Coastal Erosion and Climate Change',
+                              },
                           ],
                           related_media: [
                               {

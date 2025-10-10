@@ -249,67 +249,332 @@
     background: transparent;
 }
 
-/* Improve touch scrolling on mobile */
+/* Mobile-first responsive design */
 @media (max-width: 767px) {
+    .custom-chapters-overlay {
+        background: rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .video-chapter {
+        right: 4px !important;
+        left: 4px !important;
+        width: calc(100% - 8px) !important;
+        max-width: none !important;
+        height: calc(100% - 50px) !important;
+        bottom: 45px !important;
+        border-radius: 10px !important;
+    }
+
     .chapter-body {
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
         overscroll-behavior: contain;
-        height: calc(100% - 70px);
+        height: calc(100% - 55px);
+        scroll-behavior: smooth;
     }
 
     .chapter-body::-webkit-scrollbar {
         width: 0px;
-    }
-
-    div.chapter-close button {
-        width: 30px;
-        height: 30px;
-    }
-
-    .video-js-root-main .video-js.video-js-rounded-corners .custom-chapters-overlay {
-        border-bottom-left-radius: 12px !important;
-        border-bottom-right-radius: 12px !important;
-    }
-
-    .custom-chapters-overlay .video-chapter {
-        right: 10px;
-        left: auto;
-        width: 100%;
-        max-width: calc(300px - 20px);
-        height: calc(100% - 40px);
-        max-height: calc(100% - 40px);
-        overflow: hidden;
-        bottom: 40px;
+        background: transparent;
     }
 
     .chapter-head {
-        padding: 10px 15px;
+        padding: 8px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .chapter-close button {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    }
+
+    .chapter-close button:active {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(0.95);
     }
 
     .chapter-title h3 a {
-        font-size: 15px !important;
-        line-height: 20px !important;
-        height: 20px !important;
+        font-size: 14px !important;
+        line-height: 18px !important;
+        height: auto !important;
+        font-weight: 600 !important;
     }
 
     .chapter-title p {
         font-size: 11px !important;
         line-height: 14px !important;
+        margin-top: 1px !important;
+        opacity: 0.8;
+    }
+
+    .playlist-items {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .playlist-items:last-child {
+        border-bottom: none;
     }
 
     .playlist-items a {
-        padding: 10px 16px !important;
-        min-height: 58px !important;
+        padding: 10px 12px !important;
+        min-height: 52px !important;
+        gap: 10px !important;
+        transition: background-color 0.2s ease;
+        border-radius: 0;
+    }
+
+    .playlist-items a:active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: scale(0.98);
+    }
+
+    .playlist-items.selected a {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .playlist-drag-handle {
+        width: 24px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .thumbnail-meta {
+        flex: 1;
+        min-width: 0;
     }
 
     .thumbnail-meta h4 {
         font-size: 13px !important;
-        line-height: 18px !important;
+        line-height: 17px !important;
+        font-weight: 500 !important;
+        margin-bottom: 3px !important;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 34px;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 4px;
     }
 
     .thumbnail-meta .meta-sub .meta-dynamic {
         font-size: 11px !important;
+        line-height: 14px !important;
+        color: #bdbdbd;
+        font-weight: 400;
+    }
+
+    .thumbnail-action {
+        display: none; /* Hide action buttons on mobile for cleaner look */
+    }
+}
+
+/* Extra small screens (phones in portrait) - Ultra compact */
+@media (max-width: 480px) {
+    .video-chapter {
+        right: 2px !important;
+        left: 2px !important;
+        width: calc(100% - 4px) !important;
+        height: calc(100% - 40px) !important;
+        bottom: 35px !important;
+        border-radius: 8px !important;
+    }
+
+    .chapter-head {
+        padding: 6px 10px;
+    }
+
+    .chapter-body {
+        height: calc(100% - 45px);
+    }
+
+    .chapter-close button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .chapter-title h3 a {
+        font-size: 13px !important;
         line-height: 16px !important;
+    }
+
+    .chapter-title p {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-items a {
+        padding: 8px 10px !important;
+        min-height: 44px !important;
+        gap: 8px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 20px;
+        font-size: 11px;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 12px !important;
+        line-height: 15px !important;
+        margin-bottom: 2px !important;
+        max-height: 30px;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 3px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+}
+
+/* Very small screens (< 360px) - Maximum compactness */
+@media (max-width: 360px) {
+    .video-chapter {
+        right: 1px !important;
+        left: 1px !important;
+        width: calc(100% - 2px) !important;
+        height: calc(100% - 35px) !important;
+        bottom: 30px !important;
+        border-radius: 6px !important;
+    }
+
+    .chapter-head {
+        padding: 5px 8px;
+    }
+
+    .chapter-body {
+        height: calc(100% - 40px);
+    }
+
+    .chapter-close button {
+        width: 26px;
+        height: 26px;
+    }
+
+    .chapter-title h3 a {
+        font-size: 12px !important;
+        line-height: 15px !important;
+    }
+
+    .chapter-title p {
+        font-size: 9px !important;
+        line-height: 12px !important;
+    }
+
+    .playlist-items a {
+        padding: 6px 8px !important;
+        min-height: 40px !important;
+        gap: 6px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 18px;
+        font-size: 10px;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 11px !important;
+        line-height: 14px !important;
+        margin-bottom: 1px !important;
+        max-height: 28px;
+        -webkit-line-clamp: 2;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 2px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 9px !important;
+        line-height: 12px !important;
+    }
+}
+
+/* Landscape orientation on mobile - Compact for limited height */
+@media (max-width: 767px) and (orientation: landscape) {
+    .video-chapter {
+        height: calc(100% - 30px) !important;
+        bottom: 25px !important;
+        max-height: 350px;
+        right: 2px !important;
+        left: 2px !important;
+        width: calc(100% - 4px) !important;
+    }
+
+    .chapter-body {
+        height: calc(100% - 45px);
+    }
+
+    .chapter-head {
+        padding: 6px 12px;
+    }
+
+    .chapter-close button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .chapter-title h3 a {
+        font-size: 13px !important;
+        line-height: 16px !important;
+    }
+
+    .chapter-title p {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-items a {
+        padding: 7px 12px !important;
+        min-height: 42px !important;
+        gap: 8px !important;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 12px !important;
+        line-height: 15px !important;
+        margin-bottom: 2px !important;
+        max-height: 30px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 20px;
+        font-size: 11px;
+    }
+}
+
+/* Touch-friendly improvements for all mobile devices */
+@media (hover: none) and (pointer: coarse) {
+    .playlist-items a {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .chapter-close button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Ensure smooth scrolling on touch devices */
+    .chapter-body {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        overscroll-behavior-y: contain;
     }
 }
