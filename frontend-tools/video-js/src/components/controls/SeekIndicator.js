@@ -51,8 +51,8 @@ class SeekIndicator extends Component {
      */
     show(direction, seconds = this.seekAmount) {
         // Skip showing icons on touch devices as native browser controls handle them
-        /*   if (this.isTouchDevice) {
-            return; 
+        /*       if (this.isTouchDevice) {
+            return;
         } */
 
         const el = this.el();
