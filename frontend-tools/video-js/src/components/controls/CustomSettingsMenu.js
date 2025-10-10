@@ -22,6 +22,9 @@ class CustomSettingsMenu extends Component {
         // Touch scroll detection (mobile)
         this.isTouchScrolling = false;
         this.touchStartY = 0;
+        this.isMobile = this.detectMobile();
+        this.isSmallScreen = window.innerWidth <= 480;
+        this.touchThreshold = 150; // ms for tap vs scroll detection
 
         // Bind methods
         this.createSettingsButton = this.createSettingsButton.bind(this);
@@ -35,6 +38,9 @@ class CustomSettingsMenu extends Component {
         this.refreshSubtitlesSubmenu = this.refreshSubtitlesSubmenu.bind(this);
         this.handleSubtitleChange = this.handleSubtitleChange.bind(this);
         this.handleClickOutside = this.handleClickOutside.bind(this);
+        this.detectMobile = this.detectMobile.bind(this);
+        this.handleMobileInteraction = this.handleMobileInteraction.bind(this);
+        this.setupResizeListener = this.setupResizeListener.bind(this);
 
         // Initialize after player is ready
         this.player().ready(() => {
@@ -42,7 +48,99 @@ class CustomSettingsMenu extends Component {
             this.createSettingsOverlay();
             this.setupEventListeners();
             this.restoreSubtitlePreference();
+            this.setupResizeListener();
         });
+    }
+
+    detectMobile() {
+        return (
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+            window.matchMedia('(hover: none) and (pointer: coarse)').matches
+        );
+    }
+
+    handleMobileInteraction(element, callback) {
+        if (!this.isMobile) return;
+
+        let touchStartTime = 0;
+        let touchMoved = false;
+        let touchStartY = 0;
+
+        element.addEventListener(
+            'touchstart',
+            (e) => {
+                touchStartTime = Date.now();
+                touchMoved = false;
+                touchStartY = e.touches[0].clientY;
+
+                // Add visual feedback
+                element.style.transform = 'scale(0.98)';
+                element.style.transition = 'transform 0.1s ease';
+
+                // Add haptic feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            },
+            { passive: true }
+        );
+
+        element.addEventListener(
+            'touchmove',
+            (e) => {
+                const touchMoveY = e.touches[0].clientY;
+                const deltaY = Math.abs(touchMoveY - touchStartY);
+                const scrollThreshold = this.isSmallScreen ? 5 : 8;
+
+                if (deltaY > scrollThreshold) {
+                    touchMoved = true;
+                    // Remove visual feedback when scrolling
+                    element.style.transform = '';
+                }
+            },
+            { passive: true }
+        );
+
+        element.addEventListener(
+            'touchend',
+            (e) => {
+                const touchEndTime = Date.now();
+                const touchDuration = touchEndTime - touchStartTime;
+
+                // Reset visual feedback
+                element.style.transform = '';
+
+                // Only trigger if it's a quick tap (not a scroll)
+                const tapThreshold = this.isSmallScreen ? 120 : this.touchThreshold;
+                if (!touchMoved && touchDuration < tapThreshold) {
+                    e.preventDefault();
+                    callback(e);
+                }
+            },
+            { passive: false }
+        );
+
+        element.addEventListener(
+            'touchcancel',
+            () => {
+                // Reset visual feedback on cancel
+                element.style.transform = '';
+            },
+            { passive: true }
+        );
+    }
+
+    setupResizeListener() {
+        const handleResize = () => {
+            this.isSmallScreen = window.innerWidth <= 480;
+        };
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+
+        // Store reference for cleanup
+        this.resizeHandler = handleResize;
     }
 
     createSettingsButton() {
@@ -236,8 +334,57 @@ class CustomSettingsMenu extends Component {
         // Create subtitles submenu (YouTube-like)
         this.createSubtitlesSubmenu();
 
+        // Add mobile-specific optimizations
+        if (this.isMobile) {
+            this.settingsOverlay.style.cssText += `
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+                overscroll-behavior-y: contain;
+                touch-action: pan-y;
+            `;
+
+            // Prevent body scroll when overlay is open on mobile
+            this.settingsOverlay.addEventListener(
+                'touchstart',
+                (e) => {
+                    e.stopPropagation();
+                },
+                { passive: true }
+            );
+        }
+
         // Add to control bar
         this.player().el().appendChild(this.settingsOverlay);
+
+        // Add mobile touch handling to settings items
+        if (this.isMobile) {
+            const settingsItems = this.settingsOverlay.querySelectorAll('.settings-item');
+            settingsItems.forEach((item) => {
+                this.handleMobileInteraction(item, (e) => {
+                    // Handle the same logic as click events
+                    if (e.target.closest('[data-setting="playback-speed"]')) {
+                        this.speedSubmenu.style.display = 'flex';
+                        this.qualitySubmenu.style.display = 'none';
+                        if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
+                    }
+
+                    if (e.target.closest('[data-setting="quality"]')) {
+                        this.qualitySubmenu.style.display = 'flex';
+                        this.speedSubmenu.style.display = 'none';
+                        if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
+                    }
+
+                    if (e.target.closest('[data-setting="subtitles"]')) {
+                        this.refreshSubtitlesSubmenu();
+                        if (this.subtitlesSubmenu) {
+                            this.subtitlesSubmenu.style.display = 'flex';
+                            this.speedSubmenu.style.display = 'none';
+                            this.qualitySubmenu.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
     }
 
     createSpeedSubmenu() {
@@ -812,9 +959,28 @@ class CustomSettingsMenu extends Component {
         if (isVisible) {
             this.settingsOverlay.classList.remove('show');
             this.settingsOverlay.style.display = 'none';
+
+            // Restore body scroll on mobile when closing
+            if (this.isMobile) {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
         } else {
             this.settingsOverlay.classList.add('show');
             this.settingsOverlay.style.display = 'block';
+
+            // Add haptic feedback on mobile when opening
+            if (this.isMobile && navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+
+            // Prevent body scroll on mobile when overlay is open
+            if (this.isMobile) {
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+            }
         }
 
         this.speedSubmenu.style.display = 'none'; // Hide submenu when main menu toggles
@@ -1251,6 +1417,19 @@ class CustomSettingsMenu extends Component {
     dispose() {
         // Remove event listeners
         document.removeEventListener('click', this.handleClickOutside);
+
+        // Clean up resize listener
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            window.removeEventListener('orientationchange', this.resizeHandler);
+        }
+
+        // Restore body scroll on mobile when disposing
+        if (this.isMobile) {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
 
         // Remove DOM elements
         if (this.settingsOverlay) {

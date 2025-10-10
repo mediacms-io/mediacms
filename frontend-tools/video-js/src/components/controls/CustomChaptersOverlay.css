@@ -290,6 +290,11 @@
         transition: background-color 0.2s ease;
     }
 
+    .chapter-close button svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
     .chapter-close button:active {
         background: rgba(255, 255, 255, 0.2);
         transform: scale(0.95);
@@ -400,6 +405,11 @@
         height: 28px;
     }
 
+    .chapter-close button svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
     .chapter-title h3 a {
         font-size: 13px !important;
         line-height: 16px !important;
@@ -460,6 +470,11 @@
     .chapter-close button {
         width: 26px;
         height: 26px;
+    }
+
+    .chapter-close button svg {
+        width: 14px !important;
+        height: 14px !important;
     }
 
     .chapter-title h3 a {
@@ -523,6 +538,11 @@
     .chapter-close button {
         width: 28px;
         height: 28px;
+    }
+
+    .chapter-close button svg {
+        width: 16px !important;
+        height: 16px !important;
     }
 
     .chapter-title h3 a {
