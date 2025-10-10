@@ -75,7 +75,6 @@ const enableStandardButtonTooltips = (player) => {
 
                 // Skip empty tooltips
                 if (!tooltipText || tooltipText.trim() === '') {
-                    console.log('Empty tooltip for button:', buttonName, tooltipText);
                     return;
                 }
 
@@ -2324,7 +2323,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Auto-start video on page load/reload with fallback strategy
                             autoplayHandler.handleAutoplay();
                         } */
-                        console.log('autoplayHandler');
                         autoplayHandler.handleAutoplay();
                     } else {
                         // For embed players, setup clean appearance with hidden controls
@@ -2420,7 +2418,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         }, 100); */
                     }
 
-                    /* const setupMobilePlayPause = () => {
+                    const setupMobilePlayPause = () => {
                         const playerEl = playerRef.current.el();
                         const videoEl = playerEl.querySelector('video');
 
@@ -2498,7 +2496,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                 touch.clientY <= iconRect.bottom;
                                         }
 
-                                        if (playerRef.current.paused()) {
+                                        const isPaused = playerRef.current.paused();
+
+                                        if (isPaused) {
                                             // Always play if video is paused
                                             playerRef.current.play();
                                         } else if (isTapOnCenterIcon) {
@@ -2529,7 +2529,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             videoEl.addEventListener('touchend', handleTouchEnd, { passive: false });
                         }
                     };
-                    setTimeout(setupMobilePlayPause, 100); */
+                    setTimeout(setupMobilePlayPause, 100);
 
                     // Get control bar and its children
                     const controlBar = playerRef.current.getChild('controlBar');
