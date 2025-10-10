@@ -312,7 +312,7 @@ class CustomSettingsMenu extends Component {
         const header = `
             <div class="submenu-header">
                 <span style="margin-right: 8px;">←</span>
-                <span>Subtitles/CC</span>
+                <span>Captions</span>
             </div>
         `;
 
