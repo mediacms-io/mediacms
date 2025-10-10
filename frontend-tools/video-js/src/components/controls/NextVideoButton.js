@@ -25,7 +25,6 @@ class NextVideoButton extends Button {
         const button = videojs.dom.createEl('button', {
             className: 'vjs-next-video-button vjs-control vjs-button',
             type: 'button',
-            title: 'Next Video',
             'aria-label': 'Next Video',
             'aria-disabled': 'false',
         });

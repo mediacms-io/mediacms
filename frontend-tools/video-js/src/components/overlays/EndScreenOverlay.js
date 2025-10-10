@@ -7,7 +7,6 @@ class EndScreenOverlay extends Component {
         super(player, options);
         // Safely initialize relatedVideos with multiple fallbacks
         this.relatedVideos = options?.relatedVideos || options?._relatedVideos || this.options_?.relatedVideos || [];
-        console.log('relatedVideos1', this.relatedVideos);
         this.isTouchDevice = this.detectTouchDevice();
 
         // Bind methods to preserve 'this' context

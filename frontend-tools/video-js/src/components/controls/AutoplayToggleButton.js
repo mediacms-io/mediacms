@@ -43,7 +43,6 @@ class AutoplayToggleButton extends Button {
         const button = super.createEl('button', {
             className: 'vjs-autoplay-toggle vjs-control vjs-button',
             type: 'button',
-            title: this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off',
             'aria-label': this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off',
         });
 
@@ -115,7 +114,6 @@ class AutoplayToggleButton extends Button {
             this.updateIconClass();
 
             if (this.el()) {
-                this.el().title = this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off';
                 this.el().setAttribute('aria-label', this.isAutoplayEnabled ? 'Autoplay is on' : 'Autoplay is off');
                 const controlText = this.el().querySelector('.vjs-control-text');
                 if (controlText)

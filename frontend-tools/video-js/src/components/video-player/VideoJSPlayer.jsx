@@ -43,13 +43,24 @@ const enableStandardButtonTooltips = (player) => {
             fullscreenToggle: () => (player.isFullscreen() ? 'Exit fullscreen' : 'Fullscreen'),
             pictureInPictureToggle: 'Picture-in-picture',
             subtitlesButton: 'Subtitles/CC',
-            captionsButton: 'Captions',
-            subsCapsButton: 'Subtitles/CC',
+            captionsButton: '',
+            subsCapsButton: '',
             chaptersButton: 'Chapters',
             audioTrackButton: 'Audio tracks',
             playbackRateMenuButton: 'Playback speed',
             // currentTimeDisplay: 'Current time', // Removed - no tooltip for time
             // durationDisplay: 'Duration', // Removed - no tooltip for duration
+        };
+
+        // Define tooltip mappings for custom buttons (by CSS class)
+        const customButtonTooltips = {
+            'vjs-next-video-button': 'Next Video',
+            'vjs-autoplay-toggle': (el) => {
+                // Check if autoplay is enabled by looking at the aria-label
+                const ariaLabel = el.getAttribute('aria-label') || '';
+                return ariaLabel.includes('on') ? 'Autoplay is on' : 'Autoplay is off';
+            },
+            'vjs-settings-button': 'Settings',
         };
 
         // Apply tooltips to each button
@@ -90,6 +101,42 @@ const enableStandardButtonTooltips = (player) => {
                         buttonEl.setAttribute('title', tooltip);
                         buttonEl.setAttribute('aria-label', tooltip);
                     });
+                }
+            }
+        });
+
+        // Apply tooltips to custom buttons (by CSS class)
+        Object.keys(customButtonTooltips).forEach((className) => {
+            const buttonEl = controlBar.el().querySelector(`.${className}`);
+            if (buttonEl) {
+                const tooltipText =
+                    typeof customButtonTooltips[className] === 'function'
+                        ? customButtonTooltips[className](buttonEl)
+                        : customButtonTooltips[className];
+
+                // Skip empty tooltips
+                if (!tooltipText || tooltipText.trim() === '') {
+                    console.log('Empty tooltip for custom button:', className, tooltipText);
+                    return;
+                }
+
+                buttonEl.setAttribute('title', tooltipText);
+                buttonEl.setAttribute('aria-label', tooltipText);
+
+                // For autoplay button, update tooltip when state changes
+                if (className === 'vjs-autoplay-toggle') {
+                    // Listen for aria-label changes to update tooltip
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'aria-label') {
+                                const newTooltip = customButtonTooltips[className](buttonEl);
+                                if (newTooltip && newTooltip.trim() !== '') {
+                                    buttonEl.setAttribute('title', newTooltip);
+                                }
+                            }
+                        });
+                    });
+                    observer.observe(buttonEl, { attributes: true, attributeFilter: ['aria-label'] });
                 }
             }
         });

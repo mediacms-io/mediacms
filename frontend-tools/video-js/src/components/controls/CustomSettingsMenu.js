@@ -64,7 +64,6 @@ class CustomSettingsMenu extends Component {
         `;
 
         // Add tooltip attributes
-        settingsButtonEl.setAttribute('title', 'Settings');
         settingsButtonEl.setAttribute('aria-label', 'Settings');
 
         // Position the settings button at the end of the control bar
