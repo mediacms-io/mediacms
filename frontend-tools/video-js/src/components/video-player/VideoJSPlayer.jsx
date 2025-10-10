@@ -2555,8 +2555,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             const progressEl = progressControl.el();
                             const controlBarEl = controlBar.el();
                             controlBarEl.style.gap = 0;
-                            controlBarEl.style.background = 'none';
-                            progressEl.style.background = 'none';
+                            // controlBarEl.style.background = 'none';
+                            // progressEl.style.background = 'none';
                             // controlBarEl.style.background = 'yellow';
                             // progressEl.style.background = 'red';
 

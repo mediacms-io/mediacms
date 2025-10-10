@@ -1,10 +1,11 @@
-.video-js button {
+button {
     cursor: pointer;
 }
 
-/* Ensure video player is focusable but without outline */
 .video-js,
 .video-js[tabindex],
-.vjs-button:focus {
+.vjs-button:focus,
+.video-js video:focus,
+.video-js video:focus-visible {
     outline: none !important;
 }
