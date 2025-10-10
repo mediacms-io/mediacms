@@ -1176,7 +1176,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           media_type: 'video',
                           original_media_url:
                               '/media/original/user/markos/db52140de7204022a1e5f08e078b4ec6.UniversityofCopenhagenMærskTower.mp4',
-                          hls_info: {
+                          _hls_info: {
                               master_file: '/media/hls/5073e97457004961a163c5b504e2d7e8/master.m3u8',
                               '240_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-1/iframes.m3u8',
                               '480_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-2/iframes.m3u8',
@@ -1189,7 +1189,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '144_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-4/stream.m3u8',
                               '360_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-5/stream.m3u8',
                           },
-                          // hls_info: {},
+                          hls_info: {},
                           /* hls_info: {
                               master_file: '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/master.m3u8',
                               '240_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/iframes.m3u8',
@@ -1342,7 +1342,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                       },
 
                       // other
-                      useRoundedCorners: true,
+                      useRoundedCorners: false,
                       isPlayList: false,
                       previewSprite: {
                           url: 'https://videojs.mediacms.io/media/original/thumbnails/user/admin/43cc73a8c1604425b7057ad2b50b1798.19247660hd_1920_1080_60fps.mp4sprites.jpg',
@@ -2324,6 +2324,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Auto-start video on page load/reload with fallback strategy
                             autoplayHandler.handleAutoplay();
                         } */
+                        console.log('autoplayHandler');
                         autoplayHandler.handleAutoplay();
                     } else {
                         // For embed players, setup clean appearance with hidden controls
@@ -2678,11 +2679,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Initial sync
                             syncProgressVisibility();
 
-                            if (isEmbedPlayer) {
-                                // Initial sync - hide until video starts
-                                progressEl.style.opacity = '0';
-                                progressEl.style.visibility = 'hidden';
-                            }
+                            // if (isEmbedPlayer) {
+                            // Initial sync - hide until video starts
+                            progressEl.style.opacity = '0';
+                            progressEl.style.visibility = 'hidden';
+                            // }
 
                             // Show when video starts
                             const showOnPlay = () => {
