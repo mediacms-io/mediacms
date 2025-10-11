@@ -30,6 +30,14 @@
     justify-content: stretch;
     grid-auto-rows: 120px; /* Compact row height */
     box-sizing: border-box;
+    /* Hide scrollbar while keeping scroll functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbar for Chrome/Safari/Opera */
+.vjs-related-videos-grid::-webkit-scrollbar {
+    display: none;
 }
 
 /* Video item cards */
