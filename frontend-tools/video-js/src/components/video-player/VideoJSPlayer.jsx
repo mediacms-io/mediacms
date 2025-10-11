@@ -2754,13 +2754,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             // Initial sync
                             syncProgressVisibility();
 
-                            // if (isEmbedPlayer) {
-                            // Initial sync - hide until video starts
-                            progressEl.style.opacity = '0';
-                            progressEl.style.visibility = 'hidden';
-                            // }
+                            // For embed players only, hide until video starts
+                            if (isEmbedPlayer) {
+                                progressEl.style.opacity = '0';
+                                progressEl.style.visibility = 'hidden';
+                            }
 
-                            // Show when video starts
+                            // Show when video starts (for embed players) or ensure visibility (for regular players)
                             const showOnPlay = () => {
                                 syncProgressVisibility();
                                 playerRef.current.off('play', showOnPlay);
