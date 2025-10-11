@@ -322,9 +322,25 @@ class NavMenuInlineTabs extends React.PureComponent {
             <InlineTab
               id="media"
               isActive={'media' === this.props.type}
-              label={translateString('Media')}
+              label={translateString(this.userIsAuthor ? 'Media I own' : 'Media')}
               link={LinksContext._currentValue.profile.media}
             />
+            {this.userIsAuthor ? (
+              <InlineTab
+                id="shared_by_me"
+                isActive={'shared_by_me' === this.props.type}
+                label={translateString('Shared by me')}
+                link={LinksContext._currentValue.profile.shared_by_me}
+              />
+            ) : null}
+            {this.userIsAuthor ? (
+              <InlineTab
+                id="shared_with_me"
+                isActive={'shared_with_me' === this.props.type}
+                label={translateString('Shared with me')}
+                link={LinksContext._currentValue.profile.shared_with_me}
+              />
+            ) : null}
 
             {MemberContext._currentValue.can.saveMedia ? (
               <InlineTab
@@ -354,6 +370,57 @@ class NavMenuInlineTabs extends React.PureComponent {
             <li className="media-search">
               <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} />
             </li>
+            {this.props.onToggleFiltersClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-filters-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleFiltersClick} title={translateString('Filters')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">filter_list</i>
+                  </CircleIconButton>
+                  {this.props.hasActiveFilters ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
+                </span>
+              </li>
+            ) : null}
+            {this.props.onToggleTagsClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-tags-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleTagsClick} title={translateString('Tags')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">local_offer</i>
+                  </CircleIconButton>
+                  {this.props.hasActiveTags ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
+                </span>
+              </li>
+            ) : null}
+            {this.props.onToggleSortingClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-sorting-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={this.props.onToggleSortingClick} title={translateString('Sort By')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">swap_vert</i>
+                  </CircleIconButton>
+                </span>
+              </li>
+            ) : null}
           </ul>
 
           {this.state.displayNext ? this.nextBtn : null}
@@ -366,6 +433,11 @@ class NavMenuInlineTabs extends React.PureComponent {
 NavMenuInlineTabs.propTypes = {
   type: PropTypes.string.isRequired,
   onQueryChange: PropTypes.func,
+  onToggleFiltersClick: PropTypes.func,
+  onToggleTagsClick: PropTypes.func,
+  onToggleSortingClick: PropTypes.func,
+  hasActiveFilters: PropTypes.bool,
+  hasActiveTags: PropTypes.bool,
 };
 
 function AddBannerButton(props) {
@@ -375,8 +447,8 @@ function AddBannerButton(props) {
     link = '/edit-channel.html';
   }
   return (
-    <a href={link} className="edit-channel" title="Add banner">
-      ADD BANNER
+    <a href={link} className="edit-channel-icon" title="Add banner">
+      <i className="material-icons">add_photo_alternate</i>
     </a>
   );
 }
@@ -388,8 +460,8 @@ function EditBannerButton(props) {
     link = '/edit-channel.html';
   }
   return (
-    <a href={link} className="edit-channel" title="Edit banner">
-      EDIT BANNER
+    <a href={link} className="edit-channel-icon" title="Edit banner">
+      <i className="material-icons">edit</i>
     </a>
   );
 }
@@ -402,8 +474,8 @@ function EditProfileButton(props) {
   }
 
   return (
-    <a href={link} className="edit-profile" title="Edit profile">
-      EDIT PROFILE
+    <a href={link} className="edit-profile-icon" title="Edit profile">
+      <i className="material-icons">edit</i>
     </a>
   );
 }
@@ -528,11 +600,11 @@ export default function ProfilePagesHeader(props) {
           ></span>
         ) : null}
 
-        {userCanDeleteProfile ? (
+        {userCanDeleteProfile && !userIsAuthor ? (
           <span className="delete-profile-wrap">
             <PopupTrigger contentRef={popupContentRef}>
-              <button className="delete-profile" title="">
-                REMOVE PROFILE
+              <button className="delete-profile" title="Remove profile">
+                <i className="material-icons">delete</i>
               </button>
             </PopupTrigger>
 
@@ -556,7 +628,7 @@ export default function ProfilePagesHeader(props) {
           </span>
         ) : null}
 
-        {userCanEditProfile ? (
+        {userCanEditProfile && userIsAuthor ? (
           props.author.banner_thumbnail_url ? (
             <EditBannerButton link={ProfilePageStore.get('author-data').default_channel_edit_url} />
           ) : (
@@ -571,14 +643,27 @@ export default function ProfilePagesHeader(props) {
             <div className="profile-info-inner">
               <div>{props.author.thumbnail_url ? <img src={props.author.thumbnail_url} alt="" /> : null}</div>
               <div>
-                {props.author.name ? <h1>{props.author.name}</h1> : null}
-                {userCanEditProfile ? <EditProfileButton link={ProfilePageStore.get('author-data').edit_url} /> : null}
+                {props.author.name ? (
+                  <div className="profile-name-edit-wrapper">
+                    <h1>{props.author.name}</h1>
+                    {userCanEditProfile && !userIsAuthor ? <EditProfileButton link={ProfilePageStore.get('author-data').edit_url} /> : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         ) : null}
 
-        <NavMenuInlineTabs ref={profileNavRef} type={props.type} onQueryChange={props.onQueryChange} />
+        <NavMenuInlineTabs
+          ref={profileNavRef}
+          type={props.type}
+          onQueryChange={props.onQueryChange}
+          onToggleFiltersClick={props.onToggleFiltersClick}
+          onToggleTagsClick={props.onToggleTagsClick}
+          onToggleSortingClick={props.onToggleSortingClick}
+          hasActiveFilters={props.hasActiveFilters}
+          hasActiveTags={props.hasActiveTags}
+        />
       </div>
     </div>
   );
@@ -588,6 +673,11 @@ ProfilePagesHeader.propTypes = {
   author: PropTypes.object.isRequired,
   type: PropTypes.string.isRequired,
   onQueryChange: PropTypes.func,
+  onToggleFiltersClick: PropTypes.func,
+  onToggleTagsClick: PropTypes.func,
+  onToggleSortingClick: PropTypes.func,
+  hasActiveFilters: PropTypes.bool,
+  hasActiveTags: PropTypes.bool,
 };
 
 ProfilePagesHeader.defaultProps = {

@@ -102,6 +102,7 @@ def view_user_about(request, username):
 
 @login_required
 def edit_user(request, username):
+    context = {}
     user = get_user(username=username)
     if not user or (user != request.user and not is_mediacms_manager(request.user)):
         return HttpResponseRedirect("/")
@@ -114,7 +115,13 @@ def edit_user(request, username):
             return HttpResponseRedirect(user.get_absolute_url())
     else:
         form = UserForm(request.user, instance=user)
-    return render(request, "cms/user_edit.html", {"form": form})
+    context["form"] = form
+    context["user"] = user
+    if user == request.user:
+        context["is_author"] = True
+    else:
+        context["is_author"] = False
+    return render(request, "cms/user_edit.html", context)
 
 
 def view_channel(request, friendly_token):

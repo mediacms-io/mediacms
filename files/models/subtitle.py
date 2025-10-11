@@ -80,5 +80,9 @@ class TranscriptionRequest(models.Model):
     translate_to_english = models.BooleanField(default=False)
     logs = models.TextField(blank=True, null=True)
 
+    class Meta:
+        verbose_name = "Caption Request"
+        verbose_name_plural = "Caption Requests"
+
     def __str__(self):
         return f"Transcription request for {self.media.title} - {self.status}"

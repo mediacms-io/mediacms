@@ -74,8 +74,16 @@ export function MediaItemEditLink(props) {
   }
 
   return !link ? null : (
-    <a href={link} title={translateString("Edit media")} className="item-edit-link">
-      {translateString("EDIT MEDIA")}
+    <a href={link} title={translateString("Edit media")} className="item-edit-icon">
+      <i className="material-icons">edit</i>
+    </a>
+  );
+}
+
+export function MediaItemViewLink(props) {
+  return !props.link ? null : (
+    <a href={props.link} title={translateString("Publish media")} className="item-view-icon">
+      <i className="material-icons">publish</i>
     </a>
   );
 }

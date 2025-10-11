@@ -212,6 +212,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = (
             "title",
+            "uid",
             "description",
             "is_global",
             "media_count",
@@ -232,7 +233,7 @@ class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
         read_only_fields = ("add_date", "user")
-        fields = ("add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url")
+        fields = ("id", "add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url", "friendly_token")
 
 
 class PlaylistDetailSerializer(serializers.ModelSerializer):

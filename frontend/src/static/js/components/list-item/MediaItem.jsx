@@ -8,8 +8,9 @@ import { Item } from './Item';
 export function MediaItem(props) {
   const type = props.type;
 
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents] =
+  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
+
 
   function thumbnailComponent() {
     return <MediaItemThumbnailLink src={thumbnailUrl} title={props.title} link={props.link} />;
@@ -21,10 +22,26 @@ export function MediaItem(props) {
     props.playlistOrder === props.playlistActiveItem
   );
 
+  const finalClassname = containerClassname +
+    (props.showSelection ? ' with-selection' : '') +
+    (props.isSelected ? ' selected' : '');
+
   return (
-    <div className={containerClassname}>
+    <div className={finalClassname}>
       <div className="item-content">
+        {props.showSelection && (
+          <div className="item-selection-checkbox">
+            <input
+              type="checkbox"
+              checked={props.isSelected || false}
+              onChange={(e) => { props.onCheckboxChange && props.onCheckboxChange(e); }}
+              aria-label="Select media"
+            />
+          </div>
+        )}
+
         {editMediaComponent()}
+        {viewMediaComponent()}
 
         {thumbnailComponent()}
 

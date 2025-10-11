@@ -14,8 +14,8 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-<link href="{% static "css/profile-media.css" %}" rel="preload" as="style">
-<link href="{% static "css/profile-media.css" %}" rel="stylesheet">
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -94,7 +95,11 @@ class PlaylistDetail(APIView):
 
         serializer = PlaylistDetailSerializer(playlist, context={"request": request})
 
-        playlist_media = PlaylistMedia.objects.filter(playlist=playlist, media__state="public").prefetch_related("media__user")
+        # If user is the author, show all media; otherwise, show only public and unlisted media
+        if request.user.is_authenticated and request.user == playlist.user:
+            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).prefetch_related("media__user").select_related("media")
+        else:
+            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).filter(Q(media__state="public") | Q(media__state="unlisted")).prefetch_related("media__user").select_related("media")
 
         playlist_media = [c.media for c in playlist_media]
 
