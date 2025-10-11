@@ -71,10 +71,16 @@ class EndScreenOverlay extends Component {
         grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
         grid.style.gap = '12px';
         grid.style.padding = '20px';
+        grid.style.width = '100%';
         grid.style.height = '100%';
         grid.style.overflowY = 'auto';
-        grid.style.alignContent = 'start';
+        grid.style.alignContent = 'flex-start';
         grid.style.justifyItems = 'stretch';
+        grid.style.justifyContent = 'stretch';
+        grid.style.gridAutoRows = '120px';
+        grid.style.boxSizing = 'border-box';
+
+        console.log('Creating grid with', columns, 'columns and', videosToShow.length, 'videos');
 
         // Create video items with consistent dimensions
         videosToShow.forEach((video) => {
@@ -174,25 +180,33 @@ class EndScreenOverlay extends Component {
         const playerWidth = playerEl?.offsetWidth || window.innerWidth;
         const playerHeight = playerEl?.offsetHeight || window.innerHeight;
 
-        // Calculate available space for better utilization
-        const availableHeight = playerHeight - 140; // Account for controls and padding
-        const cardHeight = 180; // Consistent card height
-        const maxRows = Math.max(2, Math.floor(availableHeight / cardHeight));
+        // Calculate available space more accurately
+        const controlBarHeight = 60;
+        const padding = 40; // Total padding (20px top + 20px bottom)
+        const availableHeight = playerHeight - controlBarHeight - padding;
+        const cardHeight = 120; // Compact card height with text overlay
+        const gap = 12; // Gap between items
 
-        // Enhanced grid configuration to fill large screens better
+        // Calculate maximum rows that can fit - be more aggressive
+        const maxRows = Math.max(2, Math.floor((availableHeight + gap) / (cardHeight + gap)));
+
+        console.log('Grid Config:', { playerWidth, playerHeight, availableHeight, maxRows });
+
+        // Enhanced grid configuration to fill all available space
         if (playerWidth >= 1600) {
             const columns = 5;
-            return { columns, maxVideos: columns * Math.min(maxRows, 3), useSwiper: false }; // 5 columns, up to 3 rows
+            return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
         } else if (playerWidth >= 1200) {
             const columns = 4;
-            return { columns, maxVideos: columns * Math.min(maxRows, 3), useSwiper: false }; // 4 columns, up to 3 rows
+            return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
         } else if (playerWidth >= 900) {
             const columns = 3;
-            return { columns, maxVideos: columns * Math.min(maxRows, 2), useSwiper: false }; // 3 columns, up to 2 rows
-        } else if (playerWidth >= 600) {
-            return { columns: 2, maxVideos: 4, useSwiper: false }; // 2x2 grid for medium screens
+            return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
+        } else if (playerWidth >= 700) {
+            const columns = 2;
+            return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
         } else {
-            return { columns: 2, maxVideos: 6, useSwiper: true }; // Use swiper for small screens
+            return { columns: 2, maxVideos: 12, useSwiper: true }; // Use swiper for small screens
         }
     }
 
@@ -227,13 +241,17 @@ class EndScreenOverlay extends Component {
             item.style.minWidth = 'calc(50% - 6px)'; // 50% width minus half the gap
             item.style.width = 'calc(50% - 6px)';
             item.style.maxWidth = '180px'; // Maximum width for larger screens
-            item.style.height = '220px'; // Increased height for better content display
-            item.style.minHeight = '220px';
+
+            // Simpler height since text is overlaid on thumbnail
+            const cardHeight = '120px'; // Just the thumbnail height
+
+            item.style.height = cardHeight;
+            item.style.minHeight = cardHeight;
             item.style.flexShrink = '0';
             item.style.scrollSnapAlign = 'start';
         } else {
-            item.style.height = '180px';
-            item.style.minHeight = '180px';
+            item.style.height = '120px'; // Same compact height for regular grid
+            item.style.minHeight = '120px';
             item.style.width = '100%';
         }
 
@@ -251,13 +269,11 @@ class EndScreenOverlay extends Component {
             });
         }
 
-        // Create thumbnail container
-        const thumbnailContainer = this.createThumbnailContainer(video, isSwiperMode);
+        // Create thumbnail container with overlaid text
+        const thumbnailContainer = this.createThumbnailWithOverlay(video, isSwiperMode);
         item.appendChild(thumbnailContainer);
 
-        // Create simplified info section
-        const info = this.createVideoInfo(video, isSwiperMode);
-        item.appendChild(info);
+        console.log('Created video item with overlay:', item);
 
         // Add click handler
         this.addClickHandler(item, video);
@@ -315,39 +331,160 @@ class EndScreenOverlay extends Component {
         return container;
     }
 
-    createVideoInfo(video, isSwiperMode = false) {
+    createThumbnailWithOverlay(video, isSwiperMode = false) {
+        const container = videojs.dom.createEl('div', {
+            className: 'vjs-related-video-thumbnail-container',
+        });
+
+        // Container styling - full height since it contains everything
+        container.style.position = 'relative';
+        container.style.width = '100%';
+        container.style.height = '120px';
+        container.style.overflow = 'hidden';
+        container.style.borderRadius = '6px';
+
+        // Create thumbnail image
+        const thumbnail = videojs.dom.createEl('img', {
+            className: 'vjs-related-video-thumbnail',
+            src: video.thumbnail || this.getPlaceholderImage(video.title),
+            alt: video.title,
+        });
+
+        thumbnail.style.width = '100%';
+        thumbnail.style.height = '100%';
+        thumbnail.style.objectFit = 'cover';
+        thumbnail.style.display = 'block';
+
+        container.appendChild(thumbnail);
+
+        // Add duration badge at bottom right
+        if (video.duration && video.duration > 0) {
+            const duration = videojs.dom.createEl('div', {
+                className: 'vjs-video-duration',
+            });
+            duration.textContent = this.formatDuration(video.duration);
+            duration.style.position = 'absolute';
+            duration.style.bottom = '4px';
+            duration.style.right = '4px';
+            duration.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            duration.style.color = 'white';
+            duration.style.padding = '2px 6px';
+            duration.style.borderRadius = '3px';
+            duration.style.fontSize = '11px';
+            duration.style.fontWeight = '600';
+            duration.style.lineHeight = '1';
+            duration.style.zIndex = '3';
+
+            container.appendChild(duration);
+        }
+
+        // Create text overlay at top-left
+        const textOverlay = videojs.dom.createEl('div', {
+            className: 'vjs-video-text-overlay',
+        });
+
+        textOverlay.style.position = 'absolute';
+        textOverlay.style.top = '8px';
+        textOverlay.style.left = '8px';
+        textOverlay.style.right = '8px';
+        textOverlay.style.background =
+            'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)';
+        textOverlay.style.padding = '8px';
+        textOverlay.style.borderRadius = '4px';
+        textOverlay.style.zIndex = '2';
+
+        // Create title
+        const title = videojs.dom.createEl('div', {
+            className: 'vjs-overlay-title',
+        });
+        title.textContent = video.title || 'Sample Video Title';
+        title.style.color = '#ffffff';
+        title.style.fontSize = isSwiperMode ? '12px' : '13px';
+        title.style.fontWeight = '600';
+        title.style.lineHeight = '1.3';
+        title.style.marginBottom = '4px';
+        title.style.overflow = 'hidden';
+        title.style.textOverflow = 'ellipsis';
+        title.style.display = '-webkit-box';
+        title.style.webkitLineClamp = '2';
+        title.style.webkitBoxOrient = 'vertical';
+        title.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+
+        // Create meta info
+        const meta = videojs.dom.createEl('div', {
+            className: 'vjs-overlay-meta',
+        });
+
+        let metaText = '';
+        if (video.author && video.views) {
+            metaText = `${video.author} • ${video.views}`;
+        } else if (video.author) {
+            metaText = video.author;
+        } else if (video.views) {
+            metaText = video.views;
+        } else {
+            metaText = 'Unknown • No views';
+        }
+
+        meta.textContent = metaText;
+        meta.style.color = '#e0e0e0';
+        meta.style.fontSize = isSwiperMode ? '10px' : '11px';
+        meta.style.lineHeight = '1.2';
+        meta.style.overflow = 'hidden';
+        meta.style.textOverflow = 'ellipsis';
+        meta.style.whiteSpace = 'nowrap';
+        meta.style.textShadow = '0 1px 2px rgba(0,0,0,0.8)';
+
+        textOverlay.appendChild(title);
+        textOverlay.appendChild(meta);
+        container.appendChild(textOverlay);
+
+        console.log('Created thumbnail with overlay:', container);
+        console.log('Title:', title.textContent, 'Meta:', meta.textContent);
+
+        return container;
+    }
+
+    createVideoInfo(video) {
         const info = videojs.dom.createEl('div', {
             className: 'vjs-related-video-info',
         });
 
-        // Consistent info styling with increased height for swiper mode
-        const padding = isSwiperMode ? '10px' : '10px';
-        const infoHeight = isSwiperMode ? '110px' : '70px'; // Increased height for swiper mode
+        // Note: Using simplified styling for debugging
 
-        info.style.padding = padding;
+        // Force visible info section with simple styling
+        info.style.padding = '12px';
+        info.style.backgroundColor = 'rgba(26, 26, 26, 0.9)'; // Visible background for debugging
         info.style.color = 'white';
-        info.style.flex = '1';
-        info.style.display = 'flex';
-        info.style.flexDirection = 'column';
-        info.style.justifyContent = 'flex-start'; // Align content to top
-        info.style.height = infoHeight;
-        info.style.minHeight = infoHeight;
+        info.style.display = 'block'; // Use simple block display
+        info.style.width = '100%';
+        info.style.height = 'auto';
+        info.style.minHeight = '80px';
+        info.style.position = 'relative';
+        info.style.zIndex = '10';
 
         // Title with responsive text handling
         const title = videojs.dom.createEl('div', {
             className: 'vjs-related-video-title',
         });
-        title.textContent = video.title;
-        title.style.fontSize = isSwiperMode ? '13px' : '13px'; // Slightly larger font for better readability
-        title.style.fontWeight = '600';
-        title.style.lineHeight = '1.3';
-        title.style.overflow = 'hidden';
-        title.style.textOverflow = 'ellipsis';
-        title.style.display = '-webkit-box';
-        title.style.webkitLineClamp = isSwiperMode ? '3' : '2'; // Allow 3 lines for swiper mode
-        title.style.webkitBoxOrient = 'vertical';
-        title.style.marginBottom = isSwiperMode ? '8px' : '4px';
+        title.textContent = video.title || 'Sample Video Title';
+        console.log('Setting title:', video.title, 'for video:', video);
+
+        // Note: Using fixed styling for debugging
+
+        // Simple, guaranteed visible title styling
+        title.style.fontSize = '14px';
+        title.style.fontWeight = 'bold';
+        title.style.lineHeight = '1.4';
         title.style.color = '#ffffff';
+        title.style.backgroundColor = 'rgba(255, 0, 0, 0.2)'; // Red background for debugging
+        title.style.padding = '4px';
+        title.style.marginBottom = '8px';
+        title.style.display = 'block';
+        title.style.width = '100%';
+        title.style.wordWrap = 'break-word';
+        title.style.position = 'relative';
+        title.style.zIndex = '20';
 
         // Meta information - always show for swiper mode
         const meta = videojs.dom.createEl('div', {
@@ -367,18 +504,27 @@ class EndScreenOverlay extends Component {
             metaText = 'Unknown • No views';
         }
 
-        meta.textContent = metaText;
-        meta.style.fontSize = isSwiperMode ? '11px' : '11px'; // Slightly larger font for better readability
+        meta.textContent = metaText || 'Sample Author • 1K views';
+        console.log('Setting meta:', metaText, 'for video:', video);
+
+        // Note: Using fixed styling for debugging
+
+        // Simple, guaranteed visible meta styling
+        meta.style.fontSize = '12px';
         meta.style.color = '#b3b3b3';
-        meta.style.overflow = 'hidden';
-        meta.style.textOverflow = 'ellipsis';
-        meta.style.whiteSpace = 'nowrap';
-        meta.style.flexShrink = '0';
-        meta.style.lineHeight = '1.3';
-        meta.style.marginTop = isSwiperMode ? '4px' : '0px'; // Add some spacing
+        meta.style.backgroundColor = 'rgba(0, 255, 0, 0.2)'; // Green background for debugging
+        meta.style.padding = '4px';
+        meta.style.display = 'block';
+        meta.style.width = '100%';
+        meta.style.position = 'relative';
+        meta.style.zIndex = '20';
 
         info.appendChild(title);
-        info.appendChild(meta); // Always append meta for consistent layout
+        info.appendChild(meta);
+
+        console.log('Created info section:', info);
+        console.log('Title element:', title, 'Text:', title.textContent);
+        console.log('Meta element:', meta, 'Text:', meta.textContent);
 
         return info;
     }
@@ -557,7 +703,7 @@ class EndScreenOverlay extends Component {
             },
             {
                 id: 'sample10',
-                title: 'AWS Cloud Computing',
+                title: 'AWS Cloud Computing Essentials',
                 author: 'Cloud Master',
                 views: '1.8M views',
                 duration: 4800,
@@ -571,10 +717,66 @@ class EndScreenOverlay extends Component {
             },
             {
                 id: 'sample12',
-                title: 'Kubernetes Orchestration',
+                title: 'Kubernetes Orchestration Guide',
                 author: 'Container Pro',
                 views: '680K views',
                 duration: 3900,
+            },
+            {
+                id: 'sample13',
+                title: 'Redis Caching Strategies',
+                author: 'Cache Expert',
+                views: '520K views',
+                duration: 2250,
+            },
+            {
+                id: 'sample14',
+                title: 'Web Performance Optimization',
+                author: 'Speed Master',
+                views: '890K views',
+                duration: 3100,
+            },
+            {
+                id: 'sample15',
+                title: 'CI/CD Pipeline Setup',
+                author: 'DevOps Guide',
+                views: '710K views',
+                duration: 2900,
+            },
+            {
+                id: 'sample16',
+                title: 'Microservices Architecture',
+                author: 'System Design',
+                views: '1.3M views',
+                duration: 4500,
+            },
+            {
+                id: 'sample17',
+                title: 'Next.js App Router Tutorial',
+                author: 'Web Academy',
+                views: '640K views',
+                duration: 2650,
+            },
+            {
+                id: 'sample18',
+                title: 'Tailwind CSS Crash Course',
+                author: 'CSS Master',
+                views: '1.1M views',
+                duration: 1800,
+            },
+            {
+                id: 'sample19',
+                title: 'Git and GitHub Essentials',
+                author: 'Version Control Pro',
+                views: '2.3M views',
+                duration: 3300,
+            },
+            {
+                id: 'sample20',
+                title: 'REST API Best Practices',
+                author: 'API Design',
+                views: '780K views',
+                duration: 2400,
             },
         ];
     }
