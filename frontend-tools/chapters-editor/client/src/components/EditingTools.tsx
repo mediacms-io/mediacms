@@ -7,12 +7,10 @@ interface EditingToolsProps {
     onReset: () => void;
     onUndo: () => void;
     onRedo: () => void;
-    onPlaySegments: () => void;
     onPlay: () => void;
     canUndo: boolean;
     canRedo: boolean;
     isPlaying?: boolean;
-    isPlayingSegments?: boolean;
 }
 
 const EditingTools = ({
@@ -20,12 +18,10 @@ const EditingTools = ({
     onReset,
     onUndo,
     onRedo,
-    onPlaySegments,
     onPlay,
     canUndo,
     canRedo,
     isPlaying = false,
-    isPlayingSegments = false,
 }: EditingToolsProps) => {
     const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -55,52 +51,6 @@ const EditingTools = ({
             <div className="flex-container single-row">
                 {/* Left side - Play buttons group */}
                 <div className="button-group play-buttons-group">
-                    {/* Play Chapters button */}
-                    <button
-                        className={`button segments-button`}
-                        onClick={onPlaySegments}
-                        data-tooltip={
-                            isPlayingSegments ? 'Stop chapters playback' : 'Play chapters in one continuous flow'
-                        }
-                        style={{ fontSize: '0.875rem' }}
-                    >
-                        {isPlayingSegments ? (
-                            <>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="10" y1="15" x2="10" y2="9" />
-                                    <line x1="14" y1="15" x2="14" y2="9" />
-                                </svg>
-                                <span className="full-text">Stop Preview</span>
-                                <span className="short-text">Stop Preview</span>
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <polygon points="10 8 16 12 10 16 10 8" />
-                                </svg>
-                                <span className="full-text">Play Preview</span>
-                                <span className="short-text">Play Preview</span>
-                            </>
-                        )}
-                    </button>
 
                     {/* Play Preview button */}
                     {/* <button 
@@ -131,53 +81,50 @@ const EditingTools = ({
             )}
           </button> */}
 
-                    {/* Standard Play button (only shown when not in segments playback on small screens) */}
-                    {(!isPlayingSegments || !isSmallScreen) && (
-                        <button
-                            className={`button play-button ${isPlayingSegments ? 'greyed-out' : ''}`}
-                            onClick={handlePlay}
-                            data-tooltip={isPlaying ? 'Pause video' : 'Play full video'}
-                            style={{ fontSize: '0.875rem' }}
-                            disabled={isPlayingSegments}
-                        >
-                            {isPlaying && !isPlayingSegments ? (
-                                <>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <line x1="10" y1="15" x2="10" y2="9" />
-                                        <line x1="14" y1="15" x2="14" y2="9" />
-                                    </svg>
-                                    <span className="full-text">Pause</span>
-                                    <span className="short-text">Pause</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polygon points="10 8 16 12 10 16 10 8" />
-                                    </svg>
-                                    <span className="full-text">Play</span>
-                                    <span className="short-text">Play</span>
-                                </>
-                            )}
-                        </button>
-                    )}
+                    {/* Standard Play button */}
+                    <button
+                        className="button play-button"
+                        onClick={handlePlay}
+                        data-tooltip={isPlaying ? 'Pause video' : 'Play full video'}
+                        style={{ fontSize: '0.875rem' }}
+                    >
+                        {isPlaying ? (
+                            <>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="10" y1="15" x2="10" y2="9" />
+                                    <line x1="14" y1="15" x2="14" y2="9" />
+                                </svg>
+                                <span className="full-text">Pause</span>
+                                <span className="short-text">Pause</span>
+                            </>
+                        ) : (
+                            <>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polygon points="10 8 16 12 10 16 10 8" />
+                                </svg>
+                                <span className="full-text">Play</span>
+                                <span className="short-text">Play</span>
+                            </>
+                        )}
+                    </button>
 
                     {/* Segments Playback message (replaces play button during segments playback) */}
                     {/* {isPlayingSegments && !isSmallScreen && (
@@ -209,8 +156,8 @@ const EditingTools = ({
                     <button
                         className="button"
                         aria-label="Undo"
-                        data-tooltip={isPlayingSegments ? 'Disabled during preview' : 'Undo last action'}
-                        disabled={!canUndo || isPlayingSegments}
+                        data-tooltip="Undo last action"
+                        disabled={!canUndo}
                         onClick={onUndo}
                     >
                         <svg
@@ -230,8 +177,8 @@ const EditingTools = ({
                     <button
                         className="button"
                         aria-label="Redo"
-                        data-tooltip={isPlayingSegments ? 'Disabled during preview' : 'Redo last undone action'}
-                        disabled={!canRedo || isPlayingSegments}
+                        data-tooltip="Redo last undone action"
+                        disabled={!canRedo}
                         onClick={onRedo}
                     >
                         <svg
@@ -252,8 +199,7 @@ const EditingTools = ({
                     <button
                         className="button"
                         onClick={onReset}
-                        data-tooltip={isPlayingSegments ? 'Disabled during preview' : 'Reset to full video'}
-                        disabled={isPlayingSegments}
+                        data-tooltip="Reset to full video"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path
