@@ -252,7 +252,7 @@ class CustomSettingsMenu extends Component {
             for (let i = 0; i < tt.length; i++) {
                 const t = tt[i];
                 if (t.kind === 'subtitles' && t.mode === 'showing') {
-                    currentSubtitleLabel = t.label || t.language || 'Subtitles';
+                    currentSubtitleLabel = t.label || t.language || 'Captions';
                     break;
                 }
             }
@@ -308,7 +308,7 @@ class CustomSettingsMenu extends Component {
            <span class="vjs-icon-placeholder settings-item-svg">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V6C21 4.9 20.1 4 19 4ZM11 17H5V15H11V17ZM19 13H5V11H19V13ZM19 9H5V7H19V9Z" fill="white"/></svg>
            </span>
-        <span>Subtitles</span></span>
+        <span>Captions</span></span>
         <span class="settings-right">
             <span class="current-subtitles">${currentSubtitleLabel}</span>
             <span class="vjs-icon-placeholder vjs-icon-navigate-next"></span>
@@ -522,7 +522,7 @@ class CustomSettingsMenu extends Component {
             for (let i = 0; i < tracks.length; i++) {
                 const t = tracks[i];
                 if (t.kind === 'subtitles' && t.mode === 'showing') {
-                    currentSubtitleLabel = t.label || t.language || 'Subtitles';
+                    currentSubtitleLabel = t.label || t.language || 'Captions';
                     break;
                 }
             }
@@ -1015,6 +1015,35 @@ class CustomSettingsMenu extends Component {
         const btnEl = this.settingsButton?.el();
         if (btnEl) {
             btnEl.classList.add('settings-clicked');
+        }
+    }
+
+    // Check if settings menu is open
+    isMenuOpen() {
+        return this.settingsOverlay && this.settingsOverlay.classList.contains('show');
+    }
+
+    // Close the settings menu
+    closeMenu() {
+        if (this.settingsOverlay) {
+            this.settingsOverlay.classList.remove('show');
+            this.settingsOverlay.style.display = 'none';
+            this.speedSubmenu.style.display = 'none';
+            if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
+            if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
+
+            // Remove active state from settings button
+            const btnEl = this.settingsButton?.el();
+            if (btnEl) {
+                btnEl.classList.remove('settings-clicked');
+            }
+
+            // Restore body scroll on mobile when closing
+            if (this.isMobile) {
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            }
         }
     }
 

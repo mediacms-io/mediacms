@@ -3127,21 +3127,36 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                                     // Different behavior for subtitles button - open settings menu directly
                                     if (n === 'subtitlesButton') {
-                                        // Subtitles button opens settings menu directly to subtitles
-                                        const openSubtitlesSettings = (ev) => {
+                                        // Add tooltip to subtitles button
+                                        el.setAttribute('title', 'Captions');
+                                        el.setAttribute('aria-label', 'Captions');
+
+                                        // Subtitles button toggles settings menu directly to subtitles
+                                        const toggleSubtitlesSettings = (ev) => {
                                             ev.preventDefault();
                                             ev.stopPropagation();
 
-                                            // Open settings menu directly to subtitles submenu
+                                            // Toggle settings menu - close if already open, open if closed
                                             if (
                                                 customComponents.current.settingsMenu &&
                                                 customComponents.current.settingsMenu.openSubtitlesMenu
                                             ) {
-                                                customComponents.current.settingsMenu.openSubtitlesMenu();
+                                                const settingsMenu = customComponents.current.settingsMenu;
+                                                const isOpen = settingsMenu.isMenuOpen && settingsMenu.isMenuOpen();
+
+                                                if (isOpen) {
+                                                    // Close the menu if it's already open
+                                                    if (settingsMenu.closeMenu) {
+                                                        settingsMenu.closeMenu();
+                                                    }
+                                                } else {
+                                                    // Open the menu to subtitles submenu
+                                                    settingsMenu.openSubtitlesMenu();
+                                                }
                                             }
                                         };
 
-                                        el.addEventListener('click', openSubtitlesSettings, { capture: true });
+                                        el.addEventListener('click', toggleSubtitlesSettings, { capture: true });
 
                                         // Add mobile touch support for subtitles button
                                         el.addEventListener(
@@ -3149,7 +3164,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                             (e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                openSubtitlesSettings(e);
+                                                toggleSubtitlesSettings(e);
                                             },
                                             { passive: false }
                                         );

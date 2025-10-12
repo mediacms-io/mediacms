@@ -10,7 +10,7 @@ button {
     outline: none !important;
 }
 
-// Show time control in all screen sizes
+/* Show time control in all screen sizes */
 .video-js .vjs-time-control {
     display: block !important;
 }
