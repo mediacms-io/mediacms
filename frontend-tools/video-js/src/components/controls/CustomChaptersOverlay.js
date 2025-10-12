@@ -211,7 +211,7 @@ class CustomChaptersOverlay extends Component {
 
             const drag = document.createElement('div');
             drag.className = 'playlist-drag-handle';
-            drag.textContent = index === 0 ? '▶' : String(index + 1);
+            drag.textContent = String(index + 1);
 
             const meta = document.createElement('div');
             meta.className = 'thumbnail-meta';
@@ -411,12 +411,10 @@ class CustomChaptersOverlay extends Component {
             if (isPlaying) {
                 currentChapterIndex = index;
                 item.classList.add('selected');
-                if (handle) handle.textContent = '▶';
                 if (dynamic)
                     dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             } else {
                 item.classList.remove('selected');
-                if (handle) handle.textContent = String(index + 1);
                 if (dynamic)
                     dynamic.textContent = dynamic.getAttribute('data-time-range') || this.getChapterTimeRange(chapter);
             }
@@ -431,15 +429,12 @@ class CustomChaptersOverlay extends Component {
     updateActiveItem(activeIndex) {
         const items = this.chaptersList.querySelectorAll('.playlist-items');
         items.forEach((el, idx) => {
-            const handle = el.querySelector('.playlist-drag-handle');
             const dynamic = el.querySelector('.meta-dynamic');
             if (idx === activeIndex) {
                 el.classList.add('selected');
-                if (handle) handle.textContent = '▶';
                 if (dynamic) dynamic.textContent = dynamic.getAttribute('data-duration') || '';
             } else {
                 el.classList.remove('selected');
-                if (handle) handle.textContent = String(idx + 1);
                 if (dynamic) {
                     const timeRange = dynamic.getAttribute('data-time-range');
                     if (timeRange) {
