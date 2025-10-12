@@ -1023,7 +1023,7 @@
     pointer-events: auto; /* Ensure it can receive clicks */
 }
 
-.tooltip-chapter-input {
+textarea.tooltip-chapter-input {
     width: 100%;
     padding: 0.5rem;
     border: 2px solid #ccc;
@@ -1034,14 +1034,16 @@
     resize: none;
     outline: none;
     box-sizing: border-box;
-    max-height: 70px !important;
+    height: 55px !important;
+    max-height: 55px !important;
+    min-height: 55px !important;
 }
 
-.tooltip-chapter-input:focus {
+textarea.tooltip-chapter-input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-.tooltip-chapter-input::placeholder {
+textarea.tooltip-chapter-input::placeholder {
     color: #999;
 }

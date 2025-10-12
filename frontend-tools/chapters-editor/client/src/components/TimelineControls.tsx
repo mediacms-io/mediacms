@@ -57,7 +57,7 @@ interface TimelineControlsProps {
 const constrainTooltipPosition = (positionPercent: number) => {
     // Smooth transition zones instead of hard breakpoints
     const leftTransitionStart = 0;
-    const leftTransitionEnd = 25;
+    const leftTransitionEnd = 15;
     const rightTransitionStart = 75;
     const rightTransitionEnd = 100;
 
