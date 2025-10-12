@@ -847,6 +847,7 @@ const TimelineControls = ({
         document.addEventListener('update-trim', handleTrimUpdate as EventListener);
         document.addEventListener('delete-segment', scheduleAutoSave);
         document.addEventListener('split-segment', scheduleAutoSave);
+        document.addEventListener('undo-redo-autosave', scheduleAutoSave);
 
         return () => {
             logger.debug('Cleaning up auto-save event listeners...');
@@ -855,6 +856,7 @@ const TimelineControls = ({
             document.removeEventListener('update-trim', handleTrimUpdate as EventListener);
             document.removeEventListener('delete-segment', scheduleAutoSave);
             document.removeEventListener('split-segment', scheduleAutoSave);
+            document.removeEventListener('undo-redo-autosave', scheduleAutoSave);
 
             // Clear any pending auto-save timer
             if (autoSaveTimerRef.current) {

@@ -620,6 +620,12 @@ const useVideoChapters = () => {
             setSplitPoints([...previousState.splitPoints]);
             setClipSegments(JSON.parse(JSON.stringify(previousState.clipSegments)));
             setHistoryPosition(historyPosition - 1);
+
+            // Trigger auto-save by dispatching a custom event
+            setTimeout(() => {
+                const event = new CustomEvent('undo-redo-autosave');
+                document.dispatchEvent(event);
+            }, 10);
         } else {
             logger.debug('Cannot undo: at earliest history position');
         }
@@ -648,6 +654,12 @@ const useVideoChapters = () => {
             setSplitPoints([...nextState.splitPoints]);
             setClipSegments(JSON.parse(JSON.stringify(nextState.clipSegments)));
             setHistoryPosition(historyPosition + 1);
+
+            // Trigger auto-save by dispatching a custom event
+            setTimeout(() => {
+                const event = new CustomEvent('undo-redo-autosave');
+                document.dispatchEvent(event);
+            }, 10);
         } else {
             logger.debug('Cannot redo: at latest history position');
         }
