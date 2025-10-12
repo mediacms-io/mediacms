@@ -1247,8 +1247,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           ],
 
                           // VIDEO
-                          media_type: 'video',
-                          original_media_url:
+                          media_type: 'audio',
+                          _original_media_url:
                               '/media/original/user/markos/db52140de7204022a1e5f08e078b4ec6.UniversityofCopenhagenMærskTower.mp4',
                           _hls_info: {
                               master_file: '/media/hls/5073e97457004961a163c5b504e2d7e8/master.m3u8',
@@ -1264,83 +1264,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '360_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-5/stream.m3u8',
                           },
                           hls_info: {},
-                          /* hls_info: {
-                              master_file: '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/master.m3u8',
-                              '240_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/iframes.m3u8',
-                              '480_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-2/iframes.m3u8',
-                              '1080_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-3/iframes.m3u8',
-                              '360_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-4/iframes.m3u8',
-                              '720_iframe': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-5/iframes.m3u8',
-                              '240_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-1/stream.m3u8',
-                              '480_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-2/stream.m3u8',
-                              '1080_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-3/stream.m3u8',
-                              '360_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-4/stream.m3u8',
-                              '720_playlist': '/media/hls/c1ab03cab3bb46b5854a5e217cfe3013/media-5/stream.m3u8',
-                          }, */
-                          /* encodings_info: {
-                              144: {
-                                  h264: {
-                                      title: 'h264-144',
-                                      url: '/media/encoded/23/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '0.8MB',
-                                      encoding_id: 245,
-                                      status: 'success',
-                                  },
-                              },
-                              240: {
-                                  h264: {
-                                      title: 'h264-240',
-                                      url: '/media/encoded/2/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '2.0MB',
-                                      encoding_id: 246,
-                                      status: 'success',
-                                  },
-                              },
-                              360: {
-                                  h264: {
-                                      title: 'h264-360',
-                                      url: '/media/encoded/3/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '3.5MB',
-                                      encoding_id: 247,
-                                      status: 'success',
-                                  },
-                              },
-                              480: {
-                                  h264: {
-                                      title: 'h264-480',
-                                      url: '/media/encoded/13/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '7.0MB',
-                                      encoding_id: 248,
-                                      status: 'success',
-                                  },
-                              },
-                              720: {
-                                  h264: {
-                                      title: 'h264-720',
-                                      url: '/media/encoded/10/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '15.1MB',
-                                      encoding_id: 249,
-                                      status: 'success',
-                                  },
-                              },
-                              1080: {
-                                  h264: {
-                                      title: 'h264-1080',
-                                      url: '/media/encoded/7/admin/c4e70c90cc004d6aab2204a057787b17.c4e70c90cc004d6aab2204a057787b17.20233414hd_2048_1080_30fps.mp4.mp4',
-                                      progress: 100,
-                                      size: '27.5MB',
-                                      encoding_id: 250,
-                                      status: 'success',
-                                  },
-                              },
-                              1440: {},
-                              2160: {},
-                          }, */
                           encodings_info: {},
                           ___encodings_info: {
                               144: {
@@ -1713,14 +1636,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
             // Default sample video
             return [
-                {
+                /* {
                     src: '/videos/sample-video-white.mp4',
                     type: 'video/mp4',
-                },
-                /* {
+                }, */
+                {
                     src: '/videos/sample-video.mp3',
                     type: 'audio/mpeg',
-                }, */
+                },
             ];
         };
 
@@ -2252,6 +2175,12 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // Set up auto-save for preference changes
                     userPreferences.current.setupAutoSave(playerRef.current);
+
+                    // Add class for audio files to enable audio-specific styling
+                    console.log('mediaData.media_type', mediaData.data?.media_type);
+                    if (mediaData.data?.media_type === 'audio') {
+                        playerRef.current.addClass('vjs-audio-type');
+                    }
 
                     // Enable tooltips for all standard VideoJS buttons
                     enableStandardButtonTooltips(playerRef.current);
@@ -3348,16 +3277,17 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Check if we have chapters
                         const hasChapters = chaptersData && chaptersData.length > 0;
 
-                        if (hasChapters) {
+                        // Skip sprite preview and chapter markers for audio files
+                        if (hasChapters && mediaData.media_type !== 'audio') {
                             // Use original ChapterMarkers with sprite functionality when chapters exist
                             const chapterMarkers = new ChapterMarkers(playerRef.current, {
                                 previewSprite: mediaData.previewSprite,
                                 isTouchDevice: isTouchDevice,
                             });
                             seekBar.addChild(chapterMarkers);
-                        } else if (mediaData.previewSprite && !isTouchDevice) {
+                        } else if (mediaData.previewSprite && !isTouchDevice && mediaData.media_type !== 'audio') {
                             // Use separate SpritePreview component only when no chapters but sprite data exists
-                            // Skip on touch devices to avoid unwanted tooltips
+                            // Skip on touch devices and audio files to avoid unwanted tooltips
                             const spritePreview = new SpritePreview(playerRef.current, {
                                 previewSprite: mediaData.previewSprite,
                                 isTouchDevice: isTouchDevice,

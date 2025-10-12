@@ -17,3 +17,13 @@ button {
 .video-js .vjs-time-control.vjs-time-divider {
     display: none !important;
 }
+
+/* Hide time tooltip, mouse display, and sprite preview for audio files */
+.video-js.vjs-audio-type .vjs-time-tooltip,
+.video-js.vjs-audio-type .vjs-mouse-display,
+.video-js.vjs-audio-type .vjs-sprite-preview-tooltip,
+.video-js.vjs-audio-type .chapter-image-sprite {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
