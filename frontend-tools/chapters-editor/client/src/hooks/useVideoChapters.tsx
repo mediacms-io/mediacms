@@ -116,7 +116,7 @@ const useVideoChapters = () => {
 
                     const initialSegment: Segment = {
                         id: 1,
-                        chapterTitle: 'segment',
+                        chapterTitle: '',
                         startTime: 0,
                         endTime: video.duration,
                     };

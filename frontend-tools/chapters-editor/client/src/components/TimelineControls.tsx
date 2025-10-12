@@ -2577,7 +2577,7 @@ const TimelineControls = ({
                                 <div className="tooltip-chapter-editor">
                                     <textarea
                                         className="tooltip-chapter-input"
-                                        placeholder="Chapter Title"
+                                        placeholder="Add Chapter Text"
                                         value={editingChapterTitle}
                                         onChange={(e) => handleChapterTitleChange(e.target.value)}
                                         onBlur={performAutoSave}
