@@ -125,6 +125,17 @@ const TimelineControls = ({
     onPlayPause, // Add this prop
     isPlayingSegments = false,
 }: TimelineControlsProps) => {
+    // Helper function to generate proper chapter name based on chronological position
+    const generateChapterName = (newSegmentStartTime: number, existingSegments: Segment[]): string => {
+        // Create a temporary array with all segments including the new one
+        const allSegments = [...existingSegments, { startTime: newSegmentStartTime } as Segment];
+        // Sort by start time to find chronological position
+        const sortedSegments = allSegments.sort((a, b) => a.startTime - b.startTime);
+        // Find the index of our new segment
+        const chapterIndex = sortedSegments.findIndex(seg => seg.startTime === newSegmentStartTime);
+        return `Chapter ${chapterIndex + 1}`;
+    };
+
     const timelineRef = useRef<HTMLDivElement>(null);
     const leftHandleRef = useRef<HTMLDivElement>(null);
     const rightHandleRef = useRef<HTMLDivElement>(null);
@@ -2939,10 +2950,10 @@ const TimelineControls = ({
                                         const segmentStartTime = clickedTime;
                                         const segmentEndTime = segmentStartTime + availableSegmentDuration;
 
-                                        // Create the new segment with a generic name
+                                        // Create the new segment with proper chapter name
                                         const newSegment: Segment = {
                                             id: Date.now(),
-                                            chapterTitle: `segment`,
+                                            chapterTitle: generateChapterName(segmentStartTime, clipSegments),
                                             startTime: segmentStartTime,
                                             endTime: segmentEndTime,
                                         };
@@ -3253,7 +3264,7 @@ const TimelineControls = ({
                                                 // We're in a gap, create a new segment from gap start to clicked time
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    chapterTitle: 'segment',
+                                                    chapterTitle: generateChapterName(gapStart, clipSegments),
                                                     startTime: gapStart,
                                                     endTime: clickedTime,
                                                 };
@@ -3286,7 +3297,7 @@ const TimelineControls = ({
                                                 // Create a new segment from start of video to clicked time
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    chapterTitle: 'segment',
+                                                    chapterTitle: generateChapterName(0, clipSegments),
                                                     startTime: 0,
                                                     endTime: clickedTime,
                                                 };
@@ -3349,7 +3360,7 @@ const TimelineControls = ({
                                             // No segments exist; create a new segment from start to clicked time
                                             const newSegment: Segment = {
                                                 id: Date.now(),
-                                                chapterTitle: 'segment',
+                                                chapterTitle: generateChapterName(0, clipSegments),
                                                 startTime: 0,
                                                 endTime: clickedTime,
                                             };
@@ -3467,7 +3478,7 @@ const TimelineControls = ({
                                                 // We're in a gap, create a new segment from clicked time to gap end
                                                 const newSegment: Segment = {
                                                     id: Date.now(),
-                                                    chapterTitle: 'segment',
+                                                    chapterTitle: generateChapterName(clickedTime, clipSegments),
                                                     startTime: clickedTime,
                                                     endTime: gapEnd,
                                                 };
@@ -3500,7 +3511,7 @@ const TimelineControls = ({
                                                     // Create a new segment from clicked time to first segment start
                                                     const newSegment: Segment = {
                                                         id: Date.now(),
-                                                        chapterTitle: 'segment',
+                                                        chapterTitle: generateChapterName(clickedTime, clipSegments),
                                                         startTime: clickedTime,
                                                         endTime: sortedByStart[0].startTime,
                                                     };
@@ -3534,7 +3545,7 @@ const TimelineControls = ({
                                                     // Create a new segment from clicked time to end of video
                                                     const newSegment: Segment = {
                                                         id: Date.now(),
-                                                        chapterTitle: 'segment',
+                                                        chapterTitle: generateChapterName(clickedTime, clipSegments),
                                                         startTime: clickedTime,
                                                         endTime: duration,
                                                     };
@@ -3597,7 +3608,7 @@ const TimelineControls = ({
                                             // No segments exist; create a new segment from clicked time to end
                                             const newSegment: Segment = {
                                                 id: Date.now(),
-                                                chapterTitle: 'segment',
+                                                chapterTitle: generateChapterName(clickedTime, clipSegments),
                                                 startTime: clickedTime,
                                                 endTime: duration,
                                             };

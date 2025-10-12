@@ -13,6 +13,17 @@ interface EditorState {
 }
 
 const useVideoChapters = () => {
+    // Helper function to generate proper chapter name based on chronological position
+    const generateChapterName = (newSegmentStartTime: number, existingSegments: Segment[]): string => {
+        // Create a temporary array with all segments including the new one
+        const allSegments = [...existingSegments, { startTime: newSegmentStartTime } as Segment];
+        // Sort by start time to find chronological position
+        const sortedSegments = allSegments.sort((a, b) => a.startTime - b.startTime);
+        // Find the index of our new segment
+        const chapterIndex = sortedSegments.findIndex(seg => seg.startTime === newSegmentStartTime);
+        return `Chapter ${chapterIndex + 1}`;
+    };
+
     // Helper function to parse time string (HH:MM:SS.mmm) to seconds
     const parseTimeToSeconds = (timeString: string): number => {
         const parts = timeString.split(':');
@@ -447,16 +458,19 @@ const useVideoChapters = () => {
 
                 newSegments.splice(segmentIndex, 1);
 
+                // Remove the original segment first to get accurate positioning for new segments
+                const segmentsWithoutOriginal = newSegments;
+
                 const firstHalf: Segment = {
                     id: Date.now(),
-                    chapterTitle: `${segmentToSplit.chapterTitle}-A`,
+                    chapterTitle: generateChapterName(segmentToSplit.startTime, segmentsWithoutOriginal),
                     startTime: segmentToSplit.startTime,
                     endTime: timeToSplit,
                 };
 
                 const secondHalf: Segment = {
                     id: Date.now() + 1,
-                    chapterTitle: `${segmentToSplit.chapterTitle}-B`,
+                    chapterTitle: generateChapterName(timeToSplit, [...segmentsWithoutOriginal, firstHalf]),
                     startTime: timeToSplit,
                     endTime: segmentToSplit.endTime,
                 };
@@ -488,7 +502,7 @@ const useVideoChapters = () => {
                         // Create a new default segment that spans the entire video
                         const defaultSegment: Segment = {
                             id: Date.now(),
-                            chapterTitle: 'segment',
+                            chapterTitle: 'Chapter 1',
                             startTime: 0,
                             endTime: videoRef.current.duration,
                         };
@@ -549,7 +563,7 @@ const useVideoChapters = () => {
                 if (startTime < endTime) {
                     newSegments.push({
                         id: Date.now() + i,
-                        chapterTitle: `Segment ${i + 1}`,
+                        chapterTitle: `Chapter ${i + 1}`,
                         startTime,
                         endTime,
                     });
@@ -574,7 +588,7 @@ const useVideoChapters = () => {
 
         const defaultSegment: Segment = {
             id: Date.now(),
-            chapterTitle: 'segment',
+            chapterTitle: 'Chapter 1',
             startTime: 0,
             endTime: duration,
         };
