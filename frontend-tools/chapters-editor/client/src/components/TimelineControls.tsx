@@ -1878,7 +1878,9 @@ const TimelineControls = ({
 
     // Render the clip segments on the timeline
     const renderClipSegments = () => {
-        return clipSegments.map((segment, index) => {
+        // Sort segments by start time to ensure correct chronological order
+        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        return sortedSegments.map((segment, index) => {
             const startPercent = (segment.startTime / duration) * 100;
             const widthPercent = ((segment.endTime - segment.startTime) / duration) * 100;
 
