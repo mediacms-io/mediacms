@@ -429,7 +429,7 @@ def edit_video(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
-    if not media.media_type == "video":
+    if not media.media_type in ["video", "audio"]:
         messages.add_message(request, messages.INFO, "Media is not video")
         return HttpResponseRedirect(media.get_absolute_url())
 

@@ -11,7 +11,7 @@
                 {{ "Metadata" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
-        {% if media_object.media_type == 'video' %}
+        {% if media_object.media_type == 'video' or media_object.media_type == 'audio' %} 
             <li style="display: inline-block;">
                 <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}"
 
