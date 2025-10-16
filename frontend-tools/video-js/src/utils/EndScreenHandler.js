@@ -25,10 +25,41 @@ export class EndScreenHandler {
             if (this.autoplayCountdown) {
                 this.autoplayCountdown.stopCountdown();
             }
+
+            // Reset control bar to normal auto-hide behavior
+            this.resetControlBarBehavior();
         };
 
         this.player.on('play', hideEndScreenAndStopCountdown);
         this.player.on('seeking', hideEndScreenAndStopCountdown);
+
+        // Reset control bar when playing after ended state
+        this.player.on('playing', () => {
+            // Only reset if we're coming from ended state (time near 0)
+            if (this.player.currentTime() < 1) {
+                setTimeout(() => {
+                    this.player.userActive(false);
+                }, 1000); // Hide controls after 1 second
+            }
+        });
+    }
+
+    // New method to reset control bar to default behavior
+    resetControlBarBehavior() {
+        const controlBar = this.player.getChild('controlBar');
+        if (controlBar && controlBar.el()) {
+            // Remove the forced visible styles
+            controlBar.el().style.opacity = '';
+            controlBar.el().style.pointerEvents = '';
+
+            // Let video.js handle the control bar visibility normally
+            // Force the player to be inactive after a short delay
+            setTimeout(() => {
+                if (!this.player.paused() && !this.player.ended()) {
+                    this.player.userActive(false);
+                }
+            }, 500);
+        }
     }
 
     handleVideoEnded() {
@@ -138,6 +169,8 @@ export class EndScreenHandler {
             nextVideoData: nextVideoData,
             countdownSeconds: 5,
             onPlayNext: () => {
+                // Reset control bar when auto-playing next video
+                this.resetControlBarBehavior();
                 goToNextVideo();
             },
             onCancel: () => {
@@ -171,7 +204,7 @@ export class EndScreenHandler {
             relatedVideos: relatedVideos,
         });
 
-        // Also store the data directly on the component as backup and update it
+        // Store the data directly on the component as backup and update it
         this.endScreen.relatedVideos = relatedVideos;
         if (this.endScreen.setRelatedVideos) {
             this.endScreen.setRelatedVideos(relatedVideos);
@@ -195,5 +228,7 @@ export class EndScreenHandler {
 
     cleanup() {
         this.cleanupOverlays();
+        // Reset control bar on cleanup
+        this.resetControlBarBehavior();
     }
 }
