@@ -31,6 +31,9 @@ import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 // Import sample media data
 import sampleMediaData from '../../../public/sample-media-file.json';
 
+// Import fallback poster image
+import audioPosterImg from '../../../public/audio-poster.jpg';
+
 // Function to enable tooltips for all standard VideoJS buttons
 const enableStandardButtonTooltips = (player) => {
     // Wait a bit for all components to be initialized
@@ -1665,7 +1668,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
             url: mediaData.data?.url || '',
-            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '/audio-poster.jpg',
+            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : audioPosterImg,
             previewSprite: mediaData?.previewSprite || {},
             useRoundedCorners: mediaData?.useRoundedCorners,
             isPlayList: mediaData?.isPlayList,
