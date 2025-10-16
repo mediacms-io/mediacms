@@ -40,9 +40,10 @@ const App = () => {
         isMobile,
         videoInitialized,
         setVideoInitialized,
+        initializeSafariIfNeeded,
     } = useVideoChapters();
 
-    const handlePlay = () => {
+    const handlePlay = async () => {
         if (!videoRef.current) return;
 
         const video = videoRef.current;
@@ -53,6 +54,16 @@ const App = () => {
             setIsPlaying(false);
             logger.debug('Video paused');
             return;
+        }
+
+        // Safari: Try to initialize if needed before playing
+        if (duration === 0) {
+            const initialized = await initializeSafariIfNeeded();
+            if (initialized) {
+                // Wait a moment for initialization to complete
+                setTimeout(() => handlePlay(), 200);
+                return;
+            }
         }
 
         // Start playing - no boundary checking, play through entire timeline

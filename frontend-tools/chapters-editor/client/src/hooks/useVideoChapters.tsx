@@ -87,12 +87,23 @@ const useVideoChapters = () => {
         }
     }, [history, historyPosition]);
 
+    // Detect Safari browser
+    const isSafari = () => {
+        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+        const isSafariBrowser = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Chromium/.test(userAgent);
+        if (isSafariBrowser) {
+            logger.debug('Safari browser detected, enabling audio support fallbacks');
+        }
+        return isSafariBrowser;
+    };
+
     // Initialize video event listeners
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
         const handleLoadedMetadata = () => {
+            logger.debug('Video loadedmetadata event fired, duration:', video.duration);
             setDuration(video.duration);
             setTrimEnd(video.duration);
 
@@ -146,9 +157,30 @@ const useVideoChapters = () => {
                 setHistory([initialState]);
                 setHistoryPosition(0);
                 setClipSegments(initialSegments);
+                logger.debug('Editor initialized with segments:', initialSegments.length);
             };
 
             initializeEditor();
+        };
+
+        // Safari-specific fallback for audio files
+        const handleCanPlay = () => {
+            logger.debug('Video canplay event fired');
+            // If loadedmetadata hasn't fired yet but we have duration, trigger initialization
+            if (video.duration && duration === 0) {
+                logger.debug('Safari fallback: Using canplay event to initialize');
+                handleLoadedMetadata();
+            }
+        };
+
+        // Additional Safari fallback for audio files
+        const handleLoadedData = () => {
+            logger.debug('Video loadeddata event fired');
+            // If we still don't have duration, try again
+            if (video.duration && duration === 0) {
+                logger.debug('Safari fallback: Using loadeddata event to initialize');
+                handleLoadedMetadata();
+            }
         };
 
         const handleTimeUpdate = () => {
@@ -176,6 +208,33 @@ const useVideoChapters = () => {
         video.addEventListener('pause', handlePause);
         video.addEventListener('ended', handleEnded);
 
+        // Safari-specific fallback event listeners for audio files
+        if (isSafari()) {
+            logger.debug('Adding Safari-specific event listeners for audio support');
+            video.addEventListener('canplay', handleCanPlay);
+            video.addEventListener('loadeddata', handleLoadedData);
+            
+            // Additional timeout fallback for Safari audio files
+            const safariTimeout = setTimeout(() => {
+                if (video.duration && duration === 0) {
+                    logger.debug('Safari timeout fallback: Force initializing editor');
+                    handleLoadedMetadata();
+                }
+            }, 1000);
+
+            return () => {
+                // Remove event listeners
+                video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+                video.removeEventListener('timeupdate', handleTimeUpdate);
+                video.removeEventListener('play', handlePlay);
+                video.removeEventListener('pause', handlePause);
+                video.removeEventListener('ended', handleEnded);
+                video.removeEventListener('canplay', handleCanPlay);
+                video.removeEventListener('loadeddata', handleLoadedData);
+                clearTimeout(safariTimeout);
+            };
+        }
+
         return () => {
             // Remove event listeners
             video.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -186,6 +245,92 @@ const useVideoChapters = () => {
         };
     }, []);
 
+    // Safari auto-initialization on user interaction
+    useEffect(() => {
+        if (isSafari() && videoRef.current) {
+            const video = videoRef.current;
+            
+            const initializeSafariOnInteraction = () => {
+                // Try to load video metadata by attempting to play and immediately pause
+                const attemptInitialization = async () => {
+                    try {
+                        logger.debug('Safari: Attempting auto-initialization on user interaction');
+                        
+                        // Briefly play to trigger metadata loading, then pause
+                        await video.play();
+                        video.pause();
+                        
+                        // Check if we now have duration and initialize if needed
+                        if (video.duration > 0 && clipSegments.length === 0) {
+                            logger.debug('Safari: Successfully initialized metadata, creating default segment');
+                            
+                            const defaultSegment: Segment = {
+                                id: 1,
+                                chapterTitle: '',
+                                startTime: 0,
+                                endTime: video.duration,
+                            };
+
+                            setDuration(video.duration);
+                            setTrimEnd(video.duration);
+                            setClipSegments([defaultSegment]);
+                            
+                            const initialState: EditorState = {
+                                trimStart: 0,
+                                trimEnd: video.duration,
+                                splitPoints: [],
+                                clipSegments: [defaultSegment],
+                            };
+                            
+                            setHistory([initialState]);
+                            setHistoryPosition(0);
+                        }
+                    } catch (error) {
+                        logger.debug('Safari: Auto-initialization failed, will retry on next interaction:', error);
+                    }
+                };
+
+                attemptInitialization();
+            };
+
+            // Listen for any user interaction with video controls
+            const handleUserInteraction = () => {
+                if (clipSegments.length === 0 && video.duration === 0) {
+                    initializeSafariOnInteraction();
+                }
+            };
+
+            // Add listeners for various user interactions
+            document.addEventListener('click', handleUserInteraction);
+            document.addEventListener('keydown', handleUserInteraction);
+            
+            return () => {
+                document.removeEventListener('click', handleUserInteraction);
+                document.removeEventListener('keydown', handleUserInteraction);
+            };
+        }
+    }, [clipSegments.length]);
+
+    // Safari initialization helper
+    const initializeSafariIfNeeded = async () => {
+        if (isSafari() && videoRef.current && duration === 0) {
+            const video = videoRef.current;
+            try {
+                logger.debug('Safari: Initializing on user interaction');
+                // This play/pause will trigger metadata loading in Safari
+                await video.play();
+                video.pause();
+                
+                // The metadata events should fire now and initialize segments
+                return true;
+            } catch (error) {
+                logger.debug('Safari: Initialization attempt failed:', error);
+                return false;
+            }
+        }
+        return false;
+    };
+
     // Play/pause video
     const playPauseVideo = () => {
         const video = videoRef.current;
@@ -194,6 +339,21 @@ const useVideoChapters = () => {
         if (isPlaying) {
             video.pause();
         } else {
+            // Safari: Try to initialize if needed before playing
+            if (isSafari() && duration === 0) {
+                initializeSafariIfNeeded().then(() => {
+                    // After initialization, try to play again
+                    setTimeout(() => {
+                        if (video && !isPlaying) {
+                            video.play().catch((err) => {
+                                console.error('Error playing after Safari initialization:', err);
+                            });
+                        }
+                    }, 100);
+                });
+                return;
+            }
+
             // iOS Safari fix: Use the last seeked position if available
             if (!isPlaying && typeof window !== 'undefined' && window.lastSeekedPosition > 0) {
                 // Only apply this if the video is not at the same position already
@@ -227,6 +387,20 @@ const useVideoChapters = () => {
     const seekVideo = (time: number) => {
         const video = videoRef.current;
         if (!video) return;
+
+        // Safari: Try to initialize if needed before seeking
+        if (isSafari() && duration === 0) {
+            initializeSafariIfNeeded().then(() => {
+                // After initialization, try to seek again
+                setTimeout(() => {
+                    if (video) {
+                        video.currentTime = time;
+                        setCurrentTime(time);
+                    }
+                }, 100);
+            });
+            return;
+        }
 
         // Track if the video was playing before seeking
         const wasPlaying = !video.paused;
@@ -946,6 +1120,7 @@ const useVideoChapters = () => {
         isMobile,
         videoInitialized,
         setVideoInitialized,
+        initializeSafariIfNeeded, // Expose Safari initialization helper
     };
 };
 

@@ -38,14 +38,24 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const sampleVideoUrl =
         (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.videoUrl) || '/videos/sample-video.mp4';
 
-    // Detect iOS device
+    // Detect iOS device and Safari browser
     useEffect(() => {
         const checkIOS = () => {
             const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
             return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
         };
 
+        const checkSafari = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+            return /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Chromium/.test(userAgent);
+        };
+
         setIsIOS(checkIOS());
+        
+        // Store Safari detection globally for other components
+        if (typeof window !== 'undefined') {
+            (window as any).isSafari = checkSafari();
+        }
 
         // Check if video was previously initialized
         if (typeof window !== 'undefined') {
@@ -336,7 +346,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         <div className="video-player-container">
             <video
                 ref={videoRef}
-                preload="auto"
+                preload="metadata"
                 crossOrigin="anonymous"
                 onClick={handleVideoClick}
                 playsInline
@@ -346,7 +356,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 muted={isMuted}
             >
                 <source src={sampleVideoUrl} type="video/mp4" />
-                <p>Your browser doesn't support HTML5 video.</p>
+                {/* Safari fallback for audio files */}
+                <source src={sampleVideoUrl} type="audio/mp4" />
+                <source src={sampleVideoUrl} type="audio/mpeg" />
+                <p>Your browser doesn't support HTML5 video or audio.</p>
             </video>
 
             {/* iOS First-play indicator - only shown on first visit for iOS devices when not initialized */}
