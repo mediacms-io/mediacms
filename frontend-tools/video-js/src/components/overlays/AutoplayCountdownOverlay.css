@@ -10,7 +10,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 4;
+    z-index: 200;
     padding: 20px;
     box-sizing: border-box;
     opacity: 0;
@@ -154,7 +154,7 @@
     .autoplay-close-button {
         display: flex !important;
     }
-    
+
     .autoplay-cancel-button {
         display: inline-block !important;
     }

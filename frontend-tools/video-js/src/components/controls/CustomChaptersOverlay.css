@@ -14,6 +14,7 @@
     overflow: hidden;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
     right: 10px;
+    z-index: 10000;
 }
 
 .chapter-head {

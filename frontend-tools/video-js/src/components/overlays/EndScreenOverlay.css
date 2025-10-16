@@ -5,11 +5,11 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 60px; /* Leave space for control bar */
-    background: #000000; /* Solid black background */
+    bottom: 60px;
+    background: #000000;
     display: none;
     z-index: 100;
-    overflow: hidden; /* Prevent content from overflowing */
+    overflow: hidden;
     box-sizing: border-box;
 }
 
@@ -353,9 +353,9 @@
     visibility: hidden !important;
 }
 
-/* Ensure end screen overlay covers everything with solid background */
+/* Ensure end screen overlay covers everything with solid background but stays below menus */
 .video-js.vjs-ended .vjs-end-screen-overlay {
     background: #000000 !important;
-    z-index: 99999 !important;
+    z-index: 100 !important;
     display: flex !important;
 }

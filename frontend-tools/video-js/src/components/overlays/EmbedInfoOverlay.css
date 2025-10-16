@@ -4,7 +4,7 @@
     position: absolute !important;
     top: 10px !important;
     left: 10px !important;
-    z-index: 1000 !important;
+    z-index: 5000 !important;
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
