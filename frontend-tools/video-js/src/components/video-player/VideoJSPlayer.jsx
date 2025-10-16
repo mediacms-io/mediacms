@@ -2109,11 +2109,11 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Custom control spacer
                         customControlSpacer: true,
 
-                        // Fullscreen toggle button
-                        fullscreenToggle: true,
+                        // Fullscreen toggle button (hide for audio files since fullscreen doesn't work on mobile)
+                        fullscreenToggle: mediaData.data?.media_type === 'audio' ? false : true,
 
-                        // Picture-in-picture toggle button
-                        pictureInPictureToggle: isTouchDevice ? false : true,
+                        // Picture-in-picture toggle button (hide for audio and touch devices)
+                        pictureInPictureToggle: isTouchDevice || mediaData.data?.media_type === 'audio' ? false : true,
 
                         // Remove default playback speed dropdown from control bar
                         playbackRateMenuButton: false,
