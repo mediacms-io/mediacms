@@ -23,7 +23,9 @@ class AutoplayToggleButton extends Button {
         } */
 
         // Store the appropriate font size based on device type
-        this.iconSize = isTouchDevice ? PlayerConfig.controlBar.mobileFontSize : PlayerConfig.controlBar.fontSize;
+        // PlayerConfig values are in em units, convert to pixels for SVG dimensions
+        const baseFontSize = isTouchDevice ? PlayerConfig.controlBar.mobileFontSize : PlayerConfig.controlBar.fontSize;
+        this.iconSize = Math.round((baseFontSize || 14) * 1.2); // Scale and default to 14em if undefined
 
         this.userPreferences = options.userPreferences;
         // Get autoplay preference from localStorage, default to false if not set
@@ -72,6 +74,11 @@ class AutoplayToggleButton extends Button {
     }
 
     updateIconClass() {
+        // Ensure iconSize is a valid number (defensive check)
+        if (!this.iconSize || isNaN(this.iconSize)) {
+            this.iconSize = 16; // Default to 16px if undefined or NaN
+        }
+        
         // Remove existing icon classes
         this.iconSpan.className = 'vjs-icon-placeholder vjs-svg-icon vjs-autoplay-icon__OFFF';
         this.iconSpan.style.position = 'relative';
