@@ -40,7 +40,7 @@ const PlayerConfig = {
         // Font size in em units
         fontSize: 14,
 
-        mobileFontSize: 10,
+        mobileFontSize: 13,
     },
 };
 

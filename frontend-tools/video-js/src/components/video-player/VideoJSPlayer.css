@@ -29,9 +29,10 @@ button {
 }
 
 /* Center the fullscreen button inside its wrapper */
-@media (hover: hover) and (pointer: fine) {
+/* @media (hover: hover) and (pointer: fine) {
     .vjs-fullscreen-control svg {
         width: 30px !important;
         height: 30px !important;
     }
 }
+ */
