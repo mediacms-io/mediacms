@@ -2085,7 +2085,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     controlBar: {
                         playToggle: true,
                         progressControl: {
-                            seekBar: {},
+                            seekBar: { loadProgressBar: false }, // Hide the buffered/loaded progress indicator
                         },
                         /* progressControl: {
                             seekBar: {
