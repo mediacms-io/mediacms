@@ -28,6 +28,9 @@ import { EndScreenHandler } from '../../utils/EndScreenHandler';
 import KeyboardHandler from '../../utils/KeyboardHandler';
 import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 
+// Import sample media data
+import sampleMediaData from '../../../public/sample-media-file.json';
+
 // Function to enable tooltips for all standard VideoJS buttons
 const enableStandardButtonTooltips = (player) => {
     // Wait a bit for all components to be initialized
@@ -243,7 +246,24 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             typeof window !== 'undefined' && window.MEDIA_DATA
                 ? window.MEDIA_DATA
                 : {
-                      data: {
+                      data: sampleMediaData,
+
+                      // other
+                      useRoundedCorners: false,
+                      isPlayList: false,
+                      previewSprite: {
+                          url: sampleMediaData.sprites_url
+                              ? 'https://videojs.mediacms.io' + sampleMediaData.sprites_url
+                              : 'https://videojs.mediacms.io/media/original/thumbnails/user/admin/43cc73a8c1604425b7057ad2b50b1798.19247660hd_1920_1080_60fps.mp4sprites.jpg',
+                          frame: { width: 160, height: 90, seconds: 10 },
+                      },
+                      siteUrl: 'https://videojs.mediacms.io',
+                      nextLink: 'https://videojs.mediacms.io/view?m=elygiagorgechania',
+                      urlAutoplay: true,
+                      urlMuted: false,
+
+                      // FALLBACK - keep old structure for reference
+                      __data_old: {
                           // COMMON
                           title: 'Modi tempora est quaerat numquam',
                           author_name: 'Markos Gogoulos',
@@ -1338,18 +1358,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             hls_info: {},
                             encodings_info: {},*/
                       },
-
-                      // other
-                      useRoundedCorners: false,
-                      isPlayList: false,
-                      previewSprite: {
-                          url: 'https://videojs.mediacms.io/media/original/thumbnails/user/admin/43cc73a8c1604425b7057ad2b50b1798.19247660hd_1920_1080_60fps.mp4sprites.jpg',
-                          frame: { width: 160, height: 90, seconds: 10 },
-                      },
-                      siteUrl: 'https://videojs.mediacms.io',
-                      nextLink: 'https://videojs.mediacms.io/view?m=elygiagorgechania',
-                      urlAutoplay: true,
-                      urlMuted: false,
                   },
         []
     );
