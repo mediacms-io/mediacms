@@ -27,3 +27,9 @@ button {
     opacity: 0 !important;
     visibility: hidden !important;
 }
+
+/* Center the fullscreen button inside its wrapper */
+.vjs-fullscreen-control svg {
+    width: 30px !important;
+    height: 30px !important;
+}
