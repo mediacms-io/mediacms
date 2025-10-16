@@ -250,7 +250,8 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                           author_profile: '/user/markos/',
                           author_thumbnail: '/media/userlogos/user.jpg',
                           url: 'https://videojs.mediacms.io/view?m=2Uk08Il5u',
-                          poster_url:
+                          poster_url: '',
+                          __poster_url:
                               '/media/original/thumbnails/user/markos/db52140de7204022a1e5f08e078b4ec6_VKPTF4v.UniversityofCopenhagenMærskTower.mp4.jpg',
                           ___chapter_data: [],
                           chapter_data: [
@@ -1248,9 +1249,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                           // VIDEO
                           media_type: 'audio',
-                          _original_media_url:
+                          original_media_url:
                               '/media/original/user/markos/db52140de7204022a1e5f08e078b4ec6.UniversityofCopenhagenMærskTower.mp4',
-                          _hls_info: {
+                          hls_info: {
                               master_file: '/media/hls/5073e97457004961a163c5b504e2d7e8/master.m3u8',
                               '240_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-1/iframes.m3u8',
                               '480_iframe': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-2/iframes.m3u8',
@@ -1263,9 +1264,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                               '144_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-4/stream.m3u8',
                               '360_playlist': '/media/hls/5073e97457004961a163c5b504e2d7e8/media-5/stream.m3u8',
                           },
-                          hls_info: {},
-                          encodings_info: {},
-                          ___encodings_info: {
+                          __hls_info: {},
+                          __encodings_info: {},
+                          encodings_info: {
                               144: {
                                   h264: {
                                       title: 'h264-144',
@@ -1656,7 +1657,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
             url: mediaData.data?.url || '',
-            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '',
+            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : '/audio-poster.jpg',
             previewSprite: mediaData?.previewSprite || {},
             useRoundedCorners: mediaData?.useRoundedCorners,
             isPlayList: mediaData?.isPlayList,
