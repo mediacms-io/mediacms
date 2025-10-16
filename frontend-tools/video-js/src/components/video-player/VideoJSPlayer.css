@@ -1,6 +1,9 @@
 button {
     cursor: pointer;
 }
+.playlist-items a {
+    text-decoration: none !important;
+}
 
 .video-js,
 .video-js[tabindex],

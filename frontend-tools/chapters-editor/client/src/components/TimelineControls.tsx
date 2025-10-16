@@ -190,12 +190,14 @@ const TimelineControls = ({
         try {
             setIsAutoSaving(true);
 
-            // Format segments data for API request - use ref to get latest segments
-            const chapters = clipSegmentsRef.current.map((chapter) => ({
-                startTime: formatDetailedTime(chapter.startTime),
-                endTime: formatDetailedTime(chapter.endTime),
-                chapterTitle: chapter.chapterTitle,
-            }));
+            // Format segments data for API request - use ref to get latest segments and sort by start time
+            const chapters = clipSegmentsRef.current
+                .sort((a, b) => a.startTime - b.startTime) // Sort by start time chronologically
+                .map((chapter) => ({
+                    startTime: formatDetailedTime(chapter.startTime),
+                    endTime: formatDetailedTime(chapter.endTime),
+                    chapterTitle: chapter.chapterTitle,
+                }));
 
             logger.debug('chapters', chapters);
 
@@ -496,9 +498,10 @@ const TimelineControls = ({
         setSaveType('chapters');
 
         try {
-            // Format chapters data for API request
+            // Format chapters data for API request - sort by start time first
             const chapters = clipSegments
                 .filter((segment) => segment.chapterTitle && segment.chapterTitle.trim())
+                .sort((a, b) => a.startTime - b.startTime) // Sort by start time chronologically
                 .map((segment) => ({
                     chapterTitle: segment.chapterTitle || `Chapter ${segment.id}`,
                     from: formatDetailedTime(segment.startTime),

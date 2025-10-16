@@ -24,6 +24,18 @@ const useVideoChapters = () => {
         return `Chapter ${chapterIndex + 1}`;
     };
 
+    // Helper function to renumber all segments in chronological order
+    const renumberAllSegments = (segments: Segment[]): Segment[] => {
+        // Sort segments by start time
+        const sortedSegments = [...segments].sort((a, b) => a.startTime - b.startTime);
+        
+        // Renumber each segment based on its chronological position
+        return sortedSegments.map((segment, index) => ({
+            ...segment,
+            chapterTitle: `Chapter ${index + 1}`
+        }));
+    };
+
     // Helper function to parse time string (HH:MM:SS.mmm) to seconds
     const parseTimeToSeconds = (timeString: string): number => {
         const parts = timeString.split(':');
@@ -632,19 +644,16 @@ const useVideoChapters = () => {
 
                 newSegments.splice(segmentIndex, 1);
 
-                // Remove the original segment first to get accurate positioning for new segments
-                const segmentsWithoutOriginal = newSegments;
-
                 const firstHalf: Segment = {
                     id: Date.now(),
-                    chapterTitle: generateChapterName(segmentToSplit.startTime, segmentsWithoutOriginal),
+                    chapterTitle: '', // Temporary title, will be set by renumberAllSegments
                     startTime: segmentToSplit.startTime,
                     endTime: timeToSplit,
                 };
 
                 const secondHalf: Segment = {
                     id: Date.now() + 1,
-                    chapterTitle: generateChapterName(timeToSplit, [...segmentsWithoutOriginal, firstHalf]),
+                    chapterTitle: '', // Temporary title, will be set by renumberAllSegments
                     startTime: timeToSplit,
                     endTime: segmentToSplit.endTime,
                 };
@@ -652,11 +661,11 @@ const useVideoChapters = () => {
                 // Add the new segments
                 newSegments.push(firstHalf, secondHalf);
 
-                // Sort segments by start time
-                newSegments.sort((a, b) => a.startTime - b.startTime);
+                // Renumber all segments to ensure proper chronological naming
+                const renumberedSegments = renumberAllSegments(newSegments);
 
                 // Update state
-                setClipSegments(newSegments);
+                setClipSegments(renumberedSegments);
                 saveState('split_segment');
             }
         };
@@ -687,8 +696,9 @@ const useVideoChapters = () => {
                         setSplitPoints([]);
                         setClipSegments([defaultSegment]);
                     } else {
-                        // Just update the segments normally
-                        setClipSegments(newSegments);
+                        // Renumber remaining segments to ensure proper chronological naming
+                        const renumberedSegments = renumberAllSegments(newSegments);
+                        setClipSegments(renumberedSegments);
                     }
                     saveState('delete_segment');
                 }
@@ -907,12 +917,19 @@ const useVideoChapters = () => {
                 return;
             }
 
-            // Convert chapters to backend expected format
-            const backendChapters = chapters.map((chapter) => ({
-                startTime: chapter.from,
-                endTime: chapter.to,
-                chapterTitle: chapter.chapterTitle,
-            }));
+            // Convert chapters to backend expected format and sort by start time
+            const backendChapters = chapters
+                .map((chapter) => ({
+                    startTime: chapter.from,
+                    endTime: chapter.to,
+                    chapterTitle: chapter.chapterTitle,
+                }))
+                .sort((a, b) => {
+                    // Parse time strings to seconds for proper comparison
+                    const aStartSeconds = parseTimeToSeconds(a.startTime);
+                    const bStartSeconds = parseTimeToSeconds(b.startTime);
+                    return aStartSeconds - bStartSeconds;
+                });
 
             // Create the API request body
             const requestData = {
