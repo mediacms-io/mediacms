@@ -32,7 +32,7 @@ import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 import sampleMediaData from '../../../public/sample-media-file.json';
 
 // Import fallback poster image
-import audioPosterImg from '../../../public/audio-poster.jpg';
+import audioPosterImg from '../../assets/audio-poster.jpg';
 
 // Function to enable tooltips for all standard VideoJS buttons
 const enableStandardButtonTooltips = (player) => {

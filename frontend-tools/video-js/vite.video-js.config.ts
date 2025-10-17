@@ -14,7 +14,6 @@ export default defineConfig({
         },
     },
     root: path.resolve(__dirname, 'src'),
-    publicDir: path.resolve(__dirname, 'public'),
     define: {
         'process.env': {
             NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
