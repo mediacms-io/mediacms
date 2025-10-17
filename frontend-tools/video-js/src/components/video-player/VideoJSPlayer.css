@@ -37,7 +37,7 @@ button {
     margin-bottom: 2em; /* Adjust this value to move subtitles higher when controls are visible */
 }
 
-/* When controls are HIDDEN (user is inactive), use default positioning */
+/* When controls are HIDDEN (user is inactive), use default positioning  */
 .video-js.vjs-user-inactive .vjs-text-track-display {
     margin-bottom: 0.5em; /* Smaller margin when controls are hidden */
 }
