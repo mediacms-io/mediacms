@@ -50,3 +50,59 @@ button {
     }
 }
  */
+
+/* Prevent control bar buttons from overflowing */
+.video-js .vjs-control-bar {
+    overflow: visible !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Ensure control bar stays within bounds - only allow non-essential buttons to shrink */
+.video-js .vjs-control-bar .vjs-settings-button,
+.video-js .vjs-control-bar .vjs-chapters-button,
+.video-js .vjs-control-bar .vjs-subtitles-button,
+.video-js .vjs-control-bar .vjs-captions-button,
+.video-js .vjs-control-bar .vjs-subs-caps-button,
+.video-js .vjs-control-bar .vjs-autoplay-toggle,
+.video-js .vjs-control-bar .vjs-next-video-button {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+}
+
+/* Priority controls that should never shrink - maintain their size and spacing */
+.video-js .vjs-control-bar .vjs-play-control,
+.video-js .vjs-control-bar .vjs-volume-panel,
+.video-js .vjs-control-bar .vjs-fullscreen-control,
+.video-js .vjs-control-bar .vjs-picture-in-picture-toggle,
+.video-js .vjs-control-bar .custom-remaining-time {
+    flex-shrink: 0 !important;
+}
+
+/* Hide less important buttons on smaller screens */
+@media (max-width: 768px) {
+    .video-js .vjs-control-bar .vjs-picture-in-picture-toggle {
+        display: none !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .video-js .vjs-control-bar .vjs-autoplay-toggle {
+        display: none !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .video-js .vjs-control-bar .vjs-next-video-button {
+        display: none !important;
+    }
+}
+
+@media (max-width: 400px) {
+    /* Hide subtitles/captions button on very small screens - already available in settings */
+    .video-js .vjs-control-bar .vjs-subtitles-button,
+    .video-js .vjs-control-bar .vjs-captions-button,
+    .video-js .vjs-control-bar .vjs-subs-caps-button {
+        display: none !important;
+    }
+}
