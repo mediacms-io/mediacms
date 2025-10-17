@@ -1849,7 +1849,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             src: '/sample-subtitles.vtt',
             srclang: 'en',
             label: 'English Subtitles',
-            default: false,
+            default: true,
         },
         {
             kind: 'subtitles',
@@ -1870,7 +1870,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
               src: track.src,
               srclang: track.srclang,
               label: track.label,
-              default: false,
+              default: track.default || false,
           }))
         : [];
 
@@ -2150,16 +2150,17 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         nativeControlsForTouch: PlayerConfig.nativeControlsForTouch,
 
                         // Use native audio tracks instead of emulated - disabled for consistency
-                        nativeAudioTracks: true,
+                        nativeAudioTracks: false,
 
-                        // Use native text tracks instead of emulated - disabled for consistency
-                        nativeTextTracks: true,
+                        // Use Video.js text tracks for full positioning control on mobile
+                        // Native tracks don't allow CSS positioning control
+                        nativeTextTracks: isTouchDevice,
 
                         // Use native video tracks instead of emulated - disabled for consistency
-                        nativeVideoTracks: true,
+                        nativeVideoTracks: false,
 
                         // Preload text tracks
-                        preloadTextTracks: true,
+                        preloadTextTracks: false,
 
                         // Play inline
                         playsinline: true,
@@ -2189,9 +2190,28 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     userPreferences.current.setupAutoSave(playerRef.current);
 
                     // Add class for audio files to enable audio-specific styling
-                    console.log('mediaData.media_type', mediaData.data?.media_type);
                     if (mediaData.data?.media_type === 'audio') {
                         playerRef.current.addClass('vjs-audio-type');
+
+                        // For embed players, ensure poster stays visible during playback
+                        if (isEmbedPlayer) {
+                            const ensurePosterVisible = () => {
+                                const posterEl = playerRef.current.el().querySelector('.vjs-poster');
+                                if (posterEl) {
+                                    posterEl.style.display = 'block';
+                                    posterEl.style.opacity = '1';
+                                    posterEl.style.visibility = 'visible';
+                                }
+                            };
+
+                            // Keep poster visible on all play events
+                            playerRef.current.on('play', ensurePosterVisible);
+                            playerRef.current.on('playing', ensurePosterVisible);
+                            playerRef.current.on('timeupdate', ensurePosterVisible);
+
+                            // Initial call
+                            setTimeout(ensurePosterVisible, 200);
+                        }
                     }
 
                     // Enable tooltips for all standard VideoJS buttons
@@ -3939,7 +3959,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             </p>
 
             {/* Add subtitle tracks */}
-            {/*   {subtitleTracks &&
+            {subtitleTracks &&
                 subtitleTracks.map((track, index) => (
                     <track
                         key={index}
@@ -3950,7 +3970,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         default={track.default}
                     />
                 ))}
-
+            {/* 
             <track kind="chapters" src="/sample-chapters.vtt" /> */}
             {/* Add chapters track */}
             {/*  {chaptersData &&

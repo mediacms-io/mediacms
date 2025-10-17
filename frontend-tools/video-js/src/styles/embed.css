@@ -18,6 +18,16 @@
     background-color: #000 !important;
 }
 
+/* Keep poster visible even when playing for audio files */
+#page-embed .video-js-root-embed .video-js.vjs-audio-type .vjs-poster,
+#page-embed .video-js-root-embed .video-js.vjs-audio-poster-mode .vjs-poster,
+#page-embed .video-js-root-embed .video-js.vjs-has-started.vjs-audio-type .vjs-poster,
+#page-embed .video-js-root-embed .video-js.vjs-playing.vjs-audio-type .vjs-poster {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
 /* Fullscreen video element - maintain aspect ratio */
 #page-embed .video-js-root-embed .video-js video {
     position: absolute !important;
