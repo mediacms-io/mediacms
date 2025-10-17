@@ -29,7 +29,7 @@ import KeyboardHandler from '../../utils/KeyboardHandler';
 import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 
 // Import sample media data
-import sampleMediaData from '../../../public/sample-media-file.json';
+import sampleMediaData from '../../assets/sample-media-file.json';
 
 // Import fallback poster image
 import audioPosterImg from '../../assets/audio-poster.jpg';

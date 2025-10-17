@@ -110,9 +110,9 @@
         "480_playlist": "/media/hls/d393b72d279d4d0da70a484eb6b8b44f/media-6/stream.m3u8"
     },
     "license": null,
-    "subtitles_info": [
+    "__subtitles_info": [
         {
-            "src": "/media/original/subtitles/user/markos/7e5aaed284954ae497d09783bf81004f.ExitofElygiaGorgeChaniaCrete.vtt",
+            "src": "https://videojs.mediacms.io/media/original/subtitles/user/markos/7e5aaed284954ae497d09783bf81004f.ExitofElygiaGorgeChaniaCrete.vtt",
             "srclang": "en",
             "label": "English"
         }
