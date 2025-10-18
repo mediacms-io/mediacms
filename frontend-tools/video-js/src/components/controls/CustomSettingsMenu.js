@@ -990,8 +990,12 @@ class CustomSettingsMenu extends Component {
         if (btnEl) {
             if (!isVisible) {
                 btnEl.classList.add('settings-clicked');
+                // Hide tooltip when menu is open
+                btnEl.removeAttribute('title');
             } else {
                 btnEl.classList.remove('settings-clicked');
+                // Restore tooltip when menu is closed
+                btnEl.setAttribute('title', 'Settings');
             }
         }
     }
@@ -1011,10 +1015,12 @@ class CustomSettingsMenu extends Component {
             this.refreshSubtitlesSubmenu();
         }
 
-        // Mark settings button as active
+        // Mark settings button as active and hide tooltip
         const btnEl = this.settingsButton?.el();
         if (btnEl) {
             btnEl.classList.add('settings-clicked');
+            // Hide tooltip when menu is open
+            btnEl.removeAttribute('title');
         }
     }
 
@@ -1032,10 +1038,12 @@ class CustomSettingsMenu extends Component {
             if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
             if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
 
-            // Remove active state from settings button
+            // Remove active state from settings button and restore tooltip
             const btnEl = this.settingsButton?.el();
             if (btnEl) {
                 btnEl.classList.remove('settings-clicked');
+                // Restore tooltip when menu is closed
+                btnEl.setAttribute('title', 'Settings');
             }
 
             // Restore body scroll on mobile when closing
