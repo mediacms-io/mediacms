@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-// import '../../VideoJS.css';
 import '../../styles/embed.css';
 import '../controls/SubtitlesButton.css';
 import './VideoJSPlayer.css';
@@ -9,8 +8,6 @@ import './VideoJSPlayerRoundedCorners.css';
 import '../controls/ButtonTooltips.css';
 
 // Import the separated components
-import EndScreenOverlay from '../overlays/EndScreenOverlay';
-import AutoplayCountdownOverlay from '../overlays/AutoplayCountdownOverlay';
 import EmbedInfoOverlay from '../overlays/EmbedInfoOverlay';
 import ChapterMarkers from '../markers/ChapterMarkers';
 import SpritePreview from '../markers/SpritePreview';
@@ -86,9 +83,6 @@ const enableStandardButtonTooltips = (player) => {
 
                 buttonEl.setAttribute('title', tooltipText);
                 buttonEl.setAttribute('aria-label', tooltipText);
-
-                // Add touch tooltip support for mobile devices
-                //addTouchTooltipSupport(buttonEl);
 
                 // For dynamic tooltips (play/pause, fullscreen), update on state change
                 if (buttonName === 'playToggle') {
@@ -173,56 +167,6 @@ const enableStandardButtonTooltips = (player) => {
         removeVolumeTooltips();
         setTimeout(removeVolumeTooltips, 100);
     }, 500); // Delay to ensure all components are ready
-};
-
-// Helper function to add touch tooltip support
-const addTouchTooltipSupport = (element) => {
-    // Check if device is touch-enabled
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-
-    // Only add touch tooltip support on actual touch devices
-    if (!isTouchDevice) {
-        return;
-    }
-
-    let touchStartTime = 0;
-    let tooltipTimeout = null;
-
-    // Touch start
-    element.addEventListener(
-        'touchstart',
-        () => {
-            touchStartTime = Date.now();
-        },
-        { passive: true }
-    );
-
-    // Touch end
-    element.addEventListener(
-        'touchend',
-        () => {
-            const touchDuration = Date.now() - touchStartTime;
-
-            // Only show tooltip for quick taps (not swipes)
-            if (touchDuration < 300) {
-                // Don't prevent default for most buttons to maintain functionality
-
-                // Show tooltip briefly
-                element.classList.add('touch-tooltip-active');
-
-                // Clear any existing timeout
-                if (tooltipTimeout) {
-                    clearTimeout(tooltipTimeout);
-                }
-
-                // Hide tooltip after delay
-                tooltipTimeout = setTimeout(() => {
-                    element.classList.remove('touch-tooltip-active');
-                }, 2000);
-            }
-        },
-        { passive: true }
-    );
 };
 
 function VideoJSPlayer({ videoId = 'default-video' }) {
@@ -2090,14 +2034,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         progressControl: {
                             seekBar: { loadProgressBar: false }, // Hide the buffered/loaded progress indicator
                         },
-                        /* progressControl: {
-                            seekBar: {
-                                timeTooltip: {
-                                    // Customize TimeTooltip behavior
-                                    displayNegative: false, // Don't show negative time
-                                },
-                            },
-                        }, */
                         // Remaining time display configuration
                         currentTimeDisplay: false,
                         durationDisplay: false,
@@ -2152,9 +2088,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Use native audio tracks instead of emulated - disabled for consistency
                         nativeAudioTracks: false,
 
-                        // Use Video.js text tracks for full positioning control on mobile
-                        // Native tracks don't allow CSS positioning control
-                        nativeTextTracks: isTouchDevice,
+                        // Use Video.js text tracks for full positioning control on all devices
+                        // Native tracks don't allow CSS positioning control and cause duplicates
+                        nativeTextTracks: true,
 
                         // Use native video tracks instead of emulated - disabled for consistency
                         nativeVideoTracks: false,
@@ -2273,185 +2209,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         }
                     }
 
-                    /* // Detect if user has interacted with the page
-                    const hasUserInteracted = () => {
-                        // Check various indicators of user interaction
-                        return (
-                            document.hasFocus() ||
-                            document.visibilityState === 'visible' ||
-                            sessionStorage.getItem('userInteracted') === 'true'
-                        );
-                    };
-
-                    // Handle autoplay while respecting user's saved preferences
-                    const handleAutoplay = async () => {
-                        const userInteracted = hasUserInteracted();
-                        const savedMuteState = userPreferences.current.getPreference('muted');
-
-                        try {
-                            // Respect user's saved mute preference, but try unmuted if user interacted and hasn't explicitly muted
-                            if (!mediaData.urlMuted && userInteracted && savedMuteState !== true) {
-                                playerRef.current.muted(false);
-                            }
-
-                            // First attempt: try to play with current mute state
-                            await playerRef.current.play();
-                        } catch (error) {
-                            // Fallback to muted autoplay unless user explicitly wants to stay unmuted
-                            if (!playerRef.current.muted()) {
-                                try {
-                                    playerRef.current.muted(true);
-                                    await playerRef.current.play();
-
-                                    // Only try to restore sound if user hasn't explicitly saved mute=true
-                                    if (savedMuteState !== true) {
-                                        // Aggressively try to restore sound
-                                        const restoreSound = () => {
-                                            if (playerRef.current && !playerRef.current.isDisposed()) {
-                                                playerRef.current.muted(false);
-                                                playerRef.current.trigger('notify', '🔊 Sound enabled!');
-                                            }
-                                        };
-
-                                        // Try to restore sound immediately if user has interacted
-                                        if (userInteracted) {
-                                            setTimeout(restoreSound, 100);
-                                        } else {
-                                            // Show notification for manual interaction
-                                            setTimeout(() => {
-                                                if (playerRef.current && !playerRef.current.isDisposed()) {
-                                                    playerRef.current.trigger(
-                                                        'notify',
-                                                        '🔇 Click anywhere to enable sound'
-                                                    );
-                                                }
-                                            }, 1000);
-
-                                            // Set up interaction listeners
-                                            const enableSound = () => {
-                                                restoreSound();
-                                                // Mark user interaction for future videos
-                                                sessionStorage.setItem('userInteracted', 'true');
-                                                // Remove listeners
-                                                document.removeEventListener('click', enableSound);
-                                                document.removeEventListener('keydown', enableSound);
-                                                document.removeEventListener('touchstart', enableSound);
-                                            };
-
-                                            document.addEventListener('click', enableSound, { once: true });
-                                            document.addEventListener('keydown', enableSound, { once: true });
-                                            document.addEventListener('touchstart', enableSound, { once: true });
-                                        }
-                                    }
-                                } catch (mutedError) {
-                                    console.error('❌ Even muted autoplay was blocked:', mutedError.message);
-                                }
-                            }
-                        }
-                    }; */
-
                     // Skip autoplay for embed players to show poster
                     if (!isEmbedPlayer) {
-                        /* if (mediaData?.urlAutoplay) {
-                            // Explicit autoplay requested via URL parameter
-                            autoplayHandler.handleAutoplay();
-                        } else {
-                            // Auto-start video on page load/reload with fallback strategy
-                            autoplayHandler.handleAutoplay();
-                        } */
                         autoplayHandler.handleAutoplay();
-                    } else {
-                        // For embed players, setup clean appearance with hidden controls
-                        /*  setTimeout(() => {
-                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                            const controlBar = playerRef.current.getChild('controlBar');
-
-                            if (bigPlayButton) {
-                                bigPlayButton.show();
-                                // Ensure big play button is prominently displayed in center
-                                const bigPlayEl = bigPlayButton.el();
-                                if (bigPlayEl) {
-                                    bigPlayEl.style.display = 'block';
-                                    bigPlayEl.style.visibility = 'visible';
-                                    bigPlayEl.style.opacity = '1';
-                                    // Make it more prominent for embed
-                                    bigPlayEl.style.zIndex = '10';
-                                }
-                            }
-
-                            if (controlBar) {
-                                // Hide controls by default for embed players
-                                controlBar.hide();
-                                const controlBarEl = controlBar.el();
-                                if (controlBarEl) {
-                                    controlBarEl.style.opacity = '0';
-                                    controlBarEl.style.visibility = 'hidden';
-                                    controlBarEl.style.transition = 'opacity 0.3s ease';
-                                }
-                            }
-
-                            // Fix potential duplicate image issue by ensuring proper poster/video layering
-                            const embedPlayerEl = playerRef.current.el();
-                            const videoEl = embedPlayerEl.querySelector('video');
-                            const posterEl = embedPlayerEl.querySelector('.vjs-poster');
-
-                            if (videoEl && posterEl) {
-                                // Ensure video is behind poster when paused
-                                videoEl.style.opacity = '0';
-                                posterEl.style.zIndex = '1';
-                                posterEl.style.position = 'absolute';
-                                posterEl.style.top = '0';
-                                posterEl.style.left = '0';
-                                posterEl.style.width = '100%';
-                                posterEl.style.height = '100%';
-                            }
-
-                            // Set player to inactive state to hide controls initially
-                            playerRef.current.userActive(false);
-
-                            // Setup hover behavior to show/hide controls for embed
-                            if (embedPlayerEl) {
-                                const showControls = () => {
-                                    if (controlBar) {
-                                        controlBar.show();
-                                        const controlBarEl = controlBar.el();
-                                        if (controlBarEl) {
-                                            controlBarEl.style.opacity = '1';
-                                            controlBarEl.style.visibility = 'visible';
-                                        }
-                                    }
-                                    playerRef.current.userActive(true);
-                                };
-
-                                const hideControls = () => {
-                                    // Only hide if video is paused (embed behavior)
-                                    if (playerRef.current.paused()) {
-                                        if (controlBar) {
-                                            const controlBarEl = controlBar.el();
-                                            if (controlBarEl) {
-                                                controlBarEl.style.opacity = '0';
-                                                controlBarEl.style.visibility = 'hidden';
-                                            }
-                                            setTimeout(() => {
-                                                if (playerRef.current.paused()) {
-                                                    controlBar.hide();
-                                                }
-                                            }, 300);
-                                        }
-                                        playerRef.current.userActive(false);
-                                    }
-                                };
-
-                                embedPlayerEl.addEventListener('mouseenter', showControls);
-                                embedPlayerEl.addEventListener('mouseleave', hideControls);
-
-                                // Store cleanup function
-                                customComponents.current.embedControlsCleanup = () => {
-                                    embedPlayerEl.removeEventListener('mouseenter', showControls);
-                                    embedPlayerEl.removeEventListener('mouseleave', hideControls);
-                                };
-                            }
-                        }, 100); */
                     }
 
                     const setupMobilePlayPause = () => {
@@ -2640,10 +2400,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             const progressEl = progressControl.el();
                             const controlBarEl = controlBar.el();
                             controlBarEl.style.gap = 0;
-                            // controlBarEl.style.background = 'none';
-                            // progressEl.style.background = 'none';
-                            // controlBarEl.style.background = 'yellow';
-                            // progressEl.style.background = 'red';
 
                             // Remove progress control from control bar
                             controlBar.removeChild(progressControl);
@@ -2740,48 +2496,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // END: Move progress bar below control bar
 
-                    // Debug: Check if progress control exists and is visible on touch devices
-                    /* if (isTouchDevice) {
-                        console.log('🔍 Touch device detected - Progress control debug:');
-                        console.log('- progressControl exists:', !!progressControl);
-                        console.log('- progressControl element:', progressControl?.el());
-                        console.log('- progressControl visible:', progressControl?.el()?.style.display !== 'none');
-                        console.log('- seekBar exists:', !!seekBar);
-                        console.log('- seekBar element:', seekBar?.el());
-
-                        if (progressControl?.el()) {
-                            const progressEl = progressControl.el();
-                            console.log('- progressControl computed styles:', {
-                                display: window.getComputedStyle(progressEl).display,
-                                visibility: window.getComputedStyle(progressEl).visibility,
-                                opacity: window.getComputedStyle(progressEl).opacity,
-                                position: window.getComputedStyle(progressEl).position,
-                                bottom: window.getComputedStyle(progressEl).bottom,
-                            });
-
-                            // Force show progress control on touch devices
-                            console.log('🔧 Forcing progress control to be visible on touch device...');
-                            progressEl.style.display = 'block';
-                            progressEl.style.visibility = 'visible';
-                            progressEl.style.opacity = '1';
-                            progressEl.style.position = 'absolute';
-                            progressEl.style.bottom = '42px';
-                            progressEl.style.left = '0';
-                            progressEl.style.right = '0';
-                            progressEl.style.width = '100%';
-                            progressEl.style.zIndex = '10';
-                            progressEl.style.pointerEvents = 'auto';
-
-                            // Also ensure the progress control component is shown
-                            if (progressControl.show) {
-                                progressControl.show();
-                            }
-                        }
-                    }
- */
-                    // Remove from current position
-                    // controlBar.removeChild(fullscreenToggle);
-
                     // Auto-play video when navigating from next button (skip for embed players)
                     if (!isEmbedPlayer) {
                         const urlParams = new URLSearchParams(window.location.search);
@@ -2860,25 +2574,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         });
                     }
 
-                    // Force chapter markers update after chapters are loaded
-                    /* setTimeout(() => {
-                        if (chapterMarkers && chapterMarkers.updateChapterMarkers) {
-                            chapterMarkers.updateChapterMarkers();
-                        }
-                    }, 500); */
-                    // END: Chapters Implementation
-
-                    // BEGIN: Wrap play button in custom div container
-                    // const playButtonEl = playToggle.el();
-                    // const playButtonWrapper = document.createElement('div');
-                    /* playButtonWrapper.className =
-                            'vjs-play-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
-
-                    // Insert wrapper before the play button and move play button inside
-                    // playButtonEl.parentNode.insertBefore(playButtonWrapper, playButtonEl);
-                    // playButtonWrapper.appendChild(playButtonEl);
-                    // END: Wrap play button in custom div container
-
                     // BEGIN: Implement custom next video button
                     if (!isEmbedPlayer && (mediaData?.nextLink || isDevMode)) {
                         // it seems that the nextLink is not always available, and it is need the this.player().trigger('nextVideo'); from NextVideoButton.js // TODO: remove the 1===1 and the mediaData?.nextLink
@@ -2887,20 +2582,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         });
                         const playToggleIndex = controlBar.children().indexOf(playToggle); // Insert it after play button
                         controlBar.addChild(nextVideoButton, {}, playToggleIndex + 1); // After time display
-
-                        // Wrap next video button in custom div container
-                        // setTimeout(() => {
-                        //     const nextVideoButtonEl = nextVideoButton.el();
-                        //     if (nextVideoButtonEl) {
-                        //         const nextVideoWrapper = document.createElement('div');
-                        //         /*  nextVideoWrapper.className =
-                        //             'vjs-next-video-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button'; */
-
-                        //         // Insert wrapper before the next video button and move button inside
-                        //         nextVideoButtonEl.parentNode.insertBefore(nextVideoWrapper, nextVideoButtonEl);
-                        //         nextVideoWrapper.appendChild(nextVideoButtonEl);
-                        //     }
-                        // }, 2000); // Small delay to ensure button is fully rendered
                     }
                     // END: Implement custom next video button
 
@@ -2953,49 +2634,13 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     }
                     // END: Add spacer
 
-                    // BEGIN: Wrap volume panel in custom div container
-                    /* setTimeout(() => {
-                        const volumePanel = controlBar.getChild('volumePanel');
-                        if (volumePanel) {
-                            const volumePanelEl = volumePanel.el();
-                            if (volumePanelEl) {
-                                const volumeWrapper = document.createElement('div');
-                                volumeWrapper.className =
-                                    'vjs-volume-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the volume panel and move panel inside
-                                volumePanelEl.parentNode.insertBefore(volumeWrapper, volumePanelEl);
-                                volumeWrapper.appendChild(volumePanelEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure volume panel is fully rendered */
-                    // END: Wrap volume panel in custom div container
-
                     // BEGIN: Implement autoplay toggle button - simplified
                     if (!isEmbedPlayer) {
                         try {
-                            // BEGIN: Implement custom time display component
-                            /*                const customRemainingTime = new CustomRemainingTime(playerRef.current, {
-                                displayNegative: false,
-                                customPrefix: '',
-                                customSuffix: '',
-                            });
-                            const playToggleIndex = controlBar.children().indexOf(playToggle);
-                            controlBar.addChild(customRemainingTime, {}, playToggleIndex + 2);
-                            customComponents.current.customRemainingTime = customRemainingTime;
-                            // END: Implement custom time display component
- */
-
                             const autoplayToggleButton = new AutoplayToggleButton(playerRef.current, {
                                 userPreferences: userPreferences.current,
                                 isTouchDevice: isTouchDevice,
                             });
-                            // Add it before the chapters button (or at a suitable position)
-                            /* const chaptersButtonIndex = chaptersButton
-                                ? controlBar.children().indexOf(chaptersButton)
-                                : -1;
-                            const insertIndex =
-                                chaptersButtonIndex > 0 ? chaptersButtonIndex : controlBar.children().length - 3; */
                             controlBar.addChild(autoplayToggleButton, {}, 11);
 
                             // Store reference for later use
@@ -3005,20 +2650,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             setTimeout(() => {
                                 autoplayToggleButton.updateIcon();
                             }, 0);
-
-                            // Wrap autoplay toggle button in custom div container
-                            /*  setTimeout(() => {
-                                const autoplayButtonEl = autoplayToggleButton.el();
-                                if (autoplayButtonEl) {
-                                    const autoplayWrapper = document.createElement('div');
-                                    autoplayWrapper.className =
-                                        'vjs-autoplay-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                    // Insert wrapper before the autoplay button and move button inside
-                                    autoplayButtonEl.parentNode.insertBefore(autoplayWrapper, autoplayButtonEl);
-                                    // autoplayWrapper.appendChild(autoplayButtonEl);
-                                }
-                            }, 150); // Slightly longer delay to ensure button is fully rendered and updated */
                         } catch (error) {
                             console.error('✗ Failed to add autoplay toggle button:', error);
                         }
@@ -3194,7 +2825,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                         false,
                                                         true
                                                     );
-                                                } catch (e) {}
+                                                } catch (e) {
+                                                    console.error('✗ Failed to set subtitleEnabled to false:', e);
+                                                }
                                             } else {
                                                 // Show using previously chosen language only; do not change it
                                                 const preferred =
@@ -3221,14 +2854,24 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                                 first,
                                                                 true
                                                             );
-                                                        } catch (e) {}
+                                                        } catch (e) {
+                                                            console.error(
+                                                                '✗ Failed to set subtitleLanguage to first:',
+                                                                e
+                                                            );
+                                                        }
                                                         try {
                                                             userPreferences.current.setPreference(
                                                                 'subtitleEnabled',
                                                                 true,
                                                                 true
                                                             );
-                                                        } catch (e) {}
+                                                        } catch (e) {
+                                                            console.error(
+                                                                '✗ Failed to set subtitleEnabled to true:',
+                                                                e
+                                                            );
+                                                        }
                                                         el.classList.add('vjs-subs-active');
                                                     }
                                                     return;
@@ -3250,7 +2893,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                                                             true,
                                                             true
                                                         );
-                                                    } catch (e) {}
+                                                    } catch (e) {
+                                                        console.error('✗ Failed to set subtitleEnabled to true:', e);
+                                                    }
                                                 }
                                             }
                                         };
@@ -3334,26 +2979,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     }
                     // END: Add chapter markers and sprite preview to progress control
 
-                    // BEGIN: Simple button layout fix - use CSS approach
-                    /* setTimeout(() => {
-                        // Add a simple spacer div using DOM manipulation (simpler approach)
-                        const spacerDiv = document.createElement('div');
-                        spacerDiv.className = 'vjs-spacer-control vjs-control';
-                        spacerDiv.style.flex = '1';
-                        spacerDiv.style.minWidth = '1px';
-                        spacerDiv.style.height = '100%';
-
-                        // Find insertion point after duration display
-                        const durationDisplay = controlBar.getChild('durationDisplay');
-                        if (durationDisplay && durationDisplay.el()) {
-                            const controlBarEl = controlBar.el();
-                            const durationEl = durationDisplay.el();
-                            const nextSibling = durationEl.nextSibling;
-                            controlBarEl.insertBefore(spacerDiv, nextSibling);
-                        }
-                    }, 300); */
-                    // END: Simple button layout fix
-
                     // BEGIN: Move Picture-in-Picture and Fullscreen buttons to the very end
                     setTimeout(() => {
                         try {
@@ -3424,161 +3049,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Ignore errors when setting up settings menu quality updates
                     }
 
-                    // Wrap settings button in custom div container
-                    /*  setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        if (
-                            controlBar &&
-                            customComponents.current.settingsMenu &&
-                            customComponents.current.settingsMenu.settingsButton
-                        ) {
-                            const settingsButtonEl = customComponents.current.settingsMenu.settingsButton.el();
-                            if (settingsButtonEl) {
-                                const settingsWrapper = document.createElement('div');
-                                settingsWrapper.className =
-                                    'vjs-settings-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the settings button and move button inside
-                                settingsButtonEl.parentNode.insertBefore(settingsWrapper, settingsButtonEl);
-                                settingsWrapper.appendChild(settingsButtonEl);
-                            }
-                        }
-                    }, 200); // Longer delay to ensure settings button is fully created */
-
-                    // Wrap picture-in-picture button in custom div container
-                    /*  setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const pipControl = controlBar?.getChild('pictureInPictureToggle');
-                        if (pipControl) {
-                            const pipButtonEl = pipControl.el();
-                            if (pipButtonEl) {
-                                const pipWrapper = document.createElement('div');
-                                pipWrapper.className =
-                                    'vjs-pip-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the pip button and move button inside
-                                pipButtonEl.parentNode.insertBefore(pipWrapper, pipButtonEl);
-                                pipWrapper.appendChild(pipButtonEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure pip button is available */
-
-                    // Wrap fullscreen button in custom div container
-                    /* setTimeout(() => {
-                        const controlBar = playerRef.current.getChild('controlBar');
-                        const fullscreenControl = controlBar?.getChild('fullscreenToggle');
-                        if (fullscreenControl) {
-                            const fullscreenButtonEl = fullscreenControl.el();
-                            if (fullscreenButtonEl) {
-                                const fullscreenWrapper = document.createElement('div');
-                                fullscreenWrapper.className =
-                                    'vjs-fullscreen-wrapper vjs-menu-button vjs-menu-button-popup vjs-control vjs-button';
-
-                                // Insert wrapper before the fullscreen button and move button inside
-                                fullscreenButtonEl.parentNode.insertBefore(fullscreenWrapper, fullscreenButtonEl);
-                                fullscreenWrapper.appendChild(fullscreenButtonEl);
-                            }
-                        }
-                    }, 100); // Small delay to ensure fullscreen button is available */
-
-                    // END: Add Settings Menu Component
-
-                    // Store components reference for potential cleanup
-
-                    // BEGIN: Fix Android seekbar touch functionality
-                    /*  if (isTouchDevice) {
-                            setTimeout(() => {
-                                const progressControl = playerRef.current
-                                    .getChild('controlBar')
-                                    ?.getChild('progressControl');
-                                const seekBar = progressControl?.getChild('seekBar');
-
-                                if (seekBar && seekBar.el()) {
-                                    const seekBarEl = seekBar.el();
-                                    const progressHolder = seekBarEl.querySelector('.vjs-progress-holder');
-
-                                    if (progressHolder) {
-                                        let isDragging = false;
-
-                                        const handleTouchStart = (e) => {
-                                            isDragging = true;
-                                            e.preventDefault();
-                                            e.stopPropagation(); // Prevent event from reaching video element
-                                            playerRef.current.userActive(true);
-
-                                            // Mark that we're interacting with seekbar to prevent play/pause
-                                            playerRef.current.seekbarTouching = true;
-
-                                            // Temporarily disable big play button
-                                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                                            if (bigPlayButton && bigPlayButton.el()) {
-                                                bigPlayButton.el().style.pointerEvents = 'none';
-                                                bigPlayButton.el().style.touchAction = 'none';
-                                            }
-                                        };
-
-                                        const handleTouchMove = (e) => {
-                                            if (!isDragging) return;
-                                            e.preventDefault();
-                                            e.stopPropagation(); // Prevent event from reaching video element
-
-                                            const touch = e.touches[0];
-                                            const rect = progressHolder.getBoundingClientRect();
-                                            const percentage = Math.max(
-                                                0,
-                                                Math.min(1, (touch.clientX - rect.left) / rect.width)
-                                            );
-                                            const duration = playerRef.current.duration();
-
-                                            if (duration && !isNaN(duration)) {
-                                                const newTime = percentage * duration;
-                                                playerRef.current.currentTime(newTime);
-                                            }
-                                        };
-
-                                        const handleTouchEnd = () => {
-                                            isDragging = false;
-                                            // e.preventDefault();
-                                            // e.stopPropagation(); // Prevent event from reaching video element
-
-                                            // Re-enable big play button
-                                            const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                                            if (bigPlayButton && bigPlayButton.el()) {
-                                                setTimeout(() => {
-                                                    bigPlayButton.el().style.pointerEvents = '';
-                                                    bigPlayButton.el().style.touchAction = '';
-                                                }, 200);
-                                            }
-
-                                            // Clear the seekbar touching flag after a longer delay to prevent conflicts
-                                            setTimeout(() => {
-                                                if (playerRef.current) {
-                                                    playerRef.current.seekbarTouching = false;
-                                                }
-                                            }, 300);
-                                        };
-
-                                        // Add touch event listeners specifically for Android
-                                        progressHolder.addEventListener('touchstart', handleTouchStart, {
-                                            passive: false,
-                                        });
-                                        progressHolder.addEventListener('touchmove', handleTouchMove, {
-                                            passive: false,
-                                        });
-                                        progressHolder.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-                                        // Store cleanup function
-                                        customComponents.current.cleanupSeekbarTouch = () => {
-                                            progressHolder.removeEventListener('touchstart', handleTouchStart);
-                                            progressHolder.removeEventListener('touchmove', handleTouchMove);
-                                            progressHolder.removeEventListener('touchend', handleTouchEnd);
-                                        };
-                                    }
-                                }
-                            }, 500);
-                        } */
-                    // END: Fix Android seekbar touch functionality
-
                     // BEGIN: Initialize keyboard handler
                     keyboardHandler.current = new KeyboardHandler(
                         playerRef,
@@ -3629,202 +3099,6 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                 };
                 // END: Initialize playback event handler
 
-                // Store reference to end screen and autoplay countdown for cleanup
-                /* let endScreen = null;
-                let autoplayCountdown = null;
-
-                
-
-                playerRef.current.on('ended', () => {
-                    // For embed players, show big play button when video ends
-                    if (isEmbedPlayer) {
-                        const bigPlayButton = playerRef.current.getChild('bigPlayButton');
-                        if (bigPlayButton) {
-                            bigPlayButton.show();
-                        }
-                    }
-
-                    // Keep controls active after video ends
-                    setTimeout(() => {
-                        if (playerRef.current && !playerRef.current.isDisposed()) {
-                            // Remove vjs-ended class if it disables controls
-                            const playerEl = playerRef.current.el();
-                            if (playerEl) {
-                                // Keep the visual ended state but ensure controls work
-                                const controlBar = playerRef.current.getChild('controlBar');
-                                if (controlBar) {
-                                    controlBar.show();
-                                    controlBar.el().style.opacity = '1';
-                                    controlBar.el().style.pointerEvents = 'auto';
-                                }
-                            }
-                        }
-                    }, 50);
-
-                    // Check if autoplay is enabled and there's a next video
-                    const isAutoplayEnabled = userPreferences.current.getAutoplayPreference();
-                    const hasNextVideo = mediaData.nextLink !== null;
-
-                    if (!isEmbedPlayer && isAutoplayEnabled && hasNextVideo) {
-                        // If it's a playlist, skip countdown and play directly
-                        if (currentVideo.isPlayList) {
-                            // Clean up any existing overlays
-                            if (endScreen) {
-                                playerRef.current.removeChild(endScreen);
-                                endScreen = null;
-                            }
-                            if (autoplayCountdown) {
-                                playerRef.current.removeChild(autoplayCountdown);
-                                autoplayCountdown = null;
-                            }
-
-                            // Play next video directly without countdown
-                            goToNextVideo();
-                        } else {
-                            // Get next video data for countdown display - find the next video in related videos
-                            let nextVideoData = {
-                                title: 'Next Video',
-                                author: '',
-                                duration: 0,
-                                thumbnail: '',
-                            };
-
-                            // Try to find the next video by URL matching or just use the first related video
-                            if (relatedVideos.length > 0) {
-                                const nextVideo = relatedVideos[0];
-                                nextVideoData = {
-                                    title: nextVideo.title || 'Next Video',
-                                    author: nextVideo.author || '',
-                                    duration: nextVideo.duration || 0,
-                                    thumbnail: nextVideo.thumbnail || '',
-                                };
-                            }
-
-                            // Clean up any existing overlays
-                            if (endScreen) {
-                                playerRef.current.removeChild(endScreen);
-                                endScreen = null;
-                            }
-                            if (autoplayCountdown) {
-                                playerRef.current.removeChild(autoplayCountdown);
-                                autoplayCountdown = null;
-                            }
-
-                            // Show autoplay countdown immediately!
-                            autoplayCountdown = new AutoplayCountdownOverlay(playerRef.current, {
-                                nextVideoData: nextVideoData,
-                                countdownSeconds: 5,
-                                onPlayNext: () => {
-                                    goToNextVideo();
-                                },
-                                onCancel: () => {
-                                    // Hide countdown and show end screen instead
-                                    if (autoplayCountdown) {
-                                        playerRef.current.removeChild(autoplayCountdown);
-                                        autoplayCountdown = null;
-                                    }
-                                    showEndScreen();
-                                },
-                            });
-
-                            playerRef.current.addChild(autoplayCountdown);
-                            // Start countdown immediately without any delay
-                            setTimeout(() => {
-                                if (autoplayCountdown && !autoplayCountdown.isDisposed()) {
-                                    autoplayCountdown.startCountdown();
-                                }
-                            }, 0);
-                        }
-                    } else {
-                        // Autoplay disabled or no next video - show regular end screen
-                        showEndScreen();
-                    }
-
-                    // Function to show the regular end screen
-                    function showEndScreen() {
-                        // Prevent creating multiple end screens
-                        if (endScreen) {
-                            playerRef.current.removeChild(endScreen);
-                            endScreen = null;
-                        }
-
-                        // Show end screen with related videos
-                        endScreen = new EndScreenOverlay(playerRef.current, {
-                            relatedVideos: relatedVideos,
-                        });
-
-                        // Also store the data directly on the component as backup
-                        endScreen.relatedVideos = relatedVideos;
-
-                        playerRef.current.addChild(endScreen);
-                        endScreen.show();
-                    }
-                }); */
-
-                // Hide end screen and autoplay countdown when user wants to replay
-                /* playerRef.current.on('play', () => {
-                    console.log('play');
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                }); */
-
-                /* const hideEndScreenAndStopCountdown = () => {
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                };
-
-                playerRef.current.on('play', hideEndScreenAndStopCountdown);
-                playerRef.current.on('seeking', hideEndScreenAndStopCountdown); */
-
-                // Hide end screen and autoplay countdown when user seeks
-                /*   playerRef.current.on('seeking', () => { // TODO: after the end screen is implemented stop countdown
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    if (autoplayCountdown) {
-                        autoplayCountdown.stopCountdown();
-                    }
-                }); */
-
-                // Handle replay button functionality
-                /*  playerRef.current.on('replay', () => {
-                    alert('replay');
-                    console.log('replay');
-                    if (endScreen) {
-                        endScreen.hide();
-                    }
-                    playerRef.current.currentTime(0);
-                    playerRef.current.play();
-                }); */
-
-                // playerRef.current.on('error', (error) => {
-                //     // console.error('Video.js error:', error);
-                // });
-
-                // playerRef.current.on('fullscreenchange', () => {
-                //     // console.log('Fullscreen changed:', playerRef.current.isFullscreen());
-                // });
-
-                // playerRef.current.on('volumechange', () => {
-                //     console.log('Volume changed:', playerRef.current.volume(), 'Muted:', playerRef.current.muted());
-                // });
-
-                // playerRef.current.on('ratechange', () => {
-                //     // console.log('Playback rate changed:', playerRef.current.playbackRate());
-                // });
-
-                // playerRef.current.on('texttrackchange', () => {
-                //     // console.log('Text track changed');
-                // });
-
                 // Focus the player element so keyboard controls work
                 // This ensures keyboard events work properly in both normal and fullscreen modes
                 playerRef.current.ready(() => {
@@ -3836,108 +3110,10 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         videoElement.focus();
                     }
                 });
-
-                // Handle focus when entering/exiting fullscreen to ensure keyboard events work
-                /*  playerRef.current.on('fullscreenchange', () => {
-                    setTimeout(() => {
-                        if (playerRef.current && playerRef.current.el()) {
-                            const videoElement = playerRef.current.el();
-                            videoElement.setAttribute('tabindex', '0');
-                            videoElement.focus();
-
-                            // In fullscreen mode, ensure the player container has focus
-                            if (playerRef.current.isFullscreen()) {
-                                // Focus the fullscreen element to ensure keyboard events are captured
-                                const fullscreenElement =
-                                    document.fullscreenElement ||
-                                    document.webkitFullscreenElement ||
-                                    document.mozFullScreenElement ||
-                                    document.msFullscreenElement;
-                                if (fullscreenElement) {
-                                    fullscreenElement.setAttribute('tabindex', '0');
-                                    fullscreenElement.focus();
-                                }
-                            }
-                        }
-                    }, 100); // Small delay to ensure fullscreen transition is complete
-                }); */
             }
             //}, 0);
-
-            /* return () => {
-                clearTimeout(timer);
-            }; */
         }
-
-        // Cleanup function
-        /*  return () => {
-            // Clean up keyboard event listeners if they exist
-            if (customComponents.current && customComponents.current.cleanupKeyboardHandler) {
-                customComponents.current.cleanupKeyboardHandler();
-            }
-
-            // Clean up playback event handlers if they exist
-            if (customComponents.current && customComponents.current.cleanupPlaybackEventHandler) {
-                customComponents.current.cleanupPlaybackEventHandler();
-            }
-
-            // Clean up seekbar touch handlers if they exist
-            if (customComponents.current && customComponents.current.cleanupSeekbarTouch) {
-                customComponents.current.cleanupSeekbarTouch();
-            }
-
-            // Clean up embed controls event listeners if they exist
-            if (customComponents.current && customComponents.current.embedControlsCleanup) {
-                customComponents.current.embedControlsCleanup();
-            }
-
-            // Clean up force hide interval if it exists
-            if (customComponents.current && customComponents.current.forceHideInterval) {
-                clearInterval(customComponents.current.forceHideInterval);
-            }
-
-            if (playerRef.current && !playerRef.current.isDisposed()) {
-                playerRef.current.dispose();
-                playerRef.current = null;
-            }
-        }; */
     }, []);
-
-    // Additional effect to ensure video gets focus for keyboard controls on page load
-    /* useEffect(() => {
-        const focusVideo = () => {
-            if (playerRef.current && playerRef.current.el()) {
-                const videoElement = playerRef.current.el();
-                videoElement.setAttribute('tabindex', '0');
-                videoElement.focus();
-            }
-        };
-
-        // Focus when the page becomes visible or gains focus
-        const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                setTimeout(focusVideo, 100);
-            }
-        };
-
-        const handleWindowFocus = () => {
-            setTimeout(focusVideo, 100);
-        };
-
-        // Add event listeners
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', handleWindowFocus);
-
-        // Multiple attempts to ensure focus on page load
-        const focusAttempts = [100, 500, 1000, 2000];
-        const timeouts = focusAttempts.map((delay) => setTimeout(focusVideo, delay));
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('focus', handleWindowFocus);
-            timeouts.forEach(clearTimeout);
-        };
-    }, []); */
 
     return (
         <video
@@ -3959,7 +3135,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             </p>
 
             {/* Add subtitle tracks */}
-            {subtitleTracks &&
+            {/* {subtitleTracks &&
                 subtitleTracks.map((track, index) => (
                     <track
                         key={index}
@@ -3969,7 +3145,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         label={track.label}
                         default={track.default}
                     />
-                ))}
+                ))} */}
             {/* 
             <track kind="chapters" src="/sample-chapters.vtt" /> */}
             {/* Add chapters track */}
