@@ -13,11 +13,11 @@
 
 <script type="application/ld+json">
 {
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [{
-		"@type": "ListItem",
-		"position": 1,
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
         "name": "{{PORTAL_NAME}}",
         "item": {
             "@type": "WebPage",
@@ -25,8 +25,8 @@
         }
     },
     {
-		"@type": "ListItem",
-		"position": 2,
+        "@type": "ListItem",
+        "position": 2,
         "name": "Members",
         "item": {
             "@type": "WebPage",
@@ -41,5 +41,6 @@
 {% block content %}<div id="page-members"></div>{% endblock %}
 
 {% block bottomimports %}
+    {{ block.super }}
     <script src="{% static "js/members.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

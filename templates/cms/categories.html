@@ -13,20 +13,20 @@
 
 <script type="application/ld+json">
 {
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [{
-		"@type": "ListItem",
-		"position": 1,
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
         "name": "{{PORTAL_NAME}}",
         "item": {
-			"@type": "WebPage",
-	        "@id": "{{FRONTEND_HOST}}"
-	    }
+            "@type": "WebPage",
+            "@id": "{{FRONTEND_HOST}}"
+        }
     },
     {
-		"@type": "ListItem",
-		"position": 2,
+        "@type": "ListItem",
+        "position": 2,
         "name": "Categories",
         "item": {
             "@type": "WebPage",
@@ -41,5 +41,6 @@
 {% block content %}<div id="page-categories"></div>{% endblock %}
 
 {% block bottomimports %}
+{{ block.super }}
 <script src="{% static "js/categories.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
