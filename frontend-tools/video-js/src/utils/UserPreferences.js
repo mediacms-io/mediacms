@@ -340,8 +340,27 @@ class UserPreferences {
             // Set flag to prevent auto-save during restoration
             this.isRestoringSubtitles = true;
             // Multiple attempts with increasing delays to ensure text tracks are loaded
+            // Mobile devices need more time and attempts
+            const maxAttempts = 10; // Increased from 5 for mobile compatibility
             const attemptToApplySubtitles = (attempt = 1) => {
                 const textTracks = player.textTracks();
+
+                // Check if we have any subtitle tracks loaded yet
+                let hasSubtitleTracks = false;
+                for (let i = 0; i < textTracks.length; i++) {
+                    if (textTracks[i].kind === 'subtitles') {
+                        hasSubtitleTracks = true;
+                        break;
+                    }
+                }
+
+                // If no subtitle tracks found yet and we have attempts left, retry with longer delay
+                if (!hasSubtitleTracks && attempt < maxAttempts) {
+                    // Use exponential backoff: 100ms, 200ms, 400ms, 800ms, etc.
+                    const delay = Math.min(100 * Math.pow(1.5, attempt - 1), 1000);
+                    setTimeout(() => attemptToApplySubtitles(attempt + 1), delay);
+                    return;
+                }
 
                 // First, disable all subtitle tracks
                 for (let i = 0; i < textTracks.length; i++) {
@@ -401,13 +420,17 @@ class UserPreferences {
                 // Clear the restoration flag after a longer delay to ensure all events have settled
                 setTimeout(() => {
                     this.isRestoringSubtitles = false;
-                }, 600); // Increased to 3 seconds
+                }, 600);
 
-                // If not found and we haven't tried too many times, try again
-                if (!found && attempt < 5) {
-                    setTimeout(() => attemptToApplySubtitles(attempt + 1), attempt * 50);
+                // If not found and we haven't tried too many times, try again with longer delay
+                if (!found && attempt < maxAttempts) {
+                    const delay = Math.min(100 * Math.pow(1.5, attempt - 1), 1000);
+                    setTimeout(() => attemptToApplySubtitles(attempt + 1), delay);
                 } else if (!found) {
-                    console.warn('Could not find subtitle track for language:', savedLanguage);
+                    // Only log warning if we had subtitle tracks but couldn't match the language
+                    if (hasSubtitleTracks) {
+                        console.warn('Could not find subtitle track for language:', savedLanguage);
+                    }
                     // Clear flag even if not found
                     this.isRestoringSubtitles = false;
                 }
@@ -428,7 +451,9 @@ class UserPreferences {
                     ttList.addEventListener('addtrack', onAddTrack, { once: true });
                     ttList.addEventListener('change', onChange, { once: true });
                 }
-            } catch (e) {}
+            } catch {
+                // Silently ignore errors accessing native text track list
+            }
         } else {
             // Ensure subtitles are off on load when not enabled
             try {
