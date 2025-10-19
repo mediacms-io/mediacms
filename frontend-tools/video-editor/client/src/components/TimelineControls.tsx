@@ -1132,7 +1132,6 @@ const TimelineControls = ({
                         endTime: parseTimeString(seg.endTime),
                         thumbnail: '',
                     }));
-                    console.log('convertedSegments', convertedSegments);
 
                     // Dispatch event to update segments
                     const updateEvent = new CustomEvent('update-segments', {

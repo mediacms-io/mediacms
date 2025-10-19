@@ -41,9 +41,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     // Check if the media is an audio file
     const isAudioFile = sampleVideoUrl.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
     
-    // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty
+    // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty, null, or "None"
     const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
-    const posterImage = mediaPosterUrl || (isAudioFile ? '/audio-poster.jpg' : undefined);
+    const isValidPoster = mediaPosterUrl && mediaPosterUrl !== 'None' && mediaPosterUrl.trim() !== '';
+    const posterImage = isValidPoster ? mediaPosterUrl : (isAudioFile ? '/audio-poster.jpg' : undefined);
 
     // Detect iOS device
     useEffect(() => {

@@ -42,9 +42,10 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
         // Check if the media is an audio file and set poster image
         const isAudioFile = url.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
         
-        // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty
+        // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty, null, or "None"
         const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
-        setPosterImage(mediaPosterUrl || (isAudioFile ? '/audio-poster.jpg' : undefined));
+        const isValidPoster = mediaPosterUrl && mediaPosterUrl !== 'None' && mediaPosterUrl.trim() !== '';
+        setPosterImage(isValidPoster ? mediaPosterUrl : (isAudioFile ? '/audio-poster.jpg' : undefined));
     }, [videoRef]);
 
     // Function to jump 15 seconds backward
