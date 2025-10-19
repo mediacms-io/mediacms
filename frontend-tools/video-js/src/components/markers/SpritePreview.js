@@ -38,18 +38,15 @@ class SpritePreview extends Component {
 
         // Try to get progress control from control bar first, then from moved location
         let progressControl = this.player().getChild('controlBar').getChild('progressControl');
-        console.log('SpritePreview: progressControl from controlBar:', progressControl);
 
         // If not found in control bar, it might have been moved to a wrapper
         if (!progressControl) {
             // Look for moved progress control in custom components
             const customComponents = this.player().customComponents || {};
             progressControl = customComponents.movedProgressControl;
-            console.log('SpritePreview: progressControl from customComponents:', progressControl);
         }
 
         if (!progressControl) {
-            console.log('SpritePreview: No progress control found!');
             return;
         }
 
@@ -197,20 +194,20 @@ class SpritePreview extends Component {
         // Use sprite interval from frame data, fallback to 10 seconds
         const frameInterval = frame.seconds || 10;
 
-        // Try to detect total frames based on video duration vs frame interval
-        const videoDuration = this.player().duration() || 45; // fallback duration
-        const calculatedMaxFrames = Math.ceil(videoDuration / frameInterval);
-        const maxFrames = Math.min(calculatedMaxFrames, 6); // Cap at 6 frames to be safe
+        // Calculate total frames based on video duration vs frame interval
+        const videoDuration = this.player().duration();
+        if (!videoDuration) return;
 
+        const maxFrames = Math.ceil(videoDuration / frameInterval);
         let frameIndex = Math.floor(currentTime / frameInterval);
 
         // Clamp frameIndex to available frames to prevent showing empty areas
         frameIndex = Math.min(frameIndex, maxFrames - 1);
+        frameIndex = Math.max(frameIndex, 0);
 
-        // Based on the sprite image, it appears to have frames arranged vertically
-        // Let's try a vertical layout first (1 column, multiple rows)
-        const frameRow = frameIndex; // Each frame is on its own row
-        const frameCol = 0; // Always first (and only) column
+        // Frames are arranged vertically (1 column, multiple rows)
+        const frameRow = frameIndex;
+        const frameCol = 0;
 
         // Calculate background position (negative values to shift the sprite)
         const xPos = -(frameCol * width);
@@ -227,12 +224,6 @@ class SpritePreview extends Component {
 
         // Ensure the image is visible
         this.spriteImage.style.display = 'block';
-
-        // Fallback: if we're beyond frame 3 (30s+), try showing frame 2 instead (20-30s frame)
-        if (frameIndex >= 3 && currentTime > 30) {
-            const fallbackYPos = -(2 * height); // Frame 2 (20-30s range)
-            this.spriteImage.style.backgroundPosition = `${xPos}px ${fallbackYPos}px`;
-        }
     }
 
     formatTime(seconds) {
