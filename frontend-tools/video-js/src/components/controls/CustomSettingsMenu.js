@@ -213,7 +213,7 @@ class CustomSettingsMenu extends Component {
                         // Only trigger if it's a tap (not a swipe)
                         if (distance < 50) {
                             e.preventDefault();
-                            e.stopPropagation();
+                            // e.stopPropagation();
                             touchHandled = true;
                             this.toggleSettings(e);
                         }
@@ -227,7 +227,7 @@ class CustomSettingsMenu extends Component {
                 // Only handle click if touch wasn't already handled
                 if (!touchHandled) {
                     e.preventDefault();
-                    e.stopPropagation();
+                    // e.stopPropagation();
                     this.toggleSettings(e);
                 }
                 touchHandled = false; // Reset for next interaction
@@ -347,7 +347,7 @@ class CustomSettingsMenu extends Component {
             this.settingsOverlay.addEventListener(
                 'touchstart',
                 (e) => {
-                    e.stopPropagation();
+                    // e.stopPropagation();
                 },
                 { passive: true }
             );
@@ -656,7 +656,7 @@ class CustomSettingsMenu extends Component {
         const closeButton = this.settingsOverlay.querySelector('.settings-close-btn');
         if (closeButton) {
             const closeFunction = (e) => {
-                e.stopPropagation();
+                // e.stopPropagation();
                 this.settingsOverlay.classList.remove('show');
                 this.settingsOverlay.style.display = 'none';
                 this.speedSubmenu.style.display = 'none';
@@ -681,7 +681,7 @@ class CustomSettingsMenu extends Component {
 
         // Settings item clicks
         this.settingsOverlay.addEventListener('click', (e) => {
-            e.stopPropagation();
+            // e.stopPropagation();
 
             if (e.target.closest('[data-setting="playback-speed"]')) {
                 this.speedSubmenu.style.display = 'flex';
@@ -722,7 +722,7 @@ class CustomSettingsMenu extends Component {
         this.settingsOverlay.addEventListener(
             'touchend',
             (e) => {
-                e.stopPropagation();
+                // e.stopPropagation();
                 if (this.isTouchScrolling) {
                     this.isTouchScrolling = false;
                     return;
@@ -760,7 +760,7 @@ class CustomSettingsMenu extends Component {
             'touchend',
             (e) => {
                 e.preventDefault();
-                e.stopPropagation();
+                // e.stopPropagation();
                 this.speedSubmenu.style.display = 'none';
             },
             { passive: false }
@@ -775,7 +775,7 @@ class CustomSettingsMenu extends Component {
             'touchend',
             (e) => {
                 e.preventDefault();
-                e.stopPropagation();
+                // e.stopPropagation();
                 this.qualitySubmenu.style.display = 'none';
             },
             { passive: false }
@@ -790,7 +790,7 @@ class CustomSettingsMenu extends Component {
             'touchend',
             (e) => {
                 e.preventDefault();
-                e.stopPropagation();
+                // e.stopPropagation();
                 this.subtitlesSubmenu.style.display = 'none';
             },
             { passive: false }
@@ -826,7 +826,7 @@ class CustomSettingsMenu extends Component {
         this.speedSubmenu.addEventListener(
             'touchend',
             (e) => {
-                e.stopPropagation();
+                // e.stopPropagation();
                 if (this.isTouchScrolling) {
                     this.isTouchScrolling = false;
                     return;
@@ -870,7 +870,7 @@ class CustomSettingsMenu extends Component {
         this.qualitySubmenu.addEventListener(
             'touchend',
             (e) => {
-                e.stopPropagation();
+                // e.stopPropagation();
                 if (this.isTouchScrolling) {
                     this.isTouchScrolling = false;
                     return;
@@ -915,7 +915,7 @@ class CustomSettingsMenu extends Component {
         this.subtitlesSubmenu.addEventListener(
             'touchend',
             (e) => {
-                e.stopPropagation();
+                // e.stopPropagation();
                 if (this.isTouchScrolling) {
                     this.isTouchScrolling = false;
                     return;
@@ -953,7 +953,7 @@ class CustomSettingsMenu extends Component {
     }
 
     toggleSettings(e) {
-        e.stopPropagation();
+        // e.stopPropagation();
         const isVisible = this.settingsOverlay.classList.contains('show');
 
         if (isVisible) {
