@@ -31,7 +31,60 @@ button {
     visibility: hidden !important;
 }
 
-/* Adjust subtitle position when controls are visible */
+/* iOS Native Text Tracks - Position captions above control bar */
+/* Using ::cue which is the only way to style native tracks on iOS */
+video::cue {
+    line: -4; /* Move captions up by 4 lines from bottom */
+}
+
+/* Mobile-specific caption font size increases */
+@media (max-width: 767px) {
+    /* iOS native text tracks */
+    video::cue {
+        font-size: 1em;
+    }
+
+    /* Video.js text tracks for non-iOS */
+    .video-js .vjs-text-track-display {
+        font-size: 1em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1em !important;
+    }
+}
+
+/* Extra small screens - even larger captions */
+@media (max-width: 480px) {
+    video::cue {
+        font-size: 1.2em;
+    }
+
+    .video-js .vjs-text-track-display {
+        font-size: 1.2em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1.2em !important;
+    }
+}
+
+/* Tablet size - moderate increase */
+@media (min-width: 768px) and (max-width: 1024px) {
+    video::cue {
+        font-size: 1em;
+    }
+
+    .video-js .vjs-text-track-display {
+        font-size: 1em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1em !important;
+    }
+}
+
+/* Adjust subtitle position when controls are visible (for non-native Video.js tracks) */
 /* When controls are VISIBLE (user is active), add extra bottom margin */
 .video-js:not(.vjs-user-inactive) .vjs-text-track-display {
     margin-bottom: 2em; /* Adjust this value to move subtitles higher when controls are visible */

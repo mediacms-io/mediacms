@@ -185,6 +185,14 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
         return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
     }, []);
 
+    // Utility function to detect iOS devices
+    const isIOS = useMemo(() => {
+        return (
+            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        );
+    }, []);
+
     // Environment-based development mode configuration
     const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
     // Safely access window.MEDIA_DATA with fallback using useMemo
@@ -2089,9 +2097,9 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         // Use native audio tracks instead of emulated - disabled for consistency
                         nativeAudioTracks: false,
 
-                        // Use Video.js text tracks for full positioning control on all devices
-                        // Native tracks don't allow CSS positioning control and cause duplicates
-                        nativeTextTracks: true,
+                        // Use native text tracks on iOS for fullscreen caption support
+                        // On other devices, use Video.js text tracks for full CSS positioning control
+                        nativeTextTracks: isIOS,
 
                         // Use native video tracks instead of emulated - disabled for consistency
                         nativeVideoTracks: false,
@@ -2559,6 +2567,70 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                     playerRef.current.one('canplay', () =>
                         userPreferences.current.applySubtitlePreference(playerRef.current)
                     );
+
+                    // iOS-specific: Adjust native text track cues to position them above control bar
+                    if (isIOS && hasSubtitles) {
+                        const adjustIOSCues = (linePosition) => {
+                            // If no line position specified, determine based on user activity
+                            if (linePosition === undefined) {
+                                const isUserInactive = playerRef.current.hasClass('vjs-user-inactive');
+                                linePosition = isUserInactive ? -2 : -4;
+                            }
+
+                            const textTracks = playerRef.current.textTracks();
+                            for (let i = 0; i < textTracks.length; i++) {
+                                const track = textTracks[i];
+                                if (track.kind === 'subtitles' || track.kind === 'captions') {
+                                    // Wait for cues to load
+                                    if (track.cues && track.cues.length > 0) {
+                                        for (let j = 0; j < track.cues.length; j++) {
+                                            const cue = track.cues[j];
+                                            // Set line position to move captions up
+                                            // Negative values count from bottom, positive from top
+                                            // -4 when controls visible, -2 when controls hidden
+                                            cue.line = linePosition;
+                                            cue.size = 90; // Make width 90% to ensure it fits
+                                            cue.position = 'auto'; // Center horizontally
+                                            cue.align = 'center'; // Center align text
+                                        }
+                                    } else {
+                                        // If cues aren't loaded yet, listen for the cuechange event
+                                        const onCueChange = () => {
+                                            if (track.cues && track.cues.length > 0) {
+                                                for (let j = 0; j < track.cues.length; j++) {
+                                                    const cue = track.cues[j];
+                                                    cue.line = linePosition;
+                                                    cue.size = 90;
+                                                    cue.position = 'auto';
+                                                    cue.align = 'center';
+                                                }
+                                                track.removeEventListener('cuechange', onCueChange);
+                                            }
+                                        };
+                                        track.addEventListener('cuechange', onCueChange);
+                                    }
+                                }
+                            }
+                        };
+
+                        // Try to adjust immediately and also after a delay
+                        setTimeout(() => adjustIOSCues(), 100);
+                        setTimeout(() => adjustIOSCues(), 500);
+                        setTimeout(() => adjustIOSCues(), 1000);
+
+                        // Listen for user activity changes to adjust caption position dynamically
+                        playerRef.current.on('userinactive', () => {
+                            adjustIOSCues(-2); // Controls hidden - move captions closer to bottom
+                        });
+
+                        playerRef.current.on('useractive', () => {
+                            adjustIOSCues(-4); // Controls visible - move captions higher
+                        });
+
+                        // Also adjust when tracks change
+                        playerRef.current.textTracks().addEventListener('addtrack', () => adjustIOSCues());
+                        playerRef.current.textTracks().addEventListener('change', () => adjustIOSCues());
+                    }
                     // END: Add subtitle tracks
 
                     // BEGIN: Chapters Implementation
