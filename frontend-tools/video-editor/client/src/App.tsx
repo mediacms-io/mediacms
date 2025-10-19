@@ -236,6 +236,46 @@ const App = () => {
       });
   };
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle keyboard shortcuts if user is typing in an input field
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      switch (event.code) {
+        case 'Space':
+          event.preventDefault(); // Prevent default spacebar behavior (scrolling, button activation)
+          handlePlay();
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          if (videoRef.current) {
+            const newTime = Math.max(currentTime - 10, 0);
+            handleMobileSafeSeek(newTime);
+            logger.debug('Jumped backward 10 seconds to:', formatDetailedTime(newTime));
+          }
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          if (videoRef.current) {
+            const newTime = Math.min(currentTime + 10, duration);
+            handleMobileSafeSeek(newTime);
+            logger.debug('Jumped forward 10 seconds to:', formatDetailedTime(newTime));
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handlePlay, handleMobileSafeSeek, currentTime, duration, videoRef]);
+
   return (
     <div className="bg-background min-h-screen">
       <MobilePlayPrompt videoRef={videoRef} onPlay={handlePlay} />
