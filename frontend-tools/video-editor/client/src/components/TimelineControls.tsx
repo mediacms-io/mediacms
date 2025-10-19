@@ -3,7 +3,7 @@ import { formatTime, formatDetailedTime } from '../lib/timeUtils';
 import { generateThumbnail, generateSolidColor } from '../lib/videoUtils';
 import { Segment } from './ClipSegments';
 import Modal from './Modal';
-import { trimVideo, autoSaveVideo, fetchAutoSavedSegments } from '../services/videoApi';
+import { trimVideo, autoSaveVideo } from '../services/videoApi';
 import logger from '../lib/logger';
 import '../styles/TimelineControls.css';
 import '../styles/TwoRowTooltip.css';
@@ -1078,44 +1078,10 @@ const TimelineControls = ({
             // Get savedSegments directly from window.MEDIA_DATA
             let savedData = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.savedSegments) || null;
 
-            // If no saved segments, use default segments
+            // If no saved segments, don't load anything - the useVideoTrimmer hook already creates the initial full-length segment
             if (!savedData) {
-                logger.debug('No saved segments found in MEDIA_DATA, using default segments');
-                savedData = {
-                    segments: [
-                        {
-                            startTime: '00:00:01.130',
-                            endTime: '00:00:05.442',
-                            name: 'segment',
-                        },
-                        {
-                            startTime: '00:00:06.152',
-                            endTime: '00:00:10.518',
-                            name: 'segment',
-                        },
-                        {
-                            startTime: '00:00:11.518',
-                            endTime: '00:00:15.121',
-                            name: 'segment',
-                        },
-                        {
-                            startTime: '00:00:16.757',
-                            endTime: '00:00:20.769',
-                            name: 'segment',
-                        },
-                        {
-                            startTime: '00:00:21.158',
-                            endTime: '00:00:25.870',
-                            name: 'segment',
-                        },
-                        {
-                            startTime: '00:00:26.430',
-                            endTime: '00:00:29.798',
-                            name: 'segment',
-                        },
-                    ],
-                    updated_at: '2025-06-24 14:59:14',
-                };
+                logger.debug('No saved segments found in MEDIA_DATA, skipping load (initial segment already created by useVideoTrimmer)');
+                return;
             }
 
             logger.debug('Loading saved segments:', savedData);
