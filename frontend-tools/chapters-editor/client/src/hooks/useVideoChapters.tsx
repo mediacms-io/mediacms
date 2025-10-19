@@ -147,8 +147,15 @@ const useVideoChapters = () => {
                         initialSegments.push(segment);
                     }
                 } else {
-                    // Start with empty state - no default segment
-                    initialSegments = [];
+                    // Create a default segment that spans the entire video on first load
+                    const initialSegment: Segment = {
+                        id: 1,
+                        chapterTitle: '',
+                        startTime: 0,
+                        endTime: video.duration,
+                    };
+
+                    initialSegments = [initialSegment];
                 }
 
                 // Initialize history state with the segments
@@ -267,17 +274,24 @@ const useVideoChapters = () => {
                         
                         // Check if we now have duration and initialize if needed
                         if (video.duration > 0 && clipSegments.length === 0) {
-                            logger.debug('Safari: Successfully initialized metadata with empty state');
+                            logger.debug('Safari: Successfully initialized metadata, creating default segment');
                             
+                            const defaultSegment: Segment = {
+                                id: 1,
+                                chapterTitle: '',
+                                startTime: 0,
+                                endTime: video.duration,
+                            };
+
                             setDuration(video.duration);
                             setTrimEnd(video.duration);
-                            setClipSegments([]);
+                            setClipSegments([defaultSegment]);
                             
                             const initialState: EditorState = {
                                 trimStart: 0,
                                 trimEnd: video.duration,
                                 splitPoints: [],
-                                clipSegments: [],
+                                clipSegments: [defaultSegment],
                             };
                             
                             setHistory([initialState]);

@@ -3947,11 +3947,11 @@ const TimelineControls = ({
                         <button
                             onClick={() => setShowSaveChaptersModal(true)}
                             className="save-chapters-button"
-                            data-tooltip={clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                            data-tooltip={clipSegments.length === 0 
                                 ? "Clear all chapters" 
                                 : "Save chapters"}
                         >
-                            {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                            {clipSegments.length === 0 
                                 ? 'Clear Chapters' 
                                 : 'Save Chapters'}
                         </button>
@@ -3974,7 +3974,7 @@ const TimelineControls = ({
                                     className="modal-button modal-button-primary"
                                     onClick={handleSaveChaptersConfirm}
                                 >
-                                    {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                                    {clipSegments.length === 0 
                                         ? 'Clear Chapters' 
                                         : 'Save Chapters'}
                                 </button>
@@ -3982,14 +3982,9 @@ const TimelineControls = ({
                         }
                     >
                         <p className="modal-message">
-                            {(() => {
-                                const chaptersWithTitles = clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length;
-                                if (chaptersWithTitles === 0) {
-                                    return "Are you sure you want to clear all chapters? This will remove all existing chapters from the database.";
-                                } else {
-                                    return `Are you sure you want to save the chapters? This will save ${chaptersWithTitles} chapters to the database.`;
-                                }
-                            })()}
+                            {clipSegments.length === 0 
+                                ? "Are you sure you want to clear all chapters? This will remove all existing chapters from the database."
+                                : `Are you sure you want to save the chapters? This will save ${clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length} chapters to the database.`}
                         </p>
                     </Modal>
 
