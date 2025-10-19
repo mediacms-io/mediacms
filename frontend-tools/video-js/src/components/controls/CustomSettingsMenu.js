@@ -562,16 +562,6 @@ class CustomSettingsMenu extends Component {
         }
     }
 
-    // Cleanup method
-    dispose() {
-        this.stopSubtitleSync();
-        // Remove event listeners
-        document.removeEventListener('click', this.handleClickOutside);
-        // Remove text track change listener
-        if (this.player()) {
-            this.player().off('texttrackchange');
-        }
-    }
 
     getAvailableQualities() {
         // Priority: provided options -> MEDIA_DATA JSON -> player sources -> default
@@ -960,6 +950,9 @@ class CustomSettingsMenu extends Component {
             this.settingsOverlay.classList.remove('show');
             this.settingsOverlay.style.display = 'none';
 
+            // Stop keeping controls visible
+            this.stopKeepingControlsVisible();
+
             // Restore body scroll on mobile when closing
             if (this.isMobile) {
                 document.body.style.overflow = '';
@@ -969,6 +962,9 @@ class CustomSettingsMenu extends Component {
         } else {
             this.settingsOverlay.classList.add('show');
             this.settingsOverlay.style.display = 'block';
+
+            // Keep controls visible while settings menu is open
+            this.keepControlsVisible();
 
             // Add haptic feedback on mobile when opening
             if (this.isMobile && navigator.vibrate) {
@@ -1029,11 +1025,40 @@ class CustomSettingsMenu extends Component {
         return this.settingsOverlay && this.settingsOverlay.classList.contains('show');
     }
 
+    // Keep controls visible while settings menu is open
+    keepControlsVisible() {
+        const player = this.player();
+        if (!player) return;
+
+        // Keep player in active state
+        player.userActive(true);
+
+        // Set up interval to periodically keep player active
+        this.controlsVisibilityInterval = setInterval(() => {
+            if (this.isMenuOpen()) {
+                player.userActive(true);
+            } else {
+                this.stopKeepingControlsVisible();
+            }
+        }, 1000); // Check every second
+    }
+
+    // Stop keeping controls visible
+    stopKeepingControlsVisible() {
+        if (this.controlsVisibilityInterval) {
+            clearInterval(this.controlsVisibilityInterval);
+            this.controlsVisibilityInterval = null;
+        }
+    }
+
     // Close the settings menu
     closeMenu() {
         if (this.settingsOverlay) {
             this.settingsOverlay.classList.remove('show');
             this.settingsOverlay.style.display = 'none';
+
+            // Stop keeping controls visible
+            this.stopKeepingControlsVisible();
             this.speedSubmenu.style.display = 'none';
             if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
             if (this.subtitlesSubmenu) this.subtitlesSubmenu.style.display = 'none';
@@ -1447,6 +1472,17 @@ class CustomSettingsMenu extends Component {
     }
 
     dispose() {
+        // Stop subtitle sync and clear interval
+        this.stopSubtitleSync();
+        
+        // Stop keeping controls visible
+        this.stopKeepingControlsVisible();
+        
+        // Remove text track change listener
+        if (this.player()) {
+            this.player().off('texttrackchange');
+        }
+        
         // Remove event listeners
         document.removeEventListener('click', this.handleClickOutside);
 
