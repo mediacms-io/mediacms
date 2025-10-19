@@ -38,6 +38,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const sampleVideoUrl =
         (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.videoUrl) || '/videos/sample-video.mp4';
 
+    // Check if the media is an audio file
+    const isAudioFile = sampleVideoUrl.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
+    
+    // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty
+    const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
+    const posterImage = mediaPosterUrl || (isAudioFile ? '/audio-poster.jpg' : undefined);
+
     // Detect iOS device and Safari browser
     useEffect(() => {
         const checkIOS = () => {
@@ -354,6 +361,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                 x-webkit-airplay="allow"
                 controls={false}
                 muted={isMuted}
+                poster={posterImage}
             >
                 <source src={sampleVideoUrl} type="video/mp4" />
                 {/* Safari fallback for audio files */}

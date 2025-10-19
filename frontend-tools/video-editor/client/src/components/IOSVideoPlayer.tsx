@@ -11,6 +11,7 @@ interface IOSVideoPlayerProps {
 const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps) => {
     const [videoUrl, setVideoUrl] = useState<string>('');
     const [iosVideoRef, setIosVideoRef] = useState<HTMLVideoElement | null>(null);
+    const [posterImage, setPosterImage] = useState<string | undefined>(undefined);
 
     // Refs for hold-to-continue functionality
     const incrementIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -26,15 +27,24 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
 
     // Get the video source URL from the main player
     useEffect(() => {
+        let url = '';
         if (videoRef.current && videoRef.current.querySelector('source')) {
             const source = videoRef.current.querySelector('source') as HTMLSourceElement;
             if (source && source.src) {
-                setVideoUrl(source.src);
+                url = source.src;
             }
         } else {
             // Fallback to sample video if needed
-            setVideoUrl('/videos/sample-video.mp4');
+            url = '/videos/sample-video.mp3';
         }
+        setVideoUrl(url);
+
+        // Check if the media is an audio file and set poster image
+        const isAudioFile = url.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
+        
+        // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty
+        const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
+        setPosterImage(mediaPosterUrl || (isAudioFile ? '/audio-poster.jpg' : undefined));
     }, [videoRef]);
 
     // Function to jump 15 seconds backward
@@ -127,6 +137,7 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
                 x-webkit-airplay="allow"
                 preload="auto"
                 crossOrigin="anonymous"
+                poster={posterImage}
             >
                 <source src={videoUrl} type="video/mp4" />
                 <p>Your browser doesn't support HTML5 video.</p>
