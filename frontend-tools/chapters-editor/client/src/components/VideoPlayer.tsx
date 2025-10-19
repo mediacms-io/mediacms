@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { formatTime, formatDetailedTime } from '@/lib/timeUtils';
+import { AUDIO_POSTER_URL } from '@/assets/audioPosterUrl';
 import logger from '../lib/logger';
 import '../styles/VideoPlayer.css';
 
@@ -44,7 +45,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty, null, or "None"
     const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
     const isValidPoster = mediaPosterUrl && mediaPosterUrl !== 'None' && mediaPosterUrl.trim() !== '';
-    const posterImage = isValidPoster ? mediaPosterUrl : (isAudioFile ? '/audio-poster.jpg' : undefined);
+    const posterImage = isValidPoster ? mediaPosterUrl : (isAudioFile ? AUDIO_POSTER_URL : undefined);
 
     // Detect iOS device and Safari browser
     useEffect(() => {

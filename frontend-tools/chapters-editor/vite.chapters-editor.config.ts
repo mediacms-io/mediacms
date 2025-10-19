@@ -2,33 +2,12 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { copyFileSync, mkdirSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Plugin to copy audio-poster.jpg to build output
-const copyAudioPoster = () => {
-    return {
-        name: 'copy-audio-poster',
-        closeBundle() {
-            const outDir = path.resolve(__dirname, '../../../static/video_editor');
-            const sourceFile = path.resolve(__dirname, 'client/public/audio-poster.jpg');
-            const destFile = path.resolve(outDir, 'audio-poster.jpg');
-
-            try {
-                mkdirSync(outDir, { recursive: true });
-                copyFileSync(sourceFile, destFile);
-                console.log('✓ Copied audio-poster.jpg to build output');
-            } catch (error) {
-                console.error('Error copying audio-poster.jpg:', error);
-            }
-        },
-    };
-};
-
 export default defineConfig({
-    plugins: [react(), copyAudioPoster()],
+    plugins: [react()],
     resolve: {
         alias: {
             '@': path.resolve(__dirname, 'client', 'src'),
@@ -53,8 +32,14 @@ export default defineConfig({
             output: {
                 assetFileNames: (assetInfo) => {
                     if (assetInfo.name === 'style.css') return 'chapters-editor.css';
-                    return assetInfo.name;
+                    // Keep original names for image assets
+                    if (assetInfo.name && /\.(png|jpe?g|svg|gif|webp)$/i.test(assetInfo.name)) {
+                        return assetInfo.name;
+                    }
+                    return assetInfo.name || 'asset-[hash][extname]';
                 },
+                // Inline small assets, emit larger ones
+                inlineDynamicImports: true,
                 globals: {
                     react: 'React',
                     'react-dom': 'ReactDOM',
@@ -65,5 +50,7 @@ export default defineConfig({
         outDir: '../../../static/video_editor',
         emptyOutDir: true,
         external: ['react', 'react-dom'],
+        // Inline assets smaller than 100KB, emit larger ones
+        assetsInlineLimit: 102400,
     },
 });

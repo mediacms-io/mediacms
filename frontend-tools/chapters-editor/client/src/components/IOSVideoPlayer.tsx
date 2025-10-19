@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { formatTime } from '@/lib/timeUtils';
+import { AUDIO_POSTER_URL } from '@/assets/audioPosterUrl';
 import '../styles/IOSVideoPlayer.css';
 
 interface IOSVideoPlayerProps {
@@ -45,7 +46,7 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
         // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty, null, or "None"
         const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
         const isValidPoster = mediaPosterUrl && mediaPosterUrl !== 'None' && mediaPosterUrl.trim() !== '';
-        setPosterImage(isValidPoster ? mediaPosterUrl : (isAudioFile ? '/audio-poster.jpg' : undefined));
+        setPosterImage(isValidPoster ? mediaPosterUrl : (isAudioFile ? AUDIO_POSTER_URL : undefined));
     }, [videoRef]);
 
     // Function to jump 15 seconds backward
