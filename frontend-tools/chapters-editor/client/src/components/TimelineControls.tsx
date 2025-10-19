@@ -508,18 +508,17 @@ const TimelineControls = ({
                     to: formatDetailedTime(segment.endTime),
                 }));
 
-            if (chapters.length === 0) {
-                setErrorMessage('No chapters with titles found');
-                setShowErrorModal(true);
-                setShowProcessingModal(false);
-                return;
-            }
-
+            // Allow saving even when no chapters exist (will send empty array)
             // Call the onChapterSave function if provided
             if (onChapterSave) {
                 await onChapterSave(chapters);
                 setShowProcessingModal(false);
-                setSuccessMessage('Chapters saved successfully!');
+                
+                if (chapters.length === 0) {
+                    setSuccessMessage('All chapters cleared successfully!');
+                } else {
+                    setSuccessMessage('Chapters saved successfully!');
+                }
 
                 // Set redirect URL to media page
                 const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
@@ -1975,48 +1974,12 @@ const TimelineControls = ({
             // Check if this was the last segment before deletion
             const remainingSegments = clipSegments.filter((seg) => seg.id !== segmentId);
             if (remainingSegments.length === 0) {
-                // Create a full video segment
-                const fullVideoSegment: Segment = {
-                    id: Date.now(),
-                    chapterTitle: 'Full Video',
-                    startTime: 0,
-                    endTime: duration,
-                };
-
-                // Create and dispatch the update event to replace all segments with the full video segment
-                const updateEvent = new CustomEvent('update-segments', {
-                    detail: {
-                        segments: [fullVideoSegment],
-                        recordHistory: true,
-                        action: 'create_full_video_segment',
-                    },
-                });
-                document.dispatchEvent(updateEvent);
-
-                // Update UI to show the segment tooltip
-                setSelectedSegmentId(fullVideoSegment.id);
+                // Allow empty state - clear all UI state
+                setSelectedSegmentId(null);
                 setShowEmptySpaceTooltip(false);
-                setClickedTime(currentTime);
-                setDisplayTime(currentTime);
-                setActiveSegment(fullVideoSegment);
-
-                // Calculate tooltip position at current time
-                if (timelineRef.current) {
-                    const rect = timelineRef.current.getBoundingClientRect();
-                    const posPercent = (currentTime / duration) * 100;
-                    const xPosition = rect.left + rect.width * (posPercent / 100);
-
-                    setTooltipPosition({
-                        x: xPosition,
-                        y: rect.top - 10,
-                    });
-
-                    logger.debug('Created full video segment:', {
-                        id: fullVideoSegment.id,
-                        duration: formatDetailedTime(duration),
-                        currentPosition: formatDetailedTime(currentTime),
-                    });
-                }
+                setActiveSegment(null);
+                
+                logger.debug('All segments deleted - entering empty state');
             } else if (selectedSegmentId === segmentId) {
                 // Handle normal segment deletion
                 const deletedSegment = clipSegments.find((seg) => seg.id === segmentId);
@@ -3984,10 +3947,13 @@ const TimelineControls = ({
                         <button
                             onClick={() => setShowSaveChaptersModal(true)}
                             className="save-chapters-button"
-                            data-tooltip="Save chapters"
-                            disabled={clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0}
+                            data-tooltip={clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                                ? "Clear all chapters" 
+                                : "Save chapters"}
                         >
-                            Save Chapters
+                            {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                                ? 'Clear Chapters' 
+                                : 'Save Chapters'}
                         </button>
                     </div>
 
@@ -4008,15 +3974,22 @@ const TimelineControls = ({
                                     className="modal-button modal-button-primary"
                                     onClick={handleSaveChaptersConfirm}
                                 >
-                                    Save Chapters
+                                    {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length === 0 
+                                        ? 'Clear Chapters' 
+                                        : 'Save Chapters'}
                                 </button>
                             </>
                         }
                     >
                         <p className="modal-message">
-                            Are you sure you want to save the chapters? This will save{' '}
-                            {clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length} chapters to the
-                            database.
+                            {(() => {
+                                const chaptersWithTitles = clipSegments.filter((s) => s.chapterTitle && s.chapterTitle.trim()).length;
+                                if (chaptersWithTitles === 0) {
+                                    return "Are you sure you want to clear all chapters? This will remove all existing chapters from the database.";
+                                } else {
+                                    return `Are you sure you want to save the chapters? This will save ${chaptersWithTitles} chapters to the database.`;
+                                }
+                            })()}
                         </p>
                     </Modal>
 

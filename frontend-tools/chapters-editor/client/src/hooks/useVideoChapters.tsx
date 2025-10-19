@@ -147,15 +147,8 @@ const useVideoChapters = () => {
                         initialSegments.push(segment);
                     }
                 } else {
-
-                    const initialSegment: Segment = {
-                        id: 1,
-                        chapterTitle: '',
-                        startTime: 0,
-                        endTime: video.duration,
-                    };
-
-                    initialSegments = [initialSegment];
+                    // Start with empty state - no default segment
+                    initialSegments = [];
                 }
 
                 // Initialize history state with the segments
@@ -274,24 +267,17 @@ const useVideoChapters = () => {
                         
                         // Check if we now have duration and initialize if needed
                         if (video.duration > 0 && clipSegments.length === 0) {
-                            logger.debug('Safari: Successfully initialized metadata, creating default segment');
+                            logger.debug('Safari: Successfully initialized metadata with empty state');
                             
-                            const defaultSegment: Segment = {
-                                id: 1,
-                                chapterTitle: '',
-                                startTime: 0,
-                                endTime: video.duration,
-                            };
-
                             setDuration(video.duration);
                             setTrimEnd(video.duration);
-                            setClipSegments([defaultSegment]);
+                            setClipSegments([]);
                             
                             const initialState: EditorState = {
                                 trimStart: 0,
                                 trimEnd: video.duration,
                                 splitPoints: [],
-                                clipSegments: [defaultSegment],
+                                clipSegments: [],
                             };
                             
                             setHistory([initialState]);
@@ -680,21 +666,13 @@ const useVideoChapters = () => {
                 const newSegments = clipSegments.filter((segment) => segment.id !== segmentId);
 
                 if (newSegments.length !== clipSegments.length) {
-                    // If all segments are deleted, create a new full video segment
-                    if (newSegments.length === 0 && videoRef.current) {
-                        // Create a new default segment that spans the entire video
-                        const defaultSegment: Segment = {
-                            id: Date.now(),
-                            chapterTitle: 'Chapter 1',
-                            startTime: 0,
-                            endTime: videoRef.current.duration,
-                        };
-
+                    if (newSegments.length === 0) {
+                        // Allow empty state - no segments
+                        setClipSegments([]);
                         // Reset the trim points as well
                         setTrimStart(0);
-                        setTrimEnd(videoRef.current.duration);
+                        setTrimEnd(videoRef.current?.duration || 0);
                         setSplitPoints([]);
-                        setClipSegments([defaultSegment]);
                     } else {
                         // Renumber remaining segments to ensure proper chronological naming
                         const renumberedSegments = renumberAllSegments(newSegments);
@@ -767,17 +745,8 @@ const useVideoChapters = () => {
         setTrimEnd(duration);
         setSplitPoints([]);
 
-        // Create a new default segment that spans the entire video
-        if (!videoRef.current) return;
-
-        const defaultSegment: Segment = {
-            id: Date.now(),
-            chapterTitle: 'Chapter 1',
-            startTime: 0,
-            endTime: duration,
-        };
-
-        setClipSegments([defaultSegment]);
+        // Reset to empty state - no default segment
+        setClipSegments([]);
         saveState('reset_all');
     };
 
@@ -918,7 +887,7 @@ const useVideoChapters = () => {
             }
 
             // Convert chapters to backend expected format and sort by start time
-            const backendChapters = chapters
+            let backendChapters = chapters
                 .map((chapter) => ({
                     startTime: chapter.from,
                     endTime: chapter.to,
@@ -930,6 +899,21 @@ const useVideoChapters = () => {
                     const bStartSeconds = parseTimeToSeconds(b.startTime);
                     return aStartSeconds - bStartSeconds;
                 });
+
+            // If there's only one chapter that spans the full video duration, send empty array
+            if (backendChapters.length === 1) {
+                const singleChapter = backendChapters[0];
+                const startSeconds = parseTimeToSeconds(singleChapter.startTime);
+                const endSeconds = parseTimeToSeconds(singleChapter.endTime);
+                
+                // Check if this single chapter spans the entire video (within 0.1 second tolerance)
+                const isFullVideoChapter = startSeconds <= 0.1 && Math.abs(endSeconds - duration) <= 0.1;
+                
+                if (isFullVideoChapter) {
+                    logger.debug('Manual save: Single chapter spans full video - sending empty array');
+                    backendChapters = [];
+                }
+            }
 
             // Create the API request body
             const requestData = {
