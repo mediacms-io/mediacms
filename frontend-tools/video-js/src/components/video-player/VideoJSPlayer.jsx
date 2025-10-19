@@ -1592,14 +1592,16 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
             // Default sample video
             return [
-                /* {
-                    src: '/videos/sample-video-white.mp4',
-                    type: 'video/mp4',
-                }, */
                 {
+                    src: '/videos/sample-video.mp4',
+                    // src: '/videos/sample-video-white.mp4',
+                    //src: '/videos/sample-video.big.mp4',
+                    type: 'video/mp4',
+                },
+                /*  {
                     src: '/videos/sample-video.mp3',
                     type: 'audio/mpeg',
-                },
+                }, */
             ];
         };
 
@@ -1921,8 +1923,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                     // Milliseconds of inactivity before user considered inactive (0 = never)
                     // For embed players, use longer timeout to keep controls visible
-                    //inactivityTimeout: isEmbedPlayer ? 5000 : 2000,
-                    inactivityTimeout: 2000,
+                    inactivityTimeout: isEmbedPlayer || isTouchDevice ? 5000 : 2000,
 
                     // Language code for player (e.g., 'en', 'es', 'fr')
                     language: 'en',
