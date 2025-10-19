@@ -1079,8 +1079,8 @@ class CustomSettingsMenu extends Component {
         const speedLabel = speed === 1 ? 'Normal' : `${speed}`;
         currentSpeedDisplay.textContent = speedLabel;
 
-        // Close only the speed submenu (keep overlay open)
-        this.speedSubmenu.style.display = 'none';
+        // Close the entire settings menu after speed selection
+        this.closeMenu();
     }
 
     handleQualityChange(value, qualityOption) {
@@ -1257,6 +1257,9 @@ class CustomSettingsMenu extends Component {
                 } catch (e) {}
 
                 player.removeClass('vjs-changing-resolution');
+
+                // Close the entire settings menu after quality change completes
+                this.closeMenu();
             };
 
             // Wait for metadata/data to be ready, then restore
@@ -1266,10 +1269,10 @@ class CustomSettingsMenu extends Component {
                 player.one('loadeddata', finishRestore);
             };
             player.one('loadedmetadata', onLoadedMeta);
+        } else {
+            // If no source switch needed, close menu immediately
+            this.closeMenu();
         }
-
-        // Close only the quality submenu (keep overlay open)
-        if (this.qualitySubmenu) this.qualitySubmenu.style.display = 'none';
     }
 
     handleSubtitleChange(lang, optionEl) {
@@ -1310,16 +1313,8 @@ class CustomSettingsMenu extends Component {
         const currentSubtitlesDisplay = this.settingsOverlay.querySelector('.current-subtitles');
         if (currentSubtitlesDisplay) currentSubtitlesDisplay.textContent = label;
 
-        // Close the entire settings overlay after subtitle selection
-        this.settingsOverlay.classList.remove('show');
-        this.settingsOverlay.style.display = 'none';
-        this.subtitlesSubmenu.style.display = 'none';
-
-        // Remove active state from settings button
-        const btnEl = this.settingsButton?.el();
-        if (btnEl) {
-            btnEl.classList.remove('settings-clicked');
-        }
+        // Close the entire settings menu after subtitle selection
+        this.closeMenu();
     }
 
     restoreSubtitlePreference() {
