@@ -258,7 +258,7 @@ def video_chapters(request, friendly_token):
     try:
         request_data = json.loads(request.body)
         data = request_data.get("chapters")
-        if not data:
+        if data is None:
             return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
 
         chapters = []
