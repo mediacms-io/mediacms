@@ -658,10 +658,10 @@ def change_media_owner(media_id, new_user):
         return None
 
     # Change the owner
-    previous_user = media.user
+    # previous_user = media.user
     # keep original user as owner by adding a models.MediaPermission entry with permission=owner
-    if not models.MediaPermission.objects.filter(media=media, user=previous_user, permission="owner").exists():
-        models.MediaPermission.objects.create(media=media, user=previous_user, owner_user=new_user, permission="owner")
+    # if not models.MediaPermission.objects.filter(media=media, user=previous_user, permission="owner").exists():
+    #    models.MediaPermission.objects.create(media=media, user=previous_user, owner_user=new_user, permission="owner")
 
     media.user = new_user
     media.save(update_fields=["user"])
