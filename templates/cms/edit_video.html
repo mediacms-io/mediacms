@@ -13,6 +13,7 @@
 <script>
 window.MEDIA_DATA = {
     videoUrl: "{{ media_file_path }}",
+	posterUrl: "{{ media_object.poster_url }}",
 	mediaId: "{{ media_object.friendly_token }}",
 	redirectURL: "{{ media_object.get_absolute_url }}",
 	redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}"

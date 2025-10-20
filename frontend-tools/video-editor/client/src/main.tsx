@@ -5,7 +5,8 @@ import "./index.css";
 if (typeof window !== "undefined") {
   window.MEDIA_DATA = {
     videoUrl: "",
-    mediaId: ""
+    mediaId: "",
+    posterUrl: ""
   };
   window.lastSeekedPosition = 0;
 }
@@ -15,6 +16,7 @@ declare global {
     MEDIA_DATA: {
       videoUrl: string;
       mediaId: string;
+      posterUrl?: string;
     };
     seekToFunction?: (time: number) => void;
     lastSeekedPosition: number;

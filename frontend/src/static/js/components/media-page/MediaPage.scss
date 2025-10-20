@@ -495,9 +495,6 @@
         color: #888;
       }
 
-      .video-js {
-        background: none !important;
-      }
 
       .vjs-big-play-button {
       }
@@ -900,6 +897,7 @@
     display: table;
     width: 100%;
     min-height: 40px;
+    z-index: 999;
 
     > * {
       display: table-cell;
@@ -1124,112 +1122,11 @@
               }
             }
 
-            .share-fb {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(59, 89, 152);
-                  background-image: url('../../../images/social-media-icons/fb-logo.png');
-                }
-              }
-            }
-
-            .share-tw {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(29, 161, 242);
-                  background-image: url('../../../images/social-media-icons/twitter-logo.png');
-                }
-              }
-            }
-
-            .share-reddit {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(255, 69, 0);
-                  background-image: url('../../../images/social-media-icons/reddit-logo.png');
-                }
-              }
-            }
-
-            .share-tumblr {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(53, 70, 92);
-                  background-image: url('../../../images/social-media-icons/tumblr-logo.png');
-                }
-              }
-            }
-
-            .share-pinterest {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(189, 8, 28);
-                  background-image: url('../../../images/social-media-icons/pinterest-logo.png');
-                }
-              }
-            }
-
-            .share-vk {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(70, 128, 194);
-                  background-image: url('../../../images/social-media-icons/vk-logo.png');
-                }
-              }
-            }
-
-            .share-linkedin {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(0, 119, 181);
-                  background-image: url('../../../images/social-media-icons/linkedin-logo.png');
-                }
-              }
-            }
-
-            .share-mix {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(255, 130, 38);
-                  background-image: url('../../../images/social-media-icons/mix-logo.png');
-                }
-              }
-            }
-
             .share-email {
               a,
               button {
                 > *:first-child {
                   background-color: rgb(136, 136, 136);
-                }
-              }
-            }
-
-            .share-whatsapp {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(37, 211, 102);
-                  background-image: url('../../../images/social-media-icons/whatsapp-logo.png');
-                }
-              }
-            }
-
-            .share-telegram {
-              a,
-              button {
-                > *:first-child {
-                  background-color: rgb(0, 136, 204);
-                  background-position: 11px;
-                  background-image: url('../../../images/social-media-icons/telegram-logo.png');
                 }
               }
             }

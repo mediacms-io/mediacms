@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { LinksContext } from '../../utils/contexts/';
+import { LinksContext, SiteConsumer } from '../../utils/contexts/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon, NumericInputWithUnit } from '../_shared/';
@@ -135,7 +135,9 @@ export function MediaShareEmbed(props) {
       <div className="share-embed-inner">
         <div className="on-left">
           <div className="media-embed-wrap">
-            <VideoViewer data={MediaPageStore.get('media-data')} inEmbed={true} />
+            <SiteConsumer>
+              {(site) => <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} />}
+            </SiteConsumer>
           </div>
         </div>
 

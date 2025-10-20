@@ -16,9 +16,6 @@ A modern browser-based video editing tool built with React and TypeScript that i
 - React 18
 - TypeScript
 - Vite
-- Tailwind CSS
-- Express (for development server)
-- Drizzle ORM
 
 ## Installation
 

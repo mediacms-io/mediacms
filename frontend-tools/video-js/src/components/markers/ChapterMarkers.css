@@ -1,0 +1,105 @@
+/* ===== CHAPTER MARKERS STYLES ===== */
+
+.vjs-chapter-markers-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.vjs-chapter-marker {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: rgba(255, 193, 7, 0.8); /* Golden yellow color */
+    pointer-events: auto;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.vjs-chapter-marker:hover {
+    background: rgba(255, 193, 7, 1); /* Solid golden yellow on hover */
+    width: 3px;
+}
+
+.vjs-chapter-marker-tooltip {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+}
+
+.vjs-chapter-marker:hover .vjs-chapter-marker-tooltip {
+    opacity: 1;
+}
+
+.vjs-chapter-floating-tooltip {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif !important;
+    line-height: 1.4 !important;
+    animation: fadeIn 0.2s ease-in-out;
+    text-align: center;
+    width: 160px !important;
+    max-width: 100% !important ;
+    height: auto;
+}
+
+.chapter-image-sprite {
+    width: 166px !important;
+    max-width: 100% !important;
+    height: 96px;
+    margin: 10px auto 10px;
+    border-radius: 6px;
+    border: 3px solid #fff;
+}
+
+.vjs-chapter-floating-tooltip .chapter-title {
+    font-size: 16px;
+    margin: 0 0 5px;
+    word-break: break-all;
+    line-height: 20px;
+}
+
+.vjs-chapter-floating-tooltip .chapter-info {
+    font-size: 15px;
+    display: inline-block;
+    margin: 0 0 5px;
+    line-height: normal;
+    vertical-align: top;
+    line-height: 20px;
+}
+
+.vjs-chapter-floating-tooltip .position-info {
+    font-size: 15px;
+    display: inline-block;
+    margin: 0 0 2px;
+    line-height: normal;
+    vertical-align: top;
+    line-height: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
