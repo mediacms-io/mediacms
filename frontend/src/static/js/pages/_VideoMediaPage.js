@@ -54,7 +54,7 @@ export class _VideoMediaPage extends Page {
   }
 
   onMediaLoad() {
-    const isVideoMedia = 'video' === MediaPageStore.get('media-type');
+    const isVideoMedia = 'video' === MediaPageStore.get('media-type') || 'audio' === MediaPageStore.get('media-type');
 
     if (isVideoMedia) {
       this.onViewerModeChange = this.onViewerModeChange.bind(this);

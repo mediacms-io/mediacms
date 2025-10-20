@@ -185,6 +185,8 @@ class MediaPageStore extends EventEmitter {
       switch (this.get('media-type')) {
         case 'video':
         case 'audio':
+          this.emit('loaded_video_data');
+          break;
         case 'image':
           this.emit('loaded_' + this.get('media-type') + '_data');
           break;
@@ -607,7 +609,7 @@ class MediaPageStore extends EventEmitter {
   }
 
   isVideo() {
-    return 'video' === this.get('media-type');
+    return 'video' === this.get('media-type') || 'audio' === this.get('media-type');
   }
 
   onPlaylistCreationCompleted(response) {

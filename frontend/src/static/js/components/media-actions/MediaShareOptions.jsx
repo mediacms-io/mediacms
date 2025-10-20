@@ -17,7 +17,7 @@ function shareOptionsList() {
   while (i < socialMedia.length) {
     switch (socialMedia[i]) {
       case 'embed':
-        if ('video' === MediaPageStore.get('media-data').media_type) {
+        if ('video' === MediaPageStore.get('media-data').media_type || 'audio' === MediaPageStore.get('media-data').media_type) {
           ret[socialMedia[i]] = {};
         }
         break;
@@ -25,66 +25,6 @@ function shareOptionsList() {
         ret[socialMedia[i]] = {
           title: 'Email',
           shareUrl: 'mailto:?body=' + mediaUrl,
-        };
-        break;
-      case 'fb':
-        ret[socialMedia[i]] = {
-          title: 'Facebook',
-          shareUrl: 'https://www.facebook.com/sharer.php?u=' + mediaUrl,
-        };
-        break;
-      case 'tw':
-        ret[socialMedia[i]] = {
-          title: 'Twitter',
-          shareUrl: 'https://twitter.com/intent/tweet?url=' + mediaUrl,
-        };
-        break;
-      case 'reddit':
-        ret[socialMedia[i]] = {
-          title: 'reddit',
-          shareUrl: 'https://reddit.com/submit?url=' + mediaUrl + '&title=' + mediaTitle,
-        };
-        break;
-      case 'tumblr':
-        ret[socialMedia[i]] = {
-          title: 'Tumblr',
-          shareUrl: 'https://www.tumblr.com/widgets/share/tool?canonicalUrl=' + mediaUrl + '&title=' + mediaTitle,
-        };
-        break;
-      case 'pinterest':
-        ret[socialMedia[i]] = {
-          title: 'Pinterest',
-          shareUrl: 'http://pinterest.com/pin/create/link/?url=' + mediaUrl,
-        };
-        break;
-      case 'vk':
-        ret[socialMedia[i]] = {
-          title: 'ВКонтакте',
-          shareUrl: 'http://vk.com/share.php?url=' + mediaUrl + '&title=' + mediaTitle,
-        };
-        break;
-      case 'linkedin':
-        ret[socialMedia[i]] = {
-          title: 'LinkedIn',
-          shareUrl: 'https://www.linkedin.com/shareArticle?mini=true&url=' + mediaUrl,
-        };
-        break;
-      case 'mix':
-        ret[socialMedia[i]] = {
-          title: 'Mix',
-          shareUrl: 'https://mix.com/add?url=' + mediaUrl,
-        };
-        break;
-      case 'whatsapp':
-        ret[socialMedia[i]] = {
-          title: 'WhatsApp',
-          shareUrl: 'whatsapp://send?text=' + mediaUrl,
-        };
-        break;
-      case 'telegram':
-        ret[socialMedia[i]] = {
-          title: 'Telegram',
-          shareUrl: 'https://t.me/share/url?url=' + mediaUrl + '&text=' + mediaTitle,
         };
         break;
     }
@@ -111,21 +51,6 @@ function ShareOptions() {
               </span>
               <span>Embed</span>
             </button>
-          </div>
-        );
-      } else if (k === 'whatsapp') {
-        compList.push(
-          <div key={'share-' + k} className={'sh-option share-' + k}>
-            <a
-              href={shareOptions[k].shareUrl}
-              title=""
-              target="_blank"
-              data-action="share/whatsapp/share"
-              rel="noreferrer"
-            >
-              <span></span>
-              <span>{shareOptions[k].title}</span>
-            </a>
           </div>
         );
       } else if (k === 'email') {

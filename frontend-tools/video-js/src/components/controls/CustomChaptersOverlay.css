@@ -1,0 +1,601 @@
+/* ===== CUSTOM CHAPTERS OVERLAY STYLES ===== */
+
+.video-chapter {
+    position: absolute;
+    top: auto;
+    bottom: 60px;
+    width: min(360px, calc(100% - 20px));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    height: calc(100% - 80px);
+    background: rgba(18, 18, 18, 0.96);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    right: 10px;
+    z-index: 10000;
+}
+
+.chapter-head {
+    padding: 12px 8px 10px 16px;
+    position: sticky;
+    top: 0;
+    left: 0;
+    background: linear-gradient(180deg, rgba(28, 28, 28, 0.95), rgba(18, 18, 18, 0.95));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 2;
+}
+
+.playlist-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chapter-title {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+}
+
+.chapter-title h3 {
+    margin: 0;
+    padding: 0;
+}
+
+.chapter-title h3 a {
+    color: #fff;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    height: 28px;
+    overflow: hidden;
+    display: block;
+}
+
+.chapter-title p {
+    margin: 4px 0 0;
+    padding: 0;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+}
+
+.chapter-title p a {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 15px;
+    text-decoration: none;
+}
+
+.chapter-close {
+    width: 40px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.chapter-close button {
+    background: transparent;
+    color: #fff;
+    border: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.chapter-close button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.settings-close-btn {
+    background: transparent;
+    color: #fff;
+    border: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.settings-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.playlist-action-menu {
+    display: none;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.playlist-action-menu button {
+    background: transparent;
+    border: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100px;
+}
+
+.playlist-action-menu button:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.start-action {
+    display: flex;
+}
+
+.chapter-body {
+    height: calc(100% - 80px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+}
+
+.chapter-body ul {
+    margin: 0;
+    padding: 0;
+}
+
+.playlist-items a {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    color: #fff;
+}
+
+.playlist-items a:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.playlist-items.selected a {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.playlist-drag-handle {
+    width: 24px;
+    display: flex;
+    justify-content: center;
+    color: #e0e0e0;
+    font-size: 12px;
+}
+
+.thumbnail-meta {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+}
+
+.thumbnail-meta h4 {
+    margin: 0 2px 4px 0;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+    white-space: normal;
+    max-height: 40px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+.thumbnail-meta .meta-sub {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.thumbnail-meta .meta-sub .meta-dynamic {
+    color: #bdbdbd;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.thumbnail-action button {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    opacity: 0;
+}
+
+.playlist-items a:hover .thumbnail-action button {
+    opacity: 1;
+}
+
+.chapter-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.chapter-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+}
+
+.chapter-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 767px) {
+    .custom-chapters-overlay {
+        background: rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .video-chapter {
+        right: 4px !important;
+        left: 4px !important;
+        width: calc(100% - 8px) !important;
+        max-width: none !important;
+        height: calc(100% - 50px) !important;
+        bottom: 45px !important;
+        border-radius: 10px !important;
+    }
+
+    .chapter-body {
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+        overscroll-behavior: contain;
+        height: calc(100% - 55px);
+        scroll-behavior: smooth;
+    }
+
+    .chapter-body::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+    }
+
+    .chapter-head {
+        padding: 8px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .chapter-close button {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    }
+
+    .chapter-close button svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .chapter-close button:active {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(0.95);
+    }
+
+    .chapter-title h3 a {
+        font-size: 14px !important;
+        line-height: 18px !important;
+        height: auto !important;
+        font-weight: 600 !important;
+    }
+
+    .chapter-title p {
+        font-size: 11px !important;
+        line-height: 14px !important;
+        margin-top: 1px !important;
+        opacity: 0.8;
+    }
+
+    .playlist-items {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .playlist-items:last-child {
+        border-bottom: none;
+    }
+
+    .playlist-items a {
+        padding: 10px 12px !important;
+        min-height: 52px !important;
+        gap: 10px !important;
+        transition: background-color 0.2s ease;
+        border-radius: 0;
+    }
+
+    .playlist-items a:active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: scale(0.98);
+    }
+
+    .playlist-items.selected a {
+        background: rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .playlist-drag-handle {
+        width: 24px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .thumbnail-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 13px !important;
+        line-height: 17px !important;
+        font-weight: 500 !important;
+        margin-bottom: 3px !important;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-height: 34px;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 4px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 11px !important;
+        line-height: 14px !important;
+        color: #bdbdbd;
+        font-weight: 400;
+    }
+
+    .thumbnail-action {
+        display: none; /* Hide action buttons on mobile for cleaner look */
+    }
+}
+
+/* Extra small screens (phones in portrait) - Ultra compact */
+@media (max-width: 480px) {
+    .video-chapter {
+        right: 2px !important;
+        left: 2px !important;
+        width: calc(100% - 4px) !important;
+        height: calc(100% - 40px) !important;
+        bottom: 35px !important;
+        border-radius: 8px !important;
+    }
+
+    .chapter-head {
+        padding: 6px 10px;
+    }
+
+    .chapter-body {
+        height: calc(100% - 45px);
+    }
+
+    .chapter-close button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .chapter-close button svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .chapter-title h3 a {
+        font-size: 13px !important;
+        line-height: 16px !important;
+    }
+
+    .chapter-title p {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-items a {
+        padding: 8px 10px !important;
+        min-height: 44px !important;
+        gap: 8px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 20px;
+        font-size: 11px;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 12px !important;
+        line-height: 15px !important;
+        margin-bottom: 2px !important;
+        max-height: 30px;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 3px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+}
+
+/* Very small screens (< 360px) - Maximum compactness */
+@media (max-width: 360px) {
+    .video-chapter {
+        right: 1px !important;
+        left: 1px !important;
+        width: calc(100% - 2px) !important;
+        height: calc(100% - 35px) !important;
+        bottom: 30px !important;
+        border-radius: 6px !important;
+    }
+
+    .chapter-head {
+        padding: 5px 8px;
+    }
+
+    .chapter-body {
+        height: calc(100% - 40px);
+    }
+
+    .chapter-close button {
+        width: 26px;
+        height: 26px;
+    }
+
+    .chapter-close button svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+    .chapter-title h3 a {
+        font-size: 12px !important;
+        line-height: 15px !important;
+    }
+
+    .chapter-title p {
+        font-size: 9px !important;
+        line-height: 12px !important;
+    }
+
+    .playlist-items a {
+        padding: 6px 8px !important;
+        min-height: 40px !important;
+        gap: 6px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 18px;
+        font-size: 10px;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 11px !important;
+        line-height: 14px !important;
+        margin-bottom: 1px !important;
+        max-height: 28px;
+        -webkit-line-clamp: 2;
+    }
+
+    .thumbnail-meta .meta-sub {
+        gap: 2px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 9px !important;
+        line-height: 12px !important;
+    }
+}
+
+/* Landscape orientation on mobile - Compact for limited height */
+@media (max-width: 767px) and (orientation: landscape) {
+    .video-chapter {
+        height: calc(100% - 30px) !important;
+        bottom: 25px !important;
+        max-height: 350px;
+        right: 2px !important;
+        left: 2px !important;
+        width: calc(100% - 4px) !important;
+    }
+
+    .chapter-body {
+        height: calc(100% - 45px);
+    }
+
+    .chapter-head {
+        padding: 6px 12px;
+    }
+
+    .chapter-close button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .chapter-close button svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .chapter-title h3 a {
+        font-size: 13px !important;
+        line-height: 16px !important;
+    }
+
+    .chapter-title p {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-items a {
+        padding: 7px 12px !important;
+        min-height: 42px !important;
+        gap: 8px !important;
+    }
+
+    .thumbnail-meta h4 {
+        font-size: 12px !important;
+        line-height: 15px !important;
+        margin-bottom: 2px !important;
+        max-height: 30px;
+    }
+
+    .thumbnail-meta .meta-sub .meta-dynamic {
+        font-size: 10px !important;
+        line-height: 13px !important;
+    }
+
+    .playlist-drag-handle {
+        width: 20px;
+        font-size: 11px;
+    }
+}
+
+/* Touch-friendly improvements for all mobile devices */
+@media (hover: none) and (pointer: coarse) {
+    .playlist-items a {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .chapter-close button {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Ensure smooth scrolling on touch devices */
+    .chapter-body {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        overscroll-behavior-y: contain;
+    }
+}

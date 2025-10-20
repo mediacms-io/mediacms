@@ -30,16 +30,6 @@ export function init(item, shareOptions) {
   if (void 0 !== shareOptions) {
     const validShareOptions = [
       'embed',
-      'fb',
-      'tw',
-      'whatsapp',
-      'telegram',
-      'reddit',
-      'tumblr',
-      'vk',
-      'pinterest',
-      'mix',
-      'linkedin',
       'email',
     ];
 

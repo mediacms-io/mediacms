@@ -630,7 +630,7 @@ class Media(models.Model):
 
     @property
     def trim_video_url(self):
-        if self.media_type not in ["video"]:
+        if self.media_type not in ["video", "audio"]:
             return None
 
         ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
@@ -642,7 +642,7 @@ class Media(models.Model):
 
     @property
     def trim_video_path(self):
-        if self.media_type not in ["video"]:
+        if self.media_type not in ["video", "audio"]:
             return None
 
         ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()

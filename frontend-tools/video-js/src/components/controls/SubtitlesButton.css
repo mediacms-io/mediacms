@@ -1,0 +1,115 @@
+/* ===== SUBTITLES BUTTON STYLES ===== */
+
+.video-js .vjs-captions-button,
+.video-js .vjs-subs-caps-button {
+    display: none !important;
+}
+
+.video-js .vjs-subtitles-button .vjs-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.video-js .vjs-subtitles-button .vjs-menu.vjs-lock-showing {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.video-js .vjs-subtitles-button .vjs-menu.vjs-lock-showing .vjs-menu-content {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.video-js .vjs-chapters-button .vjs-menu {
+    display: none !important;
+}
+
+.video-js .vjs-chapters-button .vjs-menu.vjs-lock-showing {
+    display: none !important;
+}
+
+.video-js .vjs-chapters-button .vjs-menu.vjs-lock-showing .vjs-menu-content {
+    display: none !important;
+}
+
+.video-js .vjs-chapters-button .vjs-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.video-js .vjs-subtitles-button {
+    position: relative;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.video-js button.vjs-subtitles-button {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.video-js button.vjs-subtitles-button::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 3px;
+    height: 3px;
+    background: #e1002d;
+    border-radius: 2px;
+    width: 0;
+    padding: 0;
+    transition: none !important;
+    animation: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+}
+
+.video-js .vjs-subs-active button.vjs-subtitles-button::before {
+    width: 20px;
+    transition: none !important;
+    animation: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+}
+
+.video-js button.vjs-subtitles-button {
+    transition: none !important;
+    animation: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .video-js .vjs-subtitles-button button.vjs-button {
+        min-width: 32px !important;
+        min-height: 32px !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    .video-js .vjs-subs-active button.vjs-subtitles-button::before {
+        width: 20px;
+    }
+
+    .video-js button.vjs-subtitles-button::before {
+        bottom: 2px;
+    }
+}

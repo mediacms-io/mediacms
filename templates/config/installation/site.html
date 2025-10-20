@@ -3,6 +3,7 @@ MediaCMS.site = {
     title: "{{PORTAL_NAME}}",
     url: '{{FRONTEND_HOST}}',
     api: '{{FRONTEND_HOST}}/api/v1',
+    useRoundedCorners: {% if USE_ROUNDED_CORNERS %}true{% else %}false{% endif %},
     theme: {
     	mode: '{{DEFAULT_THEME}}',
 		switch: {

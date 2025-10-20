@@ -1,0 +1,151 @@
+/* ===== SEEK INDICATOR STYLES ===== */
+
+.vjs-seek-indicator {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease-in-out !important;
+}
+
+.vjs-seek-indicator-content {
+    background: transparent !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.vjs-seek-indicator-icon {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+}
+
+.seek-icon-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: seekPulse 0.3s ease-out !important;
+}
+
+.youtube-seek-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: youtubeSeekPulse 0.3s ease-out !important;
+}
+
+.youtube-seek-circle {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    -webkit-border-radius: 50% !important;
+    -moz-border-radius: 50% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* Responsive sizing for mobile devices */
+@media (max-width: 768px) {
+    .vjs-seek-indicator {
+        top: calc(50% - 30px) !important; /* Move up slightly to avoid seekbar on tablet */
+    }
+
+    .youtube-seek-circle {
+        width: 60px !important;
+        height: 60px !important;
+    }
+
+    .youtube-seek-icon svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .vjs-seek-indicator {
+        top: calc(50% - 40px) !important; /* Move up more to avoid seekbar on mobile */
+    }
+
+    .youtube-seek-circle {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .youtube-seek-icon svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+}
+
+.youtube-seek-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+}
+
+.youtube-seek-icon svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) !important;
+}
+
+.youtube-seek-time {
+    color: white !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    opacity: 0.9 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+@keyframes youtubeSeekPulse {
+    0% {
+        transform: scale(0.7);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.seek-seconds {
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7) !important;
+    line-height: 1 !important;
+}
+
+.vjs-seek-indicator-text {
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}

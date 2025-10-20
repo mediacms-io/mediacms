@@ -244,8 +244,6 @@ def history(request):
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
-    # this is not ready...
-    return False
     if not request.method == "POST":
         return HttpResponseRedirect("/")
 
@@ -258,20 +256,26 @@ def video_chapters(request, friendly_token):
         return HttpResponseRedirect("/")
 
     try:
-        data = json.loads(request.body)["chapters"]
+        request_data = json.loads(request.body)
+        data = request_data.get("chapters")
+        if data is None:
+            return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
+
         chapters = []
         for _, chapter_data in enumerate(data):
-            start_time = chapter_data.get('start')
-            title = chapter_data.get('title')
-            if start_time and title:
+            start_time = chapter_data.get('startTime')
+            end_time = chapter_data.get('endTime')
+            chapter_title = chapter_data.get('chapterTitle')
+            if start_time and end_time and chapter_title:
                 chapters.append(
                     {
-                        'start': start_time,
-                        'title': title,
+                        'startTime': start_time,
+                        'endTime': end_time,
+                        'chapterTitle': chapter_title,
                     }
                 )
     except Exception as e:  # noqa
-        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with start and title'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, chapterTitle'}, status=400)
 
     ret = handle_video_chapters(media, chapters)
 
@@ -358,8 +362,6 @@ def publish_media(request):
 @login_required
 def edit_chapters(request):
     """Edit chapters"""
-    # not implemented yet
-    return False
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
         return HttpResponseRedirect("/")
@@ -371,10 +373,11 @@ def edit_chapters(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    chapters = media.chapter_data
     return render(
         request,
         "cms/edit_chapters.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path), "media_id": media.friendly_token},
+        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path), "media_id": media.friendly_token, "chapters": chapters},
     )
 
 
@@ -426,7 +429,7 @@ def edit_video(request):
     if not (request.user == media.user or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
-    if not media.media_type == "video":
+    if media.media_type not in ["video", "audio"]:
         messages.add_message(request, messages.INFO, "Media is not video")
         return HttpResponseRedirect(media.get_absolute_url())
 

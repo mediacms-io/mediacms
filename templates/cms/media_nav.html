@@ -11,7 +11,7 @@
                 {{ "Metadata" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
-        {% if media_object.media_type == 'video' %}
+        {% if media_object.media_type == 'video' or media_object.media_type == 'audio' %} 
             <li style="display: inline-block;">
                 <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}"
 
@@ -23,6 +23,14 @@
                 <a href="{% url 'add_subtitle' %}?m={{media_object.friendly_token}}"
                    style="text-decoration: none; {% if active_tab == 'subtitles' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
                     {{ "Captions" | custom_translate:LANGUAGE_CODE}}
+                </a>
+            </li>
+            <li style="display: inline-block">
+                <a
+                    href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}"
+                    style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}"
+                >
+                    Chapters
                 </a>
             </li>
             {% comment %}
