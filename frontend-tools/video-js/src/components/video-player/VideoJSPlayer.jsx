@@ -1821,7 +1821,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     const subtitleTracks = hasSubtitles
         ? backendSubtitles.map((track) => ({
               kind: 'subtitles',
-              src: track.src,
+              src: mediaData?.siteUrl + track.src,
               srclang: track.srclang,
               label: track.label,
               default: track.default || false,
