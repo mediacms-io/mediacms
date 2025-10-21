@@ -686,9 +686,8 @@ a.item-edit-link {
     }
   }
 
-  // Show checkbox on hover or when any item is selected
-  &:hover .item-selection-checkbox,
-  &.has-any-selection .item-selection-checkbox {
+  // Show checkbox only on hover
+  &:hover .item-selection-checkbox {
     opacity: 1;
   }
 
@@ -707,18 +706,6 @@ a.item-edit-link {
 
     .item-thumb {
       border-radius: 10px;
-    }
-  }
-
-  // Make the whole item clickable for selection when any selection is active
-  &.has-any-selection:not(.selected) {
-    .item-thumb {
-      cursor: pointer;
-    }
-
-    .item-main {
-      cursor: pointer;
-      pointer-events: auto;
     }
   }
 }

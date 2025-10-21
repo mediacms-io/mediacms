@@ -94,7 +94,7 @@ def add_subtitle(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     # Initialize variables
@@ -146,7 +146,7 @@ def edit_subtitle(request):
     if not subtitle:
         return HttpResponseRedirect("/")
 
-    if not (request.user == subtitle.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(subtitle.media)):
         return HttpResponseRedirect("/")
 
     context = {"subtitle": subtitle, "action": action}
@@ -252,7 +252,7 @@ def video_chapters(request, friendly_token):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     try:
@@ -370,7 +370,7 @@ def edit_chapters(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     chapters = media.chapter_data
@@ -395,7 +395,7 @@ def trim_video(request, friendly_token):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     existing_requests = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
@@ -426,7 +426,7 @@ def edit_video(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     if media.media_type not in ["video", "audio"]:

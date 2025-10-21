@@ -24,7 +24,8 @@ export function MediaItem(props) {
 
   const finalClassname = containerClassname +
     (props.showSelection ? ' with-selection' : '') +
-    (props.isSelected ? ' selected' : '');
+    (props.isSelected ? ' selected' : '') +
+    (props.hasAnySelection ? ' has-any-selection' : '');
 
   return (
     <div className={finalClassname}>

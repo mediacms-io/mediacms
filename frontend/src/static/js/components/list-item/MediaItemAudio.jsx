@@ -70,32 +70,8 @@ export function MediaItemAudio(props) {
     (props.isSelected ? ' selected' : '') +
     (props.hasAnySelection ? ' has-any-selection' : '');
 
-  const handleItemClick = (e) => {
-    // Only handle clicks when selection mode is active
-    if (props.showSelection) {
-      // Check if click was on the checkbox (already handled)
-      if (e.target.type === 'checkbox' || e.target.closest('.item-selection-checkbox')) {
-        return;
-      }
-
-      // Check if click was on the edit icon or view icon
-      if (e.target.closest('.item-edit-icon') || e.target.closest('.item-view-icon')) {
-        return;
-      }
-
-      // Prevent default link behavior
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Toggle the checkbox
-      if (props.onCheckboxChange) {
-        props.onCheckboxChange({ target: { checked: !props.isSelected } });
-      }
-    }
-  };
-
   return (
-    <div className={finalClassname} onClick={handleItemClick}>
+    <div className={finalClassname}>
       {playlistOrderNumberComponent()}
 
       <div className="item-content">
