@@ -201,7 +201,10 @@ class LanguageAdmin(admin.ModelAdmin):
 
 
 class SubtitleAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["id", "language", "media"]
+    list_filter = ["language"]
+    search_fields = ["media__title"]
+    readonly_fields = ("media", "user")
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):

@@ -42,6 +42,8 @@ class Subtitle(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
 
     class Meta:
+        verbose_name = "Caption"
+        verbose_name_plural = "Captions"
         ordering = ["language__title"]
 
     def __str__(self):
