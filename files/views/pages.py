@@ -629,9 +629,11 @@ def view_media(request):
 
     if request.user.is_authenticated:
         if request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user):
-            context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
+
+        if request.user == media.user or is_mediacms_editor(request.user):
+            context["CAN_DELETE_MEDIA"] = True
 
     # in case media is video and is processing (eg the case a video was just uploaded)
     # attempt to show it (rather than showing a blank video player)
