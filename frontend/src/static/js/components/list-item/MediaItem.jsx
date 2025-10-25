@@ -27,15 +27,33 @@ export function MediaItem(props) {
     (props.isSelected ? ' selected' : '') +
     (props.hasAnySelection ? ' has-any-selection' : '');
 
+  const handleItemClick = (e) => {
+    // If there's any selection active, clicking the item should toggle selection
+    if (props.hasAnySelection && props.onCheckboxChange) {
+      // Check if clicking on the checkbox itself, edit icon, or view icon
+      if (e.target.closest('.item-selection-checkbox') ||
+          e.target.closest('.item-edit-icon') ||
+          e.target.closest('.item-view-icon')) {
+        return; // Let these elements handle their own clicks
+      }
+
+      // Prevent all other clicks and toggle selection
+      e.preventDefault();
+      e.stopPropagation();
+      props.onCheckboxChange({ target: { checked: !props.isSelected } });
+    }
+  };
+
   return (
-    <div className={finalClassname}>
+    <div className={finalClassname} onClick={handleItemClick}>
       <div className="item-content">
         {props.showSelection && (
-          <div className="item-selection-checkbox">
+          <div className="item-selection-checkbox" onClick={(e) => e.stopPropagation()}>
             <input
               type="checkbox"
               checked={props.isSelected || false}
               onChange={(e) => { props.onCheckboxChange && props.onCheckboxChange(e); }}
+              onClick={(e) => e.stopPropagation()}
               aria-label="Select media"
             />
           </div>

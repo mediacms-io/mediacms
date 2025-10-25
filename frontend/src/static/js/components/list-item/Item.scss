@@ -696,6 +696,11 @@ a.item-edit-link {
     opacity: 1;
   }
 
+  // Show all checkboxes when any item has a selection
+  &.has-any-selection .item-selection-checkbox {
+    opacity: 1;
+  }
+
   // Add hover shadow when any selection is active
   &.has-any-selection:not(.selected):hover {
     .item-content {

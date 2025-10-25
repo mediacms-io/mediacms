@@ -110,6 +110,12 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
       clearTimeout(searchTimeout);
     }
 
+    // Only search if 3 or more characters
+    if (value.trim().length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
     // Set new timeout for debounced search
     const timeout = setTimeout(() => {
       searchUsers(value);
@@ -231,7 +237,7 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
               <div className="search-box">
                 <input
                   type="text"
-                  placeholder={translateString('Search users to add...')}
+                  placeholder={translateString('Search users to add (min 3 characters)...')}
                   value={addSearchTerm}
                   onChange={(e) => handleAddSearchChange(e.target.value)}
                 />
