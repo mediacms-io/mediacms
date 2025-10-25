@@ -96,7 +96,7 @@ class MediaList(APIView):
                 rbac_conditions &= Q(user=user)
             conditions |= rbac_conditions
 
-        return base_queryset.filter(conditions).distinct()[:1000]
+        return base_queryset.filter(conditions).distinct()
 
     def get(self, request, format=None):
         # Show media
@@ -116,6 +116,7 @@ class MediaList(APIView):
         upload_date = params.get('upload_date', '').strip()
         duration = params.get('duration', '').strip()
         publish_state = params.get('publish_state', '').strip()
+        query = params.get("q", "").strip().lower()
 
         # Handle combined sort options (e.g., title_asc, views_desc)
         parsed_combined = False
@@ -221,11 +222,13 @@ class MediaList(APIView):
         if publish_state and publish_state in ['private', 'public', 'unlisted']:
             media = media.filter(state=publish_state)
 
+        if query:
+            media = media.filter(title__icontains=query)
+
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")
 
-        if show_param == "shared_with_me":
-            media = media[:1000]  # limit to 1000 results
+        media = media[:1000]  # limit to 1000 results
 
         paginator = pagination_class()
 

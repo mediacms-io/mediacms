@@ -81,7 +81,7 @@ class ProfileSharedByMePage extends Page {
 
     if (author) {
       if (this.state.query) {
-        requestUrl = ApiUrlContext._currentValue.search.query + this.state.query + '&author=' + author.id + '&show=shared_by_me' + this.state.filterArgs;
+        requestUrl = ApiUrlContext._currentValue.media + '?author=' + author.id + '&show=shared_by_me&q=' + encodeURIComponent(this.state.query) + this.state.filterArgs;
       } else {
         requestUrl = ApiUrlContext._currentValue.media + '?author=' + author.id + '&show=shared_by_me' + this.state.filterArgs;
       }
@@ -132,7 +132,7 @@ class ProfileSharedByMePage extends Page {
     let requestUrl;
 
     if (newQuery) {
-      requestUrl = ApiUrlContext._currentValue.search.query + newQuery + '&author=' + this.state.author.id + '&show=shared_by_me' + this.state.filterArgs;
+      requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + '&show=shared_by_me&q=' + encodeURIComponent(newQuery) + this.state.filterArgs;
     } else {
       requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + '&show=shared_by_me' + this.state.filterArgs;
     }
@@ -274,7 +274,7 @@ class ProfileSharedByMePage extends Page {
         let requestUrl;
 
         if (this.state.query) {
-          requestUrl = ApiUrlContext._currentValue.search.query + this.state.query + '&author=' + this.state.author.id + '&show=shared_by_me' + this.state.filterArgs;
+          requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + '&show=shared_by_me&q=' + encodeURIComponent(this.state.query) + this.state.filterArgs;
         } else {
           requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + '&show=shared_by_me' + this.state.filterArgs;
         }
