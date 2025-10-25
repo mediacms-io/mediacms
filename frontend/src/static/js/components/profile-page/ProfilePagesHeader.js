@@ -143,6 +143,14 @@ class ProfileSearchBar extends React.PureComponent {
   render() {
     const hasSearchText = this.state.queryVal && this.state.queryVal.length > 0;
 
+    // Determine the correct action URL based on page type
+    let actionUrl = LinksContext._currentValue.profile.media;
+    if (this.props.type === 'shared_by_me') {
+      actionUrl = LinksContext._currentValue.profile.shared_by_me;
+    } else if (this.props.type === 'shared_with_me') {
+      actionUrl = LinksContext._currentValue.profile.shared_with_me;
+    }
+
     if (!this.state.visibleForm) {
       return (
         <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.showForm}>
@@ -166,7 +174,7 @@ class ProfileSearchBar extends React.PureComponent {
     }
 
     return (
-      <form method="get" action={LinksContext._currentValue.profile.media} onSubmit={this.onFormSubmit}>
+      <form method="get" action={actionUrl} onSubmit={this.onFormSubmit}>
         <span style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
           <CircleIconButton buttonShadow={false}>
             <i className="material-icons">search</i>
@@ -205,6 +213,7 @@ class ProfileSearchBar extends React.PureComponent {
 
 ProfileSearchBar.propTypes = {
   onQueryChange: PropTypes.func,
+  type: PropTypes.string,
 };
 
 ProfileSearchBar.defaultProps = {};
@@ -396,7 +405,7 @@ class NavMenuInlineTabs extends React.PureComponent {
             ) : null}
 
             <li className="media-search">
-              <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} />
+              <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} type={this.props.type} />
             </li>
             {this.props.onToggleFiltersClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
               <li className="media-filters-toggle">
