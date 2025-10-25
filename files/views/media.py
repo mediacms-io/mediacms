@@ -174,15 +174,15 @@ class MediaList(APIView):
                 media = Media.objects.none()
             else:
                 base_queryset = Media.objects.prefetch_related("user", "tags")
-                user_media_filters = {'permissions__user': request.user}
-                media = base_queryset.filter(**user_media_filters)
+
+                # Build OR conditions similar to _get_media_queryset
+                conditions = Q(permissions__user=request.user)
 
                 if getattr(settings, 'USE_RBAC', False):
                     rbac_categories = request.user.get_rbac_categories_as_member()
-                    rbac_filters = {'category__in': rbac_categories}
+                    conditions |= Q(category__in=rbac_categories)
 
-                    rbac_media = base_queryset.filter(**rbac_filters)
-                    media = media.union(rbac_media)
+                media = base_queryset.filter(conditions).distinct()
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
