@@ -168,7 +168,7 @@ class MediaList(APIView):
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags")
+                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags").distinct()
         elif show_param == "shared_with_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()

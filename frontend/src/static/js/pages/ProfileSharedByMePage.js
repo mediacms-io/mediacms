@@ -10,7 +10,9 @@ import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListA
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
+import { BulkActionsModals } from '../components/BulkActionsModals';
 import { translateString } from '../utils/helpers';
+import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
 
@@ -31,7 +33,7 @@ function EmptySharedByMe(props) {
   );
 }
 
-export class ProfileSharedByMePage extends Page {
+class ProfileSharedByMePage extends Page {
   constructor(props, pageSlug) {
     super(props, 'string' === typeof pageSlug ? pageSlug : 'author-shared-by-me');
 
@@ -320,14 +322,20 @@ export class ProfileSharedByMePage extends Page {
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
           <MediaListWrapper
-            title={!isMediaAuthor || 0 < this.state.channelMediaCount ? this.state.title : null}
+            title={this.state.title}
             className="items-list-ver"
+            showBulkActions={isMediaAuthor}
+            selectedCount={this.props.bulkActions.selectedMedia.size}
+            totalCount={this.props.bulkActions.availableMediaIds.length}
+            onBulkAction={this.props.bulkActions.handleBulkAction}
+            onSelectAll={this.props.bulkActions.handleSelectAll}
+            onDeselectAll={this.props.bulkActions.handleDeselectAll}
           >
             <ProfileMediaFilters hidden={this.state.hiddenFilters} tags={this.state.availableTags} onFiltersUpdate={this.onFiltersUpdate} />
             <ProfileMediaTags hidden={this.state.hiddenTags} tags={this.state.availableTags} onTagSelect={this.onTagSelect} />
             <ProfileMediaSorting hidden={this.state.hiddenSorting} onSortSelect={this.onSortSelect} />
             <LazyLoadItemListAsync
-              key={this.state.requestUrl}
+              key={`${this.state.requestUrl}-${this.props.bulkActions.listKey}`}
               requestUrl={this.state.requestUrl}
               hideAuthor={true}
               itemsCountCallback={this.state.requestUrl ? this.getCountFunc : null}
@@ -335,6 +343,11 @@ export class ProfileSharedByMePage extends Page {
               hideDate={!PageStore.get('config-media-item').displayPublishDate}
               canEdit={false}
               onResponseDataLoaded={this.onResponseDataLoaded}
+              showSelection={isMediaAuthor}
+              hasAnySelection={this.props.bulkActions.selectedMedia.size > 0}
+              selectedMedia={this.props.bulkActions.selectedMedia}
+              onMediaSelection={this.props.bulkActions.handleMediaSelection}
+              onItemsUpdate={this.props.bulkActions.handleItemsUpdate}
             />
             {isMediaAuthor && 0 === this.state.channelMediaCount && !this.state.query ? (
               <EmptySharedByMe name={this.state.author.name} />
@@ -342,14 +355,51 @@ export class ProfileSharedByMePage extends Page {
           </MediaListWrapper>
         </ProfilePagesContent>
       ) : null,
+      this.state.author && isMediaAuthor ? (
+        <BulkActionsModals
+          key="BulkActionsModals"
+          {...this.props.bulkActions}
+          selectedMediaIds={Array.from(this.props.bulkActions.selectedMedia)}
+          csrfToken={this.props.bulkActions.getCsrfToken()}
+          username={this.state.author.username}
+          onConfirmCancel={this.props.bulkActions.handleConfirmCancel}
+          onConfirmProceed={this.props.bulkActions.handleConfirmProceed}
+          onPermissionModalCancel={this.props.bulkActions.handlePermissionModalCancel}
+          onPermissionModalSuccess={this.props.bulkActions.handlePermissionModalSuccess}
+          onPermissionModalError={this.props.bulkActions.handlePermissionModalError}
+          onPlaylistModalCancel={this.props.bulkActions.handlePlaylistModalCancel}
+          onPlaylistModalSuccess={this.props.bulkActions.handlePlaylistModalSuccess}
+          onPlaylistModalError={this.props.bulkActions.handlePlaylistModalError}
+          onChangeOwnerModalCancel={this.props.bulkActions.handleChangeOwnerModalCancel}
+          onChangeOwnerModalSuccess={this.props.bulkActions.handleChangeOwnerModalSuccess}
+          onChangeOwnerModalError={this.props.bulkActions.handleChangeOwnerModalError}
+          onPublishStateModalCancel={this.props.bulkActions.handlePublishStateModalCancel}
+          onPublishStateModalSuccess={this.props.bulkActions.handlePublishStateModalSuccess}
+          onPublishStateModalError={this.props.bulkActions.handlePublishStateModalError}
+          onCategoryModalCancel={this.props.bulkActions.handleCategoryModalCancel}
+          onCategoryModalSuccess={this.props.bulkActions.handleCategoryModalSuccess}
+          onCategoryModalError={this.props.bulkActions.handleCategoryModalError}
+          onTagModalCancel={this.props.bulkActions.handleTagModalCancel}
+          onTagModalSuccess={this.props.bulkActions.handleTagModalSuccess}
+          onTagModalError={this.props.bulkActions.handleTagModalError}
+        />
+      ) : null,
     ];
   }
 }
 
 ProfileSharedByMePage.propTypes = {
   title: PropTypes.string.isRequired,
+  bulkActions: PropTypes.object.isRequired,
 };
 
 ProfileSharedByMePage.defaultProps = {
   title: 'Shared by me',
 };
+
+// Wrap with HOC and export as named export for compatibility
+const WrappedProfileSharedByMePage = withBulkActions(ProfileSharedByMePage);
+
+// Export both the wrapped component as named export (for build system) and default export
+export { WrappedProfileSharedByMePage as ProfileSharedByMePage };
+export default WrappedProfileSharedByMePage;

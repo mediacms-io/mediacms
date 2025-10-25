@@ -23,24 +23,6 @@ import { Page } from './_Page';
 
 import '../components/profile-page/ProfilePage.scss';
 
-function EmptyChannelMedia(props) {
-  return (
-    <LinksConsumer>
-      {(links) => (
-        <div className="empty-media empty-channel-media">
-          <div className="welcome-title">{translateString('Welcome')} {props.name}</div>
-          <div className="start-uploading">
-            {translateString('Start uploading media and sharing your work. Media that you upload will show up here.')}
-          </div>
-          <a href={links.user.addMedia} title={translateString('Upload media')} className="button-link">
-            <i className="material-icons" data-icon="video_call"></i>{translateString('UPLOAD MEDIA')}
-          </a>
-        </div>
-      )}
-    </LinksConsumer>
-  );
-}
-
 export class ProfileMediaPage extends Page {
   constructor(props, pageSlug) {
     super(props, 'string' === typeof pageSlug ? pageSlug : 'author-home');
@@ -940,9 +922,6 @@ export class ProfileMediaPage extends Page {
               onItemsUpdate={this.handleItemsUpdate}
               onResponseDataLoaded={this.onResponseDataLoaded}
             />
-            {isMediaAuthor && 0 === this.state.channelMediaCount && !this.state.query ? (
-              <EmptyChannelMedia name={this.state.author.name} />
-            ) : null}
           </MediaListWrapper>
         </ProfilePagesContent>
       ) : null,

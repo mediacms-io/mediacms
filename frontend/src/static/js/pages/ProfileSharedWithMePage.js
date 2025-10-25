@@ -320,7 +320,7 @@ export class ProfileSharedWithMePage extends Page {
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
           <MediaListWrapper
-            title={!isMediaAuthor || 0 < this.state.channelMediaCount ? this.state.title : null}
+            title={this.state.title}
             className="items-list-ver"
           >
             <ProfileMediaFilters hidden={this.state.hiddenFilters} tags={this.state.availableTags} onFiltersUpdate={this.onFiltersUpdate} />
