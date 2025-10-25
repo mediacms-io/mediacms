@@ -151,17 +151,23 @@ export class ProfileSharedWithMePage extends Page {
   onToggleFiltersClick() {
     this.setState({
       hiddenFilters: !this.state.hiddenFilters,
+      hiddenTags: true,
+      hiddenSorting: true,
     });
   }
 
   onToggleTagsClick() {
     this.setState({
+      hiddenFilters: true,
       hiddenTags: !this.state.hiddenTags,
+      hiddenSorting: true,
     });
   }
 
   onToggleSortingClick() {
     this.setState({
+      hiddenFilters: true,
+      hiddenTags: true,
       hiddenSorting: !this.state.hiddenSorting,
     });
   }
@@ -290,6 +296,12 @@ export class ProfileSharedWithMePage extends Page {
 
     const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
 
+    // Check if any filters are active
+    const hasActiveFilters = this.state.filterArgs && (
+      this.state.filterArgs.includes('media_type=') ||
+      this.state.filterArgs.includes('upload_date=')
+    );
+
     return [
       this.state.author ? (
         <ProfilePagesHeader
@@ -300,6 +312,9 @@ export class ProfileSharedWithMePage extends Page {
           onToggleFiltersClick={this.onToggleFiltersClick}
           onToggleTagsClick={this.onToggleTagsClick}
           onToggleSortingClick={this.onToggleSortingClick}
+          hasActiveFilters={hasActiveFilters}
+          hasActiveTags={this.state.selectedTag !== 'all'}
+          hasActiveSort={this.state.selectedSort !== 'date_added_desc'}
         />
       ) : null,
       this.state.author ? (

@@ -414,10 +414,22 @@ class NavMenuInlineTabs extends React.PureComponent {
             ) : null}
             {this.props.onToggleSortingClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
               <li className="media-sorting-toggle">
-                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={this.props.onToggleSortingClick} title={translateString('Sort By')}>
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleSortingClick} title={translateString('Sort By')}>
                   <CircleIconButton buttonShadow={false}>
                     <i className="material-icons">swap_vert</i>
                   </CircleIconButton>
+                  {this.props.hasActiveSort ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
                 </span>
               </li>
             ) : null}
@@ -438,6 +450,7 @@ NavMenuInlineTabs.propTypes = {
   onToggleSortingClick: PropTypes.func,
   hasActiveFilters: PropTypes.bool,
   hasActiveTags: PropTypes.bool,
+  hasActiveSort: PropTypes.bool,
 };
 
 function AddBannerButton(props) {
@@ -663,6 +676,7 @@ export default function ProfilePagesHeader(props) {
           onToggleSortingClick={props.onToggleSortingClick}
           hasActiveFilters={props.hasActiveFilters}
           hasActiveTags={props.hasActiveTags}
+          hasActiveSort={props.hasActiveSort}
         />
       </div>
     </div>
@@ -678,6 +692,7 @@ ProfilePagesHeader.propTypes = {
   onToggleSortingClick: PropTypes.func,
   hasActiveFilters: PropTypes.bool,
   hasActiveTags: PropTypes.bool,
+  hasActiveSort: PropTypes.bool,
 };
 
 ProfilePagesHeader.defaultProps = {

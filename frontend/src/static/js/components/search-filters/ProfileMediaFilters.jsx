@@ -67,6 +67,9 @@ export function ProfileMediaFilters(props) {
   }
 
   function onFilterSelect(ev) {
+    const filterType = ev.currentTarget.getAttribute('filter');
+    const clickedValue = ev.currentTarget.getAttribute('value');
+
     const args = {
       media_type: mediaTypeFilter,
       upload_date: uploadDateFilter,
@@ -76,34 +79,35 @@ export function ProfileMediaFilters(props) {
       tag: props.selectedTag || tagFilter,
     };
 
-    switch (ev.currentTarget.getAttribute('filter')) {
+    switch (filterType) {
       case 'media_type':
-        args.media_type = ev.currentTarget.getAttribute('value');
+        // If clicking the currently selected filter, deselect it (set to 'all')
+        args.media_type = clickedValue === mediaTypeFilter ? 'all' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_media_type(args.media_type);
         break;
       case 'upload_date':
-        args.upload_date = ev.currentTarget.getAttribute('value');
+        args.upload_date = clickedValue === uploadDateFilter ? 'all' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_upload_date(args.upload_date);
         break;
       case 'duration':
-        args.duration = ev.currentTarget.getAttribute('value');
+        args.duration = clickedValue === durationFilter ? 'all' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_duration(args.duration);
         break;
       case 'publish_state':
-        args.publish_state = ev.currentTarget.getAttribute('value');
+        args.publish_state = clickedValue === publishStateFilter ? 'all' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_publish_state(args.publish_state);
         break;
       case 'sort_by':
-        args.sort_by = ev.currentTarget.getAttribute('value');
+        args.sort_by = clickedValue === sortByFilter ? 'date_added_desc' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_sort_by(args.sort_by);
         break;
       case 'tag':
-        args.tag = ev.currentTarget.getAttribute('value');
+        args.tag = clickedValue === tagFilter ? 'all' : clickedValue;
         props.onFiltersUpdate(args);
         setFilter_tag(args.tag);
         break;

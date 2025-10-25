@@ -26,8 +26,10 @@ export function ProfileMediaTags(props) {
 
   function onFilterSelect(ev) {
     const tag = ev.currentTarget.getAttribute('value');
-    setFilter_tag(tag);
-    props.onTagSelect(tag);
+    // If clicking the currently selected tag, deselect it (set to 'all')
+    const newTag = tag === tagFilter ? 'all' : tag;
+    setFilter_tag(newTag);
+    props.onTagSelect(newTag);
   }
 
   useEffect(() => {

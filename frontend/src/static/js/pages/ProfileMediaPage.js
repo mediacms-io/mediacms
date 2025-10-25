@@ -605,7 +605,7 @@ export class ProfileMediaPage extends Page {
   }
 
   onTagSelect(tag) {
-    this.setState({ selectedTag: tag, hiddenTags: true }, () => {
+    this.setState({ selectedTag: tag }, () => {
       // Apply tag filter
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.includes('media_type') ? this.state.filterArgs.match(/media_type=([^&]*)/)?.[1] : null,
@@ -617,7 +617,7 @@ export class ProfileMediaPage extends Page {
   }
 
   onSortSelect(sortOption) {
-    this.setState({ selectedSort: sortOption, hiddenSorting: true }, () => {
+    this.setState({ selectedSort: sortOption }, () => {
       // Apply sort filter
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.includes('media_type') ? this.state.filterArgs.match(/media_type=([^&]*)/)?.[1] : null,
@@ -884,12 +884,15 @@ export class ProfileMediaPage extends Page {
     );
 
     const hasActiveTags = this.state.selectedTag && this.state.selectedTag !== 'all';
+    const hasActiveSort = this.state.selectedSort && this.state.selectedSort !== 'date_added_desc';
 
     console.log('Filter Debug:', {
       filterArgs: this.state.filterArgs,
       selectedTag: this.state.selectedTag,
+      selectedSort: this.state.selectedSort,
       hasActiveFilters,
-      hasActiveTags
+      hasActiveTags,
+      hasActiveSort
     });
 
     return [
@@ -904,6 +907,7 @@ export class ProfileMediaPage extends Page {
           onToggleSortingClick={this.onToggleSortingClick}
           hasActiveFilters={hasActiveFilters}
           hasActiveTags={hasActiveTags}
+          hasActiveSort={hasActiveSort}
         />
       ) : null,
       this.state.author ? (

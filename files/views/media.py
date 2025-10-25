@@ -221,12 +221,11 @@ class MediaList(APIView):
         if publish_state and publish_state in ['private', 'public', 'unlisted']:
             media = media.filter(state=publish_state)
 
-        if show_param == "shared_with_me":
-            media = media[:1000]  # limit to 1000 results
-            already_sorted = True
-
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")
+
+        if show_param == "shared_with_me":
+            media = media[:1000]  # limit to 1000 results
 
         paginator = pagination_class()
 
