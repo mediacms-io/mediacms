@@ -357,6 +357,10 @@ class Media(models.Model):
             a_tags,
             b_tags,
         ]
+
+        for subtitle in self.subtitles.all():
+            items.append(subtitle.subtitle_text)
+
         items = [item for item in items if item]
         text = " ".join(items)
         text = " ".join([token for token in text.lower().split(" ") if token not in STOP_WORDS])

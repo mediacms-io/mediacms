@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+import pysubs2
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -72,6 +73,17 @@ class Subtitle(models.Model):
             else:
                 raise Exception("Could not convert to srt")
         return True
+
+    @property
+    def subtitle_text(self):
+        sub = pysubs2.load(self.subtitle_file.path, encoding="utf-8")
+        text = ' '.join([line.text for line in sub])
+        text = text.replace("\\N", " ")
+        text = text.replace("-", " ")
+        text = text.replace(".", " ")
+        text = text.replace("  ", " ")
+
+        return text
 
 
 class TranscriptionRequest(models.Model):
