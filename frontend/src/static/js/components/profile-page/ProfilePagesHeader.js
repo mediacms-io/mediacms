@@ -45,10 +45,11 @@ class ProfileSearchBar extends React.PureComponent {
 
   onChange(ev) {
     this.pendingEvent = ev;
+    const newValue = ev.target.value || '';
 
     this.setState(
       {
-        queryVal: ev.target.value || '',
+        queryVal: newValue,
       },
       function () {
         if (this.updateTimeout) {
@@ -57,8 +58,11 @@ class ProfileSearchBar extends React.PureComponent {
 
         this.pendingEvent = null;
 
+        // Only trigger search if 3+ characters or empty (to reset)
         if ('function' === typeof this.props.onQueryChange) {
-          this.props.onQueryChange(this.state.queryVal);
+          if (newValue.length >= 3 || newValue.length === 0) {
+            this.props.onQueryChange(newValue);
+          }
         }
 
         this.updateTimeout = setTimeout(
@@ -137,13 +141,27 @@ class ProfileSearchBar extends React.PureComponent {
   }
 
   render() {
+    const hasSearchText = this.state.queryVal && this.state.queryVal.length > 0;
+
     if (!this.state.visibleForm) {
       return (
         <div>
-          <span>
+          <span style={{ position: 'relative' }}>
             <CircleIconButton buttonShadow={false} onClick={this.showForm}>
               <i className="material-icons">search</i>
             </CircleIconButton>
+            {hasSearchText ? (
+              <span style={{
+                position: 'absolute',
+                top: '8px',
+                right: '8px',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--default-theme-color)',
+                border: '2px solid white',
+              }}></span>
+            ) : null}
           </span>
         </div>
       );
@@ -151,10 +169,22 @@ class ProfileSearchBar extends React.PureComponent {
 
     return (
       <form method="get" action={LinksContext._currentValue.profile.media} onSubmit={this.onFormSubmit}>
-        <span>
+        <span style={{ position: 'relative' }}>
           <CircleIconButton buttonShadow={false}>
             <i className="material-icons">search</i>
           </CircleIconButton>
+          {hasSearchText ? (
+            <span style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--default-theme-color)',
+              border: '2px solid white',
+            }}></span>
+          ) : null}
         </span>
         <span>
           <input
