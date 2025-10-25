@@ -145,31 +145,29 @@ class ProfileSearchBar extends React.PureComponent {
 
     if (!this.state.visibleForm) {
       return (
-        <div>
-          <span style={{ position: 'relative' }}>
-            <CircleIconButton buttonShadow={false} onClick={this.showForm}>
-              <i className="material-icons">search</i>
-            </CircleIconButton>
-            {hasSearchText ? (
-              <span style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--default-theme-color)',
-                border: '2px solid white',
-              }}></span>
-            ) : null}
-          </span>
-        </div>
+        <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.showForm}>
+          <CircleIconButton buttonShadow={false}>
+            <i className="material-icons">search</i>
+          </CircleIconButton>
+          {hasSearchText ? (
+            <span style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--default-theme-color)',
+              border: '2px solid white',
+            }}></span>
+          ) : null}
+        </span>
       );
     }
 
     return (
       <form method="get" action={LinksContext._currentValue.profile.media} onSubmit={this.onFormSubmit}>
-        <span style={{ position: 'relative' }}>
+        <span style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
           <CircleIconButton buttonShadow={false}>
             <i className="material-icons">search</i>
           </CircleIconButton>
