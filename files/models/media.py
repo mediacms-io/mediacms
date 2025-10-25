@@ -410,11 +410,11 @@ class Media(models.Model):
                 self.media_type = "image"
             elif kind == "pdf":
                 self.media_type = "pdf"
-
-        if self.media_type in ["audio", "image", "pdf"]:
+        if self.media_type in ["image", "pdf"]:
             self.encoding_status = "success"
         else:
             ret = helpers.media_file_info(self.media_file.path)
+
             if ret.get("fail"):
                 self.media_type = ""
                 self.encoding_status = "fail"

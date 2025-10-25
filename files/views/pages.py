@@ -430,7 +430,7 @@ def edit_video(request):
         return HttpResponseRedirect("/")
 
     if media.media_type not in ["video", "audio"]:
-        messages.add_message(request, messages.INFO, "Media is not video")
+        messages.add_message(request, messages.INFO, "Media is not video or audio")
         return HttpResponseRedirect(media.get_absolute_url())
 
     if not settings.ALLOW_VIDEO_TRIMMER:
