@@ -4,6 +4,8 @@ import tempfile
 import pysubs2
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 
 from .. import helpers
@@ -100,3 +102,13 @@ class TranscriptionRequest(models.Model):
 
     def __str__(self):
         return f"Transcription request for {self.media.title} - {self.status}"
+
+
+@receiver(post_save, sender=Subtitle)
+def subtitle_save(sender, instance, created, **kwargs):
+    from .. import tasks
+
+    tasks.update_search_vector.apply_async(
+        args=[instance.media.friendly_token],
+        countdown=10,
+    )
