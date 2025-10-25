@@ -206,6 +206,7 @@ class UserList(APIView):
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
             openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name or username'),
+            openapi.Parameter(name='exclude_self', type=openapi.TYPE_BOOLEAN, in_=openapi.IN_QUERY, description='Exclude current user from results'),
         ],
         tags=['Users'],
         operation_summary='List users',
@@ -225,6 +226,11 @@ class UserList(APIView):
         name = request.GET.get("name", "").strip()
         if name:
             users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
+
+        # Exclude current user if requested
+        exclude_self = request.GET.get("exclude_self", "") == "True"
+        if exclude_self and request.user.is_authenticated:
+            users = users.exclude(id=request.user.id)
 
         if settings.USERS_NEEDS_TO_BE_APPROVED:
             is_approved = request.GET.get("is_approved")
