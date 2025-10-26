@@ -868,15 +868,6 @@ export class ProfileMediaPage extends Page {
     const hasActiveTags = this.state.selectedTag && this.state.selectedTag !== 'all';
     const hasActiveSort = this.state.selectedSort && this.state.selectedSort !== 'date_added_desc';
 
-    console.log('Filter Debug:', {
-      filterArgs: this.state.filterArgs,
-      selectedTag: this.state.selectedTag,
-      selectedSort: this.state.selectedSort,
-      hasActiveFilters,
-      hasActiveTags,
-      hasActiveSort
-    });
-
     return [
       this.state.author ? (
         <ProfilePagesHeader

@@ -200,6 +200,18 @@ class MediaList(APIView):
                 media = self._get_media_queryset(request)
                 already_sorted = True
 
+        if query:
+            query = helpers.clean_query(query)
+            q_parts = [q_part.rstrip("y") for q_part in query.split() if q_part not in STOP_WORDS]
+            if q_parts:
+                query = SearchQuery(q_parts[0] + ":*", search_type="raw")
+                for part in q_parts[1:]:
+                    query &= SearchQuery(part + ":*", search_type="raw")
+            else:
+                query = None
+        if query:
+            media = media.filter(search=query)
+
         if tag:
             media = media.filter(tags__title=tag)
 
@@ -221,9 +233,6 @@ class MediaList(APIView):
 
         if publish_state and publish_state in ['private', 'public', 'unlisted']:
             media = media.filter(state=publish_state)
-
-        if query:
-            media = media.filter(title__icontains=query)
 
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")

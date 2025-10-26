@@ -601,17 +601,25 @@
         }
 
         &.media-search {
+          display: flex !important;
+          align-items: center;
+
           > * {
             position: relative;
-            display: table;
-            float: left;
+            display: flex;
+            align-items: center;
             width: auto;
             height: 3rem;
 
             > span {
-              display: table-cell;
-              vertical-align: middle;
+              display: inline-flex;
+              align-items: center;
             }
+          }
+
+          form {
+            display: flex;
+            align-items: center;
           }
 
           button {
@@ -620,17 +628,27 @@
           }
 
           input[type='text'] {
+            width: 178px;
             max-width: 178px;
-            padding-left: 0;
-            padding-right: 0;
+            padding-left: 8px;
+            padding-right: 8px;
             font-weight: 500;
             border-width: 0 0 2px;
+            border-color: var(--profile-page-nav-link-text-color);
             background-color: transparent;
             background-color: rgba(0, 0, 0, 0);
             box-shadow: none;
+            font-size: 14px;
+            color: var(--profile-page-nav-link-text-color);
+
+            &::placeholder {
+              color: var(--profile-page-nav-link-text-color);
+              opacity: 0.7;
+            }
 
             &:focus {
               border-bottom-color: var(--profile-page-nav-link-active-after-bg-color);
+              outline: none;
             }
           }
         }

@@ -25,6 +25,7 @@ class ProfileSearchBar extends React.PureComponent {
 
     this.updateTimeout = null;
     this.pendingUpdate = false;
+    this.justShown = false;
   }
 
   updateQuery(value) {
@@ -103,10 +104,15 @@ class ProfileSearchBar extends React.PureComponent {
   }
 
   onInputBlur() {
+    // Don't hide immediately after showing to prevent race condition
+    if (this.justShown) {
+      return;
+    }
     this.hideForm();
   }
 
   showForm() {
+    this.justShown = true;
     this.setState(
       {
         visibleForm: true,
@@ -115,6 +121,10 @@ class ProfileSearchBar extends React.PureComponent {
         if ('function' === typeof this.props.toggleSearchField) {
           this.props.toggleSearchField();
         }
+        // Reset the flag after a short delay
+        setTimeout(() => {
+          this.justShown = false;
+        }, 200);
       }
     );
   }
