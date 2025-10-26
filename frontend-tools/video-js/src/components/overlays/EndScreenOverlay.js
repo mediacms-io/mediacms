@@ -190,7 +190,7 @@ class EndScreenOverlay extends Component {
                 page.style.display = 'grid';
                 page.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
                 page.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
-                page.style.gap = '8px';
+                page.style.gap = '12px'; // Increased gap for better spacing
                 page.style.scrollSnapAlign = 'start';
                 page.style.boxSizing = 'border-box';
                 page.style.alignContent = 'stretch';
@@ -252,11 +252,16 @@ class EndScreenOverlay extends Component {
         const isScreenLandscape = screenWidth > screenHeight;
 
         const isLandscape = playerWidth > playerHeight;
-        const isMobile = playerWidth < 700;
+
+        // Detect mobile/touch devices - should always show swiper
+        // Check both width and touch capability for better detection
+        const isTouchDevice = this.isTouchDevice;
+        const isSmallScreen = screenWidth < 700 || playerWidth < 700;
+        const isMobileOrTouch = isTouchDevice || isSmallScreen;
 
         // For mobile, prioritize screen orientation over player dimensions
         // Only consider it landscape if BOTH screen and player are in landscape
-        const isDefinitelyLandscape = isMobile ? isScreenLandscape && isLandscape : isLandscape;
+        const isDefinitelyLandscape = isMobileOrTouch ? isScreenLandscape && isLandscape : isLandscape;
 
         console.log('Grid Config:', {
             screenWidth,
@@ -268,16 +273,18 @@ class EndScreenOverlay extends Component {
             maxRows,
             isLandscape,
             isDefinitelyLandscape,
-            isMobile,
+            isTouchDevice,
+            isSmallScreen,
+            isMobileOrTouch,
         });
 
         // Enhanced grid configuration to fill all available space
-        // Check mobile conditions first to prevent being caught by desktop breakpoints
-        if (isMobile && isDefinitelyLandscape) {
-            // Mobile landscape: show 2x2 grid (4 items total) with swiper for pagination
+        // Check mobile/touch conditions first - swiper should ALWAYS be used on mobile/touch devices
+        if (isMobileOrTouch && isDefinitelyLandscape) {
+            // Mobile/Touch landscape: show 2x2 grid (4 items total) with swiper for pagination
             return { columns: 2, maxVideos: 12, useSwiper: true, itemsPerView: 4, gridRows: 2 };
-        } else if (isMobile) {
-            // Mobile portrait: show 2 items in single row swiper mode
+        } else if (isMobileOrTouch) {
+            // Mobile/Touch portrait: show 2 items in single row swiper mode
             return { columns: 2, maxVideos: 12, useSwiper: true, itemsPerView: 2, gridRows: 1 };
         } else if (playerWidth >= 1600) {
             const columns = 5;
