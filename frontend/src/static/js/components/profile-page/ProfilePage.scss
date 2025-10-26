@@ -467,6 +467,9 @@
       max-width: 100%;
       margin: 0 auto;
       clear: both;
+      display: flex;
+      align-items: center;
+      position: relative;
 
       .sliding-sidebar & {
         transition-property: width;
@@ -474,44 +477,54 @@
       }
     }
 
-    &.items-list-outer .previous-slide,
-    &.items-list-outer .next-slide {
-      top: 4px;
-      bottom: 4px;
-      padding: 0 !important;
+    .previous-slide,
+    .next-slide {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px !important;
       margin: 0;
       background-color: var(--profile-page-header-bg-color);
+      height: $_authorPage-navHeight;
+      flex-shrink: 0;
+      z-index: 2;
 
       .circle-icon-button {
         margin: 0;
-        background-color: var(--profile-page-header-bg-color);
+        background-color: transparent;
       }
     }
 
-    &.items-list-outer .previous-slide {
-      left: -0.75em;
-      left: -1px;
+    .previous-slide {
+      padding-right: 8px !important;
     }
 
-    &.items-list-outer .next-slide {
-      right: -0.75em;
-      right: -1px;
+    .next-slide {
+      padding-left: 8px !important;
     }
 
     ul {
       position: relative;
-      width: 100%;
-      float: left;
+      flex: 1;
       list-style: none;
       margin: 0;
       padding: 0;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      font-size: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      min-width: 0; // Allow flex item to shrink
 
-      // Remove whitespace between inline-block elements on mobile
-      @media screen and (max-width: 768px) {
-        font-size: 0;
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
+      // Hide scrollbar but keep functionality
+      scrollbar-width: none; // Firefox
+      -ms-overflow-style: none; // IE/Edge
+
+      &::-webkit-scrollbar {
+        display: none; // Chrome/Safari
       }
 
       li {
@@ -519,10 +532,7 @@
         display: inline-block;
         text-align: center;
         vertical-align: bottom;
-
-        @media screen and (max-width: 768px) {
-          flex-shrink: 0;
-        }
+        flex-shrink: 0;
 
         a {
           display: block;

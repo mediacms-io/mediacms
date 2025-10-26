@@ -5,7 +5,6 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
 import { translateString } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
@@ -244,12 +243,11 @@ class NavMenuInlineTabs extends React.PureComponent {
       displayPrev: false,
     };
 
-    this.inlineSlider = null;
-
     this.nextSlide = this.nextSlide.bind(this);
     this.prevSlide = this.prevSlide.bind(this);
 
-    this.updateSlider = this.updateSlider.bind(this, false);
+    this.updateSlider = this.updateSlider.bind(this);
+    this.updateSliderButtonsView = this.updateSliderButtonsView.bind(this);
 
     this.onToggleSearchField = this.onToggleSearchField.bind(this);
 
@@ -303,44 +301,57 @@ class NavMenuInlineTabs extends React.PureComponent {
 
   componentDidMount() {
     this.updateSlider();
+    if (this.refs.itemsListWrap) {
+      this.refs.itemsListWrap.addEventListener('scroll', this.updateSliderButtonsView.bind(this));
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.refs.itemsListWrap) {
+      this.refs.itemsListWrap.removeEventListener('scroll', this.updateSliderButtonsView.bind(this));
+    }
   }
 
   nextSlide() {
-    this.inlineSlider.nextSlide();
-    this.updateSliderButtonsView();
-    this.inlineSlider.scrollToCurrentSlide();
+    if (!this.refs.itemsListWrap) return;
+    const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
+    this.refs.itemsListWrap.scrollLeft += scrollAmount;
+    setTimeout(() => this.updateSliderButtonsView(), 50);
   }
 
   prevSlide() {
-    this.inlineSlider.previousSlide();
-    this.updateSliderButtonsView();
-    this.inlineSlider.scrollToCurrentSlide();
+    if (!this.refs.itemsListWrap) return;
+    const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
+    this.refs.itemsListWrap.scrollLeft -= scrollAmount;
+    setTimeout(() => this.updateSliderButtonsView(), 50);
   }
 
   updateSlider(afterItemsUpdate) {
-    if (!this.inlineSlider) {
-      this.inlineSlider = new ItemsInlineSlider(this.refs.itemsListWrap, '.profile-nav ul li');
-    }
-
-    this.inlineSlider.updateDataState(document.querySelectorAll('.profile-nav ul li').length, true, !afterItemsUpdate);
-
     this.updateSliderButtonsView();
-
-    if (this.pendingChangeSlide) {
-      this.pendingChangeSlide = false;
-      this.inlineSlider.scrollToCurrentSlide();
-    }
   }
 
   updateSliderButtonsView() {
+    if (!this.refs.itemsListWrap) return;
+
+    const container = this.refs.itemsListWrap;
+    const scrollLeft = container.scrollLeft;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+
+    // Show prev arrow if we can scroll left
+    const canScrollLeft = scrollLeft > 1;
+
+    // Show next arrow if we can scroll right
+    const canScrollRight = scrollLeft < scrollWidth - clientWidth - 1;
+
     this.setState({
-      displayPrev: this.inlineSlider.hasPreviousSlide(),
-      displayNext: this.inlineSlider.hasNextSlide(),
+      displayPrev: canScrollLeft,
+      displayNext: canScrollRight,
     });
   }
 
   onToggleSearchField() {
-    this.updateSlider();
+    setTimeout(() => this.updateSlider(), 100);
   }
 
   render() {
@@ -404,9 +415,11 @@ class NavMenuInlineTabs extends React.PureComponent {
               />
             ) : null}
 
-            <li className="media-search">
-              <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} type={this.props.type} />
-            </li>
+            {!['about', 'playlists'].includes(this.props.type) ? (
+              <li className="media-search">
+                <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} type={this.props.type} />
+              </li>
+            ) : null}
             {this.props.onToggleFiltersClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
               <li className="media-filters-toggle">
                 <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleFiltersClick} title={translateString('Filters')}>
