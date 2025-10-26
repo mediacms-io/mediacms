@@ -724,7 +724,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     const subtitleTracks = hasSubtitles
         ? backendSubtitles.map((track) => ({
               kind: 'subtitles',
-              src: mediaData?.siteUrl + track.src,
+              src: (!isDevMode ? mediaData?.siteUrl : '') + track.src,
               srclang: track.srclang,
               label: track.label,
               default: track.default || false,
@@ -1002,7 +1002,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
 
                         // Use native text tracks on iOS for fullscreen caption support
                         // On other devices, use Video.js text tracks for full CSS positioning control
-                        nativeTextTracks: isIOS,
+                        nativeTextTracks: isIOS && mediaData.data?.media_type !== 'audio' ? true : false,
 
                         // Use native video tracks instead of emulated - disabled for consistency
                         nativeVideoTracks: false,
