@@ -179,6 +179,8 @@ class ProfileSharedByMePage extends Page {
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.match(/media_type=([^&]+)/)?.[1],
         upload_date: this.state.filterArgs.match(/upload_date=([^&]+)/)?.[1],
+        duration: this.state.filterArgs.match(/duration=([^&]+)/)?.[1],
+        publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
         sort_by: this.state.selectedSort,
         tag: tag,
       });
@@ -190,6 +192,8 @@ class ProfileSharedByMePage extends Page {
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.match(/media_type=([^&]+)/)?.[1],
         upload_date: this.state.filterArgs.match(/upload_date=([^&]+)/)?.[1],
+        duration: this.state.filterArgs.match(/duration=([^&]+)/)?.[1],
+        publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
         sort_by: sortBy,
         tag: this.state.selectedTag,
       });
@@ -200,6 +204,8 @@ class ProfileSharedByMePage extends Page {
     const args = {
       media_type: null,
       upload_date: null,
+      duration: null,
+      publish_state: null,
       sort_by: null,
       ordering: null,
       t: null,
@@ -221,6 +227,16 @@ class ProfileSharedByMePage extends Page {
       case 'this_year':
         args.upload_date = updatedArgs.upload_date;
         break;
+    }
+
+    // Handle duration filter
+    if (updatedArgs.duration && updatedArgs.duration !== 'all') {
+      args.duration = updatedArgs.duration;
+    }
+
+    // Handle publish state filter
+    if (updatedArgs.publish_state && updatedArgs.publish_state !== 'all') {
+      args.publish_state = updatedArgs.publish_state;
     }
 
     switch (updatedArgs.sort_by) {
@@ -301,7 +317,9 @@ class ProfileSharedByMePage extends Page {
     // Check if any filters are active
     const hasActiveFilters = this.state.filterArgs && (
       this.state.filterArgs.includes('media_type=') ||
-      this.state.filterArgs.includes('upload_date=')
+      this.state.filterArgs.includes('upload_date=') ||
+      this.state.filterArgs.includes('duration=') ||
+      this.state.filterArgs.includes('publish_state=')
     );
 
     return [

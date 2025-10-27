@@ -592,6 +592,8 @@ export class ProfileMediaPage extends Page {
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.includes('media_type') ? this.state.filterArgs.match(/media_type=([^&]*)/)?.[1] : null,
         upload_date: this.state.filterArgs.includes('upload_date') ? this.state.filterArgs.match(/upload_date=([^&]*)/)?.[1] : null,
+        duration: this.state.filterArgs.includes('duration') ? this.state.filterArgs.match(/duration=([^&]*)/)?.[1] : null,
+        publish_state: this.state.filterArgs.includes('publish_state') ? this.state.filterArgs.match(/publish_state=([^&]*)/)?.[1] : null,
         sort_by: this.state.selectedSort,
         tag: tag,
       });
@@ -604,6 +606,8 @@ export class ProfileMediaPage extends Page {
       this.onFiltersUpdate({
         media_type: this.state.filterArgs.includes('media_type') ? this.state.filterArgs.match(/media_type=([^&]*)/)?.[1] : null,
         upload_date: this.state.filterArgs.includes('upload_date') ? this.state.filterArgs.match(/upload_date=([^&]*)/)?.[1] : null,
+        duration: this.state.filterArgs.includes('duration') ? this.state.filterArgs.match(/duration=([^&]*)/)?.[1] : null,
+        publish_state: this.state.filterArgs.includes('publish_state') ? this.state.filterArgs.match(/publish_state=([^&]*)/)?.[1] : null,
         sort_by: sortOption,
         tag: this.state.selectedTag,
       });
