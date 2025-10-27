@@ -359,7 +359,7 @@ class ProfileSharedByMePage extends Page {
               itemsCountCallback={this.state.requestUrl ? this.getCountFunc : null}
               hideViews={!PageStore.get('config-media-item').displayViews}
               hideDate={!PageStore.get('config-media-item').displayPublishDate}
-              canEdit={false}
+              canEdit={isMediaAuthor}
               onResponseDataLoaded={this.onResponseDataLoaded}
               showSelection={isMediaAuthor}
               hasAnySelection={this.props.bulkActions.selectedMedia.size > 0}
