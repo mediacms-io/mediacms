@@ -392,6 +392,7 @@ export default class VideoViewer extends React.PureComponent {
                                         return React.createElement(VideoJSEmbed, {
                                             data: this.props.data,
                                             useRoundedCorners: site.useRoundedCorners,
+                                            version: site.version,
                                             isPlayList: !!MediaPageStore.get('playlist-id'),
                                             playerVolume: this.browserCache.get('player-volume'),
                                             playerSoundMuted: this.browserCache.get('player-sound-muted'),

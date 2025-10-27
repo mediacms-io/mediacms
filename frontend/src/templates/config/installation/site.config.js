@@ -5,6 +5,7 @@ module.exports = {
   url: process.env.MEDIACMS_URL || 'UNDEFINED_URL',
   api: process.env.MEDIACMS_API || 'UNDEFINED_API',
   useRoundedCorners: true,
+  version: '1.0.0',
   theme: {
     mode: 'light', // Valid values: 'light', 'dark'.
     switch: {
