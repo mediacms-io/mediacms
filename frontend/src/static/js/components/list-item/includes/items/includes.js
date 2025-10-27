@@ -49,6 +49,11 @@ export function UserItemMemberSince(props) {
 }
 
 export function TaxonomyItemMediaCount(props) {
+    // Check if listing numbers should be included based on settings
+    if (!window.MediaCMS.features.listings.includeNumbers) {
+        return null;
+    }
+
     return (
         <span key="item-media-count" className="item-media-count">
             {' ' + props.count} media
