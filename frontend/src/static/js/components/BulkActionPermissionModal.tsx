@@ -276,7 +276,7 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
 
           <div className="permission-panel">
             <h3>
-              {translateString('To add')}
+              {permissionType === 'viewer' ? translateString('Existing co-viewers') : permissionType === 'editor' ? translateString('Existing co-editors') : translateString('Existing co-owners')}
               {selectedMediaIds.length > 1 && (
                 <span className="info-tooltip" title={translateString('The intersection of users in the selected media is shown')}>
                   ?
