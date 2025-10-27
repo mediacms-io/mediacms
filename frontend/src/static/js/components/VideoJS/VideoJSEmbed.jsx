@@ -16,6 +16,7 @@ import React, { useEffect, useRef } from 'react';
 const VideoJSEmbed = ({
     data,
     useRoundedCorners,
+    version,
     isPlayList,
     playerVolume,
     playerSoundMuted,
@@ -67,6 +68,7 @@ const VideoJSEmbed = ({
             window.MEDIA_DATA = {
                 data: data || {}, 
                 useRoundedCorners: useRoundedCorners,
+                version: version,
                 isPlayList: isPlayList,
                 playerVolume: playerVolume || 0.5,
                 playerSoundMuted: playerSoundMuted || (urlMuted === '1'),
@@ -204,14 +206,14 @@ const VideoJSEmbed = ({
         if (!existingCSS) {
             const cssLink = document.createElement('link');
             cssLink.rel = 'stylesheet';
-            cssLink.href = siteUrl + '/static/video_js/video-js.css';
+            cssLink.href = siteUrl + '/static/video_js/video-js.css?v=' + version;
             document.head.appendChild(cssLink);
         }
 
         // Load JS if not already loaded
         if (!existingJS) {
             const script = document.createElement('script');
-            script.src = siteUrl + '/static/video_js/video-js.js';
+            script.src = siteUrl + '/static/video_js/video-js.js?v=' + version;
             document.head.appendChild(script);
         }
     };

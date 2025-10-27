@@ -45,7 +45,7 @@ class EndScreenOverlay extends Component {
     }
 
     createGrid() {
-        const { columns, maxVideos, useSwiper } = this.getGridConfig();
+        const { columns, maxVideos, useSwiper, itemsPerView, gridRows } = this.getGridConfig();
 
         // Get videos to show - access directly from options during createEl
         const relatedVideos = this.options_?.relatedVideos || this.relatedVideos || [];
@@ -55,7 +55,7 @@ class EndScreenOverlay extends Component {
                 : this.createSampleVideos().slice(0, maxVideos);
 
         if (useSwiper) {
-            return this.createSwiperGrid(videosToShow);
+            return this.createSwiperGrid(videosToShow, itemsPerView || 2, columns, gridRows || 1);
         } else {
             return this.createRegularGrid(columns, videosToShow);
         }
@@ -91,14 +91,14 @@ class EndScreenOverlay extends Component {
         return grid;
     }
 
-    createSwiperGrid(videosToShow) {
+    createSwiperGrid(videosToShow, itemsPerView = 2, columns = 2, gridRows = 1) {
         const container = videojs.dom.createEl('div', {
             className: 'vjs-related-videos-swiper-container',
         });
 
         // Container styling - ensure it stays within bounds
         container.style.position = 'relative';
-        container.style.padding = '20px';
+        container.style.padding = gridRows > 1 ? '12px' : '20px'; // Minimal padding for 2x2 grid
         container.style.height = '100%';
         container.style.width = '100%';
         container.style.display = 'flex';
@@ -111,16 +111,32 @@ class EndScreenOverlay extends Component {
             className: 'vjs-related-videos-swiper',
         });
 
-        swiperWrapper.style.display = 'flex';
-        swiperWrapper.style.overflowX = 'auto';
-        swiperWrapper.style.overflowY = 'hidden';
-        swiperWrapper.style.gap = '12px';
-        swiperWrapper.style.paddingBottom = '10px';
-        swiperWrapper.style.scrollBehavior = 'smooth';
-        swiperWrapper.style.scrollSnapType = 'x mandatory';
-        swiperWrapper.style.width = '100%';
-        swiperWrapper.style.maxWidth = '100%';
-        swiperWrapper.style.boxSizing = 'border-box';
+        if (gridRows > 1) {
+            // Multi-row grid layout (e.g., 2x2 for landscape)
+            swiperWrapper.style.display = 'flex';
+            swiperWrapper.style.overflowX = 'auto';
+            swiperWrapper.style.overflowY = 'hidden';
+            swiperWrapper.style.scrollBehavior = 'smooth';
+            swiperWrapper.style.scrollSnapType = 'x mandatory';
+            swiperWrapper.style.width = '100%';
+            swiperWrapper.style.maxWidth = '100%';
+            swiperWrapper.style.height = '100%';
+            swiperWrapper.style.flex = '1';
+            swiperWrapper.style.boxSizing = 'border-box';
+            swiperWrapper.style.gap = '0'; // Remove gap, we'll handle it in pages
+        } else {
+            // Single row layout (original swiper)
+            swiperWrapper.style.display = 'flex';
+            swiperWrapper.style.overflowX = 'auto';
+            swiperWrapper.style.overflowY = 'hidden';
+            swiperWrapper.style.gap = '12px';
+            swiperWrapper.style.paddingBottom = '10px';
+            swiperWrapper.style.scrollBehavior = 'smooth';
+            swiperWrapper.style.scrollSnapType = 'x mandatory';
+            swiperWrapper.style.width = '100%';
+            swiperWrapper.style.maxWidth = '100%';
+            swiperWrapper.style.boxSizing = 'border-box';
+        }
 
         // Hide scrollbar and prevent scroll propagation
         swiperWrapper.style.scrollbarWidth = 'none'; // Firefox
@@ -158,17 +174,56 @@ class EndScreenOverlay extends Component {
             { passive: true }
         );
 
-        // Create video items for swiper (show 2 at a time, but allow scrolling through all)
-        videosToShow.forEach((video) => {
-            const videoItem = this.createVideoItem(video, true); // Pass true for swiper mode
-            swiperWrapper.appendChild(videoItem);
-        });
+        if (gridRows > 1) {
+            // Create pages with grid layout (e.g., 2x2 grid per page)
+            const itemsPerPage = itemsPerView;
+            const totalPages = Math.ceil(videosToShow.length / itemsPerPage);
+
+            for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+                const page = videojs.dom.createEl('div', {
+                    className: 'vjs-swiper-page',
+                });
+
+                page.style.minWidth = '100%';
+                page.style.width = '100%';
+                page.style.height = '100%';
+                page.style.display = 'grid';
+                page.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+                page.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
+                page.style.gap = '12px'; // Increased gap for better spacing
+                page.style.scrollSnapAlign = 'start';
+                page.style.boxSizing = 'border-box';
+                page.style.alignContent = 'stretch';
+                page.style.justifyContent = 'stretch';
+                page.style.alignItems = 'stretch';
+                page.style.justifyItems = 'stretch';
+
+                // Get videos for this page
+                const startIndex = pageIndex * itemsPerPage;
+                const endIndex = Math.min(startIndex + itemsPerPage, videosToShow.length);
+                const pageVideos = videosToShow.slice(startIndex, endIndex);
+
+                // Create video items for this page
+                pageVideos.forEach((video) => {
+                    const videoItem = this.createVideoItem(video, true, itemsPerView, true); // Pass true for grid mode
+                    page.appendChild(videoItem);
+                });
+
+                swiperWrapper.appendChild(page);
+            }
+        } else {
+            // Single row - create video items directly
+            videosToShow.forEach((video) => {
+                const videoItem = this.createVideoItem(video, true, itemsPerView, false);
+                swiperWrapper.appendChild(videoItem);
+            });
+        }
 
         container.appendChild(swiperWrapper);
 
-        // Add navigation indicators if there are more than 2 videos
-        if (videosToShow.length > 2) {
-            const indicators = this.createSwiperIndicators(videosToShow.length, swiperWrapper);
+        // Add navigation indicators if there are more videos than can fit in one view
+        if (videosToShow.length > itemsPerView) {
+            const indicators = this.createSwiperIndicators(videosToShow.length, swiperWrapper, itemsPerView);
             container.appendChild(indicators);
         }
 
@@ -190,10 +245,48 @@ class EndScreenOverlay extends Component {
         // Calculate maximum rows that can fit - be more aggressive
         const maxRows = Math.max(2, Math.floor((availableHeight + gap) / (cardHeight + gap)));
 
-        console.log('Grid Config:', { playerWidth, playerHeight, availableHeight, maxRows });
+        // Detect landscape orientation on mobile
+        // Check screen/window orientation first, then player dimensions
+        const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+        const screenHeight = window.innerHeight || document.documentElement.clientHeight;
+        const isScreenLandscape = screenWidth > screenHeight;
+
+        const isLandscape = playerWidth > playerHeight;
+
+        // Detect mobile/touch devices - should always show swiper
+        // Check both width and touch capability for better detection
+        const isTouchDevice = this.isTouchDevice;
+        const isSmallScreen = screenWidth < 700 || playerWidth < 700;
+        const isMobileOrTouch = isTouchDevice || isSmallScreen;
+
+        // For mobile, prioritize screen orientation over player dimensions
+        // Only consider it landscape if BOTH screen and player are in landscape
+        const isDefinitelyLandscape = isMobileOrTouch ? isScreenLandscape && isLandscape : isLandscape;
+
+        console.log('Grid Config:', {
+            screenWidth,
+            screenHeight,
+            isScreenLandscape,
+            playerWidth,
+            playerHeight,
+            availableHeight,
+            maxRows,
+            isLandscape,
+            isDefinitelyLandscape,
+            isTouchDevice,
+            isSmallScreen,
+            isMobileOrTouch,
+        });
 
         // Enhanced grid configuration to fill all available space
-        if (playerWidth >= 1600) {
+        // Check mobile/touch conditions first - swiper should ALWAYS be used on mobile/touch devices
+        if (isMobileOrTouch && isDefinitelyLandscape) {
+            // Mobile/Touch landscape: show 2x2 grid (4 items total) with swiper for pagination
+            return { columns: 2, maxVideos: 12, useSwiper: true, itemsPerView: 4, gridRows: 2 };
+        } else if (isMobileOrTouch) {
+            // Mobile/Touch portrait: show 2 items in single row swiper mode
+            return { columns: 2, maxVideos: 12, useSwiper: true, itemsPerView: 2, gridRows: 1 };
+        } else if (playerWidth >= 1600) {
             const columns = 5;
             return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
         } else if (playerWidth >= 1200) {
@@ -202,11 +295,9 @@ class EndScreenOverlay extends Component {
         } else if (playerWidth >= 900) {
             const columns = 3;
             return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
-        } else if (playerWidth >= 700) {
+        } else {
             const columns = 2;
             return { columns, maxVideos: columns * maxRows, useSwiper: false }; // Fill all available rows
-        } else {
-            return { columns: 2, maxVideos: 12, useSwiper: true }; // Use swiper for small screens
         }
     }
 
@@ -220,7 +311,7 @@ class EndScreenOverlay extends Component {
         return this.createSampleVideos().slice(0, maxVideos);
     }
 
-    createVideoItem(video, isSwiperMode = false) {
+    createVideoItem(video, isSwiperMode = false, itemsPerView = 2, isGridMode = false) {
         const item = videojs.dom.createEl('div', {
             className: `vjs-related-video-item ${isSwiperMode ? 'vjs-swiper-item' : ''}`,
         });
@@ -228,7 +319,7 @@ class EndScreenOverlay extends Component {
         // Consistent item styling with fixed dimensions
         item.style.position = 'relative';
         item.style.backgroundColor = '#1a1a1a';
-        item.style.borderRadius = '6px';
+        item.style.borderRadius = '8px';
         item.style.overflow = 'hidden';
         item.style.cursor = 'pointer';
         item.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
@@ -236,11 +327,21 @@ class EndScreenOverlay extends Component {
         item.style.flexDirection = 'column';
 
         // Consistent dimensions for all cards
-        if (isSwiperMode) {
-            // Calculate proper width for swiper items (2 items visible + gap)
-            item.style.minWidth = 'calc(50% - 6px)'; // 50% width minus half the gap
-            item.style.width = 'calc(50% - 6px)';
-            item.style.maxWidth = '180px'; // Maximum width for larger screens
+        if (isGridMode) {
+            // Grid mode (2x2): items fill their grid cell completely
+            item.style.height = '100%';
+            item.style.minHeight = '0';
+            item.style.width = '100%';
+            item.style.maxWidth = 'none';
+            item.style.flex = '1';
+        } else if (isSwiperMode) {
+            // Single row swiper mode: calculate width based on items per view
+            // Formula: (100% / itemsPerView) - (gap * (itemsPerView - 1) / itemsPerView)
+            const itemsPerRow = itemsPerView / (itemsPerView === 4 ? 2 : 1); // For 4 items in 2 rows, show 2 per row
+            const gapAdjustment = (12 * (itemsPerRow - 1)) / itemsPerRow;
+            item.style.minWidth = `calc(${100 / itemsPerRow}% - ${gapAdjustment}px)`;
+            item.style.width = `calc(${100 / itemsPerRow}% - ${gapAdjustment}px)`;
+            item.style.maxWidth = itemsPerView === 4 ? '150px' : '180px'; // Smaller max width for 4 items
 
             // Simpler height since text is overlaid on thumbnail
             const cardHeight = '120px'; // Just the thumbnail height
@@ -270,7 +371,7 @@ class EndScreenOverlay extends Component {
         }
 
         // Create thumbnail container with overlaid text
-        const thumbnailContainer = this.createThumbnailWithOverlay(video, isSwiperMode);
+        const thumbnailContainer = this.createThumbnailWithOverlay(video, isSwiperMode, itemsPerView);
         item.appendChild(thumbnailContainer);
 
         console.log('Created video item with overlay:', item);
@@ -331,7 +432,7 @@ class EndScreenOverlay extends Component {
         return container;
     }
 
-    createThumbnailWithOverlay(video, isSwiperMode = false) {
+    createThumbnailWithOverlay(video, isSwiperMode = false, itemsPerView = 2) {
         const container = videojs.dom.createEl('div', {
             className: 'vjs-related-video-thumbnail-container',
         });
@@ -339,9 +440,13 @@ class EndScreenOverlay extends Component {
         // Container styling - full height since it contains everything
         container.style.position = 'relative';
         container.style.width = '100%';
-        container.style.height = '120px';
+        container.style.height = '100%';
+        container.style.minHeight = '120px';
         container.style.overflow = 'hidden';
-        container.style.borderRadius = '6px';
+        container.style.borderRadius = '8px';
+        container.style.flex = '1';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
 
         // Create thumbnail image
         const thumbnail = videojs.dom.createEl('img', {
@@ -354,6 +459,9 @@ class EndScreenOverlay extends Component {
         thumbnail.style.height = '100%';
         thumbnail.style.objectFit = 'cover';
         thumbnail.style.display = 'block';
+        thumbnail.style.flex = '1';
+        thumbnail.style.minWidth = '0';
+        thumbnail.style.minHeight = '0';
 
         container.appendChild(thumbnail);
 
@@ -370,7 +478,7 @@ class EndScreenOverlay extends Component {
             duration.style.color = 'white';
             duration.style.padding = '2px 6px';
             duration.style.borderRadius = '3px';
-            duration.style.fontSize = '11px';
+            duration.style.fontSize = itemsPerView === 4 ? '10px' : '11px';
             duration.style.fontWeight = '600';
             duration.style.lineHeight = '1';
             duration.style.zIndex = '3';
@@ -384,12 +492,12 @@ class EndScreenOverlay extends Component {
         });
 
         textOverlay.style.position = 'absolute';
-        textOverlay.style.top = '8px';
-        textOverlay.style.left = '8px';
-        textOverlay.style.right = '8px';
+        textOverlay.style.top = itemsPerView === 4 ? '6px' : '8px';
+        textOverlay.style.left = itemsPerView === 4 ? '6px' : '8px';
+        textOverlay.style.right = itemsPerView === 4 ? '6px' : '8px';
         textOverlay.style.background =
             'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)';
-        textOverlay.style.padding = '8px';
+        textOverlay.style.padding = itemsPerView === 4 ? '6px' : '8px';
         textOverlay.style.borderRadius = '4px';
         textOverlay.style.zIndex = '2';
 
@@ -399,10 +507,11 @@ class EndScreenOverlay extends Component {
         });
         title.textContent = video.title || 'Sample Video Title';
         title.style.color = '#ffffff';
-        title.style.fontSize = isSwiperMode ? '12px' : '13px';
+        // Adjust font sizes based on items per view
+        title.style.fontSize = itemsPerView === 4 ? '11px' : isSwiperMode ? '12px' : '13px';
         title.style.fontWeight = '600';
         title.style.lineHeight = '1.3';
-        title.style.marginBottom = '4px';
+        title.style.marginBottom = itemsPerView === 4 ? '3px' : '4px';
         title.style.overflow = 'hidden';
         title.style.textOverflow = 'ellipsis';
         title.style.display = '-webkit-box';
@@ -428,7 +537,8 @@ class EndScreenOverlay extends Component {
 
         meta.textContent = metaText;
         meta.style.color = '#e0e0e0';
-        meta.style.fontSize = isSwiperMode ? '10px' : '11px';
+        // Adjust font sizes based on items per view
+        meta.style.fontSize = itemsPerView === 4 ? '9px' : isSwiperMode ? '10px' : '11px';
         meta.style.lineHeight = '1.2';
         meta.style.overflow = 'hidden';
         meta.style.textOverflow = 'ellipsis';
@@ -529,7 +639,7 @@ class EndScreenOverlay extends Component {
         return info;
     }
 
-    createSwiperIndicators(totalVideos, swiperWrapper) {
+    createSwiperIndicators(totalVideos, swiperWrapper, itemsPerView = 2) {
         const indicators = videojs.dom.createEl('div', {
             className: 'vjs-swiper-indicators',
         });
@@ -539,7 +649,6 @@ class EndScreenOverlay extends Component {
         indicators.style.gap = '8px';
         indicators.style.marginTop = '10px';
 
-        const itemsPerView = 2;
         const totalPages = Math.ceil(totalVideos / itemsPerView);
 
         for (let i = 0; i < totalPages; i++) {
