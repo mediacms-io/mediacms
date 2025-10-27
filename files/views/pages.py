@@ -343,6 +343,10 @@ def publish_media(request):
     if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    if not request.user.has_owner_access_to_media(media):
+        messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, f"Permission to publish is not grated by the owner: {media.user.name}"))
+        return HttpResponseRedirect(media.get_absolute_url())
+
     if request.method == "POST":
         form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
