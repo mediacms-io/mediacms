@@ -94,7 +94,7 @@ def add_subtitle(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     # Initialize variables
@@ -146,7 +146,7 @@ def edit_subtitle(request):
     if not subtitle:
         return HttpResponseRedirect("/")
 
-    if not (request.user == subtitle.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(subtitle.media)):
         return HttpResponseRedirect("/")
 
     context = {"subtitle": subtitle, "action": action}
@@ -252,7 +252,7 @@ def video_chapters(request, friendly_token):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     try:
@@ -343,6 +343,10 @@ def publish_media(request):
     if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
         return HttpResponseRedirect("/")
 
+    if not (request.user.has_owner_access_to_media(media) or is_mediacms_editor(request.user)):
+        messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, f"Permission to publish is not grated by the owner: {media.user.name}"))
+        return HttpResponseRedirect(media.get_absolute_url())
+
     if request.method == "POST":
         form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
@@ -370,7 +374,7 @@ def edit_chapters(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     chapters = media.chapter_data
@@ -395,7 +399,7 @@ def trim_video(request, friendly_token):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     existing_requests = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
@@ -426,11 +430,11 @@ def edit_video(request):
     if not media:
         return HttpResponseRedirect("/")
 
-    if not (request.user == media.user or is_mediacms_editor(request.user)):
+    if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
     if media.media_type not in ["video", "audio"]:
-        messages.add_message(request, messages.INFO, "Media is not video")
+        messages.add_message(request, messages.INFO, "Media is not video or audio")
         return HttpResponseRedirect(media.get_absolute_url())
 
     if not settings.ALLOW_VIDEO_TRIMMER:
@@ -629,9 +633,11 @@ def view_media(request):
 
     if request.user.is_authenticated:
         if request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user):
-            context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
+
+        if request.user == media.user or is_mediacms_editor(request.user):
+            context["CAN_DELETE_MEDIA"] = True
 
     # in case media is video and is processing (eg the case a video was just uploaded)
     # attempt to show it (rather than showing a blank video player)

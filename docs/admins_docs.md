@@ -533,10 +533,48 @@ By default `CAN_SEE_MEMBERS_PAGE = "all"` means that all registered users can se
 - **admins**, only MediaCMS admins can view the page
 
 
-### 5.28 Require user approval on registration
+### 5.28 Configure user search fields
+
+By default, when searching for users (e.g., in bulk actions modals or the users API), the search is performed on the user's name and username. You can configure this behavior using the `USER_SEARCH_FIELD` setting:
+
+```
+USER_SEARCH_FIELD = "name_username"  # Default - searches in name and username
+```
+
+To also include email addresses in the search and display them in the user interface:
+
+```
+USER_SEARCH_FIELD = "name_username_email"  # Searches in name, username, and email
+```
+
+When set to `"name_username_email"`:
+- The user search will also match email addresses
+- The email field will be returned in the API response
+- Frontend components will display users as "Name - Email" instead of "Name - Username"
+
+This setting is useful when you want to make it easier to find users by their email addresses, particularly in administrative interfaces like bulk action modals.
+
+
+### 5.29 Require user approval on registration
 
 By default, users do not require approval, so they can login immediately after registration (if registration is open). However, if the parameter `USERS_NEEDS_TO_BE_APPROVED` is set to `True`, they will first have to have their accounts approved by an administrator before they can successfully sign in.
 Administrators can approve users through the following ways: 1. through Django administration, 2. through the users management page, 3. through editing the profile page directly. In all cases, set 'Is approved' to True.
+
+### 5.30 Show or hide media count numbers on categories and tags pages
+
+By default, the number of media items is displayed next to each category and tag on the `/categories` and `/tags` pages. To hide these numbers:
+
+```
+INCLUDE_LISTING_NUMBERS = False
+```
+
+To show the numbers (default behavior):
+
+```
+INCLUDE_LISTING_NUMBERS = True
+```
+
+This setting affects only the visual display on the categories and tags listing pages and does not impact the functionality of filtering by categories or tags.
 
 
 ## 6. Manage pages

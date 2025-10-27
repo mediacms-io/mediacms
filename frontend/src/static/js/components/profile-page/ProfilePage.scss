@@ -4,6 +4,8 @@
 #page-profile-media,
 #page-profile-playlists,
 #page-profile-about,
+#page-profile-shared-by-me,
+#page-profile-shared-with-me,
 #page-liked.profile-page-liked,
 #page-history.profile-page-history {
   .page-main {
@@ -33,6 +35,7 @@
       li {
         a {
           color: var(--profile-page-nav-link-text-color);
+          text-transform: none;
 
           &:hover {
             color: var(--profile-page-nav-link-hover-text-color);
@@ -189,48 +192,150 @@
     display: block;
   }
 
-  a.edit-channel,
-  a.edit-profile {
+  a.edit-channel-icon {
     position: absolute;
-  }
-
-  a.edit-channel,
-  a.edit-profile,
-  .delete-profile-wrap > button {
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 400;
-    color: #fff;
-    border: 0;
-    line-height: inherit;
-
-    padding: 6px 12px;
-    border-radius: 1px;
-
-    background-color: var(--brand-color, var(--default-brand-color));
-
-    @media screen and (min-width: 710px) {
-      padding: 8px 16px;
-    }
-  }
-
-  a.edit-channel,
-  a.edit-profile {
-  }
-
-  a.edit-channel {
     top: 16px;
     right: 16px;
+    text-decoration: none;
+    color: #fff;
+    border: 0;
+    line-height: 1;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(40, 167, 69, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     @media screen and (min-width: 710px) {
       right: 24px;
     }
+
+    .material-icons {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    &:hover {
+      background-color: rgba(40, 167, 69, 1);
+      color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .dark_theme & {
+      background-color: rgba(40, 167, 69, 0.9);
+      color: #fff;
+
+      &:hover {
+        background-color: rgba(40, 167, 69, 1);
+        color: #fff;
+      }
+    }
   }
 
-  a.edit-profile {
-    top: 0;
-    right: 0;
+  a.edit-profile-icon {
+    text-decoration: none;
+    color: #666;
+    border: 0;
+    line-height: 1;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+
+    .material-icons {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    @media screen and (max-width: 480px) {
+      width: 30px;
+      height: 30px;
+
+      .material-icons {
+        font-size: 18px;
+      }
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+      color: #333;
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .dark_theme & {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #aaa;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+    }
   }
+
+  .delete-profile-wrap > button {
+    text-decoration: none;
+    color: #fff;
+    border: 0;
+    line-height: 1;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(220, 53, 69, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    .material-icons {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    &:hover {
+      background-color: rgba(220, 53, 69, 1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    .dark_theme & {
+      background-color: rgba(255, 107, 107, 0.9);
+
+      &:hover {
+        background-color: rgba(255, 107, 107, 1);
+      }
+    }
+  }
+
 
   .delete-profile-wrap {
     position: absolute;
@@ -249,6 +354,13 @@
     padding-top: 16px;
     padding-left: 16px;
     padding-right: 16px;
+
+    // Reduce padding on mobile
+    @media screen and (max-width: 480px) {
+      padding-top: 12px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
 
     @media screen and (min-width: 710px) {
       padding-left: 24px;
@@ -297,6 +409,20 @@
       font-weight: 400;
       line-height: 1.25;
       margin: 0;
+
+      @media screen and (max-width: 480px) {
+        font-size: 20px;
+      }
+    }
+
+    .profile-name-edit-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      @media screen and (max-width: 480px) {
+        gap: 8px;
+      }
     }
 
     .profile-info-inner {
@@ -341,6 +467,9 @@
       max-width: 100%;
       margin: 0 auto;
       clear: both;
+      display: flex;
+      align-items: center;
+      position: relative;
 
       .sliding-sidebar & {
         transition-property: width;
@@ -348,54 +477,115 @@
       }
     }
 
-    &.items-list-outer .previous-slide,
-    &.items-list-outer .next-slide {
-      top: 4px;
-      bottom: 4px;
-      padding: 0 !important;
+    .previous-slide,
+    .next-slide {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px !important;
       margin: 0;
       background-color: var(--profile-page-header-bg-color);
+      height: $_authorPage-navHeight;
+      flex-shrink: 0;
+      z-index: 2;
 
       .circle-icon-button {
         margin: 0;
-        background-color: var(--profile-page-header-bg-color);
+        background-color: transparent;
       }
     }
 
-    &.items-list-outer .previous-slide {
-      left: -0.75em;
-      left: -1px;
+    .previous-slide {
+      padding-right: 8px !important;
     }
 
-    &.items-list-outer .next-slide {
-      right: -0.75em;
-      right: -1px;
+    .next-slide {
+      padding-left: 8px !important;
     }
 
     ul {
       position: relative;
-      width: 100%;
-      float: left;
+      flex: 1;
       list-style: none;
       margin: 0;
       padding: 0;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      font-size: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      min-width: 0; // Allow flex item to shrink
+
+      // Hide scrollbar but keep functionality
+      scrollbar-width: none; // Firefox
+      -ms-overflow-style: none; // IE/Edge
+
+      &::-webkit-scrollbar {
+        display: none; // Chrome/Safari
+      }
 
       li {
         position: relative;
         display: inline-block;
         text-align: center;
         vertical-align: bottom;
+        flex-shrink: 0;
 
         a {
           display: block;
           line-height: $_authorPage-navHeight;
-          width: 109px;
+          width: auto;
+          padding: 0 16px;
           text-decoration: none;
-          text-transform: uppercase;
+          text-transform: none !important;
 
           font-size: 14px;
           font-weight: 500;
           letter-spacing: 0.007px;
+
+          // Mobile optimization - remove padding and reduce width
+          @media screen and (max-width: 768px) {
+            width: auto;
+            font-size: 11px;
+            padding: 0 8px;
+            margin: 0;
+            white-space: nowrap;
+          }
+
+          @media screen and (max-width: 480px) {
+            width: auto;
+            font-size: 10px;
+            padding: 0 6px;
+            margin: 0;
+            white-space: nowrap;
+          }
+
+          @media screen and (max-width: 360px) {
+            width: auto;
+            font-size: 9px;
+            padding: 0 4px;
+            margin: 0;
+            letter-spacing: 0;
+            white-space: nowrap;
+          }
+        }
+
+        // Ensure icon buttons are visible on mobile
+        &.media-search,
+        &.media-filters-toggle,
+        &.media-tags-toggle,
+        &.media-sorting-toggle {
+          @media screen and (max-width: 768px) {
+            display: inline-flex;
+            align-items: center;
+
+            span {
+              font-size: 14px;
+            }
+          }
         }
 
         &.active {
@@ -411,17 +601,25 @@
         }
 
         &.media-search {
+          display: flex !important;
+          align-items: center;
+
           > * {
             position: relative;
-            display: table;
-            float: left;
+            display: flex;
+            align-items: center;
             width: auto;
             height: 3rem;
 
             > span {
-              display: table-cell;
-              vertical-align: middle;
+              display: inline-flex;
+              align-items: center;
             }
+          }
+
+          form {
+            display: flex;
+            align-items: center;
           }
 
           button {
@@ -430,17 +628,27 @@
           }
 
           input[type='text'] {
+            width: 178px;
             max-width: 178px;
-            padding-left: 0;
-            padding-right: 0;
+            padding-left: 8px;
+            padding-right: 8px;
             font-weight: 500;
             border-width: 0 0 2px;
+            border-color: var(--profile-page-nav-link-text-color);
             background-color: transparent;
             background-color: rgba(0, 0, 0, 0);
             box-shadow: none;
+            font-size: 14px;
+            color: var(--profile-page-nav-link-text-color);
+
+            &::placeholder {
+              color: var(--profile-page-nav-link-text-color);
+              opacity: 0.7;
+            }
 
             &:focus {
               border-bottom-color: var(--profile-page-nav-link-active-after-bg-color);
+              outline: none;
             }
           }
         }
@@ -454,7 +662,7 @@
     }
 
     .profile-nav {
-      z-index: +2;
+      z-index: 3;
       position: fixed;
       top: var(--header-height);
       left: 0;
@@ -480,6 +688,8 @@
   #page-profile-media &,
   #page-profile-about &,
   #page-profile-playlists &,
+  #page-profile-shared-by-me &,
+  #page-profile-shared-with-me &,
   #page-liked.profile-page-liked &,
   #page-history.profile-page-history & {
     padding-bottom: 0;

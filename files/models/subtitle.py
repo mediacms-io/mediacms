@@ -1,8 +1,11 @@
 import os
 import tempfile
 
+import pysubs2
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 
 from .. import helpers
@@ -42,6 +45,8 @@ class Subtitle(models.Model):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE)
 
     class Meta:
+        verbose_name = "Caption"
+        verbose_name_plural = "Captions"
         ordering = ["language__title"]
 
     def __str__(self):
@@ -71,6 +76,17 @@ class Subtitle(models.Model):
                 raise Exception("Could not convert to srt")
         return True
 
+    @property
+    def subtitle_text(self):
+        sub = pysubs2.load(self.subtitle_file.path, encoding="utf-8")
+        text = ' '.join([line.text for line in sub])
+        text = text.replace("\\N", " ")
+        text = text.replace("-", " ")
+        text = text.replace(".", " ")
+        text = text.replace("  ", " ")
+
+        return text
+
 
 class TranscriptionRequest(models.Model):
     # Whisper transcription request
@@ -80,5 +96,19 @@ class TranscriptionRequest(models.Model):
     translate_to_english = models.BooleanField(default=False)
     logs = models.TextField(blank=True, null=True)
 
+    class Meta:
+        verbose_name = "Caption Request"
+        verbose_name_plural = "Caption Requests"
+
     def __str__(self):
         return f"Transcription request for {self.media.title} - {self.status}"
+
+
+@receiver(post_save, sender=Subtitle)
+def subtitle_save(sender, instance, created, **kwargs):
+    from .. import tasks
+
+    tasks.update_search_vector.apply_async(
+        args=[instance.media.friendly_token],
+        countdown=10,
+    )

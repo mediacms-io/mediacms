@@ -31,7 +31,8 @@ export function LazyLoadItemListAsync(props) {
         props.firstItemRequestUrl,
         props.requestUrl,
         onItemsCount,
-        onItemsLoad
+        onItemsLoad,
+        props.onResponseDataLoaded
       )
     );
 
@@ -51,6 +52,12 @@ export function LazyLoadItemListAsync(props) {
     };
   }, []);
 
+  useEffect(() => {
+    if (props.onItemsUpdate && items.length > 0) {
+      props.onItemsUpdate(items);
+    }
+  }, [items]);
+
   return !countedItems ? (
     <PendingItemsList className={classname.listOuter} />
   ) : !items.length ? null : (
@@ -60,7 +67,15 @@ export function LazyLoadItemListAsync(props) {
       <div ref={itemsListWrapperRef} className="items-list-wrap">
         <div ref={itemsListRef} className={classname.list}>
           {items.map((itm, index) => (
-            <ListItem key={index} {...listItemProps(props, itm, index)} />
+            <ListItem
+              key={index}
+              {...listItemProps(props, itm, index)}
+              showSelection={props.showSelection}
+              hasAnySelection={props.hasAnySelection}
+              isSelected={props.selectedMedia && props.selectedMedia.has(itm.friendly_token || itm.uid || itm.id)}
+              onSelectionChange={props.onMediaSelection}
+              mediaId={itm.friendly_token || itm.uid || itm.id}
+            />
           ))}
         </div>
       </div>
