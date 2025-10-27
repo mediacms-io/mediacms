@@ -96,7 +96,8 @@ const App = () => {
                 case 'ArrowLeft':
                     event.preventDefault();
                     if (videoRef.current) {
-                        const newTime = Math.max(currentTime - 10, 0);
+                        // Use the video element's current time directly to avoid stale state
+                        const newTime = Math.max(videoRef.current.currentTime - 10, 0);
                         handleMobileSafeSeek(newTime);
                         logger.debug('Jumped backward 10 seconds to:', formatDetailedTime(newTime));
                     }
@@ -104,7 +105,8 @@ const App = () => {
                 case 'ArrowRight':
                     event.preventDefault();
                     if (videoRef.current) {
-                        const newTime = Math.min(currentTime + 10, duration);
+                        // Use the video element's current time directly to avoid stale state
+                        const newTime = Math.min(videoRef.current.currentTime + 10, duration);
                         handleMobileSafeSeek(newTime);
                         logger.debug('Jumped forward 10 seconds to:', formatDetailedTime(newTime));
                     }
@@ -117,7 +119,7 @@ const App = () => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [handlePlay, handleMobileSafeSeek, currentTime, duration, videoRef]);
+    }, [handlePlay, handleMobileSafeSeek, duration, videoRef]);
 
     return (
         <div className="bg-background min-h-screen">

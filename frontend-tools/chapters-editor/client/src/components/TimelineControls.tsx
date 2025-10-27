@@ -589,12 +589,13 @@ const TimelineControls = ({
 
     // Update display time and check for transitions between segments and empty spaces
     useEffect(() => {
-        // Always update display time to match current video time when playing
+        // Always update display time to match current video time
         if (videoRef.current) {
-            // If video is playing, always update the displayed time in the tooltip
+            // Always update display time when current time changes (both playing and paused)
+            setDisplayTime(currentTime);
+            
+            // If video is playing, also update the tooltip and perform segment checks
             if (!videoRef.current.paused) {
-                setDisplayTime(currentTime);
-
                 // Also update clicked time to keep them in sync when playing
                 // This ensures correct time is shown when pausing
                 setClickedTime(currentTime);

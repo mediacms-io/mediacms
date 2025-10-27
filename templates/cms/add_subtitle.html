@@ -5,8 +5,9 @@
 {% block headtitle %}Add subtitle - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block innercontent %}
-			{% include "cms/media_nav.html" with active_tab="subtitles" %}
-
+    <div class="user-action-form-wrap">
+		{% include "cms/media_nav.html" with active_tab="subtitles" %}
+	</div>
 
 	{% if whisper_form %}
 		<div class="user-action-form-wrap">
