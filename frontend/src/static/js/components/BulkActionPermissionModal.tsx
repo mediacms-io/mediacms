@@ -29,7 +29,7 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
 }) => {
   const [existingUsers, setExistingUsers] = useState<string[]>([]);
   const [existingSearchTerm, setExistingSearchTerm] = useState('');
-  const [usersToAdd, setUsersToAdd] = useState<string[]>([]);
+  const [usersToAdd, setUsersToAdd] = useState<Array<{ username: string; display: string }>>([]);
   const [usersToRemove, setUsersToRemove] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [addSearchTerm, setAddSearchTerm] = useState('');
@@ -127,15 +127,15 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
 
   const addUserToList = (username: string, name: string, email?: string) => {
     const userDisplay = `${name} - ${email || username}`;
-    if (!usersToAdd.includes(userDisplay) && !existingUsers.includes(userDisplay)) {
-      setUsersToAdd([...usersToAdd, userDisplay]);
+    if (!usersToAdd.some(u => u.username === username) && !existingUsers.includes(userDisplay)) {
+      setUsersToAdd([...usersToAdd, { username, display: userDisplay }]);
       setAddSearchTerm('');
       setSearchResults([]);
     }
   };
 
-  const removeUserFromAddList = (user: string) => {
-    setUsersToAdd(usersToAdd.filter((u) => u !== user));
+  const removeUserFromAddList = (username: string) => {
+    setUsersToAdd(usersToAdd.filter((u) => u.username !== username));
   };
 
   const markUserForRemoval = (user: string) => {
@@ -149,7 +149,8 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
   };
 
   const extractUsername = (userDisplay: string): string => {
-    // Extract username from "Name - username" format
+    // For existing users from API, extract username from "Name - username/email" format
+    // Note: This assumes the username is after the last ' - ' separator
     const parts = userDisplay.split(' - ');
     return parts.length > 1 ? parts[parts.length - 1] : userDisplay;
   };
@@ -160,7 +161,7 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
     try {
       // First, add users if any
       if (usersToAdd.length > 0) {
-        const usernamesToAdd = usersToAdd.map(extractUsername);
+        const usernamesToAdd = usersToAdd.map(u => u.username);
         const addResponse = await fetch('/api/v1/media/user/bulk_actions', {
           method: 'POST',
           headers: {
@@ -264,9 +265,9 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
                 <div className="empty-message">{translateString('No users to add')}</div>
               ) : (
                 usersToAdd.map((user) => (
-                  <div key={user} className="user-item">
-                    <span>{user}</span>
-                    <button className="remove-btn" onClick={() => removeUserFromAddList(user)}>
+                  <div key={user.username} className="user-item">
+                    <span>{user.display}</span>
+                    <button className="remove-btn" onClick={() => removeUserFromAddList(user.username)}>
                       ×
                     </button>
                   </div>
