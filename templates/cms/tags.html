@@ -13,11 +13,11 @@
 
 <script type="application/ld+json">
 {
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	"itemListElement": [{
-		"@type": "ListItem",
-		"position": 1,
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
         "name": "{{PORTAL_NAME}}",
         "item": {
             "@type": "WebPage",
@@ -41,5 +41,6 @@
 {% block content %}<div id="page-tags"></div>{% endblock %}
 
 {% block bottomimports %}
+    {{ block.super }}
     <script src="{% static "js/tags.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

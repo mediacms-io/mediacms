@@ -29,5 +29,6 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
+    {{ block.super }}
     <script src="{% static "js/profile-playlists.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
