@@ -7,3 +7,4 @@ export * from './MediaShareEmbed.jsx';
 export * from './MediaShareOptions.jsx';
 export * from './OtherMediaDownloadLink.jsx';
 export * from './VideoMediaDownloadLink.jsx';
+export * from './AttachmentDownloadLink.jsx';
