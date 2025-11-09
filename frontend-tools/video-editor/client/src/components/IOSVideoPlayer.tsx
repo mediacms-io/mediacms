@@ -13,6 +13,7 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
     const [videoUrl, setVideoUrl] = useState<string>('');
     const [iosVideoRef, setIosVideoRef] = useState<HTMLVideoElement | null>(null);
     const [posterImage, setPosterImage] = useState<string | undefined>(undefined);
+    const [isAudioFile, setIsAudioFile] = useState(false);
 
     // Refs for hold-to-continue functionality
     const incrementIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -41,12 +42,13 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
         setVideoUrl(url);
 
         // Check if the media is an audio file and set poster image
-        const isAudioFile = url.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
+        const audioFile = url.match(/\.(mp3|wav|ogg|m4a|aac|flac)$/i) !== null;
+        setIsAudioFile(audioFile);
         
         // Get posterUrl from MEDIA_DATA, or use audio-poster.jpg as fallback for audio files when posterUrl is empty, null, or "None"
         const mediaPosterUrl = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.posterUrl) || '';
         const isValidPoster = mediaPosterUrl && mediaPosterUrl !== 'None' && mediaPosterUrl.trim() !== '';
-        setPosterImage(isValidPoster ? mediaPosterUrl : (isAudioFile ? AUDIO_POSTER_URL : undefined));
+        setPosterImage(isValidPoster ? mediaPosterUrl : (audioFile ? AUDIO_POSTER_URL : undefined));
     }, [videoRef]);
 
     // Function to jump 15 seconds backward
@@ -128,22 +130,34 @@ const IOSVideoPlayer = ({ videoRef, currentTime, duration }: IOSVideoPlayerProps
                 </span>
             </div>
 
-            {/* iOS-optimized Video Element with Native Controls */}
-            <video
-                ref={(ref) => setIosVideoRef(ref)}
-                className="w-full rounded-md"
-                src={videoUrl}
-                controls
-                playsInline
-                webkit-playsinline="true"
-                x-webkit-airplay="allow"
-                preload="auto"
-                crossOrigin="anonymous"
-                poster={posterImage}
-            >
-                <source src={videoUrl} type="video/mp4" />
-                <p>Your browser doesn't support HTML5 video.</p>
-            </video>
+            {/* Video container with persistent background for audio files */}
+            <div className="ios-video-wrapper">
+                {/* Persistent background image for audio files (Safari fix) */}
+                {isAudioFile && posterImage && (
+                    <div 
+                        className="ios-audio-poster-background" 
+                        style={{ backgroundImage: `url(${posterImage})` }}
+                        aria-hidden="true"
+                    />
+                )}
+                
+                {/* iOS-optimized Video Element with Native Controls */}
+                <video
+                    ref={(ref) => setIosVideoRef(ref)}
+                    className={`w-full rounded-md ${isAudioFile && posterImage ? 'audio-with-poster' : ''}`}
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    webkit-playsinline="true"
+                    x-webkit-airplay="allow"
+                    preload="auto"
+                    crossOrigin="anonymous"
+                    poster={posterImage}
+                >
+                    <source src={videoUrl} type="video/mp4" />
+                    <p>Your browser doesn't support HTML5 video.</p>
+                </video>
+            </div>
 
             {/* iOS Video Skip Controls */}
             <div className="ios-skip-controls mt-3 flex justify-center gap-4">
