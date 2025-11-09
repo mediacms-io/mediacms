@@ -3,11 +3,16 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 from django.urls import path, re_path
+from rest_framework import routers
 
 from . import management_views, tinymce_handlers, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
+from .views.attachment import AttachmentViewSet, edit_attachments
 
 friendly_token = r"(?P<friendly_token>[\w\-_]*)"
+
+router = routers.DefaultRouter()
+router.register(r"api/v1/attachments", AttachmentViewSet, basename="attachment")
 
 urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
@@ -21,6 +26,7 @@ urlpatterns = [
     re_path(r"^publish", views.publish_media, name="publish_media"),
     re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
     re_path(r"^edit_video", views.edit_video, name="edit_video"),
+    re_path(r'^edit_attachments', edit_attachments, name='edit_attachments'),
     re_path(r"^edit", views.edit_media, name="edit_media"),
     re_path(r"^embed", views.embed_media, name="get_embed"),
     re_path(r"^featured$", views.featured_media),
@@ -111,7 +117,7 @@ urlpatterns = [
     # Media uploads in ADMIN created pages
     re_path(r"^tinymce/upload/", tinymce_handlers.upload_image, name="tinymce_upload_image"),
     re_path("^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + router.urls
 
 
 if settings.USERS_NEEDS_TO_BE_APPROVED:
