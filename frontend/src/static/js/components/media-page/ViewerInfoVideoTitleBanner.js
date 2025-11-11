@@ -77,7 +77,7 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
                 .downloadLink ? (
                 <VideoMediaDownloadLink />
               ) : (
-                <OtherMediaDownloadLink link={this.downloadLink} title={this.props.title} />
+                <OtherMediaDownloadLink link={this.downloadLink} title={this.downloadFilename} />
               )}
 
               <MediaMoreOptionsIcon allowDownload={this.props.allowDownload} />
