@@ -8,12 +8,40 @@
     overflow: hidden;
 }
 
+/* Video wrapper for positioning background */
+.ios-video-wrapper {
+    position: relative;
+    width: 100%;
+    background-color: black;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Persistent background poster for audio files (Safari fix) */
+.ios-audio-poster-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+    pointer-events: none;
+}
+
 .ios-video-player-container video {
+    position: relative;
     width: 100%;
     height: auto;
     max-height: 360px;
     aspect-ratio: 16/9;
-    background-color: black;
+}
+
+/* Make video transparent only for audio files with poster so background shows through */
+.ios-video-player-container video.audio-with-poster {
+    background-color: transparent;
 }
 
 .ios-time-display {

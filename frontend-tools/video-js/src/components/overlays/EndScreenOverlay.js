@@ -49,10 +49,7 @@ class EndScreenOverlay extends Component {
 
         // Get videos to show - access directly from options during createEl
         const relatedVideos = this.options_?.relatedVideos || this.relatedVideos || [];
-        const videosToShow =
-            relatedVideos.length > 0
-                ? relatedVideos.slice(0, maxVideos)
-                : this.createSampleVideos().slice(0, maxVideos);
+        const videosToShow = relatedVideos.slice(0, maxVideos);
 
         if (useSwiper) {
             return this.createSwiperGrid(videosToShow, itemsPerView || 2, columns, gridRows || 1);
@@ -307,8 +304,8 @@ class EndScreenOverlay extends Component {
         if (this.relatedVideos && Array.isArray(this.relatedVideos) && this.relatedVideos.length > 0) {
             return this.relatedVideos.slice(0, maxVideos);
         }
-        // Fallback to sample videos for testing
-        return this.createSampleVideos().slice(0, maxVideos);
+        // Return empty array if no related videos
+        return [];
     }
 
     createVideoItem(video, isSwiperMode = false, itemsPerView = 2, isGridMode = false) {
@@ -745,153 +742,12 @@ class EndScreenOverlay extends Component {
         return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     }
 
-    createSampleVideos() {
-        return [
-            {
-                id: 'sample1',
-                title: 'React Full Course - Complete Tutorial for Beginners',
-                author: 'Bro Code',
-                views: '2.1M views',
-                duration: 1800,
-            },
-            {
-                id: 'sample2',
-                title: 'JavaScript ES6+ Modern Features',
-                author: 'Tech Tutorials',
-                views: '850K views',
-                duration: 1200,
-            },
-            {
-                id: 'sample3',
-                title: 'CSS Grid Layout Masterclass',
-                author: 'Web Dev Academy',
-                views: '1.2M views',
-                duration: 2400,
-            },
-            {
-                id: 'sample4',
-                title: 'Node.js Backend Development',
-                author: 'Code Master',
-                views: '650K views',
-                duration: 3600,
-            },
-            {
-                id: 'sample5',
-                title: 'Vue.js Complete Guide',
-                author: 'Frontend Pro',
-                views: '980K views',
-                duration: 2800,
-            },
-            {
-                id: 'sample6',
-                title: 'Python Data Science Bootcamp',
-                author: 'Data Academy',
-                views: '1.5M views',
-                duration: 4200,
-            },
-            {
-                id: 'sample7',
-                title: 'TypeScript for Beginners',
-                author: 'Code School',
-                views: '750K views',
-                duration: 1950,
-            },
-            {
-                id: 'sample8',
-                title: 'Docker Container Tutorial',
-                author: 'DevOps Pro',
-                views: '920K views',
-                duration: 2700,
-            },
-            {
-                id: 'sample9',
-                title: 'MongoDB Database Design',
-                author: 'DB Expert',
-                views: '580K views',
-                duration: 3200,
-            },
-            {
-                id: 'sample10',
-                title: 'AWS Cloud Computing Essentials',
-                author: 'Cloud Master',
-                views: '1.8M views',
-                duration: 4800,
-            },
-            {
-                id: 'sample11',
-                title: 'GraphQL API Development',
-                author: 'API Guru',
-                views: '420K views',
-                duration: 2100,
-            },
-            {
-                id: 'sample12',
-                title: 'Kubernetes Orchestration Guide',
-                author: 'Container Pro',
-                views: '680K views',
-                duration: 3900,
-            },
-            {
-                id: 'sample13',
-                title: 'Redis Caching Strategies',
-                author: 'Cache Expert',
-                views: '520K views',
-                duration: 2250,
-            },
-            {
-                id: 'sample14',
-                title: 'Web Performance Optimization',
-                author: 'Speed Master',
-                views: '890K views',
-                duration: 3100,
-            },
-            {
-                id: 'sample15',
-                title: 'CI/CD Pipeline Setup',
-                author: 'DevOps Guide',
-                views: '710K views',
-                duration: 2900,
-            },
-            {
-                id: 'sample16',
-                title: 'Microservices Architecture',
-                author: 'System Design',
-                views: '1.3M views',
-                duration: 4500,
-            },
-            {
-                id: 'sample17',
-                title: 'Next.js App Router Tutorial',
-                author: 'Web Academy',
-                views: '640K views',
-                duration: 2650,
-            },
-            {
-                id: 'sample18',
-                title: 'Tailwind CSS Crash Course',
-                author: 'CSS Master',
-                views: '1.1M views',
-                duration: 1800,
-            },
-            {
-                id: 'sample19',
-                title: 'Git and GitHub Essentials',
-                author: 'Version Control Pro',
-                views: '2.3M views',
-                duration: 3300,
-            },
-            {
-                id: 'sample20',
-                title: 'REST API Best Practices',
-                author: 'API Design',
-                views: '780K views',
-                duration: 2400,
-            },
-        ];
-    }
-
     show() {
-        this.el().style.display = 'flex';
+        // Only show if there are related videos
+        const relatedVideos = this.options_?.relatedVideos || this.relatedVideos || [];
+        if (relatedVideos.length > 0) {
+            this.el().style.display = 'flex';
+        }
     }
 
     hide() {

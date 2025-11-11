@@ -5,7 +5,6 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
 import { translateString } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
@@ -26,6 +25,7 @@ class ProfileSearchBar extends React.PureComponent {
 
     this.updateTimeout = null;
     this.pendingUpdate = false;
+    this.justShown = false;
   }
 
   updateQuery(value) {
@@ -45,10 +45,11 @@ class ProfileSearchBar extends React.PureComponent {
 
   onChange(ev) {
     this.pendingEvent = ev;
+    const newValue = ev.target.value || '';
 
     this.setState(
       {
-        queryVal: ev.target.value || '',
+        queryVal: newValue,
       },
       function () {
         if (this.updateTimeout) {
@@ -57,8 +58,11 @@ class ProfileSearchBar extends React.PureComponent {
 
         this.pendingEvent = null;
 
+        // Only trigger search if 3+ characters or empty (to reset)
         if ('function' === typeof this.props.onQueryChange) {
-          this.props.onQueryChange(this.state.queryVal);
+          if (newValue.length >= 3 || newValue.length === 0) {
+            this.props.onQueryChange(newValue);
+          }
         }
 
         this.updateTimeout = setTimeout(
@@ -100,10 +104,15 @@ class ProfileSearchBar extends React.PureComponent {
   }
 
   onInputBlur() {
+    // Don't hide immediately after showing to prevent race condition
+    if (this.justShown) {
+      return;
+    }
     this.hideForm();
   }
 
   showForm() {
+    this.justShown = true;
     this.setState(
       {
         visibleForm: true,
@@ -112,6 +121,10 @@ class ProfileSearchBar extends React.PureComponent {
         if ('function' === typeof this.props.toggleSearchField) {
           this.props.toggleSearchField();
         }
+        // Reset the flag after a short delay
+        setTimeout(() => {
+          this.justShown = false;
+        }, 200);
       }
     );
   }
@@ -137,24 +150,56 @@ class ProfileSearchBar extends React.PureComponent {
   }
 
   render() {
+    const hasSearchText = this.state.queryVal && this.state.queryVal.length > 0;
+
+    // Determine the correct action URL based on page type
+    let actionUrl = LinksContext._currentValue.profile.media;
+    if (this.props.type === 'shared_by_me') {
+      actionUrl = LinksContext._currentValue.profile.shared_by_me;
+    } else if (this.props.type === 'shared_with_me') {
+      actionUrl = LinksContext._currentValue.profile.shared_with_me;
+    }
+
     if (!this.state.visibleForm) {
       return (
-        <div>
-          <span>
-            <CircleIconButton buttonShadow={false} onClick={this.showForm}>
-              <i className="material-icons">search</i>
-            </CircleIconButton>
-          </span>
-        </div>
+        <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.showForm}>
+          <CircleIconButton buttonShadow={false}>
+            <i className="material-icons">search</i>
+          </CircleIconButton>
+          {hasSearchText ? (
+            <span style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--default-theme-color)',
+              border: '2px solid white',
+            }}></span>
+          ) : null}
+        </span>
       );
     }
 
     return (
-      <form method="get" action={LinksContext._currentValue.profile.media} onSubmit={this.onFormSubmit}>
-        <span>
+      <form method="get" action={actionUrl} onSubmit={this.onFormSubmit}>
+        <span style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
           <CircleIconButton buttonShadow={false}>
             <i className="material-icons">search</i>
           </CircleIconButton>
+          {hasSearchText ? (
+            <span style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--default-theme-color)',
+              border: '2px solid white',
+            }}></span>
+          ) : null}
         </span>
         <span>
           <input
@@ -177,6 +222,7 @@ class ProfileSearchBar extends React.PureComponent {
 
 ProfileSearchBar.propTypes = {
   onQueryChange: PropTypes.func,
+  type: PropTypes.string,
 };
 
 ProfileSearchBar.defaultProps = {};
@@ -207,12 +253,11 @@ class NavMenuInlineTabs extends React.PureComponent {
       displayPrev: false,
     };
 
-    this.inlineSlider = null;
-
     this.nextSlide = this.nextSlide.bind(this);
     this.prevSlide = this.prevSlide.bind(this);
 
-    this.updateSlider = this.updateSlider.bind(this, false);
+    this.updateSlider = this.updateSlider.bind(this);
+    this.updateSliderButtonsView = this.updateSliderButtonsView.bind(this);
 
     this.onToggleSearchField = this.onToggleSearchField.bind(this);
 
@@ -266,44 +311,57 @@ class NavMenuInlineTabs extends React.PureComponent {
 
   componentDidMount() {
     this.updateSlider();
+    if (this.refs.itemsListWrap) {
+      this.refs.itemsListWrap.addEventListener('scroll', this.updateSliderButtonsView.bind(this));
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.refs.itemsListWrap) {
+      this.refs.itemsListWrap.removeEventListener('scroll', this.updateSliderButtonsView.bind(this));
+    }
   }
 
   nextSlide() {
-    this.inlineSlider.nextSlide();
-    this.updateSliderButtonsView();
-    this.inlineSlider.scrollToCurrentSlide();
+    if (!this.refs.itemsListWrap) return;
+    const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
+    this.refs.itemsListWrap.scrollLeft += scrollAmount;
+    setTimeout(() => this.updateSliderButtonsView(), 50);
   }
 
   prevSlide() {
-    this.inlineSlider.previousSlide();
-    this.updateSliderButtonsView();
-    this.inlineSlider.scrollToCurrentSlide();
+    if (!this.refs.itemsListWrap) return;
+    const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
+    this.refs.itemsListWrap.scrollLeft -= scrollAmount;
+    setTimeout(() => this.updateSliderButtonsView(), 50);
   }
 
   updateSlider(afterItemsUpdate) {
-    if (!this.inlineSlider) {
-      this.inlineSlider = new ItemsInlineSlider(this.refs.itemsListWrap, '.profile-nav ul li');
-    }
-
-    this.inlineSlider.updateDataState(document.querySelectorAll('.profile-nav ul li').length, true, !afterItemsUpdate);
-
     this.updateSliderButtonsView();
-
-    if (this.pendingChangeSlide) {
-      this.pendingChangeSlide = false;
-      this.inlineSlider.scrollToCurrentSlide();
-    }
   }
 
   updateSliderButtonsView() {
+    if (!this.refs.itemsListWrap) return;
+
+    const container = this.refs.itemsListWrap;
+    const scrollLeft = container.scrollLeft;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+
+    // Show prev arrow if we can scroll left
+    const canScrollLeft = scrollLeft > 1;
+
+    // Show next arrow if we can scroll right
+    const canScrollRight = scrollLeft < scrollWidth - clientWidth - 1;
+
     this.setState({
-      displayPrev: this.inlineSlider.hasPreviousSlide(),
-      displayNext: this.inlineSlider.hasNextSlide(),
+      displayPrev: canScrollLeft,
+      displayNext: canScrollRight,
     });
   }
 
   onToggleSearchField() {
-    this.updateSlider();
+    setTimeout(() => this.updateSlider(), 100);
   }
 
   render() {
@@ -322,9 +380,25 @@ class NavMenuInlineTabs extends React.PureComponent {
             <InlineTab
               id="media"
               isActive={'media' === this.props.type}
-              label={translateString('Media')}
+              label={translateString(this.userIsAuthor ? 'Media I own' : 'Media')}
               link={LinksContext._currentValue.profile.media}
             />
+            {this.userIsAuthor ? (
+              <InlineTab
+                id="shared_by_me"
+                isActive={'shared_by_me' === this.props.type}
+                label={translateString('Shared by me')}
+                link={LinksContext._currentValue.profile.shared_by_me}
+              />
+            ) : null}
+            {this.userIsAuthor ? (
+              <InlineTab
+                id="shared_with_me"
+                isActive={'shared_with_me' === this.props.type}
+                label={translateString('Shared with me')}
+                link={LinksContext._currentValue.profile.shared_with_me}
+              />
+            ) : null}
 
             {MemberContext._currentValue.can.saveMedia ? (
               <InlineTab
@@ -351,9 +425,74 @@ class NavMenuInlineTabs extends React.PureComponent {
               />
             ) : null}
 
-            <li className="media-search">
-              <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} />
-            </li>
+            {!['about', 'playlists'].includes(this.props.type) ? (
+              <li className="media-search">
+                <ProfileSearchBar onQueryChange={this.props.onQueryChange} toggleSearchField={this.onToggleSearchField} type={this.props.type} />
+              </li>
+            ) : null}
+            {this.props.onToggleFiltersClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-filters-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleFiltersClick} title={translateString('Filters')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">filter_list</i>
+                  </CircleIconButton>
+                  {this.props.hasActiveFilters ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
+                </span>
+              </li>
+            ) : null}
+            {this.props.onToggleTagsClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-tags-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleTagsClick} title={translateString('Tags')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">local_offer</i>
+                  </CircleIconButton>
+                  {this.props.hasActiveTags ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
+                </span>
+              </li>
+            ) : null}
+            {this.props.onToggleSortingClick && ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
+              <li className="media-sorting-toggle">
+                <span style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }} onClick={this.props.onToggleSortingClick} title={translateString('Sort By')}>
+                  <CircleIconButton buttonShadow={false}>
+                    <i className="material-icons">swap_vert</i>
+                  </CircleIconButton>
+                  {this.props.hasActiveSort ? (
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--default-theme-color)',
+                      border: '2px solid white',
+                    }}></span>
+                  ) : null}
+                </span>
+              </li>
+            ) : null}
           </ul>
 
           {this.state.displayNext ? this.nextBtn : null}
@@ -366,6 +505,12 @@ class NavMenuInlineTabs extends React.PureComponent {
 NavMenuInlineTabs.propTypes = {
   type: PropTypes.string.isRequired,
   onQueryChange: PropTypes.func,
+  onToggleFiltersClick: PropTypes.func,
+  onToggleTagsClick: PropTypes.func,
+  onToggleSortingClick: PropTypes.func,
+  hasActiveFilters: PropTypes.bool,
+  hasActiveTags: PropTypes.bool,
+  hasActiveSort: PropTypes.bool,
 };
 
 function AddBannerButton(props) {
@@ -375,8 +520,8 @@ function AddBannerButton(props) {
     link = '/edit-channel.html';
   }
   return (
-    <a href={link} className="edit-channel" title="Add banner">
-      ADD BANNER
+    <a href={link} className="edit-channel-icon" title="Add banner">
+      <i className="material-icons">add_photo_alternate</i>
     </a>
   );
 }
@@ -388,8 +533,8 @@ function EditBannerButton(props) {
     link = '/edit-channel.html';
   }
   return (
-    <a href={link} className="edit-channel" title="Edit banner">
-      EDIT BANNER
+    <a href={link} className="edit-channel-icon" title="Edit banner">
+      <i className="material-icons">edit</i>
     </a>
   );
 }
@@ -402,8 +547,8 @@ function EditProfileButton(props) {
   }
 
   return (
-    <a href={link} className="edit-profile" title="Edit profile">
-      EDIT PROFILE
+    <a href={link} className="edit-profile-icon" title="Edit profile">
+      <i className="material-icons">edit</i>
     </a>
   );
 }
@@ -528,11 +673,11 @@ export default function ProfilePagesHeader(props) {
           ></span>
         ) : null}
 
-        {userCanDeleteProfile ? (
+        {userCanDeleteProfile && !userIsAuthor ? (
           <span className="delete-profile-wrap">
             <PopupTrigger contentRef={popupContentRef}>
-              <button className="delete-profile" title="">
-                REMOVE PROFILE
+              <button className="delete-profile" title="Remove profile">
+                <i className="material-icons">delete</i>
               </button>
             </PopupTrigger>
 
@@ -556,7 +701,7 @@ export default function ProfilePagesHeader(props) {
           </span>
         ) : null}
 
-        {userCanEditProfile ? (
+        {userCanEditProfile && userIsAuthor ? (
           props.author.banner_thumbnail_url ? (
             <EditBannerButton link={ProfilePageStore.get('author-data').default_channel_edit_url} />
           ) : (
@@ -571,14 +716,28 @@ export default function ProfilePagesHeader(props) {
             <div className="profile-info-inner">
               <div>{props.author.thumbnail_url ? <img src={props.author.thumbnail_url} alt="" /> : null}</div>
               <div>
-                {props.author.name ? <h1>{props.author.name}</h1> : null}
-                {userCanEditProfile ? <EditProfileButton link={ProfilePageStore.get('author-data').edit_url} /> : null}
+                {props.author.name ? (
+                  <div className="profile-name-edit-wrapper">
+                    <h1>{props.author.name}</h1>
+                    {userCanEditProfile && !userIsAuthor ? <EditProfileButton link={ProfilePageStore.get('author-data').edit_url} /> : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         ) : null}
 
-        <NavMenuInlineTabs ref={profileNavRef} type={props.type} onQueryChange={props.onQueryChange} />
+        <NavMenuInlineTabs
+          ref={profileNavRef}
+          type={props.type}
+          onQueryChange={props.onQueryChange}
+          onToggleFiltersClick={props.onToggleFiltersClick}
+          onToggleTagsClick={props.onToggleTagsClick}
+          onToggleSortingClick={props.onToggleSortingClick}
+          hasActiveFilters={props.hasActiveFilters}
+          hasActiveTags={props.hasActiveTags}
+          hasActiveSort={props.hasActiveSort}
+        />
       </div>
     </div>
   );
@@ -588,6 +747,12 @@ ProfilePagesHeader.propTypes = {
   author: PropTypes.object.isRequired,
   type: PropTypes.string.isRequired,
   onQueryChange: PropTypes.func,
+  onToggleFiltersClick: PropTypes.func,
+  onToggleTagsClick: PropTypes.func,
+  onToggleSortingClick: PropTypes.func,
+  hasActiveFilters: PropTypes.bool,
+  hasActiveTags: PropTypes.bool,
+  hasActiveSort: PropTypes.bool,
 };
 
 ProfilePagesHeader.defaultProps = {

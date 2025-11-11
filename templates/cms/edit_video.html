@@ -5,10 +5,9 @@
 {% block headtitle %}Edit video - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-<link href="{% static "video_editor/video-editor.css?v={{ VERSION }}" %}" rel="preload" as="style">
-<link href="{% static "video_editor/video-editor.css?v={{ VERSION }}" %}" rel="stylesheet">
-
-<script src="{% static 'video_editor/video-editor.js?v={{ VERSION }}' %}"></script>
+<link href="{% static 'video_editor/video-editor.css' %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static 'video_editor/video-editor.css' %}?v={{ VERSION }}" rel="stylesheet">
+<script src="{% static 'video_editor/video-editor.js' %}?v={{ VERSION }}"></script>
 
 <script>
 window.MEDIA_DATA = {

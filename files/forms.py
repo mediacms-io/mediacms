@@ -178,14 +178,11 @@ class MediaPublishForm(forms.ModelForm):
         state = cleaned_data.get("state")
         categories = cleaned_data.get("category")
 
-        if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
+        if state in ['private', 'unlisted']:
+            custom_permissions = self.instance.permissions.exists()
             rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
-
-            if rbac_categories and state in ['private', 'unlisted']:
-                # Make the confirm_state field visible and add it to the layout
+            if rbac_categories or custom_permissions:
                 self.fields['confirm_state'].widget = forms.CheckboxInput()
-
-                # add it after the state field
                 state_index = None
                 for i, layout_item in enumerate(self.helper.layout):
                     if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
@@ -198,8 +195,12 @@ class MediaPublishForm(forms.ModelForm):
                     self.helper.layout = Layout(*layout_items)
 
                 if not cleaned_data.get('confirm_state'):
-                    error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', '.join(rbac_categories)}"
-                    self.add_error('confirm_state', error_message)
+                    if rbac_categories:
+                        error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to categories: {', '.join(rbac_categories)}"
+                        self.add_error('confirm_state', error_message)
+                    if custom_permissions:
+                        error_message = f"I understand that although media state is {state}, the media is also shared by me with other users, that I can see in the 'Shared by me' page"
+                        self.add_error('confirm_state', error_message)
 
         return cleaned_data
 

@@ -22,7 +22,7 @@
   max-width: 100%;
   min-height: 48px;
   margin: 12px;
-  color: #f1f1f1;
+  color: #f1f1f1 !important;
   background-color: #323232;
   border-radius: 2px;
   box-shadow: 0 2px 5px 0 rgba(#000, 0.26);
@@ -35,6 +35,12 @@
     line-height: 20px;
     padding: 8px 24px;
     overflow: hidden;
+    color: #f1f1f1 !important;
+    font-size: 14px !important;
+  }
+
+  div {
+    color: #f1f1f1 !important;
   }
 
   &.hidden {

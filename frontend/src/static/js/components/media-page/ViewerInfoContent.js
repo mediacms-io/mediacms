@@ -80,8 +80,8 @@ function EditMediaButton(props) {
   }
 
   return (
-    <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media">
-      {translateString('EDIT MEDIA')}
+    <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media-icon">
+      <i className="material-icons">edit</i>
     </a>
   );
 }
@@ -217,31 +217,37 @@ export default function ViewerInfoContent(props) {
             />
           ) : null}
 
-          {userCan.editMedia || userCan.deleteMedia ? (
+          {userCan.editMedia ? (
             <div className="media-author-actions">
               {userCan.editMedia ? <EditMediaButton link={MediaPageStore.get('media-data').edit_url} /> : null}
 
-              <PopupTrigger contentRef={popupContentRef}>
-                <button className="remove-media">{translateString('DELETE MEDIA')}</button>
-              </PopupTrigger>
+              {userCan.deleteMedia ? (
+                <PopupTrigger contentRef={popupContentRef}>
+                  <button className="remove-media-icon" title={translateString('Delete media')}>
+                    <i className="material-icons">delete</i>
+                  </button>
+                </PopupTrigger>
+              ) : null}
 
-              <PopupContent contentRef={popupContentRef}>
-                <PopupMain>
-                  <div className="popup-message">
-                    <span className="popup-message-title">Media removal</span>
-                    <span className="popup-message-main">You're willing to remove media permanently?</span>
-                  </div>
-                  <hr />
-                  <span className="popup-message-bottom">
-                    <button className="button-link cancel-comment-removal" onClick={cancelMediaRemoval}>
-                      CANCEL
-                    </button>
-                    <button className="button-link proceed-comment-removal" onClick={proceedMediaRemoval}>
-                      PROCEED
-                    </button>
-                  </span>
-                </PopupMain>
-              </PopupContent>
+              {userCan.deleteMedia ? (
+                <PopupContent contentRef={popupContentRef}>
+                  <PopupMain>
+                    <div className="popup-message">
+                      <span className="popup-message-title">Media removal</span>
+                      <span className="popup-message-main">You're willing to remove media permanently?</span>
+                    </div>
+                    <hr />
+                    <span className="popup-message-bottom">
+                      <button className="button-link cancel-comment-removal" onClick={cancelMediaRemoval}>
+                        CANCEL
+                      </button>
+                      <button className="button-link proceed-comment-removal" onClick={proceedMediaRemoval}>
+                        PROCEED
+                      </button>
+                    </span>
+                  </PopupMain>
+                </PopupContent>
+              ) : null}
             </div>
           ) : null}
         </div>

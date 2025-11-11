@@ -5,10 +5,9 @@
 {% block headtitle %}Edit video chapters - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
-<link href="{% static "chapters_editor/chapters-editor.css?v={{ VERSION }}" %}" rel="preload" as="style">
-<link href="{% static "chapters_editor/chapters-editor.css?v={{ VERSION }}" %}" rel="stylesheet">
-
-<script src="{% static 'chapters_editor/chapters-editor.js?v={{ VERSION }}' %}"></script>
+<link href="{% static 'chapters_editor/chapters-editor.css' %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static 'chapters_editor/chapters-editor.css' %}?v={{ VERSION }}" rel="stylesheet">
+<script src="{% static 'chapters_editor/chapters-editor.js' %}?v={{ VERSION }}"></script>
 
 <script>
     window.MEDIA_DATA = {
