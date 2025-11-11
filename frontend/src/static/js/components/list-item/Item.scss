@@ -598,3 +598,209 @@ a.item-edit-link {
     }
   }
 }
+
+// Bulk selection checkbox styles
+.item.with-selection {
+  .item-content {
+    position: relative;
+  }
+
+  // Selected state styling
+  &.selected {
+    .item-content {
+      background-color: rgba(0, 0, 0, 0.05);
+      border: 2px solid var(--default-theme-color, #009933);
+      border-radius: 8px;
+      padding: 4px;
+
+      .dark_theme & {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    .item-thumb {
+      opacity: 0.9;
+    }
+  }
+
+  .item-selection-checkbox {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    input[type='checkbox'] {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      border: 2px solid #666;
+      border-radius: 3px;
+      background-color: white;
+      transition: all 0.2s ease;
+      position: relative;
+      pointer-events: auto;
+      margin: 0;
+      flex-shrink: 0;
+
+      &:hover {
+        border-color: #333;
+        box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+      }
+
+      &:checked {
+        background-color: var(--default-theme-color, #009933);
+        border-color: var(--default-theme-color, #009933);
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 7px;
+          top: 3px;
+          width: 6px;
+          height: 12px;
+          border: solid white;
+          border-width: 0 3px 3px 0;
+          transform: rotate(45deg);
+        }
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
+  // Show checkbox only on hover
+  &:hover .item-selection-checkbox {
+    opacity: 1;
+  }
+
+  // Always show checkbox when this item is selected
+  &.selected .item-selection-checkbox {
+    opacity: 1;
+  }
+
+  // Show all checkboxes when any item has a selection
+  &.has-any-selection .item-selection-checkbox {
+    opacity: 1;
+  }
+
+  // Add hover shadow when any selection is active
+  &.has-any-selection:not(.selected):hover {
+    .item-content {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .item-thumb {
+      border-radius: 10px;
+    }
+  }
+}
+
+// Edit icon styles
+.item-edit-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+
+  .dark_theme & {
+    background-color: rgba(42, 42, 42, 0.95);
+  }
+
+  .material-icons {
+    font-size: 18px;
+    color: #333;
+
+    .dark_theme & {
+      color: #fff;
+    }
+  }
+
+  &:hover {
+    background-color: var(--default-theme-color, #009933);
+
+    .material-icons {
+      color: white;
+    }
+  }
+}
+
+.item.with-selection:hover .item-edit-icon {
+  opacity: 1;
+}
+
+// View icon styles (eye icon below edit icon)
+.item-view-icon {
+  position: absolute;
+  top: 48px;
+  right: 8px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-decoration: none;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+
+  .dark_theme & {
+    background-color: rgba(42, 42, 42, 0.95);
+  }
+
+  .material-icons {
+    font-size: 18px;
+    color: #333;
+
+    .dark_theme & {
+      color: #fff;
+    }
+  }
+
+  &:hover {
+    background-color: var(--default-theme-color, #009933);
+
+    .material-icons {
+      color: white;
+    }
+  }
+}
+
+.item.with-selection:hover .item-view-icon {
+  opacity: 1;
+}

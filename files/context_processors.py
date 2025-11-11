@@ -57,6 +57,7 @@ def stuff(request):
     ret["USE_SAML"] = settings.USE_SAML
     ret["USE_RBAC"] = settings.USE_RBAC
     ret["USE_ROUNDED_CORNERS"] = settings.USE_ROUNDED_CORNERS
+    ret["INCLUDE_LISTING_NUMBERS"] = settings.INCLUDE_LISTING_NUMBERS
     ret["VERSION"] = VERSION
 
     if request.user.is_superuser:

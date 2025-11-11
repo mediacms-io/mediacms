@@ -6,6 +6,14 @@
   margin: 0 auto;
   width: 100%;
   max-width: 100%;
+
+  .bulk-actions-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 16px;
+  }
 }
 
 .media-list-row {

@@ -528,6 +528,17 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         return False
 
 
+@task(name="update_search_vector", queue="short_tasks")
+def update_search_vector(friendly_token):
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+        media.update_search_vector()
+    except:  # noqa
+        return False
+
+    return True
+
+
 @task(name="produce_sprite_from_video", queue="long_tasks")
 def produce_sprite_from_video(friendly_token):
     """Produces a sprites file for a video, uses ffmpeg"""
@@ -980,10 +991,10 @@ def post_trim_action(friendly_token):
         produce_sprite_from_video.delay(friendly_token)
         create_hls.delay(friendly_token)
 
-        vt_request = VideoTrimRequest.objects.filter(media=media, status="running").first()
-        if vt_request:
-            vt_request.status = "success"
-            vt_request.save(update_fields=["status"])
+    vt_request = VideoTrimRequest.objects.filter(media=media, status="running").first()
+    if vt_request:
+        vt_request.status = "success"
+        vt_request.save(update_fields=["status"])
 
     return True
 
@@ -1003,7 +1014,6 @@ def video_trim_task(self, trim_request_id):
 
     timestamps_encodings = get_trim_timestamps(trim_request.media.trim_video_path, trim_request.timestamps)
     timestamps_original = get_trim_timestamps(trim_request.media.media_file.path, trim_request.timestamps)
-
     if not timestamps_encodings:
         trim_request.status = "fail"
         trim_request.save(update_fields=["status"])

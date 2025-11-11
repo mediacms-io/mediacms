@@ -201,11 +201,18 @@ class LanguageAdmin(admin.ModelAdmin):
 
 
 class SubtitleAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["id", "language", "media"]
+    list_filter = ["language"]
+    search_fields = ["media__title"]
+    readonly_fields = ("media", "user")
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["media", "status", "add_date", "video_action", "media_trim_style", "timestamps"]
+    list_filter = ["status", "video_action", "media_trim_style", "add_date"]
+    search_fields = ["media__title"]
+    readonly_fields = ("add_date",)
+    ordering = ("-add_date",)
 
 
 class EncodingAdmin(admin.ModelAdmin):
@@ -224,7 +231,11 @@ class EncodingAdmin(admin.ModelAdmin):
 
 
 class TranscriptionRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["media", "add_date", "status", "translate_to_english"]
+    list_filter = ["status", "translate_to_english", "add_date"]
+    search_fields = ["media__title"]
+    readonly_fields = ("add_date", "logs")
+    ordering = ("-add_date",)
 
 
 class PageAdminForm(forms.ModelForm):

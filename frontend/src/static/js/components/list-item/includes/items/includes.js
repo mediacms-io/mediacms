@@ -49,6 +49,11 @@ export function UserItemMemberSince(props) {
 }
 
 export function TaxonomyItemMediaCount(props) {
+    // Check if listing numbers should be included based on settings
+    if (!window.MediaCMS.features.listings.includeNumbers) {
+        return null;
+    }
+
     return (
         <span key="item-media-count" className="item-media-count">
             {' ' + props.count} media
@@ -73,11 +78,19 @@ export function MediaItemEditLink(props) {
         link = '/edit-media.html';
     }
 
-    return !link ? null : (
-        <a href={link} title={translateString('Edit media')} className="item-edit-link">
-            {translateString('EDIT MEDIA')}
-        </a>
-    );
+  return !link ? null : (
+    <a href={link} title={translateString("Edit media")} className="item-edit-icon">
+      <i className="material-icons">edit</i>
+    </a>
+  );
+}
+
+export function MediaItemViewLink(props) {
+  return !props.link ? null : (
+    <a href={props.link} title={translateString("Publish media")} className="item-view-icon">
+      <i className="material-icons">publish</i>
+    </a>
+  );
 }
 
 export function MediaItemThumbnailLink(props) {

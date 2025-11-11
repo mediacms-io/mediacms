@@ -56,6 +56,10 @@ class VideoTrimRequest(models.Model):
     media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
     timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
 
+    class Meta:
+        verbose_name = "Trim Request"
+        verbose_name_plural = "Trim Requests"
+
     def __str__(self):
         return f"Trim request for {self.media.title} ({self.status})"
 

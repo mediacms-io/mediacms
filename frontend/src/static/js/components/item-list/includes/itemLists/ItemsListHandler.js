@@ -7,7 +7,8 @@ export function ItemsListHandler(
   first_item_request_url,
   request_url,
   itemsCountCallback,
-  loadItemsCallback
+  loadItemsCallback,
+  responseDataCallback
 ) {
   const config = {
     maxItems: maxItems || 255,
@@ -122,6 +123,11 @@ export function ItemsListHandler(
         state.totalPages = Math.ceil(state.totalItems / config.pageItems);
 
         callbacks.itemsCount();
+
+        // Call response data callback with full response data
+        if ('function' === typeof responseDataCallback) {
+          responseDataCallback(data);
+        }
       }
 
       loadNextItems();

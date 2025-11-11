@@ -20,6 +20,7 @@ class CustomChaptersOverlay extends Component {
         this.touchStartTime = 0;
         this.touchThreshold = 150; // ms for tap vs scroll detection
         this.isSmallScreen = window.innerWidth <= 480;
+        this.scrollY = 0; // Track scroll position before locking
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -31,6 +32,8 @@ class CustomChaptersOverlay extends Component {
         this.handleMobileInteraction = this.handleMobileInteraction.bind(this);
         this.setupResizeListener = this.setupResizeListener.bind(this);
         this.handleResize = this.handleResize.bind(this);
+        this.lockBodyScroll = this.lockBodyScroll.bind(this);
+        this.unlockBodyScroll = this.unlockBodyScroll.bind(this);
 
         // Initialize after player is ready
         this.player().ready(() => {
@@ -65,6 +68,9 @@ class CustomChaptersOverlay extends Component {
 
         const el = this.player().el();
         if (el) el.classList.remove('chapters-open');
+
+        // Restore body scroll on mobile when closing
+        this.unlockBodyScroll();
     }
 
     setupResizeListener() {
@@ -164,6 +170,8 @@ class CustomChaptersOverlay extends Component {
             this.overlay.style.display = 'none';
             const el = this.player().el();
             if (el) el.classList.remove('chapters-open');
+            // Restore body scroll on mobile when closing
+            this.unlockBodyScroll();
         };
         chapterClose.appendChild(closeBtn);
         playlistTitle.appendChild(chapterClose);
@@ -355,6 +363,37 @@ class CustomChaptersOverlay extends Component {
         }
     }
 
+    lockBodyScroll() {
+        if (!this.isMobile) return;
+
+        // Save current scroll position
+        this.scrollY = window.scrollY || window.pageYOffset;
+
+        // Lock body scroll with proper iOS handling
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${this.scrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+    }
+
+    unlockBodyScroll() {
+        if (!this.isMobile) return;
+
+        // Restore body scroll
+        const scrollY = this.scrollY;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+    }
+
     toggleOverlay() {
         if (!this.overlay) return;
 
@@ -369,17 +408,11 @@ class CustomChaptersOverlay extends Component {
             navigator.vibrate(30);
         }
 
-        // Prevent body scroll on mobile when overlay is open
-        if (this.isMobile) {
-            if (isHidden) {
-                document.body.style.overflow = 'hidden';
-                document.body.style.position = 'fixed';
-                document.body.style.width = '100%';
-            } else {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.width = '';
-            }
+        // Lock/unlock body scroll on mobile when overlay opens/closes
+        if (isHidden) {
+            this.lockBodyScroll();
+        } else {
+            this.unlockBodyScroll();
         }
 
         try {
@@ -390,7 +423,9 @@ class CustomChaptersOverlay extends Component {
                     m.classList.remove('vjs-lock-showing');
                     m.style.display = 'none';
                 });
-        } catch (e) {}
+        } catch {
+            // Ignore errors when closing menus
+        }
     }
 
     updateCurrentChapter() {
@@ -406,7 +441,6 @@ class CustomChaptersOverlay extends Component {
                 currentTime >= chapter.startTime &&
                 (index === this.chaptersData.length - 1 || currentTime < this.chaptersData[index + 1].startTime);
 
-            const handle = item.querySelector('.playlist-drag-handle');
             const dynamic = item.querySelector('.meta-dynamic');
             if (isPlaying) {
                 currentChapterIndex = index;
@@ -463,11 +497,7 @@ class CustomChaptersOverlay extends Component {
             if (el) el.classList.remove('chapters-open');
 
             // Restore body scroll on mobile
-            if (this.isMobile) {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.width = '';
-            }
+            this.unlockBodyScroll();
         }
     }
 
@@ -479,11 +509,7 @@ class CustomChaptersOverlay extends Component {
         if (el) el.classList.remove('chapters-open');
 
         // Restore body scroll on mobile when disposing
-        if (this.isMobile) {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-        }
+        this.unlockBodyScroll();
 
         // Clean up event listeners
         if (this.handleResize) {
