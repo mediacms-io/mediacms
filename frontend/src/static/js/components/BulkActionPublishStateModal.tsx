@@ -26,17 +26,12 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   csrfToken,
 }) => {
   const [selectedState, setSelectedState] = useState('public');
-  const [initialState, setInitialState] = useState('public');
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       // Reset state when modal closes
       setSelectedState('public');
-      setInitialState('public');
-    } else {
-      // When modal opens, set initial state
-      setInitialState('public');
     }
   }, [isOpen]);
 
@@ -79,7 +74,9 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
 
   if (!isOpen) return null;
 
-  const hasStateChanged = selectedState !== initialState;
+  // Note: We don't check hasStateChanged because the modal doesn't know the actual
+  // current state of the selected media. Users should be able to set any state.
+  // If the state is already the same, the backend will handle it gracefully.
 
   return (
     <div className="publish-state-modal-overlay">
@@ -116,7 +113,7 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
           <button
             className="publish-state-btn publish-state-btn-submit"
             onClick={handleSubmit}
-            disabled={isProcessing || !hasStateChanged}
+            disabled={isProcessing}
           >
             {isProcessing ? translateString('Processing...') : translateString('Submit')}
           </button>
