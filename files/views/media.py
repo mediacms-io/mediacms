@@ -74,10 +74,8 @@ class MediaList(APIView):
         if not request.user.is_authenticated:
             return base_queryset.filter(base_filters)
 
-        # Build OR conditions for authenticated users
-        conditions = base_filters  # Start with listable media
+        conditions = base_filters
 
-        # Add user permissions
         permission_filter = {'user': request.user}
         if user:
             permission_filter['owner_user'] = user
@@ -88,7 +86,6 @@ class MediaList(APIView):
                 perm_conditions &= Q(user=user)
             conditions |= perm_conditions
 
-        # Add RBAC conditions
         if getattr(settings, 'USE_RBAC', False):
             rbac_categories = request.user.get_rbac_categories_as_member()
             rbac_conditions = Q(category__in=rbac_categories)
@@ -99,7 +96,6 @@ class MediaList(APIView):
         return base_queryset.filter(conditions).distinct()
 
     def get(self, request, format=None):
-        # Show media
         # authenticated users can see:
 
         # All listable media (public access)
@@ -118,7 +114,6 @@ class MediaList(APIView):
         publish_state = params.get('publish_state', '').strip()
         query = params.get("q", "").strip().lower()
 
-        # Handle combined sort options (e.g., title_asc, views_desc)
         parsed_combined = False
         if sort_by and '_' in sort_by:
             parts = sort_by.rsplit('_', 1)
@@ -237,14 +232,14 @@ class MediaList(APIView):
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")
 
-        media = media[:1000]  # limit to 1000 results
+        media = media[:1000]
 
         paginator = pagination_class()
 
         page = paginator.paginate_queryset(media, request)
 
         serializer = MediaSerializer(page, many=True, context={"request": request})
-        # Collect all unique tags from the current page results
+
         tags_set = set()
         for media_obj in page:
             for tag in media_obj.tags.all():
@@ -354,28 +349,23 @@ class MediaBulkUserActions(APIView):
         },
     )
     def post(self, request, format=None):
-        # Check if user is authenticated
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Get required parameters
         media_ids = request.data.get('media_ids', [])
         action = request.data.get('action')
 
-        # Validate required parameters
         if not media_ids:
             return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         if not action:
             return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get media objects owned by the user
         media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
         if not media:
             return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Process based on action
         if action == "enable_comments":
             media.update(enable_comments=True)
             return Response({"detail": f"Comments enabled for {media.count()} media items"})
@@ -446,12 +436,10 @@ class MediaBulkUserActions(APIView):
             if state not in valid_states:
                 return Response({"detail": f"state must be one of {valid_states}"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Check if user can set public state
             if not is_mediacms_editor(request.user) and settings.PORTAL_WORKFLOW != "public":
                 if state == "public":
                     return Response({"detail": "You are not allowed to set media to public state"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Update media state
             for m in media:
                 m.state = state
                 if m.state == "public" and m.encoding_status == "success" and m.is_reviewed is True:
@@ -495,7 +483,6 @@ class MediaBulkUserActions(APIView):
             if ownership_type not in valid_ownership_types:
                 return Response({"detail": f"ownership_type must be one of {valid_ownership_types}"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Find users who have the permission on ALL media items (intersection)
 
             media_count = media.count()
 
@@ -523,7 +510,6 @@ class MediaBulkUserActions(APIView):
             if not usernames:
                 return Response({"detail": "users is required for set_ownership action"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get valid users from the provided usernames
             users = User.objects.filter(username__in=usernames)
             if not users.exists():
                 return Response({"detail": "No valid users found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -548,22 +534,18 @@ class MediaBulkUserActions(APIView):
             if not usernames:
                 return Response({"detail": "users is required for remove_ownership action"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Get valid users from the provided usernames
             users = User.objects.filter(username__in=usernames)
             if not users.exists():
                 return Response({"detail": "No valid users found"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Delete MediaPermission objects matching the criteria
             MediaPermission.objects.filter(media__in=media, permission=ownership_type, user__in=users).delete()
 
             return Response({"detail": "Action succeeded"})
 
         elif action == "playlist_membership":
-            # Find playlists that contain ALL the selected media (intersection)
 
             media_count = media.count()
 
-            # Query playlists owned by user that contain these media
             results = list(
                 Playlist.objects.filter(user=request.user, playlistmedia__media__in=media)
                 .values('id', 'friendly_token', 'title')
@@ -574,21 +556,17 @@ class MediaBulkUserActions(APIView):
             return Response({'results': results})
 
         elif action == "category_membership":
-            # Find categories that contain ALL the selected media (intersection)
 
             media_count = media.count()
 
-            # Query categories that contain these media
             results = list(Category.objects.filter(media__in=media).values('title', 'uid').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
 
             return Response({'results': results})
 
         elif action == "tag_membership":
-            # Find tags that contain ALL the selected media (intersection)
 
             media_count = media.count()
 
-            # Query tags that contain these media
             results = list(Tag.objects.filter(media__in=media).values('title').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
 
             return Response({'results': results})
@@ -605,7 +583,6 @@ class MediaBulkUserActions(APIView):
             added_count = 0
             for category in categories:
                 for m in media:
-                    # Add media to category (ManyToMany relationship)
                     if not m.category.filter(uid=category.uid).exists():
                         m.category.add(category)
                         added_count += 1
@@ -624,7 +601,6 @@ class MediaBulkUserActions(APIView):
             removed_count = 0
             for category in categories:
                 for m in media:
-                    # Remove media from category (ManyToMany relationship)
                     if m.category.filter(uid=category.uid).exists():
                         m.category.remove(category)
                         removed_count += 1
@@ -643,7 +619,6 @@ class MediaBulkUserActions(APIView):
             added_count = 0
             for tag in tags:
                 for m in media:
-                    # Add media to tag (ManyToMany relationship)
                     if not m.tags.filter(title=tag.title).exists():
                         m.tags.add(tag)
                         added_count += 1
@@ -662,7 +637,6 @@ class MediaBulkUserActions(APIView):
             removed_count = 0
             for tag in tags:
                 for m in media:
-                    # Remove media from tag (ManyToMany relationship)
                     if m.tags.filter(title=tag.title).exists():
                         m.tags.remove(tag)
                         removed_count += 1
