@@ -26,7 +26,7 @@ function downloadOptionsList() {
                 link: formatInnerLink(encodings_info[k][g].url, SiteContext._currentValue.url),
                 linkAttr: {
                   target: '_blank',
-                  download: media_data.title + '_' + k + '_' + g.toUpperCase(),
+                  download: k + '_' + g.toLowerCase() + '_' + media_data.title,
                 },
               };
             }
