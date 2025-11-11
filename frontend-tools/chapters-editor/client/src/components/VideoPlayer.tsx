@@ -353,8 +353,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     return (
         <div className="video-player-container">
+            {/* Persistent background image for audio files (Safari fix) */}
+            {isAudioFile && posterImage && (
+                <div 
+                    className="audio-poster-background" 
+                    style={{ backgroundImage: `url(${posterImage})` }}
+                    aria-hidden="true"
+                />
+            )}
+            
             <video
                 ref={videoRef}
+                className={isAudioFile && posterImage ? 'audio-with-poster' : ''}
                 preload="metadata"
                 crossOrigin="anonymous"
                 onClick={handleVideoClick}

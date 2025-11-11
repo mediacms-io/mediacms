@@ -25,6 +25,7 @@ class CustomSettingsMenu extends Component {
         this.isMobile = this.detectMobile();
         this.isSmallScreen = window.innerWidth <= 480;
         this.touchThreshold = 150; // ms for tap vs scroll detection
+        this.scrollY = 0; // Track scroll position before locking
 
         // Bind methods
         this.createSettingsButton = this.createSettingsButton.bind(this);
@@ -41,6 +42,8 @@ class CustomSettingsMenu extends Component {
         this.detectMobile = this.detectMobile.bind(this);
         this.handleMobileInteraction = this.handleMobileInteraction.bind(this);
         this.setupResizeListener = this.setupResizeListener.bind(this);
+        this.lockBodyScroll = this.lockBodyScroll.bind(this);
+        this.unlockBodyScroll = this.unlockBodyScroll.bind(this);
 
         // Initialize after player is ready
         this.player().ready(() => {
@@ -656,6 +659,8 @@ class CustomSettingsMenu extends Component {
                 if (btnEl) {
                     btnEl.classList.remove('settings-clicked');
                 }
+                // Restore body scroll on mobile when closing
+                this.unlockBodyScroll();
             };
 
             closeButton.addEventListener('click', closeFunction);
@@ -942,6 +947,37 @@ class CustomSettingsMenu extends Component {
         this.startSubtitleSync();
     }
 
+    lockBodyScroll() {
+        if (!this.isMobile) return;
+        
+        // Save current scroll position
+        this.scrollY = window.scrollY || window.pageYOffset;
+        
+        // Lock body scroll with proper iOS handling
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${this.scrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+    }
+
+    unlockBodyScroll() {
+        if (!this.isMobile) return;
+        
+        // Restore body scroll
+        const scrollY = this.scrollY;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+    }
+
     toggleSettings(e) {
         // e.stopPropagation();
         const isVisible = this.settingsOverlay.classList.contains('show');
@@ -954,11 +990,7 @@ class CustomSettingsMenu extends Component {
             this.stopKeepingControlsVisible();
 
             // Restore body scroll on mobile when closing
-            if (this.isMobile) {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.width = '';
-            }
+            this.unlockBodyScroll();
         } else {
             this.settingsOverlay.classList.add('show');
             this.settingsOverlay.style.display = 'block';
@@ -972,11 +1004,7 @@ class CustomSettingsMenu extends Component {
             }
 
             // Prevent body scroll on mobile when overlay is open
-            if (this.isMobile) {
-                document.body.style.overflow = 'hidden';
-                document.body.style.position = 'fixed';
-                document.body.style.width = '100%';
-            }
+            this.lockBodyScroll();
         }
 
         this.speedSubmenu.style.display = 'none'; // Hide submenu when main menu toggles
@@ -1001,6 +1029,9 @@ class CustomSettingsMenu extends Component {
         // First ensure settings overlay is visible
         this.settingsOverlay.classList.add('show');
         this.settingsOverlay.style.display = 'block';
+
+        // Lock body scroll when opening
+        this.lockBodyScroll();
 
         // Hide other submenus and show subtitles submenu
         this.speedSubmenu.style.display = 'none';
@@ -1072,11 +1103,7 @@ class CustomSettingsMenu extends Component {
             }
 
             // Restore body scroll on mobile when closing
-            if (this.isMobile) {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.width = '';
-            }
+            this.unlockBodyScroll();
         }
     }
 
@@ -1417,6 +1444,8 @@ class CustomSettingsMenu extends Component {
             if (btnEl) {
                 btnEl.classList.remove('settings-clicked');
             }
+            // Restore body scroll on mobile when closing
+            this.unlockBodyScroll();
         }
     }
 
@@ -1493,11 +1522,7 @@ class CustomSettingsMenu extends Component {
         }
 
         // Restore body scroll on mobile when disposing
-        if (this.isMobile) {
-            document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.width = '';
-        }
+        this.unlockBodyScroll();
 
         // Remove DOM elements
         if (this.settingsOverlay) {

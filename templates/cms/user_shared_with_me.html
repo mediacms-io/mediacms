@@ -14,7 +14,6 @@
 {% endblock headermeta %}
 
 {% block topimports %}
-{% load static %}
 <link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="preload" as="style">
 <link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="stylesheet">
 {%endblock topimports %}
@@ -26,9 +25,9 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-media"></div>{% endif %}
+{% if user %}<div id="page-profile-shared-with-me"></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
-    <script src="{% static "js/profile-media.js" %}?v={{ VERSION }}"></script>
+    <script src="{% static "js/profile-shared-with-me.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

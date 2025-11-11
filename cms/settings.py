@@ -100,6 +100,9 @@ RELATED_MEDIA_STRATEGY = "content"
 # Whether or not to generate a sitemap.xml listing the pages on the site (default: False)
 GENERATE_SITEMAP = False
 
+# Whether to include media count numbers on categories and tags listing pages
+INCLUDE_LISTING_NUMBERS = True
+
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -566,6 +569,11 @@ ALLOW_ANONYMOUS_USER_LISTING = True
 # Who can see the members page
 # valid choices are all, editors, admins
 CAN_SEE_MEMBERS_PAGE = "all"
+
+# User search field setting
+# valid choices are name_username, name_username_email
+# this searches for users in the share media modal under my media
+USER_SEARCH_FIELD = "name_username"
 
 # Maximum number of media a user can upload
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100

@@ -91,10 +91,10 @@ class Category(models.Model):
         if self.listings_thumbnail:
             return self.listings_thumbnail
 
-        if Media.objects.filter(category=self, state="public").exists():
-            media = Media.objects.filter(category=self, state="public").order_by("-views").first()
-            if media:
-                return media.thumbnail_url
+        # Optimize: Use first() directly instead of exists() + first() (saves one query)
+        media = Media.objects.filter(category=self, state="public").order_by("-views").first()
+        if media:
+            return media.thumbnail_url
 
         return None
 

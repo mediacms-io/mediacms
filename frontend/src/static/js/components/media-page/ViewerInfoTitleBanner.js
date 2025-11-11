@@ -54,6 +54,10 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
         ? formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url)
         : null;
 
+    // Extract actual filename from URL for non-video downloads
+    const originalUrl = MediaPageStore.get('media-original-url');
+    this.downloadFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : this.props.title;
+
     this.updateStateValues = this.updateStateValues.bind(this);
   }
 
@@ -171,7 +175,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
                 .downloadLink ? (
                 <VideoMediaDownloadLink />
               ) : (
-                <OtherMediaDownloadLink link={this.downloadLink} title={this.props.title} />
+                <OtherMediaDownloadLink link={this.downloadLink} title={this.downloadFilename} />
               )}
 
               <MediaMoreOptionsIcon allowDownload={this.props.allowDownload} />

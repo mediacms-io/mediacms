@@ -14,6 +14,8 @@ export * from './PlaylistPage';
 export * from './ProfileAboutPage';
 export * from './ProfileMediaPage';
 export * from './ProfilePlaylistsPage';
+export * from './ProfileSharedByMePage';
+export * from './ProfileSharedWithMePage';
 export * from './RecommendedMediaPage';
 export * from './SearchPage';
 export * from './TagsPage';

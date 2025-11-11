@@ -139,12 +139,6 @@ video::cue {
     }
 }
 
-@media (max-width: 600px) {
-    .video-js .vjs-control-bar .vjs-autoplay-toggle {
-        display: none !important;
-    }
-}
-
 @media (max-width: 500px) {
     .video-js .vjs-control-bar .vjs-next-video-button {
         display: none !important;

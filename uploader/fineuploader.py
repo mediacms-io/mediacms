@@ -31,7 +31,7 @@ class BaseFineUploader(object):
             # generate new uuid to ensure this is uuid
             # not sure if this will work with the chunked uploads though
             self.uuid = uuid.uuid4()
-
+        self.original_filename = self.filename
         self.filename = os.path.basename(self.filename)
         self.filename = strip_delimiters(self.filename)
         # avoid possibility of passing a fake path here

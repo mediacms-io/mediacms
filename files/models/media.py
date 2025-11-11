@@ -357,6 +357,10 @@ class Media(models.Model):
             a_tags,
             b_tags,
         ]
+
+        for subtitle in self.subtitles.all():
+            items.append(subtitle.subtitle_text)
+
         items = [item for item in items if item]
         text = " ".join(items)
         text = " ".join([token for token in text.lower().split(" ") if token not in STOP_WORDS])
@@ -406,11 +410,11 @@ class Media(models.Model):
                 self.media_type = "image"
             elif kind == "pdf":
                 self.media_type = "pdf"
-
-        if self.media_type in ["audio", "image", "pdf"]:
+        if self.media_type in ["image", "pdf"]:
             self.encoding_status = "success"
         else:
             ret = helpers.media_file_info(self.media_file.path)
+
             if ret.get("fail"):
                 self.media_type = ""
                 self.encoding_status = "fail"
@@ -759,6 +763,8 @@ class Media(models.Model):
             return helpers.url_from_path(self.uploaded_thumbnail.path)
         if self.thumbnail:
             return helpers.url_from_path(self.thumbnail.path)
+        if self.media_type == "audio":
+            return helpers.url_from_path("userlogos/poster_audio.jpg")
         return None
 
     @property
@@ -772,6 +778,9 @@ class Media(models.Model):
             return helpers.url_from_path(self.uploaded_poster.path)
         if self.poster:
             return helpers.url_from_path(self.poster.path)
+        if self.media_type == "audio":
+            return helpers.url_from_path("userlogos/poster_audio.jpg")
+
         return None
 
     @property

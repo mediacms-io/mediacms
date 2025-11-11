@@ -47,6 +47,10 @@ class UserSerializer(serializers.ModelSerializer):
             "email_is_verified",
         ]
 
+        if settings.USER_SEARCH_FIELD == "name_username_email":
+            fields.append("email")
+            read_only_fields.append("email")
+
         if settings.USERS_NEEDS_TO_BE_APPROVED:
             fields.append("is_approved")
             read_only_fields.append("is_approved")

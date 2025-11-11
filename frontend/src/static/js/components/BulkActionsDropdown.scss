@@ -1,0 +1,90 @@
+@import '../../css/config/index.scss';
+
+.bulk-actions-dropdown {
+  display: inline-block;
+  margin-bottom: 16px;
+
+  .bulk-actions-select {
+    width: auto;
+    max-width: 220px;
+    height: 36px;
+    padding: 0 28px 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+
+    &:hover {
+      background-color: #e8e8e8;
+      border-color: #ccc;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--default-theme-color, #009933);
+      box-shadow: 0 0 0 3px rgba(0, 153, 51, 0.25);
+    }
+
+    &.no-selection {
+      color: #666;
+    }
+
+    option {
+      padding: 10px;
+      font-weight: normal;
+      font-style: normal;
+      color: #333;
+      background-color: white;
+
+      &:disabled {
+        color: #999;
+      }
+
+      &:not(:disabled) {
+        color: #000;
+      }
+    }
+  }
+
+  .dark_theme & {
+    .bulk-actions-select {
+      color: #fff;
+      background-color: #3a3a3a;
+      border-color: #555;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+
+      &:hover {
+        background-color: #454545;
+        border-color: #666;
+      }
+
+      &:focus {
+        border-color: var(--default-theme-color, #009933);
+      }
+
+      &.no-selection {
+        color: #aaa;
+      }
+
+      option {
+        background-color: #2a2a2a;
+        color: #fff;
+
+        &:disabled {
+          color: #777;
+        }
+      }
+    }
+  }
+}

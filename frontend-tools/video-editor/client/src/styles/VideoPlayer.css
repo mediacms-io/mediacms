@@ -76,16 +76,37 @@
         user-select: none;
     }
 
+    /* Persistent background poster for audio files (Safari fix) */
+    .audio-poster-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 1;
+        pointer-events: none;
+    }
+
     .video-player-container video {
+        position: relative;
         width: 100%;
         height: 100%;
         cursor: pointer;
+        z-index: 2;
         /* Force hardware acceleration */
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
         /* Prevent iOS Safari from showing default video controls */
         -webkit-user-select: none;
         user-select: none;
+    }
+
+    /* Make video transparent only for audio files with poster so background shows through */
+    .video-player-container video.audio-with-poster {
+        background: transparent;
     }
 
     /* iOS-specific styles */
@@ -109,6 +130,7 @@
         opacity: 0;
         transition: opacity 0.3s;
         pointer-events: none;
+        z-index: 3;
     }
 
     .video-player-container:hover .play-pause-indicator {
@@ -187,6 +209,7 @@
         background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
         opacity: 0;
         transition: opacity 0.3s;
+        z-index: 3;
     }
 
     .video-player-container:hover .video-controls {

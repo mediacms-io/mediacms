@@ -33,6 +33,9 @@ MediaCMS.features = {
 		hideViews: false,
 		hideAuthor: false,
 	},
+	listings:{
+		includeNumbers: {% if INCLUDE_LISTING_NUMBERS %}true{% else %}false{% endif %},
+	},
 	playlists:{
 		mediaTypes: ['audio', 'video'],
 	}

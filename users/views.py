@@ -102,6 +102,7 @@ def view_user_about(request, username):
 
 @login_required
 def edit_user(request, username):
+    context = {}
     user = get_user(username=username)
     if not user or (user != request.user and not is_mediacms_manager(request.user)):
         return HttpResponseRedirect("/")
@@ -114,7 +115,13 @@ def edit_user(request, username):
             return HttpResponseRedirect(user.get_absolute_url())
     else:
         form = UserForm(request.user, instance=user)
-    return render(request, "cms/user_edit.html", {"form": form})
+    context["form"] = form
+    context["user"] = user
+    if user == request.user:
+        context["is_author"] = True
+    else:
+        context["is_author"] = False
+    return render(request, "cms/user_edit.html", context)
 
 
 def view_channel(request, friendly_token):
@@ -198,7 +205,8 @@ class UserList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
-            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name or username'),
+            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name, username, and optionally email (depending on USER_SEARCH_FIELD setting)'),
+            openapi.Parameter(name='exclude_self', type=openapi.TYPE_BOOLEAN, in_=openapi.IN_QUERY, description='Exclude current user from results'),
         ],
         tags=['Users'],
         operation_summary='List users',
@@ -217,7 +225,15 @@ class UserList(APIView):
 
         name = request.GET.get("name", "").strip()
         if name:
-            users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
+            if settings.USER_SEARCH_FIELD == "name_username_email":
+                users = users.filter(Q(name__icontains=name) | Q(username__icontains=name) | Q(email__icontains=name))
+            else:  # default: name_username
+                users = users.filter(Q(name__icontains=name) | Q(username__icontains=name))
+
+        # Exclude current user if requested
+        exclude_self = request.GET.get("exclude_self", "") == "True"
+        if exclude_self and request.user.is_authenticated:
+            users = users.exclude(id=request.user.id)
 
         if settings.USERS_NEEDS_TO_BE_APPROVED:
             is_approved = request.GET.get("is_approved")
