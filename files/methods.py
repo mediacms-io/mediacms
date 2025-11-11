@@ -666,11 +666,8 @@ def change_media_owner(media_id, new_user):
     media.user = new_user
     media.save(update_fields=["user"])
 
-    # Update any related permissions
-    media_permissions = models.MediaPermission.objects.filter(media=media)
-    for permission in media_permissions:
-        permission.owner_user = new_user
-        permission.save(update_fields=["owner_user"])
+    # Optimize: Update any related permissions in bulk instead of loop
+    models.MediaPermission.objects.filter(media=media).update(owner_user=new_user)
 
     # remove any existing permissions for the new user, since they are now owner
     models.MediaPermission.objects.filter(media=media, user=new_user).delete()

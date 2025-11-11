@@ -483,7 +483,6 @@ class MediaBulkUserActions(APIView):
             if ownership_type not in valid_ownership_types:
                 return Response({"detail": f"ownership_type must be one of {valid_ownership_types}"}, status=status.HTTP_400_BAD_REQUEST)
 
-
             media_count = media.count()
 
             users = (
@@ -543,7 +542,6 @@ class MediaBulkUserActions(APIView):
             return Response({"detail": "Action succeeded"})
 
         elif action == "playlist_membership":
-
             media_count = media.count()
 
             results = list(
@@ -556,7 +554,6 @@ class MediaBulkUserActions(APIView):
             return Response({'results': results})
 
         elif action == "category_membership":
-
             media_count = media.count()
 
             results = list(Category.objects.filter(media__in=media).values('title', 'uid').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
@@ -564,7 +561,6 @@ class MediaBulkUserActions(APIView):
             return Response({'results': results})
 
         elif action == "tag_membership":
-
             media_count = media.count()
 
             results = list(Tag.objects.filter(media__in=media).values('title').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
