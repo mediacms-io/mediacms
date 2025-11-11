@@ -272,12 +272,16 @@ def show_related_media_content(media, request, limit):
         category = media.category.first()
         if category:
             q_category = Q(listable=True, category=category)
-            q_res = models.Media.objects.filter(q_category).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[: limit - media.user.media_count]
+            # Fix: Ensure slice index is never negative
+            remaining = max(0, limit - len(m))
+            q_res = models.Media.objects.filter(q_category).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[:remaining]
             m = list(itertools.chain(m, q_res))
 
         if len(m) < limit:
             q_generic = Q(listable=True)
-            q_res = models.Media.objects.filter(q_generic).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[: limit - media.user.media_count]
+            # Fix: Ensure slice index is never negative
+            remaining = max(0, limit - len(m))
+            q_res = models.Media.objects.filter(q_generic).order_by(order_criteria[random.randint(0, len(order_criteria) - 1)]).prefetch_related("user")[:remaining]
             m = list(itertools.chain(m, q_res))
 
     m = list(set(m[:limit]))  # remove duplicates
