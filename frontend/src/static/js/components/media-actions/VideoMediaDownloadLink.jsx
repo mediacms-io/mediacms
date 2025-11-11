@@ -36,12 +36,16 @@ function downloadOptionsList() {
     }
   }
 
+  // Extract actual filename from the original media URL
+  const originalUrl = media_data.original_media_url;
+  const originalFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : media_data.title;
+
   optionsList.original_media_url = {
     text: 'Original file (' + media_data.size + ')',
     link: formatInnerLink(media_data.original_media_url, SiteContext._currentValue.url),
     linkAttr: {
       target: '_blank',
-      download: media_data.title,
+      download: originalFilename,
     },
   };
 
