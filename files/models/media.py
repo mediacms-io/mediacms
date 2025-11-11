@@ -763,6 +763,8 @@ class Media(models.Model):
             return helpers.url_from_path(self.uploaded_thumbnail.path)
         if self.thumbnail:
             return helpers.url_from_path(self.thumbnail.path)
+        if self.media_type == "audio":
+            return helpers.url_from_path("userlogos/poster_audio.jpg")
         return None
 
     @property
