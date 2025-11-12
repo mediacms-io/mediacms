@@ -150,7 +150,7 @@ const useVideoChapters = () => {
                     // Create a default segment that spans the entire video on first load
                     const initialSegment: Segment = {
                         id: 1,
-                        chapterTitle: '',
+                        chapterTitle: 'Chapter 1',
                         startTime: 0,
                         endTime: video.duration,
                     };

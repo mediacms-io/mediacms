@@ -268,13 +268,8 @@ const TimelineControls = ({
     // Update editing title when selected segment changes
     useEffect(() => {
         if (selectedSegment) {
-            // Check if the chapter title is a default generated name (e.g., "Chapter 1", "Chapter 2", etc.)
-            const isDefaultChapterName = selectedSegment.chapterTitle && 
-                /^Chapter \d+$/.test(selectedSegment.chapterTitle);
-            
-            // If it's a default name, show empty string so placeholder appears
-            // If it's a custom title, show the actual title
-            setEditingChapterTitle(isDefaultChapterName ? '' : (selectedSegment.chapterTitle || ''));
+            // Always show the chapter title in the textarea, whether it's default or custom
+            setEditingChapterTitle(selectedSegment.chapterTitle || '');
         } else {
             setEditingChapterTitle('');
         }
