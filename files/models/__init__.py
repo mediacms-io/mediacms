@@ -18,6 +18,7 @@ from .utils import MEDIA_STATES  # noqa: F401
 from .utils import MEDIA_TYPES_SUPPORTED  # noqa: F401
 from .utils import category_thumb_path  # noqa: F401
 from .utils import encoding_media_file_path  # noqa: F401
+from .attachment import Attachment  # noqa: F401
 from .utils import generate_uid  # noqa: F401
 from .utils import original_media_file_path  # noqa: F401
 from .utils import original_thumbnail_file_path  # noqa: F401

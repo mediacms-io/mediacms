@@ -126,7 +126,8 @@
         }
 
         &.more-options,
-        &.video-downloads {
+        &.video-downloads,
+        &.video-attachments {
           .nav-page-main,
           .nav-page-mediaStatusInfo,
           .nav-page-videoDownloadOptions {
@@ -156,7 +157,8 @@
         &.share,
         &.save,
         &.more-options,
-        &.video-downloads {
+        &.video-downloads,
+        &.video-attachments {
           .popup-fullscreen {
             .popup-main {
               > div {
@@ -984,7 +986,8 @@
         &.share,
         &.save,
         &.download,
-        &.video-downloads {
+        &.video-downloads,
+        &.video-attachments {
           > *:not(.popup) {
             font-size: 13px;
             font-weight: 500;
@@ -1277,7 +1280,8 @@
           }
         }
 
-        &.video-downloads {
+        &.video-downloads,
+        &.video-attachments {
           .circle-icon-button {
             outline-width: initial;
           }

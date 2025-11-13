@@ -2,7 +2,7 @@ import React from 'react';
 import { formatViewsNumber } from '../../utils/helpers/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { MemberContext, PlaylistsContext } from '../../utils/contexts/';
-import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
+import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon, AttachmentDownloadLink } from '../media-actions/';
 import ViewerInfoTitleBanner from './ViewerInfoTitleBanner';
 import { translateString } from '../../utils/helpers/';
 
@@ -79,6 +79,8 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
               ) : (
                 <OtherMediaDownloadLink link={this.downloadLink} title={this.downloadFilename} />
               )}
+
+              <AttachmentDownloadLink />
 
               <MediaMoreOptionsIcon allowDownload={this.props.allowDownload} />
             </div>
