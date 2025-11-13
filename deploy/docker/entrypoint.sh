@@ -35,4 +35,10 @@ find /home/mediacms.io/mediacms ! \( -path "*.git*" -o -name "package-lock.json"
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
 
+if [ -n "$LOGS_DIR" ]; then
+    mkdir -p "$LOGS_DIR"
+    chown -R www-data:root "$LOGS_DIR"
+    echo "Log directory created at $LOGS_DIR"
+fi
+
 exec "$@"
