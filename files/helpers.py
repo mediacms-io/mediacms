@@ -910,7 +910,9 @@ def trim_video_method(media_file_path, timestamps_list):
         return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
-        output_file = os.path.join(temp_dir, "output.mp4")
+        # Detect input file extension to preserve original format
+        _, input_ext = os.path.splitext(media_file_path)
+        output_file = os.path.join(temp_dir, f"output{input_ext}")
 
         segment_files = []
         for i, item in enumerate(timestamps_list):
@@ -920,7 +922,7 @@ def trim_video_method(media_file_path, timestamps_list):
 
             # For single timestamp, we can use the output file directly
             # For multiple timestamps, we need to create segment files
-            segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{i}.mp4")
+            segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{i}{input_ext}")
 
             cmd = [settings.FFMPEG_COMMAND, "-y", "-ss", str(item['startTime']), "-i", media_file_path, "-t", str(duration), "-c", "copy", "-avoid_negative_ts", "1", segment_file]
 
