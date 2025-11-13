@@ -282,7 +282,7 @@ class Media(models.Model):
                 self.allow_whisper_transcribe != self.__original_allow_whisper_transcribe or self.allow_whisper_transcribe_and_translate != self.__original_allow_whisper_transcribe_and_translate
             )
 
-            if transcription_changed and self.media_type == "video":
+            if transcription_changed and self.media_type in ["video", "audio"]:
                 self.transcribe_function()
 
             # Update the original values for next comparison
