@@ -494,7 +494,6 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             state=helpers.get_default_state(user=original_media.user),
             is_reviewed=original_media.is_reviewed,
             encoding_status=original_media.encoding_status,
-            listable=original_media.listable,
             add_date=timezone.now(),
             video_height=original_media.video_height,
             size=original_media.size,
@@ -714,7 +713,6 @@ def copy_media(media):
                 state=helpers.get_default_state(user=media.user),
                 is_reviewed=media.is_reviewed,
                 encoding_status=media.encoding_status,
-                listable=media.listable,
                 add_date=timezone.now(),
             )
 
