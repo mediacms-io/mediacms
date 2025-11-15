@@ -91,8 +91,8 @@ WORKDIR /home/mediacms.io/mediacms
 # Copy imagemagick policy for sprite thumbnail generation
 COPY config/imagemagick/policy.xml /etc/ImageMagick-6/policy.xml
 
-# Copy local_settings.py from deploy/docker to cms/ for default Docker config
-RUN cp deploy/docker/local_settings.py cms/local_settings.py
+# Copy local_settings.py from config to cms/ for default Docker config (if exists)
+RUN cp config/local_settings.py cms/local_settings.py 2>/dev/null || true
 
 # Create www-data user directories and set permissions
 RUN mkdir -p /var/run/mediacms && \

@@ -17,7 +17,7 @@ static/mptt/
 static/rest_framework/
 static/drf-yasg
 cms/local_settings.py
-deploy/docker/local_settings.py
+config/local_settings.py
 yt.readme.md
 /frontend-tools/video-editor/node_modules
 /frontend-tools/video-editor/client/node_modules
