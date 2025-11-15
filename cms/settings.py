@@ -253,7 +253,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media uploads has been reached."
 
 # mp4hls command, part of Bento4
-MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
+MP4HLS_COMMAND = "/home/mediacms.io/bento4/bin/mp4hls"
 
 # highly experimental, related with remote workers
 ADMIN_TOKEN = ""
@@ -370,41 +370,30 @@ FILE_UPLOAD_HANDLERS = [
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 ]
 
-LOGS_DIR = os.path.join(BASE_DIR, "logs")
-
-error_filename = os.path.join(LOGS_DIR, "debug.log")
-if not os.path.exists(LOGS_DIR):
-    try:
-        os.mkdir(LOGS_DIR)
-    except PermissionError:
-        pass
-
-if not os.path.isfile(error_filename):
-    open(error_filename, 'a').close()
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        }
+    },
     "handlers": {
-        "file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": error_filename,
-        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        }
     },
-    "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-    },
+    "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "db", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
-REDIS_LOCATION = "redis://127.0.0.1:6379/1"
+REDIS_LOCATION = "redis://redis:6379/1"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",

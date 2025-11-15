@@ -26,22 +26,20 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
 ############ BASE RUNTIME IMAGE ############
 FROM python:3.13.5-slim-bookworm AS base
 
-LABEL org.opencontainers.image.version="7.3"
-LABEL org.opencontainers.image.title="MediaCMS"
-LABEL org.opencontainers.image.description="Modern, scalable and open source video platform"
-
 SHELL ["/bin/bash", "-c"]
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    CELERY_APP='cms' \
-    VIRTUAL_ENV=/home/mediacms.io \
-    PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV CELERY_APP='cms'
+ENV VIRTUAL_ENV=/home/mediacms.io
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install system dependencies (no nginx, no supervisor)
+# Install system dependencies first
 RUN apt-get update -y && \
     apt-get -y upgrade && \
     apt-get install --no-install-recommends -y \
+        supervisor \
+        nginx \
         imagemagick \
         procps \
         build-essential \
@@ -52,12 +50,11 @@ RUN apt-get update -y && \
         libxmlsec1-dev \
         libxmlsec1-openssl \
         libpq-dev \
-        gosu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up virtualenv
-RUN mkdir -p /home/mediacms.io/mediacms/{logs,media_files,static} && \
+# Set up virtualenv first
+RUN mkdir -p /home/mediacms.io/mediacms/{logs} && \
     cd /home/mediacms.io && \
     python3 -m venv $VIRTUAL_ENV
 
@@ -85,58 +82,32 @@ COPY --from=build-image /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 COPY --from=build-image /usr/local/bin/qt-faststart /usr/local/bin/qt-faststart
 COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
 
-# Copy application files with correct ownership
-COPY --chown=www-data:www-data . /home/mediacms.io/mediacms
+# Copy application files
+COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
-# Copy imagemagick policy for sprite thumbnail generation
-COPY config/imagemagick/policy.xml /etc/ImageMagick-6/policy.xml
+# required for sprite thumbnail generation for large video files
+COPY deploy/docker/policy.xml /etc/ImageMagick-6/policy.xml
 
-# Copy local_settings.py from config to cms/ for default Docker config (if exists)
-RUN if [ -f config/local_settings.py ]; then \
-        cp config/local_settings.py cms/local_settings.py && \
-        chown www-data:www-data cms/local_settings.py && \
-        echo "Docker local_settings.py applied"; \
-    else \
-        echo "No config/local_settings.py found, using default settings"; \
-    fi
+# Set process control environment variables
+ENV ENABLE_UWSGI='yes' \
+    ENABLE_NGINX='yes' \
+    ENABLE_CELERY_BEAT='yes' \
+    ENABLE_CELERY_SHORT='yes' \
+    ENABLE_CELERY_LONG='yes' \
+    ENABLE_MIGRATIONS='yes'
 
-# Create www-data user directories and set permissions
-RUN mkdir -p /var/run/mediacms && \
-    chown -R www-data:www-data /home/mediacms.io/mediacms/logs \
-                                /home/mediacms.io/mediacms/media_files \
-                                /home/mediacms.io/mediacms/static \
-                                /var/run/mediacms
+EXPOSE 9000 80
 
-# Copy and set up entrypoint script
-COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x ./deploy/docker/entrypoint.sh
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
+CMD ["./deploy/docker/start.sh"]
 
-############ WEB IMAGE (Django/uWSGI) ############
-FROM base AS web
-
-# Install uWSGI
-RUN uv pip install uwsgi
-
-# Copy uWSGI configuration
-COPY config/uwsgi/uwsgi.ini /home/mediacms.io/mediacms/uwsgi.ini
-
-EXPOSE 9000
-
-CMD ["/home/mediacms.io/bin/uwsgi", "--ini", "/home/mediacms.io/mediacms/uwsgi.ini"]
-
-############ WORKER IMAGE (Celery) ############
-FROM base AS worker
-
-# CMD will be overridden in docker-compose for different worker types
-
-############ FULL WORKER IMAGE (Celery with extra codecs) ############
-FROM worker AS worker-full
-
+############ FULL IMAGE ############
+FROM base AS full
 COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
-    chmod go+rwx /root/.cache/ && \
-    uv pip install -r requirements-full.txt
+    chmod go+rwx /root/.cache/
+RUN uv pip install -r requirements-full.txt

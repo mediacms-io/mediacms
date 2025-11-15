@@ -1,7 +1,7 @@
 # MediaCMS: Document Changes for DEIC
 
 ## Configuration Changes
-The following changes are required in `deploy/docker/local_settings.py`:
+The following changes are required in `config/local_settings.py`:
 
 ```python
 

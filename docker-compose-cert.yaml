@@ -1,13 +1,43 @@
 version: "3.8"
 
+# Production setup with automatic HTTPS via Let's Encrypt
+# Uses https://github.com/nginx-proxy/acme-companion
+
 services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./config/nginx-proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    restart: unless-stopped
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   migrations:
     image: mediacms/mediacms:7.3
     command: ["/bin/bash", "/home/mediacms.io/mediacms/scripts/run-migrations.sh"]
     environment:
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
-      ADMIN_PASSWORD: # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+      # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
     restart: "no"
     depends_on:
       redis:
@@ -15,7 +45,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - static_files:/home/mediacms.io/mediacms/static
+      - static_files:/home/mediacms.io/mediacms/static_files
       - media_files:/home/mediacms.io/mediacms/media_files
       - logs:/home/mediacms.io/mediacms/logs
 
@@ -32,15 +62,20 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - static_files:/home/mediacms.io/mediacms/static
+      - static_files:/home/mediacms.io/mediacms/static_files
       - media_files:/home/mediacms.io/mediacms/media_files
       - logs:/home/mediacms.io/mediacms/logs
 
   nginx:
     image: mediacms/mediacms-nginx:7.3
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"
+    environment:
+      # These are required for nginx-proxy to route traffic correctly
+      VIRTUAL_HOST: 'mediacms.example.com'  # CHANGE THIS to your domain
+      LETSENCRYPT_HOST: 'mediacms.example.com'  # CHANGE THIS to your domain
+      LETSENCRYPT_EMAIL: 'admin@example.com'  # CHANGE THIS to your email
     depends_on:
       - web
     volumes:
@@ -51,7 +86,7 @@ services:
   celery_beat:
     image: mediacms/mediacms-worker:7.3
     restart: unless-stopped
-    command: ["/home/mediacms.io/bin/celery", "-A", "cms", "beat", "--loglevel=INFO", "--schedule=/home/mediacms.io/mediacms/logs/celerybeat-schedule"]
+    command: ["/home/mediacms.io/bin/celery", "-A", "cms", "beat", "--loglevel=INFO"]
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -114,6 +149,12 @@ services:
       retries: 3
 
 volumes:
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
+  acme:
   postgres_data:
   static_files:
   media_files:
