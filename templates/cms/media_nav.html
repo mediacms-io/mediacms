@@ -11,12 +11,14 @@
                 {{ "Metadata" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
+        {% if ENABLE_MEDIA_ATTACHMENTS %}
         <li style="display: inline-block;">
             <a href="{% url 'edit_attachments' %}?m={{media_object.friendly_token}}"
                style="text-decoration: none; {% if active_tab == 'attachments' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
                 {{ "Attachments" | custom_translate:LANGUAGE_CODE}}
             </a>
         </li>
+        {% endif %}
         {% if media_object.media_type == 'video' or media_object.media_type == 'audio' %} 
             <li style="display: inline-block;">
                 <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}"

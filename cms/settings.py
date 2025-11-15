@@ -43,6 +43,9 @@ CAN_SHARE_MEDIA = True  # whether the share media appears
 REPORTED_TIMES_THRESHOLD = 10
 ALLOW_ANONYMOUS_ACTIONS = ["report", "like", "dislike", "watch"]  # need be a list
 
+# whether media attachments functionality is enabled
+ENABLE_MEDIA_ATTACHMENTS = False  # Set to True to enable attachments feature
+
 # experimental functionality for user ratings - does not work
 ALLOW_RATINGS = False
 ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True

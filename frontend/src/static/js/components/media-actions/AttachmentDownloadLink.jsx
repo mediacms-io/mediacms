@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePopup } from '../../utils/hooks/';
 import { SiteContext } from '../../utils/contexts/';
-import { MediaPageStore } from '../../utils/stores/';
+import { MediaPageStore, PageStore } from '../../utils/stores/';
 import { formatInnerLink } from '../../utils/helpers/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared/';
 import { translateString } from '../../utils/helpers/';
@@ -60,7 +60,12 @@ export function AttachmentDownloadLink(props) {
     };
   }, []);
 
-  if (!hasAttachments) {
+  // Check if attachments feature is enabled via MediaCMS config
+  const features = PageStore.get('config-options')?.features;
+  const attachmentsEnabled = features?.media?.actions?.attachments !== false;
+  
+  // Don't render if feature is disabled or no attachments
+  if (!attachmentsEnabled || !hasAttachments) {
     return null;
   }
 

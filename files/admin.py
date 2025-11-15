@@ -283,6 +283,9 @@ admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
-admin.site.register(Attachment, AttachmentAdmin)
+
+# Only register Attachment admin if the feature is enabled
+if settings.ENABLE_MEDIA_ATTACHMENTS:
+    admin.site.register(Attachment, AttachmentAdmin)
 
 Media._meta.app_config.verbose_name = "Media"

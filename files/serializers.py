@@ -107,6 +107,9 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
     def get_attachments(self, obj):
+        # Only return attachments if the feature is enabled
+        if not settings.ENABLE_MEDIA_ATTACHMENTS:
+            return []
         attachments = obj.attachments.all()
         return AttachmentSerializer(attachments, many=True, context=self.context).data
 
@@ -274,6 +277,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class AttachmentSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     file_size = serializers.SerializerMethodField()
+    name = serializers.CharField(required=False, allow_blank=True)
 
     def get_file_url(self, obj):
         request = self.context.get('request')

@@ -3,7 +3,9 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from ..models import Attachment, Media
 from ..serializers import AttachmentSerializer
 from django import forms
+from django.conf import settings
 from django.core.paginator import Paginator
+from django.http import Http404
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, get_object_or_404, redirect
 
@@ -17,6 +19,12 @@ class AttachmentViewSet(viewsets.ModelViewSet):
     serializer_class = AttachmentSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def initial(self, request, *args, **kwargs):
+        # Check if attachments feature is enabled
+        if not settings.ENABLE_MEDIA_ATTACHMENTS:
+            raise Http404("Attachments feature is not enabled")
+        super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
         media_id = self.request.query_params.get('media')
@@ -43,6 +51,10 @@ class AttachmentViewSet(viewsets.ModelViewSet):
 
 @require_http_methods(["GET", "POST"])
 def edit_attachments(request):
+    # Check if attachments feature is enabled
+    if not settings.ENABLE_MEDIA_ATTACHMENTS:
+        raise Http404("Attachments feature is not enabled")
+    
     media_token = request.GET.get('m')
     media_object = get_object_or_404(Media, friendly_token=media_token)
     attachments_qs = Attachment.objects.filter(media=media_object).order_by('-uploaded_at')
