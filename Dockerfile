@@ -52,6 +52,7 @@ RUN apt-get update -y && \
         libxmlsec1-dev \
         libxmlsec1-openssl \
         libpq-dev \
+        gosu \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -92,11 +93,26 @@ WORKDIR /home/mediacms.io/mediacms
 COPY config/imagemagick/policy.xml /etc/ImageMagick-6/policy.xml
 
 # Copy local_settings.py from config to cms/ for default Docker config (if exists)
-RUN cp config/local_settings.py cms/local_settings.py 2>/dev/null || true
+RUN if [ -f config/local_settings.py ]; then \
+        cp config/local_settings.py cms/local_settings.py && \
+        chown www-data:www-data cms/local_settings.py && \
+        echo "Docker local_settings.py applied"; \
+    else \
+        echo "No config/local_settings.py found, using default settings"; \
+    fi
 
 # Create www-data user directories and set permissions
 RUN mkdir -p /var/run/mediacms && \
-    chown www-data:www-data /var/run/mediacms
+    chown -R www-data:www-data /home/mediacms.io/mediacms/logs \
+                                /home/mediacms.io/mediacms/media_files \
+                                /home/mediacms.io/mediacms/static_files \
+                                /var/run/mediacms
+
+# Copy and set up entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 ############ WEB IMAGE (Django/uWSGI) ############
 FROM base AS web
@@ -107,8 +123,6 @@ RUN uv pip install uwsgi
 # Copy uWSGI configuration
 COPY config/uwsgi/uwsgi.ini /home/mediacms.io/mediacms/uwsgi.ini
 
-USER www-data
-
 EXPOSE 9000
 
 CMD ["/home/mediacms.io/bin/uwsgi", "--ini", "/home/mediacms.io/mediacms/uwsgi.ini"]
@@ -116,19 +130,13 @@ CMD ["/home/mediacms.io/bin/uwsgi", "--ini", "/home/mediacms.io/mediacms/uwsgi.i
 ############ WORKER IMAGE (Celery) ############
 FROM base AS worker
 
-USER www-data
-
 # CMD will be overridden in docker-compose for different worker types
 
 ############ FULL WORKER IMAGE (Celery with extra codecs) ############
 FROM worker AS worker-full
-
-USER root
 
 COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
     chmod go+rwx /root/.cache/ && \
     uv pip install -r requirements-full.txt
-
-USER www-data

@@ -5,18 +5,22 @@ echo "========================================="
 echo "MediaCMS Migrations Starting..."
 echo "========================================="
 
-# Wait for database to be ready
-until python manage.py migrate --check 2>/dev/null; do
-  echo "Waiting for database to be ready..."
-  sleep 2
-done
+# Ensure virtualenv is activated
+export VIRTUAL_ENV=/home/mediacms.io
+export PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Use explicit python path from virtualenv
+PYTHON="$VIRTUAL_ENV/bin/python"
+
+echo "Using Python: $PYTHON"
+$PYTHON --version
 
 # Run migrations
 echo "Running database migrations..."
-python manage.py migrate
+$PYTHON manage.py migrate
 
 # Check if this is a new installation
-EXISTING_INSTALLATION=$(echo "from users.models import User; print(User.objects.exists())" | python manage.py shell)
+EXISTING_INSTALLATION=$(echo "from users.models import User; print(User.objects.exists())" | $PYTHON manage.py shell)
 
 if [ "$EXISTING_INSTALLATION" = "True" ]; then
     echo "Existing installation detected, skipping initial data load"
@@ -24,14 +28,14 @@ else
     echo "New installation detected, loading initial data..."
 
     # Load fixtures
-    python manage.py loaddata fixtures/encoding_profiles.json
-    python manage.py loaddata fixtures/categories.json
+    $PYTHON manage.py loaddata fixtures/encoding_profiles.json
+    $PYTHON manage.py loaddata fixtures/categories.json
 
     # Create admin user
-    RANDOM_ADMIN_PASS=$(python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))")
+    RANDOM_ADMIN_PASS=$($PYTHON -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))")
     ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}
 
-    DJANGO_SUPERUSER_PASSWORD=$ADMIN_PASSWORD python manage.py createsuperuser \
+    DJANGO_SUPERUSER_PASSWORD=$ADMIN_PASSWORD $PYTHON manage.py createsuperuser \
         --no-input \
         --username=${ADMIN_USER:-admin} \
         --email=${ADMIN_EMAIL:-admin@localhost} \
@@ -44,7 +48,7 @@ fi
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput
+$PYTHON manage.py collectstatic --noinput
 
 echo "========================================="
 echo "Migrations completed successfully!"

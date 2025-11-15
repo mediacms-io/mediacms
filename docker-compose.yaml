@@ -7,7 +7,7 @@ services:
     environment:
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
-      # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+      ADMIN_PASSWORD: # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
     restart: "no"
     depends_on:
       redis:
@@ -51,7 +51,7 @@ services:
   celery_beat:
     image: mediacms/mediacms-worker:7.3
     restart: unless-stopped
-    command: ["/home/mediacms.io/bin/celery", "-A", "cms", "beat", "--loglevel=INFO"]
+    command: ["/home/mediacms.io/bin/celery", "-A", "cms", "beat", "--loglevel=INFO", "--schedule=/home/mediacms.io/mediacms/logs/celerybeat-schedule"]
     depends_on:
       migrations:
         condition: service_completed_successfully
