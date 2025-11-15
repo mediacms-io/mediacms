@@ -57,7 +57,7 @@ RUN apt-get update -y && \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up virtualenv
-RUN mkdir -p /home/mediacms.io/mediacms/{logs,media_files,static_files} && \
+RUN mkdir -p /home/mediacms.io/mediacms/{logs,media_files,static} && \
     cd /home/mediacms.io && \
     python3 -m venv $VIRTUAL_ENV
 
@@ -105,7 +105,7 @@ RUN if [ -f config/local_settings.py ]; then \
 RUN mkdir -p /var/run/mediacms && \
     chown -R www-data:www-data /home/mediacms.io/mediacms/logs \
                                 /home/mediacms.io/mediacms/media_files \
-                                /home/mediacms.io/mediacms/static_files \
+                                /home/mediacms.io/mediacms/static \
                                 /var/run/mediacms
 
 # Copy and set up entrypoint script

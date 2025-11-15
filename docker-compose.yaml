@@ -15,7 +15,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - static_files:/home/mediacms.io/mediacms/static_files
+      - static_files:/home/mediacms.io/mediacms/static
       - media_files:/home/mediacms.io/mediacms/media_files
       - logs:/home/mediacms.io/mediacms/logs
 
@@ -32,7 +32,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - static_files:/home/mediacms.io/mediacms/static_files
+      - static_files:/home/mediacms.io/mediacms/static
       - media_files:/home/mediacms.io/mediacms/media_files
       - logs:/home/mediacms.io/mediacms/logs
 
