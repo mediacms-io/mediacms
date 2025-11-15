@@ -26,18 +26,6 @@ const mediaPageLinkStyles = {
     },
 } as const;
 
-// Helper function to parse time string (HH:MM:SS.mmm) to seconds
-const parseTimeToSeconds = (timeString: string): number => {
-    const parts = timeString.split(':');
-    if (parts.length !== 3) return 0;
-
-    const hours = parseInt(parts[0], 10) || 0;
-    const minutes = parseInt(parts[1], 10) || 0;
-    const seconds = parseFloat(parts[2]) || 0;
-
-    return hours * 3600 + minutes * 60 + seconds;
-};
-
 interface TimelineControlsProps {
     currentTime: number;
     duration: number;
@@ -203,17 +191,7 @@ const TimelineControls = ({
             setIsAutoSaving(true);
 
             // Format segments data for API request - use ref to get latest segments and sort by start time
-            // ONLY save chapters that have custom titles - filter out chapters without titles or with default names
             const chapters = clipSegmentsRef.current
-                .filter((segment) => {
-                    // Filter out empty titles
-                    if (!segment.chapterTitle || !segment.chapterTitle.trim()) {
-                        return false;
-                    }
-                    // Filter out default chapter names like "Chapter 1", "Chapter 2", etc.
-                    const isDefaultName = /^Chapter \d+$/.test(segment.chapterTitle);
-                    return !isDefaultName;
-                })
                 .sort((a, b) => a.startTime - b.startTime) // Sort by start time chronologically
                 .map((chapter) => ({
                     startTime: formatDetailedTime(chapter.startTime),
@@ -221,7 +199,7 @@ const TimelineControls = ({
                     chapterTitle: chapter.chapterTitle,
                 }));
 
-            logger.debug('Filtered chapters (only custom titles):', chapters);
+            logger.debug('chapters', chapters);
 
             const mediaId = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.mediaId) || null;
             // For testing, use '1234' if no mediaId is available
@@ -229,13 +207,12 @@ const TimelineControls = ({
 
             logger.debug('mediaId', finalMediaId);
 
-            if (!finalMediaId) {
-                logger.debug('No mediaId, skipping auto-save');
+            if (!finalMediaId || chapters.length === 0) {
+                logger.debug('No mediaId or segments, skipping auto-save');
                 setIsAutoSaving(false);
                 return;
             }
 
-            // Save chapters (empty array if no chapters have titles)
             logger.debug('Auto-saving segments:', { mediaId: finalMediaId, chapters });
 
             const response = await autoSaveVideo(finalMediaId, { chapters });
@@ -291,13 +268,8 @@ const TimelineControls = ({
     // Update editing title when selected segment changes
     useEffect(() => {
         if (selectedSegment) {
-            // Check if the chapter title is a default generated name (e.g., "Chapter 1", "Chapter 2", etc.)
-            const isDefaultChapterName = selectedSegment.chapterTitle && 
-                /^Chapter \d+$/.test(selectedSegment.chapterTitle);
-            
-            // If it's a default name, show empty string so placeholder appears
-            // If it's a custom title, show the actual title
-            setEditingChapterTitle(isDefaultChapterName ? '' : (selectedSegment.chapterTitle || ''));
+            // Always show the chapter title in the textarea, whether it's default or custom
+            setEditingChapterTitle(selectedSegment.chapterTitle || '');
         } else {
             setEditingChapterTitle('');
         }
@@ -522,20 +494,11 @@ const TimelineControls = ({
 
         try {
             // Format chapters data for API request - sort by start time first
-            // ONLY save chapters that have custom titles - filter out chapters without titles or with default names
             const chapters = clipSegments
-                .filter((segment) => {
-                    // Filter out empty titles
-                    if (!segment.chapterTitle || !segment.chapterTitle.trim()) {
-                        return false;
-                    }
-                    // Filter out default chapter names like "Chapter 1", "Chapter 2", etc.
-                    const isDefaultName = /^Chapter \d+$/.test(segment.chapterTitle);
-                    return !isDefaultName;
-                })
+                .filter((segment) => segment.chapterTitle && segment.chapterTitle.trim())
                 .sort((a, b) => a.startTime - b.startTime) // Sort by start time chronologically
                 .map((segment) => ({
-                    chapterTitle: segment.chapterTitle,
+                    chapterTitle: segment.chapterTitle || `Chapter ${segment.id}`,
                     from: formatDetailedTime(segment.startTime),
                     to: formatDetailedTime(segment.endTime),
                 }));
