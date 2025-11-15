@@ -26,22 +26,20 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
 ############ BASE RUNTIME IMAGE ############
 FROM python:3.13.5-slim-bookworm AS base
 
-LABEL org.opencontainers.image.version="7.3"
-LABEL org.opencontainers.image.title="MediaCMS"
-LABEL org.opencontainers.image.description="Modern, scalable and open source video platform"
-
 SHELL ["/bin/bash", "-c"]
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    CELERY_APP='cms' \
-    VIRTUAL_ENV=/home/mediacms.io \
-    PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV CELERY_APP='cms'
+ENV VIRTUAL_ENV=/home/mediacms.io
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install system dependencies (no nginx, no supervisor)
+# Install system dependencies first
 RUN apt-get update -y && \
     apt-get -y upgrade && \
     apt-get install --no-install-recommends -y \
+        supervisor \
+        nginx \
         imagemagick \
         procps \
         build-essential \
@@ -55,8 +53,8 @@ RUN apt-get update -y && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up virtualenv
-RUN mkdir -p /home/mediacms.io/mediacms/{logs,media_files,static_files} && \
+# Set up virtualenv first
+RUN mkdir -p /home/mediacms.io/mediacms/{logs} && \
     cd /home/mediacms.io && \
     python3 -m venv $VIRTUAL_ENV
 
@@ -88,48 +86,28 @@ COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
 COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
-# Copy imagemagick policy for sprite thumbnail generation
-COPY config/imagemagick/policy.xml /etc/ImageMagick-6/policy.xml
+# required for sprite thumbnail generation for large video files
+COPY deploy/docker/policy.xml /etc/ImageMagick-6/policy.xml
 
-# Copy local_settings.py from deploy/docker to cms/ for default Docker config
-RUN cp deploy/docker/local_settings.py cms/local_settings.py
+# Set process control environment variables
+ENV ENABLE_UWSGI='yes' \
+    ENABLE_NGINX='yes' \
+    ENABLE_CELERY_BEAT='yes' \
+    ENABLE_CELERY_SHORT='yes' \
+    ENABLE_CELERY_LONG='yes' \
+    ENABLE_MIGRATIONS='yes'
 
-# Create www-data user directories and set permissions
-RUN mkdir -p /var/run/mediacms && \
-    chown -R www-data:www-data /home/mediacms.io/mediacms && \
-    chown -R www-data:www-data /var/run/mediacms
+EXPOSE 9000 80
 
-############ WEB IMAGE (Django/uWSGI) ############
-FROM base AS web
+RUN chmod +x ./deploy/docker/entrypoint.sh
 
-# Install uWSGI
-RUN uv pip install uwsgi
+ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
+CMD ["./deploy/docker/start.sh"]
 
-# Copy uWSGI configuration
-COPY config/uwsgi/uwsgi.ini /home/mediacms.io/mediacms/uwsgi.ini
-
-USER www-data
-
-EXPOSE 9000
-
-CMD ["/home/mediacms.io/bin/uwsgi", "--ini", "/home/mediacms.io/mediacms/uwsgi.ini"]
-
-############ WORKER IMAGE (Celery) ############
-FROM base AS worker
-
-USER www-data
-
-# CMD will be overridden in docker-compose for different worker types
-
-############ FULL WORKER IMAGE (Celery with extra codecs) ############
-FROM worker AS worker-full
-
-USER root
-
+############ FULL IMAGE ############
+FROM base AS full
 COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
-    chmod go+rwx /root/.cache/ && \
-    uv pip install -r requirements-full.txt
-
-USER www-data
+    chmod go+rwx /root/.cache/
+RUN uv pip install -r requirements-full.txt
