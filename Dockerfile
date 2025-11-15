@@ -84,8 +84,8 @@ COPY --from=build-image /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 COPY --from=build-image /usr/local/bin/qt-faststart /usr/local/bin/qt-faststart
 COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
 
-# Copy application files
-COPY . /home/mediacms.io/mediacms
+# Copy application files with correct ownership
+COPY --chown=www-data:www-data . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
 # Copy imagemagick policy for sprite thumbnail generation
@@ -96,8 +96,7 @@ RUN cp config/local_settings.py cms/local_settings.py 2>/dev/null || true
 
 # Create www-data user directories and set permissions
 RUN mkdir -p /var/run/mediacms && \
-    chown -R www-data:www-data /home/mediacms.io/mediacms && \
-    chown -R www-data:www-data /var/run/mediacms
+    chown www-data:www-data /var/run/mediacms
 
 ############ WEB IMAGE (Django/uWSGI) ############
 FROM base AS web
