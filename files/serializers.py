@@ -2,7 +2,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from .methods import is_mediacms_editor
-from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
+from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag, Attachment
 
 # TODO: put them in a more DRY way
 
@@ -101,9 +101,17 @@ class MediaSerializer(serializers.ModelSerializer):
 class SingleMediaSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
+    attachments = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_attachments(self, obj):
+        # Only return attachments if the feature is enabled
+        if not settings.ENABLE_MEDIA_ATTACHMENTS:
+            return []
+        attachments = obj.attachments.all()
+        return AttachmentSerializer(attachments, many=True, context=self.context).data
 
     class Meta:
         model = Media
@@ -166,6 +174,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "add_subtitle_url",
             "allow_download",
             "slideshow_items",
+            "attachments",
         )
 
 
@@ -263,3 +272,23 @@ class CommentSerializer(serializers.ModelSerializer):
             "media_url",
             "uid",
         )
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    name = serializers.CharField(required=False, allow_blank=True)
+
+    def get_file_url(self, obj):
+        request = self.context.get('request')
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
+
+    def get_file_size(self, obj):
+        return obj.get_file_size()
+
+    class Meta:
+        model = Attachment
+        fields = ['id', 'media', 'name', 'file', 'file_url', 'file_size', 'uploaded_at']
+        read_only_fields = ['id', 'uploaded_at', 'file_url', 'file_size']

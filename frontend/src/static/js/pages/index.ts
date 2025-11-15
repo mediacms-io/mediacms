@@ -19,3 +19,4 @@ export * from './ProfileSharedWithMePage';
 export * from './RecommendedMediaPage';
 export * from './SearchPage';
 export * from './TagsPage';
+export * from './EditAttachmentsPage';

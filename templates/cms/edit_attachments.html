@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load i18n %}
+
+{% block headtitle %}{% trans "ATTACHMENTS" %} - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block innercontent %}
+    <div class="user-action-form-wrap">
+        {% include "cms/media_nav.html" with media_object=media_object active_tab="attachments" %}
+    </div>
+        {% if media_object %}
+        <div class="user-action-form-wrap">
+            <div class="user-action-form-inner">
+                <h3>{% trans "Upload new attachment" %}</h3>
+                   {% if form.errors %}
+                       <div class="alert alert-danger">
+                           <strong>{% trans "Error uploading:" %}</strong>
+                           <ul>
+                           {% for field, errors in form.errors.items %}
+                               {% for error in errors %}
+                                   <li>{{ field }}: {{ error }}</li>
+                               {% endfor %}
+                           {% endfor %}
+                           </ul>
+                       </div>
+                   {% endif %}
+                <form method="post" action="" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload">
+                    <input type="hidden" name="media_id" value="{{ media_object.id }}">
+                    <div style="margin-bottom:10px;">
+                        <label for="file">{% trans "File:" %}</label>
+                        <input type="file" name="file" id="file" required>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label for="name">{% trans "Name (optional):" %}</label>
+                        <input type="text" name="name" id="name" style="width:200px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">{% trans "UPLOAD" %}</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    {% if attachments %}
+        <div class="user-action-form-wrap">
+            <div class="user-action-form-inner">
+                <h3>{% trans "ATTACHMENTS" %}</h3>
+                <ul>
+                    {% for attachment in attachments %}
+                        <li style="margin-bottom: 10px;">
+                            <a href="{{ attachment.file.url }}" target="_blank">{{ attachment.name }}</a>
+                            <span style="color: #888; font-size: 0.9em;">({{ attachment.uploaded_at|date:"Y-m-d H:i" }})</span>
+                            <!-- Rename form -->
+                            <form method="post" action="" style="display:inline; margin-left:10px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="rename">
+                                <input type="hidden" name="attachment_id" value="{{ attachment.id }}">
+                                <input type="text" name="new_name" value="{{ attachment.name }}" style="width:120px;">
+                                <button type="submit" class="btn btn-sm btn-secondary">{% trans "Rename" %}</button>
+                            </form>
+                            <!-- Delete form -->
+                            {% trans "are you sure you want to delete this attachment?" as delete_confirm %}
+                            <form method="post" action="" style="display:inline; margin-left:5px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="attachment_id" value="{{ attachment.id }}">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{{ delete_confirm }}');">{% trans "Remove" %}</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if attachments.has_other_pages %}
+                    <div class="pagination">
+                        {% if attachments.has_previous %}
+                            <a href="?m={{ media_object.friendly_token }}&page={{ attachments.previous_page_number }}">&laquo; {% trans "Previous" %}</a>
+                        {% endif %}
+                        <span>{% trans "Page" %} {{ attachments.number }} {% trans "of" %} {{ attachments.paginator.num_pages }}</span>
+                        {% if attachments.has_next %}
+                            <a href="?m={{ media_object.friendly_token }}&page={{ attachments.next_page_number }}">{% trans "Next" %} &raquo;</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock innercontent %}

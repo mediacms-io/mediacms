@@ -20,6 +20,7 @@ from .models import (
     TinyMCEMedia,
     TranscriptionRequest,
     VideoTrimRequest,
+    Attachment,
 )
 
 
@@ -265,6 +266,12 @@ class TinyMCEMediaAdmin(admin.ModelAdmin):
     date_hierarchy = 'uploaded_at'
 
 
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ["name", "media", "uploaded_at"]
+    search_fields = ["name", "media__title"]
+    list_filter = ["uploaded_at", "media"]
+
+
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Media, MediaAdmin)
@@ -276,5 +283,9 @@ admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
+
+# Only register Attachment admin if the feature is enabled
+if settings.ENABLE_MEDIA_ATTACHMENTS:
+    admin.site.register(Attachment, AttachmentAdmin)
 
 Media._meta.app_config.verbose_name = "Media"
