@@ -1,2 +1,37 @@
+# Dependencies
 node_modules
 npm-debug.log
+
+# Local development files - exclude uploaded content but keep placeholder images
+media_files/*
+!media_files/userlogos/
+media_files/userlogos/*
+!media_files/userlogos/*.jpg
+logs
+static_collected
+
+# Version control
+.git
+.github
+.gitignore
+
+# Development/testing
+.pytest_cache
+.qodo
+.claude
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+.docker-backup
+
+# Documentation (if you don't need it in the image)
+docs
+
+# Other
+*.pyc
+__pycache__
+.env
+.vscode
+.idea

@@ -46,7 +46,7 @@ Before beginning, ensure the following:
 
 ## Step 1: Configure MediaCMS for SAML
 
-The first step in enabling SAML authentication is to modify the `local_settings.py` (for Docker: `./deploy/docker/local_settings.py`) file of your MediaCMS deployment. Add the following configuration block to enable SAML support, role-based access control (RBAC), and enforce secure communication settings:
+The first step in enabling SAML authentication is to modify the `local_settings.py` (for Docker: `./config/local_settings.py`) file of your MediaCMS deployment. Add the following configuration block to enable SAML support, role-based access control (RBAC), and enforce secure communication settings:
 
 ```python
 USE_RBAC = True
@@ -292,7 +292,7 @@ Another issue you might encounter is an **infinite redirect loop**. This can hap
   https://<MyDomainName>/accounts/saml/mediacms_entraid/login/
   ```
 
-* Add the following line to `./deploy/docker/local_settings.py`:
+* Add the following line to `./config/local_settings.py`:
 
   ```python
   LOGIN_URL = "/accounts/saml/mediacms_entraid/login/"

@@ -1,0 +1,57 @@
+# MediaCMS Local Settings Example
+# Copy this file to local_settings.py and customize as needed:
+#   cp custom/local_settings.py.example custom/local_settings.py
+
+# ===== Basic Settings =====
+
+# DEBUG = False
+# ALLOWED_HOSTS = ['example.com', 'www.example.com']
+# PORTAL_NAME = "My Media Portal"
+
+# ===== Database Settings =====
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'mediacms',
+#         'USER': 'mediacms',
+#         'PASSWORD': 'mediacms',
+#         'HOST': 'db',
+#         'PORT': '5432',
+#     }
+# }
+
+# ===== Custom Branding =====
+
+# Custom logos (place files in custom/static/images/)
+# Nginx serves these directly from /custom/static/ (no rebuild needed!)
+# PORTAL_LOGO_DARK_SVG = "/custom/static/images/logo_dark.svg"
+# PORTAL_LOGO_DARK_PNG = "/custom/static/images/logo_dark.png"
+# PORTAL_LOGO_LIGHT_SVG = "/custom/static/images/logo_light.svg"
+# PORTAL_LOGO_LIGHT_PNG = "/custom/static/images/logo_light.png"
+
+# Custom CSS (place files in custom/static/css/)
+# Nginx serves these directly from /custom/static/ (no rebuild needed!)
+# EXTRA_CSS_PATHS = ["/custom/static/css/custom.css"]
+
+# ===== Email Settings =====
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@example.com'
+# EMAIL_HOST_PASSWORD = 'your-password'
+# DEFAULT_FROM_EMAIL = 'noreply@example.com'
+
+# ===== Security Settings =====
+
+# SECRET_KEY = 'your-secret-key-here'
+# SECURE_SSL_REDIRECT = True
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+
+# ===== Other Settings =====
+
+# Any other Django setting can be overridden here
+# See cms/settings.py for available settings

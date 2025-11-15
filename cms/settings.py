@@ -112,18 +112,22 @@ SITE_ID = 1
 # set new paths for svg or png if you want to override
 # svg has priority over png, so if you want to use
 # custom pngs and not svgs, remove the lines with svgs
-# or set as empty strings
+# Logo paths (served from /static/)
+# Default logos are built into the image
+# To customize: place files in custom/static/images/ and reference as /custom/static/images/file.png
+# or set as empty strings to disable
 # example:
+# PORTAL_LOGO_DARK_PNG = "/custom/static/images/my-logo.png"
 # PORTAL_LOGO_DARK_SVG = ""
-# PORTAL_LOGO_LIGHT_SVG = ""
-# place the files on static/images folder
 PORTAL_LOGO_DARK_SVG = "/static/images/logo_dark.svg"
 PORTAL_LOGO_DARK_PNG = "/static/images/logo_dark.png"
 PORTAL_LOGO_LIGHT_SVG = "/static/images/logo_light.svg"
 PORTAL_LOGO_LIGHT_PNG = "/static/images/logo_dark.png"
 
-# paths to extra css files to be included, eg "/static/css/custom.css"
-# place css inside static/css folder
+# Extra CSS files to include in templates
+# To add custom CSS: place files in custom/static/css/ and add paths here
+# Use /custom/static/ prefix for files in custom/ directory
+# Example: EXTRA_CSS_PATHS = ["/custom/static/css/custom.css"]
 EXTRA_CSS_PATHS = []
 # protection agains anonymous users
 # per ip address limit, for actions as like/dislike/report
@@ -179,6 +183,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = "/static/"  # where js/css files are stored on the filesystem
 MEDIA_URL = "/media/"  # URL where static files are served from the server
 STATIC_ROOT = BASE_DIR + "/static/"
+# Additional locations for static files
+# Note: custom/static is NOT included here because it's served directly by nginx
+# at /custom/static/ and doesn't need collectstatic
+STATICFILES_DIRS = []
 # where uploaded + encoded media are stored
 MEDIA_ROOT = BASE_DIR + "/media_files/"
 
@@ -253,7 +261,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media uploads has been reached."
 
 # mp4hls command, part of Bento4
-MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
+MP4HLS_COMMAND = "/home/mediacms.io/bento4/bin/mp4hls"
 
 # highly experimental, related with remote workers
 ADMIN_TOKEN = ""
@@ -370,41 +378,30 @@ FILE_UPLOAD_HANDLERS = [
     "django.core.files.uploadhandler.TemporaryFileUploadHandler",
 ]
 
-LOGS_DIR = os.path.join(BASE_DIR, "logs")
-
-error_filename = os.path.join(LOGS_DIR, "debug.log")
-if not os.path.exists(LOGS_DIR):
-    try:
-        os.mkdir(LOGS_DIR)
-    except PermissionError:
-        pass
-
-if not os.path.isfile(error_filename):
-    open(error_filename, 'a').close()
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s "
+            "%(process)d %(thread)d %(message)s"
+        }
+    },
     "handlers": {
-        "file": {
-            "level": "ERROR",
-            "class": "logging.FileHandler",
-            "filename": error_filename,
-        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        }
     },
-    "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-    },
+    "root": {"level": "INFO", "handlers": ["console"]},
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "db", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
-REDIS_LOCATION = "redis://127.0.0.1:6379/1"
+REDIS_LOCATION = "redis://redis:6379/1"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -600,13 +597,15 @@ WHISPER_MODEL = "base"
 SIDEBAR_FOOTER_TEXT = ""
 
 try:
-    # keep a local_settings.py file for local overrides
-    from .local_settings import *  # noqa
+    # Load custom settings from custom/local_settings.py
+    import sys
+    sys.path.insert(0, BASE_DIR)
+    from custom.local_settings import *  # noqa
 
     # ALLOWED_HOSTS needs a url/ip
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
 except ImportError:
-    # local_settings not in use
+    # custom/local_settings.py not in use or empty
     pass
 
 # Don't add new settings below that could be overridden in local_settings.py!!!
