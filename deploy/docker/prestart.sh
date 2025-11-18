@@ -33,7 +33,7 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
 fi
 
 # Setting up internal nginx server
-# HTTPS setup is delegated to a reverse proxy running infront of the application
+# HTTPS setup is delegated to a reverse proxy running in front of the application
 
 cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-available/default
 cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-enabled/default
