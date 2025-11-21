@@ -20,7 +20,7 @@ const useVideoChapters = () => {
         // Sort by start time to find chronological position
         const sortedSegments = allSegments.sort((a, b) => a.startTime - b.startTime);
         // Find the index of our new segment
-        const chapterIndex = sortedSegments.findIndex(seg => seg.startTime === newSegmentStartTime);
+        const chapterIndex = sortedSegments.findIndex((seg) => seg.startTime === newSegmentStartTime);
         return `Chapter ${chapterIndex + 1}`;
     };
 
@@ -28,12 +28,18 @@ const useVideoChapters = () => {
     const renumberAllSegments = (segments: Segment[]): Segment[] => {
         // Sort segments by start time
         const sortedSegments = [...segments].sort((a, b) => a.startTime - b.startTime);
-        
+
         // Renumber each segment based on its chronological position
-        return sortedSegments.map((segment, index) => ({
-            ...segment,
-            chapterTitle: `Chapter ${index + 1}`
-        }));
+        // Only update titles that follow the default "Chapter X" pattern to preserve custom titles
+        return sortedSegments.map((segment, index) => {
+            const currentTitle = segment.chapterTitle || '';
+            const isDefaultTitle = /^Chapter \d+$/.test(currentTitle);
+
+            return {
+                ...segment,
+                chapterTitle: isDefaultTitle ? `Chapter ${index + 1}` : currentTitle,
+            };
+        });
     };
 
     // Helper function to parse time string (HH:MM:SS.mmm) to seconds
@@ -124,9 +130,7 @@ const useVideoChapters = () => {
                 let initialSegments: Segment[] = [];
 
                 // Check if we have existing chapters from the backend
-                const existingChapters =
-                    (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) ||
-                    [];
+                const existingChapters = (typeof window !== 'undefined' && (window as any).MEDIA_DATA?.chapters) || [];
 
                 if (existingChapters.length > 0) {
                     // Create segments from existing chapters
@@ -225,7 +229,7 @@ const useVideoChapters = () => {
             logger.debug('Adding Safari-specific event listeners for audio support');
             video.addEventListener('canplay', handleCanPlay);
             video.addEventListener('loadeddata', handleLoadedData);
-            
+
             // Additional timeout fallback for Safari audio files
             const safariTimeout = setTimeout(() => {
                 if (video.duration && duration === 0) {
@@ -261,21 +265,21 @@ const useVideoChapters = () => {
     useEffect(() => {
         if (isSafari() && videoRef.current) {
             const video = videoRef.current;
-            
+
             const initializeSafariOnInteraction = () => {
                 // Try to load video metadata by attempting to play and immediately pause
                 const attemptInitialization = async () => {
                     try {
                         logger.debug('Safari: Attempting auto-initialization on user interaction');
-                        
+
                         // Briefly play to trigger metadata loading, then pause
                         await video.play();
                         video.pause();
-                        
+
                         // Check if we now have duration and initialize if needed
                         if (video.duration > 0 && clipSegments.length === 0) {
                             logger.debug('Safari: Successfully initialized metadata, creating default segment');
-                            
+
                             const defaultSegment: Segment = {
                                 id: 1,
                                 chapterTitle: '',
@@ -286,14 +290,14 @@ const useVideoChapters = () => {
                             setDuration(video.duration);
                             setTrimEnd(video.duration);
                             setClipSegments([defaultSegment]);
-                            
+
                             const initialState: EditorState = {
                                 trimStart: 0,
                                 trimEnd: video.duration,
                                 splitPoints: [],
                                 clipSegments: [defaultSegment],
                             };
-                            
+
                             setHistory([initialState]);
                             setHistoryPosition(0);
                         }
@@ -315,7 +319,7 @@ const useVideoChapters = () => {
             // Add listeners for various user interactions
             document.addEventListener('click', handleUserInteraction);
             document.addEventListener('keydown', handleUserInteraction);
-            
+
             return () => {
                 document.removeEventListener('click', handleUserInteraction);
                 document.removeEventListener('keydown', handleUserInteraction);
@@ -332,7 +336,7 @@ const useVideoChapters = () => {
                 // This play/pause will trigger metadata loading in Safari
                 await video.play();
                 video.pause();
-                
+
                 // The metadata events should fire now and initialize segments
                 return true;
             } catch (error) {
@@ -564,8 +568,11 @@ const useVideoChapters = () => {
                     `Updating segments with action: ${actionType}, recordHistory: ${isSignificantChange ? 'true' : 'false'}`
                 );
 
+                // Renumber all segments to ensure proper chronological naming
+                const renumberedSegments = renumberAllSegments(e.detail.segments);
+
                 // Update segment state immediately for UI feedback
-                setClipSegments(e.detail.segments);
+                setClipSegments(renumberedSegments);
 
                 // Always save state to history for non-intermediate actions
                 if (isSignificantChange) {
@@ -573,7 +580,7 @@ const useVideoChapters = () => {
                     // ensure we capture the state properly
                     setTimeout(() => {
                         // Deep clone to ensure state is captured correctly
-                        const segmentsClone = JSON.parse(JSON.stringify(e.detail.segments));
+                        const segmentsClone = JSON.parse(JSON.stringify(renumberedSegments));
 
                         // Create a complete state snapshot
                         const stateWithAction: EditorState = {
@@ -919,10 +926,10 @@ const useVideoChapters = () => {
                 const singleChapter = backendChapters[0];
                 const startSeconds = parseTimeToSeconds(singleChapter.startTime);
                 const endSeconds = parseTimeToSeconds(singleChapter.endTime);
-                
+
                 // Check if this single chapter spans the entire video (within 0.1 second tolerance)
                 const isFullVideoChapter = startSeconds <= 0.1 && Math.abs(endSeconds - duration) <= 0.1;
-                
+
                 if (isFullVideoChapter) {
                     logger.debug('Manual save: Single chapter spans full video - sending empty array');
                     backendChapters = [];
