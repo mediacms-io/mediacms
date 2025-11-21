@@ -329,10 +329,17 @@ class Media(models.Model):
 
             if to_transcribe:
                 TranscriptionRequest.objects.create(media=self, translate_to_english=False)
-                tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=False)
+                tasks.whisper_transcribe.apply_async(
+                    args=[self.friendly_token, False],
+                    countdown=10,
+                )
+
             if to_transcribe_and_translate:
                 TranscriptionRequest.objects.create(media=self, translate_to_english=True)
-                tasks.whisper_transcribe.delay(self.friendly_token, translate_to_english=True)
+                tasks.whisper_transcribe.apply_async(
+                    args=[self.friendly_token, True],
+                    countdown=10,
+                )
 
     def update_search_vector(self):
         """
