@@ -85,6 +85,15 @@ class Media(models.Model):
 
     likes = models.IntegerField(db_index=True, default=1)
 
+    linked_playlist = models.ForeignKey(
+        "Playlist",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="media_representation",
+        help_text="If set, this Media represents a Playlist in listings",
+    )
+
     listable = models.BooleanField(default=False, help_text="Whether it will appear on listings")
 
     md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
@@ -93,6 +102,8 @@ class Media(models.Model):
         "media file",
         upload_to=original_media_file_path,
         max_length=500,
+        blank=True,
+        null=True,
         help_text="media file",
     )
 
@@ -240,7 +251,10 @@ class Media(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.title:
-            self.title = self.media_file.path.split("/")[-1]
+            if self.media_file:
+                self.title = self.media_file.path.split("/")[-1]
+            elif self.linked_playlist:
+                self.title = self.linked_playlist.title
 
         strip_text_items = ["title", "description"]
         for item in strip_text_items:
@@ -294,6 +308,10 @@ class Media(models.Model):
             # to take care of post save steps
 
             self.state = helpers.get_default_state(user=self.user)
+
+        # Set encoding_status to success for playlist type
+        if self.media_type == "playlist":
+            self.encoding_status = "success"
 
         # condition to appear on listings
         if self.state == "public" and self.encoding_status == "success" and self.is_reviewed is True:
@@ -383,11 +401,16 @@ class Media(models.Model):
         Performs all related tasks, as check for media type,
         video duration, encode
         """
+        # Skip media_init for playlist type as it has no media file to process
+        if self.media_type == "playlist" or self.linked_playlist:
+            return True
+
         self.set_media_type()
         from ..methods import is_media_allowed_type
 
         if not is_media_allowed_type(self):
-            helpers.rm_file(self.media_file.path)
+            if self.media_file and self.media_file.path:
+                helpers.rm_file(self.media_file.path)
             if self.state == "public":
                 self.state = "unlisted"
                 self.save(update_fields=["state"])
@@ -765,6 +788,9 @@ class Media(models.Model):
         Prioritize uploaded_thumbnail, if exists, then thumbnail
         that is auto-generated
         """
+        # If this media represents a playlist, use playlist's thumbnail
+        if self.linked_playlist:
+            return self.linked_playlist.thumbnail_url
 
         if self.uploaded_thumbnail:
             return helpers.url_from_path(self.uploaded_thumbnail.path)
@@ -780,6 +806,9 @@ class Media(models.Model):
         Prioritize uploaded_poster, if exists, then poster
         that is auto-generated
         """
+        # If this media represents a playlist, use playlist's thumbnail
+        if self.linked_playlist:
+            return self.linked_playlist.thumbnail_url
 
         if self.uploaded_poster:
             return helpers.url_from_path(self.uploaded_poster.path)
@@ -917,6 +946,14 @@ class Media(models.Model):
         return helpers.url_from_path(self.user.logo.path)
 
     def get_absolute_url(self, api=False, edit=False):
+        # If this media represents a playlist, redirect to playlist page
+        if self.linked_playlist:
+            if edit:
+                # For now, playlist editing is not supported via media edit page
+                return self.linked_playlist.get_absolute_url(api=api)
+            # Start playback from first media when clicking on playlist in listings
+            return self.linked_playlist.get_absolute_url(api=api, start_playback=True)
+
         if edit:
             return f"{reverse('edit_media')}?m={self.friendly_token}"
         if api:

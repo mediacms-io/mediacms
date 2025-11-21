@@ -222,6 +222,12 @@ a.item-thumb {
       }
     }
 
+    .item.playlist-item & {
+      &:before {
+        content: '\e04a'; // Material icon: queue_music (playlist icon)
+      }
+    }
+
     .item.category-item & {
       &:before {
         content: '\e892';

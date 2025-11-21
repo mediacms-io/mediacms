@@ -1,6 +1,8 @@
 import uuid
 
 from django.db import models
+from django.db.models.signals import post_save, pre_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.html import strip_tags
 
@@ -31,7 +33,25 @@ class Playlist(models.Model):
     def media_count(self):
         return self.media.filter(listable=True).count()
 
-    def get_absolute_url(self, api=False):
+    def get_first_media(self):
+        """Get the first media item in the playlist"""
+        pm = self.playlistmedia_set.filter(media__listable=True).first()
+        return pm.media if pm else None
+
+    def get_absolute_url(self, api=False, start_playback=False):
+        """
+        Get the URL for this playlist.
+
+        Args:
+            api: If True, return API URL
+            start_playback: If True, return URL to first media with playlist context
+        """
+        if start_playback and not api:
+            # Get first media and return its URL with playlist parameter
+            first_media = self.get_first_media()
+            if first_media:
+                return f"{first_media.get_absolute_url()}&pl={self.friendly_token}"
+
         if api:
             return reverse("api_get_playlist", kwargs={"friendly_token": self.friendly_token})
         else:
@@ -40,6 +60,11 @@ class Playlist(models.Model):
     @property
     def url(self):
         return self.get_absolute_url()
+
+    @property
+    def playback_url(self):
+        """URL that starts playing the first media in the playlist"""
+        return self.get_absolute_url(start_playback=True)
 
     @property
     def api_url(self):
@@ -95,3 +120,46 @@ class PlaylistMedia(models.Model):
 
     class Meta:
         ordering = ["ordering", "-action_date"]
+
+
+@receiver(post_save, sender=Playlist)
+def create_or_update_playlist_media(sender, instance, created, **kwargs):
+    """
+    Automatically create or update a Media object that represents this Playlist in listings.
+    This allows playlists to appear alongside regular media in search results and listings.
+    """
+    from .media import Media
+
+    # Check if a Media representation already exists for this playlist
+    media_representation = Media.objects.filter(linked_playlist=instance).first()
+
+    if media_representation:
+        # Update existing media representation
+        media_representation.title = instance.title
+        media_representation.description = instance.description
+        media_representation.user = instance.user
+        media_representation.media_type = "playlist"
+        media_representation.encoding_status = "success"
+        media_representation.save()
+    else:
+        # Create new media representation for this playlist
+        Media.objects.create(
+            title=instance.title,
+            description=instance.description,
+            user=instance.user,
+            linked_playlist=instance,
+            media_type="playlist",
+            encoding_status="success",
+            # Inherit the same state and review status defaults
+        )
+
+
+@receiver(pre_delete, sender=Playlist)
+def delete_playlist_media(sender, instance, **kwargs):
+    """
+    Delete the associated Media representation when a Playlist is deleted.
+    """
+    from .media import Media
+
+    # Delete any Media objects that represent this playlist
+    Media.objects.filter(linked_playlist=instance).delete()

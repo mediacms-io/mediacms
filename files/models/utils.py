@@ -29,6 +29,7 @@ MEDIA_TYPES_SUPPORTED = (
     ("image", "Image"),
     ("pdf", "Pdf"),
     ("audio", "Audio"),
+    ("playlist", "Playlist"),
 )
 
 ENCODE_EXTENSIONS = (

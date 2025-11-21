@@ -69,7 +69,7 @@ class MediaList(APIView):
         if user:
             base_filters &= Q(user=user)
 
-        base_queryset = Media.objects.prefetch_related("user", "tags")
+        base_queryset = Media.objects.prefetch_related("user", "tags").select_related("linked_playlist")
 
         if not request.user.is_authenticated:
             return base_queryset.filter(base_filters)
@@ -159,17 +159,17 @@ class MediaList(APIView):
             media = show_recommended_media(request, limit=50)
             already_sorted = True
         elif show_param == "featured":
-            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user", "tags")
+            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user", "tags").select_related("linked_playlist")
         elif show_param == "shared_by_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags").distinct()
+                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags").select_related("linked_playlist").distinct()
         elif show_param == "shared_with_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-                base_queryset = Media.objects.prefetch_related("user", "tags")
+                base_queryset = Media.objects.prefetch_related("user", "tags").select_related("linked_playlist")
 
                 # Build OR conditions similar to _get_media_queryset
                 conditions = Q(permissions__user=request.user)
@@ -183,14 +183,14 @@ class MediaList(APIView):
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
             if self.request.user == user or is_mediacms_editor(self.request.user):
-                media = Media.objects.filter(user=user).prefetch_related("user", "tags")
+                media = Media.objects.filter(user=user).prefetch_related("user", "tags").select_related("linked_playlist")
             else:
                 media = self._get_media_queryset(request, user)
                 already_sorted = True
 
         else:
             if is_mediacms_editor(self.request.user):
-                media = Media.objects.prefetch_related("user", "tags")
+                media = Media.objects.prefetch_related("user", "tags").select_related("linked_playlist")
             else:
                 media = self._get_media_queryset(request)
                 already_sorted = True
@@ -995,7 +995,7 @@ class MediaSearch(APIView):
 
         if request.user.is_authenticated:
             if is_mediacms_editor(self.request.user):
-                media = Media.objects.prefetch_related("user", "tags")
+                media = Media.objects.prefetch_related("user", "tags").select_related("linked_playlist")
                 basic_query = Q()
             else:
                 basic_query = Q(listable=True) | Q(permissions__user=request.user) | Q(user=request.user)

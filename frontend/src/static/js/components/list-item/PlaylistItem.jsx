@@ -31,14 +31,11 @@ export function PlaylistItem(props) {
           aria-hidden="true"
           style={!thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" }}
         >
-          <div className="playlist-count">
-            <div>
-              <div>
-                <span>{props.media_count}</span>
-                <i className="material-icons">playlist_play</i>
-              </div>
+          {!thumbnailUrl ? null : (
+            <div key="item-type-icon" className="item-type-icon">
+              <div></div>
             </div>
-          </div>
+          )}
 
           <div className="playlist-hover-play-all">
             <div>
