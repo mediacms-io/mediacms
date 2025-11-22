@@ -1,4 +1,4 @@
-.PHONY: admin-shell build-frontend
+.PHONY: admin-shell build-frontend backup-db
 
 admin-shell:
 	@container_id=$$(docker compose ps -q web); \
@@ -16,4 +16,17 @@ build-frontend:
 
 test:
 	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+
+backup-db:
+	@echo "Creating PostgreSQL database dump..."
+	@mkdir -p backups
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	dump_file="backups/mediacms_dump_$${timestamp}.sql"; \
+	docker compose exec -T db pg_dump -U mediacms -d mediacms > "$${dump_file}"; \
+	if [ $$? -eq 0 ]; then \
+		echo "Database dump created successfully: $${dump_file}"; \
+	else \
+		echo "Database dump failed"; \
+		exit 1; \
+	fi
 

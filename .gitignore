@@ -1,5 +1,10 @@
 cli-tool/.env
 frontend/package-lock.json
+custom/local_settings.py
+custom/static/images/*
+!custom/static/images/.gitkeep
+custom/static/css/*
+!custom/static/css/.gitkeep
 media_files/encoded/
 media_files/original/
 media_files/hls/
@@ -17,7 +22,7 @@ static/mptt/
 static/rest_framework/
 static/drf-yasg
 cms/local_settings.py
-deploy/docker/local_settings.py
+config/local_settings.py
 yt.readme.md
 /frontend-tools/video-editor/node_modules
 /frontend-tools/video-editor/client/node_modules
@@ -35,3 +40,4 @@ frontend-tools/video-editor/client/public/videos/sample-video.mp3
 frontend-tools/chapters-editor/client/public/videos/sample-video.mp3
 static/chapters_editor/videos/sample-video.mp3
 static/video_editor/videos/sample-video.mp3
+backups/

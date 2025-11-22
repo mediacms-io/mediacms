@@ -164,53 +164,123 @@ Database is stored on ../postgres_data/ and media_files on media_files/
 
 ## 4. Docker Deployment options
 
-The mediacms image is built to use supervisord as the main process, which manages one or more services required to run mediacms. We can toggle which services are run in a given container by setting the environment variables below to `yes` or `no`:
+**⚠️ IMPORTANT**: MediaCMS 7.3 introduces a new Docker architecture. If you're upgrading from an earlier version, please see the [Migration Guide](DOCKER_V7.3_MIGRATION.md).
 
-* ENABLE_UWSGI
-* ENABLE_NGINX
-* ENABLE_CELERY_BEAT
-* ENABLE_CELERY_SHORT
-* ENABLE_CELERY_LONG
-* ENABLE_MIGRATIONS
+### Architecture Overview
 
-By default, all these services are enabled, but in order to create a scaleable deployment, some of them can be disabled, splitting the service up into smaller services.
+MediaCMS 7.3+ uses a modern microservices architecture with dedicated containers:
 
-Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
+- **nginx** - Web server for static/media files and reverse proxy
+- **web** - Django application (uWSGI)
+- **celery_short** - Short-running background tasks
+- **celery_long** - Long-running tasks (video encoding)
+- **celery_beat** - Task scheduler
+- **migrations** - Database migrations (runs on startup)
+- **db** - PostgreSQL database
+- **redis** - Cache and message broker
 
-To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
+### Key Changes from Previous Versions
 
-### Simple Deployment, accessed as http://localhost
+- ✅ **No supervisord** - Native Docker process management
+- ✅ **Dedicated images** per service
+- ✅ **No ENABLE_* environment variables** - Services are separated into individual containers
+- ✅ **Production images** don't mount source code (immutable)
+- ✅ **config/** directory for centralized configuration
+- ✅ **Separate celery workers** for short and long tasks
 
-The main container runs migrations, mediacms_web, celery_beat, celery_workers (celery_short and celery_long services), exposed on port 80 supported by redis and postgres database.
+### Configuration
 
- The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://localhost, on the docker host machine.
+Application settings can be overridden using environment variables in your docker-compose file or by building a custom image with a modified `cms/local_settings.py` file.
 
-### Server with ssl certificate through letsencrypt service, accessed as https://my_domain.com
-Before trying this out make sure the ip points to my_domain.com.
+Key environment variables:
+- `FRONTEND_HOST` - Your domain (e.g., `https://mediacms.example.com`)
+- `PORTAL_NAME` - Portal name
+- `SECRET_KEY` - Django secret key
+- `DEBUG` - Enable debug mode (development only)
+- Database and Redis connection settings
 
-With this method [this deployment](../docker-compose-letsencrypt.yaml) is used.
+See the [Migration Guide](DOCKER_V7.3_MIGRATION.md) for detailed configuration options
 
-Edit this file and set `VIRTUAL_HOST` as my_domain.com, `LETSENCRYPT_HOST` as my_domain.com, and your email on `LETSENCRYPT_EMAIL`
+### Simple Deployment (HTTP)
 
-Edit `deploy/docker/local_settings.py` and set https://my_domain.com as `FRONTEND_HOST`
+Use `docker-compose.yaml` for a standard HTTP deployment on port 80:
 
-Now run `docker compose -f docker-compose-letsencrypt.yaml up`, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
+```bash
+docker compose up -d
+```
 
-### Advanced Deployment, accessed as http://localhost:8000
+This starts all services (nginx, web, celery workers, database, redis) with the nginx container exposed on port 80. Access at http://localhost or http://your-server-ip.
 
-Here we can run 1 mediacms_web instance, with the FRONTEND_HOST in `deploy/docker/local_settings.py` configured as http://localhost:8000. This is bootstrapped by a single migrations instance and supported by a single celery_beat instance and 1 or more celery_worker instances. Redis and postgres containers are also used for persistence. Clients can access the service on http://localhost:8000, on the docker host machine. This is similar to [this deployment](../docker-compose.yaml), with a `port` defined in FRONTEND_HOST.
+**Features:**
+- Production-ready with immutable images
+- Named volumes for data persistence
+- Separate containers for each service
 
-### Advanced Deployment, with reverse proxy, accessed as http://mediacms.io
+### Production Deployment with HTTPS (Let's Encrypt)
 
-Here we can use `jwilder/nginx-proxy` to reverse proxy to 1 or more instances of mediacms_web supported by other services as mentioned in the previous deployment. The FRONTEND_HOST in `deploy/docker/local_settings.py` is configured as http://mediacms.io, nginx-proxy has port 80 exposed. Clients can access the service on http://mediacms.io (Assuming DNS or the hosts file is setup correctly to point to the IP of the nginx-proxy instance). This is similar to [this deployment](../docker-compose-http-proxy.yaml).
+Use `docker-compose-cert.yaml` for automatic HTTPS with Let's Encrypt:
 
-### Advanced Deployment, with reverse proxy, accessed as https://localhost
+**Prerequisites:**
+- Domain name pointing to your server
+- Ports 80 and 443 open
 
-The reverse proxy (`jwilder/nginx-proxy`) can be configured to provide SSL termination using self-signed certificates, letsencrypt or CA signed certificates (see: https://hub.docker.com/r/jwilder/nginx-proxy or [LetsEncrypt Example](https://www.singularaspect.com/use-nginx-proxy-and-letsencrypt-companion-to-host-multiple-websites/) ). In this case the FRONTEND_HOST should be set to https://mediacms.io. This is similar to [this deployment](../docker-compose-http-proxy.yaml).
+**Setup:**
+1. Edit `docker-compose-cert.yaml` and update:
+   - `VIRTUAL_HOST` - Your domain
+   - `LETSENCRYPT_HOST` - Your domain
+   - `LETSENCRYPT_EMAIL` - Your email
+
+2. Run:
+```bash
+docker compose -f docker-compose-cert.yaml up -d
+```
+
+This uses `nginxproxy/nginx-proxy` with `acme-companion` for automatic HTTPS certificate management. Access at https://your-domain.com.
+
+### Development Deployment
+
+Use `docker-compose-dev.yaml` for development with live code reloading:
+
+```bash
+docker compose -f docker-compose-dev.yaml up
+```
+
+**Features:**
+- Source code mounted for live editing
+- Django debug mode enabled
+- Frontend dev server on port 8088
+- Direct Django access (no nginx) on port 80
+
+### Scaling Workers
+
+Scale celery workers independently based on load:
+
+```bash
+# Scale short task workers to 3 instances
+docker compose up -d --scale celery_short=3
+
+# Scale long task workers to 2 instances
+docker compose up -d --scale celery_long=2
+```
+
+### Using Extra Codecs (Full Image)
+
+For advanced transcoding features (including Whisper for automatic subtitles), use the full worker image:
+
+Edit your docker-compose file:
+```yaml
+celery_long:
+  image: mediacms/mediacms-worker:7.3-full  # Changed from :7.3
+```
+
+Then restart:
+```bash
+docker compose up -d celery_long
+```
 
 ### A Scaleable Deployment Architecture (Docker, Swarm, Kubernetes)
 
-The architecture below generalises all the deployment scenarios above, and provides a conceptual design for other deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple mediacms_web instances and celery_workers. For large deployments, managed postgres, redis and storage may be adopted.
+The architecture below provides a conceptual design for deployments based on kubernetes and docker swarm. It allows for horizontal scaleability through the use of multiple web instances and celery workers. For large deployments, managed postgres, redis and storage may be adopted.
 
 ![MediaCMS](images/architecture.png)
 
@@ -218,24 +288,36 @@ The architecture below generalises all the deployment scenarios above, and provi
 ## 5. Configuration
 Several options are available on `cms/settings.py`, most of the things that are allowed or should be disallowed are described there.
 
-It is advisable to override any of them by adding it to `local_settings.py` .
+It is advisable to override any of them by adding it to `local_settings.py`.
 
-In case of a the single server installation, add to `cms/local_settings.py` .
-
-In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
-
-Any change needs restart of MediaCMS in order to take effect.
-
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
+**Single server installation:** edit `cms/local_settings.py`, make changes and restart MediaCMS:
 
 ```bash
-#systemctl restart mediacms
+systemctl restart mediacms celery_beat celery_short celery_long
 ```
 
-Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
+**Docker installation:** Configuration can be done in two ways:
+
+1. **Environment variables** (recommended for simple changes):
+   Add to your docker-compose file:
+   ```yaml
+   environment:
+     FRONTEND_HOST: 'https://mediacms.example.com'
+     PORTAL_NAME: 'My MediaCMS'
+   ```
+
+2. **Custom image with local_settings.py** (for complex changes):
+   - Create a custom Dockerfile:
+   ```dockerfile
+   FROM mediacms/mediacms:7.3
+   COPY my_custom_settings.py /home/mediacms.io/mediacms/cms/local_settings.py
+   ```
+   - Build and use your custom image
+
+After changes, restart the affected containers:
 
 ```bash
-#docker compose restart web celery_worker celery_beat
+docker compose restart web celery_short celery_long celery_beat
 ```
 
 ### 5.1 Change portal logo

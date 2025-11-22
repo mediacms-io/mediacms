@@ -1,0 +1,62 @@
+version: "3.8"
+
+# HTTPS/SSL certificate overlay for docker-compose.yaml
+# Uses nginx-proxy with Let's Encrypt via acme-companion
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose-cert.yaml up -d
+#
+# Before running:
+#   1. Change VIRTUAL_HOST to your domain
+#   2. Change LETSENCRYPT_HOST to your domain
+#   3. Change LETSENCRYPT_EMAIL to your email
+
+services:
+  # Reverse proxy with automatic SSL
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+      - certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./config/nginx-proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
+
+  # Let's Encrypt certificate manager
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    restart: unless-stopped
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # Override nginx to work with nginx-proxy
+  nginx:
+    expose:
+      - "80"
+    ports: []  # Remove ports, nginx-proxy handles external access
+    environment:
+      # CHANGE THESE VALUES:
+      VIRTUAL_HOST: 'mediacms.example.com'
+      LETSENCRYPT_HOST: 'mediacms.example.com'
+      LETSENCRYPT_EMAIL: 'admin@example.com'
+
+volumes:
+  # nginx-proxy volumes
+  conf:
+  vhost:
+  html:
+  dhparam:
+  certs:
+  acme:
