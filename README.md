@@ -69,7 +69,7 @@ Copyright Markos Gogoulos.
 
 ## Support and paid services
 
-We provide custom installations, development of extra functionality, migration from existing systems, integrations with legacy systems, training and support. Contact us at info@mediacms.io for more information.
+We provide custom installations, development of extra functionality, migration from existing systems, integrations with legacy systems, training and support. Checkout our [services page](https://mediacms.io/#services/) for more information.
 
 ### Commercial Hostings
 **Elestio**
