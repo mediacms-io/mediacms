@@ -1237,7 +1237,7 @@
 "@types/react-dom@^19.0.4":
   version "19.1.2"
 
-"@types/react@^17.0.0", "@types/react@^17.0.11":
+"@types/react@^17.0.0", "@types/react@^17.0.0", "@types/react@^17.0.11":
   version "17.0.85"
   dependencies:
     "@types/prop-types" "*"
@@ -5990,7 +5990,7 @@ picomatch@^2.2.2:
   resolved "https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
 
-picomatch@^2.3.1:
+"picomatch@^3 || ^4", picomatch@^2.3.1:
   version "2.3.1"
   resolved "https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==

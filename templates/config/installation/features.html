@@ -25,6 +25,7 @@ MediaCMS.features = {
 			timestampTimebar: {% if TIMESTAMP_IN_TIMEBAR %}true{% else %}false{% endif %},
 			comment_mention: {% if CAN_MENTION_IN_COMMENTS %}true{% else %}false{% endif %},
 			save: true,
+			attachments: {% if ENABLE_MEDIA_ATTACHMENTS %}true{% else %}false{% endif %},
 		},
 		shareOptions: [ 'embed', 'fb', 'tw', 'whatsapp', 'telegram', 'reddit', 'tumblr', 'vk', 'pinterest', 'mix', 'linkedin', 'email' ],
 	},
