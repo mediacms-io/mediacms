@@ -1,4 +1,16 @@
 #chapters-editor-root {
+    .timeline-header-container {
+        margin-left: 1rem;
+        margin-top: -0.5rem;
+    }
+
+    .timeline-header-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #059669;
+        margin: 0;
+    }
+
     .timeline-container-card {
         background-color: white;
         border-radius: 0.5rem;

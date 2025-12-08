@@ -151,10 +151,8 @@ const App = () => {
                 />
 
                 {/* Timeline Header */}
-                <div style={{ marginLeft: '1rem', marginTop: '-0.5rem' }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#059669', margin: 0 }}>
-                        Add Chapters
-                    </h2>
+                <div className="timeline-header-container">
+                    <h2 className="timeline-header-title">Add Chapters</h2>
                 </div>
 
                 {/* Timeline Controls */}

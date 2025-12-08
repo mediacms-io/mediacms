@@ -309,12 +309,10 @@ const App = () => {
           canRedo={historyPosition < history.length - 1}
         />
 
-        {/* Timeline Header */}
-        <div style={{ marginLeft: '1rem', marginTop: '-0.5rem' }}>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#2563eb', margin: 0 }}>
-            Trim or Split
-          </h2>
-        </div>
+                 {/* Timeline Header */}
+                 <div className="timeline-header-container">
+                     <h2 className="timeline-header-title">Trim or Split</h2>
+                 </div>
 
         {/* Timeline Controls */}
         <TimelineControls
