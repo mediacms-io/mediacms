@@ -1,0 +1,18 @@
+FROM nginx:alpine
+
+LABEL org.opencontainers.image.version="7.3"
+LABEL org.opencontainers.image.title="MediaCMS Nginx"
+LABEL org.opencontainers.image.description="Nginx server for MediaCMS"
+
+# Copy nginx configurations
+COPY config/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY config/nginx/site.conf /etc/nginx/conf.d/default.conf
+COPY config/nginx/uwsgi_params /etc/nginx/uwsgi_params
+
+# Create directories for static and media files (will be volumes)
+RUN mkdir -p /var/www/media /var/www/static && \
+    chown -R nginx:nginx /var/www
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

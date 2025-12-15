@@ -21,8 +21,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker meta for base image
-        id: meta-base
+      - name: Docker meta for web image
+        id: meta-web
         uses: docker/metadata-action@v4
         with:
           images: |
@@ -40,39 +40,95 @@ jobs:
             org.opencontainers.image.source=https://github.com/mediacms-io/mediacms
             org.opencontainers.image.licenses=AGPL-3.0
 
-      - name: Docker meta for full image
-        id: meta-full
+      - name: Build and push web image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          target: web
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+
+      - name: Docker meta for worker image
+        id: meta-worker
         uses: docker/metadata-action@v4
         with:
           images: |
-            mediacms/mediacms
+            mediacms/mediacms-worker
           tags: |
-            type=raw,value=full,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
-            type=semver,pattern={{version}}-full
-            type=semver,pattern={{major}}.{{minor}}-full
-            type=semver,pattern={{major}}-full
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
           labels: |
-            org.opencontainers.image.title=MediaCMS Full
-            org.opencontainers.image.description=MediaCMS is a modern, fully featured open source video and media CMS, written in Python/Django and React, featuring a REST API. This is the full version with additional dependencies.
+            org.opencontainers.image.title=MediaCMS Worker
+            org.opencontainers.image.description=MediaCMS Celery worker for background task processing.
             org.opencontainers.image.vendor=MediaCMS
             org.opencontainers.image.url=https://mediacms.io/
             org.opencontainers.image.source=https://github.com/mediacms-io/mediacms
             org.opencontainers.image.licenses=AGPL-3.0
 
-      - name: Build and push full image
+      - name: Build and push worker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          target: full
+          target: worker
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-full.outputs.tags }}
-          labels: ${{ steps.meta-full.outputs.labels }}
+          tags: ${{ steps.meta-worker.outputs.tags }}
+          labels: ${{ steps.meta-worker.outputs.labels }}
 
-      - name: Build and push base image
+      - name: Docker meta for worker-full image
+        id: meta-worker-full
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            mediacms/mediacms-worker
+          tags: |
+            type=raw,value=latest-full,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+            type=semver,pattern={{version}}-full
+            type=semver,pattern={{major}}.{{minor}}-full
+            type=semver,pattern={{major}}-full
+          labels: |
+            org.opencontainers.image.title=MediaCMS Worker Full
+            org.opencontainers.image.description=MediaCMS Celery worker with additional codecs for advanced transcoding features.
+            org.opencontainers.image.vendor=MediaCMS
+            org.opencontainers.image.url=https://mediacms.io/
+            org.opencontainers.image.source=https://github.com/mediacms-io/mediacms
+            org.opencontainers.image.licenses=AGPL-3.0
+
+      - name: Build and push worker-full image
         uses: docker/build-push-action@v4
         with:
           context: .
-          target: base
+          target: worker-full
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-base.outputs.tags }}
-          labels: ${{ steps.meta-base.outputs.labels }}
+          tags: ${{ steps.meta-worker-full.outputs.tags }}
+          labels: ${{ steps.meta-worker-full.outputs.labels }}
+
+      - name: Docker meta for nginx image
+        id: meta-nginx
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            mediacms/mediacms-nginx
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          labels: |
+            org.opencontainers.image.title=MediaCMS Nginx
+            org.opencontainers.image.description=Nginx web server for MediaCMS, serving static and media files.
+            org.opencontainers.image.vendor=MediaCMS
+            org.opencontainers.image.url=https://mediacms.io/
+            org.opencontainers.image.source=https://github.com/mediacms-io/mediacms
+            org.opencontainers.image.licenses=AGPL-3.0
+
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.nginx
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
