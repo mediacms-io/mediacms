@@ -28,9 +28,9 @@ const ClipSegments = ({ segments }: ClipSegmentsProps) => {
 
     // Generate the same color background for a segment as shown in the timeline
     const getSegmentColorClass = (index: number) => {
-        // Return CSS class based on index modulo 8
-        // This matches the CSS nth-child selectors in the timeline
-        return `segment-default-color segment-color-${(index % 8) + 1}`;
+        // Return CSS class based on index modulo 20
+        // This matches the CSS classes for up to 20 segments
+        return `segment-default-color segment-color-${(index % 20) + 1}`;
     };
 
     return (

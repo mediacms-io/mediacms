@@ -99,6 +99,7 @@
     }
 
     .segment-thumbnail {
+        display: none;
         width: 4rem;
         height: 2.25rem;
         background-size: cover;
@@ -129,7 +130,7 @@
         margin-top: 0.25rem;
         display: inline-block;
         background-color: #f3f4f6;
-        padding: 0 0.5rem;
+        padding: 0;
         border-radius: 0.25rem;
         color: black;
     }
@@ -169,28 +170,67 @@
         color: rgba(51, 51, 51, 0.7);
     }
 
+    /* Generate 20 shades of #2563eb (rgb(37, 99, 235)) */
+    /* Base color: #2563eb = rgb(37, 99, 235) */
+    /* Creating variations from lighter to darker */
     .segment-color-1 {
-        background-color: rgba(59, 130, 246, 0.15);
+        background-color: rgba(147, 179, 247, 0.2);
     }
     .segment-color-2 {
-        background-color: rgba(16, 185, 129, 0.15);
+        background-color: rgba(129, 161, 243, 0.2);
     }
     .segment-color-3 {
-        background-color: rgba(245, 158, 11, 0.15);
+        background-color: rgba(111, 143, 239, 0.2);
     }
     .segment-color-4 {
-        background-color: rgba(239, 68, 68, 0.15);
+        background-color: rgba(93, 125, 237, 0.2);
     }
     .segment-color-5 {
-        background-color: rgba(139, 92, 246, 0.15);
+        background-color: rgba(75, 107, 235, 0.2);
     }
     .segment-color-6 {
-        background-color: rgba(236, 72, 153, 0.15);
+        background-color: rgba(65, 99, 235, 0.2);
     }
     .segment-color-7 {
-        background-color: rgba(6, 182, 212, 0.15);
+        background-color: rgba(55, 91, 235, 0.2);
     }
     .segment-color-8 {
-        background-color: rgba(250, 204, 21, 0.15);
+        background-color: rgba(45, 83, 235, 0.2);
+    }
+    .segment-color-9 {
+        background-color: rgba(37, 99, 235, 0.2);
+    }
+    .segment-color-10 {
+        background-color: rgba(33, 89, 215, 0.2);
+    }
+    .segment-color-11 {
+        background-color: rgba(29, 79, 195, 0.2);
+    }
+    .segment-color-12 {
+        background-color: rgba(25, 69, 175, 0.2);
+    }
+    .segment-color-13 {
+        background-color: rgba(21, 59, 155, 0.2);
+    }
+    .segment-color-14 {
+        background-color: rgba(17, 49, 135, 0.2);
+    }
+    .segment-color-15 {
+        background-color: rgba(15, 43, 119, 0.2);
+    }
+    .segment-color-16 {
+        background-color: rgba(13, 37, 103, 0.2);
+    }
+    .segment-color-17 {
+        background-color: rgba(11, 31, 87, 0.2);
+    }
+    .segment-color-18 {
+        background-color: rgba(9, 25, 71, 0.2);
+    }
+    .segment-color-19 {
+        background-color: rgba(7, 19, 55, 0.2);
+    }
+    .segment-color-20 {
+        background-color: rgba(5, 13, 39, 0.2);
     }
 }

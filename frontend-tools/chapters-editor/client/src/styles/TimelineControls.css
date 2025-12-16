@@ -34,8 +34,6 @@
     }
 
     .timeline-title-text {
-        font-weight: 700;
-        color: #059669;
         font-size: 0.875rem;
     }
 
@@ -64,7 +62,7 @@
     .timeline-container {
         position: relative;
         min-width: 100%;
-        background-color: #E2EDE4;
+        background-color: #e2ede4;
         height: 70px;
         border-radius: 0.25rem;
         overflow: visible !important;
@@ -557,7 +555,7 @@
     .save-copy-button,
     .save-segments-button {
         color: #ffffff;
-        background: #0066cc;
+        background: #059669;
         border-radius: 0.25rem;
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
@@ -730,7 +728,7 @@
         height: 50px;
         border: 5px solid rgba(0, 0, 0, 0.1);
         border-radius: 50%;
-        border-top-color: #0066cc;
+        border-top-color: #059669;
         animation: spin 1s ease-in-out infinite;
     }
 
@@ -770,7 +768,7 @@
         align-items: center;
         justify-content: center;
         padding: 0.75rem 1.25rem;
-        background-color: #0066cc;
+        background-color: #059669;
         color: white;
         border-radius: 4px;
         text-decoration: none;
@@ -783,7 +781,7 @@
     }
 
     .modal-choice-button:hover {
-        background-color: #0056b3;
+        background-color:rgb(7, 119, 84);
     }
 
     .modal-choice-button svg {
@@ -958,7 +956,6 @@
 
 .save-chapters-button:hover {
     background-color: #2563eb;
-    transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
 }
 

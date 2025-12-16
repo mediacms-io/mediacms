@@ -3943,9 +3943,7 @@ const TimelineControls = ({
                         <button
                             onClick={() => setShowSaveChaptersModal(true)}
                             className="save-chapters-button"
-                            data-tooltip={clipSegments.length === 0 
-                                ? "Clear all chapters" 
-                                : "Save chapters"}
+                            {...(clipSegments.length === 0 && { 'data-tooltip': 'Clear all chapters' })}
                         >
                             {clipSegments.length === 0 
                                 ? 'Clear Chapters' 
