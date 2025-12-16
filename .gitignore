@@ -7,7 +7,7 @@ media_files/chunks/
 media_files/uploads/
 media_files/tinymce_media/
 postgres_data/
-celerybeat-schedule
+celerybeat-schedule*
 logs/
 pids/
 static/admin/
