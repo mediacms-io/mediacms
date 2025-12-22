@@ -309,6 +309,11 @@ const App = () => {
           canRedo={historyPosition < history.length - 1}
         />
 
+                 {/* Timeline Header */}
+                 <div className="timeline-header-container">
+                     <h2 className="timeline-header-title">Trim or Split</h2>
+                 </div>
+
         {/* Timeline Controls */}
         <TimelineControls
           currentTime={currentTime}
