@@ -318,23 +318,86 @@ def encode_media(
 
     if profile.extension == "gif":
         tf = create_temp_file(suffix=".gif")
-        # -ss 5 start from 5 second. -t 25 until 25 sec
+        
+        # Get configuration settings with defaults matching original behavior
+        auto_mode = getattr(settings, 'THUMBNAIL_GIF_AUTO_MODE', False)
+        num_frames = getattr(settings, 'THUMBNAIL_GIF_NUM_FRAMES', 5)
+        gif_start = getattr(settings, 'THUMBNAIL_GIF_START', 3)
+        # Use None as default to distinguish between "not set" (use default) and "explicitly None" (use full video in auto mode)
+        gif_duration = getattr(settings, 'THUMBNAIL_GIF_DURATION', None)
+        gif_fps = getattr(settings, 'THUMBNAIL_GIF_FPS', None)
+        
+        # Get video duration
+        video_duration = media.duration if media.duration and media.duration > 0 else None
+        
+        # Determine effective duration and FPS
+        if auto_mode and video_duration:
+            # Automatic mode: calculate based on video length
+            # Use full video duration if None (explicitly set) or not configured
+            if gif_duration is None:
+                effective_duration = video_duration - gif_start
+            else:
+                effective_duration = min(gif_duration, video_duration - gif_start)
+            
+            # Ensure duration is positive
+            if effective_duration <= 0:
+                effective_duration = max(1, video_duration - gif_start)
+            
+            # Calculate FPS to evenly distribute frames
+            # For N frames over D seconds, we need fps = (N-1) / D
+            # This ensures frames at start, end, and evenly spaced in between
+            if num_frames > 1:
+                calculated_fps = (num_frames - 1) / effective_duration
+            else:
+                calculated_fps = 1.0 / effective_duration  # At least 1 frame
+            
+            # Use calculated FPS if not manually specified
+            if gif_fps is None:
+                gif_fps = calculated_fps
+            
+            # Use calculated duration
+            final_duration = effective_duration
+            
+        else:
+            # Manual mode or fallback when duration is missing
+            # Use original defaults (start=3, duration=25, fps=1) for backward compatibility
+            if gif_duration is None:
+                gif_duration = 25  # Original default
+            if gif_fps is None:
+                gif_fps = 1  # Original default
+            if gif_start is None or gif_start == 0:
+                gif_start = 3  # Original default for backward compatibility
+            
+            # Cap duration if it exceeds video length
+            if video_duration and (gif_start + gif_duration) > video_duration:
+                final_duration = max(1, video_duration - gif_start)
+                logger.info(f"GIF duration capped to {final_duration}s for video of {video_duration}s")
+            else:
+                final_duration = gif_duration
+        
+        # Ensure minimum values
+        gif_start = max(0, gif_start)
+        final_duration = max(0.1, final_duration)
+        gif_fps = max(0.01, gif_fps)
+        
+        # Build ffmpeg command
         command = [
             settings.FFMPEG_COMMAND,
             "-y",
             "-ss",
-            "3",
+            str(gif_start),
             "-i",
             media.media_file.path,
             "-hide_banner",
             "-vf",
-            "scale=344:-1:flags=lanczos,fps=1",
+            f"scale=344:-1:flags=lanczos,fps={gif_fps:.4f}",
             "-t",
-            "25",
+            str(final_duration),
             "-f",
             "gif",
             tf,
         ]
+        
         ret = run_command(command)
         if os.path.exists(tf) and get_file_type(tf) == "image":
             with open(tf, "rb") as f:

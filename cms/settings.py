@@ -538,6 +538,19 @@ SPRITE_NUM_SECS = 10
 # If you plan to change this, you must also follow the instructions on admins_docs.md
 # to change the equivalent value in ./frontend/src/static/js/components/media-viewer/VideoViewer/index.js and then re-build frontend
 
+# Thumbnail GIF generation settings
+THUMBNAIL_GIF_NUM_FRAMES = 5          # Number of frames to capture (for automatic mode)
+THUMBNAIL_GIF_START = 3                # Start position in seconds (default: 3, matches original behavior)
+THUMBNAIL_GIF_DURATION = None         # Duration in seconds (None = use 25 in manual mode, full video in auto mode)
+THUMBNAIL_GIF_FPS = None              # Frames per second (None = use 1 in manual mode, auto-calculate in auto mode)
+THUMBNAIL_GIF_AUTO_MODE = False        # Enable automatic calculation (default: False for backward compatibility)
+# When THUMBNAIL_GIF_AUTO_MODE = True:
+#   - If THUMBNAIL_GIF_DURATION is None, uses full video duration
+#   - Calculates FPS automatically to evenly distribute frames across duration
+# When THUMBNAIL_GIF_AUTO_MODE = False:
+#   - Uses manual settings: THUMBNAIL_GIF_START, THUMBNAIL_GIF_DURATION, THUMBNAIL_GIF_FPS
+#   - Defaults match original hardcoded values (start=3, duration=25, fps=1) for backward compatibility
+
 # how many images will be shown on the slideshow
 SLIDESHOW_ITEMS = 30
 # this calculation is redundant most probably, setting as an option
