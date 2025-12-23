@@ -1066,9 +1066,69 @@ def media_file_delete(sender, instance, **kwargs):
 
 @receiver(m2m_changed, sender=Media.category.through)
 def media_m2m(sender, instance, **kwargs):
-    if instance.category.all():
-        for category in instance.category.all():
+    action = kwargs.get('action', '')
+    pk_set = kwargs.get('pk_set', set())
+    # Only update on post actions to avoid duplicate updates
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        # Import here to avoid circular imports
+        from .category import Category
+        
+        categories_to_update = set()
+        
+        if action == 'post_clear':
+            # For clear, update all categories that were associated
+            # We need to update all categories, but we can't know which ones were cleared
+            # So update all current categories
+            if instance.category.all():
+                categories_to_update.update(instance.category.all())
+        else:
+            # For add/remove, update the affected categories using pk_set
+            if pk_set:
+                categories_to_update.update(Category.objects.filter(pk__in=pk_set))
+            # Also update current categories to ensure counts are correct
+            if instance.category.all():
+                categories_to_update.update(instance.category.all())
+        
+        # Update counts for all affected categories
+        for category in categories_to_update:
             category.update_category_media()
-    if instance.tags.all():
-        for tag in instance.tags.all():
+        
+        # Refresh instance from DB to ensure we have latest data
+        if instance.id:
+            instance.refresh_from_db()
+            instance.update_search_vector()
+
+
+@receiver(m2m_changed, sender=Media.tags.through)
+def media_tags_m2m(sender, instance, **kwargs):
+    action = kwargs.get('action', '')
+    pk_set = kwargs.get('pk_set', set())
+    # Only update on post actions to avoid duplicate updates
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        # Import here to avoid circular imports
+        from .category import Tag
+        
+        tags_to_update = set()
+        
+        if action == 'post_clear':
+            # For clear, update all tags that were associated
+            # We need to update all tags, but we can't know which ones were cleared
+            # So update all current tags
+            if instance.tags.all():
+                tags_to_update.update(instance.tags.all())
+        else:
+            # For add/remove, update the affected tags using pk_set
+            if pk_set:
+                tags_to_update.update(Tag.objects.filter(pk__in=pk_set))
+            # Also update current tags to ensure counts are correct
+            if instance.tags.all():
+                tags_to_update.update(instance.tags.all())
+        
+        # Update counts for all affected tags
+        for tag in tags_to_update:
             tag.update_tag_media()
+        
+        # Refresh instance from DB to ensure we have latest tags
+        if instance.id:
+            instance.refresh_from_db()
+            instance.update_search_vector()

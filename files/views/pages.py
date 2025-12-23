@@ -317,6 +317,9 @@ def edit_media(request):
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
+            # Refresh instance to ensure tags are loaded, then update search vector
+            media.refresh_from_db()
+            media.update_search_vector()
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
