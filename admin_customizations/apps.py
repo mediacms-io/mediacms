@@ -2,12 +2,36 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.contrib import admin
 
+from .admin import calculate_statistics
+
 
 class AdminCustomizationsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'admin_customizations'
 
     def ready(self):
+        # Patch the index method to add statistics
+        original_index = admin.site.index
+        
+        def custom_index(self, request, extra_context=None):
+            """Custom index with statistics"""
+            extra_context = extra_context or {}
+            
+            # Calculate statistics
+            stats = calculate_statistics()
+            extra_context['dashboard_stats'] = stats
+            
+            # Call original index to get app_list and other context
+            response = original_index(request, extra_context)
+            
+            return response
+        
+        # Patch the index method
+        admin.site.index = custom_index.__get__(admin.site, admin.AdminSite)
+        
+        # Set custom index template
+        admin.site.index_template = 'admin/index.html'
+        
         original_get_app_list = admin.AdminSite.get_app_list
 
         def get_app_list(self, request, app_label=None):
@@ -83,4 +107,5 @@ class AdminCustomizationsConfig(AppConfig):
 
             return app_list
 
+        # Apply custom get_app_list to admin site
         admin.AdminSite.get_app_list = get_app_list
