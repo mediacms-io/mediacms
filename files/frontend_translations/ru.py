@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "Удалить из списка",
     "Remove tag": "Удалить тег",
     "Remove user": "Удалить пользователя",
+    "Replace": "",
     "SAVE": "СОХРАНИТЬ",
     "SEARCH": "ПОИСК",
     "SHARE": "ПОДЕЛИТЬСЯ",

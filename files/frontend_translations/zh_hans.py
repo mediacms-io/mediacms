@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "",
     "Remove tag": "",
     "Remove user": "",
+    "Replace": "",
     "SAVE": "保存",
     "SEARCH": "搜索",
     "SHARE": "分享",
