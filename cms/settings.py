@@ -4,8 +4,6 @@ import os
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
 
-logger = logging.getLogger(__name__)
-
 DEBUG = False
 
 # PORTAL NAME, this is the portal title and
@@ -380,7 +378,8 @@ if not os.path.exists(LOGS_DIR):
     try:
         os.mkdir(LOGS_DIR)
     except PermissionError as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        # Logging not yet configured, use basic logging
+        logging.warning("Failed to create logs directory: %s - %s", type(e).__name__, str(e))
         pass
 
 if not os.path.isfile(error_filename):
@@ -413,6 +412,46 @@ LOGGING = {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True,
+        },
+        "files": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "uploader": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "saml_auth": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "rbac": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "identity_providers": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "actions": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "cms": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": False,
         },
     },
 }
@@ -456,6 +495,14 @@ if DEBUG:
         "level": "DEBUG",
         "propagate": False,
     }
+    # Add console handler to app-specific loggers for DEBUG mode
+    for app_name in ["files", "users", "uploader", "saml_auth", "rbac", "identity_providers", "actions", "cms"]:
+        if app_name in LOGGING["loggers"]:
+            LOGGING["loggers"][app_name]["handlers"] = ["file", "console"]
+            LOGGING["loggers"][app_name]["level"] = "DEBUG"
+
+# Initialize logger after LOGGING configuration
+logger = logging.getLogger(__name__)
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
@@ -663,7 +710,8 @@ try:
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
 except ImportError as e:
     # local_settings not in use
-    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # Logger is now configured at this point
+    logger.warning("local_settings.py not found or import failed: %s - %s", type(e).__name__, str(e))
     pass
 
 # Don't add new settings below that could be overridden in local_settings.py!!!
@@ -691,7 +739,7 @@ try:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
 except ImportError as e:
-    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    logger.warning("dev_settings.py import failed: %s - %s", type(e).__name__, str(e))
     pass
 
 

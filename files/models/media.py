@@ -429,7 +429,11 @@ class Media(models.Model):
                 try:
                     self.media_info = json.dumps(ret)
                 except TypeError as e:
-                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+                    logger.error(
+                        "Type error updating search vector - friendly_token=%s, error=%s",
+                        self.friendly_token,
+                        str(e),
+                    )
                     self.media_info = ""
                 self.md5sum = ret.get("md5sum")
                 self.size = helpers.show_file_size(ret.get("file_size"))
@@ -625,6 +629,7 @@ class Media(models.Model):
         """Set encoding_status for videos
         Set success if at least one mp4 or webm exists
         """
+        old_status = self.encoding_status
         mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False))
         webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
@@ -636,6 +641,14 @@ class Media(models.Model):
             encoding_status = "running"
         else:
             encoding_status = "fail"
+        
+        if old_status != encoding_status:
+            logger.info(
+                "Media encoding status changed - friendly_token=%s, old_status=%s, new_status=%s",
+                self.friendly_token,
+                old_status,
+                encoding_status,
+            )
         self.encoding_status = encoding_status
 
         return True
@@ -1001,11 +1014,25 @@ def media_save(sender, instance, created, **kwargs):
     if not instance.friendly_token:
         return False
 
-    if created:
-        from ..methods import notify_users
+        if created:
+            from ..methods import notify_users
 
-        instance.media_init()
-        notify_users(friendly_token=instance.friendly_token, action="media_added")
+            logger.info(
+                "Media created - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+                instance.friendly_token,
+                instance.user.id if instance.user else None,
+                instance.media_type,
+                instance.title[:50] if instance.title else None,
+            )
+            instance.media_init()
+            notify_users(friendly_token=instance.friendly_token, action="media_added")
+        else:
+            # Log significant updates
+            logger.debug(
+                "Media updated - friendly_token=%s, user_id=%s",
+                instance.friendly_token,
+                instance.user.id if instance.user else None,
+            )
 
     instance.user.update_user_media()
     if instance.category.all():
@@ -1023,6 +1050,12 @@ def media_save(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender=Media)
 def media_file_pre_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion initiated - friendly_token=%s, user_id=%s, media_type=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+    )
     if instance.category.all():
         for category in instance.category.all():
             instance.category.remove(category)

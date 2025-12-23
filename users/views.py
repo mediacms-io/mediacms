@@ -36,8 +36,11 @@ def get_user(username):
     try:
         user = User.objects.get(username=username)
         return user
-    except User.DoesNotExist as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    except User.DoesNotExist:
+        logger.debug("User not found - username=%s", username)
+        return None
+    except Exception as e:
+        logger.exception("Unexpected error retrieving user - username=%s", username)
         return None
 
 

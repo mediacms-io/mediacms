@@ -57,7 +57,18 @@ class FineUploaderView(generic.FormView):
             try:
                 self.upload.combine_chunks()
             except FileNotFoundError as e:
-                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+                logger.error(
+                    "File not found during chunk combination - user_id=%s, error=%s",
+                    getattr(self.request.user, 'id', None),
+                    str(e),
+                )
+                data = {"success": False, "error": "Error with File Uploading"}
+                return self.make_response(data, status=400)
+            except Exception as e:
+                logger.exception(
+                    "Unexpected error combining upload chunks - user_id=%s",
+                    getattr(self.request.user, 'id', None),
+                )
                 data = {"success": False, "error": "Error with File Uploading"}
                 return self.make_response(data, status=400)
         elif self.upload.total_parts == 1:
@@ -67,12 +78,26 @@ class FineUploaderView(generic.FormView):
             return self.make_response({"success": True})
         # create media!
         media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
-        with open(media_file, "rb") as f:
-            myfile = File(f)
-            new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
-        rm_file(media_file)
-        shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
-        return self.make_response({"success": True, "media_url": new.get_absolute_url()})
+        try:
+            with open(media_file, "rb") as f:
+                myfile = File(f)
+                new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
+            logger.info(
+                "Media uploaded successfully - user_id=%s, friendly_token=%s, filename=%s",
+                self.request.user.id,
+                new.friendly_token,
+                self.upload.original_filename,
+            )
+            rm_file(media_file)
+            shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
+            return self.make_response({"success": True, "media_url": new.get_absolute_url()})
+        except Exception as e:
+            logger.exception(
+                "Error creating media from upload - user_id=%s, filename=%s",
+                getattr(self.request.user, 'id', None),
+                self.upload.original_filename,
+            )
+            raise
 
     def form_invalid(self, form):
         data = {"success": False, "error": "%s" % repr(form.errors)}

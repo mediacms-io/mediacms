@@ -162,10 +162,18 @@ def rm_dir(directory):
         if directory.startswith(settings.BASE_DIR):
             try:
                 shutil.rmtree(directory)
+                logger.debug("Successfully removed directory - directory=%s", directory)
                 return True
-            except (FileNotFoundError, PermissionError) as e:
-                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
-                pass
+            except FileNotFoundError:
+                logger.debug("Directory not found during removal - directory=%s", directory)
+            except PermissionError as e:
+                logger.warning(
+                    "Permission denied removing directory - directory=%s, error=%s",
+                    directory,
+                    str(e),
+                )
+            except Exception as e:
+                logger.exception("Unexpected error removing directory - directory=%s", directory)
     return False
 
 
@@ -219,19 +227,60 @@ def run_command(cmd, cwd=None):
     if process.returncode == 0:
         try:
             ret["out"] = stdout.decode("utf-8")
-        except BaseException as e:
-            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for command stdout - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
+            ret["out"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding command stdout - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
             ret["out"] = ""
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException as e:
-            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for command stderr - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
+            ret["error"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding command stderr - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
             ret["error"] = ""
     else:
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException as e:
-            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
+                cmd,
+                process.returncode,
+                cwd,
+                str(e),
+            )
+            ret["error"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
+                cmd,
+                process.returncode,
+                cwd,
+                str(e),
+            )
             ret["error"] = ""
     return ret
 
@@ -296,8 +345,12 @@ def media_file_info(input_file):
     stdout = run_command(cmd).get("out")
     try:
         info = json.loads(stdout)
-    except TypeError as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    except (TypeError, json.JSONDecodeError) as e:
+        logger.error(
+            "Failed to parse ffprobe JSON output - input_file=%s, error=%s",
+            input_file,
+            str(e),
+        )
         ret["fail"] = True
         return ret
 
@@ -333,8 +386,13 @@ def media_file_info(input_file):
         duration_str = video_info["tags"]["DURATION"]
         try:
             hms, msec = duration_str.split(".")
-        except ValueError as e:
-            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        except ValueError:
+            # Try comma separator as fallback
+            logger.debug(
+                "Duration string uses comma separator, using fallback - input_file=%s, duration_str=%s",
+                input_file,
+                duration_str,
+            )
             hms, msec = duration_str.split(",")
 
         total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
@@ -354,8 +412,12 @@ def media_file_info(input_file):
         format_info = json.loads(stdout)["format"]
         try:
             video_duration = float(format_info["duration"])
-        except KeyError as e:
-            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        except KeyError:
+            logger.error(
+                "Duration not found in format info - input_file=%s, format_info=%s",
+                input_file,
+                format_info,
+            )
             ret["fail"] = True
             return ret
 
@@ -415,8 +477,13 @@ def media_file_info(input_file):
             duration_str = audio_info["tags"]["DURATION"]
             try:
                 hms, msec = duration_str.split(".")
-            except ValueError as e:
-                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            except ValueError:
+                # Try comma separator as fallback
+                logger.debug(
+                    "Audio duration string uses comma separator, using fallback - input_file=%s, duration_str=%s",
+                    input_file,
+                    duration_str,
+                )
                 hms, msec = duration_str.split(",")
             total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
             audio_duration = total_dur + float("0." + msec)
@@ -705,8 +772,12 @@ def get_base_ffmpeg_command(
 def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_filename, pass_file, chunk=False):
     try:
         media_info = json.loads(media_info)
-    except BaseException as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    except (TypeError, json.JSONDecodeError) as e:
+        logger.warning(
+            "Failed to parse media_info JSON, using empty dict - media_file=%s, error=%s",
+            media_file,
+            str(e),
+        )
         media_info = {}
 
     if codec == "h264":
@@ -964,7 +1035,11 @@ def trim_video_method(media_file_path, timestamps_list):
             shutil.copy2(output_file, media_file_path)
             return True
         except Exception as e:
-            logger.info(f"Failed to replace original file: {str(e)}")
+            logger.error(
+                "Failed to replace original file with trimmed version - media_file_path=%s, error=%s",
+                media_file_path,
+                str(e),
+            )
             return False
 
 

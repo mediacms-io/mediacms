@@ -96,11 +96,19 @@ def is_mediacms_editor(user):
 
     editor = False
     try:
-        if user.is_superuser or user.is_manager or user.is_editor:
+        if user and (user.is_superuser or user.is_manager or user.is_editor):
             editor = True
-    except BaseException as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
-        pass
+    except AttributeError as e:
+        logger.warning(
+            "User object missing expected attributes for editor check - user_id=%s, error=%s",
+            getattr(user, 'id', None),
+            str(e),
+        )
+    except Exception as e:
+        logger.exception(
+            "Unexpected error checking editor status - user_id=%s",
+            getattr(user, 'id', None),
+        )
     return editor
 
 
@@ -109,11 +117,19 @@ def is_mediacms_manager(user):
 
     manager = False
     try:
-        if user.is_superuser or user.is_manager:
+        if user and (user.is_superuser or user.is_manager):
             manager = True
-    except BaseException as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
-        pass
+    except AttributeError as e:
+        logger.warning(
+            "User object missing expected attributes for manager check - user_id=%s, error=%s",
+            getattr(user, 'id', None),
+            str(e),
+        )
+    except Exception as e:
+        logger.exception(
+            "Unexpected error checking manager status - user_id=%s",
+            getattr(user, 'id', None),
+        )
     return manager
 
 
@@ -290,9 +306,12 @@ def show_related_media_content(media, request, limit):
 
     try:
         m.remove(media)  # remove media from results
-    except ValueError as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
-        pass
+    except ValueError:
+        # Media not in results, which is fine
+        logger.debug(
+            "Media not found in related media results (expected) - friendly_token=%s",
+            media.friendly_token if media else None,
+        )
 
     random.shuffle(m)
     return m
@@ -312,9 +331,12 @@ def show_related_media_author(media, request, limit):
 
     try:
         m.remove(media)  # remove media from results
-    except ValueError as e:
-        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
-        pass
+    except ValueError:
+        # Media not in results, which is fine
+        logger.debug(
+            "Media not found in related media results (expected) - friendly_token=%s",
+            media.friendly_token if media else None,
+        )
 
     random.shuffle(m)
     return m
