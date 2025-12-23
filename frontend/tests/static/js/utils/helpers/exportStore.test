@@ -88,7 +88,6 @@ describe('utils/helpers/exportStore', () => {
 
     test('runtime guard scenario: non-existing handler results in TypeError on bind access', () => {
         const store = new TestStore();
-        // @ts-expect-error intentionally passing wrong key to simulate runtime misuse
         expect(() => exportStore(store as unknown as EventEmitter, 'notAHandler')).toThrow();
     });
 });

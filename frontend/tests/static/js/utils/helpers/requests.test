@@ -29,6 +29,7 @@ describe('utils/helpers/requests', () => {
         mockedAxios.delete.mockReset();
     });
 
+    // @todo
     /*test('axios mock identity', () => {
         const required = jest.requireMock('axios');
         const effective = (required && (required as any).default) || required;
