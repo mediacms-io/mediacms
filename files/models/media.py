@@ -1014,25 +1014,25 @@ def media_save(sender, instance, created, **kwargs):
     if not instance.friendly_token:
         return False
 
-        if created:
-            from ..methods import notify_users
+    if created:
+        from ..methods import notify_users
 
-            logger.info(
-                "Media created - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
-                instance.friendly_token,
-                instance.user.id if instance.user else None,
-                instance.media_type,
-                instance.title[:50] if instance.title else None,
-            )
-            instance.media_init()
-            notify_users(friendly_token=instance.friendly_token, action="media_added")
-        else:
-            # Log significant updates
-            logger.debug(
-                "Media updated - friendly_token=%s, user_id=%s",
-                instance.friendly_token,
-                instance.user.id if instance.user else None,
-            )
+        logger.info(
+            "Media created - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+            instance.media_type,
+            instance.title[:50] if instance.title else None,
+        )
+        instance.media_init()
+        notify_users(friendly_token=instance.friendly_token, action="media_added")
+    else:
+        # Log significant updates
+        logger.debug(
+            "Media updated - friendly_token=%s, user_id=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+        )
 
     instance.user.update_user_media()
     if instance.category.all():
