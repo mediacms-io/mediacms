@@ -1,5 +1,9 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+
+logger = logging.getLogger(__name__)
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -32,7 +36,8 @@ def get_user(username):
     try:
         user = User.objects.get(username=username)
         return user
-    except User.DoesNotExist:
+    except User.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         return None
 
 
@@ -300,9 +305,11 @@ class UserDetail(APIView):
             # has_object_permission() after has_permission has succeeded
             self.check_object_permissions(self.request, user)
             return user
-        except PermissionDenied:
+        except PermissionDenied as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "not enough permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
+        except User.DoesNotExist as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return Response({"detail": "user does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(

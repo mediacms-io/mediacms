@@ -98,7 +98,8 @@ def is_mediacms_editor(user):
     try:
         if user.is_superuser or user.is_manager or user.is_editor:
             editor = True
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
     return editor
 
@@ -110,7 +111,8 @@ def is_mediacms_manager(user):
     try:
         if user.is_superuser or user.is_manager:
             manager = True
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
     return manager
 
@@ -288,7 +290,8 @@ def show_related_media_content(media, request, limit):
 
     try:
         m.remove(media)  # remove media from results
-    except ValueError:
+    except ValueError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
 
     random.shuffle(m)
@@ -309,7 +312,8 @@ def show_related_media_author(media, request, limit):
 
     try:
         m.remove(media)  # remove media from results
-    except ValueError:
+    except ValueError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
 
     random.shuffle(m)

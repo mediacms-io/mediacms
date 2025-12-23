@@ -29,6 +29,7 @@
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
 - [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [29. Logging Configuration and Management](#29-logging-configuration-and-management)
 
 
 ## 1. Welcome
@@ -1076,3 +1077,245 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 29. Logging Configuration and Management
+
+MediaCMS includes comprehensive logging capabilities to help administrators monitor, debug, and troubleshoot the application. This section covers logging configuration, log file locations, and common scenarios.
+
+### Overview
+
+MediaCMS uses Python's standard `logging` module to capture application events, errors, and exceptions. The logging system is configured in `cms/settings.py` and can be customized to meet your deployment needs.
+
+### Log File Locations
+
+By default, MediaCMS stores log files in the `logs/` directory within your project root:
+
+- **Default log file**: `logs/debug.log`
+- **Log directory**: Created automatically if it doesn't exist
+- **Permissions**: Ensure the application user has write permissions to the logs directory
+
+### Default Logging Configuration
+
+MediaCMS uses a conservative logging approach by default to minimize disk usage and ensure production stability:
+
+- **Log Level**: ERROR (only errors and critical issues are logged)
+- **Handler**: File handler writing to `logs/debug.log`
+- **Format**: Includes level name, timestamp, module name, and message
+
+This default configuration ensures that:
+- Only significant errors are logged
+- Log files don't grow excessively large
+- Production installations maintain consistent behavior
+
+### Enhanced Logging for Development
+
+When `DEBUG = True` in your settings, MediaCMS automatically enables enhanced logging:
+
+- **Console Output**: Logs are also displayed in the console/terminal
+- **Log Level**: DEBUG (all log levels including INFO, WARNING, ERROR)
+- **Additional Loggers**: Celery tasks, Django requests, database queries
+- **Formatters**: Verbose formatting with timestamps and module names
+
+This enhanced logging is useful for:
+- Local development
+- Debugging issues
+- Understanding application flow
+
+### Configuration Options
+
+#### Basic Configuration
+
+The logging configuration is located in `cms/settings.py`. Key settings include:
+
+```python
+LOGLEVEL = "INFO"  # Can be overridden in local_settings.py
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "ERROR",  # Default: ERROR level
+            "class": "logging.FileHandler",
+            "filename": error_filename,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
+```
+
+#### Customizing Log Levels
+
+You can customize log levels by adding settings to your `local_settings.py`:
+
+```python
+# Enable INFO level logging for production debugging
+LOGLEVEL = "INFO"
+
+# Or modify the LOGGING dictionary directly
+LOGGING["handlers"]["file"]["level"] = "INFO"
+LOGGING["loggers"]["django"]["level"] = "INFO"
+```
+
+### Common Scenarios
+
+#### Development Environment
+
+For local development with detailed logging:
+
+1. Set `DEBUG = True` in `cms/settings.py` or `local_settings.py`
+2. Enhanced logging will automatically activate
+3. Logs will appear both in `logs/debug.log` and console output
+
+**Example `local_settings.py` for development:**
+```python
+DEBUG = True
+```
+
+#### Production Environment
+
+For production deployments:
+
+1. Keep `DEBUG = False` (default)
+2. Default ERROR-level logging will be active
+3. Only critical errors will be logged to `logs/debug.log`
+
+**Example `local_settings.py` for production:**
+```python
+DEBUG = False
+# Logs only ERROR level by default
+```
+
+#### Temporarily Enabling Debug Logging
+
+To temporarily enable more verbose logging for troubleshooting:
+
+**Option 1: Modify `local_settings.py`**
+```python
+# Temporarily enable INFO level logging
+LOGGING["handlers"]["file"]["level"] = "INFO"
+LOGGING["loggers"]["django"]["level"] = "INFO"
+LOGGING["loggers"]["celery"] = {
+    "handlers": ["file"],
+    "level": "INFO",
+    "propagate": False,
+}
+```
+
+**Option 2: Use Environment Variable**
+You can also modify the settings dynamically based on environment variables.
+
+### Viewing Logs
+
+#### Command Line
+
+View logs in real-time:
+```bash
+tail -f logs/debug.log
+```
+
+Search for specific errors:
+```bash
+grep -i "error" logs/debug.log
+```
+
+View recent errors:
+```bash
+tail -n 100 logs/debug.log | grep -i error
+```
+
+#### Log Rotation
+
+For production deployments, consider setting up log rotation to prevent log files from growing too large:
+
+**Using logrotate (Linux):**
+```bash
+# Create /etc/logrotate.d/mediacms
+/path/to/mediacms/logs/debug.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 mediacms mediacms
+}
+```
+
+### Logging Locations in Codebase
+
+MediaCMS logs exceptions and errors from the following areas:
+
+- **Celery Tasks** (`files/tasks.py`): Encoding errors, task failures
+- **FFmpeg Backend** (`files/backends.py`): Video encoding exceptions
+- **File Operations** (`files/helpers.py`): File I/O errors, command execution failures
+- **User Management** (`users/views.py`): User lookup failures, permission errors
+- **Media Upload** (`uploader/views.py`): File upload errors
+- **Media Models** (`files/models/media.py`): Model operation exceptions
+
+### Troubleshooting
+
+#### Logs Not Being Created
+
+1. Check that the `logs/` directory exists and is writable
+2. Verify file permissions: `chmod 755 logs/` and `chmod 644 logs/debug.log`
+3. Check application user has write access to the logs directory
+
+#### Too Many Logs
+
+1. Ensure `DEBUG = False` in production
+2. Verify log level is set to ERROR (default)
+3. Check for misconfigured loggers in `local_settings.py`
+
+#### Missing Log Information
+
+1. Temporarily enable INFO or DEBUG level logging
+2. Check that exception handlers are properly logging (see [Developer Documentation](developers_docs.md#8-logging-in-mediacms))
+3. Verify log file permissions allow writing
+
+### Integration with External Log Aggregation
+
+MediaCMS logs can be integrated with external log aggregation systems:
+
+- **Syslog**: Configure Python logging to use SyslogHandler
+- **ELK Stack**: Use Filebeat to ship logs to Elasticsearch
+- **Cloud Logging**: Configure handlers for cloud providers (AWS CloudWatch, Google Cloud Logging, etc.)
+
+**Example: Adding Syslog Handler**
+```python
+# In local_settings.py
+import logging.handlers
+
+LOGGING["handlers"]["syslog"] = {
+    "level": "ERROR",
+    "class": "logging.handlers.SysLogHandler",
+    "address": "/dev/log",
+    "formatter": "verbose",
+}
+LOGGING["loggers"]["django"]["handlers"].append("syslog")
+```
+
+### Best Practices
+
+1. **Production**: Keep ERROR-level logging to minimize disk usage
+2. **Development**: Use DEBUG mode for comprehensive logging
+3. **Troubleshooting**: Temporarily increase log level, then revert
+4. **Monitoring**: Set up log rotation and monitoring for production
+5. **Security**: Ensure log files have appropriate permissions and don't contain sensitive data
+
+### Related Documentation
+
+- For information on adding logging to code, see [Developer Documentation - Logging in MediaCMS](developers_docs.md#8-logging-in-mediacms)
+- For debugging specific issues, check the relevant sections in this documentation

@@ -8,6 +8,7 @@
 - [5. Working with Docker tips](#5-working-with-docker-tips)
 - [6. Working with the automated tests](#6-working-with-the-automated-tests)
 - [7. How video is transcoded](#7-how-video-is-transcoded)
+- [8. Logging in MediaCMS](#8-logging-in-mediacms)
 
 ## 1. Welcome
 This page is created for MediaCMS developers and contains related information.
@@ -153,3 +154,380 @@ docker compose exec --env TESTING=True -T web pytest --cov=. --cov-report=html
 ```
 
 and of course...you are very welcome to help us increase it ;)
+
+## 8. Logging in MediaCMS
+
+MediaCMS uses Python's standard `logging` module throughout the codebase to capture exceptions, errors, and important events. This section covers logging patterns, best practices, and how to add logging to your code.
+
+### Overview
+
+MediaCMS implements consistent exception logging across the application to help with debugging and monitoring. All exception handlers use a standardized logging format that includes the exception type and message.
+
+### Logger Initialization
+
+To use logging in a new module, follow this pattern:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+```
+
+**Important**: Always use `logging.getLogger(__name__)` to ensure loggers are properly namespaced by module. This allows fine-grained control over logging levels per module.
+
+**For Celery Tasks**: Use the Celery task logger instead:
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+```
+
+### Log Levels
+
+MediaCMS uses the following log levels:
+
+- **DEBUG**: Detailed information for diagnosing problems (only when DEBUG=True)
+- **INFO**: General informational messages about application flow
+- **WARNING**: Warning messages for potentially problematic situations (used for exceptions)
+- **ERROR**: Error messages for serious problems
+- **CRITICAL**: Critical errors that may cause the application to stop
+
+**When to use each level:**
+
+- **DEBUG**: Detailed diagnostic information, variable values during development
+- **INFO**: Important application events (task started, media encoded, etc.)
+- **WARNING**: Exception handling, recoverable errors, deprecated feature usage
+- **ERROR**: Unrecoverable errors, failed operations
+- **CRITICAL**: System-level failures, data corruption risks
+
+### Exception Logging Pattern
+
+MediaCMS uses a consistent pattern for logging exceptions throughout the codebase:
+
+```python
+except ExceptionType as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # existing exception handling logic
+```
+
+**Key principles:**
+
+1. **Preserve existing exception handling**: Only add logging statements, don't modify exception handling logic
+2. **Use structured format**: Include exception type and message for better log parsing
+3. **Use WARNING level**: Exceptions are typically logged at WARNING level unless they're critical
+4. **Use `as e` syntax**: Always capture the exception object to access its properties
+
+### Logging Locations
+
+Logging is implemented in the following areas:
+
+#### Celery Tasks (`files/tasks.py`)
+
+Exception logging in background tasks:
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@task(name="encode_media")
+def encode_media(self, friendly_token, profile_id, encoding_id):
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        # handle exception
+        return False
+```
+
+#### FFmpeg Backend (`files/backends.py`)
+
+Logging encoding-related exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def _spawn(self, cmd):
+    try:
+        return Popen(cmd, ...)
+    except OSError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        raise VideoEncodingError("Error while running ffmpeg", e)
+```
+
+#### File Operations (`files/helpers.py`)
+
+Logging file I/O and command execution errors:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def run_command(cmd, cwd=None):
+    # ... command execution ...
+    try:
+        ret["out"] = stdout.decode("utf-8")
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        ret["out"] = ""
+```
+
+#### Django Views (`users/views.py`, `uploader/views.py`)
+
+Logging view-level exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_user(username):
+    try:
+        user = User.objects.get(username=username)
+        return user
+    except User.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return None
+```
+
+#### Model Methods (`files/models/media.py`)
+
+Logging model operation exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class Media(models.Model):
+    def media_init(self):
+        try:
+            self.media_info = json.dumps(ret)
+        except TypeError as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            self.media_info = ""
+```
+
+### Best Practices
+
+#### 1. Always Preserve Exception Handling Logic
+
+**Good:**
+```python
+except BaseException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # existing handling logic unchanged
+    return False
+```
+
+**Bad:**
+```python
+except BaseException as e:
+    # Don't replace existing logic with logging
+    logger.error("Error occurred")
+    # missing original handling logic
+```
+
+#### 2. Use Structured Logging Format
+
+**Good:**
+```python
+logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+```
+
+**Bad:**
+```python
+logger.warning(f"Error: {e}")  # Less structured, harder to parse
+```
+
+#### 3. Don't Log Sensitive Information
+
+**Good:**
+```python
+except AuthenticationError as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # Don't log passwords, tokens, or user credentials
+```
+
+**Bad:**
+```python
+logger.warning(f"Login failed for user {username} with password {password}")  # Never log passwords!
+```
+
+#### 4. Use Appropriate Log Levels
+
+- **WARNING**: For exceptions that are handled gracefully
+- **ERROR**: For exceptions that cause operation failure
+- **CRITICAL**: For exceptions that may cause system instability
+
+#### 5. Add Context When Helpful
+
+For complex operations, add context to log messages:
+
+```python
+except Exception as e:
+    logger.warning("Caught exception during media encoding: type=%s, message=%s, media_id=%s", 
+                   type(e).__name__, str(e), media.id)
+```
+
+### Examples
+
+#### Adding Logging to a New Exception Handler
+
+**Before:**
+```python
+def process_media(media_id):
+    try:
+        media = Media.objects.get(id=media_id)
+        # process media
+    except Media.DoesNotExist:
+        return False
+```
+
+**After:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def process_media(media_id):
+    try:
+        media = Media.objects.get(id=media_id)
+        # process media
+    except Media.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return False
+```
+
+#### Logging in Celery Tasks
+
+```python
+from celery import shared_task as task
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@task(name="process_video")
+def process_video(video_id):
+    try:
+        video = Video.objects.get(id=video_id)
+        # process video
+    except Video.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return False
+    except Exception as e:
+        logger.error("Unexpected error processing video: type=%s, message=%s", 
+                     type(e).__name__, str(e))
+        raise
+```
+
+#### Logging in Django Views
+
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MediaDetail(APIView):
+    def get(self, request, friendly_token):
+        try:
+            media = Media.objects.get(friendly_token=friendly_token)
+            return Response({"title": media.title})
+        except Media.DoesNotExist as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            return Response({"error": "Media not found"}, status=404)
+```
+
+#### Logging in Model Methods
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class Media(models.Model):
+    def save(self, *args, **kwargs):
+        try:
+            # custom save logic
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            # handle exception
+            raise
+```
+
+### Common Patterns
+
+#### Handling Multiple Exception Types
+
+```python
+try:
+    # operation
+except SpecificException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # specific handling
+except BaseException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # general handling
+```
+
+#### Logging Before Re-raising
+
+```python
+try:
+    # operation
+except CriticalException as e:
+    logger.error("Caught critical exception: type=%s, message=%s", type(e).__name__, str(e))
+    raise  # Re-raise after logging
+```
+
+#### Conditional Logging
+
+```python
+try:
+    # operation
+except Exception as e:
+    if settings.DEBUG:
+        logger.debug("Detailed error info: type=%s, message=%s", type(e).__name__, str(e))
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # handle exception
+```
+
+### Integration with Configuration
+
+Logging behavior is controlled by the logging configuration in `cms/settings.py`. See [Administrator Documentation - Logging Configuration](admins_docs.md#29-logging-configuration-and-management) for details on:
+
+- Configuring log levels
+- Setting up log handlers
+- Customizing log formats
+- Enabling debug logging
+
+### Testing Logging
+
+When writing tests, you can verify logging behavior:
+
+```python
+import logging
+from unittest.mock import patch
+
+def test_exception_logging():
+    with patch('files.helpers.logger') as mock_logger:
+        # trigger code that should log
+        result = function_that_logs()
+        
+        # verify logging was called
+        mock_logger.warning.assert_called_once()
+        call_args = mock_logger.warning.call_args
+        assert "Caught exception" in str(call_args)
+```
+
+### Related Documentation
+
+- For logging configuration options, see [Administrator Documentation - Logging Configuration](admins_docs.md#29-logging-configuration-and-management)
+- For Python logging module documentation, see [Python Logging Documentation](https://docs.python.org/3/library/logging.html)

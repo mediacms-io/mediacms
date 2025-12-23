@@ -428,7 +428,8 @@ class Media(models.Model):
             elif ret.get("is_video") or ret.get("is_audio"):
                 try:
                     self.media_info = json.dumps(ret)
-                except TypeError:
+                except TypeError as e:
+                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                     self.media_info = ""
                 self.md5sum = ret.get("md5sum")
                 self.size = helpers.show_file_size(ret.get("file_size"))

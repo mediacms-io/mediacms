@@ -1,7 +1,10 @@
+import logging
 import os
 
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
 
 DEBUG = False
 
@@ -376,20 +379,33 @@ error_filename = os.path.join(LOGS_DIR, "debug.log")
 if not os.path.exists(LOGS_DIR):
     try:
         os.mkdir(LOGS_DIR)
-    except PermissionError:
+    except PermissionError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         pass
 
 if not os.path.isfile(error_filename):
     open(error_filename, 'a').close()
 
+# Logging configuration
+# Default: ERROR-level file logging (preserves existing behavior)
+# Enhanced: Console handler and formatters available when DEBUG=True
+LOGLEVEL = "INFO"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "file": {
-            "level": "ERROR",
+            "level": "ERROR",  # Default: ERROR level to preserve existing behavior
             "class": "logging.FileHandler",
             "filename": error_filename,
+            "formatter": "verbose",
         },
     },
     "loggers": {
@@ -400,6 +416,46 @@ LOGGING = {
         },
     },
 }
+
+# Enhanced logging configuration when DEBUG=True
+# Adds console handler and additional loggers for development
+if DEBUG:
+    LOGGING["handlers"]["console"] = {
+        "level": "DEBUG",
+        "class": "logging.StreamHandler",
+        "formatter": "verbose",
+    }
+    # Add console handler to file handler for DEBUG mode
+    LOGGING["handlers"]["file"]["level"] = "DEBUG"
+    LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
+    LOGGING["loggers"]["django"]["level"] = "DEBUG"
+    
+    # Add additional loggers for development
+    LOGGING["loggers"]["celery.task"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["celery"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["cms"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["django.db.backends"] = {
+        "handlers": ["file", "console"],
+        "level": "INFO",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["django.request"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
@@ -605,8 +661,9 @@ try:
 
     # ALLOWED_HOSTS needs a url/ip
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
-except ImportError:
+except ImportError as e:
     # local_settings not in use
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     pass
 
 # Don't add new settings below that could be overridden in local_settings.py!!!
@@ -633,7 +690,8 @@ try:
     if DEVELOPMENT_MODE:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
-except ImportError:
+except ImportError as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     pass
 
 

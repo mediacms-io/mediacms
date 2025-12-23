@@ -35,6 +35,7 @@ class FFmpegBackend(object):
                 close_fds=True,
             )
         except OSError as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             raise VideoEncodingError("Error while running ffmpeg", e)
 
     def _check_returncode(self, process):
@@ -53,13 +54,15 @@ class FFmpegBackend(object):
                 break
             try:
                 out = out.decode(console_encoding)
-            except UnicodeDecodeError:
+            except UnicodeDecodeError as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 out = ""
             output = output[-500:] + out
             buf = buf[-500:] + out
             try:
                 line, buf = buf.split("\r", 1)
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 continue
 
             progress = RE_TIMECODE.findall(line)

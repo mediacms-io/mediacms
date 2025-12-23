@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 
 from celery import Task
 from celery import shared_task as task
+from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
 
 # from celery.task.control import revoke
@@ -229,7 +230,8 @@ class EncodingTask(Task):
                 kill_ffmpeg_process(self.encoding.chunk_file_path)
                 if hasattr(self.encoding, "media"):
                     self.encoding.media.post_encode_actions()
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             pass
         return False
 
@@ -268,7 +270,8 @@ def encode_media(
     try:
         media = Media.objects.get(friendly_token=friendly_token)
         profile = EncodeProfile.objects.get(id=profile_id)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         Encoding.objects.filter(id=encoding_id).delete()
         return False
 
@@ -290,7 +293,8 @@ def encode_media(
                     chunk=True,
                     chunk_file_path=chunk_file_path,
                 ).exclude(id=encoding_id).delete()
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 encoding = Encoding(
                     media=media,
                     profile=profile,
@@ -307,7 +311,8 @@ def encode_media(
                 encoding = Encoding.objects.get(id=encoding_id)
                 encoding.status = "running"
                 Encoding.objects.filter(media=media, profile=profile).exclude(id=encoding_id).delete()
-            except BaseException:
+            except BaseException as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 encoding = Encoding(media=media, profile=profile, status="running")
 
     if task_id:
@@ -399,8 +404,12 @@ def encode_media(
                             percent = duration * 100 / media.duration
                             if n_times % 60 == 0:
                                 encoding.progress = percent
-                                encoding.save(update_fields=["progress", "update_date"])
-                                logger.info(f"Saved {round(percent, 2)}")
+                                try:
+                                    encoding.save(update_fields=["progress", "update_date"])
+                                    logger.info(f"Saved {round(percent, 2)}")
+                                except BaseException as e:
+                                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+                                    pass
                             n_times += 1
                     except DatabaseError:
                         # primary reason for this is that the encoding has been deleted, because
@@ -410,17 +419,21 @@ def encode_media(
                         kill_ffmpeg_process(encoding.chunk_file_path)
                         return False
 
-                    except StopIteration:
+                    except StopIteration as e:
+                        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                         break
-                    except VideoEncodingError:
+                    except VideoEncodingError as e:
+                        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                         # ffmpeg error, or ffmpeg was killed
                         raise
 
             except Exception as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 try:
                     # output is empty, fail message is on the exception
                     output = e.message
-                except AttributeError:
+                except AttributeError as e:
+                    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                     output = ""
                 kill_ffmpeg_process(encoding.temp_file)
                 kill_ffmpeg_process(encoding.chunk_file_path)
@@ -461,7 +474,8 @@ def encode_media(
             encoding.save(update_fields=["status", "logs", "progress", "total_run_time"])
         # this will raise a django.db.utils.DatabaseError error when task is revoked,
         # since we delete the encoding at that stage
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             pass
 
         return success
@@ -571,7 +585,7 @@ def produce_sprite_from_video(friendly_token):
                     media.save(update_fields=["sprites"])
 
         except Exception as e:
-            print(e)
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
     return True
 
 
@@ -589,7 +603,8 @@ def create_hls(friendly_token):
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         logger.info(f"failed to get media with friendly_token {friendly_token}")
         return False
 
@@ -613,9 +628,10 @@ def create_hls(friendly_token):
 
             try:
                 shutil.rmtree(output_dir)
-            except:  # noqa
+            except BaseException as e:  # noqa
                 # this was breaking in some cases where it was already deleted
                 # because create_hls was running multiple times
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 pass
             output_dir = existing_output_dir
         pp = os.path.join(output_dir, "master.m3u8")
@@ -741,7 +757,8 @@ def clear_sessions():
 
         engine = import_module(settings.SESSION_ENGINE)
         engine.SessionStore.clear_expired()
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         return False
     return True
 
@@ -755,7 +772,8 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         return False
 
     user = user_or_session.get("user_id")
@@ -765,7 +783,8 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
     if user:
         try:
             user = User.objects.get(id=user)
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
 
     if not (user or session_key):
@@ -790,8 +809,9 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
         try:
             score = extra_info.get("score")
             rating_category = extra_info.get("category_id")
-        except BaseException:
+        except BaseException as e:
             # TODO: better error handling?
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
         try:
             rating = Rating.objects.filter(user=user, media=media, rating_category_id=rating_category).first()
@@ -805,9 +825,10 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                     rating_category_id=rating_category,
                     score=score,
                 )
-        except Exception:
+        except Exception as e:
             # TODO: more specific handling, for errors in score, or
             # rating_category?
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             return False
 
     ma = MediaAction(

@@ -163,7 +163,8 @@ def rm_dir(directory):
             try:
                 shutil.rmtree(directory)
                 return True
-            except (FileNotFoundError, PermissionError):
+            except (FileNotFoundError, PermissionError) as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 pass
     return False
 
@@ -218,16 +219,19 @@ def run_command(cmd, cwd=None):
     if process.returncode == 0:
         try:
             ret["out"] = stdout.decode("utf-8")
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             ret["out"] = ""
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             ret["error"] = ""
     else:
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException:
+        except BaseException as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             ret["error"] = ""
     return ret
 
@@ -292,7 +296,8 @@ def media_file_info(input_file):
     stdout = run_command(cmd).get("out")
     try:
         info = json.loads(stdout)
-    except TypeError:
+    except TypeError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         ret["fail"] = True
         return ret
 
@@ -328,7 +333,8 @@ def media_file_info(input_file):
         duration_str = video_info["tags"]["DURATION"]
         try:
             hms, msec = duration_str.split(".")
-        except ValueError:
+        except ValueError as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             hms, msec = duration_str.split(",")
 
         total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
@@ -348,7 +354,8 @@ def media_file_info(input_file):
         format_info = json.loads(stdout)["format"]
         try:
             video_duration = float(format_info["duration"])
-        except KeyError:
+        except KeyError as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
             ret["fail"] = True
             return ret
 
@@ -408,7 +415,8 @@ def media_file_info(input_file):
             duration_str = audio_info["tags"]["DURATION"]
             try:
                 hms, msec = duration_str.split(".")
-            except ValueError:
+            except ValueError as e:
+                logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
                 hms, msec = duration_str.split(",")
             total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
             audio_duration = total_dur + float("0." + msec)
@@ -697,7 +705,8 @@ def get_base_ffmpeg_command(
 def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_filename, pass_file, chunk=False):
     try:
         media_info = json.loads(media_info)
-    except BaseException:
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
         media_info = {}
 
     if codec == "h264":
