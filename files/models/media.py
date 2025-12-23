@@ -270,7 +270,8 @@ class Media(models.Model):
             if self.media_file != self.__original_media_file:
                 # set this otherwise gets to infinite loop
                 self.__original_media_file = self.media_file
-                self.media_init()
+                from .. import tasks
+                tasks.media_init.apply_async(args=[self.friendly_token], countdown=5)
 
             # for video files, if user specified a different time
             # to automatically grub thumbnail
