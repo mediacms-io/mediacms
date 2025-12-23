@@ -2,14 +2,15 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.contrib import admin
 
-from .admin import calculate_statistics
-
 
 class AdminCustomizationsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'admin_customizations'
 
     def ready(self):
+        # Import here to avoid AppRegistryNotReady error
+        from .admin import calculate_statistics
+        
         # Patch the index method to add statistics
         original_index = admin.site.index
         
