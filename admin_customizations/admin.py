@@ -155,14 +155,14 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
     
     # Users with most media (top 5)
     user_stats['top_uploaders'] = list(User.objects.annotate(
-        media_count_annotated=Count('media_set')
+        media_count_annotated=Count('media')
     ).filter(media_count_annotated__gt=0).order_by('-media_count_annotated')[:5].values(
         'id', 'username', 'media_count_annotated'
     ))
     
     # Active users (uploaded media in last 30 days)
     user_stats['active_users'] = User.objects.filter(
-        media_set__add_date__gte=thirty_days_ago
+        media__add_date__gte=thirty_days_ago
     ).distinct().count()
     
     # Pending user approvals
