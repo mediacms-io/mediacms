@@ -30,6 +30,7 @@ from .pages import manage_media  # noqa: F401
 from .pages import manage_users  # noqa: F401
 from .pages import members  # noqa: F401
 from .pages import publish_media  # noqa: F401
+from .pages import replace_media  # noqa: F401
 from .pages import recommended_media  # noqa: F401
 from .pages import record_screen  # noqa: F401
 from .pages import search  # noqa: F401

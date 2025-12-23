@@ -418,6 +418,11 @@ class Media(models.Model):
                 self.media_type = "image"
             elif kind == "pdf":
                 self.media_type = "pdf"
+            elif kind == "audio":
+                self.media_type = "audio"
+            elif kind == "video":
+                self.media_type = "video"
+
         if self.media_type in ["image", "pdf"]:
             self.encoding_status = "success"
         else:

@@ -43,6 +43,14 @@
                 </li>
             {% endcomment %}
         {% endif %}
+        {% if ALLOW_MEDIA_REPLACEMENT %}
+            <li style="display: inline-block;">
+                <a href="{% url 'replace_media' %}?m={{media_object.friendly_token}}"
+                   style="text-decoration: none; {% if active_tab == 'replace' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
+                    {{ "Replace" | custom_translate:LANGUAGE_CODE}}
+                </a>
+            </li>
+        {% endif %}
         <li style="display: inline-block;">
             <a href="{% url 'publish_media' %}?m={{media_object.friendly_token}}"
                style="text-decoration: none; {% if active_tab == 'publish' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">

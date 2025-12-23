@@ -334,3 +334,35 @@ class ContactForm(forms.Form):
         if user.is_authenticated:
             self.fields.pop("name")
             self.fields.pop("from_email")
+
+
+class ReplaceMediaForm(forms.Form):
+    new_media_file = forms.FileField(
+        required=True,
+        label="New Media File",
+        help_text="Select a new file to replace the current media",
+    )
+
+    def __init__(self, media_instance, *args, **kwargs):
+        self.media_instance = media_instance
+        super(ReplaceMediaForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('new_media_file'),
+        )
+
+        self.helper.layout.append(FormActions(Submit('submit', 'Replace Media', css_class='primaryAction')))
+
+    def clean_new_media_file(self):
+        file = self.cleaned_data.get("new_media_file", False)
+        if file:
+            if file.size > settings.UPLOAD_MAX_SIZE:
+                max_size_mb = settings.UPLOAD_MAX_SIZE / (1024 * 1024)
+                raise forms.ValidationError(f"File too large. Maximum size: {max_size_mb:.0f}MB")
+            return file
