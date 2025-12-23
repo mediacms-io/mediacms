@@ -6,6 +6,7 @@ from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
 from .models import MEDIA_STATES, Category, Media, Subtitle
+from .widgets import CategoryModalWidget
 
 
 class CustomField(Field):
@@ -121,7 +122,7 @@ class MediaPublishForm(forms.ModelForm):
         fields = ("category", "state", "featured", "reported_times", "is_reviewed", "allow_download")
 
         widgets = {
-            "category": MultipleSelect(),
+            "category": CategoryModalWidget(),
         }
 
     def __init__(self, user, *args, **kwargs):
