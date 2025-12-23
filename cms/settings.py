@@ -388,7 +388,11 @@ if not os.path.isfile(error_filename):
 # Logging configuration
 # Default: ERROR-level file logging (preserves existing behavior)
 # Enhanced: Console handler and formatters available when DEBUG=True
-LOGLEVEL = "INFO"
+# LOGLEVEL can be overridden via environment variable or local_settings.py
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
+
+# Determine effective log level: use DEBUG when DEBUG=True, otherwise use LOGLEVEL
+effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
 
 LOGGING = {
     "version": 1,
@@ -401,7 +405,7 @@ LOGGING = {
     },
     "handlers": {
         "file": {
-            "level": "ERROR",  # Default: ERROR level to preserve existing behavior
+            "level": effective_log_level,
             "class": "logging.FileHandler",
             "filename": error_filename,
             "formatter": "verbose",
@@ -410,47 +414,47 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": True,
         },
         "files": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "users": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "uploader": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "saml_auth": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "rbac": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "identity_providers": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "actions": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
         "cms": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": False,
         },
     },
@@ -464,10 +468,8 @@ if DEBUG:
         "class": "logging.StreamHandler",
         "formatter": "verbose",
     }
-    # Add console handler to file handler for DEBUG mode
-    LOGGING["handlers"]["file"]["level"] = "DEBUG"
+    # Add console handler to existing loggers for DEBUG mode
     LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
-    LOGGING["loggers"]["django"]["level"] = "DEBUG"
     
     # Add additional loggers for development
     LOGGING["loggers"]["celery.task"] = {
@@ -480,11 +482,7 @@ if DEBUG:
         "level": "DEBUG",
         "propagate": False,
     }
-    LOGGING["loggers"]["cms"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
+    # django.db.backends uses INFO level to avoid excessive SQL query logging
     LOGGING["loggers"]["django.db.backends"] = {
         "handlers": ["file", "console"],
         "level": "INFO",
@@ -499,7 +497,6 @@ if DEBUG:
     for app_name in ["files", "users", "uploader", "saml_auth", "rbac", "identity_providers", "actions", "cms"]:
         if app_name in LOGGING["loggers"]:
             LOGGING["loggers"][app_name]["handlers"] = ["file", "console"]
-            LOGGING["loggers"][app_name]["level"] = "DEBUG"
 
 # Initialize logger after LOGGING configuration
 logger = logging.getLogger(__name__)

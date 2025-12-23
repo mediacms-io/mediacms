@@ -1090,9 +1090,15 @@ MediaCMS uses Python's standard `logging` module to capture application events, 
 
 By default, MediaCMS stores log files in the `logs/` directory within your project root:
 
-- **Default log file**: `logs/debug.log`
+- **Django application log file**: `logs/debug.log` - Contains Django application logs (errors, exceptions, etc.)
+- **Celery log files**: 
+  - `logs/celery_long.log` - Long-running Celery tasks
+  - `logs/celery_short.log` - Short-running Celery tasks
+  - `logs/celery_beat.log` - Celery beat scheduler logs
 - **Log directory**: Created automatically if it doesn't exist
 - **Permissions**: Ensure the application user has write permissions to the logs directory
+
+**Note**: Celery log files are configured separately via systemd services (local installation) or supervisord (Docker installation), and are independent of Django's LOGGING configuration. These logs use INFO level by default and are controlled by the Celery process configuration, not the `LOGLEVEL` setting.
 
 ### Default Logging Configuration
 
@@ -1111,10 +1117,17 @@ This default configuration ensures that:
 
 When `DEBUG = True` in your settings, MediaCMS automatically enables enhanced logging:
 
-- **Console Output**: Logs are also displayed in the console/terminal
-- **Log Level**: DEBUG (all log levels including INFO, WARNING, ERROR)
-- **Additional Loggers**: Celery tasks, Django requests, database queries
+- **Console Output**: Logs are also displayed in the console/terminal (in addition to the log file)
+- **Log Level**: Automatically set to `DEBUG` (overrides `LOGLEVEL` setting)
+- **Additional Loggers**: 
+  - `celery.task` - Individual Celery task execution
+  - `celery` - Celery worker processes
+  - `django.db.backends` - Database queries (set to INFO level to avoid excessive SQL logging)
+  - `django.request` - HTTP request/response logging
+- **All App Loggers**: All application loggers (files, users, uploader, etc.) are set to DEBUG level and output to both file and console
 - **Formatters**: Verbose formatting with timestamps and module names
+
+**Important**: When `DEBUG = True`, the `LOGLEVEL` setting is automatically overridden to `DEBUG` for all loggers. This ensures comprehensive logging during development, regardless of the `LOGLEVEL` value.
 
 This enhanced logging is useful for:
 - Local development
@@ -1125,10 +1138,16 @@ This enhanced logging is useful for:
 
 #### Basic Configuration
 
-The logging configuration is located in `cms/settings.py`. Key settings include:
+The logging configuration is located in `cms/settings.py`. The primary mechanism for configuring log levels is the `LOGLEVEL` variable, which defaults to `"ERROR"` to match current behavior.
 
 ```python
-LOGLEVEL = "INFO"  # Can be overridden in local_settings.py
+# LOGLEVEL can be overridden via environment variable or local_settings.py
+# Default: "ERROR" (matches current behavior)
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
+
+# When DEBUG=True, log level is automatically set to "DEBUG"
+effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -1140,7 +1159,7 @@ LOGGING = {
     },
     "handlers": {
         "file": {
-            "level": "ERROR",  # Default: ERROR level
+            "level": effective_log_level,
             "class": "logging.FileHandler",
             "filename": error_filename,
             "formatter": "verbose",
@@ -1149,25 +1168,97 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": effective_log_level,
             "propagate": True,
+        },
+        "files": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "uploader": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "saml_auth": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "rbac": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "identity_providers": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "actions": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "cms": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
         },
     },
 }
 ```
 
+**Configured Loggers:**
+- `django` - Django framework logs
+- `files` - Media file operations and encoding
+- `users` - User management and authentication
+- `uploader` - File upload operations
+- `saml_auth` - SAML authentication
+- `rbac` - Role-based access control
+- `identity_providers` - Identity provider integrations
+- `actions` - User actions (likes, comments, etc.)
+- `cms` - Core CMS functionality
+
+All loggers use the same log level as specified by `LOGLEVEL` (or "DEBUG" when `DEBUG=True`).
+
 #### Customizing Log Levels
 
-You can customize log levels by adding settings to your `local_settings.py`:
+The `LOGLEVEL` variable is the primary mechanism for configuring log levels across all MediaCMS components. You can customize it in several ways:
+
+**Method 1: Override in `local_settings.py` (Recommended)**
 
 ```python
-# Enable INFO level logging for production debugging
+# Set LOGLEVEL to INFO for more verbose logging
 LOGLEVEL = "INFO"
+```
 
-# Or modify the LOGGING dictionary directly
-LOGGING["handlers"]["file"]["level"] = "INFO"
+This will automatically apply to all configured loggers and handlers. Valid log levels are: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
+
+**Method 2: Use Environment Variable**
+
+```bash
+# Set environment variable before starting MediaCMS
+export LOGLEVEL=INFO
+```
+
+**Method 3: Direct LOGGING Dictionary Modification (Advanced)**
+
+If you need fine-grained control over specific loggers, you can modify the LOGGING dictionary directly:
+
+```python
+# In local_settings.py - modify specific logger levels
+LOGGING["loggers"]["files"]["level"] = "DEBUG"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 ```
+
+**Note**: When `DEBUG = True`, the log level is automatically set to `DEBUG` for all loggers, overriding the `LOGLEVEL` setting. This ensures comprehensive logging during development.
 
 ### Common Scenarios
 
@@ -1189,52 +1280,85 @@ DEBUG = True
 For production deployments:
 
 1. Keep `DEBUG = False` (default)
-2. Default ERROR-level logging will be active
+2. Default ERROR-level logging will be active (`LOGLEVEL = "ERROR"`)
 3. Only critical errors will be logged to `logs/debug.log`
+4. To enable more verbose logging for troubleshooting, set `LOGLEVEL = "INFO"` or `LOGLEVEL = "WARNING"`
 
 **Example `local_settings.py` for production:**
 ```python
 DEBUG = False
-# Logs only ERROR level by default
+# LOGLEVEL defaults to "ERROR" - only errors are logged
+# Uncomment the line below to enable INFO level logging for troubleshooting:
+# LOGLEVEL = "INFO"
 ```
 
 #### Temporarily Enabling Debug Logging
 
 To temporarily enable more verbose logging for troubleshooting:
 
-**Option 1: Modify `local_settings.py`**
+**Option 1: Use LOGLEVEL in `local_settings.py` (Recommended)**
 ```python
 # Temporarily enable INFO level logging
-LOGGING["handlers"]["file"]["level"] = "INFO"
-LOGGING["loggers"]["django"]["level"] = "INFO"
-LOGGING["loggers"]["celery"] = {
-    "handlers": ["file"],
-    "level": "INFO",
-    "propagate": False,
-}
+# This applies to all loggers automatically
+LOGLEVEL = "INFO"
 ```
 
 **Option 2: Use Environment Variable**
-You can also modify the settings dynamically based on environment variables.
+```bash
+# Set LOGLEVEL environment variable before starting MediaCMS
+export LOGLEVEL=INFO
+
+# For Docker installations, add to docker-compose.yaml:
+environment:
+  - LOGLEVEL=INFO
+
+# For systemd services, add to service file:
+Environment=LOGLEVEL=INFO
+```
+
+**Option 3: Direct LOGGING Dictionary Modification (Advanced)**
+If you need to modify specific loggers without changing the global level:
+```python
+# In local_settings.py
+LOGGING["handlers"]["file"]["level"] = "INFO"
+LOGGING["loggers"]["django"]["level"] = "INFO"
+LOGGING["loggers"]["files"]["level"] = "DEBUG"  # More verbose for file operations
+```
+
+**Remember**: After troubleshooting, revert these changes to maintain production performance and minimize log file growth.
 
 ### Viewing Logs
 
 #### Command Line
 
-View logs in real-time:
+**Django Application Logs:**
 ```bash
+# View logs in real-time
 tail -f logs/debug.log
-```
 
-Search for specific errors:
-```bash
+# Search for specific errors
 grep -i "error" logs/debug.log
-```
 
-View recent errors:
-```bash
+# View recent errors
 tail -n 100 logs/debug.log | grep -i error
 ```
+
+**Celery Logs:**
+```bash
+# View Celery long tasks logs
+tail -f logs/celery_long.log
+
+# View Celery short tasks logs
+tail -f logs/celery_short.log
+
+# View Celery beat scheduler logs
+tail -f logs/celery_beat.log
+
+# View all Celery logs together
+tail -f logs/celery_*.log
+```
+
+**Note**: Celery log files are separate from Django's `logs/debug.log` and are configured independently. They use INFO level by default and are controlled by Celery's process configuration.
 
 #### Log Rotation
 
@@ -1243,16 +1367,25 @@ For production deployments, consider setting up log rotation to prevent log file
 **Using logrotate (Linux):**
 ```bash
 # Create /etc/logrotate.d/mediacms
-/path/to/mediacms/logs/debug.log {
+/path/to/mediacms/logs/*.log {
     daily
     rotate 7
     compress
     delaycompress
     missingok
     notifempty
-    create 0644 mediacms mediacms
+    create 0644 www-data www-data
+    # Adjust user/group to match your MediaCMS installation user
 }
 ```
+
+This configuration will rotate all log files in the `logs/` directory, including:
+- `debug.log` (Django application logs)
+- `celery_long.log` (Celery long tasks)
+- `celery_short.log` (Celery short tasks)
+- `celery_beat.log` (Celery beat scheduler)
+
+**Note**: Adjust the `create` directive user/group (`www-data` in the example) to match your MediaCMS installation user. Common values are `www-data`, `mediacms`, or `nginx` depending on your setup.
 
 ### Logging Locations in Codebase
 
@@ -1309,11 +1442,12 @@ LOGGING["loggers"]["django"]["handlers"].append("syslog")
 
 ### Best Practices
 
-1. **Production**: Keep ERROR-level logging to minimize disk usage
-2. **Development**: Use DEBUG mode for comprehensive logging
-3. **Troubleshooting**: Temporarily increase log level, then revert
-4. **Monitoring**: Set up log rotation and monitoring for production
+1. **Production**: Keep `LOGLEVEL = "ERROR"` (default) to minimize disk usage and log file growth
+2. **Development**: Use `DEBUG = True` for comprehensive logging (automatically sets log level to DEBUG)
+3. **Troubleshooting**: Temporarily set `LOGLEVEL = "INFO"` or `LOGLEVEL = "WARNING"` in `local_settings.py`, then revert after resolving issues
+4. **Monitoring**: Set up log rotation for all log files (Django and Celery) and monitoring for production
 5. **Security**: Ensure log files have appropriate permissions and don't contain sensitive data
+6. **Consistency**: Use `LOGLEVEL` as the primary configuration mechanism rather than modifying the LOGGING dictionary directly
 
 ### Related Documentation
 
