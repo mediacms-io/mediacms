@@ -226,8 +226,13 @@ class MediaList(APIView):
             elif duration == '60-120':
                 media = media.filter(duration__gte=3600)
 
-        if publish_state and publish_state in ['private', 'public', 'unlisted']:
-            media = media.filter(state=publish_state)
+        if publish_state:
+            if publish_state == 'shared':
+                # Filter media that have custom permissions OR RBAC categories
+                shared_conditions = Q(permissions__isnull=False) | Q(category__is_rbac_category=True)
+                media = media.filter(shared_conditions).distinct()
+            elif publish_state in ['private', 'public', 'unlisted']:
+                media = media.filter(state=publish_state)
 
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")

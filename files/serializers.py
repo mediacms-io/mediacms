@@ -101,9 +101,16 @@ class MediaSerializer(serializers.ModelSerializer):
 class SingleMediaSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
+    is_shared = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_is_shared(self, obj):
+        """Check if media has custom permissions or RBAC categories"""
+        custom_permissions = obj.permissions.exists()
+        rbac_categories = obj.category.filter(is_rbac_category=True).exists()
+        return custom_permissions or rbac_categories
 
     class Meta:
         model = Media
@@ -133,6 +140,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "edit_date",
             "media_type",
             "state",
+            "is_shared",
             "duration",
             "thumbnail_url",
             "poster_url",

@@ -129,6 +129,12 @@ class MediaPublishForm(forms.ModelForm):
         self.user = user
         super(MediaPublishForm, self).__init__(*args, **kwargs)
 
+        # Check if media has sharing (custom permissions or rbac categories)
+        self.has_custom_permissions = self.instance.permissions.exists() if self.instance.pk else False
+        self.has_rbac_categories = self.instance.category.filter(is_rbac_category=True).exists() if self.instance.pk else False
+        self.is_shared = self.has_custom_permissions or self.has_rbac_categories
+        self.actual_state = self.instance.state if self.instance.pk else None
+
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
                 self.fields[field].disabled = True
@@ -140,6 +146,15 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
+
+        # If media is shared, add "shared" as a state option and set it as initial
+        if self.is_shared:
+            current_choices = list(self.fields["state"].choices)
+            current_choices.insert(0, ("shared", "Shared"))
+            self.fields["state"].choices = current_choices
+            self.fields["state"].initial = "shared"
+            # Override the instance value to show "shared" in the form
+            self.initial["state"] = "shared"
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
@@ -179,7 +194,39 @@ class MediaPublishForm(forms.ModelForm):
         state = cleaned_data.get("state")
         categories = cleaned_data.get("category")
 
-        if state in ['private', 'unlisted']:
+        # If transitioning from "shared" state, handle appropriately
+        if self.is_shared and state != "shared":
+            self.fields['confirm_state'].widget = forms.CheckboxInput()
+            state_index = None
+            for i, layout_item in enumerate(self.helper.layout):
+                if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
+                    state_index = i
+                    break
+
+            if state_index is not None:
+                layout_items = list(self.helper.layout)
+                layout_items.insert(state_index + 1, CustomField('confirm_state'))
+                self.helper.layout = Layout(*layout_items)
+
+            if not cleaned_data.get('confirm_state'):
+                if state == 'private':
+                    # When moving from shared to private, all sharing will be removed
+                    error_parts = []
+                    if self.has_rbac_categories:
+                        rbac_cat_titles = self.instance.category.filter(is_rbac_category=True).values_list('title', flat=True)
+                        error_parts.append(f"shared with users that have access to categories: {', '.join(rbac_cat_titles)}")
+                    if self.has_custom_permissions:
+                        error_parts.append("shared by me with other users (visible in 'Shared by me' page)")
+
+                    error_message = f"I understand that changing to Private will remove all sharing. Currently this media is {' and '.join(error_parts)}. All this sharing will be removed."
+                    self.add_error('confirm_state', error_message)
+                else:
+                    # When moving from shared to unlisted/public, sharing is maintained
+                    error_message = f"I understand that changing to {state.title()} will maintain existing sharing settings."
+                    self.add_error('confirm_state', error_message)
+
+        # Original logic for non-shared states
+        elif state in ['private', 'unlisted']:
             custom_permissions = self.instance.permissions.exists()
             rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
             if rbac_categories or custom_permissions:
@@ -190,7 +237,7 @@ class MediaPublishForm(forms.ModelForm):
                         state_index = i
                         break
 
-                if state_index:
+                if state_index is not None:
                     layout_items = list(self.helper.layout)
                     layout_items.insert(state_index + 1, CustomField('confirm_state'))
                     self.helper.layout = Layout(*layout_items)
@@ -203,11 +250,24 @@ class MediaPublishForm(forms.ModelForm):
                         error_message = f"I understand that although media state is {state}, the media is also shared by me with other users, that I can see in the 'Shared by me' page"
                         self.add_error('confirm_state', error_message)
 
+        # Convert "shared" state to actual underlying state for saving
+        if state == "shared":
+            cleaned_data["state"] = self.actual_state
+
         return cleaned_data
 
     def save(self, *args, **kwargs):
         data = self.cleaned_data
         state = data.get("state")
+
+        # If transitioning from shared to private, remove all sharing
+        if self.is_shared and state == 'private' and data.get('confirm_state'):
+            # Remove all custom permissions
+            self.instance.permissions.all().delete()
+            # Remove RBAC categories
+            rbac_cats = self.instance.category.filter(is_rbac_category=True)
+            self.instance.category.remove(*rbac_cats)
+
         if state != self.initial["state"]:
             self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
 
