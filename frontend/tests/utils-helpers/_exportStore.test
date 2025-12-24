@@ -1,14 +1,14 @@
 import EventEmitter from 'events';
-import exportStore from '../../../../../src/static/js/utils/helpers/exportStore';
+import exportStore from '../../../../../../src/static/js/utils/helpers/exportStore';
 
 // The dispatcher is an external module dependency used by exportStore; mock it to observe registrations
-jest.mock('../../../../../src/static/js/utils/dispatcher', () => ({
+jest.mock('../../../../../../src/static/js/utils/dispatcher', () => ({
     dispatcher: {
         register: jest.fn(),
     },
 }));
 
-import dispatcher from '../../../../../src/static/js/utils/dispatcher';
+import dispatcher from '../../../../../../src/static/js/utils/dispatcher';
 
 /**
  * Behaviors covered:

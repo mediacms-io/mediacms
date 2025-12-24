@@ -4,7 +4,7 @@ import {
     postRequest,
     putRequest,
     deleteRequest,
-} from '../../../../../src/static/js/utils/helpers/requests';
+} from '../../../../../../src/static/js/utils/helpers/requests';
 
 jest.mock('axios', () => ({
     __esModule: true,

@@ -8,47 +8,47 @@ import {
     isPositiveInteger,
     isPositiveIntegerOrZero,
     greaterCommonDivision,
-} from '../../../../../src/static/js/utils/helpers/math';
+} from '../../src/static/js/utils/helpers/math';
 
 describe('utils/helpers/math', () => {
     describe('isGt', () => {
-        it('returns true when x > y', () => {
+        it('Returns true when x > y', () => {
             expect(isGt(5, 3)).toBe(true);
         });
 
-        it('returns false when x == y', () => {
+        it('Returns false when x === y', () => {
             expect(isGt(3, 3)).toBe(false);
         });
 
-        it('returns false when x < y', () => {
+        it('Returns false when x < y', () => {
             expect(isGt(2, 3)).toBe(false);
         });
     });
 
     describe('isZero', () => {
-        it('returns true for 0', () => {
+        it('Returns true for 0', () => {
             expect(isZero(0)).toBe(true);
         });
 
-        it('returns false for non-zero numbers', () => {
+        it('Returns false for non-zero numbers', () => {
             expect(isZero(1)).toBe(false);
             expect(isZero(-1)).toBe(false);
         });
     });
 
     describe('isNumber', () => {
-        it('returns true for numbers', () => {
+        it('Returns true for numbers', () => {
             expect(isNumber(0)).toBe(true);
             expect(isNumber(1)).toBe(true);
             expect(isNumber(-1)).toBe(true);
             expect(isNumber(1.5)).toBe(true);
         });
 
-        it('returns false for NaN', () => {
-            expect(isNumber(NaN as unknown as number)).toBe(false);
+        it('Returns false for NaN', () => {
+            expect(isNumber(Number.NaN as unknown as number)).toBe(false);
         });
 
-        it('returns false for non-number types (via casting)', () => {
+        it('Returns false for non-number types (via casting)', () => {
             // TypeScript type guards prevent passing non-numbers directly; simulate via casting
             expect(isNumber('3' as unknown as number)).toBe(false);
             expect(isNumber(null as unknown as number)).toBe(false);
@@ -57,25 +57,25 @@ describe('utils/helpers/math', () => {
     });
 
     describe('isInteger', () => {
-        it('returns true for integers', () => {
+        it('Returns true for integers', () => {
             expect(isInteger(0)).toBe(true);
             expect(isInteger(1)).toBe(true);
             expect(isInteger(-1)).toBe(true);
         });
 
-        it('returns false for non-integers', () => {
+        it('Returns false for non-integers', () => {
             expect(isInteger(1.1)).toBe(false);
             expect(isInteger(-2.5)).toBe(false);
         });
     });
 
     describe('isPositive', () => {
-        it('returns true for positive numbers', () => {
+        it('Returns true for positive numbers', () => {
             expect(isPositive(1)).toBe(true);
             expect(isPositive(3.14)).toBe(true);
         });
 
-        it('returns false for zero and negatives', () => {
+        it('Returns false for zero and negatives', () => {
             expect(isPositive(0)).toBe(false);
             expect(isPositive(-1)).toBe(false);
             expect(isPositive(-3.14)).toBe(false);
@@ -83,29 +83,30 @@ describe('utils/helpers/math', () => {
     });
 
     describe('isPositiveNumber', () => {
-        it('returns true for positive numbers', () => {
+        it('Returns true for positive numbers', () => {
             expect(isPositiveNumber(1)).toBe(true);
             expect(isPositiveNumber(2.7)).toBe(true);
         });
 
-        it('returns false for zero and negatives', () => {
+        it('Returns false for zero and negatives', () => {
             expect(isPositiveNumber(0)).toBe(false);
             expect(isPositiveNumber(-1)).toBe(false);
+            expect(isPositiveNumber(-3.4)).toBe(false);
         });
 
-        it('returns false for NaN (and non-number when cast)', () => {
-            expect(isPositiveNumber(NaN as unknown as number)).toBe(false);
+        it('Returns false for NaN (and non-number when cast)', () => {
+            expect(isPositiveNumber(Number.NaN as unknown as number)).toBe(false);
             expect(isPositiveNumber('3' as unknown as number)).toBe(false);
         });
     });
 
     describe('isPositiveInteger', () => {
-        it('returns true for positive integers', () => {
+        it('Returns true for positive integers', () => {
             expect(isPositiveInteger(1)).toBe(true);
             expect(isPositiveInteger(10)).toBe(true);
         });
 
-        it('returns false for zero, negatives, and non-integers', () => {
+        it('Returns false for zero, negatives, and non-integers', () => {
             expect(isPositiveInteger(0)).toBe(false);
             expect(isPositiveInteger(-1)).toBe(false);
             expect(isPositiveInteger(1.5)).toBe(false);
@@ -113,39 +114,39 @@ describe('utils/helpers/math', () => {
     });
 
     describe('isPositiveIntegerOrZero', () => {
-        it('returns true for positive integers and zero', () => {
+        it('Returns true for positive integers and zero', () => {
             expect(isPositiveIntegerOrZero(0)).toBe(true);
             expect(isPositiveIntegerOrZero(1)).toBe(true);
             expect(isPositiveIntegerOrZero(10)).toBe(true);
         });
 
-        it('returns false for negatives and non-integers', () => {
+        it('Returns false for negatives and non-integers', () => {
             expect(isPositiveIntegerOrZero(-1)).toBe(false);
             expect(isPositiveIntegerOrZero(1.1)).toBe(false);
         });
     });
 
     describe('greaterCommonDivision', () => {
-        it('computes gcd for positive integers', () => {
+        it('Computes gcd for positive integers', () => {
             expect(greaterCommonDivision(54, 24)).toBe(6);
             expect(greaterCommonDivision(24, 54)).toBe(6);
             expect(greaterCommonDivision(21, 14)).toBe(7);
             expect(greaterCommonDivision(7, 13)).toBe(1);
         });
 
-        it('handles zeros', () => {
+        it('Handles zeros', () => {
             expect(greaterCommonDivision(0, 0)).toBe(0);
             expect(greaterCommonDivision(0, 5)).toBe(5);
             expect(greaterCommonDivision(12, 0)).toBe(12);
         });
 
-        it('handles negative numbers by returning gcd sign of first arg (Euclid recursion behavior)', () => {
+        it('Handles negative numbers by returning gcd sign of first arg (Euclid recursion behavior)', () => {
             expect(greaterCommonDivision(-54, 24)).toBe(-6);
             expect(greaterCommonDivision(54, -24)).toBe(6);
             expect(greaterCommonDivision(-54, -24)).toBe(-6);
         });
 
-        it('works with equal numbers', () => {
+        it('Works with equal numbers', () => {
             expect(greaterCommonDivision(8, 8)).toBe(8);
             expect(greaterCommonDivision(-8, -8)).toBe(-8);
         });
