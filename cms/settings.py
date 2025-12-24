@@ -539,11 +539,11 @@ SPRITE_NUM_SECS = 10
 # to change the equivalent value in ./frontend/src/static/js/components/media-viewer/VideoViewer/index.js and then re-build frontend
 
 # Thumbnail GIF generation settings
-THUMBNAIL_GIF_NUM_FRAMES = 5          # Number of frames to capture (for automatic mode)
-THUMBNAIL_GIF_START = 3                # Start position in seconds (default: 3, matches original behavior)
-THUMBNAIL_GIF_DURATION = None         # Duration in seconds (None = use 25 in manual mode, full video in auto mode)
-THUMBNAIL_GIF_FPS = None              # Frames per second (None = use 1 in manual mode, auto-calculate in auto mode)
-THUMBNAIL_GIF_AUTO_MODE = False        # Enable automatic calculation (default: False for backward compatibility)
+THUMBNAIL_GIF_NUM_FRAMES = 5  # Number of frames to capture (for automatic mode)
+THUMBNAIL_GIF_START = 3  # Start position in seconds (default: 3, matches original behavior)
+THUMBNAIL_GIF_DURATION = None  # Duration in seconds (None = use 25 in manual mode, full video in auto mode)
+THUMBNAIL_GIF_FPS = None  # Frames per second (None = use 1 in manual mode, auto-calculate in auto mode)
+THUMBNAIL_GIF_AUTO_MODE = False  # Enable automatic calculation (default: False for backward compatibility)
 # When THUMBNAIL_GIF_AUTO_MODE = True:
 #   - If THUMBNAIL_GIF_DURATION is None, uses full video duration
 #   - Calculates FPS automatically to evenly distribute frames across duration
