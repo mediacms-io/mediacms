@@ -32,6 +32,7 @@ const filters = {
     { id: 'private', title: translateString('Private') },
     { id: 'unlisted', title: translateString('Unlisted') },
     { id: 'public', title: translateString('Published') },
+    { id: 'shared', title: translateString('Shared') },
   ],
   sort_by: [
     { id: 'date_added_desc', title: translateString('Upload date (newest)') },

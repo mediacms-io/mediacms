@@ -10,7 +10,9 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
   render() {
     const displayViews = PageStore.get('config-options').pages.media.displayViews && void 0 !== this.props.views;
 
-    const mediaState = MediaPageStore.get('media-data').state;
+    const mediaData = MediaPageStore.get('media-data');
+    const mediaState = mediaData.state;
+    const isShared = mediaData.is_shared;
 
     let stateTooltip = '';
 
@@ -23,6 +25,8 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
         break;
     }
 
+    const sharedTooltip = 'This media is shared with specific users or categories';
+
     return (
       <div className="media-title-banner">
         {displayViews && PageStore.get('config-options').pages.media.categoriesWithTitle
@@ -31,15 +35,28 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
 
         {void 0 !== this.props.title ? <h1>{this.props.title}</h1> : null}
 
-        {'public' !== mediaState ? (
+        {isShared || 'public' !== mediaState ? (
           <div className="media-labels-area">
             <div className="media-labels-area-inner">
-              <span className="media-label-state">
-                <span>{mediaState}</span>
-              </span>
-              <span className="helper-icon" data-tooltip={stateTooltip}>
-                <i className="material-icons">help_outline</i>
-              </span>
+              {isShared ? (
+                <>
+                  <span className="media-label-state">
+                    <span>shared</span>
+                  </span>
+                  <span className="helper-icon" data-tooltip={sharedTooltip}>
+                    <i className="material-icons">help_outline</i>
+                  </span>
+                </>
+              ) : 'public' !== mediaState ? (
+                <>
+                  <span className="media-label-state">
+                    <span>{mediaState}</span>
+                  </span>
+                  <span className="helper-icon" data-tooltip={stateTooltip}>
+                    <i className="material-icons">help_outline</i>
+                  </span>
+                </>
+              ) : null}
             </div>
           </div>
         ) : null}

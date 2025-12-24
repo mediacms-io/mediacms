@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "",
     "Remove tag": "",
     "Remove user": "",
+    "Replace": "",
     "SAVE": "সংরক্ষণ করুন",
     "SEARCH": "অনুসন্ধান",
     "SHARE": "শেয়ার করুন",
