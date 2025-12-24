@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block headtitle %}Replace media - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}{% endblock headermeta %}
+
+{% block innercontent %}
+    <div class="user-action-form-wrap">
+			{% include "cms/media_nav.html" with active_tab="replace" %}
+			<div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
+
+				<div style="margin-bottom: 20px; padding: 15px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+					<h4 style="margin-top: 0; color: #856404;">⚠️ Important Information</h4>
+					<p style="margin-bottom: 0; color: #856404;">The new file will be processed but all metadata is preserved</p>
+				</div>
+
+				{% csrf_token %}
+				{% crispy form %}
+			</div>
+	</div>
+
+{% endblock innercontent %}

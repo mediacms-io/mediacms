@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "목록에서 제거",
     "Remove tag": "태그 제거",
     "Remove user": "사용자 제거",
+    "Replace": "",
     "SAVE": "저장",
     "SEARCH": "검색",
     "SHARE": "공유",

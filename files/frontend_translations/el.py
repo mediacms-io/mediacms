@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "Αφαίρεση από λίστα",
     "Remove tag": "Αφαίρεση ετικέτας",
     "Remove user": "Αφαίρεση χρήστη",
+    "Replace": "",
     "SAVE": "ΑΠΟΘΗΚΕΥΣΗ",
     "SEARCH": "ΑΝΑΖΗΤΗΣΗ",
     "SHARE": "ΚΟΙΝΟΠΟΙΗΣΗ",
