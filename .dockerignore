@@ -1,2 +1,69 @@
-node_modules
-npm-debug.log
+# Node.js/JavaScript dependencies and artifacts
+**/node_modules
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.yarn/cache
+**/.yarn/unplugged
+**/package-lock.json
+**/.npm
+**/.cache
+**/.parcel-cache
+**/dist
+**/build
+**/*.tsbuildinfo
+
+# Python bytecode and cache
+**/__pycache__
+**/*.py[cod]
+**/*$py.class
+**/*.so
+**/.Python
+**/pip-log.txt
+**/pip-delete-this-directory.txt
+**/.pytest_cache
+**/.coverage
+**/htmlcov
+**/.tox
+**/.mypy_cache
+**/.ruff_cache
+
+# Version control
+**/.git
+**/.gitignore
+**/.gitattributes
+
+# IDE and editor files
+**/.DS_Store
+**/.vscode
+**/.idea
+**/*.swp
+**/*.swo
+**/*~
+
+# Logs and runtime files
+**/logs
+**/*.log
+**/celerybeat-schedule*
+**/.env
+**/.env.*
+
+# Media files and data directories (should not be in image)
+media_files/**
+postgres_data/**
+pids/**
+
+# Static files collected at runtime
+static_collected/**
+
+# Documentation and development files
+**/.github
+**/CHANGELOG.md
+
+# Test files and directories
+**/tests
+**/test_*.py
+**/*_test.py
+
+# Frontend build artifacts (built separately)
+frontend/dist/**

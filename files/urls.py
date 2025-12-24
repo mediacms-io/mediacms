@@ -111,7 +111,7 @@ urlpatterns = [
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
     # Media uploads in ADMIN created pages
     re_path(r"^tinymce/upload/", tinymce_handlers.upload_image, name="tinymce_upload_image"),
-    re_path("^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
+    re_path(r"^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
