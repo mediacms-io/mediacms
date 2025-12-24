@@ -9,10 +9,29 @@
 
   .bulk-actions-container {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 20px;
     margin-bottom: 16px;
+
+    .add-media-button {
+      margin-left: auto;
+
+      a {
+        display: flex;
+        align-items: center;
+      }
+
+      .circle-icon-button {
+        width: 48px;
+        height: 48px;
+
+        .material-icons {
+          font-size: 32px;
+        }
+      }
+    }
   }
 }
 

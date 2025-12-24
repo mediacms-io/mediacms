@@ -898,6 +898,7 @@ export class ProfileMediaPage extends Page {
             onBulkAction={this.handleBulkAction}
             onSelectAll={this.handleSelectAll}
             onDeselectAll={this.handleDeselectAll}
+            showAddMediaButton={isMediaAuthor}
           >
             <ProfileMediaFilters hidden={this.state.hiddenFilters} tags={this.state.availableTags} onFiltersUpdate={this.onFiltersUpdate} selectedTag={this.state.selectedTag} selectedSort={this.state.selectedSort} />
             <ProfileMediaTags hidden={this.state.hiddenTags} tags={this.state.availableTags} onTagSelect={this.onTagSelect} />
