@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "فہرست سے ہٹائیں",
     "Remove tag": "ٹیگ ہٹائیں",
     "Remove user": "صارف ہٹائیں",
+    "Replace": "",
     "SAVE": "محفوظ کریں",
     "SEARCH": "تلاش کریں",
     "SHARE": "شیئر کریں",
