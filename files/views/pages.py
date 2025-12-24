@@ -423,11 +423,7 @@ def replace_media(request):
             media.state = helpers.get_default_state(request.user)
             media.save()
 
-            messages.add_message(
-                request,
-                messages.INFO,
-                translate_string(request.LANGUAGE_CODE, "Media file was replaced successfully")
-            )
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media file was replaced successfully"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
         form = ReplaceMediaForm(media)

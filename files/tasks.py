@@ -627,10 +627,9 @@ def create_hls(friendly_token):
 
 @task(name="media_init", queue="short_tasks")
 def media_init(friendly_token):
-    # run media init async
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except:
+    except:  # noqa
         logger.info("failed to get media with friendly_token %s" % friendly_token)
         return False
     media.media_init()

@@ -1,4 +1,5 @@
 import json
+
 from django import forms
 from django.utils.safestring import mark_safe
 
@@ -7,9 +8,7 @@ class CategoryModalWidget(forms.SelectMultiple):
     """Two-panel category selector with modal"""
 
     class Media:
-        css = {
-            'all': ('css/category_modal.css',)
-        }
+        css = {'all': ('css/category_modal.css',)}
         js = ('js/category_modal.js',)
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -17,10 +16,7 @@ class CategoryModalWidget(forms.SelectMultiple):
         categories = []
         for opt_value, opt_label in self.choices:
             if opt_value:  # Skip empty choice
-                categories.append({
-                    'id': str(opt_value),
-                    'title': str(opt_label)
-                })
+                categories.append({'id': str(opt_value), 'title': str(opt_label)})
 
         all_categories_json = json.dumps(categories)
         selected_ids_json = json.dumps([str(v) for v in (value or [])])
