@@ -104,7 +104,7 @@ def is_mediacms_editor(user):
             getattr(user, 'id', None),
             str(e),
         )
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error checking editor status - user_id=%s",
             getattr(user, 'id', None),
@@ -125,7 +125,7 @@ def is_mediacms_manager(user):
             getattr(user, 'id', None),
             str(e),
         )
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error checking manager status - user_id=%s",
             getattr(user, 'id', None),

@@ -648,7 +648,7 @@ class Media(models.Model):
             encoding_status = "running"
         else:
             encoding_status = "fail"
-        
+
         if old_status != encoding_status:
             logger.info(
                 "Media encoding status changed - friendly_token=%s, old_status=%s, new_status=%s",

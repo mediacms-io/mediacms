@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 from celery import Task
 from celery import shared_task as task
-from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_revoked
 
 # from celery.task.control import revoke
@@ -234,7 +233,7 @@ class EncodingTask(Task):
                 if hasattr(self.encoding, "media"):
                     media_token = self.encoding.media.friendly_token
                     self.encoding.media.post_encode_actions()
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error in EncodingTask.on_failure handler - encoding_id=%s, media_token=%s, task_id=%s",
                 encoding_id,
@@ -309,7 +308,7 @@ def encode_media(
         )
         Encoding.objects.filter(id=encoding_id).delete()
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error retrieving media/profile for encoding - friendly_token=%s, profile_id=%s, encoding_id=%s",
             friendly_token,
@@ -352,7 +351,7 @@ def encode_media(
                     chunk=True,
                     chunk_file_path=chunk_file_path,
                 )
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Error retrieving encoding for chunk - encoding_id=%s, friendly_token=%s, profile_id=%s",
                     encoding_id,
@@ -383,7 +382,7 @@ def encode_media(
                     profile_id,
                 )
                 encoding = Encoding(media=media, profile=profile, status="running")
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Error retrieving encoding - encoding_id=%s, friendly_token=%s, profile_id=%s",
                     encoding_id,
@@ -497,14 +496,14 @@ def encode_media(
                                         friendly_token,
                                         percent,
                                     )
-                                except DatabaseError as e:
+                                except DatabaseError:
                                     logger.warning(
                                         "Database error saving encoding progress - encoding_id=%s, friendly_token=%s, progress=%.2f%%",
                                         encoding_id,
                                         friendly_token,
                                         percent,
                                     )
-                                except Exception as e:
+                                except Exception:
                                     logger.exception(
                                         "Unexpected error saving encoding progress - encoding_id=%s, friendly_token=%s, progress=%.2f%%",
                                         encoding_id,
@@ -605,13 +604,13 @@ def encode_media(
                 )
         # this will raise a django.db.utils.DatabaseError error when task is revoked,
         # since we delete the encoding at that stage
-        except DatabaseError as e:
+        except DatabaseError:
             logger.warning(
                 "Database error saving encoding (task may have been revoked) - encoding_id=%s, friendly_token=%s",
                 encoding_id,
                 friendly_token,
             )
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected error saving encoding final status - encoding_id=%s, friendly_token=%s",
                 encoding_id,
@@ -632,7 +631,7 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
             translate_to_english,
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error retrieving media for transcription - friendly_token=%s, translate_to_english=%s",
             friendly_token,
@@ -704,7 +703,7 @@ def update_search_vector(friendly_token):
             friendly_token,
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Error updating search vector - friendly_token=%s",
             friendly_token,
@@ -726,7 +725,7 @@ def produce_sprite_from_video(friendly_token):
             friendly_token,
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error retrieving media for sprite generation - friendly_token=%s",
             friendly_token,
@@ -754,7 +753,7 @@ def produce_sprite_from_video(friendly_token):
                     media.sprites.save(content=myfile, name=get_file_name(media.media_file.path) + "sprites.jpg", save=False)
                     media.save(update_fields=["sprites"])
 
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error producing sprite from video - friendly_token=%s",
                 friendly_token,
@@ -782,7 +781,7 @@ def create_hls(friendly_token):
             friendly_token,
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error retrieving media for HLS creation - friendly_token=%s",
             friendly_token,
@@ -809,7 +808,7 @@ def create_hls(friendly_token):
 
             try:
                 shutil.rmtree(output_dir)
-            except (FileNotFoundError, OSError) as e:
+            except (FileNotFoundError, OSError):
                 # this was breaking in some cases where it was already deleted
                 # because create_hls was running multiple times
                 logger.debug(
@@ -968,7 +967,7 @@ def clear_sessions():
             str(e),
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error clearing expired sessions")
         return False
     return True
@@ -990,7 +989,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
             action,
         )
         return False
-    except Exception as e:
+    except Exception:
         logger.exception(
             "Unexpected error retrieving media for user action - friendly_token=%s, action=%s",
             friendly_token,
@@ -1013,7 +1012,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                 action,
             )
             return False
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Unexpected error retrieving user for action - user_id=%s, friendly_token=%s, action=%s",
                 user,
@@ -1052,7 +1051,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                 extra_info,
             )
             return False
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error extracting rating info - friendly_token=%s, user_id=%s",
                 friendly_token,
@@ -1071,7 +1070,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
                     rating_category_id=rating_category,
                     score=score,
                 )
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error saving rating - friendly_token=%s, user_id=%s, score=%s, category_id=%s",
                 friendly_token,

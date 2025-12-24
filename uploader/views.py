@@ -4,8 +4,6 @@ import os
 import shutil
 
 from django.conf import settings
-
-logger = logging.getLogger(__name__)
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.http import JsonResponse
@@ -17,6 +15,8 @@ from files.models import Media
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
+
+logger = logging.getLogger(__name__)
 
 
 class FineUploaderView(generic.FormView):
@@ -64,7 +64,7 @@ class FineUploaderView(generic.FormView):
                 )
                 data = {"success": False, "error": "Error with File Uploading"}
                 return self.make_response(data, status=400)
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "Unexpected error combining upload chunks - user_id=%s",
                     getattr(self.request.user, 'id', None),
@@ -91,7 +91,7 @@ class FineUploaderView(generic.FormView):
             rm_file(media_file)
             shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
             return self.make_response({"success": True, "media_url": new.get_absolute_url()})
-        except Exception as e:
+        except Exception:
             logger.exception(
                 "Error creating media from upload - user_id=%s, filename=%s",
                 getattr(self.request.user, 'id', None),

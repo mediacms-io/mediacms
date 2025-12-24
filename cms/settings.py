@@ -470,7 +470,7 @@ if DEBUG:
     }
     # Add console handler to existing loggers for DEBUG mode
     LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
-    
+
     # Add additional loggers for development
     LOGGING["loggers"]["celery.task"] = {
         "handlers": ["file", "console"],

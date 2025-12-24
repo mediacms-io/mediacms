@@ -2,8 +2,6 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-
-logger = logging.getLogger(__name__)
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -31,6 +29,8 @@ from .forms import ChannelForm, UserForm
 from .models import Channel, User
 from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
 
+logger = logging.getLogger(__name__)
+
 
 def get_user(username):
     try:
@@ -39,7 +39,7 @@ def get_user(username):
     except User.DoesNotExist:
         logger.debug("User not found - username=%s", username)
         return None
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error retrieving user - username=%s", username)
         return None
 

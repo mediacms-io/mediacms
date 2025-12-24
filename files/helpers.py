@@ -172,7 +172,7 @@ def rm_dir(directory):
                     directory,
                     str(e),
                 )
-            except Exception as e:
+            except Exception:
                 logger.exception("Unexpected error removing directory - directory=%s", directory)
     return False
 
