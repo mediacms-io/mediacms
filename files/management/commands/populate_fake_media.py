@@ -119,10 +119,8 @@ class Command(BaseCommand):
 
     def generate_name(self):
         """Generate a random name"""
-        first_names = ['John', 'Jane', 'Mike', 'Sarah', 'David', 'Emily', 'Chris', 'Lisa',
-                      'Tom', 'Anna', 'Alex', 'Maria', 'James', 'Emma', 'Robert', 'Olivia']
-        last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller',
-                     'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Wilson', 'Anderson']
+        first_names = ['John', 'Jane', 'Mike', 'Sarah', 'David', 'Emily', 'Chris', 'Lisa', 'Tom', 'Anna', 'Alex', 'Maria', 'James', 'Emma', 'Robert', 'Olivia']
+        last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Wilson', 'Anderson']
         return f"{random.choice(first_names)} {random.choice(last_names)}"
 
     def generate_email(self, username=None):
@@ -157,7 +155,7 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 name=name,
-                description=f"Fake user account for testing purposes. User #{i+1}",
+                description=f"Fake user account for testing purposes. User #{i + 1}",
                 is_editor=is_editor,
                 is_manager=is_manager,
             )
@@ -173,11 +171,41 @@ class Command(BaseCommand):
         tags = []
 
         # Common tag words
-        tag_words = ['tutorial', 'demo', 'example', 'test', 'sample', 'video', 'audio',
-                    'image', 'document', 'presentation', 'guide', 'howto', 'review',
-                    'unboxing', 'music', 'tech', 'gaming', 'sports', 'news', 'entertainment',
-                    'education', 'science', 'art', 'photography', 'travel', 'food', 'cooking',
-                    'fitness', 'health', 'business', 'finance', 'programming', 'coding']
+        tag_words = [
+            'tutorial',
+            'demo',
+            'example',
+            'test',
+            'sample',
+            'video',
+            'audio',
+            'image',
+            'document',
+            'presentation',
+            'guide',
+            'howto',
+            'review',
+            'unboxing',
+            'music',
+            'tech',
+            'gaming',
+            'sports',
+            'news',
+            'entertainment',
+            'education',
+            'science',
+            'art',
+            'photography',
+            'travel',
+            'food',
+            'cooking',
+            'fitness',
+            'health',
+            'business',
+            'finance',
+            'programming',
+            'coding',
+        ]
 
         # Get existing tags to avoid duplicates
         existing_tag_titles = set(Tag.objects.values_list('title', flat=True))
@@ -221,10 +249,7 @@ class Command(BaseCommand):
 
         # If no categories exist, create some basic ones
         if not categories:
-            category_names = [
-                'Technology', 'Entertainment', 'Education', 'Sports',
-                'News', 'Music', 'Gaming', 'Travel', 'Food', 'Science'
-            ]
+            category_names = ['Technology', 'Entertainment', 'Education', 'Sports', 'News', 'Music', 'Gaming', 'Travel', 'Food', 'Science']
             for name in category_names:
                 category = Category.objects.create(
                     title=name,
@@ -270,9 +295,24 @@ class Command(BaseCommand):
             "Understanding {topic}",
         ]
 
-        topics = ['Video Editing', 'Photography', 'Music Production', 'Coding', 'Design',
-                 'Cooking', 'Fitness', 'Travel', 'Gaming', 'Technology', 'Business',
-                 'Education', 'Science', 'Art', 'Sports', 'Entertainment']
+        topics = [
+            'Video Editing',
+            'Photography',
+            'Music Production',
+            'Coding',
+            'Design',
+            'Cooking',
+            'Fitness',
+            'Travel',
+            'Gaming',
+            'Technology',
+            'Business',
+            'Education',
+            'Science',
+            'Art',
+            'Sports',
+            'Entertainment',
+        ]
         actions = ['Master', 'Learn', 'Understand', 'Create', 'Build', 'Design', 'Develop']
 
         template = random.choice(title_templates)
@@ -389,9 +429,24 @@ class Command(BaseCommand):
             "Curated {topic} Playlist",
         ]
 
-        topics = ['Video Editing', 'Photography', 'Music Production', 'Coding', 'Design',
-                 'Cooking', 'Fitness', 'Travel', 'Gaming', 'Technology', 'Business',
-                 'Education', 'Science', 'Art', 'Sports', 'Entertainment']
+        topics = [
+            'Video Editing',
+            'Photography',
+            'Music Production',
+            'Coding',
+            'Design',
+            'Cooking',
+            'Fitness',
+            'Travel',
+            'Gaming',
+            'Technology',
+            'Business',
+            'Education',
+            'Science',
+            'Art',
+            'Sports',
+            'Entertainment',
+        ]
 
         template = random.choice(playlist_templates)
         topic = random.choice(topics)
@@ -458,9 +513,6 @@ class Command(BaseCommand):
         is_reviewed = random.random() < 0.8  # 80% True
         featured = random.random() < 0.1  # 10% True
 
-        # Calculate listable based on state, encoding_status, is_reviewed
-        listable = (state == 'public' and encoding_status == 'success' and is_reviewed)
-
         # Other fields
         enable_comments = random.random() < 0.9  # 90% True
         allow_download = random.random() < 0.85  # 85% True
@@ -502,7 +554,7 @@ class Command(BaseCommand):
             media.state = state
             media.encoding_status = encoding_status
             # Recalculate listable based on our desired encoding_status
-            media.listable = (state == 'public' and encoding_status == 'success' and is_reviewed)
+            media.listable = state == 'public' and encoding_status == 'success' and is_reviewed
             media.save(update_fields=['state', 'encoding_status', 'listable'])
 
         return media
@@ -562,15 +614,10 @@ class Command(BaseCommand):
                 num_additional_playlists = random.randint(1, 2)
                 available_playlists = [p for p in playlists if media not in p.media.all()]
                 if available_playlists:
-                    selected_playlists = random.sample(
-                        available_playlists,
-                        min(num_additional_playlists, len(available_playlists))
-                    )
+                    selected_playlists = random.sample(available_playlists, min(num_additional_playlists, len(available_playlists)))
                     for playlist in selected_playlists:
                         # Get the current max ordering for this playlist
-                        max_ordering = PlaylistMedia.objects.filter(playlist=playlist).aggregate(
-                            max_order=models.Max('ordering')
-                        )['max_order'] or 0
+                        max_ordering = PlaylistMedia.objects.filter(playlist=playlist).aggregate(max_order=models.Max('ordering'))['max_order'] or 0
 
                         PlaylistMedia.objects.create(
                             playlist=playlist,
@@ -714,10 +761,7 @@ class Command(BaseCommand):
                     top_level_comments = [c for c in comments_for_media if c.parent is None]
                     if top_level_comments:
                         # Select random comments to reply to
-                        parent_comments = random.sample(
-                            top_level_comments,
-                            min(num_replies, len(top_level_comments))
-                        )
+                        parent_comments = random.sample(top_level_comments, min(num_replies, len(top_level_comments)))
 
                         for parent_comment in parent_comments:
                             # Create reply
@@ -757,9 +801,9 @@ class Command(BaseCommand):
 
     def display_summary(self, created_media, users, tags, categories, reported_media, playlists, comments):
         """Display summary statistics"""
-        self.stdout.write(self.style.SUCCESS('\n' + '='*60))
+        self.stdout.write(self.style.SUCCESS('\n' + '=' * 60))
         self.stdout.write(self.style.SUCCESS('SUMMARY STATISTICS'))
-        self.stdout.write(self.style.SUCCESS('='*60))
+        self.stdout.write(self.style.SUCCESS('=' * 60))
 
         # Basic counts
         self.stdout.write(f'\nTotal media created: {len(created_media)}')
@@ -799,15 +843,15 @@ class Command(BaseCommand):
         total_views = sum(m.views for m in created_media)
         total_likes = sum(m.likes for m in created_media)
 
-        self.stdout.write(f'\nOther statistics:')
-        self.stdout.write(f'  Reviewed: {reviewed_count} ({reviewed_count/len(created_media)*100:.1f}%)')
-        self.stdout.write(f'  Featured: {featured_count} ({featured_count/len(created_media)*100:.1f}%)')
+        self.stdout.write('\nOther statistics:')
+        self.stdout.write(f'  Reviewed: {reviewed_count} ({reviewed_count / len(created_media) * 100:.1f}%)')
+        self.stdout.write(f'  Featured: {featured_count} ({featured_count / len(created_media) * 100:.1f}%)')
         self.stdout.write(f'  Total views: {total_views:,}')
         self.stdout.write(f'  Total likes: {total_likes:,}')
 
         # Playlist statistics
         if playlists:
-            self.stdout.write(f'\nPlaylist statistics:')
+            self.stdout.write('\nPlaylist statistics:')
             media_per_playlist = []
             for playlist in playlists:
                 count = playlist.media.count()
@@ -835,7 +879,7 @@ class Command(BaseCommand):
 
         # Comment statistics
         if comments:
-            self.stdout.write(f'\nComment statistics:')
+            self.stdout.write('\nComment statistics:')
             media_with_comments = [m for m in created_media if m.enable_comments]
             media_comment_counts = {}
             for media in media_with_comments:
@@ -858,13 +902,12 @@ class Command(BaseCommand):
                 # Count nested/reply comments
                 reply_count = sum(1 for c in comments if c.parent is not None)
                 if reply_count > 0:
-                    self.stdout.write(f'  Reply comments: {reply_count} ({reply_count/len(comments)*100:.1f}%)')
+                    self.stdout.write(f'  Reply comments: {reply_count} ({reply_count / len(comments) * 100:.1f}%)')
 
                 # Find most active media
                 most_active = max(media_comment_counts.items(), key=lambda x: x[1])
                 self.stdout.write(f'  Most active media: "{most_active[0].title}" with {most_active[1]} comments')
             else:
-                self.stdout.write(f'  No comments created (all media have comments disabled or distribution resulted in 0 comments)')
+                self.stdout.write('  No comments created (all media have comments disabled or distribution resulted in 0 comments)')
 
-        self.stdout.write(self.style.SUCCESS('\n' + '='*60))
-
+        self.stdout.write(self.style.SUCCESS('\n' + '=' * 60))

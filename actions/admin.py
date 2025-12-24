@@ -13,11 +13,6 @@ class MediaActionAdmin(admin.ModelAdmin):
     date_hierarchy = 'action_date'
 
     fieldsets = (
-        ('Action Details', {
-            'fields': ('action', 'media', 'user', 'session_key')
-        }),
-        ('Additional Information', {
-            'fields': ('extra_info', 'action_date', 'remote_ip')
-        }),
+        ('Action Details', {'fields': ('action', 'media', 'user', 'session_key')}),
+        ('Additional Information', {'fields': ('extra_info', 'action_date', 'remote_ip')}),
     )
-
