@@ -300,6 +300,7 @@ INSTALLED_APPS = [
     "actions.apps.ActionsConfig",
     "rbac.apps.RbacConfig",
     "identity_providers.apps.IdentityProvidersConfig",
+    "lti.apps.LtiConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -555,6 +556,7 @@ DJANGO_ADMIN_URL = "admin/"
 USE_SAML = False
 USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
+USE_LTI = False  # Enable LTI 1.3 integration
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 USE_ROUNDED_CORNERS = True
@@ -650,3 +652,16 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+
+# LTI 1.3 Integration Settings
+if USE_LTI:
+    # Session timeout for LTI launches (seconds)
+    LTI_SESSION_TIMEOUT = 3600  # 1 hour
+
+    # Cookie settings required for iframe embedding from LMS
+    # IMPORTANT: Requires HTTPS to be enabled
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True

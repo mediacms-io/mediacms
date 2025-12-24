@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "actions.apps.ActionsConfig",
     "rbac.apps.RbacConfig",
     "identity_providers.apps.IdentityProvidersConfig",
+    "lti.apps.LtiConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",

@@ -65,7 +65,9 @@ class CategoryAdminForm(forms.ModelForm):
 
     class Meta:
         model = Category
-        fields = '__all__'
+        # Exclude LTI fields to avoid circular dependency during admin loading
+        # These will be managed automatically by LTI provisioning
+        exclude = ['lti_platform', 'lti_context_id']
 
     def clean(self):
         cleaned_data = super().clean()

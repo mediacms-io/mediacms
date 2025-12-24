@@ -47,6 +47,13 @@ class Category(models.Model):
         verbose_name='IDP Config Name',
     )
 
+    # LTI/LMS integration fields
+    is_lms_course = models.BooleanField(default=False, db_index=True, help_text='Whether this category represents an LMS course')
+
+    lti_platform = models.ForeignKey('lti.LTIPlatform', blank=True, null=True, on_delete=models.SET_NULL, related_name='categories', help_text='LTI Platform if this is an LTI course')
+
+    lti_context_id = models.CharField(max_length=255, blank=True, db_index=True, help_text='LTI context ID from platform')
+
     def __str__(self):
         return self.title
 
