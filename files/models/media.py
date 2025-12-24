@@ -1081,9 +1081,9 @@ def media_m2m(sender, instance, **kwargs):
     if action in ['post_add', 'post_remove', 'post_clear']:
         # Import here to avoid circular imports
         from .category import Category
-        
+
         categories_to_update = set()
-        
+
         if action == 'post_clear':
             # For clear, update all categories that were associated
             # We need to update all categories, but we can't know which ones were cleared
@@ -1097,11 +1097,11 @@ def media_m2m(sender, instance, **kwargs):
             # Also update current categories to ensure counts are correct
             if instance.category.all():
                 categories_to_update.update(instance.category.all())
-        
+
         # Update counts for all affected categories
         for category in categories_to_update:
             category.update_category_media()
-        
+
         # Refresh instance from DB to ensure we have latest data
         if instance.id:
             instance.refresh_from_db()
@@ -1116,9 +1116,9 @@ def media_tags_m2m(sender, instance, **kwargs):
     if action in ['post_add', 'post_remove', 'post_clear']:
         # Import here to avoid circular imports
         from .category import Tag
-        
+
         tags_to_update = set()
-        
+
         if action == 'post_clear':
             # For clear, update all tags that were associated
             # We need to update all tags, but we can't know which ones were cleared
@@ -1132,11 +1132,11 @@ def media_tags_m2m(sender, instance, **kwargs):
             # Also update current tags to ensure counts are correct
             if instance.tags.all():
                 tags_to_update.update(instance.tags.all())
-        
+
         # Update counts for all affected tags
         for tag in tags_to_update:
             tag.update_tag_media()
-        
+
         # Refresh instance from DB to ensure we have latest tags
         if instance.id:
             instance.refresh_from_db()
