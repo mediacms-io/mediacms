@@ -4,12 +4,16 @@
 <style>
   /* Form group styling */
   .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 1.25rem 1.25rem 0.75rem 1.25rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
   }
 
   /* Control label container styling */
   .control-label-container {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
   /* Label styling */
@@ -54,6 +58,24 @@
   input[type="submit"]:hover {
     background-color: #218838;
     border-color: #1e7e34;
+  }
+
+  /* Better input field styling */
+  .controls input:not([type="checkbox"]):not([type="radio"]),
+  .controls select,
+  .controls textarea {
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .controls input:not([type="checkbox"]):not([type="radio"]):focus,
+  .controls select:focus,
+  .controls textarea:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
   }
 
 </style>

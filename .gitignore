@@ -6,8 +6,9 @@ media_files/hls/
 media_files/chunks/
 media_files/uploads/
 media_files/tinymce_media/
+media_files/userlogos/
 postgres_data/
-celerybeat-schedule
+celerybeat-schedule*
 logs/
 pids/
 static/admin/
@@ -19,8 +20,8 @@ static/drf-yasg
 cms/local_settings.py
 deploy/docker/local_settings.py
 yt.readme.md
-/frontend-tools/video-editor/node_modules
-/frontend-tools/video-editor/client/node_modules
+# Node.js dependencies (covers all node_modules directories, including frontend-tools)
+**/node_modules/
 /static_collected
 /frontend-tools/video-editor-v1
 frontend-tools/.DS_Store

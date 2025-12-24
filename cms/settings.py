@@ -563,7 +563,8 @@ ALLOW_VIDEO_TRIMMER = True
 
 ALLOW_CUSTOM_MEDIA_URLS = False
 
-# Whether to allow anonymous users to list all users
+ALLOW_MEDIA_REPLACEMENT = False
+
 ALLOW_ANONYMOUS_USER_LISTING = True
 
 # Who can see the members page

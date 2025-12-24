@@ -165,6 +165,7 @@ translation_strings = {
     "Recommended": "",
     "Record Screen": "",
     "Register": "",
+    "Replace": "",
     "Remove category": "",
     "Remove from list": "",
     "Remove tag": "",

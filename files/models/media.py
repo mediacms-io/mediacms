@@ -270,7 +270,9 @@ class Media(models.Model):
             if self.media_file != self.__original_media_file:
                 # set this otherwise gets to infinite loop
                 self.__original_media_file = self.media_file
-                self.media_init()
+                from .. import tasks
+
+                tasks.media_init.apply_async(args=[self.friendly_token], countdown=5)
 
             # for video files, if user specified a different time
             # to automatically grub thumbnail
@@ -417,6 +419,11 @@ class Media(models.Model):
                 self.media_type = "image"
             elif kind == "pdf":
                 self.media_type = "pdf"
+            elif kind == "audio":
+                self.media_type = "audio"
+            elif kind == "video":
+                self.media_type = "video"
+
         if self.media_type in ["image", "pdf"]:
             self.encoding_status = "success"
         else:
