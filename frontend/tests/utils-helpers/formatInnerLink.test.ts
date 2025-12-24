@@ -1,19 +1,19 @@
-import { formatInnerLink } from '../../../../../src/static/js/utils/helpers/formatInnerLink';
+import { formatInnerLink } from '../../src/static/js/utils/helpers/formatInnerLink';
 
-describe('utils/helpers/formatInnerLink.formatInnerLink', () => {
-    test('returns the same absolute URL unchanged', () => {
+describe('utils/helpers/formatInnerLink', () => {
+    test('Returns the same absolute URL unchanged', () => {
         const url = 'https://example.com/path?x=1#hash';
         const base = 'https://base.example.org';
         expect(formatInnerLink(url, base)).toBe(url);
     });
 
-    test('constructs absolute URL from relative path with leading slash', () => {
+    test('Constructs absolute URL from relative path with leading slash', () => {
         const url = '/images/picture.png';
         const base = 'https://media.example.com';
         expect(formatInnerLink(url, base)).toBe('https://media.example.com/images/picture.png');
     });
 
-    test('constructs absolute URL from relative path without leading slash', () => {
+    test('Constructs absolute URL from relative path without leading slash', () => {
         const url = 'assets/file.txt';
         const base = 'https://cdn.example.com';
         expect(formatInnerLink(url, base)).toBe('https://cdn.example.com/assets/file.txt');
