@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "Eliminar de la lista",
     "Remove tag": "Eliminar etiqueta",
     "Remove user": "Eliminar usuario",
+    "Replace": "",
     "SAVE": "GUARDAR",
     "SEARCH": "BUSCAR",
     "SHARE": "COMPARTIR",

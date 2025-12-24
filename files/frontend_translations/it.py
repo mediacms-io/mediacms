@@ -163,6 +163,7 @@ translation_strings = {
     "Remove from list": "Rimuovi dalla lista",
     "Remove tag": "Rimuovi tag",
     "Remove user": "Rimuovi utente",
+    "Replace": "",
     "SAVE": "SALVA",
     "SEARCH": "CERCA",
     "SHARE": "CONDIVIDI",

@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "Odstrani s seznama",
     "Remove tag": "Odstrani oznako",
     "Remove user": "Odstrani uporabnika",
+    "Replace": "",
     "SAVE": "SHRANI",
     "SEARCH": "ISKANJE",
     "SHARE": "DELI",

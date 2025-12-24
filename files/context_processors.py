@@ -58,6 +58,7 @@ def stuff(request):
     ret["USE_RBAC"] = settings.USE_RBAC
     ret["USE_ROUNDED_CORNERS"] = settings.USE_ROUNDED_CORNERS
     ret["INCLUDE_LISTING_NUMBERS"] = settings.INCLUDE_LISTING_NUMBERS
+    ret["ALLOW_MEDIA_REPLACEMENT"] = getattr(settings, 'ALLOW_MEDIA_REPLACEMENT', False)
     ret["VERSION"] = VERSION
 
     if request.user.is_superuser:

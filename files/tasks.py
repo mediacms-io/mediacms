@@ -625,6 +625,18 @@ def create_hls(friendly_token):
     return True
 
 
+@task(name="media_init", queue="short_tasks")
+def media_init(friendly_token):
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except:  # noqa
+        logger.info("failed to get media with friendly_token %s" % friendly_token)
+        return False
+    media.media_init()
+
+    return True
+
+
 @task(name="check_running_states", queue="short_tasks")
 def check_running_states():
     # Experimental - unused

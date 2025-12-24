@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "",
     "Remove tag": "",
     "Remove user": "",
+    "Replace": "",
     "SAVE": "שמור",
     "SEARCH": "חפש",
     "SHARE": "שתף",

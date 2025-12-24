@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "सूची से हटाएं",
     "Remove tag": "टैग हटाएं",
     "Remove user": "उपयोगकर्ता हटाएं",
+    "Replace": "",
     "SAVE": "सहेजें",
     "SEARCH": "खोजें",
     "SHARE": "साझा करें",
