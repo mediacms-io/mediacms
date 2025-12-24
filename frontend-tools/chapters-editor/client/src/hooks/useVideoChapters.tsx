@@ -60,6 +60,9 @@ const useVideoChapters = () => {
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
+    
+    // Track if editor has been initialized to prevent re-initialization on Safari metadata events
+    const isInitializedRef = useRef<boolean>(false);
 
     // Timeline state
     const [trimStart, setTrimStart] = useState(0);
@@ -108,11 +111,7 @@ const useVideoChapters = () => {
     // Detect Safari browser
     const isSafari = () => {
         const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-        const isSafariBrowser = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Chromium/.test(userAgent);
-        if (isSafariBrowser) {
-            logger.debug('Safari browser detected, enabling audio support fallbacks');
-        }
-        return isSafariBrowser;
+        return /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Chromium/.test(userAgent);
     };
 
     // Initialize video event listeners
@@ -121,7 +120,15 @@ const useVideoChapters = () => {
         if (!video) return;
 
         const handleLoadedMetadata = () => {
-            logger.debug('Video loadedmetadata event fired, duration:', video.duration);
+            // CRITICAL: Prevent re-initialization if editor has already been initialized
+            // Safari fires loadedmetadata multiple times, which was resetting segments
+            if (isInitializedRef.current) {
+                // Still update duration and trimEnd in case they changed
+                setDuration(video.duration);
+                setTrimEnd(video.duration);
+                return;
+            }
+            
             setDuration(video.duration);
             setTrimEnd(video.duration);
 
@@ -173,7 +180,7 @@ const useVideoChapters = () => {
                 setHistory([initialState]);
                 setHistoryPosition(0);
                 setClipSegments(initialSegments);
-                logger.debug('Editor initialized with segments:', initialSegments.length);
+                isInitializedRef.current = true; // Mark as initialized
             };
 
             initializeEditor();
@@ -181,20 +188,18 @@ const useVideoChapters = () => {
 
         // Safari-specific fallback for audio files
         const handleCanPlay = () => {
-            logger.debug('Video canplay event fired');
             // If loadedmetadata hasn't fired yet but we have duration, trigger initialization
-            if (video.duration && duration === 0) {
-                logger.debug('Safari fallback: Using canplay event to initialize');
+            // Also check if already initialized to prevent re-initialization
+            if (video.duration && duration === 0 && !isInitializedRef.current) {
                 handleLoadedMetadata();
             }
         };
 
         // Additional Safari fallback for audio files
         const handleLoadedData = () => {
-            logger.debug('Video loadeddata event fired');
             // If we still don't have duration, try again
-            if (video.duration && duration === 0) {
-                logger.debug('Safari fallback: Using loadeddata event to initialize');
+            // Also check if already initialized to prevent re-initialization
+            if (video.duration && duration === 0 && !isInitializedRef.current) {
                 handleLoadedMetadata();
             }
         };
@@ -226,14 +231,12 @@ const useVideoChapters = () => {
 
         // Safari-specific fallback event listeners for audio files
         if (isSafari()) {
-            logger.debug('Adding Safari-specific event listeners for audio support');
             video.addEventListener('canplay', handleCanPlay);
             video.addEventListener('loadeddata', handleLoadedData);
 
             // Additional timeout fallback for Safari audio files
             const safariTimeout = setTimeout(() => {
-                if (video.duration && duration === 0) {
-                    logger.debug('Safari timeout fallback: Force initializing editor');
+                if (video.duration && duration === 0 && !isInitializedRef.current) {
                     handleLoadedMetadata();
                 }
             }, 1000);

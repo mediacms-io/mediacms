@@ -31,7 +31,7 @@
 
 .ios-notification-icon {
     flex-shrink: 0;
-    color: #0066cc;
+    color: #059669;
     margin-right: 15px;
     margin-top: 3px;
 }
@@ -96,7 +96,7 @@
 }
 
 .ios-desktop-mode-btn {
-    background-color: #0066cc;
+    background-color: #059669;
     color: white;
     border: none;
     border-radius: 8px;

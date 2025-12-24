@@ -1,4 +1,16 @@
 #chapters-editor-root {
+    .timeline-header-container {
+        margin-left: 1rem;
+        margin-top: -0.5rem;
+    }
+
+    .timeline-header-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #059669;
+        margin: 0;
+    }
+
     .timeline-container-card {
         background-color: white;
         border-radius: 0.5rem;
@@ -11,6 +23,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(16, 185, 129, 0.2);
     }
 
     .timeline-title {
@@ -20,7 +34,7 @@
     }
 
     .timeline-title-text {
-        font-weight: 700;
+        font-size: 0.875rem;
     }
 
     .current-time {
@@ -48,10 +62,11 @@
     .timeline-container {
         position: relative;
         min-width: 100%;
-        background-color: #fafbfc;
+        background-color: #e2ede4;
         height: 70px;
         border-radius: 0.25rem;
         overflow: visible !important;
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .timeline-marker {
@@ -194,7 +209,7 @@
         left: 0;
         right: 0;
         padding: 0.4rem;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(16, 185, 129, 0.6);
         color: white;
         opacity: 1;
         transition: background-color 0.2s;
@@ -202,15 +217,15 @@
     }
 
     .clip-segment:hover .clip-segment-info {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(16, 185, 129, 0.7);
     }
 
     .clip-segment.selected .clip-segment-info {
-        background-color: rgba(59, 130, 246, 0.5);
+        background-color: rgba(5, 150, 105, 0.8);
     }
 
     .clip-segment.selected:hover .clip-segment-info {
-        background-color: rgba(59, 130, 246, 0.4);
+        background-color: rgba(5, 150, 105, 0.75);
     }
 
     .clip-segment-name {
@@ -540,7 +555,7 @@
     .save-copy-button,
     .save-segments-button {
         color: #ffffff;
-        background: #0066cc;
+        background: #059669;
         border-radius: 0.25rem;
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
@@ -713,7 +728,7 @@
         height: 50px;
         border: 5px solid rgba(0, 0, 0, 0.1);
         border-radius: 50%;
-        border-top-color: #0066cc;
+        border-top-color: #059669;
         animation: spin 1s ease-in-out infinite;
     }
 
@@ -753,7 +768,7 @@
         align-items: center;
         justify-content: center;
         padding: 0.75rem 1.25rem;
-        background-color: #0066cc;
+        background-color: #059669;
         color: white;
         border-radius: 4px;
         text-decoration: none;
@@ -766,7 +781,7 @@
     }
 
     .modal-choice-button:hover {
-        background-color: #0056b3;
+        background-color:rgb(7, 119, 84);
     }
 
     .modal-choice-button svg {
@@ -941,7 +956,6 @@
 
 .save-chapters-button:hover {
     background-color: #2563eb;
-    transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
 }
 

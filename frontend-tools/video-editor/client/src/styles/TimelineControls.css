@@ -1,4 +1,16 @@
 #video-editor-trim-root {
+    .timeline-header-container {
+        margin-left: 1rem;
+        margin-top: -0.5rem;
+    }
+
+    .timeline-header-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #2563eb;
+        margin: 0;
+    }
+
     .timeline-container-card {
         background-color: white;
         border-radius: 0.5rem;
@@ -11,6 +23,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.2);
     }
 
     .timeline-title {
@@ -20,7 +34,7 @@
     }
 
     .timeline-title-text {
-        font-weight: 700;
+        font-size: 0.875rem;
     }
 
     .current-time {
@@ -48,10 +62,11 @@
     .timeline-container {
         position: relative;
         min-width: 100%;
-        background-color: #fafbfc;
+        background-color: #eff6ff;
         height: 70px;
         border-radius: 0.25rem;
         overflow: visible !important;
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .timeline-marker {
@@ -194,7 +209,7 @@
         left: 0;
         right: 0;
         padding: 0.4rem;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(59, 130, 246, 0.6);
         color: white;
         opacity: 1;
         transition: background-color 0.2s;
@@ -202,15 +217,15 @@
     }
 
     .clip-segment:hover .clip-segment-info {
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(59, 130, 246, 0.7);
     }
 
     .clip-segment.selected .clip-segment-info {
-        background-color: rgba(59, 130, 246, 0.5);
+        background-color: rgba(37, 99, 235, 0.8);
     }
 
     .clip-segment.selected:hover .clip-segment-info {
-        background-color: rgba(59, 130, 246, 0.4);
+        background-color: rgba(37, 99, 235, 0.75);
     }
 
     .clip-segment-name {

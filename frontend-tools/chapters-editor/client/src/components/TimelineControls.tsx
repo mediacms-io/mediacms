@@ -177,7 +177,16 @@ const TimelineControls = ({
     const [isAutoSaving, setIsAutoSaving] = useState(false);
     const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
     const clipSegmentsRef = useRef(clipSegments);
-    
+    // Track when a drag just ended to prevent Safari from triggering clicks after drag
+    const dragJustEndedRef = useRef<boolean>(false);
+    const dragEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Helper function to detect Safari browser
+    const isSafari = () => {
+        if (typeof window === 'undefined') return false;
+        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+        return /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Chromium/.test(userAgent);
+    };
 
     // Keep clipSegmentsRef updated
     useEffect(() => {
@@ -867,6 +876,12 @@ const TimelineControls = ({
                 logger.debug('Clearing auto-save timer in cleanup:', autoSaveTimerRef.current);
                 clearTimeout(autoSaveTimerRef.current);
             }
+
+            // Clear any pending drag end timeout
+            if (dragEndTimeoutRef.current) {
+                clearTimeout(dragEndTimeoutRef.current);
+                dragEndTimeoutRef.current = null;
+            }
         };
     }, [scheduleAutoSave]);
 
@@ -1084,16 +1099,20 @@ const TimelineControls = ({
     };
 
     // Helper function to calculate available space for a new segment
-    const calculateAvailableSpace = (startTime: number): number => {
+    const calculateAvailableSpace = (startTime: number, segmentsOverride?: Segment[]): number => {
         // Always return at least 0.1 seconds to ensure tooltip shows
         const MIN_SPACE = 0.1;
+
+        // Use override segments if provided, otherwise use ref to get latest segments
+        // This ensures we always have the most up-to-date segments, especially important for Safari
+        const segmentsToUse = segmentsOverride || clipSegmentsRef.current;
 
         // Determine the amount of available space:
         // 1. Check remaining space until the end of video
         const remainingDuration = Math.max(0, duration - startTime);
 
         // 2. Find the next segment (if any)
-        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        const sortedSegments = [...segmentsToUse].sort((a, b) => a.startTime - b.startTime);
 
         // Find the next and previous segments
         const nextSegment = sortedSegments.find((seg) => seg.startTime > startTime);
@@ -1109,14 +1128,6 @@ const TimelineControls = ({
             availableSpace = duration - startTime;
         }
 
-        // Log the space calculation for debugging
-        logger.debug('Space calculation:', {
-            position: formatDetailedTime(startTime),
-            nextSegment: nextSegment ? formatDetailedTime(nextSegment.startTime) : 'none',
-            prevSegment: prevSegment ? formatDetailedTime(prevSegment.endTime) : 'none',
-            availableSpace: formatDetailedTime(Math.max(MIN_SPACE, availableSpace)),
-        });
-
         // Always return at least MIN_SPACE to ensure tooltip shows
         return Math.max(MIN_SPACE, availableSpace);
     };
@@ -1125,8 +1136,11 @@ const TimelineControls = ({
     const updateTooltipForPosition = (currentPosition: number) => {
         if (!timelineRef.current) return;
 
+        // Use ref to get latest segments to avoid stale state issues
+        const currentSegments = clipSegmentsRef.current;
+
         // Find if we're in a segment at the current position with a small tolerance
-        const segmentAtPosition = clipSegments.find((seg) => {
+        const segmentAtPosition = currentSegments.find((seg) => {
             const isWithinSegment = currentPosition >= seg.startTime && currentPosition <= seg.endTime;
             const isVeryCloseToStart = Math.abs(currentPosition - seg.startTime) < 0.001;
             const isVeryCloseToEnd = Math.abs(currentPosition - seg.endTime) < 0.001;
@@ -1134,7 +1148,7 @@ const TimelineControls = ({
         });
 
         // Find the next and previous segments
-        const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+        const sortedSegments = [...currentSegments].sort((a, b) => a.startTime - b.startTime);
         const nextSegment = sortedSegments.find((seg) => seg.startTime > currentPosition);
         const prevSegment = [...sortedSegments].reverse().find((seg) => seg.endTime < currentPosition);
 
@@ -1144,21 +1158,13 @@ const TimelineControls = ({
             setShowEmptySpaceTooltip(false);
         } else {
             // We're in a cutaway area
-            // Calculate available space for new segment
-            const availableSpace = calculateAvailableSpace(currentPosition);
+            // Calculate available space for new segment using current segments
+            const availableSpace = calculateAvailableSpace(currentPosition, currentSegments);
             setAvailableSegmentDuration(availableSpace);
 
             // Always show empty space tooltip
             setSelectedSegmentId(null);
             setShowEmptySpaceTooltip(true);
-
-            // Log position info for debugging
-            logger.debug('Cutaway position:', {
-                current: formatDetailedTime(currentPosition),
-                prevSegmentEnd: prevSegment ? formatDetailedTime(prevSegment.endTime) : 'none',
-                nextSegmentStart: nextSegment ? formatDetailedTime(nextSegment.startTime) : 'none',
-                availableSpace: formatDetailedTime(availableSpace),
-            });
         }
 
         // Update tooltip position
@@ -1188,6 +1194,12 @@ const TimelineControls = ({
 
         if (!timelineRef.current || !scrollContainerRef.current) return;
 
+        // Safari-specific fix: Ignore clicks that happen immediately after a drag operation
+        // Safari fires click events after drag ends, which can cause issues with stale state
+        if (isSafari() && dragJustEndedRef.current) {
+            return;
+        }
+
         // If on mobile device and video hasn't been initialized, don't handle timeline clicks
         if (isIOSUninitialized) {
             return;
@@ -1195,7 +1207,6 @@ const TimelineControls = ({
 
         // Check if video is globally playing before the click
         const wasPlaying = videoRef.current && !videoRef.current.paused;
-        logger.debug('Video was playing before timeline click:', wasPlaying);
 
         // Reset continuation flag when clicking on timeline - ensures proper boundary detection
         setContinuePastBoundary(false);
@@ -1216,14 +1227,6 @@ const TimelineControls = ({
 
         const newTime = position * duration;
 
-        // Log the position for debugging
-        logger.debug(
-            'Timeline clicked at:',
-            formatDetailedTime(newTime),
-            'distance from end:',
-            formatDetailedTime(duration - newTime)
-        );
-
         // Store position globally for iOS Safari (this is critical for first-time visits)
         if (typeof window !== 'undefined') {
             window.lastSeekedPosition = newTime;
@@ -1236,8 +1239,12 @@ const TimelineControls = ({
         setClickedTime(newTime);
         setDisplayTime(newTime);
 
+        // Use ref to get latest segments to avoid stale state issues, especially in Safari
+        // Safari can fire click events immediately after drag before React re-renders
+        const currentSegments = clipSegmentsRef.current;
+
         // Find if we clicked in a segment with a small tolerance for boundaries
-        const segmentAtClickedTime = clipSegments.find((seg) => {
+        const segmentAtClickedTime = currentSegments.find((seg) => {
             // Standard check for being inside a segment
             const isInside = newTime >= seg.startTime && newTime <= seg.endTime;
             // Additional checks for being exactly at the start or end boundary (with small tolerance)
@@ -1258,7 +1265,7 @@ const TimelineControls = ({
             if (isPlayingSegments && wasPlaying) {
                 // Update the current segment index if we clicked into a segment
                 if (segmentAtClickedTime) {
-                    const orderedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
+                    const orderedSegments = [...currentSegments].sort((a, b) => a.startTime - b.startTime);
                     const targetSegmentIndex = orderedSegments.findIndex((seg) => seg.id === segmentAtClickedTime.id);
 
                     if (targetSegmentIndex !== -1) {
@@ -1311,8 +1318,9 @@ const TimelineControls = ({
                 // We're in a cutaway area - always show tooltip
                 setSelectedSegmentId(null);
 
-                // Calculate the available space for a new segment
-                const availableSpace = calculateAvailableSpace(newTime);
+                // Calculate the available space for a new segment using current segments from ref
+                // This ensures we use the latest segments even if React hasn't re-rendered yet
+                const availableSpace = calculateAvailableSpace(newTime, currentSegments);
                 setAvailableSegmentDuration(availableSpace);
 
                 // Calculate and set tooltip position correctly for zoomed timeline
@@ -1334,18 +1342,6 @@ const TimelineControls = ({
 
                 // Always show the empty space tooltip in cutaway areas
                 setShowEmptySpaceTooltip(true);
-
-                // Log the cutaway area details
-                const sortedSegments = [...clipSegments].sort((a, b) => a.startTime - b.startTime);
-                const prevSegment = [...sortedSegments].reverse().find((seg) => seg.endTime < newTime);
-                const nextSegment = sortedSegments.find((seg) => seg.startTime > newTime);
-
-                logger.debug('Clicked in cutaway area:', {
-                    position: formatDetailedTime(newTime),
-                    availableSpace: formatDetailedTime(availableSpace),
-                    prevSegmentEnd: prevSegment ? formatDetailedTime(prevSegment.endTime) : 'none',
-                    nextSegmentStart: nextSegment ? formatDetailedTime(nextSegment.startTime) : 'none',
-                });
             }
         }
     };
@@ -1498,6 +1494,10 @@ const TimelineControls = ({
                 return seg;
             });
 
+            // Update the ref immediately during drag to ensure we always have latest segments
+            // This is critical for Safari which may fire events before React re-renders
+            clipSegmentsRef.current = updatedSegments;
+
             // Create a custom event to update the segments WITHOUT recording in history during drag
             const updateEvent = new CustomEvent('update-segments', {
                 detail: {
@@ -1582,6 +1582,26 @@ const TimelineControls = ({
                 return seg;
             });
 
+            // CRITICAL: Update the ref immediately with the new segments
+            // This ensures that if Safari fires a click event before React re-renders,
+            // the click handler will use the updated segments instead of stale ones
+            clipSegmentsRef.current = finalSegments;
+
+            // Safari-specific fix: Set flag to ignore clicks immediately after drag
+            // Safari fires click events after drag ends, which can interfere with state updates
+            if (isSafari()) {
+                dragJustEndedRef.current = true;
+                // Clear the flag after a delay to allow React to re-render with updated segments
+                // Increased timeout to ensure state has propagated
+                if (dragEndTimeoutRef.current) {
+                    clearTimeout(dragEndTimeoutRef.current);
+                }
+                dragEndTimeoutRef.current = setTimeout(() => {
+                    dragJustEndedRef.current = false;
+                    dragEndTimeoutRef.current = null;
+                }, 200); // 200ms to ensure React has processed the state update and re-rendered
+            }
+
             // Now we can create a history record for the complete drag operation
             const actionType = isLeft ? 'adjust_segment_start' : 'adjust_segment_end';
             document.dispatchEvent(
@@ -1591,6 +1611,13 @@ const TimelineControls = ({
                         recordHistory: true,
                         action: actionType,
                     },
+                })
+            );
+
+            // Dispatch segment-drag-end event for other listeners
+            document.dispatchEvent(
+                new CustomEvent('segment-drag-end', {
+                    detail: { segmentId },
                 })
             );
 
@@ -3943,9 +3970,7 @@ const TimelineControls = ({
                         <button
                             onClick={() => setShowSaveChaptersModal(true)}
                             className="save-chapters-button"
-                            data-tooltip={clipSegments.length === 0 
-                                ? "Clear all chapters" 
-                                : "Save chapters"}
+                            {...(clipSegments.length === 0 && { 'data-tooltip': 'Clear all chapters' })}
                         >
                             {clipSegments.length === 0 
                                 ? 'Clear Chapters' 
