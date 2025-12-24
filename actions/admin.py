@@ -11,7 +11,7 @@ class MediaActionAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'media', 'action_date', 'remote_ip', 'session_key']
     ordering = ('-action_date',)
     date_hierarchy = 'action_date'
-    
+
     fieldsets = (
         ('Action Details', {
             'fields': ('action', 'media', 'user', 'session_key')
