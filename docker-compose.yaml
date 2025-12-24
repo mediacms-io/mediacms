@@ -2,10 +2,12 @@ version: "3"
 
 services:
   migrations:
-    image: mediacms/mediacms:latest
+    # image: mediacms/mediacms:latest
+    build: .
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
+      LOGS_DIR: /home/mediacms.io/mediacms/custom_logs
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_SHORT: 'no'
@@ -13,7 +15,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
-      # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
+      ADMIN_PASSWORD: ''   #enter an admin password here ('') for localhost
     command: "./deploy/docker/prestart.sh"
     restart: on-failure
     depends_on:
@@ -22,7 +24,8 @@ services:
       db:
         condition: service_healthy
   web:
-    image: mediacms/mediacms:latest
+    # image: mediacms/mediacms:latest
+    build: .
     deploy:
       replicas: 1
     ports:
@@ -30,37 +33,45 @@ services:
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
+      LOGS_DIR: /home/mediacms.io/mediacms/custom_logs
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
     depends_on:
-      - migrations
+      db:
+        condition: service_healthy
   celery_beat:
-    image: mediacms/mediacms:latest
+    # image: mediacms/mediacms:latest
+    build: .
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
+      LOGS_DIR: /home/mediacms.io/mediacms/custom_logs
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
     depends_on:
-      - redis
+      db:
+        condition: service_healthy
   celery_worker:
-    image: mediacms/mediacms:latest
+    # image: mediacms/mediacms:latest
+    build: .
     deploy:
       replicas: 1
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
+      LOGS_DIR: /home/mediacms.io/mediacms/custom_logs
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_MIGRATIONS: 'no'
     depends_on:
-      - migrations
+      db:
+        condition: service_healthy
   db:
     image: postgres:17.2-alpine
     volumes:
@@ -72,8 +83,8 @@ services:
       POSTGRES_DB: mediacms
       TZ: Europe/London
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -h localhost -U mediacms -d mediacms"]
+      interval: 5s
       timeout: 5s
       retries: 5
   redis:
