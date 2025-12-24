@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "リストから削除",
     "Remove tag": "タグを削除",
     "Remove user": "ユーザーを削除",
+    "Replace": "",
     "SAVE": "保存",
     "SEARCH": "検索",
     "SHARE": "共有",

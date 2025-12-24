@@ -20,6 +20,7 @@ urlpatterns = [
     re_path(r"^contact$", views.contact, name="contact"),
     re_path(r"^publish", views.publish_media, name="publish_media"),
     re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
+    re_path(r"^replace_media", views.replace_media, name="replace_media"),
     re_path(r"^edit_video", views.edit_video, name="edit_video"),
     re_path(r"^edit", views.edit_media, name="edit_media"),
     re_path(r"^embed", views.embed_media, name="get_embed"),
@@ -110,7 +111,7 @@ urlpatterns = [
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
     # Media uploads in ADMIN created pages
     re_path(r"^tinymce/upload/", tinymce_handlers.upload_image, name="tinymce_upload_image"),
-    re_path("^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
+    re_path(r"^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

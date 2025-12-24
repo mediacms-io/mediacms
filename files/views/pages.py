@@ -1,4 +1,5 @@
 import json
+import os
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,6 +19,7 @@ from ..forms import (
     EditSubtitleForm,
     MediaMetadataForm,
     MediaPublishForm,
+    ReplaceMediaForm,
     SubtitleForm,
     WhisperSubtitlesForm,
 )
@@ -359,6 +361,76 @@ def publish_media(request):
     return render(
         request,
         "cms/publish_media.html",
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+    )
+
+
+@login_required
+def replace_media(request):
+    """Replace media file"""
+
+    if not getattr(settings, 'ALLOW_MEDIA_REPLACEMENT', False):
+        return HttpResponseRedirect("/")
+
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
+        return HttpResponseRedirect("/")
+
+    if not is_media_allowed_type(media):
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    if request.method == "POST":
+        form = ReplaceMediaForm(media, request.POST, request.FILES)
+        if form.is_valid():
+            new_media_file = form.cleaned_data.get("new_media_file")
+
+            media.encodings.all().delete()
+
+            if media.thumbnail:
+                helpers.rm_file(media.thumbnail.path)
+                media.thumbnail = None
+            if media.poster:
+                helpers.rm_file(media.poster.path)
+                media.poster = None
+            if media.uploaded_thumbnail:
+                helpers.rm_file(media.uploaded_thumbnail.path)
+                media.uploaded_thumbnail = None
+            if media.uploaded_poster:
+                helpers.rm_file(media.uploaded_poster.path)
+                media.uploaded_poster = None
+            if media.sprites:
+                helpers.rm_file(media.sprites.path)
+                media.sprites = None
+            if media.preview_file_path:
+                helpers.rm_file(media.preview_file_path)
+                media.preview_file_path = ""
+
+            if media.hls_file:
+                hls_dir = os.path.dirname(media.hls_file)
+                helpers.rm_dir(hls_dir)
+                media.hls_file = ""
+
+            media.media_file = new_media_file
+
+            media.listable = False
+            media.state = helpers.get_default_state(request.user)
+            media.save()
+
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media file was replaced successfully"))
+            return HttpResponseRedirect(media.get_absolute_url())
+    else:
+        form = ReplaceMediaForm(media)
+
+    return render(
+        request,
+        "cms/replace_media.html",
         {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
     )
 

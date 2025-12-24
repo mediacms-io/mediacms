@@ -162,6 +162,7 @@ translation_strings = {
     "Remove from list": "Listeden kaldır",
     "Remove tag": "Etiketi kaldır",
     "Remove user": "Kullanıcıyı kaldır",
+    "Replace": "",
     "SAVE": "KAYDET",
     "SEARCH": "ARA",
     "SHARE": "PAYLAŞ",
