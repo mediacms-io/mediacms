@@ -1,4 +1,4 @@
-import publishedOnDate from '../../src/static/js/utils/helpers/publishedOnDate';
+import publishedOnDate from '../../../src/static/js/utils/helpers/publishedOnDate';
 
 // Helper to create Date in UTC to avoid timezone issues in CI environments
 const makeDate = (y: number, mZeroBased: number, d: number) => new Date(Date.UTC(y, mZeroBased, d));

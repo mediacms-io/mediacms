@@ -8,7 +8,7 @@ import {
     isPositiveInteger,
     isPositiveIntegerOrZero,
     greaterCommonDivision,
-} from '../../src/static/js/utils/helpers/math';
+} from '../../../src/static/js/utils/helpers/math';
 
 describe('js/utils/helpers', () => {
     describe('math', () => {

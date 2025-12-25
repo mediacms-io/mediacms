@@ -1,4 +1,4 @@
-import { replaceString } from '../../src/static/js/utils/helpers/replacementStrings';
+import { replaceString } from '../../../src/static/js/utils/helpers/replacementStrings';
 
 declare global {
     interface Window {

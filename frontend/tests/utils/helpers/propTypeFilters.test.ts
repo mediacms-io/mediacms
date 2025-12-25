@@ -1,10 +1,10 @@
 // Mock the errors helper to capture error construction without side effects
-jest.mock('../../src/static/js/utils/helpers/errors', () => ({
+jest.mock('../../../src/static/js/utils/helpers/errors', () => ({
     logErrorAndReturnError: jest.fn((messages: string[]) => new Error(messages.join('\n'))),
 }));
 
-import { logErrorAndReturnError } from '../../src/static/js/utils/helpers/errors';
-import { PositiveIntegerOrZero, PositiveInteger } from '../../src/static/js/utils/helpers/propTypeFilters';
+import { logErrorAndReturnError } from '../../../src/static/js/utils/helpers/errors';
+import { PositiveIntegerOrZero, PositiveInteger } from '../../../src/static/js/utils/helpers/propTypeFilters';
 
 describe('js/utils/helpers', () => {
     describe('propTypeFilters', () => {

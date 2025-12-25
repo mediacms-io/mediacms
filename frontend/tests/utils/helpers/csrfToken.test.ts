@@ -1,4 +1,4 @@
-import { csrfToken } from '../../src/static/js/utils/helpers/csrfToken';
+import { csrfToken } from '../../../src/static/js/utils/helpers/csrfToken';
 
 const setupDocumentCookie = () => {
     if (typeof document === 'undefined') {

@@ -1,4 +1,4 @@
-import { warn, error } from '../../src/static/js/utils/helpers/log';
+import { warn, error } from '../../../src/static/js/utils/helpers/log';
 
 describe('js/utils/helpers', () => {
     describe('log', () => {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getRequest, postRequest, putRequest, deleteRequest } from '../../src/static/js/utils/helpers/requests';
+import { getRequest, postRequest, putRequest, deleteRequest } from '../../../src/static/js/utils/helpers/requests';
 
 jest.mock('axios');
 

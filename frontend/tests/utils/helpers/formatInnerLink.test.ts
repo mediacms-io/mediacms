@@ -1,4 +1,4 @@
-import { formatInnerLink } from '../../src/static/js/utils/helpers/formatInnerLink';
+import { formatInnerLink } from '../../../src/static/js/utils/helpers/formatInnerLink';
 
 describe('js/utils/helpers', () => {
     describe('formatInnerLink', () => {

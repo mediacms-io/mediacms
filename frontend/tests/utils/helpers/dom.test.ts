@@ -4,7 +4,7 @@ import {
     addClassname,
     hasClassname,
     BrowserEvents,
-} from '../../src/static/js/utils/helpers/dom';
+} from '../../../src/static/js/utils/helpers/dom';
 
 declare global {
     interface Window {
