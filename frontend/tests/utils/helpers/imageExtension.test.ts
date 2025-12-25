@@ -1,4 +1,4 @@
-import { imageExtension } from '../../src/static/js/utils/helpers/imageExtension';
+import { imageExtension } from '../../../src/static/js/utils/helpers/imageExtension';
 
 describe('js/utils/helpers', () => {
     describe('imageExtension', () => {

@@ -1,10 +1,10 @@
 // Mock the dispatcher module used by exportStore
-jest.mock('../../src/static/js/utils/dispatcher', () => ({ register: jest.fn() }));
+jest.mock('../../../src/static/js/utils/dispatcher', () => ({ register: jest.fn() }));
 
-import exportStore from '../../src/static/js/utils/helpers/exportStore';
+import exportStore from '../../../src/static/js/utils/helpers/exportStore';
 
 // Re-import the mocked dispatcher for assertions
-import * as dispatcher from '../../src/static/js/utils/dispatcher';
+import * as dispatcher from '../../../src/static/js/utils/dispatcher';
 
 describe('js/utils/helpers', () => {
     describe('exportStore', () => {

@@ -1,4 +1,4 @@
-import { quickSort } from '../../src/static/js/utils/helpers/quickSort';
+import { quickSort } from '../../../src/static/js/utils/helpers/quickSort';
 
 describe('js/utils/helpers', () => {
     describe('quickSort', () => {

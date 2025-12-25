@@ -1,8 +1,8 @@
 // Mock the './log' module used by errors.ts to capture calls without console side effects
-jest.mock('../../src/static/js/utils/helpers/log', () => ({ error: jest.fn(), warn: jest.fn() }));
+jest.mock('../../../src/static/js/utils/helpers/log', () => ({ error: jest.fn(), warn: jest.fn() }));
 
-import { logErrorAndReturnError, logWarningAndReturnError } from '../../src/static/js/utils/helpers/errors';
-import { error as mockedError, warn as mockedWarn } from '../../src/static/js/utils/helpers/log';
+import { logErrorAndReturnError, logWarningAndReturnError } from '../../../src/static/js/utils/helpers/errors';
+import { error as mockedError, warn as mockedWarn } from '../../../src/static/js/utils/helpers/log';
 
 describe('js/utils/helpers', () => {
     describe('errors', () => {

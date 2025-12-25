@@ -1,4 +1,4 @@
-import { translateString } from '../../src/static/js/utils/helpers/translate';
+import { translateString } from '../../../src/static/js/utils/helpers/translate';
 
 declare global {
     interface Window {

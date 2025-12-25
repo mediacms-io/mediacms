@@ -1,4 +1,4 @@
-import { formatManagementTableDate } from '../../src/static/js/utils/helpers/formatManagementTableDate';
+import { formatManagementTableDate } from '../../../src/static/js/utils/helpers/formatManagementTableDate';
 
 describe('js/utils/helpers', () => {
     describe('formatManagementTableDate', () => {
