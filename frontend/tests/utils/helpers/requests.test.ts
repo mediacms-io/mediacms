@@ -51,7 +51,7 @@ describe('js/utils/helpers', () => {
 
                 expect(errorCb).toHaveBeenCalledTimes(1);
                 const arg = errorCb.mock.calls[0][0];
-                expect(arg).toEqual({ type: 'network', error: networkError });
+                expect(arg).toStrictEqual({ type: 'network', error: networkError });
             });
 
             test('Error handler maps status 401 to private error', async () => {
