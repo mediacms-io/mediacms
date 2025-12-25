@@ -7,13 +7,13 @@ export async function getRequest(url, sync, callback, errorCallback) {
   };
 
   function responseHandler(result) {
-    if (callback instanceof Function) {
+    if (callback instanceof Function || typeof callback === 'function') {
       callback(result);
     }
   }
 
   function errorHandler(error) {
-    if (errorCallback instanceof Function) {
+    if (errorCallback instanceof Function || typeof errorCallback === 'function') {
       let err = error;
       if (void 0 === error.response) {
         err = {
@@ -58,13 +58,13 @@ export async function postRequest(url, postData, configData, sync, callback, err
   postData = postData || {};
 
   function responseHandler(result) {
-    if (callback instanceof Function) {
+    if (callback instanceof Function || typeof callback === 'function') {
       callback(result);
     }
   }
 
   function errorHandler(error) {
-    if (errorCallback instanceof Function) {
+    if (errorCallback instanceof Function || typeof errorCallback === 'function') {
       errorCallback(error);
     }
   }
@@ -84,13 +84,13 @@ export async function putRequest(url, putData, configData, sync, callback, error
   putData = putData || {};
 
   function responseHandler(result) {
-    if (callback instanceof Function) {
+    if (callback instanceof Function || typeof callback === 'function') {
       callback(result);
     }
   }
 
   function errorHandler(error) {
-    if (errorCallback instanceof Function) {
+    if (errorCallback instanceof Function || typeof errorCallback === 'function') {
       errorCallback(error);
     }
   }
@@ -110,13 +110,13 @@ export async function deleteRequest(url, configData, sync, callback, errorCallba
   configData = configData || {};
 
   function responseHandler(result) {
-    if (callback instanceof Function) {
+    if (callback instanceof Function || typeof callback === 'function') {
       callback(result);
     }
   }
 
   function errorHandler(error) {
-    if (errorCallback instanceof Function) {
+    if (errorCallback instanceof Function || typeof errorCallback === 'function') {
       errorCallback(error);
     }
   }
