@@ -1,7 +1,11 @@
+import logging
+
 from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+
+logger = logging.getLogger(__name__)
 
 
 class MyAccountAdapter(DefaultAccountAdapter):

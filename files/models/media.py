@@ -1048,10 +1048,12 @@ def media_save(sender, instance, created, **kwargs):
     if created:
         from ..methods import notify_users
 
+        # Log media creation - this should always fire for new media
         logger.info(
-            "Media created - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+            "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
             instance.friendly_token,
             instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
             instance.media_type,
             instance.title[:50] if instance.title else None,
         )
@@ -1137,7 +1139,26 @@ def media_file_delete(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=Media.category.through)
-def media_m2m(sender, instance, **kwargs):
+def media_m2m(sender, instance, action, pk_set, **kwargs):
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Only log post_add and post_remove actions to avoid duplicate logs
+    if action in ['post_add', 'post_remove']:
+        from .category import Category
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "Media category %s - friendly_token=%s, user_id=%s, action=%s, category_count=%s, category_names=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.friendly_token if instance.friendly_token else None,
+            instance.user.id if instance.user else None,
+            action,
+            len(categories),
+            category_names,
+        )
+    
     if instance.category.all():
         for category in instance.category.all():
             category.update_category_media()

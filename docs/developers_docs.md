@@ -499,6 +499,532 @@ except Exception as e:
     # handle exception
 ```
 
+### Signal Handler Logging
+
+MediaCMS uses Django signals to automatically log important application events. Signal handlers provide a clean way to add logging without modifying core application code.
+
+#### Django-Allauth Signal Handlers
+
+MediaCMS includes signal handlers for django-allauth authentication events:
+
+**User Login** (`user_logged_in`):
+```python
+from allauth.account.signals import user_logged_in
+from django.dispatch import receiver
+import logging
+
+logger = logging.getLogger(__name__)
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
+        user.id,
+        user.username,
+        client_ip,
+    )
+```
+
+**User Logout** (`user_logged_out`):
+```python
+from allauth.account.signals import user_logged_out
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    if user:
+        logger.info(
+            "Logout (django-allauth) - user_id=%s, username=%s",
+            user.id,
+            user.username,
+        )
+```
+
+**Password Reset** (`password_reset`):
+```python
+from allauth.account.signals import password_reset
+
+@receiver(password_reset)
+def log_password_reset(sender, request, user, **kwargs):
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+```
+
+**Email Confirmation** (`email_confirmed`):
+```python
+from allauth.account.signals import email_confirmed
+
+@receiver(email_confirmed)
+def log_email_confirmed(sender, request, email_address, **kwargs):
+    user = email_address.user if email_address else None
+    logger.info(
+        "Email confirmed - user_id=%s, username=%s, email=%s",
+        user.id if user else None,
+        user.username if user else None,
+        email_address.email if email_address else None,
+    )
+```
+
+**Password Change** (`password_changed`):
+```python
+from allauth.account.signals import password_changed
+
+@receiver(password_changed)
+def log_password_changed(sender, request, user, **kwargs):
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Password changed - user_id=%s, username=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        client_ip,
+    )
+```
+
+**Account Signup** (`account_signup`):
+```python
+from allauth.account.signals import account_signup
+
+@receiver(account_signup)
+def log_account_signup(sender, request, user, **kwargs):
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+```
+
+#### Django Model Signal Handlers
+
+MediaCMS includes signal handlers for Django model events:
+
+**User Creation** (`post_save` for User):
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def post_user_create(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "User registered - user_id=%s, username=%s, email=%s",
+            instance.id,
+            instance.username,
+            instance.email,
+        )
+```
+
+**User Deletion** (`post_delete` for User):
+```python
+from django.db.models.signals import post_delete
+
+@receiver(post_delete, sender=User)
+def delete_content(sender, instance, **kwargs):
+    # Count content before deletion
+    media_count = Media.objects.filter(user=instance).count()
+    tag_count = Tag.objects.filter(user=instance).count()
+    category_count = Category.objects.filter(user=instance).count()
+    
+    logger.info(
+        "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+        instance.id,
+        instance.username,
+        instance.email,
+        media_count,
+        tag_count,
+        category_count,
+    )
+```
+
+**Media Creation/Updates** (`post_save` for Media):
+```python
+@receiver(post_save, sender=Media)
+def media_save(sender, instance, created, **kwargs):
+    if not instance.friendly_token:
+        return False
+
+    if created:
+        logger.info(
+            "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media_type,
+            instance.title[:50] if instance.title else None,
+        )
+    else:
+        logger.debug(
+            "Media updated - friendly_token=%s, user_id=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Media Deletion** (`pre_delete` and `post_delete` for Media):
+```python
+from django.db.models.signals import pre_delete, post_delete
+
+@receiver(pre_delete, sender=Media)
+def media_file_pre_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion initiated - friendly_token=%s, user_id=%s, media_type=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+    )
+
+@receiver(post_delete, sender=Media)
+def media_file_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion completed - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+        instance.title[:50] if instance.title else None,
+    )
+```
+
+**Media Category Changes** (`m2m_changed` for Media.category):
+```python
+from django.db.models.signals import m2m_changed
+
+@receiver(m2m_changed, sender=Media.category.through)
+def media_m2m(sender, instance, action, pk_set, **kwargs):
+    # Only log post_add and post_remove actions
+    if action in ['post_add', 'post_remove']:
+        from .category import Category
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "Media category %s - friendly_token=%s, user_id=%s, action=%s, category_count=%s, category_names=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.friendly_token if instance.friendly_token else None,
+            instance.user.id if instance.user else None,
+            action,
+            len(categories),
+            category_names,
+        )
+```
+
+**Subtitle Creation/Updates** (`post_save` for Subtitle):
+```python
+@receiver(post_save, sender=Subtitle)
+def subtitle_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Subtitle created - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
+    else:
+        logger.debug(
+            "Subtitle updated - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
+```
+
+**Encoding Creation/Updates** (`post_save` for Encoding):
+```python
+@receiver(post_save, sender=Encoding)
+def encoding_file_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.profile.name if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
+    else:
+        logger.debug(
+            "Encoding updated - friendly_token=%s, profile_id=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
+```
+
+**Encoding Deletion** (`post_delete` for Encoding):
+```python
+@receiver(post_delete, sender=Encoding)
+def encoding_file_delete(sender, instance, **kwargs):
+    logger.info(
+        "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.profile.id if instance.profile else None,
+        instance.profile.name if instance.profile else None,
+        instance.status,
+        instance.chunk,
+        bool(instance.media_file),
+    )
+```
+
+**Video Chapter Deletion** (`post_delete` for VideoChapterData):
+```python
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    logger.info(
+        "Video chapter data deleted - friendly_token=%s, user_id=%s, chapters_folder=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.media.user.id if instance.media and instance.media.user else None,
+        instance.media.video_chapters_folder if instance.media else None,
+    )
+```
+
+**RBAC Group Category Changes** (`m2m_changed` for RBACGroup.categories):
+```python
+@receiver(m2m_changed, sender=RBACGroup.categories.through)
+def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwargs):
+    if action in ['post_add', 'post_remove']:
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "RBAC group category %s - group_id=%s, group_name=%s, group_uid=%s, action=%s, category_count=%s, category_names=%s, identity_provider=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.id,
+            instance.name,
+            instance.uid,
+            action,
+            len(categories),
+            category_names,
+            instance.identity_provider.provider if instance.identity_provider else None,
+        )
+```
+
+### Event Logging Patterns
+
+MediaCMS uses consistent logging patterns for different types of events:
+
+#### Authentication Event Logging
+
+Authentication events are logged at INFO level for successful operations and WARNING level for failures:
+
+```python
+# Successful login
+logger.info(
+    "Login successful - user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
+    request.META.get('REMOTE_ADDR'),
+)
+
+# Failed login attempt
+logger.warning(
+    "Login failed: user not found - username_or_email=%s, ip=%s",
+    username_or_email,
+    request.META.get('REMOTE_ADDR'),
+)
+```
+
+#### User Management Event Logging
+
+User management events include creation, deletion, password changes, and role changes:
+
+```python
+# User creation
+logger.info(
+    "User registered - user_id=%s, username=%s, email=%s",
+    instance.id,
+    instance.username,
+    instance.email,
+)
+
+# User deletion with content counts
+logger.info(
+    "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+    instance.id,
+    instance.username,
+    instance.email,
+    media_count,
+    tag_count,
+    category_count,
+)
+
+# Role changes
+logger.info(
+    "User role(s) changed - user_id=%s, username=%s, changed_roles=%s, source=role_mapping",
+    self.id,
+    self.username,
+    changed_roles,
+)
+```
+
+#### Media Operation Event Logging
+
+Media operations include creation, updates, deletion, and bulk actions:
+
+```python
+# Media creation
+logger.info(
+    "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+    instance.friendly_token,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media_type,
+    instance.title[:50] if instance.title else None,
+)
+
+# Media updates
+logger.info(
+    "Media updated via API - friendly_token=%s, user_id=%s, changed_fields=%s",
+    friendly_token,
+    request.user.id if request.user.is_authenticated else None,
+    changed_fields,
+)
+
+# Bulk operations
+logger.info(
+    "Bulk action: download enabled - count=%s, user_id=%s, media_ids=%s",
+    count,
+    request.user.id,
+    list(media.values_list('friendly_token', flat=True)),
+)
+```
+
+#### Subtitle Operation Event Logging
+
+Subtitle operations use INFO for creation and DEBUG for updates:
+
+```python
+# Subtitle creation
+logger.info(
+    "Subtitle created - friendly_token=%s, language=%s, user_id=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.language.code if instance.language else None,
+    instance.media.user.id if instance.media and instance.media.user else None,
+)
+
+# Subtitle updates
+logger.debug(
+    "Subtitle updated - friendly_token=%s, language=%s, user_id=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.language.code if instance.language else None,
+    instance.media.user.id if instance.media and instance.media.user else None,
+)
+```
+
+#### Encoding Operation Event Logging
+
+Encoding operations track creation, updates, and deletion:
+
+```python
+# Encoding creation
+logger.info(
+    "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.profile.id if instance.profile else None,
+    instance.profile.name if instance.profile else None,
+    instance.status,
+    instance.chunk,
+)
+
+# Encoding deletion
+logger.info(
+    "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.profile.id if instance.profile else None,
+    instance.profile.name if instance.profile else None,
+    instance.status,
+    instance.chunk,
+    bool(instance.media_file),
+)
+```
+
+#### RBAC Operation Event Logging
+
+RBAC operations track group category changes:
+
+```python
+logger.info(
+    "RBAC group category %s - group_id=%s, group_name=%s, group_uid=%s, action=%s, category_count=%s, category_names=%s, identity_provider=%s",
+    "added" if action == 'post_add' else "removed",
+    instance.id,
+    instance.name,
+    instance.uid,
+    action,
+    len(categories),
+    category_names,
+    instance.identity_provider.provider if instance.identity_provider else None,
+)
+```
+
+### Best Practices for Signal Handler Logging
+
+1. **Use Appropriate Log Levels**:
+   - **INFO**: For important events that should always be logged (creation, deletion, authentication)
+   - **DEBUG**: For frequent updates that are only needed during development
+   - **WARNING**: For failed operations or permission denials
+
+2. **Structured Logging Format**:
+   - Always use key-value pairs: `key=value`
+   - Include relevant identifiers (user_id, friendly_token, etc.)
+   - Use conditional checks to avoid AttributeError: `instance.user.id if instance.user else None`
+
+3. **Include Context**:
+   - Always include user information when available
+   - Include IP addresses for authentication events
+   - Include counts for bulk operations
+   - Include changed fields for update operations
+
+4. **Handle Edge Cases**:
+   - Check for None values before accessing attributes
+   - Use conditional expressions: `value if condition else None`
+   - Truncate long strings (e.g., `title[:50]`)
+
+5. **Signal Handler Placement**:
+   - Place signal handlers in the same module as the model when possible
+   - Use `@receiver` decorator for clarity
+   - Import signals at the top of the file
+
+### Adding Logging to New Signal Handlers
+
+When adding logging to a new signal handler:
+
+1. **Import logging and get logger**:
+```python
+import logging
+logger = logging.getLogger(__name__)
+```
+
+2. **Add logging at appropriate points**:
+```python
+@receiver(post_save, sender=YourModel)
+def your_signal_handler(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "YourModel created - id=%s, field1=%s, field2=%s",
+            instance.id,
+            instance.field1,
+            instance.field2,
+        )
+    else:
+        logger.debug(
+            "YourModel updated - id=%s, field1=%s",
+            instance.id,
+            instance.field1,
+        )
+```
+
+3. **Follow structured logging format**:
+   - Use key-value pairs
+   - Include relevant identifiers
+   - Handle None values safely
+
 ### Integration with Configuration
 
 Logging behavior is controlled by the logging configuration in `cms/settings.py`. See [Administrator Documentation - Logging Configuration](admins_docs.md#29-logging-configuration-and-management) for details on:

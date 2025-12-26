@@ -66,4 +66,14 @@ class VideoTrimRequest(models.Model):
 
 @receiver(post_delete, sender=VideoChapterData)
 def videochapterdata_delete(sender, instance, **kwargs):
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(
+        "Video chapter data deleted - friendly_token=%s, user_id=%s, chapters_folder=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.media.user.id if instance.media and instance.media.user else None,
+        instance.media.video_chapters_folder if instance.media else None,
+    )
+    
     helpers.rm_dir(instance.media.video_chapters_folder)

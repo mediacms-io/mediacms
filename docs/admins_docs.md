@@ -1288,6 +1288,259 @@ export ENABLE_SQL_DEBUG_LOGGING=True
 
 **Note**: SQL debug logging requires both `DEBUG=True` and `ENABLE_SQL_DEBUG_LOGGING=True` to be enabled. This allows you to have detailed application logging without the SQL query noise.
 
+### Logged Events Reference
+
+MediaCMS logs a comprehensive set of events to help administrators monitor application activity, troubleshoot issues, and audit user actions. All events use structured logging with key-value pairs for easy parsing and analysis.
+
+#### Authentication Events
+
+The following authentication-related events are logged:
+
+- **Login (API)**: When users log in via the API endpoint (`/api/v1/login`)
+  - Log level: INFO
+  - Example: `Login successful - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Login (django-allauth)**: When users log in via the web UI using django-allauth
+  - Log level: INFO
+  - Example: `Login successful (django-allauth) - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Logout**: When users log out via django-allauth
+  - Log level: INFO
+  - Example: `Logout (django-allauth) - user_id=1, username=admin`
+
+- **Failed Login Attempts**: When login fails (user not found, invalid password, deactivated user, missing credentials)
+  - Log level: WARNING
+  - Example: `Login failed: user not found - username_or_email=testuser, ip=192.168.1.100`
+
+- **Password Reset Request**: When a user requests a password reset
+  - Log level: INFO
+  - Example: `Password reset requested - user_id=1, username=admin, email=admin@example.com, ip=192.168.1.100`
+
+- **Password Changed**: When a user changes their password via django-allauth
+  - Log level: INFO
+  - Example: `Password changed - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Email Confirmed**: When a user confirms their email address
+  - Log level: INFO
+  - Example: `Email confirmed - user_id=1, username=admin, email=admin@example.com`
+
+- **Account Signup**: When a new account is created via django-allauth
+  - Log level: INFO
+  - Example: `Account signup (django-allauth) - user_id=2, username=newuser, email=newuser@example.com, ip=192.168.1.100`
+
+#### User Management Events
+
+The following user management events are logged:
+
+- **User Registration/Creation**: When a new user is created
+  - Log level: INFO
+  - Example: `User registered - user_id=2, username=newuser, email=newuser@example.com`
+
+- **User Deletion**: When a user is deleted (includes content counts)
+  - Log level: INFO
+  - Example: `User deletion - user_id=2, username=olduser, email=olduser@example.com, media_count=5, tag_count=3, category_count=1`
+
+- **User Password Change**: When a user changes their password via API
+  - Log level: INFO
+  - Example: `Password changed - user_id=1, username=admin, changed_by_user_id=1, changed_by_username=admin`
+
+- **User Approval**: When an administrator approves a user
+  - Log level: INFO
+  - Example: `User approved - user_id=2, username=newuser, approved_by_user_id=1, approved_by_username=admin`
+
+- **User Disapproval**: When an administrator disapproves a user
+  - Log level: INFO
+  - Example: `User disapproved - user_id=2, username=newuser, disapproved_by_user_id=1, disapproved_by_username=admin`
+
+- **Role Changes**: When a user's role is changed (via SAML or manual assignment)
+  - Log level: INFO
+  - Example: `User role(s) changed - user_id=2, username=user, changed_roles={'is_editor': {'old': False, 'new': True}}, source=role_mapping`
+
+#### Media Operations
+
+The following media-related events are logged:
+
+- **Media Creation**: When new media is uploaded and created
+  - Log level: INFO
+  - Example: `Media created - friendly_token=abc123, user_id=1, username=admin, media_type=video, title=My Video`
+
+- **Media Updates**: When media metadata is updated via API
+  - Log level: INFO
+  - Example: `Media updated via API - friendly_token=abc123, user_id=1, changed_fields={'title': {'old': 'Old Title', 'new': 'New Title'}}`
+
+- **Media Deletion Initiated**: When media deletion is started
+  - Log level: INFO
+  - Example: `Media deletion initiated - friendly_token=abc123, user_id=1, media_type=video`
+
+- **Media Deletion Completed**: When media deletion is completed and files are removed
+  - Log level: INFO
+  - Example: `Media deletion completed - friendly_token=abc123, user_id=1, media_type=video, title=My Video`
+
+- **Media Deletion via API**: When media is deleted via API endpoint
+  - Log level: INFO
+  - Example: `Media deletion requested via API - friendly_token=abc123, user_id=1, request_user_id=1`
+
+- **Bulk Media Operations**: When bulk actions are performed on media (enable/disable comments, download, delete, set state, change owner, etc.)
+  - Log level: INFO
+  - Example: `Bulk action: download enabled - count=5, user_id=1, media_ids=['abc123', 'def456']`
+
+- **Media Category Changes**: When media is added to or removed from categories
+  - Log level: INFO
+  - Example: `Media category added - friendly_token=abc123, user_id=1, action=post_add, category_count=2, category_names=['Category 1', 'Category 2']`
+
+#### Subtitle Operations
+
+The following subtitle-related events are logged:
+
+- **Subtitle Creation**: When a new subtitle is created
+  - Log level: INFO
+  - Example: `Subtitle created - friendly_token=abc123, language=en, user_id=1`
+
+- **Subtitle Updates**: When an existing subtitle is updated
+  - Log level: DEBUG
+  - Example: `Subtitle updated - friendly_token=abc123, language=en, user_id=1`
+
+#### Encoding Operations
+
+The following encoding-related events are logged:
+
+- **Encoding Creation**: When a new encoding is created
+  - Log level: INFO
+  - Example: `Encoding created - friendly_token=abc123, profile_id=1, profile_name=720p, status=pending, chunk=False`
+
+- **Encoding Updates**: When an encoding status is updated
+  - Log level: DEBUG
+  - Example: `Encoding updated - friendly_token=abc123, profile_id=1, status=success, chunk=False`
+
+- **Encoding Deletion**: When an encoding is deleted
+  - Log level: INFO
+  - Example: `Encoding deleted - friendly_token=abc123, profile_id=1, profile_name=720p, status=success, chunk=False, has_media_file=True`
+
+#### Video Chapter Operations
+
+The following video chapter-related events are logged:
+
+- **Chapter Data Deletion**: When video chapter data is deleted
+  - Log level: INFO
+  - Example: `Video chapter data deleted - friendly_token=abc123, user_id=1, chapters_folder=/path/to/chapters`
+
+#### RBAC Operations
+
+The following RBAC-related events are logged:
+
+- **RBAC Group Category Changes**: When categories are added to or removed from RBAC groups
+  - Log level: INFO
+  - Example: `RBAC group category added - group_id=1, group_name=Students, group_uid=student-group, action=post_add, category_count=2, category_names=['Category 1', 'Category 2'], identity_provider=saml`
+
+#### Admin Actions
+
+The following admin action events are logged:
+
+- **Admin Media Deletion**: When an administrator deletes media
+  - Log level: INFO
+  - Example: `Admin action: media deleted - count=3, admin_user_id=1, admin_username=admin, deleted_friendly_tokens=['abc123', 'def456', 'ghi789']`
+
+- **Admin Comment Deletion**: When an administrator deletes comments
+  - Log level: INFO
+  - Example: `Admin action: comments deleted - count=5, admin_user_id=1, admin_username=admin`
+
+- **Admin User Deletion**: When an administrator deletes users
+  - Log level: INFO
+  - Example: `Admin action: users deleted - count=2, admin_user_id=1, admin_username=admin, deleted_usernames=['user1', 'user2']`
+
+### Signal Handler Reference
+
+MediaCMS uses Django signals to automatically log important events. The following signal handlers are configured with logging:
+
+#### Django-Allauth Signal Handlers
+
+- **`user_logged_in`** (`users/models.py`)
+  - Triggered: When a user successfully logs in via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, IP address
+
+- **`user_logged_out`** (`users/models.py`)
+  - Triggered: When a user logs out via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username
+
+- **`password_reset`** (`users/models.py`)
+  - Triggered: When a password reset is requested
+  - Log level: INFO
+  - Logs: user_id, username, email, IP address
+
+- **`email_confirmed`** (`users/models.py`)
+  - Triggered: When an email address is confirmed
+  - Log level: INFO
+  - Logs: user_id, username, email
+
+- **`password_changed`** (`users/models.py`)
+  - Triggered: When a password is changed via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, IP address
+
+- **`account_signup`** (`users/models.py`)
+  - Triggered: When a new account is created via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, email, IP address
+
+#### Django Model Signal Handlers
+
+- **`post_save` for User** (`users/models.py`)
+  - Triggered: When a user is created
+  - Log level: INFO
+  - Logs: user_id, username, email
+
+- **`post_delete` for User** (`users/models.py`)
+  - Triggered: When a user is deleted
+  - Log level: INFO
+  - Logs: user_id, username, email, media_count, tag_count, category_count
+
+- **`post_save` for Media** (`files/models/media.py`)
+  - Triggered: When media is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, user_id, username, media_type, title (for creation)
+
+- **`pre_delete` for Media** (`files/models/media.py`)
+  - Triggered: Before media is deleted
+  - Log level: INFO
+  - Logs: friendly_token, user_id, media_type
+
+- **`post_delete` for Media** (`files/models/media.py`)
+  - Triggered: After media is deleted and files are removed
+  - Log level: INFO
+  - Logs: friendly_token, user_id, media_type, title
+
+- **`m2m_changed` for Media.category** (`files/models/media.py`)
+  - Triggered: When media categories are added or removed
+  - Log level: INFO
+  - Logs: friendly_token, user_id, action, category_count, category_names
+
+- **`post_save` for Subtitle** (`files/models/subtitle.py`)
+  - Triggered: When a subtitle is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, language, user_id
+
+- **`post_save` for Encoding** (`files/models/encoding.py`)
+  - Triggered: When an encoding is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, profile_id, profile_name, status, chunk
+
+- **`post_delete` for Encoding** (`files/models/encoding.py`)
+  - Triggered: When an encoding is deleted
+  - Log level: INFO
+  - Logs: friendly_token, profile_id, profile_name, status, chunk, has_media_file
+
+- **`post_delete` for VideoChapterData** (`files/models/video_data.py`)
+  - Triggered: When video chapter data is deleted
+  - Log level: INFO
+  - Logs: friendly_token, user_id, chapters_folder
+
+- **`m2m_changed` for RBACGroup.categories** (`rbac/models.py`)
+  - Triggered: When categories are added to or removed from RBAC groups
+  - Log level: INFO
+  - Logs: group_id, group_name, group_uid, action, category_count, category_names, identity_provider
+
 ### Common Scenarios
 
 #### Development Environment

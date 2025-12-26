@@ -71,11 +71,31 @@ def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwar
     """
     Signal handler for when categories are added to or removed from an RBACGroup.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
         return
 
     from files.models import Category
     from identity_providers.models import IdentityProviderCategoryMapping
+
+    # Log category changes
+    if action in ['post_add', 'post_remove']:
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "RBAC group category %s - group_id=%s, group_name=%s, group_uid=%s, action=%s, category_count=%s, category_names=%s, identity_provider=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.id,
+            instance.name,
+            instance.uid,
+            action,
+            len(categories),
+            category_names,
+            instance.identity_provider.provider if instance.identity_provider else None,
+        )
 
     if action == 'post_add':
         if not instance.identity_provider:

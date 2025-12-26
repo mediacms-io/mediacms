@@ -2,6 +2,14 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.mail import EmailMessage
 from django.db import models
+from allauth.account.signals import (
+    account_signup,
+    email_confirmed,
+    password_changed,
+    password_reset,
+    user_logged_in,
+    user_logged_out,
+)
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -334,6 +342,91 @@ Visit user profile page at %s
             email.send(fail_silently=True)
 
 
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    """Log user login via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
+        user.id,
+        user.username,
+        client_ip,
+    )
+
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    """Log user logout via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    if user:
+        logger.info(
+            "Logout (django-allauth) - user_id=%s, username=%s",
+            user.id,
+            user.username,
+        )
+
+
+@receiver(password_reset)
+def log_password_reset(sender, request, user, **kwargs):
+    """Log password reset requests via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+
+
+@receiver(email_confirmed)
+def log_email_confirmed(sender, request, email_address, **kwargs):
+    """Log email confirmation via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    user = email_address.user if email_address else None
+    logger.info(
+        "Email confirmed - user_id=%s, username=%s, email=%s",
+        user.id if user else None,
+        user.username if user else None,
+        email_address.email if email_address else None,
+    )
+
+
+@receiver(password_changed)
+def log_password_changed(sender, request, user, **kwargs):
+    """Log password changes via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Password changed - user_id=%s, username=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        client_ip,
+    )
+
+
+@receiver(account_signup)
+def log_account_signup(sender, request, user, **kwargs):
+    """Log account signup via django-allauth"""
+    import logging
+    logger = logging.getLogger(__name__)
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(
+        "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+
+
 NOTIFICATION_METHODS = (("email", "Email"),)
 
 
@@ -360,6 +453,23 @@ def delete_content(sender, instance, **kwargs):
     """Delete user related content
     Upon user deletion
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Count content before deletion for logging
+    media_count = Media.objects.filter(user=instance).count()
+    tag_count = Tag.objects.filter(user=instance).count()
+    category_count = Category.objects.filter(user=instance).count()
+    
+    logger.info(
+        "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+        instance.id,
+        instance.username,
+        instance.email,
+        media_count,
+        tag_count,
+        category_count,
+    )
 
     Media.objects.filter(user=instance).delete()
     Tag.objects.filter(user=instance).delete()

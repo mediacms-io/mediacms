@@ -106,7 +106,25 @@ class TranscriptionRequest(models.Model):
 
 @receiver(post_save, sender=Subtitle)
 def subtitle_save(sender, instance, created, **kwargs):
+    import logging
     from .. import tasks
+
+    logger = logging.getLogger(__name__)
+    
+    if created:
+        logger.info(
+            "Subtitle created - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
+    else:
+        logger.debug(
+            "Subtitle updated - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
 
     tasks.update_search_vector.apply_async(
         args=[instance.media.friendly_token],
