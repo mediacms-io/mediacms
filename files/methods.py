@@ -96,7 +96,7 @@ def is_mediacms_editor(user):
 
     editor = False
     try:
-        if user and (user.is_superuser or user.is_manager or user.is_editor):
+        if user and user.is_authenticated and (user.is_superuser or user.is_manager or user.is_editor):
             editor = True
     except AttributeError as e:
         logger.warning(
@@ -117,7 +117,7 @@ def is_mediacms_manager(user):
 
     manager = False
     try:
-        if user and (user.is_superuser or user.is_manager):
+        if user and user.is_authenticated and (user.is_superuser or user.is_manager):
             manager = True
     except AttributeError as e:
         logger.warning(

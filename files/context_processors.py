@@ -76,6 +76,9 @@ def stuff(request):
     # Default media_object (can be overridden by views)
     ret["media_object"] = None
 
+    # Default media (can be overridden by views, used in config/index.html)
+    ret["media"] = None
+
     # Default current_site (for email templates and sites framework)
     if get_current_site:
         try:
