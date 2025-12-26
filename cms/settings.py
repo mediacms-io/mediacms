@@ -702,6 +702,13 @@ if DEBUG:
             "level": "DEBUG",
             "propagate": False,
         }
+    else:
+        # Explicitly suppress SQL query logging when ENABLE_SQL_DEBUG_LOGGING is False
+        LOGGING["loggers"]["django.db.backends"] = {
+            "handlers": ["file", "console"],
+            "level": "ERROR",
+            "propagate": False,
+        }
     # Add console handler to existing loggers for DEBUG mode
     LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
 

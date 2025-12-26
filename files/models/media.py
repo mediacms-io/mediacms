@@ -1103,6 +1103,13 @@ def media_file_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
+    logger.info(
+        "Media deletion completed - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+        instance.title[:50] if instance.title else None,
+    )
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:

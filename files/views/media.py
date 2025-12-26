@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -45,6 +46,8 @@ from ..models import (
 from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer
 from ..stop_words import STOP_WORDS
 from ..tasks import save_user_action
+
+logger = logging.getLogger(__name__)
 
 
 class MediaList(APIView):
@@ -831,6 +834,12 @@ class MediaDetail(APIView):
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
+        logger.info(
+            "Media deletion requested via API - friendly_token=%s, user_id=%s, request_user_id=%s",
+            media.friendly_token,
+            media.user.id if media.user else None,
+            request.user.id if request.user.is_authenticated else None,
+        )
         media.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
