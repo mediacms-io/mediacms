@@ -22,6 +22,10 @@ import files.helpers as helpers
 from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class User(AbstractUser):
     logo = ProcessedImageField(
@@ -216,9 +220,6 @@ class User(AbstractUser):
         Returns:
             bool: True if a valid role was applied, False otherwise.
         """
-        import logging
-        logger = logging.getLogger(__name__)
-        
         # Track old role state
         old_roles = {
             'advancedUser': self.advancedUser,
@@ -319,35 +320,34 @@ class Channel(models.Model):
 def post_user_create(sender, instance, created, **kwargs):
     # create a Channel object upon user creation, name it default
     if created:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.info(
             "User registered - user_id=%s, username=%s, email=%s",
             instance.id,
             instance.username,
             instance.email,
         )
-        new = Channel.objects.create(title="default", user=instance)
-        new.save()
-        if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
-            title = f"[{settings.PORTAL_NAME}] - New user just registered"
-            msg = """
+        try:
+            new = Channel.objects.create(title="default", user=instance)
+            new.save()
+            if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
+                title = f"[{settings.PORTAL_NAME}] - New user just registered"
+                msg = """
 User has just registered with email %s\n
 Visit user profile page at %s
-            """ % (
-                instance.email,
-                settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),
-            )
-            email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
-            email.send(fail_silently=True)
+                """ % (
+                    instance.email,
+                    settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),
+                )
+                email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
+                email.send(fail_silently=True)
+        except Exception as e:
+            logger.exception("Error in post_user_create: failed to create channel or send notification")
 
 
-@receiver(user_logged_in)
+@receiver(user_logged_in, weak=False)
 def log_user_login(sender, request, user, **kwargs):
     """Log user login via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
     logger.info(
         "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
         user.id,
@@ -356,11 +356,9 @@ def log_user_login(sender, request, user, **kwargs):
     )
 
 
-@receiver(user_logged_out)
+@receiver(user_logged_out, weak=False)
 def log_user_logout(sender, request, user, **kwargs):
     """Log user logout via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
     if user:
         logger.info(
             "Logout (django-allauth) - user_id=%s, username=%s",
@@ -369,12 +367,10 @@ def log_user_logout(sender, request, user, **kwargs):
         )
 
 
-@receiver(password_reset)
+@receiver(password_reset, weak=False)
 def log_password_reset(sender, request, user, **kwargs):
     """Log password reset requests via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
     logger.info(
         "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,
@@ -384,11 +380,9 @@ def log_password_reset(sender, request, user, **kwargs):
     )
 
 
-@receiver(email_confirmed)
+@receiver(email_confirmed, weak=False)
 def log_email_confirmed(sender, request, email_address, **kwargs):
     """Log email confirmation via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
     user = email_address.user if email_address else None
     logger.info(
         "Email confirmed - user_id=%s, username=%s, email=%s",
@@ -398,12 +392,10 @@ def log_email_confirmed(sender, request, email_address, **kwargs):
     )
 
 
-@receiver(password_changed)
+@receiver(password_changed, weak=False)
 def log_password_changed(sender, request, user, **kwargs):
     """Log password changes via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
     logger.info(
         "Password changed - user_id=%s, username=%s, ip=%s",
         user.id if user else None,
@@ -412,12 +404,10 @@ def log_password_changed(sender, request, user, **kwargs):
     )
 
 
-@receiver(user_signed_up)
+@receiver(user_signed_up, weak=False)
 def log_account_signup(sender, request, user, **kwargs):
     """Log account signup via django-allauth"""
-    import logging
-    logger = logging.getLogger(__name__)
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
     logger.info(
         "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,
@@ -453,9 +443,6 @@ def delete_content(sender, instance, **kwargs):
     """Delete user related content
     Upon user deletion
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
     # Count content before deletion for logging
     media_count = Media.objects.filter(user=instance).count()
     tag_count = Tag.objects.filter(user=instance).count()
@@ -471,6 +458,9 @@ def delete_content(sender, instance, **kwargs):
         category_count,
     )
 
-    Media.objects.filter(user=instance).delete()
-    Tag.objects.filter(user=instance).delete()
-    Category.objects.filter(user=instance).delete()
+    try:
+        Media.objects.filter(user=instance).delete()
+        Tag.objects.filter(user=instance).delete()
+        Category.objects.filter(user=instance).delete()
+    except Exception as e:
+        logger.exception("Error in delete_content: failed to delete user-related content")

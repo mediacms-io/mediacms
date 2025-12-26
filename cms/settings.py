@@ -651,6 +651,11 @@ LOGGING = {
         "users": {
             "handlers": ["file"],
             "level": effective_log_level,
+            "propagate": True,  # Allow propagation to child loggers like users.models
+        },
+        "users.models": {
+            "handlers": ["file"],
+            "level": effective_log_level,
             "propagate": False,
         },
         "uploader": {
@@ -739,6 +744,9 @@ if DEBUG:
     for app_name in ["files", "users", "uploader", "saml_auth", "rbac", "identity_providers", "actions", "cms"]:
         if app_name in LOGGING["loggers"]:
             LOGGING["loggers"][app_name]["handlers"] = ["file", "console"]
+    # Also add console handler to users.models logger if it exists
+    if "users.models" in LOGGING["loggers"]:
+        LOGGING["loggers"]["users.models"]["handlers"] = ["file", "console"]
 
 # Initialize logger after LOGGING configuration
 logger = logging.getLogger(__name__)
