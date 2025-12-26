@@ -123,7 +123,10 @@ def pre_trim_video_actions(media):
 
     if picked:
         # by calling encode will re-encode all. The logic is explained above...
-        logger.info(f"Encoding media {media.friendly_token} will have to be performed for all profiles")
+        logger.info(
+            "Encoding media will have to be performed for all profiles - friendly_token=%s",
+            media.friendly_token,
+        )
         media.encode()
 
     return True
@@ -164,7 +167,10 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 chunks.append(ch[0])
     if not chunks:
         # command completely failed to segment file.putting to normal encode
-        logger.info(f"Failed to break file {friendly_token} in chunks. Putting to normal encode queue")
+        logger.info(
+            "Failed to break file in chunks, using normal encode queue - friendly_token=%s",
+            friendly_token,
+        )
         for profile in profiles:
             if media.video_height and media.video_height < profile.resolution:
                 if profile.resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
@@ -213,7 +219,12 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                 priority=priority,
             )
 
-    logger.info(f"got {len(chunks)} chunks and will encode to {to_profiles} profiles")
+    logger.info(
+        "File chunked successfully - friendly_token=%s, chunk_count=%s, profile_count=%s",
+        friendly_token,
+        len(chunks),
+        len(to_profiles),
+    )
     return True
 
 
@@ -269,6 +280,12 @@ def encode_media(
         encoding_id,
         force,
         chunk,
+    )
+    logger.debug(
+        "encode_media task details - encoding_url=%s, chunk_file_path=%s, task_id=%s",
+        encoding_url,
+        chunk_file_path,
+        self.request.id if hasattr(self.request, 'id') else None,
     )
     # TODO: this is new behavior, check whether it performs well. Before that check it would end up saving the Encoding
     # at some point below. Now it exits the task. Could it be that before it would give it a chance to re-run? Or it was
@@ -641,7 +658,11 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
 
     request = TranscriptionRequest.objects.filter(media=media, status="pending", translate_to_english=translate_to_english).first()
     if not request:
-        logger.info(f"No pending transcription request for media {friendly_token}")
+        logger.info(
+            "No pending transcription request found - friendly_token=%s, translate_to_english=%s",
+            friendly_token,
+            translate_to_english,
+        )
         return False
 
     if translate_to_english:
@@ -667,7 +688,12 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         if translate_to_english:
             cmd += " --task translate"
 
-        logger.info(f"Whisper transcribe: ready to run command {cmd}")
+        logger.info(
+            "Whisper transcribe command ready - friendly_token=%s, translate_to_english=%s, model=%s",
+            friendly_token,
+            translate_to_english,
+            settings.WHISPER_MODEL,
+        )
 
         start_time = datetime.now()
         ret = run_command(cmd, cwd=cwd)  # noqa
@@ -833,12 +859,38 @@ def create_hls(friendly_token):
 
 @task(name="media_init", queue="short_tasks")
 def media_init(friendly_token):
+    logger.info(
+        "Starting media initialization - friendly_token=%s",
+        friendly_token,
+    )
     try:
         media = Media.objects.get(friendly_token=friendly_token)
-    except:  # noqa
-        logger.info("failed to get media with friendly_token %s" % friendly_token)
+    except Media.DoesNotExist:
+        logger.warning(
+            "Media not found for initialization - friendly_token=%s",
+            friendly_token,
+        )
         return False
-    media.media_init()
+    except Exception:
+        logger.exception(
+            "Unexpected error retrieving media for initialization - friendly_token=%s",
+            friendly_token,
+        )
+        return False
+
+    try:
+        media.media_init()
+        logger.info(
+            "Media initialization completed successfully - friendly_token=%s, media_type=%s",
+            friendly_token,
+            media.media_type,
+        )
+    except Exception:
+        logger.exception(
+            "Error during media initialization - friendly_token=%s",
+            friendly_token,
+        )
+        return False
 
     return True
 
@@ -1152,7 +1204,7 @@ def get_list_of_popular_media():
     media_ids.extend([a[0] for a in y])
     media_ids = list(set(media_ids))
     cache.set("popular_media_ids", media_ids, 60 * 60 * 12)
-    logger.info("saved popular media ids")
+    logger.debug("Popular media IDs cached - count=%s", len(media_ids))
 
     return True
 
@@ -1172,7 +1224,7 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info(f"updated {saved} categories")
+    logger.debug("Categories thumbnails updated - count=%s", saved)
 
     # Tags
     used_media = []
@@ -1185,7 +1237,7 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info(f"updated {saved} tags")
+    logger.debug("Tags thumbnails updated - count=%s", saved)
 
     return True
 
@@ -1246,11 +1298,17 @@ def post_trim_action(friendly_token):
     Returns:
         bool: True if successful, False otherwise
     """
-    logger.info(f"Post trim action for {friendly_token}")
+    logger.info(
+        "Post trim action started - friendly_token=%s",
+        friendly_token,
+    )
     try:
         media = Media.objects.get(friendly_token=friendly_token)
     except Media.DoesNotExist:
-        logger.info(f"Media with friendly token {friendly_token} not found")
+        logger.warning(
+            "Media not found for post trim action - friendly_token=%s",
+            friendly_token,
+        )
         return False
 
     media.set_media_type()
@@ -1282,7 +1340,10 @@ def video_trim_task(self, trim_request_id):
     try:
         trim_request = VideoTrimRequest.objects.get(id=trim_request_id)
     except VideoTrimRequest.DoesNotExist:
-        logger.info(f"VideoTrimRequest with ID {trim_request_id} not found")
+        logger.warning(
+            "VideoTrimRequest not found - trim_request_id=%s",
+            trim_request_id,
+        )
         return False
 
     trim_request.status = "running"
@@ -1320,7 +1381,10 @@ def video_trim_task(self, trim_request_id):
 
         original_trim_result = trim_video_method(target_media.media_file.path, timestamps_original)
         if not original_trim_result:
-            logger.info(f"Failed to trim original file for media {target_media.friendly_token}")
+            logger.error(
+                "Failed to trim original file - friendly_token=%s",
+                target_media.friendly_token,
+            )
 
         deleted_encodings = handle_pending_running_encodings(target_media)
         # the following could be un-necessary, read commend in pre_trim_video_actions to see why
@@ -1328,7 +1392,11 @@ def video_trim_task(self, trim_request_id):
         for encoding in encodings:
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
             if not trim_result:
-                logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+                logger.error(
+                    "Failed to trim encoding - encoding_id=%s, friendly_token=%s",
+                    encoding.id,
+                    target_media.friendly_token,
+                )
                 encoding.delete()
 
         pre_trim_video_actions(target_media)
@@ -1350,7 +1418,11 @@ def video_trim_task(self, trim_request_id):
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
                 if not trim_result:
-                    logger.info(f"Failed to trim encoding {encoding.id} for media {target_media.friendly_token}")
+                    logger.error(
+                        "Failed to trim encoding - encoding_id=%s, friendly_token=%s",
+                        encoding.id,
+                        target_media.friendly_token,
+                    )
                     encoding.delete()
 
             pre_trim_video_actions(target_media)

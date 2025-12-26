@@ -10,6 +10,8 @@ from django.dispatch import receiver
 from identity_providers.models import IdentityProviderUserLog
 from rbac.models import RBACGroup, RBACMembership
 
+logger = logging.getLogger(__name__)
+
 
 class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, socialaccount):
@@ -34,6 +36,12 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
     def save_user(self, request, sociallogin, form=None):
         user = super().save_user(request, sociallogin, form)
         # Runs after new user is created
+        logger.info(
+            "SAML user created - user_id=%s, username=%s, provider=%s",
+            user.id if user.id else None,
+            user.username,
+            sociallogin.account.provider,
+        )
         perform_user_actions(user, sociallogin.account)
         return user
 
@@ -44,6 +52,12 @@ def social_account_updated(sender, request, sociallogin, **kwargs):
     user = sociallogin.user
     # data is there due to populate_user
     common_fields = sociallogin.data
+    logger.info(
+        "SAML user updated - user_id=%s, username=%s, provider=%s",
+        user.id if user.id else None,
+        user.username,
+        sociallogin.account.provider,
+    )
     perform_user_actions(user, sociallogin.account, common_fields)
 
 
@@ -58,6 +72,11 @@ def perform_user_actions(user, social_account, common_fields=None):
                 setattr(user, item, common_fields[item])
                 fields_to_update.append(item)
         if fields_to_update:
+            logger.debug(
+                "Updating user fields from SAML - user_id=%s, fields=%s",
+                user.id if user.id else None,
+                fields_to_update,
+            )
             user.save(update_fields=fields_to_update)
 
     # extra_data is the plain response from SAML provider
@@ -84,13 +103,28 @@ def add_user_logo(user, extra_data):
             image_data = base64.b64decode(base64_string)
             image_content = ContentFile(image_data)
             user.logo.save('user.jpg', image_content, save=True)
+            logger.debug(
+                "SAML user logo added - user_id=%s, username=%s",
+                user.id if user.id else None,
+                user.username,
+            )
     except Exception as e:
-        logging.error(e)
+        logger.exception(
+            "Error adding SAML user logo - user_id=%s, username=%s, error=%s",
+            user.id if user.id else None,
+            user.username,
+            str(e),
+        )
     return True
 
 
 def handle_role_mapping(user, extra_data, social_app, saml_configuration):
     if not saml_configuration:
+        logger.debug(
+            "SAML role mapping skipped - no configuration - user_id=%s, provider=%s",
+            user.id if user.id else None,
+            social_app.provider if social_app else None,
+        )
         return False
 
     rbac_groups = []
@@ -102,6 +136,12 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
 
     if groups:
         rbac_groups = RBACGroup.objects.filter(identity_provider=social_app, uid__in=groups)
+        logger.debug(
+            "SAML groups found - user_id=%s, group_count=%s, group_ids=%s",
+            user.id if user.id else None,
+            len(groups),
+            groups,
+        )
 
     try:
         # try to get the role, always use member as fallback
@@ -114,33 +154,75 @@ def handle_role_mapping(user, extra_data, social_app, saml_configuration):
         global_role = social_app.global_roles.filter(name=role).first()
         if global_role:
             user.set_role_from_mapping(global_role.map_to)
+            logger.info(
+                "SAML global role mapped - user_id=%s, role=%s, mapped_to=%s",
+                user.id if user.id else None,
+                role,
+                global_role.map_to,
+            )
 
         group_role = social_app.group_roles.filter(name=role).first()
         if group_role:
             if group_role.map_to in ['member', 'contributor', 'manager']:
                 role = group_role.map_to
+                logger.debug(
+                    "SAML group role mapped - user_id=%s, role=%s, mapped_to=%s",
+                    user.id if user.id else None,
+                    role,
+                    group_role.map_to,
+                )
 
     except Exception as e:
-        logging.error(e)
+        logger.exception(
+            "Error processing SAML role mapping - user_id=%s, role_key=%s, error=%s",
+            user.id if user.id else None,
+            saml_configuration.role if saml_configuration else None,
+            str(e),
+        )
 
     role = role if role in ['member', 'contributor', 'manager'] else 'member'
 
     for rbac_group in rbac_groups:
         membership = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
         if membership and role != membership.role:
+            old_role = membership.role
             membership.role = role
             membership.save(update_fields=["role"])
+            logger.info(
+                "SAML RBAC membership role updated - user_id=%s, group_id=%s, old_role=%s, new_role=%s",
+                user.id if user.id else None,
+                rbac_group.id,
+                old_role,
+                role,
+            )
         if not membership:
             try:
                 # use role from early above
                 membership = RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=role)
+                logger.info(
+                    "SAML RBAC membership created - user_id=%s, group_id=%s, role=%s",
+                    user.id if user.id else None,
+                    rbac_group.id,
+                    role,
+                )
             except Exception as e:
-                logging.error(e)
+                logger.exception(
+                    "Error creating SAML RBAC membership - user_id=%s, group_id=%s, role=%s, error=%s",
+                    user.id if user.id else None,
+                    rbac_group.id,
+                    role,
+                    str(e),
+                )
     # if remove_from_groups setting is True and user is part of groups for this
     # social app that are not included anymore on the response, then remove user from group
     if saml_configuration.remove_from_groups:
         for group in user.rbac_groups.filter(identity_provider=social_app):
             if group not in rbac_groups:
+                logger.info(
+                    "Removing user from SAML group - user_id=%s, group_id=%s",
+                    user.id if user.id else None,
+                    group.id,
+                )
                 group.members.remove(user)
 
     return True

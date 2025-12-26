@@ -413,7 +413,17 @@ class Media(models.Model):
         Set encoding_status as success for non video
         content since all listings filter for encoding_status success
         """
+        logger.debug(
+            "Setting media type - friendly_token=%s, current_media_type=%s",
+            self.friendly_token,
+            self.media_type,
+        )
         kind = helpers.get_file_type(self.media_file.path)
+        logger.debug(
+            "File type detected - friendly_token=%s, detected_type=%s",
+            self.friendly_token,
+            kind,
+        )
         if kind is not None:
             if kind == "image":
                 self.media_type = "image"
@@ -559,10 +569,24 @@ class Media(models.Model):
         so that no EncodeProfile for highter heights than the video
         are created
         """
+        logger.debug(
+            "Starting encode - friendly_token=%s, profile_count=%s, force=%s, chunkize=%s, video_height=%s, duration=%s",
+            self.friendly_token,
+            len(profiles) if profiles else 0,
+            force,
+            chunkize,
+            self.video_height,
+            self.duration,
+        )
 
         if not profiles:
             profiles = EncodeProfile.objects.filter(active=True)
         profiles = list(profiles)
+        logger.debug(
+            "Active profiles retrieved - friendly_token=%s, profile_count=%s",
+            self.friendly_token,
+            len(profiles),
+        )
 
         from .. import tasks
 

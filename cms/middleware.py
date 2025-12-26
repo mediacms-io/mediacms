@@ -1,7 +1,11 @@
+import logging
+
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+
+logger = logging.getLogger(__name__)
 
 
 class ApprovalMiddleware:
@@ -15,6 +19,13 @@ class ApprovalMiddleware:
                 reverse('account_logout'),
             ]
             if request.path not in allowed_paths:
+                logger.warning(
+                    "User access blocked - approval required - user_id=%s, username=%s, path=%s, method=%s",
+                    request.user.id,
+                    request.user.username,
+                    request.path,
+                    request.method,
+                )
                 if request.path.startswith('/api/'):
                     return JsonResponse({'detail': 'User account not approved.'}, status=403)
                 return redirect('approval_required')

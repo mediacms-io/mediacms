@@ -399,8 +399,14 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} {message}",
             "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "detailed": {
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} [{pathname}:{lineno}] {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
     "handlers": {
@@ -466,7 +472,13 @@ if DEBUG:
     LOGGING["handlers"]["console"] = {
         "level": "DEBUG",
         "class": "logging.StreamHandler",
-        "formatter": "verbose",
+        "formatter": "detailed",
+    }
+    # Set django.db.backends to DEBUG for detailed SQL logging in development
+    LOGGING["loggers"]["django.db.backends"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
     }
     # Add console handler to existing loggers for DEBUG mode
     LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
@@ -480,12 +492,6 @@ if DEBUG:
     LOGGING["loggers"]["celery"] = {
         "handlers": ["file", "console"],
         "level": "DEBUG",
-        "propagate": False,
-    }
-    # django.db.backends uses INFO level to avoid excessive SQL query logging
-    LOGGING["loggers"]["django.db.backends"] = {
-        "handlers": ["file", "console"],
-        "level": "INFO",
         "propagate": False,
     }
     LOGGING["loggers"]["django.request"] = {
