@@ -1,7 +1,11 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
+
+logger = logging.getLogger(__name__)
 
 from .models import User
 
@@ -121,9 +125,18 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(username=username_or_email, password=password)
 
         if user is None:
+            logger.warning(
+                "Login failed - user_not_found, attempted_username_or_email=%s",
+                username_or_email,
+            )
             raise serializers.ValidationError('User not found.')
 
         if not user.is_active:
+            logger.warning(
+                "Login failed - user_deactivated, user_id=%s, username=%s",
+                user.id,
+                user.username,
+            )
             raise serializers.ValidationError('User has been deactivated.')
 
         token = Token.objects.filter(user=user).first()

@@ -208,6 +208,18 @@ class User(AbstractUser):
         Returns:
             bool: True if a valid role was applied, False otherwise.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Track old role state
+        old_roles = {
+            'advancedUser': self.advancedUser,
+            'is_editor': self.is_editor,
+            'is_manager': self.is_manager,
+            'is_superuser': self.is_superuser,
+            'is_staff': self.is_staff,
+        }
+        
         update_fields = []
 
         if role_mapping == 'advancedUser':
@@ -233,6 +245,22 @@ class User(AbstractUser):
 
         if update_fields:
             self.save(update_fields=update_fields)
+            # Log role change
+            new_roles = {
+                'advancedUser': self.advancedUser,
+                'is_editor': self.is_editor,
+                'is_manager': self.is_manager,
+                'is_superuser': self.is_superuser,
+                'is_staff': self.is_staff,
+            }
+            logger.info(
+                "User role changed - user_id=%s, username=%s, role_mapping=%s, old_roles=%s, new_roles=%s",
+                self.id,
+                self.username,
+                role_mapping,
+                old_roles,
+                new_roles,
+            )
         return True
 
 
@@ -283,6 +311,14 @@ class Channel(models.Model):
 def post_user_create(sender, instance, created, **kwargs):
     # create a Channel object upon user creation, name it default
     if created:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "User registered - user_id=%s, username=%s, email=%s",
+            instance.id,
+            instance.username,
+            instance.email,
+        )
         new = Channel.objects.create(title="default", user=instance)
         new.save()
         if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):

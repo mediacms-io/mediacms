@@ -375,25 +375,60 @@ class MediaBulkUserActions(APIView):
             return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)
 
         if action == "enable_comments":
+            count = media.count()
             media.update(enable_comments=True)
-            return Response({"detail": f"Comments enabled for {media.count()} media items"})
+            logger.info(
+                "Bulk action: comments enabled - count=%s, user_id=%s, media_ids=%s",
+                count,
+                request.user.id,
+                list(media.values_list('friendly_token', flat=True)),
+            )
+            return Response({"detail": f"Comments enabled for {count} media items"})
 
         elif action == "disable_comments":
+            count = media.count()
             media.update(enable_comments=False)
-            return Response({"detail": f"Comments disabled for {media.count()} media items"})
+            logger.info(
+                "Bulk action: comments disabled - count=%s, user_id=%s, media_ids=%s",
+                count,
+                request.user.id,
+                list(media.values_list('friendly_token', flat=True)),
+            )
+            return Response({"detail": f"Comments disabled for {count} media items"})
 
         elif action == "delete_media":
             count = media.count()
+            media_tokens = list(media.values_list('friendly_token', flat=True))
             media.delete()
+            logger.info(
+                "Bulk action: media deleted - count=%s, user_id=%s, media_ids=%s",
+                count,
+                request.user.id,
+                media_tokens,
+            )
             return Response({"detail": f"{count} media items deleted"})
 
         elif action == "enable_download":
+            count = media.count()
             media.update(allow_download=True)
-            return Response({"detail": f"Download enabled for {media.count()} media items"})
+            logger.info(
+                "Bulk action: download enabled - count=%s, user_id=%s, media_ids=%s",
+                count,
+                request.user.id,
+                list(media.values_list('friendly_token', flat=True)),
+            )
+            return Response({"detail": f"Download enabled for {count} media items"})
 
         elif action == "disable_download":
+            count = media.count()
             media.update(allow_download=False)
-            return Response({"detail": f"Download disabled for {media.count()} media items"})
+            logger.info(
+                "Bulk action: download disabled - count=%s, user_id=%s, media_ids=%s",
+                count,
+                request.user.id,
+                list(media.values_list('friendly_token', flat=True)),
+            )
+            return Response({"detail": f"Download disabled for {count} media items"})
 
         elif action == "add_to_playlist":
             playlist_ids = request.data.get('playlist_ids', [])
@@ -448,7 +483,10 @@ class MediaBulkUserActions(APIView):
                 if state == "public":
                     return Response({"detail": "You are not allowed to set media to public state"}, status=status.HTTP_400_BAD_REQUEST)
 
+            count = media.count()
+            media_tokens = list(media.values_list('friendly_token', flat=True))
             for m in media:
+                old_state = m.state
                 m.state = state
                 if m.state == "public" and m.encoding_status == "success" and m.is_reviewed is True:
                     m.listable = True
@@ -457,7 +495,14 @@ class MediaBulkUserActions(APIView):
 
                 m.save(update_fields=["state", "listable"])
 
-            return Response({"detail": f"State updated to {state} for {media.count()} media items"})
+            logger.info(
+                "Bulk action: state changed - count=%s, new_state=%s, user_id=%s, media_ids=%s",
+                count,
+                state,
+                request.user.id,
+                media_tokens,
+            )
+            return Response({"detail": f"State updated to {state} for {count} media items"})
 
         elif action == "change_owner":
             owner = request.data.get('owner')
@@ -521,11 +566,21 @@ class MediaBulkUserActions(APIView):
             if not users.exists():
                 return Response({"detail": "No valid users found"}, status=status.HTTP_400_BAD_REQUEST)
 
+            count = media.count()
+            media_tokens = list(media.values_list('friendly_token', flat=True))
             for m in media:
                 for user in users:
                     # Create or update MediaPermission
                     MediaPermission.objects.update_or_create(user=user, media=m, defaults={'owner_user': request.user, 'permission': ownership_type})
 
+            logger.info(
+                "Bulk action: ownership set - count=%s, ownership_type=%s, assigned_to_users=%s, assigned_by_user_id=%s, media_ids=%s",
+                count,
+                ownership_type,
+                usernames,
+                request.user.id,
+                media_tokens,
+            )
             return Response({"detail": "Action succeeded"})
 
         elif action == "remove_ownership":
@@ -545,8 +600,18 @@ class MediaBulkUserActions(APIView):
             if not users.exists():
                 return Response({"detail": "No valid users found"}, status=status.HTTP_400_BAD_REQUEST)
 
+            count = media.count()
+            media_tokens = list(media.values_list('friendly_token', flat=True))
             MediaPermission.objects.filter(media__in=media, permission=ownership_type, user__in=users).delete()
 
+            logger.info(
+                "Bulk action: ownership removed - count=%s, ownership_type=%s, removed_from_users=%s, removed_by_user_id=%s, media_ids=%s",
+                count,
+                ownership_type,
+                usernames,
+                request.user.id,
+                media_tokens,
+            )
             return Response({"detail": "Action succeeded"})
 
         elif action == "playlist_membership":
@@ -807,6 +872,12 @@ class MediaDetail(APIView):
 
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
+            # Track changed fields before saving
+            changed_fields = []
+            for field in request.data.keys():
+                if hasattr(media, field) and getattr(media, field) != request.data.get(field):
+                    changed_fields.append(field)
+            
             # if request.data.get('media_file'):
             #     media_file = request.data["media_file"]
             #     media.state = helpers.get_default_state(request.user)
@@ -815,6 +886,16 @@ class MediaDetail(APIView):
             # else:
             #     serializer.save(user=request.user)
             serializer.save(user=request.user)
+            
+            if changed_fields:
+                logger.info(
+                    "Media updated - friendly_token=%s, changed_fields=%s, user_id=%s, request_user_id=%s",
+                    friendly_token,
+                    changed_fields,
+                    media.user.id if media.user else None,
+                    request.user.id if request.user.is_authenticated else None,
+                )
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

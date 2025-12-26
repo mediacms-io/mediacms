@@ -21,6 +21,7 @@ from rest_framework.parsers import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
+from rest_framework import serializers
 
 from cms.permissions import IsUserOrManager
 from files.methods import is_mediacms_editor, is_mediacms_manager
@@ -291,6 +292,15 @@ class UserList(APIView):
 
         user = User.objects.create_user(username=username, password=password, email=email, name=name)
 
+        logger.info(
+            "User created via API - user_id=%s, username=%s, email=%s, created_by_user_id=%s, created_by_username=%s",
+            user.id,
+            username,
+            email,
+            request.user.id,
+            request.user.username,
+        )
+
         serializer = UserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -382,19 +392,42 @@ class UserDetail(APIView):
             password = request.data.get("password")
             if not password:
                 return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+            changed_by_self = (request.user.id == user.id)
             user.set_password(password)
             user.save()
+            logger.info(
+                "Password changed - user_id=%s, username=%s, changed_by_self=%s, changed_by_user_id=%s, changed_by_username=%s",
+                user.id,
+                user.username,
+                changed_by_self,
+                request.user.id,
+                request.user.username,
+            )
 
         elif action == "approve_user":
             if not is_mediacms_manager(request.user):
                 raise PermissionDenied("You do not have permission to approve users.")
             user.is_approved = True
             user.save()
+            logger.info(
+                "User approved - user_id=%s, username=%s, approved_by_user_id=%s, approved_by_username=%s",
+                user.id,
+                user.username,
+                request.user.id,
+                request.user.username,
+            )
         elif action == "disapprove_user":
             if not is_mediacms_manager(request.user):
                 raise PermissionDenied("You do not have permission to approve users.")
             user.is_approved = False
             user.save()
+            logger.info(
+                "User disapproved - user_id=%s, username=%s, disapproved_by_user_id=%s, disapproved_by_username=%s",
+                user.id,
+                user.username,
+                request.user.id,
+                request.user.username,
+            )
         else:
             return Response({"detail": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -413,7 +446,21 @@ class UserDetail(APIView):
         if isinstance(user, Response):
             return user
 
+        user_id = user.id
+        user_username = user.username
+        deleted_by_user_id = request.user.id if request.user.is_authenticated else None
+        deleted_by_username = request.user.username if request.user.is_authenticated else None
+
         user.delete()
+
+        logger.info(
+            "User deleted - user_id=%s, username=%s, deleted_by_user_id=%s, deleted_by_username=%s",
+            user_id,
+            user_username,
+            deleted_by_user_id,
+            deleted_by_username,
+        )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -474,6 +521,20 @@ class LoginView(APIView):
         data = request.data
 
         serializer = self.serializer_class(data=data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+            # Login successful - get user info from serializer data
+            username = serializer.data.get('username')
+            user = User.objects.get(username=username)
+            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            logger.info(
+                "Login successful - user_id=%s, username=%s, ip=%s",
+                user.id,
+                username,
+                client_ip,
+            )
+        except serializers.ValidationError:
+            # Failed login already logged in serializer
+            raise
 
         return Response(serializer.data, status=status.HTTP_200_OK)
