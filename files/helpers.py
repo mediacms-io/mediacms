@@ -280,6 +280,12 @@ def run_command(cmd, cwd=None):
             )
             ret["error"] = ""
     else:
+        logger.warning(
+            "Command failed - cmd=%s, returncode=%s, cwd=%s",
+            cmd,
+            process.returncode,
+            cwd,
+        )
         try:
             ret["error"] = stderr.decode("utf-8")
         except UnicodeDecodeError as e:
@@ -300,13 +306,6 @@ def run_command(cmd, cwd=None):
                 str(e),
             )
             ret["error"] = ""
-    else:
-        logger.warning(
-            "Command failed - cmd=%s, returncode=%s, cwd=%s",
-            cmd,
-            process.returncode,
-            cwd,
-        )
     return ret
 
 
