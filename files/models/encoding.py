@@ -148,8 +148,9 @@ def encoding_file_save(sender, instance, created, **kwargs):
     concatenate chunks, create final encoding file and delete chunks
     """
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     if created:
         logger.info(
             "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
@@ -315,8 +316,9 @@ def encoding_file_delete(sender, instance, **kwargs):
     when corresponding `Encoding` object is deleted.
     """
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     logger.info(
         "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
         instance.media.friendly_token if instance.media else None,

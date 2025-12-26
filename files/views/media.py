@@ -486,7 +486,6 @@ class MediaBulkUserActions(APIView):
             count = media.count()
             media_tokens = list(media.values_list('friendly_token', flat=True))
             for m in media:
-                old_state = m.state
                 m.state = state
                 if m.state == "public" and m.encoding_status == "success" and m.is_reviewed is True:
                     m.listable = True
@@ -877,7 +876,7 @@ class MediaDetail(APIView):
             for field in request.data.keys():
                 if hasattr(media, field) and getattr(media, field) != request.data.get(field):
                     changed_fields.append(field)
-            
+
             # if request.data.get('media_file'):
             #     media_file = request.data["media_file"]
             #     media.state = helpers.get_default_state(request.user)
@@ -886,7 +885,7 @@ class MediaDetail(APIView):
             # else:
             #     serializer.save(user=request.user)
             serializer.save(user=request.user)
-            
+
             if changed_fields:
                 logger.info(
                     "Media updated - friendly_token=%s, changed_fields=%s, user_id=%s, request_user_id=%s",
@@ -895,7 +894,7 @@ class MediaDetail(APIView):
                     media.user.id if media.user else None,
                     request.user.id if request.user.is_authenticated else None,
                 )
-            
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

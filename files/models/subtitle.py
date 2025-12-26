@@ -107,10 +107,11 @@ class TranscriptionRequest(models.Model):
 @receiver(post_save, sender=Subtitle)
 def subtitle_save(sender, instance, created, **kwargs):
     import logging
+
     from .. import tasks
 
     logger = logging.getLogger(__name__)
-    
+
     if created:
         logger.info(
             "Subtitle created - friendly_token=%s, language=%s, user_id=%s",

@@ -1432,6 +1432,222 @@ The following RBAC-related events are logged:
   - Log level: INFO
   - Example: `RBAC group category added - group_id=1, group_name=Students, group_uid=student-group, action=post_add, category_count=2, category_names=['Category 1', 'Category 2'], identity_provider=saml`
 
+#### Category and Tag Operations
+
+The following category and tag-related events are logged:
+
+- **Category Creation**: When a new category is created
+  - Log level: INFO
+  - Example: `Category created - category_id=1, title=Science, user_id=1, is_global=True, is_rbac_category=False`
+
+- **Category Updates**: When a category is updated
+  - Log level: DEBUG
+  - Example: `Category updated - category_id=1, title=Science, user_id=1`
+
+- **Category Deletion**: When a category is deleted
+  - Log level: INFO
+  - Example: `Category deleted - category_id=1, title=Science, user_id=1, is_global=True, media_count=5`
+
+- **Tag Creation**: When a new tag is created
+  - Log level: INFO
+  - Example: `Tag created - tag_id=1, title=educational, user_id=1`
+
+- **Tag Updates**: When a tag is updated
+  - Log level: DEBUG
+  - Example: `Tag updated - tag_id=1, title=educational, user_id=1`
+
+- **Tag Deletion**: When a tag is deleted
+  - Log level: INFO
+  - Example: `Tag deleted - tag_id=1, title=educational, user_id=1, media_count=3`
+
+#### Comment Operations
+
+The following comment-related events are logged:
+
+- **Comment Creation**: When a new comment is created
+  - Log level: INFO
+  - Example: `Comment created - comment_id=1, user_id=1, username=admin, media_friendly_token=abc123, has_parent=False`
+
+- **Comment Updates**: When a comment is updated
+  - Log level: DEBUG
+  - Example: `Comment updated - comment_id=1, user_id=1, media_friendly_token=abc123`
+
+- **Comment Deletion**: When a comment is deleted
+  - Log level: INFO
+  - Example: `Comment deleted - comment_id=1, user_id=1, username=admin, media_friendly_token=abc123`
+
+#### Playlist Operations
+
+The following playlist-related events are logged:
+
+- **Playlist Creation**: When a new playlist is created
+  - Log level: INFO
+  - Example: `Playlist created - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1, username=admin`
+
+- **Playlist Updates**: When a playlist is updated
+  - Log level: DEBUG
+  - Example: `Playlist updated - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1`
+
+- **Playlist Deletion**: When a playlist is deleted
+  - Log level: INFO
+  - Example: `Playlist deleted - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1, username=admin`
+
+- **Media Added to Playlist**: When media is added to a playlist
+  - Log level: INFO
+  - Example: `Media added to playlist - playlist_id=1, playlist_friendly_token=xyz789, media_friendly_token=abc123, ordering=1`
+
+- **Media Removed from Playlist**: When media is removed from a playlist
+  - Log level: INFO
+  - Example: `Media removed from playlist - playlist_id=1, playlist_friendly_token=xyz789, media_friendly_token=abc123`
+
+#### Rating Operations
+
+The following rating-related events are logged:
+
+- **Rating Creation**: When a new rating is created
+  - Log level: INFO
+  - Example: `Rating created - rating_id=1, user_id=1, username=admin, media_friendly_token=abc123, rating_category_id=1, rating_category_title=Quality, score=5`
+
+- **Rating Updates**: When a rating is updated
+  - Log level: DEBUG
+  - Example: `Rating updated - rating_id=1, user_id=1, media_friendly_token=abc123, score=4`
+
+- **Rating Deletion**: When a rating is deleted
+  - Log level: INFO
+  - Example: `Rating deleted - rating_id=1, user_id=1, username=admin, media_friendly_token=abc123, rating_category_title=Quality, score=5`
+
+- **Rating Category Creation**: When a new rating category is created
+  - Log level: INFO
+  - Example: `Rating category created - rating_category_id=1, title=Quality, enabled=True`
+
+- **Rating Category Updates**: When a rating category is updated
+  - Log level: DEBUG
+  - Example: `Rating category updated - rating_category_id=1, title=Quality, enabled=True`
+
+- **Rating Category Deletion**: When a rating category is deleted
+  - Log level: INFO
+  - Example: `Rating category deleted - rating_category_id=1, title=Quality`
+
+#### Page Operations
+
+The following page-related events are logged:
+
+- **Page Creation**: When a new page is created
+  - Log level: INFO
+  - Example: `Page created - page_id=1, slug=about, title=About Us`
+
+- **Page Updates**: When a page is updated
+  - Log level: DEBUG
+  - Example: `Page updated - page_id=1, slug=about, title=About Us`
+
+- **Page Deletion**: When a page is deleted
+  - Log level: INFO
+  - Example: `Page deleted - page_id=1, slug=about, title=About Us`
+
+- **TinyMCE Media Upload**: When a file is uploaded via TinyMCE
+  - Log level: INFO
+  - Example: `TinyMCE media uploaded - file_id=1, original_filename=image.jpg, file_type=image, user_id=1`
+
+- **TinyMCE Media Deletion**: When a TinyMCE media file is deleted
+  - Log level: INFO
+  - Example: `TinyMCE media deleted - file_id=1, original_filename=image.jpg, file_type=image, user_id=1`
+
+#### License Operations
+
+The following license-related events are logged:
+
+- **License Creation**: When a new license is created
+  - Log level: INFO
+  - Example: `License created - license_id=1, title=CC BY 4.0`
+
+- **License Updates**: When a license is updated
+  - Log level: DEBUG
+  - Example: `License updated - license_id=1, title=CC BY 4.0`
+
+- **License Deletion**: When a license is deleted
+  - Log level: INFO
+  - Example: `License deleted - license_id=1, title=CC BY 4.0`
+
+#### Channel Operations
+
+The following channel-related events are logged:
+
+- **Channel Creation**: When a new channel is created
+  - Log level: INFO
+  - Example: `Channel created - channel_id=1, friendly_token=def456, title=My Channel, user_id=1, username=admin`
+
+- **Channel Updates**: When a channel is updated
+  - Log level: DEBUG
+  - Example: `Channel updated - channel_id=1, friendly_token=def456, title=My Channel, user_id=1`
+
+- **Channel Deletion**: When a channel is deleted
+  - Log level: INFO
+  - Example: `Channel deleted - channel_id=1, friendly_token=def456, title=My Channel, user_id=1, username=admin`
+
+#### MediaAction Operations
+
+The following user action events are logged:
+
+- **User Action**: When a user performs an action (like, dislike, watch, report, rate)
+  - Log level: INFO
+  - Example: `User action - action_id=1, action=like, user_id=1, username=admin, media_friendly_token=abc123, session_key=None, remote_ip=192.168.1.100`
+
+#### Identity Provider Operations
+
+The following identity provider-related events are logged:
+
+- **Identity Provider Group Role Mapping Creation**: When a group role mapping is created
+  - Log level: INFO
+  - Example: `Identity provider group role mapping created - mapping_id=1, identity_provider_id=1, name=student-group, map_to=member`
+
+- **Identity Provider Group Role Mapping Updates**: When a group role mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider group role mapping updated - mapping_id=1, identity_provider_id=1, name=student-group, map_to=contributor`
+
+- **Identity Provider Group Role Mapping Deletion**: When a group role mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider group role mapping deleted - mapping_id=1, identity_provider_id=1, name=student-group, map_to=member`
+
+- **Identity Provider Global Role Mapping Creation**: When a global role mapping is created
+  - Log level: INFO
+  - Example: `Identity provider global role mapping created - mapping_id=1, identity_provider_id=1, name=admin, map_to=admin`
+
+- **Identity Provider Global Role Mapping Updates**: When a global role mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider global role mapping updated - mapping_id=1, identity_provider_id=1, name=admin, map_to=manager`
+
+- **Identity Provider Global Role Mapping Deletion**: When a global role mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider global role mapping deleted - mapping_id=1, identity_provider_id=1, name=admin, map_to=admin`
+
+- **Identity Provider Category Mapping Creation**: When a category mapping is created
+  - Log level: INFO
+  - Example: `Identity provider category mapping created - mapping_id=1, identity_provider_id=1, name=student-group, category_id=1, category_title=Science`
+
+- **Identity Provider Category Mapping Updates**: When a category mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider category mapping updated - mapping_id=1, identity_provider_id=1, name=student-group, category_id=2`
+
+- **Identity Provider Category Mapping Deletion**: When a category mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider category mapping deleted - mapping_id=1, identity_provider_id=1, name=student-group, category_id=1, category_title=Science`
+
+#### SAML Configuration Operations
+
+The following SAML configuration-related events are logged:
+
+- **SAML Configuration Creation**: When a new SAML configuration is created
+  - Log level: INFO
+  - Example: `SAML configuration created - config_id=1, social_app_id=1, social_app_name=My SAML Provider, idp_id=https://idp.example.com`
+
+- **SAML Configuration Updates**: When a SAML configuration is updated
+  - Log level: DEBUG
+  - Example: `SAML configuration updated - config_id=1, social_app_id=1, idp_id=https://idp.example.com`
+
+- **SAML Configuration Deletion**: When a SAML configuration is deleted
+  - Log level: INFO
+  - Example: `SAML configuration deleted - config_id=1, social_app_id=1, social_app_name=My SAML Provider, idp_id=https://idp.example.com`
+
 #### Admin Actions
 
 The following admin action events are logged:
@@ -1540,6 +1756,161 @@ MediaCMS uses Django signals to automatically log important events. The followin
   - Triggered: When categories are added to or removed from RBAC groups
   - Log level: INFO
   - Logs: group_id, group_name, group_uid, action, category_count, category_names, identity_provider
+
+- **`post_save` for Category** (`files/models/category.py`)
+  - Triggered: When a category is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: category_id, title, user_id, is_global, is_rbac_category
+
+- **`post_delete` for Category** (`files/models/category.py`)
+  - Triggered: When a category is deleted
+  - Log level: INFO
+  - Logs: category_id, title, user_id, is_global, media_count
+
+- **`post_save` for Tag** (`files/models/category.py`)
+  - Triggered: When a tag is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: tag_id, title, user_id
+
+- **`post_delete` for Tag** (`files/models/category.py`)
+  - Triggered: When a tag is deleted
+  - Log level: INFO
+  - Logs: tag_id, title, user_id, media_count
+
+- **`post_save` for Comment** (`files/models/comment.py`)
+  - Triggered: When a comment is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: comment_id, user_id, username, media_friendly_token, has_parent
+
+- **`post_delete` for Comment** (`files/models/comment.py`)
+  - Triggered: When a comment is deleted
+  - Log level: INFO
+  - Logs: comment_id, user_id, username, media_friendly_token
+
+- **`post_save` for Playlist** (`files/models/playlist.py`)
+  - Triggered: When a playlist is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: playlist_id, friendly_token, title, user_id, username
+
+- **`post_delete` for Playlist** (`files/models/playlist.py`)
+  - Triggered: When a playlist is deleted
+  - Log level: INFO
+  - Logs: playlist_id, friendly_token, title, user_id, username
+
+- **`post_save` for PlaylistMedia** (`files/models/playlist.py`)
+  - Triggered: When media is added to or reordered in a playlist
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: playlist_id, playlist_friendly_token, media_friendly_token, ordering
+
+- **`post_delete` for PlaylistMedia** (`files/models/playlist.py`)
+  - Triggered: When media is removed from a playlist
+  - Log level: INFO
+  - Logs: playlist_id, playlist_friendly_token, media_friendly_token
+
+- **`post_save` for Rating** (`files/models/rating.py`)
+  - Triggered: When a rating is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: rating_id, user_id, username, media_friendly_token, rating_category_id, rating_category_title, score
+
+- **`post_delete` for Rating** (`files/models/rating.py`)
+  - Triggered: When a rating is deleted
+  - Log level: INFO
+  - Logs: rating_id, user_id, username, media_friendly_token, rating_category_title, score
+
+- **`post_save` for RatingCategory** (`files/models/rating.py`)
+  - Triggered: When a rating category is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: rating_category_id, title, enabled
+
+- **`post_delete` for RatingCategory** (`files/models/rating.py`)
+  - Triggered: When a rating category is deleted
+  - Log level: INFO
+  - Logs: rating_category_id, title
+
+- **`post_save` for Page** (`files/models/page.py`)
+  - Triggered: When a page is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: page_id, slug, title
+
+- **`post_delete` for Page** (`files/models/page.py`)
+  - Triggered: When a page is deleted
+  - Log level: INFO
+  - Logs: page_id, slug, title
+
+- **`post_save` for TinyMCEMedia** (`files/models/page.py`)
+  - Triggered: When a TinyMCE media file is uploaded or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: file_id, original_filename, file_type, user_id
+
+- **`post_delete` for TinyMCEMedia** (`files/models/page.py`)
+  - Triggered: When a TinyMCE media file is deleted
+  - Log level: INFO
+  - Logs: file_id, original_filename, file_type, user_id
+
+- **`post_save` for License** (`files/models/license.py`)
+  - Triggered: When a license is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: license_id, title
+
+- **`post_delete` for License** (`files/models/license.py`)
+  - Triggered: When a license is deleted
+  - Log level: INFO
+  - Logs: license_id, title
+
+- **`post_save` for Channel** (`users/models.py`)
+  - Triggered: When a channel is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: channel_id, friendly_token, title, user_id, username
+
+- **`post_delete` for Channel** (`users/models.py`)
+  - Triggered: When a channel is deleted
+  - Log level: INFO
+  - Logs: channel_id, friendly_token, title, user_id, username
+
+- **`post_save` for MediaAction** (`actions/models.py`)
+  - Triggered: When a user action is created (like, dislike, watch, report, rate)
+  - Log level: INFO
+  - Logs: action_id, action, user_id, username, media_friendly_token, session_key, remote_ip
+
+- **`post_save` for IdentityProviderGroupRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider group role mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_delete` for IdentityProviderGroupRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider group role mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_save` for IdentityProviderGlobalRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider global role mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_delete` for IdentityProviderGlobalRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider global role mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_save` for IdentityProviderCategoryMapping** (`identity_providers/models.py`)
+  - Triggered: When an identity provider category mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, category_id, category_title
+
+- **`post_delete` for IdentityProviderCategoryMapping** (`identity_providers/models.py`)
+  - Triggered: When an identity provider category mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, category_id, category_title
+
+- **`post_save` for SAMLConfiguration** (`saml_auth/models.py`)
+  - Triggered: When a SAML configuration is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: config_id, social_app_id, social_app_name, idp_id
+
+- **`post_delete` for SAMLConfiguration** (`saml_auth/models.py`)
+  - Triggered: When a SAML configuration is deleted
+  - Log level: INFO
+  - Logs: config_id, social_app_id, social_app_name, idp_id
 
 ### Common Scenarios
 

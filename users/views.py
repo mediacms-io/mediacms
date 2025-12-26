@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import PermissionDenied
@@ -21,7 +21,6 @@ from rest_framework.parsers import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-from rest_framework import serializers
 
 from cms.permissions import IsUserOrManager
 from files.methods import is_mediacms_editor, is_mediacms_manager
@@ -392,7 +391,7 @@ class UserDetail(APIView):
             password = request.data.get("password")
             if not password:
                 return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
-            changed_by_self = (request.user.id == user.id)
+            changed_by_self = request.user.id == user.id
             user.set_password(password)
             user.save()
             logger.info(

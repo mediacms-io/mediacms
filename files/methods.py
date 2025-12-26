@@ -578,22 +578,22 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
         with open(original_media.media_file.path, "rb") as f:
             myfile = File(f)
             new_media = models.Media(
-            media_file=myfile,
-            friendly_token=friendly_token,
-            title=f"{original_media.title} {title_suffix}",
-            description=original_media.description,
-            user=original_media.user,
-            media_type=original_media.media_type,
-            enable_comments=original_media.enable_comments,
-            allow_download=original_media.allow_download,
-            state=helpers.get_default_state(user=original_media.user),
-            is_reviewed=original_media.is_reviewed,
-            encoding_status=original_media.encoding_status,
-            add_date=timezone.now(),
-            video_height=original_media.video_height,
-            size=original_media.size,
-            duration=original_media.duration,
-            media_info=original_media.media_info,
+                media_file=myfile,
+                friendly_token=friendly_token,
+                title=f"{original_media.title} {title_suffix}",
+                description=original_media.description,
+                user=original_media.user,
+                media_type=original_media.media_type,
+                enable_comments=original_media.enable_comments,
+                allow_download=original_media.allow_download,
+                state=helpers.get_default_state(user=original_media.user),
+                is_reviewed=original_media.is_reviewed,
+                encoding_status=original_media.encoding_status,
+                add_date=timezone.now(),
+                video_height=original_media.video_height,
+                size=original_media.size,
+                duration=original_media.duration,
+                media_info=original_media.media_info,
             )
             models.Media.objects.bulk_create([new_media])
         # avoids calling signals since signals will call media_init and we don't want that

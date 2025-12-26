@@ -806,6 +806,267 @@ def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwar
         )
 ```
 
+**Category Creation/Updates** (`post_save` for Category):
+```python
+@receiver(post_save, sender=Category)
+def category_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Category created - category_id=%s, title=%s, user_id=%s, is_global=%s, is_rbac_category=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.is_global,
+            instance.is_rbac_category,
+        )
+    else:
+        logger.debug(
+            "Category updated - category_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Tag Creation/Updates** (`post_save` for Tag):
+```python
+@receiver(post_save, sender=Tag)
+def tag_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Tag created - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Tag updated - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Comment Creation/Updates** (`post_save` for Comment):
+```python
+@receiver(post_save, sender=Comment)
+def comment_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            bool(instance.parent),
+        )
+    else:
+        logger.debug(
+            "Comment updated - comment_id=%s, user_id=%s, media_friendly_token=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+        )
+```
+
+**Playlist Creation/Updates** (`post_save` for Playlist):
+```python
+@receiver(post_save, sender=Playlist)
+def playlist_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Playlist updated - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Media Added to Playlist** (`post_save` for PlaylistMedia):
+```python
+@receiver(post_save, sender=PlaylistMedia)
+def playlistmedia_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Media added to playlist - playlist_id=%s, playlist_friendly_token=%s, media_friendly_token=%s, ordering=%s",
+            instance.playlist.id if instance.playlist else None,
+            instance.playlist.friendly_token if instance.playlist else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.ordering,
+        )
+```
+
+**Rating Creation/Updates** (`post_save` for Rating):
+```python
+@receiver(post_save, sender=Rating)
+def rating_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Rating created - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.rating_category.id if instance.rating_category else None,
+            instance.rating_category.title if instance.rating_category else None,
+            instance.score,
+        )
+    else:
+        logger.debug(
+            "Rating updated - rating_id=%s, user_id=%s, media_friendly_token=%s, score=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.score,
+        )
+```
+
+**Page Creation/Updates** (`post_save` for Page):
+```python
+@receiver(post_save, sender=Page)
+def page_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Page created - page_id=%s, slug=%s, title=%s",
+            instance.id,
+            instance.slug,
+            instance.title,
+        )
+    else:
+        logger.debug(
+            "Page updated - page_id=%s, slug=%s, title=%s",
+            instance.id,
+            instance.slug,
+            instance.title,
+        )
+```
+
+**TinyMCE Media Upload** (`post_save` for TinyMCEMedia):
+```python
+@receiver(post_save, sender=TinyMCEMedia)
+def tinymcemedia_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "TinyMCE media uploaded - file_id=%s, original_filename=%s, file_type=%s, user_id=%s",
+            instance.id,
+            instance.original_filename,
+            instance.file_type,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**License Creation/Updates** (`post_save` for License):
+```python
+@receiver(post_save, sender=License)
+def license_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "License created - license_id=%s, title=%s",
+            instance.id,
+            instance.title,
+        )
+    else:
+        logger.debug(
+            "License updated - license_id=%s, title=%s",
+            instance.id,
+            instance.title,
+        )
+```
+
+**Channel Creation/Updates** (`post_save` for Channel):
+```python
+@receiver(post_save, sender=Channel)
+def channel_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Channel updated - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**User Action** (`post_save` for MediaAction):
+```python
+@receiver(post_save, sender=MediaAction)
+def mediaaction_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "User action - action_id=%s, action=%s, user_id=%s, username=%s, media_friendly_token=%s, session_key=%s, remote_ip=%s",
+            instance.id,
+            instance.action,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.session_key if instance.session_key else None,
+            instance.remote_ip if instance.remote_ip else None,
+        )
+```
+
+**Identity Provider Group Role Mapping** (`post_save` for IdentityProviderGroupRole):
+```python
+@receiver(post_save, sender=IdentityProviderGroupRole)
+def identity_provider_group_role_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Identity provider group role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+    else:
+        logger.debug(
+            "Identity provider group role mapping updated - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+```
+
+**SAML Configuration Creation/Updates** (`post_save` for SAMLConfiguration):
+```python
+@receiver(post_save, sender=SAMLConfiguration)
+def saml_configuration_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "SAML configuration created - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.social_app.name if instance.social_app else None,
+            instance.idp_id,
+        )
+    else:
+        logger.debug(
+            "SAML configuration updated - config_id=%s, social_app_id=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.idp_id,
+        )
+```
+
 ### Event Logging Patterns
 
 MediaCMS uses consistent logging patterns for different types of events:
@@ -960,6 +1221,207 @@ logger.info(
     len(categories),
     category_names,
     instance.identity_provider.provider if instance.identity_provider else None,
+)
+```
+
+#### Category and Tag Operation Event Logging
+
+Category and tag operations track creation, updates, and deletion:
+
+```python
+# Category creation
+logger.info(
+    "Category created - category_id=%s, title=%s, user_id=%s, is_global=%s, is_rbac_category=%s",
+    instance.id,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.is_global,
+    instance.is_rbac_category,
+)
+
+# Tag creation
+logger.info(
+    "Tag created - tag_id=%s, title=%s, user_id=%s",
+    instance.id,
+    instance.title,
+    instance.user.id if instance.user else None,
+)
+```
+
+#### Comment Operation Event Logging
+
+Comment operations track creation, updates, and deletion:
+
+```python
+# Comment creation
+logger.info(
+    "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+    instance.id,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    bool(instance.parent),
+)
+```
+
+#### Playlist Operation Event Logging
+
+Playlist operations track playlist and playlist media changes:
+
+```python
+# Playlist creation
+logger.info(
+    "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+    instance.id,
+    instance.friendly_token,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+)
+
+# Media added to playlist
+logger.info(
+    "Media added to playlist - playlist_id=%s, playlist_friendly_token=%s, media_friendly_token=%s, ordering=%s",
+    instance.playlist.id if instance.playlist else None,
+    instance.playlist.friendly_token if instance.playlist else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.ordering,
+)
+```
+
+#### Rating Operation Event Logging
+
+Rating operations track user ratings and rating categories:
+
+```python
+# Rating creation
+logger.info(
+    "Rating created - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
+    instance.id,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.rating_category.id if instance.rating_category else None,
+    instance.rating_category.title if instance.rating_category else None,
+    instance.score,
+)
+
+# Rating category creation
+logger.info(
+    "Rating category created - rating_category_id=%s, title=%s, enabled=%s",
+    instance.id,
+    instance.title,
+    instance.enabled,
+)
+```
+
+#### Page Operation Event Logging
+
+Page operations track static pages and TinyMCE media:
+
+```python
+# Page creation
+logger.info(
+    "Page created - page_id=%s, slug=%s, title=%s",
+    instance.id,
+    instance.slug,
+    instance.title,
+)
+
+# TinyMCE media upload
+logger.info(
+    "TinyMCE media uploaded - file_id=%s, original_filename=%s, file_type=%s, user_id=%s",
+    instance.id,
+    instance.original_filename,
+    instance.file_type,
+    instance.user.id if instance.user else None,
+)
+```
+
+#### License Operation Event Logging
+
+License operations track license creation and updates:
+
+```python
+# License creation
+logger.info(
+    "License created - license_id=%s, title=%s",
+    instance.id,
+    instance.title,
+)
+```
+
+#### Channel Operation Event Logging
+
+Channel operations track user channel creation and updates:
+
+```python
+# Channel creation
+logger.info(
+    "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+    instance.id,
+    instance.friendly_token,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+)
+```
+
+#### MediaAction Operation Event Logging
+
+MediaAction operations track user interactions with media:
+
+```python
+# User action (like, dislike, watch, report, rate)
+logger.info(
+    "User action - action_id=%s, action=%s, user_id=%s, username=%s, media_friendly_token=%s, session_key=%s, remote_ip=%s",
+    instance.id,
+    instance.action,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.session_key if instance.session_key else None,
+    instance.remote_ip if instance.remote_ip else None,
+)
+```
+
+#### Identity Provider Operation Event Logging
+
+Identity provider operations track role and category mappings:
+
+```python
+# Identity provider group role mapping creation
+logger.info(
+    "Identity provider group role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+    instance.id,
+    instance.identity_provider.id if instance.identity_provider else None,
+    instance.name,
+    instance.map_to,
+)
+
+# Identity provider category mapping creation
+logger.info(
+    "Identity provider category mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, category_id=%s, category_title=%s",
+    instance.id,
+    instance.identity_provider.id if instance.identity_provider else None,
+    instance.name,
+    instance.map_to.id if instance.map_to else None,
+    instance.map_to.title if instance.map_to else None,
+)
+```
+
+#### SAML Configuration Operation Event Logging
+
+SAML configuration operations track SAML setup changes:
+
+```python
+# SAML configuration creation
+logger.info(
+    "SAML configuration created - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+    instance.id,
+    instance.social_app.id if instance.social_app else None,
+    instance.social_app.name if instance.social_app else None,
+    instance.idp_id,
 )
 ```
 

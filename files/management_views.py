@@ -9,9 +9,6 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-
-logger = logging.getLogger(__name__)
-
 from users.models import User
 from users.serializers import UserSerializer
 
@@ -19,6 +16,8 @@ from .methods import is_mediacms_manager
 from .models import Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class MediaList(APIView):
@@ -266,7 +265,7 @@ class UserList(APIView):
     def delete(self, request, format=None):
         if not is_mediacms_manager(request.user):
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         usernames = request.GET.get("usernames")
         if usernames:
             usernames_list = usernames.split(",")

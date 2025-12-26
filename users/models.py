@@ -1,7 +1,5 @@
-from django.conf import settings
-from django.contrib.auth.models import AbstractUser
-from django.core.mail import EmailMessage
-from django.db import models
+import logging
+
 from allauth.account.signals import (
     email_confirmed,
     password_changed,
@@ -10,6 +8,10 @@ from allauth.account.signals import (
     user_logged_out,
     user_signed_up,
 )
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.core.mail import EmailMessage
+from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -21,8 +23,6 @@ from imagekit.processors import ResizeToFill
 import files.helpers as helpers
 from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -228,7 +228,7 @@ class User(AbstractUser):
             'is_superuser': self.is_superuser,
             'is_staff': self.is_staff,
         }
-        
+
         update_fields = []
 
         if role_mapping == 'advancedUser':
@@ -316,6 +316,41 @@ class Channel(models.Model):
         return self.get_absolute_url(edit=True)
 
 
+@receiver(post_save, sender=Channel)
+def channel_save(sender, instance, created, **kwargs):
+    """Log channel creation and updates"""
+    if created:
+        logger.info(
+            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Channel updated - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+
+
+@receiver(post_delete, sender=Channel)
+def channel_delete(sender, instance, **kwargs):
+    """Log channel deletion"""
+    logger.info(
+        "Channel deleted - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+        instance.id,
+        instance.friendly_token,
+        instance.title,
+        instance.user.id if instance.user else None,
+        instance.user.username if instance.user else None,
+    )
+
+
 @receiver(post_save, sender=User)
 def post_user_create(sender, instance, created, **kwargs):
     # create a Channel object upon user creation, name it default
@@ -340,7 +375,7 @@ Visit user profile page at %s
                 )
                 email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
                 email.send(fail_silently=True)
-        except Exception as e:
+        except Exception:
             logger.exception("Error in post_user_create: failed to create channel or send notification")
 
 
@@ -447,7 +482,7 @@ def delete_content(sender, instance, **kwargs):
     media_count = Media.objects.filter(user=instance).count()
     tag_count = Tag.objects.filter(user=instance).count()
     category_count = Category.objects.filter(user=instance).count()
-    
+
     logger.info(
         "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
         instance.id,
@@ -462,5 +497,5 @@ def delete_content(sender, instance, **kwargs):
         Media.objects.filter(user=instance).delete()
         Tag.objects.filter(user=instance).delete()
         Category.objects.filter(user=instance).delete()
-    except Exception as e:
+    except Exception:
         logger.exception("Error in delete_content: failed to delete user-related content")

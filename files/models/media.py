@@ -1141,14 +1141,16 @@ def media_file_delete(sender, instance, **kwargs):
 @receiver(m2m_changed, sender=Media.category.through)
 def media_m2m(sender, instance, action, pk_set, **kwargs):
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     # Only log post_add and post_remove actions to avoid duplicate logs
     if action in ['post_add', 'post_remove']:
         from .category import Category
+
         categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
         category_names = [cat.title for cat in categories]
-        
+
         logger.info(
             "Media category %s - friendly_token=%s, user_id=%s, action=%s, category_count=%s, category_names=%s",
             "added" if action == 'post_add' else "removed",
@@ -1158,7 +1160,7 @@ def media_m2m(sender, instance, action, pk_set, **kwargs):
             len(categories),
             category_names,
         )
-    
+
     if instance.category.all():
         for category in instance.category.all():
             category.update_category_media()
