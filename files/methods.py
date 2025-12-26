@@ -603,78 +603,78 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             friendly_token,
         )
 
-    if copy_encodings:
-        for encoding in original_media.encodings.filter(chunk=False, status="success"):
-            if encoding.media_file:
-                with open(encoding.media_file.path, "rb") as f:
-                    myfile = File(f)
-                    new_encoding = models.Encoding(
-                        media_file=myfile, media=new_media, profile=encoding.profile, size=encoding.size, status="success", progress=100, chunk=False, logs=f"Copied from encoding {encoding.id}"
-                    )
-                    models.Encoding.objects.bulk_create([new_encoding])
-                    # avoids calling signals as this is still not ready
+        if copy_encodings:
+            for encoding in original_media.encodings.filter(chunk=False, status="success"):
+                if encoding.media_file:
+                    with open(encoding.media_file.path, "rb") as f:
+                        myfile = File(f)
+                        new_encoding = models.Encoding(
+                            media_file=myfile, media=new_media, profile=encoding.profile, size=encoding.size, status="success", progress=100, chunk=False, logs=f"Copied from encoding {encoding.id}"
+                        )
+                        models.Encoding.objects.bulk_create([new_encoding])
+                        # avoids calling signals as this is still not ready
 
-    # Copy categories and tags
-    for category in original_media.category.all():
-        new_media.category.add(category)
+        # Copy categories and tags
+        for category in original_media.category.all():
+            new_media.category.add(category)
 
-    for tag in original_media.tags.all():
-        new_media.tags.add(tag)
+        for tag in original_media.tags.all():
+            new_media.tags.add(tag)
 
-    if original_media.thumbnail:
-        with open(original_media.thumbnail.path, 'rb') as f:
-            thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
-            new_media.thumbnail.save(thumbnail_name, File(f))
+        if original_media.thumbnail:
+            with open(original_media.thumbnail.path, 'rb') as f:
+                thumbnail_name = helpers.get_file_name(original_media.thumbnail.path)
+                new_media.thumbnail.save(thumbnail_name, File(f))
 
-    if original_media.poster:
-        with open(original_media.poster.path, 'rb') as f:
-            poster_name = helpers.get_file_name(original_media.poster.path)
-            new_media.poster.save(poster_name, File(f))
+        if original_media.poster:
+            with open(original_media.poster.path, 'rb') as f:
+                poster_name = helpers.get_file_name(original_media.poster.path)
+                new_media.poster.save(poster_name, File(f))
 
-    if original_media.uploaded_thumbnail:
-        with open(original_media.uploaded_thumbnail.path, 'rb') as f:
-            thumbnail_name = helpers.get_file_name(original_media.uploaded_thumbnail.path)
-            new_media.uploaded_thumbnail.save(thumbnail_name, File(f))
+        if original_media.uploaded_thumbnail:
+            with open(original_media.uploaded_thumbnail.path, 'rb') as f:
+                thumbnail_name = helpers.get_file_name(original_media.uploaded_thumbnail.path)
+                new_media.uploaded_thumbnail.save(thumbnail_name, File(f))
 
-    if original_media.uploaded_poster:
-        with open(original_media.uploaded_poster.path, 'rb') as f:
-            poster_name = helpers.get_file_name(original_media.uploaded_poster.path)
-            new_media.uploaded_poster.save(poster_name, File(f))
+        if original_media.uploaded_poster:
+            with open(original_media.uploaded_poster.path, 'rb') as f:
+                poster_name = helpers.get_file_name(original_media.uploaded_poster.path)
+                new_media.uploaded_poster.save(poster_name, File(f))
 
-    if original_media.sprites:
-        with open(original_media.sprites.path, 'rb') as f:
-            sprites_name = helpers.get_file_name(original_media.sprites.path)
-            new_media.sprites.save(sprites_name, File(f))
+        if original_media.sprites:
+            with open(original_media.sprites.path, 'rb') as f:
+                sprites_name = helpers.get_file_name(original_media.sprites.path)
+                new_media.sprites.save(sprites_name, File(f))
 
-    if original_media.hls_file and os.path.exists(original_media.hls_file):
-        p = os.path.dirname(original_media.hls_file)
-        if os.path.exists(p):
-            new_hls_file = original_media.hls_file.replace(original_media.uid.hex, new_media.uid.hex)
-            models.Media.objects.filter(id=new_media.id).update(hls_file=new_hls_file)
-            new_p = p.replace(original_media.uid.hex, new_media.uid.hex)
+        if original_media.hls_file and os.path.exists(original_media.hls_file):
+            p = os.path.dirname(original_media.hls_file)
+            if os.path.exists(p):
+                new_hls_file = original_media.hls_file.replace(original_media.uid.hex, new_media.uid.hex)
+                models.Media.objects.filter(id=new_media.id).update(hls_file=new_hls_file)
+                new_p = p.replace(original_media.uid.hex, new_media.uid.hex)
 
-            if not os.path.exists(new_p):
-                os.makedirs(new_p, exist_ok=True)
-            cmd = f"cp -r {p}/* {new_p}/"
-            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-            logger.debug(
-                "HLS files copied - original_friendly_token=%s, new_friendly_token=%s",
-                original_media.friendly_token,
-                friendly_token,
-            )
+                if not os.path.exists(new_p):
+                    os.makedirs(new_p, exist_ok=True)
+                cmd = f"cp -r {p}/* {new_p}/"
+                subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+                logger.debug(
+                    "HLS files copied - original_friendly_token=%s, new_friendly_token=%s",
+                    original_media.friendly_token,
+                    friendly_token,
+                )
 
-    logger.info(
-        "Video copy completed - original_friendly_token=%s, new_friendly_token=%s",
-        original_media.friendly_token,
-        friendly_token,
-    )
-    return new_media
+        logger.info(
+            "Video copy completed - original_friendly_token=%s, new_friendly_token=%s",
+            original_media.friendly_token,
+            friendly_token,
+        )
     except Exception:
         logger.exception(
             "Error copying video - original_friendly_token=%s",
             original_media.friendly_token,
         )
         raise
+    return new_media
 
 
 def create_video_trim_request(media, data):
