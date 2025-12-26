@@ -508,6 +508,28 @@ Logging behavior is controlled by the logging configuration in `cms/settings.py`
 - Customizing log formats
 - Enabling debug logging
 
+#### SQL Debug Logging
+
+By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable detailed SQL query logging for debugging database operations, set `ENABLE_SQL_DEBUG_LOGGING=True` in your `local_settings.py` or via environment variable:
+
+```python
+# In local_settings.py
+DEBUG = True
+ENABLE_SQL_DEBUG_LOGGING = True
+```
+
+**Note**: SQL debug logging requires both `DEBUG=True` and `ENABLE_SQL_DEBUG_LOGGING=True` to be enabled.
+
+#### Celery Logging Behavior
+
+MediaCMS includes optimized Celery logging configuration:
+
+- **`celery.task` logger**: Set to DEBUG level when `DEBUG=True` to capture useful task execution details
+- **`celery` logger**: Set to INFO level to reduce noise while preserving important messages
+- **`celery.utils.functional` logger**: Suppressed at WARNING level to avoid useless debug messages from Celery's internal function introspection
+
+This configuration ensures you get useful task execution logs without being overwhelmed by internal Celery debug messages.
+
 ### Testing Logging
 
 When writing tests, you can verify logging behavior:

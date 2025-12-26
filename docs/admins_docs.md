@@ -1120,14 +1120,17 @@ When `DEBUG = True` in your settings, MediaCMS automatically enables enhanced lo
 - **Console Output**: Logs are also displayed in the console/terminal (in addition to the log file)
 - **Log Level**: Automatically set to `DEBUG` (overrides `LOGLEVEL` setting)
 - **Additional Loggers**: 
-  - `celery.task` - Individual Celery task execution
-  - `celery` - Celery worker processes
-  - `django.db.backends` - Database queries (set to INFO level to avoid excessive SQL logging)
+  - `celery.task` - Individual Celery task execution (DEBUG level)
+  - `celery` - Celery worker processes (INFO level to reduce noise)
+  - `celery.utils.functional` - Suppressed at WARNING level to avoid useless debug messages
+  - `django.db.backends` - Database queries (only enabled if `ENABLE_SQL_DEBUG_LOGGING=True`)
   - `django.request` - HTTP request/response logging
 - **All App Loggers**: All application loggers (files, users, uploader, etc.) are set to DEBUG level and output to both file and console
 - **Formatters**: Verbose formatting with timestamps and module names
 
 **Important**: When `DEBUG = True`, the `LOGLEVEL` setting is automatically overridden to `DEBUG` for all loggers. This ensures comprehensive logging during development, regardless of the `LOGLEVEL` value.
+
+**SQL Query Logging**: By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable SQL query logging, you must set `ENABLE_SQL_DEBUG_LOGGING=True` (see [SQL Debug Logging](#sql-debug-logging) section below).
 
 This enhanced logging is useful for:
 - Local development
@@ -1144,6 +1147,10 @@ The logging configuration is located in `cms/settings.py`. The primary mechanism
 # LOGLEVEL can be overridden via environment variable or local_settings.py
 # Default: "ERROR" (matches current behavior)
 LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
+
+# Enable SQL debug logging (default: False)
+# When DEBUG=True, SQL queries are only logged if ENABLE_SQL_DEBUG_LOGGING is also True
+ENABLE_SQL_DEBUG_LOGGING = os.environ.get("ENABLE_SQL_DEBUG_LOGGING", "False").lower() == "true"
 
 # When DEBUG=True, log level is automatically set to "DEBUG"
 effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
@@ -1260,6 +1267,27 @@ LOGGING["loggers"]["django"]["level"] = "INFO"
 
 **Note**: When `DEBUG = True`, the log level is automatically set to `DEBUG` for all loggers, overriding the `LOGLEVEL` setting. This ensures comprehensive logging during development.
 
+#### SQL Debug Logging
+
+By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable detailed SQL query logging, you must explicitly set `ENABLE_SQL_DEBUG_LOGGING=True`.
+
+**Method 1: Override in `local_settings.py` (Recommended)**
+
+```python
+# Enable SQL debug logging
+DEBUG = True
+ENABLE_SQL_DEBUG_LOGGING = True
+```
+
+**Method 2: Use Environment Variable**
+
+```bash
+# Set environment variable before starting MediaCMS
+export ENABLE_SQL_DEBUG_LOGGING=True
+```
+
+**Note**: SQL debug logging requires both `DEBUG=True` and `ENABLE_SQL_DEBUG_LOGGING=True` to be enabled. This allows you to have detailed application logging without the SQL query noise.
+
 ### Common Scenarios
 
 #### Development Environment
@@ -1273,6 +1301,8 @@ For local development with detailed logging:
 **Example `local_settings.py` for development:**
 ```python
 DEBUG = True
+# Optionally enable SQL query logging (disabled by default to reduce log noise)
+# ENABLE_SQL_DEBUG_LOGGING = True
 ```
 
 #### Production Environment
@@ -1411,6 +1441,8 @@ MediaCMS logs exceptions and errors from the following areas:
 1. Ensure `DEBUG = False` in production
 2. Verify log level is set to ERROR (default)
 3. Check for misconfigured loggers in `local_settings.py`
+4. **SQL Query Logging**: SQL queries are disabled by default even when `DEBUG=True`. If you're seeing excessive SQL logs, ensure `ENABLE_SQL_DEBUG_LOGGING` is not set to `True`
+5. **Celery Logging**: MediaCMS automatically suppresses useless Celery debug messages (`celery.utils.functional`) and sets the general `celery` logger to INFO level to reduce noise while keeping useful task logs at DEBUG level
 
 #### Missing Log Information
 

@@ -606,6 +606,11 @@ except ImportError as e:
 # LOGLEVEL can be overridden via environment variable or local_settings.py
 LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
 
+# Enable SQL debug logging (default: False)
+# When DEBUG=True, SQL queries are only logged if ENABLE_SQL_DEBUG_LOGGING is also True
+# This can be set via environment variable or local_settings.py
+ENABLE_SQL_DEBUG_LOGGING = os.environ.get("ENABLE_SQL_DEBUG_LOGGING", "False").lower() == "true"
+
 # Determine effective log level: use DEBUG when DEBUG=True, otherwise use LOGLEVEL
 effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
 
@@ -690,11 +695,13 @@ if DEBUG:
         "formatter": "detailed",
     }
     # Set django.db.backends to DEBUG for detailed SQL logging in development
-    LOGGING["loggers"]["django.db.backends"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
+    # Only enable SQL debug logging if explicitly requested via ENABLE_SQL_DEBUG_LOGGING
+    if ENABLE_SQL_DEBUG_LOGGING:
+        LOGGING["loggers"]["django.db.backends"] = {
+            "handlers": ["file", "console"],
+            "level": "DEBUG",
+            "propagate": False,
+        }
     # Add console handler to existing loggers for DEBUG mode
     LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
 
@@ -704,9 +711,16 @@ if DEBUG:
         "level": "DEBUG",
         "propagate": False,
     }
+    # Set celery logger to INFO to reduce noise, but keep celery.task at DEBUG for useful task logs
     LOGGING["loggers"]["celery"] = {
         "handlers": ["file", "console"],
-        "level": "DEBUG",
+        "level": "INFO",
+        "propagate": False,
+    }
+    # Suppress useless celery.utils.functional debug messages
+    LOGGING["loggers"]["celery.utils.functional"] = {
+        "handlers": ["file", "console"],
+        "level": "WARNING",
         "propagate": False,
     }
     LOGGING["loggers"]["django.request"] = {
