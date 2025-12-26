@@ -69,38 +69,48 @@ class FineUploaderView(generic.FormView):
         )
 
         if self.upload.concurrent and self.chunks_done:
-            try:
+            # Check if file already exists (from a previous successful combination)
+            media_file = os.path.join(settings.MEDIA_ROOT, self.upload._full_file_path)
+            if os.path.exists(media_file):
                 logger.debug(
-                    "Combining upload chunks - user_id=%s, filename=%s, total_parts=%s",
-                    getattr(self.request.user, 'id', None),
-                    self.upload.original_filename,
-                    self.upload.total_parts,
-                )
-                self.upload.combine_chunks()
-                logger.debug(
-                    "Chunks combined successfully - user_id=%s, filename=%s",
+                    "Combined file already exists, skipping chunk combination - user_id=%s, filename=%s",
                     getattr(self.request.user, 'id', None),
                     self.upload.original_filename,
                 )
-            except FileNotFoundError as e:
-                logger.error(
-                    "File not found during chunk combination - user_id=%s, filename=%s, file_path=%s, error=%s",
-                    getattr(self.request.user, 'id', None),
-                    self.upload.original_filename,
-                    getattr(self.upload, 'file_path', None),
-                    str(e),
-                )
-                data = {"success": False, "error": "Error with File Uploading"}
-                return self.make_response(data, status=400)
-            except Exception:
-                logger.exception(
-                    "Unexpected error combining upload chunks - user_id=%s, filename=%s, file_path=%s",
-                    getattr(self.request.user, 'id', None),
-                    self.upload.original_filename,
-                    getattr(self.upload, 'file_path', None),
-                )
-                data = {"success": False, "error": "Error with File Uploading"}
-                return self.make_response(data, status=400)
+                self.upload.real_path = self.upload._full_file_path
+            else:
+                try:
+                    logger.debug(
+                        "Combining upload chunks - user_id=%s, filename=%s, total_parts=%s",
+                        getattr(self.request.user, 'id', None),
+                        self.upload.original_filename,
+                        self.upload.total_parts,
+                    )
+                    self.upload.combine_chunks()
+                    logger.debug(
+                        "Chunks combined successfully - user_id=%s, filename=%s",
+                        getattr(self.request.user, 'id', None),
+                        self.upload.original_filename,
+                    )
+                except FileNotFoundError as e:
+                    logger.error(
+                        "File not found during chunk combination - user_id=%s, filename=%s, file_path=%s, error=%s",
+                        getattr(self.request.user, 'id', None),
+                        self.upload.original_filename,
+                        getattr(self.upload, 'file_path', None),
+                        str(e),
+                    )
+                    data = {"success": False, "error": "Error with File Uploading"}
+                    return self.make_response(data, status=400)
+                except Exception:
+                    logger.exception(
+                        "Unexpected error combining upload chunks - user_id=%s, filename=%s, file_path=%s",
+                        getattr(self.request.user, 'id', None),
+                        self.upload.original_filename,
+                        getattr(self.upload, 'file_path', None),
+                    )
+                    data = {"success": False, "error": "Error with File Uploading"}
+                    return self.make_response(data, status=400)
         elif self.upload.total_parts == 1:
             logger.debug(
                 "Saving single-part upload - user_id=%s, filename=%s",
