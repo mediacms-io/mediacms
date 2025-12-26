@@ -139,6 +139,7 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_USERNAME_MIN_LENGTH = 4
 ACCOUNT_ADAPTER = "users.adapter.MyAccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "users.forms.SignupForm"
+ACCOUNT_FORMS = {"login": "users.forms.LoginForm"}
 ACCOUNT_USERNAME_VALIDATORS = "users.validators.custom_username_validators"
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = False
 ACCOUNT_USERNAME_REQUIRED = True

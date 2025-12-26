@@ -122,22 +122,56 @@ class LoginSerializer(serializers.Serializer):
         if password is None:
             raise serializers.ValidationError('password is required to log in.')
 
+        # Get IP address from request context
+        request = self.context.get('request')
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+
+        # Check if user exists before authenticating to distinguish failure types
+        try:
+            if '@' in username_or_email:
+                user_exists = User.objects.filter(email=username_or_email).exists()
+            else:
+                user_exists = User.objects.filter(username=username_or_email).exists()
+        except Exception:
+            user_exists = False
+
         user = authenticate(username=username_or_email, password=password)
 
         if user is None:
-            logger.warning(
-                "Login failed - user_not_found, attempted_username_or_email=%s",
-                username_or_email,
-            )
-            raise serializers.ValidationError('User not found.')
+            if user_exists:
+                # User exists but password is wrong
+                logger.warning(
+                    "Login failed - wrong_password, attempted_username_or_email=%s, ip=%s",
+                    username_or_email,
+                    client_ip,
+                )
+                raise serializers.ValidationError('Invalid credentials.')
+            else:
+                # User doesn't exist
+                logger.warning(
+                    "Login failed - user_not_found, attempted_username_or_email=%s, ip=%s",
+                    username_or_email,
+                    client_ip,
+                )
+                raise serializers.ValidationError('User not found.')
 
         if not user.is_active:
             logger.warning(
-                "Login failed - user_deactivated, user_id=%s, username=%s",
+                "Login failed - user_deactivated, user_id=%s, username=%s, ip=%s",
                 user.id,
                 user.username,
+                client_ip,
             )
             raise serializers.ValidationError('User has been deactivated.')
+
+        if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_approved:
+            logger.warning(
+                "Login failed - user_not_approved, user_id=%s, username=%s, ip=%s",
+                user.id,
+                user.username,
+                client_ip,
+            )
+            raise serializers.ValidationError('User account is pending approval.')
 
         token = Token.objects.filter(user=user).first()
         if not token:

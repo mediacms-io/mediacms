@@ -519,7 +519,7 @@ class LoginView(APIView):
     def post(self, request):
         data = request.data
 
-        serializer = self.serializer_class(data=data)
+        serializer = self.serializer_class(data=data, context={'request': request})
         try:
             serializer.is_valid(raise_exception=True)
             # Login successful - get user info from serializer data

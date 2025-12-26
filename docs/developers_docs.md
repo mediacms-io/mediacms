@@ -1084,10 +1084,34 @@ logger.info(
     request.META.get('REMOTE_ADDR'),
 )
 
-# Failed login attempt
+# Failed login attempts - different failure types
+# User not found
 logger.warning(
-    "Login failed: user not found - username_or_email=%s, ip=%s",
+    "Login failed - user_not_found, attempted_username_or_email=%s, ip=%s",
     username_or_email,
+    request.META.get('REMOTE_ADDR'),
+)
+
+# Wrong password (user exists but password incorrect)
+logger.warning(
+    "Login failed - wrong_password, attempted_username_or_email=%s, ip=%s",
+    username_or_email,
+    request.META.get('REMOTE_ADDR'),
+)
+
+# User deactivated
+logger.warning(
+    "Login failed - user_deactivated, user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
+    request.META.get('REMOTE_ADDR'),
+)
+
+# User not approved
+logger.warning(
+    "Login failed - user_not_approved, user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
     request.META.get('REMOTE_ADDR'),
 )
 ```

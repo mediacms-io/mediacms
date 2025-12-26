@@ -1304,13 +1304,29 @@ The following authentication-related events are logged:
   - Log level: INFO
   - Example: `Login successful (django-allauth) - user_id=1, username=admin, ip=192.168.1.100`
 
+- **Login (SAML)**: When users successfully authenticate via SAML/SSO
+  - Log level: INFO (logged via django-allauth user_logged_in signal)
+  - Example: `Login successful (django-allauth) - user_id=1, username=admin, ip=192.168.1.100`
+
 - **Logout**: When users log out via django-allauth
   - Log level: INFO
   - Example: `Logout (django-allauth) - user_id=1, username=admin`
 
-- **Failed Login Attempts**: When login fails (user not found, invalid password, deactivated user, missing credentials)
+- **Failed Login Attempts**: Comprehensive logging of failed login attempts across all authentication methods (API, django-allauth, SAML)
   - Log level: WARNING
-  - Example: `Login failed: user not found - username_or_email=testuser, ip=192.168.1.100`
+  - Failure types logged:
+    - `user_not_found`: User account does not exist
+    - `wrong_password`: User exists but password is incorrect
+    - `user_deactivated`: User account is inactive
+    - `user_not_approved`: User account is pending approval (when USERS_NEEDS_TO_BE_APPROVED is enabled)
+    - `saml_error`: SAML authentication error (invalid response, processing errors)
+    - `authentication_cancelled`: SAML authentication was cancelled
+    - `session_missing`: SAML session data missing
+    - `idp_initiated_rejected`: IdP-initiated SSO was rejected
+  - Examples:
+    - API: `Login failed - wrong_password, attempted_username_or_email=testuser, ip=192.168.1.100`
+    - django-allauth: `Login failed (django-allauth) - user_not_found, attempted_username_or_email=testuser, ip=192.168.1.100`
+    - SAML: `Login failed (SAML) - saml_error, organization_slug=myorg, errors=invalid_response, error_reason=Invalid signature, ip=192.168.1.100`
 
 - **Password Reset Request**: When a user requests a password reset
   - Log level: INFO

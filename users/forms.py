@@ -1,9 +1,61 @@
+import logging
+
+from allauth.account.forms import LoginForm as AllAuthLoginForm
 from django import forms
 from django.conf import settings
+from django.contrib.auth import authenticate
 
 from files.methods import is_mediacms_manager
 
 from .models import Channel, User
+
+logger = logging.getLogger(__name__)
+
+
+class LoginForm(AllAuthLoginForm):
+    """Custom login form to capture failed login attempts"""
+
+    def clean(self):
+        """Override clean to log failed login attempts before parent validation"""
+        login = self.cleaned_data.get('login') if hasattr(self, 'cleaned_data') else self.data.get('login')
+        password = self.cleaned_data.get('password') if hasattr(self, 'cleaned_data') else self.data.get('password')
+
+        # Get IP address from request
+        request = self.request if hasattr(self, 'request') else None
+        client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+
+        # Call parent clean which will handle authentication
+        try:
+            cleaned_data = super().clean()
+        except forms.ValidationError as e:
+            # Authentication failed - log it
+            if login and password:
+                try:
+                    if '@' in login:
+                        user_exists = User.objects.filter(email=login).exists()
+                    else:
+                        user_exists = User.objects.filter(username=login).exists()
+                except Exception:
+                    user_exists = False
+
+                if user_exists:
+                    # User exists but password is wrong
+                    logger.warning(
+                        "Login failed (django-allauth) - wrong_password, attempted_username_or_email=%s, ip=%s",
+                        login,
+                        client_ip,
+                    )
+                else:
+                    # User doesn't exist
+                    logger.warning(
+                        "Login failed (django-allauth) - user_not_found, attempted_username_or_email=%s, ip=%s",
+                        login,
+                        client_ip,
+                    )
+            # Re-raise the validation error
+            raise
+
+        return cleaned_data
 
 
 class SignupForm(forms.Form):
