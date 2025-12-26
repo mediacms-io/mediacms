@@ -2,7 +2,6 @@ import logging
 
 from allauth.account.adapter import DefaultAccountAdapter
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
@@ -53,12 +52,12 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def authenticate(self, request, **credentials):
         """Override authenticate to log failed attempts"""
         user = super().authenticate(request, **credentials)
-        
+
         if user is None and request:
             # Authentication failed - try to determine why
             client_ip = request.META.get('REMOTE_ADDR', 'unknown')
             username_or_email = credentials.get('username') or credentials.get('email', '')
-            
+
             # Check if user exists
             try:
                 if '@' in username_or_email:
@@ -67,7 +66,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
                     user_exists = User.objects.filter(username=username_or_email).exists()
             except Exception:
                 user_exists = False
-            
+
             if user_exists:
                 # User exists but password is wrong
                 logger.warning(
@@ -82,7 +81,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
                     username_or_email,
                     client_ip,
                 )
-        
+
         return user
 
     def pre_login(self, request, user, **kwargs):
@@ -98,7 +97,6 @@ class MyAccountAdapter(DefaultAccountAdapter):
             from allauth.exceptions import ImmediateHttpResponse
             from django.http import HttpResponseRedirect
             from django.urls import reverse
-            raise ImmediateHttpResponse(
-                HttpResponseRedirect(reverse('account_login') + '?approval_required=1')
-            )
+
+            raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login') + '?approval_required=1'))
         return super().pre_login(request, user, **kwargs)

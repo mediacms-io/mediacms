@@ -3,7 +3,6 @@ import logging
 from allauth.account.forms import LoginForm as AllAuthLoginForm
 from django import forms
 from django.conf import settings
-from django.contrib.auth import authenticate
 
 from files.methods import is_mediacms_manager
 
@@ -27,7 +26,7 @@ class LoginForm(AllAuthLoginForm):
         # Call parent clean which will handle authentication
         try:
             cleaned_data = super().clean()
-        except forms.ValidationError as e:
+        except forms.ValidationError:
             # Authentication failed - log it
             if login and password:
                 try:
