@@ -385,128 +385,6 @@ if not os.path.exists(LOGS_DIR):
 if not os.path.isfile(error_filename):
     open(error_filename, 'a').close()
 
-# Logging configuration
-# Default: ERROR-level file logging (preserves existing behavior)
-# Enhanced: Console handler and formatters available when DEBUG=True
-# LOGLEVEL can be overridden via environment variable or local_settings.py
-LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
-
-# Determine effective log level: use DEBUG when DEBUG=True, otherwise use LOGLEVEL
-effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {name} {funcName}:{lineno} {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-        "detailed": {
-            "format": "{levelname} {asctime} {name} {funcName}:{lineno} [{pathname}:{lineno}] {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "file": {
-            "level": effective_log_level,
-            "class": "logging.FileHandler",
-            "filename": error_filename,
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": True,
-        },
-        "files": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "users": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "uploader": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "saml_auth": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "rbac": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "identity_providers": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "actions": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-        "cms": {
-            "handlers": ["file"],
-            "level": effective_log_level,
-            "propagate": False,
-        },
-    },
-}
-
-# Enhanced logging configuration when DEBUG=True
-# Adds console handler and additional loggers for development
-if DEBUG:
-    LOGGING["handlers"]["console"] = {
-        "level": "DEBUG",
-        "class": "logging.StreamHandler",
-        "formatter": "detailed",
-    }
-    # Set django.db.backends to DEBUG for detailed SQL logging in development
-    LOGGING["loggers"]["django.db.backends"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
-    # Add console handler to existing loggers for DEBUG mode
-    LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
-
-    # Add additional loggers for development
-    LOGGING["loggers"]["celery.task"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
-    LOGGING["loggers"]["celery"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
-    LOGGING["loggers"]["django.request"] = {
-        "handlers": ["file", "console"],
-        "level": "DEBUG",
-        "propagate": False,
-    }
-    # Add console handler to app-specific loggers for DEBUG mode
-    for app_name in ["files", "users", "uploader", "saml_auth", "rbac", "identity_providers", "actions", "cms"]:
-        if app_name in LOGGING["loggers"]:
-            LOGGING["loggers"][app_name]["handlers"] = ["file", "console"]
-
-# Initialize logger after LOGGING configuration
-logger = logging.getLogger(__name__)
-
 DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
@@ -714,11 +592,135 @@ try:
     ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
 except ImportError as e:
     # local_settings not in use
-    # Logger is now configured at this point
-    logger.warning("local_settings.py not found or import failed: %s - %s", type(e).__name__, str(e))
+    # Use basic logging since logger is not yet configured
+    logging.warning("local_settings.py not found or import failed: %s - %s", type(e).__name__, str(e))
     pass
 
 # Don't add new settings below that could be overridden in local_settings.py!!!
+
+# Logging configuration
+# Note: This is placed after local_settings import so that DEBUG overrides from local_settings
+# are properly reflected in the logging configuration
+# Default: ERROR-level file logging (preserves existing behavior)
+# Enhanced: Console handler and formatters available when DEBUG=True
+# LOGLEVEL can be overridden via environment variable or local_settings.py
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
+
+# Determine effective log level: use DEBUG when DEBUG=True, otherwise use LOGLEVEL
+effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "detailed": {
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} [{pathname}:{lineno}] {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": effective_log_level,
+            "class": "logging.FileHandler",
+            "filename": error_filename,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": True,
+        },
+        "files": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "uploader": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "saml_auth": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "rbac": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "identity_providers": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "actions": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "cms": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+    },
+}
+
+# Enhanced logging configuration when DEBUG=True
+# Adds console handler and additional loggers for development
+if DEBUG:
+    LOGGING["handlers"]["console"] = {
+        "level": "DEBUG",
+        "class": "logging.StreamHandler",
+        "formatter": "detailed",
+    }
+    # Set django.db.backends to DEBUG for detailed SQL logging in development
+    LOGGING["loggers"]["django.db.backends"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    # Add console handler to existing loggers for DEBUG mode
+    LOGGING["loggers"]["django"]["handlers"] = ["file", "console"]
+
+    # Add additional loggers for development
+    LOGGING["loggers"]["celery.task"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["celery"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    LOGGING["loggers"]["django.request"] = {
+        "handlers": ["file", "console"],
+        "level": "DEBUG",
+        "propagate": False,
+    }
+    # Add console handler to app-specific loggers for DEBUG mode
+    for app_name in ["files", "users", "uploader", "saml_auth", "rbac", "identity_providers", "actions", "cms"]:
+        if app_name in LOGGING["loggers"]:
+            LOGGING["loggers"][app_name]["handlers"] = ["file", "console"]
+
+# Initialize logger after LOGGING configuration
+logger = logging.getLogger(__name__)
 
 if "http" not in FRONTEND_HOST:
     # FRONTEND_HOST needs a http:// preffix
