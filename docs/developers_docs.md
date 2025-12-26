@@ -586,11 +586,11 @@ def log_password_changed(sender, request, user, **kwargs):
     )
 ```
 
-**Account Signup** (`account_signup`):
+**Account Signup** (`user_signed_up`):
 ```python
-from allauth.account.signals import account_signup
+from allauth.account.signals import user_signed_up
 
-@receiver(account_signup)
+@receiver(user_signed_up)
 def log_account_signup(sender, request, user, **kwargs):
     client_ip = request.META.get('REMOTE_ADDR', 'unknown')
     logger.info(

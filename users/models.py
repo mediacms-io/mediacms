@@ -3,12 +3,12 @@ from django.contrib.auth.models import AbstractUser
 from django.core.mail import EmailMessage
 from django.db import models
 from allauth.account.signals import (
-    account_signup,
     email_confirmed,
     password_changed,
     password_reset,
     user_logged_in,
     user_logged_out,
+    user_signed_up,
 )
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -412,7 +412,7 @@ def log_password_changed(sender, request, user, **kwargs):
     )
 
 
-@receiver(account_signup)
+@receiver(user_signed_up)
 def log_account_signup(sender, request, user, **kwargs):
     """Log account signup via django-allauth"""
     import logging

@@ -1479,7 +1479,7 @@ MediaCMS uses Django signals to automatically log important events. The followin
   - Log level: INFO
   - Logs: user_id, username, IP address
 
-- **`account_signup`** (`users/models.py`)
+- **`user_signed_up`** (`users/models.py`)
   - Triggered: When a new account is created via django-allauth
   - Log level: INFO
   - Logs: user_id, username, email, IP address
