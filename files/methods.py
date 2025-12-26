@@ -17,6 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from cms import celery_app
+from cms.utils import get_client_ip
 
 from . import helpers, models
 from .helpers import mask_ip
@@ -38,10 +39,19 @@ def get_user_or_session(request):
         if not request.session.session_key:
             request.session.save()
         ret["user_session"] = request.session.session_key
+
+    # Get client IP address, preferring request.client_ip (set by ProxyAwareMiddleware)
+    # Fall back to get_client_ip utility or REMOTE_ADDR
+    client_ip = getattr(request, 'client_ip', None)
+    if client_ip is None:
+        client_ip = get_client_ip(request)
+    if client_ip is None:
+        client_ip = request.META.get("REMOTE_ADDR")
+
     if settings.MASK_IPS_FOR_ACTIONS:
-        ret["remote_ip_addr"] = mask_ip(request.META.get("REMOTE_ADDR"))
+        ret["remote_ip_addr"] = mask_ip(client_ip)
     else:
-        ret["remote_ip_addr"] = request.META.get("REMOTE_ADDR")
+        ret["remote_ip_addr"] = client_ip
     return ret
 
 

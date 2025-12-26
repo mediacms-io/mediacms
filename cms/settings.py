@@ -585,6 +585,55 @@ WHISPER_MODEL = "base"
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
 
+# Reverse proxy configuration settings
+# These settings control how MediaCMS handles requests from reverse proxies (nginx, Apache, load balancers, etc.)
+# For detailed documentation, see docs/reverse_proxy.md
+
+# TRUSTED_PROXIES: List of IP addresses or CIDR networks that are trusted proxies
+# Only proxy headers (X-Forwarded-For, X-Real-IP) from these IPs will be trusted
+# Default includes RFC 1918 private networks and localhost
+# Format: List of strings like ['127.0.0.1', '10.0.0.0/8', '192.168.0.0/16']
+# Empty list means no proxies trusted (backward compatible - existing deployments work as-is)
+TRUSTED_PROXIES = [
+    '127.0.0.1/32',  # IPv4 localhost
+    '::1/128',  # IPv6 localhost
+    '10.0.0.0/8',  # Private network (RFC 1918)
+    '172.16.0.0/12',  # Private network (RFC 1918)
+    '192.168.0.0/16',  # Private network (RFC 1918)
+    'fc00::/7',  # IPv6 private networks (RFC 4193)
+]
+
+# PROXY_AWARE_MIDDLEWARE_ENABLED: Enable the proxy-aware middleware
+# When enabled, the middleware will extract real client IPs from proxy headers
+# Default: True if TRUSTED_PROXIES is configured, False otherwise
+# Can be overridden in local_settings.py
+PROXY_AWARE_MIDDLEWARE_ENABLED = bool(TRUSTED_PROXIES)
+
+# SET_REAL_IP_IN_META: Whether to modify request.META['REMOTE_ADDR'] with the real client IP
+# When True: Sets REMOTE_ADDR to real client IP (allows Django's built-in middleware to work)
+# When False: Only sets request.client_ip attribute (safer default, recommended)
+# Default: False for maximum security
+SET_REAL_IP_IN_META = False
+
+# USE_X_FORWARDED_HOST: Use X-Forwarded-Host header to determine the host
+# Set to True when behind a reverse proxy that sets this header
+# Default: False (backward compatible)
+USE_X_FORWARDED_HOST = False
+
+# SECURE_PROXY_SSL_HEADER: Tuple specifying header that indicates HTTPS connection
+# Example: ('HTTP_X_FORWARDED_PROTO', 'https')
+# Set this when behind a reverse proxy that terminates SSL/TLS
+# Default: None (backward compatible)
+SECURE_PROXY_SSL_HEADER = None
+
+# USE_X_FORWARDED_PORT: Use X-Forwarded-Port header
+# Default: False
+USE_X_FORWARDED_PORT = False
+
+# USE_X_FORWARDED_PREFIX: Use X-Forwarded-Prefix header
+# Default: False
+USE_X_FORWARDED_PREFIX = False
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
@@ -765,6 +814,16 @@ else:
 # CSRF_COOKIE_SECURE = True
 # SESSION_COOKIE_SECURE = True
 
+# Session and CSRF cookie settings for reverse proxy support
+# When behind a reverse proxy with HTTPS, you may need to enable these:
+# - Set CSRF_COOKIE_SECURE = True
+# - Set SESSION_COOKIE_SECURE = True
+# - Set SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# The default SameSite settings ('Lax') work well with most reverse proxies
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+# SESSION_COOKIE_DOMAIN is None by default, which respects the proxy's Host header
+
 PYSUBS_COMMAND = "pysubs2"
 
 # the following is related to local development using docker
@@ -791,3 +850,16 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+# Conditionally add ProxyAwareMiddleware if enabled
+# Insert after SecurityMiddleware, before SessionMiddleware
+# This allows the middleware to process proxy headers early in the request chain
+# Note: PROXY_AWARE_MIDDLEWARE_ENABLED is evaluated here, after potential local_settings override
+if PROXY_AWARE_MIDDLEWARE_ENABLED:
+    try:
+        security_index = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")
+        # Insert after SecurityMiddleware, before SessionMiddleware
+        MIDDLEWARE.insert(security_index + 1, "cms.middleware.ProxyAwareMiddleware")
+    except ValueError:
+        # SecurityMiddleware not found, insert at beginning
+        MIDDLEWARE.insert(0, "cms.middleware.ProxyAwareMiddleware")

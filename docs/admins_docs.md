@@ -25,11 +25,12 @@
 - [22. Role-Based Access Control](#22-role-based-access-control)
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
-- [25. Custom urls](#25-custom-urls)
-- [26. Allowed files](#26-allowed-files)
-- [27. User upload limits](#27-user-upload-limits)
-- [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
-- [29. Logging Configuration and Management](#29-logging-configuration-and-management)
+- [25. Reverse Proxy Configuration](#25-reverse-proxy-configuration)
+- [26. Custom urls](#26-custom-urls)
+- [27. Allowed files](#27-allowed-files)
+- [28. User upload limits](#28-user-upload-limits)
+- [29. Whisper Transcribe for Automatic Subtitles](#29-whisper-transcribe-for-automatic-subtitles)
+- [30. Logging Configuration and Management](#30-logging-configuration-and-management)
 
 
 ## 1. Welcome
@@ -1042,18 +1043,77 @@ USE_IDENTITY_PROVIDERS = True
 
 Visiting the admin, you will see the Identity Providers tab and you can add one.
 
-## 25. Custom urls
+## 25. Reverse Proxy Configuration
+
+MediaCMS includes built-in support for reverse proxies (nginx, Apache, load balancers, etc.). When MediaCMS is deployed behind a reverse proxy, proper configuration ensures that client IP addresses are logged correctly and sessions work properly.
+
+### Quick Start
+
+1. **Configure your reverse proxy** to forward required headers (see examples below)
+
+2. **Edit `local_settings.py`** to enable proxy support:
+   ```python
+   # Add your proxy IP to trusted proxies
+   TRUSTED_PROXIES = [
+       '127.0.0.1',      # localhost
+       '192.168.1.10',   # Your reverse proxy IP
+       '10.0.0.0/8',     # Private network range (if applicable)
+   ]
+
+   # Enable proxy-aware middleware
+   PROXY_AWARE_MIDDLEWARE_ENABLED = True
+
+   # If using HTTPS, configure SSL detection
+   USE_X_FORWARDED_HOST = True
+   SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+   SECURE_SSL_REDIRECT = True
+   CSRF_COOKIE_SECURE = True
+   SESSION_COOKIE_SECURE = True
+   ```
+
+3. **Restart MediaCMS** to apply changes
+
+### Basic nginx Configuration
+
+```nginx
+location / {
+    proxy_pass http://mediacms:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+### Common Issues
+
+- **All users appear to share the same IP**: Ensure `TRUSTED_PROXIES` includes your proxy IP
+- **Login sessions shared between users**: Check session cookie domain and host header forwarding
+- **HTTPS/SSL errors**: Enable `SECURE_PROXY_SSL_HEADER` and secure cookie settings
+
+### Full Documentation
+
+For comprehensive documentation including:
+- Detailed architecture explanation
+- Configuration examples for various scenarios (nginx, Apache, cloud load balancers, Docker)
+- Troubleshooting guide
+- Security considerations
+- Advanced middleware configuration
+
+See the [Reverse Proxy Configuration Guide](reverse_proxy.md).
+
+## 26. Custom urls
 To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
 This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.
 
-## 26. Allowed files
+## 27. Allowed files
 MediaCMS performs identification attempts on new file uploads and only allows certain file types specified in the `ALLOWED_MEDIA_UPLOAD_TYPES` setting. By default, only ["video", "audio", "image", "pdf"] files are allowed.
 
 When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
 
 If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file. If 'all' is specified in this list, no check is performed and all files are allowed.
 
-## 27. User upload limits
+## 28. User upload limits
 MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
 
 When a user reaches this limit, they will no longer be able to upload new media until they delete some of their existing content. This limit applies regardless of the user's role or permissions in the system.
@@ -1064,7 +1124,7 @@ To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
 ```
 
-## 28. Whisper Transcribe for Automatic Subtitles
+## 29. Whisper Transcribe for Automatic Subtitles
 MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles for your media files. This feature is useful for making your content more accessible.
 
 ### How it works
@@ -1078,7 +1138,7 @@ By default, all users have the ability to send a request for a video to be trans
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
 
-## 29. Logging Configuration and Management
+## 30. Logging Configuration and Management
 
 MediaCMS includes comprehensive logging capabilities to help administrators monitor, debug, and troubleshoot the application. This section covers logging configuration, log file locations, and common scenarios.
 
@@ -1091,7 +1151,7 @@ MediaCMS uses Python's standard `logging` module to capture application events, 
 By default, MediaCMS stores log files in the `logs/` directory within your project root:
 
 - **Django application log file**: `logs/debug.log` - Contains Django application logs (errors, exceptions, etc.)
-- **Celery log files**: 
+- **Celery log files**:
   - `logs/celery_long.log` - Long-running Celery tasks
   - `logs/celery_short.log` - Short-running Celery tasks
   - `logs/celery_beat.log` - Celery beat scheduler logs
@@ -1119,7 +1179,7 @@ When `DEBUG = True` in your settings, MediaCMS automatically enables enhanced lo
 
 - **Console Output**: Logs are also displayed in the console/terminal (in addition to the log file)
 - **Log Level**: Automatically set to `DEBUG` (overrides `LOGLEVEL` setting)
-- **Additional Loggers**: 
+- **Additional Loggers**:
   - `celery.task` - Individual Celery task execution (DEBUG level)
   - `celery` - Celery worker processes (INFO level to reduce noise)
   - `celery.utils.functional` - Suppressed at WARNING level to avoid useless debug messages
