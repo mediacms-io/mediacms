@@ -1,6 +1,12 @@
+import logging
+
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
+logger = logging.getLogger(__name__)
 
 
 class SAMLConfiguration(models.Model):
@@ -70,3 +76,35 @@ class SAMLConfiguration(models.Model):
         provider_settings["email_verified"] = self.verified_email
         provider_settings["email_authentication"] = self.email_authentication
         return provider_settings
+
+
+@receiver(post_save, sender=SAMLConfiguration)
+def saml_configuration_save(sender, instance, created, **kwargs):
+    """Log SAML configuration creation and updates"""
+    if created:
+        logger.info(
+            "SAML configuration created - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.social_app.name if instance.social_app else None,
+            instance.idp_id,
+        )
+    else:
+        logger.debug(
+            "SAML configuration updated - config_id=%s, social_app_id=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.idp_id,
+        )
+
+
+@receiver(post_delete, sender=SAMLConfiguration)
+def saml_configuration_delete(sender, instance, **kwargs):
+    """Log SAML configuration deletion"""
+    logger.info(
+        "SAML configuration deleted - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+        instance.id,
+        instance.social_app.id if instance.social_app else None,
+        instance.social_app.name if instance.social_app else None,
+        instance.idp_id,
+    )

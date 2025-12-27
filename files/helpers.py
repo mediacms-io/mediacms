@@ -143,9 +143,16 @@ def rm_file(filename):
     if os.path.isfile(filename):
         try:
             os.remove(filename)
+            logger.debug("Successfully removed file - filename=%s", filename)
             return True
-        except OSError:
-            pass
+        except OSError as e:
+            logger.warning(
+                "Error removing file - filename=%s, error=%s",
+                filename,
+                str(e),
+            )
+        except Exception:
+            logger.exception("Unexpected error removing file - filename=%s", filename)
     return False
 
 
@@ -162,9 +169,18 @@ def rm_dir(directory):
         if directory.startswith(settings.BASE_DIR):
             try:
                 shutil.rmtree(directory)
+                logger.debug("Successfully removed directory - directory=%s", directory)
                 return True
-            except (FileNotFoundError, PermissionError):
-                pass
+            except FileNotFoundError:
+                logger.debug("Directory not found during removal - directory=%s", directory)
+            except PermissionError as e:
+                logger.warning(
+                    "Permission denied removing directory - directory=%s, error=%s",
+                    directory,
+                    str(e),
+                )
+            except Exception:
+                logger.exception("Unexpected error removing directory - directory=%s", directory)
     return False
 
 
@@ -174,13 +190,23 @@ def url_from_path(filename):
 
 
 def create_temp_file(suffix=None, dir=settings.TEMP_DIRECTORY):
-    tf = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir)
-    return tf.name
+    try:
+        tf = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir)
+        logger.debug("Created temporary file - filename=%s, suffix=%s", tf.name, suffix)
+        return tf.name
+    except Exception:
+        logger.exception("Error creating temporary file - suffix=%s, dir=%s", suffix, dir)
+        raise
 
 
 def create_temp_dir(suffix=None, dir=settings.TEMP_DIRECTORY):
-    td = tempfile.mkdtemp(dir=dir)
-    return td
+    try:
+        td = tempfile.mkdtemp(dir=dir)
+        logger.debug("Created temporary directory - dir=%s, suffix=%s", td, suffix)
+        return td
+    except Exception:
+        logger.exception("Error creating temporary directory - suffix=%s, dir=%s", suffix, dir)
+        raise
 
 
 def produce_friendly_token(token_len=settings.FRIENDLY_TOKEN_LEN):
@@ -216,18 +242,69 @@ def run_command(cmd, cwd=None):
     stdout, stderr = process.communicate()
     # TODO: catch unicodedecodeerrors here...
     if process.returncode == 0:
+        logger.debug("Command executed successfully - cmd=%s, cwd=%s", cmd, cwd)
         try:
             ret["out"] = stdout.decode("utf-8")
-        except BaseException:
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for command stdout - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
+            ret["out"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding command stdout - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
             ret["out"] = ""
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException:
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for command stderr - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
+            ret["error"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding command stderr - cmd=%s, cwd=%s, error=%s",
+                cmd,
+                cwd,
+                str(e),
+            )
             ret["error"] = ""
     else:
+        logger.warning(
+            "Command failed - cmd=%s, returncode=%s, cwd=%s",
+            cmd,
+            process.returncode,
+            cwd,
+        )
         try:
             ret["error"] = stderr.decode("utf-8")
-        except BaseException:
+        except UnicodeDecodeError as e:
+            logger.warning(
+                "Unicode decode error for failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
+                cmd,
+                process.returncode,
+                cwd,
+                str(e),
+            )
+            ret["error"] = ""
+        except Exception as e:
+            logger.warning(
+                "Error decoding failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
+                cmd,
+                process.returncode,
+                cwd,
+                str(e),
+            )
             ret["error"] = ""
     return ret
 
@@ -257,6 +334,7 @@ def media_file_info(input_file):
     ret = {}
 
     if not os.path.isfile(input_file):
+        logger.warning("File not found for media info extraction - input_file=%s", input_file)
         ret["fail"] = True
         return ret
 
@@ -267,7 +345,9 @@ def media_file_info(input_file):
     stdout = run_command(cmd).get("out")
     if stdout:
         file_size = int(stdout.strip())
+        logger.debug("File size retrieved - input_file=%s, size=%s", input_file, file_size)
     else:
+        logger.error("Failed to get file size - input_file=%s", input_file)
         ret["fail"] = True
         return ret
 
@@ -292,7 +372,12 @@ def media_file_info(input_file):
     stdout = run_command(cmd).get("out")
     try:
         info = json.loads(stdout)
-    except TypeError:
+    except (TypeError, json.JSONDecodeError) as e:
+        logger.error(
+            "Failed to parse ffprobe JSON output - input_file=%s, error=%s",
+            input_file,
+            str(e),
+        )
         ret["fail"] = True
         return ret
 
@@ -329,6 +414,12 @@ def media_file_info(input_file):
         try:
             hms, msec = duration_str.split(".")
         except ValueError:
+            # Try comma separator as fallback
+            logger.debug(
+                "Duration string uses comma separator, using fallback - input_file=%s, duration_str=%s",
+                input_file,
+                duration_str,
+            )
             hms, msec = duration_str.split(",")
 
         total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
@@ -349,6 +440,11 @@ def media_file_info(input_file):
         try:
             video_duration = float(format_info["duration"])
         except KeyError:
+            logger.error(
+                "Duration not found in format info - input_file=%s, format_info=%s",
+                input_file,
+                format_info,
+            )
             ret["fail"] = True
             return ret
 
@@ -409,6 +505,12 @@ def media_file_info(input_file):
             try:
                 hms, msec = duration_str.split(".")
             except ValueError:
+                # Try comma separator as fallback
+                logger.debug(
+                    "Audio duration string uses comma separator, using fallback - input_file=%s, duration_str=%s",
+                    input_file,
+                    duration_str,
+                )
                 hms, msec = duration_str.split(",")
             total_dur = sum(int(x) * 60**i for i, x in enumerate(reversed(hms.split(":"))))
             audio_duration = total_dur + float("0." + msec)
@@ -697,7 +799,12 @@ def get_base_ffmpeg_command(
 def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_filename, pass_file, chunk=False):
     try:
         media_info = json.loads(media_info)
-    except BaseException:
+    except (TypeError, json.JSONDecodeError) as e:
+        logger.warning(
+            "Failed to parse media_info JSON, using empty dict - media_file=%s, error=%s",
+            media_file,
+            str(e),
+        )
         media_info = {}
 
     if codec == "h264":
@@ -955,7 +1062,11 @@ def trim_video_method(media_file_path, timestamps_list):
             shutil.copy2(output_file, media_file_path)
             return True
         except Exception as e:
-            logger.info(f"Failed to replace original file: {str(e)}")
+            logger.error(
+                "Failed to replace original file with trimmed version - media_file_path=%s, error=%s",
+                media_file_path,
+                str(e),
+            )
             return False
 
 

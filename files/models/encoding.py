@@ -147,6 +147,27 @@ def encoding_file_save(sender, instance, created, **kwargs):
     perform a check if this is the final chunk file of a media, then
     concatenate chunks, create final encoding file and delete chunks
     """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    if created:
+        logger.info(
+            "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.profile.name if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
+    else:
+        logger.debug(
+            "Encoding updated - friendly_token=%s, profile_id=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
 
     if instance.chunk and instance.status == "success":
         # a chunk got completed
@@ -294,6 +315,19 @@ def encoding_file_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `Encoding` object is deleted.
     """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    logger.info(
+        "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.profile.id if instance.profile else None,
+        instance.profile.name if instance.profile else None,
+        instance.status,
+        instance.chunk,
+        bool(instance.media_file),
+    )
 
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)

@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db.models import Q
 from drf_yasg import openapi as openapi
@@ -15,6 +17,8 @@ from .methods import is_mediacms_manager
 from .models import Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class MediaList(APIView):
@@ -123,7 +127,15 @@ class MediaList(APIView):
         tokens = request.GET.get("tokens")
         if tokens:
             tokens = tokens.split(",")
+            count = Media.objects.filter(friendly_token__in=tokens).count()
             Media.objects.filter(friendly_token__in=tokens).delete()
+            logger.info(
+                "Admin action: media deleted - count=%s, admin_user_id=%s, admin_username=%s, media_tokens=%s",
+                count,
+                request.user.id,
+                request.user.username,
+                tokens,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -178,7 +190,15 @@ class CommentList(APIView):
         comment_ids = request.GET.get("comment_ids")
         if comment_ids:
             comments = comment_ids.split(",")
+            count = Comment.objects.filter(uid__in=comments).count()
             Comment.objects.filter(uid__in=comments).delete()
+            logger.info(
+                "Admin action: comments deleted - count=%s, admin_user_id=%s, admin_username=%s, comment_ids=%s",
+                count,
+                request.user.id,
+                request.user.username,
+                comments,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -246,6 +266,19 @@ class UserList(APIView):
     def delete(self, request, format=None):
         if not is_mediacms_manager(request.user):
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
+
+        usernames = request.GET.get("usernames")
+        if usernames:
+            usernames_list = usernames.split(",")
+            count = User.objects.filter(username__in=usernames_list).count()
+            User.objects.filter(username__in=usernames_list).delete()
+            logger.info(
+                "Admin action: users deleted - count=%s, admin_user_id=%s, admin_username=%s, deleted_usernames=%s",
+                count,
+                request.user.id,
+                request.user.username,
+                usernames_list,
+            )
 
         tokens = request.GET.get("tokens")
         if tokens:

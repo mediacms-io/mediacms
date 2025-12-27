@@ -1,4 +1,8 @@
+import logging
+
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
@@ -6,6 +10,8 @@ from imagekit.processors import ResizeToFit
 
 from .. import helpers
 from .utils import category_thumb_path, generate_uid
+
+logger = logging.getLogger(__name__)
 
 
 class Category(models.Model):
@@ -154,3 +160,68 @@ class Tag(models.Model):
 
 # Import Media to avoid circular imports
 from .media import Media  # noqa
+
+
+@receiver(post_save, sender=Category)
+def category_save(sender, instance, created, **kwargs):
+    """Log category creation and updates"""
+    if created:
+        logger.info(
+            "Category created - category_id=%s, title=%s, user_id=%s, is_global=%s, is_rbac_category=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.is_global,
+            instance.is_rbac_category,
+        )
+    else:
+        logger.debug(
+            "Category updated - category_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+
+
+@receiver(post_delete, sender=Category)
+def category_delete(sender, instance, **kwargs):
+    """Log category deletion"""
+    logger.info(
+        "Category deleted - category_id=%s, title=%s, user_id=%s, is_global=%s, media_count=%s",
+        instance.id,
+        instance.title,
+        instance.user.id if instance.user else None,
+        instance.is_global,
+        instance.media_count,
+    )
+
+
+@receiver(post_save, sender=Tag)
+def tag_save(sender, instance, created, **kwargs):
+    """Log tag creation and updates"""
+    if created:
+        logger.info(
+            "Tag created - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Tag updated - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+
+
+@receiver(post_delete, sender=Tag)
+def tag_delete(sender, instance, **kwargs):
+    """Log tag deletion"""
+    logger.info(
+        "Tag deleted - tag_id=%s, title=%s, user_id=%s, media_count=%s",
+        instance.id,
+        instance.title,
+        instance.user.id if instance.user else None,
+        instance.media_count,
+    )

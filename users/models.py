@@ -1,3 +1,13 @@
+import logging
+
+from allauth.account.signals import (
+    email_confirmed,
+    password_changed,
+    password_reset,
+    user_logged_in,
+    user_logged_out,
+    user_signed_up,
+)
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.mail import EmailMessage
@@ -11,8 +21,11 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
+from cms.utils import get_client_ip_for_logging
 from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
+
+logger = logging.getLogger(__name__)
 
 
 class User(AbstractUser):
@@ -208,6 +221,15 @@ class User(AbstractUser):
         Returns:
             bool: True if a valid role was applied, False otherwise.
         """
+        # Track old role state
+        old_roles = {
+            'advancedUser': self.advancedUser,
+            'is_editor': self.is_editor,
+            'is_manager': self.is_manager,
+            'is_superuser': self.is_superuser,
+            'is_staff': self.is_staff,
+        }
+
         update_fields = []
 
         if role_mapping == 'advancedUser':
@@ -233,6 +255,22 @@ class User(AbstractUser):
 
         if update_fields:
             self.save(update_fields=update_fields)
+            # Log role change
+            new_roles = {
+                'advancedUser': self.advancedUser,
+                'is_editor': self.is_editor,
+                'is_manager': self.is_manager,
+                'is_superuser': self.is_superuser,
+                'is_staff': self.is_staff,
+            }
+            logger.info(
+                "User role changed - user_id=%s, username=%s, role_mapping=%s, old_roles=%s, new_roles=%s",
+                self.id,
+                self.username,
+                role_mapping,
+                old_roles,
+                new_roles,
+            )
         return True
 
 
@@ -279,23 +317,140 @@ class Channel(models.Model):
         return self.get_absolute_url(edit=True)
 
 
+@receiver(post_save, sender=Channel)
+def channel_save(sender, instance, created, **kwargs):
+    """Log channel creation and updates"""
+    if created:
+        logger.info(
+            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Channel updated - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+
+
+@receiver(post_delete, sender=Channel)
+def channel_delete(sender, instance, **kwargs):
+    """Log channel deletion"""
+    logger.info(
+        "Channel deleted - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+        instance.id,
+        instance.friendly_token,
+        instance.title,
+        instance.user.id if instance.user else None,
+        instance.user.username if instance.user else None,
+    )
+
+
 @receiver(post_save, sender=User)
 def post_user_create(sender, instance, created, **kwargs):
     # create a Channel object upon user creation, name it default
     if created:
-        new = Channel.objects.create(title="default", user=instance)
-        new.save()
-        if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
-            title = f"[{settings.PORTAL_NAME}] - New user just registered"
-            msg = """
+        logger.info(
+            "User registered - user_id=%s, username=%s, email=%s",
+            instance.id,
+            instance.username,
+            instance.email,
+        )
+        try:
+            new = Channel.objects.create(title="default", user=instance)
+            new.save()
+            if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
+                title = f"[{settings.PORTAL_NAME}] - New user just registered"
+                msg = """
 User has just registered with email %s\n
 Visit user profile page at %s
-            """ % (
-                instance.email,
-                settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),
-            )
-            email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
-            email.send(fail_silently=True)
+                """ % (
+                    instance.email,
+                    settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),
+                )
+                email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, settings.ADMIN_EMAIL_LIST)
+                email.send(fail_silently=True)
+        except Exception:
+            logger.exception("Error in post_user_create: failed to create channel or send notification")
+
+
+@receiver(user_logged_in, weak=False)
+def log_user_login(sender, request, user, **kwargs):
+    """Log user login via django-allauth"""
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
+    logger.info(
+        "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
+        user.id,
+        user.username,
+        client_ip,
+    )
+
+
+@receiver(user_logged_out, weak=False)
+def log_user_logout(sender, request, user, **kwargs):
+    """Log user logout via django-allauth"""
+    if user:
+        logger.info(
+            "Logout (django-allauth) - user_id=%s, username=%s",
+            user.id,
+            user.username,
+        )
+
+
+@receiver(password_reset, weak=False)
+def log_password_reset(sender, request, user, **kwargs):
+    """Log password reset requests via django-allauth"""
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
+    logger.info(
+        "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+
+
+@receiver(email_confirmed, weak=False)
+def log_email_confirmed(sender, request, email_address, **kwargs):
+    """Log email confirmation via django-allauth"""
+    user = email_address.user if email_address else None
+    logger.info(
+        "Email confirmed - user_id=%s, username=%s, email=%s",
+        user.id if user else None,
+        user.username if user else None,
+        email_address.email if email_address else None,
+    )
+
+
+@receiver(password_changed, weak=False)
+def log_password_changed(sender, request, user, **kwargs):
+    """Log password changes via django-allauth"""
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
+    logger.info(
+        "Password changed - user_id=%s, username=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        client_ip,
+    )
+
+
+@receiver(user_signed_up, weak=False)
+def log_account_signup(sender, request, user, **kwargs):
+    """Log account signup via django-allauth"""
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
+    logger.info(
+        "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
 
 
 NOTIFICATION_METHODS = (("email", "Email"),)
@@ -324,7 +479,24 @@ def delete_content(sender, instance, **kwargs):
     """Delete user related content
     Upon user deletion
     """
+    # Count content before deletion for logging
+    media_count = Media.objects.filter(user=instance).count()
+    tag_count = Tag.objects.filter(user=instance).count()
+    category_count = Category.objects.filter(user=instance).count()
 
-    Media.objects.filter(user=instance).delete()
-    Tag.objects.filter(user=instance).delete()
-    Category.objects.filter(user=instance).delete()
+    logger.info(
+        "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+        instance.id,
+        instance.username,
+        instance.email,
+        media_count,
+        tag_count,
+        category_count,
+    )
+
+    try:
+        Media.objects.filter(user=instance).delete()
+        Tag.objects.filter(user=instance).delete()
+        Category.objects.filter(user=instance).delete()
+    except Exception:
+        logger.exception("Error in delete_content: failed to delete user-related content")

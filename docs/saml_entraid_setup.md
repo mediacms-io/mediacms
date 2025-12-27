@@ -276,6 +276,17 @@ https://<MyMediaCMS.MyDomain.com>/saml/metadata/
 
 You can use the returned XML data from this URL to confirm that MediaCMS is configured appropriately as expected and is providing the correct information to the identity provider.
 
+#### Checking Logs for SAML Authentication Failures
+
+MediaCMS logs all SAML authentication failures with detailed information. Check the application logs (typically `logs/debug.log`) for entries like:
+
+- `Login failed (SAML) - saml_error, organization_slug=<slug>, errors=<error_list>, error_reason=<reason>, ip=<ip_address>`
+- `Login failed (SAML) - authentication_cancelled, organization_slug=<slug>, ip=<ip_address>`
+- `Login failed (SAML) - session_missing, organization_slug=<slug>, ip=<ip_address>`
+- `Login failed (SAML) - idp_initiated_rejected, organization_slug=<slug>, ip=<ip_address>`
+
+These logs include the organization slug, specific error details, and client IP address to help diagnose authentication issues. For more information on authentication event logging, see the [Logged Events Reference](admins_docs.md#authentication-events) in the admin documentation.
+
 ### Infinite Redirect Loop
 
 Another issue you might encounter is an **infinite redirect loop**. This can happen when global login is enforced and local user login is disabled.

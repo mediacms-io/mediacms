@@ -19,6 +19,8 @@ from django.views.decorators.csrf import csrf_exempt
 from onelogin.saml2.auth import OneLogin_Saml2_Settings
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 
+from cms.utils import get_client_ip_for_logging
+
 from .utils import build_auth, build_saml_config, decode_relay_state, get_app_or_404
 
 logger = logging.getLogger(__name__)
@@ -63,7 +65,12 @@ class FinishACSView(SAMLViewMixin, View):
             acs_request = httpkit.deserialize_request(acs_request_data, HttpRequest())
         acs_session.delete()
         if not acs_request:
-            logger.error("Unable to finish login, SAML ACS session missing")
+            client_ip = get_client_ip_for_logging(request)
+            logger.warning(
+                "Login failed (SAML) - session_missing, organization_slug=%s, ip=%s",
+                organization_slug,
+                client_ip,
+            )
             return render_authentication_error(request, provider)
 
         auth = build_auth(acs_request, provider)
@@ -84,7 +91,14 @@ class FinishACSView(SAMLViewMixin, View):
         if errors:
             # e.g. ['invalid_response']
             error_reason = auth.get_last_error_reason() or error_reason
-            logger.error("Error processing SAML ACS response: %s: %s" % (", ".join(errors), error_reason))
+            client_ip = get_client_ip_for_logging(request)
+            logger.warning(
+                "Login failed (SAML) - saml_error, organization_slug=%s, errors=%s, error_reason=%s, ip=%s",
+                organization_slug,
+                ", ".join(errors),
+                error_reason,
+                client_ip,
+            )
             return render_authentication_error(
                 request,
                 provider,
@@ -94,6 +108,12 @@ class FinishACSView(SAMLViewMixin, View):
                 },
             )
         if not auth.is_authenticated():
+            client_ip = get_client_ip_for_logging(request)
+            logger.warning(
+                "Login failed (SAML) - authentication_cancelled, organization_slug=%s, ip=%s",
+                organization_slug,
+                client_ip,
+            )
             return render_authentication_error(request, provider, error=AuthError.CANCELLED)
         login = provider.sociallogin_from_response(request, auth)
         # (*) If we (the SP) initiated the login, there should be a matching
@@ -105,7 +125,12 @@ class FinishACSView(SAMLViewMixin, View):
             # IdP initiated SSO
             reject = provider.app.settings.get("advanced", {}).get("reject_idp_initiated_sso", True)
             if reject:
-                logger.error("IdP initiated SSO rejected")
+                client_ip = get_client_ip_for_logging(request)
+                logger.warning(
+                    "Login failed (SAML) - idp_initiated_rejected, organization_slug=%s, ip=%s",
+                    organization_slug,
+                    client_ip,
+                )
                 return render_authentication_error(request, provider)
             next_url = decode_relay_state(acs_request.POST.get("RelayState"))
             login.state["process"] = AuthProcess.LOGIN
