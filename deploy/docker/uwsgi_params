@@ -14,3 +14,11 @@ uwsgi_param  REMOTE_ADDR        $remote_addr;
 uwsgi_param  REMOTE_PORT        $remote_port;
 uwsgi_param  SERVER_PORT        $server_port;
 uwsgi_param  SERVER_NAME        $server_name;
+
+# Forward proxy headers for client IP tracking
+# Use the forwarded_for and real_ip variables set in the location block
+# These are set from $remote_addr when no external proxy exists
+# uwsgi_param  HTTP_X_FORWARDED_FOR $forwarded_for;
+# uwsgi_param  HTTP_X_REAL_IP $real_ip;
+# uwsgi_param  HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
+# uwsgi_param  HTTP_X_FORWARDED_HOST $http_x_forwarded_host;

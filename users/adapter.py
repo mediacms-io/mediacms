@@ -5,6 +5,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from cms.utils import get_client_ip_for_logging
+
 from .models import User
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
     def respond_user_inactive(self, request, user):
         """Called when login is attempted with an inactive user"""
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+        client_ip = get_client_ip_for_logging(request) if request else 'unknown'
         logger.warning(
             "Login failed (django-allauth) - user_deactivated, user_id=%s, username=%s, ip=%s",
             user.id if user else None,
@@ -55,7 +57,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
         if user is None and request:
             # Authentication failed - try to determine why
-            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            client_ip = get_client_ip_for_logging(request)
             username_or_email = credentials.get('username') or credentials.get('email', '')
 
             # Check if user exists
@@ -87,7 +89,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def pre_login(self, request, user, **kwargs):
         """Called before login - check for approval if needed"""
         if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_approved:
-            client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+            client_ip = get_client_ip_for_logging(request) if request else 'unknown'
             logger.warning(
                 "Login failed (django-allauth) - user_not_approved, user_id=%s, username=%s, ip=%s",
                 user.id,

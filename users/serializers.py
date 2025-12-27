@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from cms.utils import get_client_ip_for_logging
+
 from .models import User
 
 logger = logging.getLogger(__name__)
@@ -124,7 +126,7 @@ class LoginSerializer(serializers.Serializer):
 
         # Get IP address from request context
         request = self.context.get('request')
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+        client_ip = get_client_ip_for_logging(request) if request else 'unknown'
 
         # Check if user exists before authenticating to distinguish failure types
         try:

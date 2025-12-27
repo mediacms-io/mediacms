@@ -513,11 +513,13 @@ from allauth.account.signals import user_logged_in
 from django.dispatch import receiver
 import logging
 
+from cms.utils import get_client_ip_for_logging
+
 logger = logging.getLogger(__name__)
 
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = get_client_ip_for_logging(request)
     logger.info(
         "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
         user.id,
@@ -543,10 +545,11 @@ def log_user_logout(sender, request, user, **kwargs):
 **Password Reset** (`password_reset`):
 ```python
 from allauth.account.signals import password_reset
+from cms.utils import get_client_ip_for_logging
 
 @receiver(password_reset)
 def log_password_reset(sender, request, user, **kwargs):
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = get_client_ip_for_logging(request)
     logger.info(
         "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,
@@ -574,10 +577,11 @@ def log_email_confirmed(sender, request, email_address, **kwargs):
 **Password Change** (`password_changed`):
 ```python
 from allauth.account.signals import password_changed
+from cms.utils import get_client_ip_for_logging
 
 @receiver(password_changed)
 def log_password_changed(sender, request, user, **kwargs):
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = get_client_ip_for_logging(request)
     logger.info(
         "Password changed - user_id=%s, username=%s, ip=%s",
         user.id if user else None,
@@ -589,10 +593,11 @@ def log_password_changed(sender, request, user, **kwargs):
 **Account Signup** (`user_signed_up`):
 ```python
 from allauth.account.signals import user_signed_up
+from cms.utils import get_client_ip_for_logging
 
 @receiver(user_signed_up)
 def log_account_signup(sender, request, user, **kwargs):
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+    client_ip = get_client_ip_for_logging(request)
     logger.info(
         "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,
@@ -1076,43 +1081,50 @@ MediaCMS uses consistent logging patterns for different types of events:
 Authentication events are logged at INFO level for successful operations and WARNING level for failures:
 
 ```python
+from cms.utils import get_client_ip_for_logging
+
 # Successful login
+client_ip = get_client_ip_for_logging(request)
 logger.info(
     "Login successful - user_id=%s, username=%s, ip=%s",
     user.id,
     user.username,
-    request.META.get('REMOTE_ADDR'),
+    client_ip,
 )
 
 # Failed login attempts - different failure types
 # User not found
+client_ip = get_client_ip_for_logging(request)
 logger.warning(
     "Login failed - user_not_found, attempted_username_or_email=%s, ip=%s",
     username_or_email,
-    request.META.get('REMOTE_ADDR'),
+    client_ip,
 )
 
 # Wrong password (user exists but password incorrect)
+client_ip = get_client_ip_for_logging(request)
 logger.warning(
     "Login failed - wrong_password, attempted_username_or_email=%s, ip=%s",
     username_or_email,
-    request.META.get('REMOTE_ADDR'),
+    client_ip,
 )
 
 # User deactivated
+client_ip = get_client_ip_for_logging(request)
 logger.warning(
     "Login failed - user_deactivated, user_id=%s, username=%s, ip=%s",
     user.id,
     user.username,
-    request.META.get('REMOTE_ADDR'),
+    client_ip,
 )
 
 # User not approved
+client_ip = get_client_ip_for_logging(request)
 logger.warning(
     "Login failed - user_not_approved, user_id=%s, username=%s, ip=%s",
     user.id,
     user.username,
-    request.META.get('REMOTE_ADDR'),
+    client_ip,
 )
 ```
 

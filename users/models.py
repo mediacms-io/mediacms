@@ -21,6 +21,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
+from cms.utils import get_client_ip_for_logging
 from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
 
@@ -382,7 +383,7 @@ Visit user profile page at %s
 @receiver(user_logged_in, weak=False)
 def log_user_login(sender, request, user, **kwargs):
     """Log user login via django-allauth"""
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
         "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
         user.id,
@@ -405,7 +406,7 @@ def log_user_logout(sender, request, user, **kwargs):
 @receiver(password_reset, weak=False)
 def log_password_reset(sender, request, user, **kwargs):
     """Log password reset requests via django-allauth"""
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
         "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,
@@ -430,7 +431,7 @@ def log_email_confirmed(sender, request, email_address, **kwargs):
 @receiver(password_changed, weak=False)
 def log_password_changed(sender, request, user, **kwargs):
     """Log password changes via django-allauth"""
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
         "Password changed - user_id=%s, username=%s, ip=%s",
         user.id if user else None,
@@ -442,7 +443,7 @@ def log_password_changed(sender, request, user, **kwargs):
 @receiver(user_signed_up, weak=False)
 def log_account_signup(sender, request, user, **kwargs):
     """Log account signup via django-allauth"""
-    client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+    client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
         "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
         user.id if user else None,

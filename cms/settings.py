@@ -591,17 +591,19 @@ SIDEBAR_FOOTER_TEXT = ""
 
 # TRUSTED_PROXIES: List of IP addresses or CIDR networks that are trusted proxies
 # Only proxy headers (X-Forwarded-For, X-Real-IP) from these IPs will be trusted
-# Default includes RFC 1918 private networks and localhost
+# Default: Empty list (no proxies trusted - backward compatible)
 # Format: List of strings like ['127.0.0.1', '10.0.0.0/8', '192.168.0.0/16']
 # Empty list means no proxies trusted (backward compatible - existing deployments work as-is)
-TRUSTED_PROXIES = [
-    '127.0.0.1/32',  # IPv4 localhost
-    '::1/128',  # IPv6 localhost
-    '10.0.0.0/8',  # Private network (RFC 1918)
-    '172.16.0.0/12',  # Private network (RFC 1918)
-    '192.168.0.0/16',  # Private network (RFC 1918)
-    'fc00::/7',  # IPv6 private networks (RFC 4193)
-]
+# See commented examples below for common trusted proxy configurations
+TRUSTED_PROXIES = []
+# [
+#     '127.0.0.1/32',  # IPv4 localhost
+#     '::1/128',  # IPv6 localhost
+#     '10.0.0.0/8',  # Private network (RFC 1918)
+#     '172.16.0.0/12',  # Private network (RFC 1918)
+#     '192.168.0.0/16',  # Private network (RFC 1918)
+#     'fc00::/7',  # IPv6 private networks (RFC 4193)
+# ]
 
 # PROXY_AWARE_MIDDLEWARE_ENABLED: Enable the proxy-aware middleware
 # When enabled, the middleware will extract real client IPs from proxy headers
@@ -625,14 +627,6 @@ USE_X_FORWARDED_HOST = False
 # Set this when behind a reverse proxy that terminates SSL/TLS
 # Default: None (backward compatible)
 SECURE_PROXY_SSL_HEADER = None
-
-# USE_X_FORWARDED_PORT: Use X-Forwarded-Port header
-# Default: False
-USE_X_FORWARDED_PORT = False
-
-# USE_X_FORWARDED_PREFIX: Use X-Forwarded-Prefix header
-# Default: False
-USE_X_FORWARDED_PREFIX = False
 
 try:
     # keep a local_settings.py file for local overrides

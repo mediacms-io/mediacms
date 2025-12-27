@@ -4,6 +4,7 @@ from allauth.account.forms import LoginForm as AllAuthLoginForm
 from django import forms
 from django.conf import settings
 
+from cms.utils import get_client_ip_for_logging
 from files.methods import is_mediacms_manager
 
 from .models import Channel, User
@@ -21,7 +22,7 @@ class LoginForm(AllAuthLoginForm):
 
         # Get IP address from request
         request = self.request if hasattr(self, 'request') else None
-        client_ip = request.META.get('REMOTE_ADDR', 'unknown') if request else 'unknown'
+        client_ip = get_client_ip_for_logging(request) if request else 'unknown'
 
         # Call parent clean which will handle authentication
         try:

@@ -23,6 +23,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from cms.permissions import IsUserOrManager
+from cms.utils import get_client_ip_for_logging
 from files.methods import is_mediacms_editor, is_mediacms_manager
 
 from .forms import ChannelForm, UserForm
@@ -525,7 +526,7 @@ class LoginView(APIView):
             # Login successful - get user info from serializer data
             username = serializer.data.get('username')
             user = User.objects.get(username=username)
-            client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            client_ip = get_client_ip_for_logging(request)
             logger.info(
                 "Login successful - user_id=%s, username=%s, ip=%s",
                 user.id,

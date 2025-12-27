@@ -122,3 +122,38 @@ def get_client_ip(request: HttpRequest) -> Optional[str]:
 
     # Fall back to REMOTE_ADDR if no valid proxy headers
     return remote_addr
+
+
+def get_client_ip_for_logging(request: HttpRequest) -> str:
+    """
+    Get client IP address for logging purposes, handling reverse proxy scenarios.
+
+    This function provides a consistent way to extract client IP addresses for
+    logging across the application. It uses the following fallback chain:
+    1. request.client_ip (set by ProxyAwareMiddleware if available)
+    2. get_client_ip(request) (proxy-aware IP extraction utility)
+    3. request.META.get('REMOTE_ADDR') (direct connection IP)
+    4. 'unknown' (final fallback if all else fails)
+
+    This ensures that logged IP addresses are correct in both reverse proxy
+    and non-reverse proxy scenarios.
+
+    Args:
+        request: Django HttpRequest object
+
+    Returns:
+        Client IP address as string, or 'unknown' if extraction fails
+    """
+    # First check if ProxyAwareMiddleware has set client_ip
+    client_ip = getattr(request, 'client_ip', None)
+
+    # Fall back to get_client_ip utility function
+    if client_ip is None:
+        client_ip = get_client_ip(request)
+
+    # Fall back to REMOTE_ADDR if still None
+    if client_ip is None:
+        client_ip = request.META.get('REMOTE_ADDR')
+
+    # Return 'unknown' as final fallback for logging
+    return client_ip if client_ip else 'unknown'

@@ -34,3 +34,10 @@ CELERY_RESULT_BACKEND = BROKER_URL
 MP4HLS_COMMAND = "/home/mediacms.io/bento4/bin/mp4hls"
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+SET_REAL_IP_IN_META = os.getenv('SET_REAL_IP_IN_META', 'False') == 'True'
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'False') == 'True'
+
+TRUSTED_PROXIES = [
+    '127.0.0.1',  # localhost
+    '192.168.0.0/16',  # Private network range
+]

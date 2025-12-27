@@ -354,7 +354,7 @@ Traefik automatically sets proxy headers, no additional configuration needed.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `TRUSTED_PROXIES` | `['127.0.0.1/32', '::1/128', ...]` | List of trusted proxy IPs/networks |
+| `TRUSTED_PROXIES` | `[]` (empty list) | List of trusted proxy IPs/networks |
 | `PROXY_AWARE_MIDDLEWARE_ENABLED` | `True` if `TRUSTED_PROXIES` set | Enable proxy-aware middleware |
 | `SET_REAL_IP_IN_META` | `False` | Modify `REMOTE_ADDR` in request.META |
 | `USE_X_FORWARDED_HOST` | `False` | Use X-Forwarded-Host header |
@@ -396,9 +396,11 @@ TRUSTED_PROXIES = [
 ]
 ```
 
-**Default Values** (RFC 1918 private networks):
-- `127.0.0.1/32` - IPv4 localhost
-- `::1/128` - IPv6 localhost
+**Default Value**: Empty list `[]` (no proxies trusted by default)
+
+**Common Example Values** (RFC 1918 private networks):
+- `127.0.0.1/32` or `127.0.0.1` - IPv4 localhost
+- `::1/128` or `::1` - IPv6 localhost
 - `10.0.0.0/8` - Private network
 - `172.16.0.0/12` - Private network
 - `192.168.0.0/16` - Private network
