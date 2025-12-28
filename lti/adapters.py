@@ -22,9 +22,10 @@ class DjangoRequest(Request):
 
     def get_param(self, key):
         """Get parameter from GET or POST"""
-        if self._request.method == 'POST':
-            return self._request.POST.get(key)
-        return self._request.GET.get(key)
+        # Check both POST and GET, POST takes priority
+        value = self._request.POST.get(key) or self._request.GET.get(key)
+        print(f"DjangoRequest.get_param('{key}') = {value}", flush=True)
+        return value
 
     def get_cookie(self, key):
         """Get cookie value"""
