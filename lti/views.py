@@ -83,6 +83,7 @@ class OIDCLoginView(View):
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
+            lti_deployment_id = request.GET.get('lti_deployment_id') or request.POST.get('lti_deployment_id')
 
             print(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}", flush=True)
             print(f"login_hint: {login_hint}, lti_message_hint: {lti_message_hint}", flush=True)
@@ -139,20 +140,19 @@ class OIDCLoginView(View):
                     # Store state in session (nonce will come from JWT)
                     session_service.save_launch_data(f'state-{state}', {'target_link_uri': target_link_uri})
 
-                    # Build redirect URL - let Moodle handle nonce generation
+                    # Build redirect URL - only LTI 1.3 required parameters
                     params = {
                         'iss': iss,
-                        'client_id': client_id,
                         'login_hint': login_hint,
                         'target_link_uri': target_link_uri,
-                        'lti_message_hint': lti_message_hint,
-                        'state': state,
-                        'redirect_uri': target_link_uri,
-                        'response_type': 'id_token',
-                        'response_mode': 'form_post',
-                        'scope': 'openid',
-                        'prompt': 'none',
+                        'client_id': client_id,
                     }
+
+                    # Add optional parameters if present
+                    if lti_message_hint:
+                        params['lti_message_hint'] = lti_message_hint
+                    if lti_deployment_id:
+                        params['lti_deployment_id'] = lti_deployment_id
 
                     redirect_url = f"{platform.auth_login_url}?{urlencode(params)}"
                     print(f"Manually built redirect URL: {redirect_url}", flush=True)
