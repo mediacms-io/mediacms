@@ -269,35 +269,41 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def find_deployment(self, iss, deployment_id):
         """Find deployment by issuer and deployment ID"""
-        config = self.find_registration_by_issuer(iss)
-        if not config:
+        if iss not in self._config:
             return None
 
-        deployment_ids = config.get('deployment_ids', [])
-        if deployment_id in deployment_ids:
-            return config
+        config_dict = self._config[iss]
+        deployment_ids = config_dict.get('deployment_ids', [])
+        if deployment_id not in deployment_ids:
+            return None
 
-        return None
+        return self.find_registration_by_issuer(iss)
 
     def find_deployment_by_params(self, iss, deployment_id, client_id, *args, **kwargs):
         """Find deployment by parameters"""
-        config = self.find_registration_by_params(iss, client_id)
-        if not config:
+        if iss not in self._config:
             return None
 
-        deployment_ids = config.get('deployment_ids', [])
-        if deployment_id in deployment_ids:
-            return config
+        config_dict = self._config[iss]
+        if config_dict.get('client_id') != client_id:
+            return None
 
-        return None
+        deployment_ids = config_dict.get('deployment_ids', [])
+        if deployment_id not in deployment_ids:
+            return None
+
+        return self.find_registration_by_params(iss, client_id)
 
     def get_jwks(self, iss, client_id=None):
         """Get JWKS from configuration"""
-        config = self.find_registration_by_params(iss, client_id) if client_id else self.find_registration_by_issuer(iss)
-        if not config:
+        if iss not in self._config:
             return None
 
-        return config.get('key_set')
+        config_dict = self._config[iss]
+        if client_id and config_dict.get('client_id') != client_id:
+            return None
+
+        return config_dict.get('key_set')
 
     def get_iss(self):
         """Get all issuers"""
