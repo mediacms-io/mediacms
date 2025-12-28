@@ -219,7 +219,14 @@ class LaunchView(View):
             # Validate JWT and get launch data
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)
-            message_launch = MessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
+
+            # Create custom MessageLaunch that properly implements _get_request_param
+            class CustomMessageLaunch(MessageLaunch):
+                def _get_request_param(self, key):
+                    """Override to properly get request parameters"""
+                    return self._request.get_param(key)
+
+            message_launch = CustomMessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Get validated launch data
             launch_data = message_launch.get_launch_data()

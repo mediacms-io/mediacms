@@ -77,7 +77,13 @@ class DjangoMessageLaunch:
         """Validate the LTI launch message"""
         from pylti1p3.message_launch import MessageLaunch
 
-        message_launch = MessageLaunch(self.lti_request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
+        # Create custom MessageLaunch that properly implements _get_request_param
+        class CustomMessageLaunch(MessageLaunch):
+            def _get_request_param(self, key):
+                """Override to properly get request parameters"""
+                return self._request.get_param(key)
+
+        message_launch = CustomMessageLaunch(self.lti_request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return message_launch
 
