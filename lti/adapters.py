@@ -23,7 +23,7 @@ class DjangoOIDCLogin:
         """Get the redirect object for OIDC login"""
         from pylti1p3.oidc_login import OIDCLogin
 
-        oidc_login = OIDCLogin(self.request, self.tool_config, launch_data_storage=self.launch_data_storage)
+        oidc_login = OIDCLogin(self.request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return oidc_login.enable_check_cookies().redirect(redirect_url)
 
@@ -40,7 +40,7 @@ class DjangoMessageLaunch:
         """Validate the LTI launch message"""
         from pylti1p3.message_launch import MessageLaunch
 
-        message_launch = MessageLaunch(self.request, self.tool_config, launch_data_storage=self.launch_data_storage)
+        message_launch = MessageLaunch(self.request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return message_launch
 

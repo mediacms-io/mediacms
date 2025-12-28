@@ -85,9 +85,10 @@ class OIDCLoginView(View):
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
 
-            # Create OIDC login handler
-            launch_data_storage = DjangoSessionService(request)
-            oidc_login = OIDCLogin(request, tool_config, launch_data_storage=launch_data_storage)
+            # Create OIDC login handler with session and cookie services
+            session_service = DjangoSessionService(request)
+            cookie_service = DjangoSessionService(request)  # Using same service for cookies
+            oidc_login = OIDCLogin(request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Redirect to platform's authorization endpoint
             redirect_obj = oidc_login.enable_check_cookies().redirect(target_link_uri)
@@ -138,8 +139,9 @@ class LaunchView(View):
             tool_config = DjangoToolConfig.from_platform(platform)
 
             # Validate JWT and get launch data
-            launch_data_storage = DjangoSessionService(request)
-            message_launch = MessageLaunch(request, tool_config, launch_data_storage=launch_data_storage)
+            session_service = DjangoSessionService(request)
+            cookie_service = DjangoSessionService(request)
+            message_launch = MessageLaunch(request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Get validated launch data
             launch_data = message_launch.get_launch_data()
