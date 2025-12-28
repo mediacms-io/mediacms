@@ -94,9 +94,9 @@ class OIDCLoginView(View):
             oidc_login = OIDCLogin(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Redirect to platform's authorization endpoint
-            redirect_obj = oidc_login.enable_check_cookies().redirect(target_link_uri)
+            redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
 
-            return HttpResponseRedirect(redirect_obj.get_redirect_url())
+            return HttpResponseRedirect(redirect_url)
 
         except LtiException as e:
             logger.error(f"LTI OIDC Login Error: {str(e)}")
