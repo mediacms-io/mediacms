@@ -16,6 +16,7 @@ class DjangoRequest(Request):
     """Django request adapter for PyLTI1p3"""
 
     def __init__(self, request):
+        super().__init__()
         self._request = request
         self._cookies = request.COOKIES
         self._session = request.session
@@ -39,6 +40,10 @@ class DjangoRequest(Request):
     def session(self):
         """Get session"""
         return self._session
+
+    def _get_request_param(self, key):
+        """Internal method for PyLTI1p3 compatibility"""
+        return self.get_param(key)
 
 
 class DjangoOIDCLogin:
