@@ -70,17 +70,22 @@ class OIDCLoginView(View):
 
     def handle_oidc_login(self, request):
         """Handle OIDC login initiation"""
+        logger.info("=== OIDC Login Started ===")
         try:
             # Get target_link_uri and other OIDC params
             target_link_uri = request.GET.get('target_link_uri') or request.POST.get('target_link_uri')
             iss = request.GET.get('iss') or request.POST.get('iss')
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
 
+            logger.info(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}")
+
             if not all([target_link_uri, iss, client_id]):
+                logger.error("Missing OIDC parameters")
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id, active=True)
+            logger.info(f"Found platform: {platform.name}")
 
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
@@ -95,6 +100,7 @@ class OIDCLoginView(View):
 
             # Redirect to platform's authorization endpoint
             redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
+            logger.info(f"OIDC redirecting to: {redirect_url}")
 
             return HttpResponseRedirect(redirect_url)
 
@@ -117,6 +123,7 @@ class LaunchView(View):
 
     def post(self, request):
         """Handle LTI launch with JWT validation"""
+        logger.info("=== LTI Launch Started ===")
         platform = None
         user = None
         error_message = ''
@@ -137,6 +144,7 @@ class LaunchView(View):
 
             # Get platform
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud, active=True)
+            logger.info(f"Launch from platform: {platform.name}")
 
             # Create tool config
             tool_config = DjangoToolConfig.from_platform(platform)
@@ -167,8 +175,10 @@ class LaunchView(View):
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Provision user
+            logger.info(f"Provisioning user, sub: {sub}")
             if platform.auto_create_users:
                 user = provision_lti_user(platform, launch_data)
+                logger.info(f"User provisioned: {user.username}")
             else:
                 # Must find existing user
                 from .models import LTIUserMapping
@@ -180,22 +190,28 @@ class LaunchView(View):
 
             # Provision context (category + RBAC group)
             if 'https://purl.imsglobal.org/spec/lti/claim/context' in launch_data:
+                logger.info("Provisioning context...")
                 category, rbac_group, resource_link_obj = provision_lti_context(platform, launch_data, resource_link_id)
+                logger.info(f"Context provisioned: category={category.title if category else None}")
 
                 # Apply roles
                 apply_lti_roles(user, platform, roles, rbac_group)
+                logger.info(f"Roles applied: {roles}")
             else:
                 # No context - might be a direct media embed
                 resource_link_obj = None
 
             # Create session
             create_lti_session(request, user, message_launch, platform)
+            logger.info("LTI session created")
 
             # Log successful launch
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims, ip_address=get_client_ip(request))
+            logger.info("Launch logged")
 
             # Determine where to redirect
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
+            logger.info(f"=== Launch Success - Redirecting to: {redirect_url} ===")
 
             return HttpResponseRedirect(redirect_url)
 
@@ -281,15 +297,21 @@ class MyMediaLTIView(View):
 
     def get(self, request):
         """Display my media page"""
+        logger.info(f"=== My Media LTI View - User: {request.user} ===")
+
         # Validate LTI session
         lti_session = validate_lti_session(request)
+        logger.info(f"LTI session valid: {bool(lti_session)}")
 
         if not lti_session:
+            logger.error("LTI session validation failed")
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
         # Redirect to user's profile page
         # The existing user profile page is already iframe-compatible
-        return HttpResponseRedirect(f"/user/{request.user.username}")
+        profile_url = f"/user/{request.user.username}"
+        logger.info(f"Redirecting to profile: {profile_url}")
+        return HttpResponseRedirect(profile_url)
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')
