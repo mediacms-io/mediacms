@@ -113,6 +113,14 @@ class DjangoSessionService:
         session_key = self._session_key_prefix + key
         return session_key in self.request.session
 
+    def check_state_is_valid(self, state, nonce):
+        """Check if state is valid"""
+        state_key = f'state-{state}'
+        state_data = self.get_launch_data(state_key)
+        if not state_data:
+            return False
+        return state_data.get('nonce') == nonce
+
 
 class DjangoCacheDataStorage:
     """Key/value storage using Django cache"""
