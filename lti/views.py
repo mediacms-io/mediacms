@@ -93,6 +93,7 @@ class OIDCLoginView(View):
 
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
+            print(f"Tool config: {tool_config._config}", flush=True)
 
             # Wrap Django request for PyLTI1p3
             lti_request = DjangoRequest(request)
