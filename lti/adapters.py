@@ -151,6 +151,13 @@ class DjangoSessionService:
         print(f"Nonce {nonce} is valid and marked as used", flush=True)
         return True
 
+    def set_state_valid(self, state, id_token_hash):
+        """Mark state as valid and associate it with the id_token_hash"""
+        state_key = f'state-{state}'
+        print(f"Setting state valid: state={state}, id_token_hash={id_token_hash}", flush=True)
+        self.save_launch_data(state_key, {'valid': True, 'id_token_hash': id_token_hash})
+        return True
+
     def get_cookie(self, key):
         """Get cookie value (for cookie service compatibility)"""
         return self.request.COOKIES.get(key)
