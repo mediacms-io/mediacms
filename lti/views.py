@@ -101,14 +101,21 @@ class OIDCLoginView(View):
             # Create OIDC login handler with session and cookie services
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)  # Using same service for cookies
+
+            print("Creating OIDCLogin...", flush=True)
             oidc_login = OIDCLogin(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
+            print("OIDCLogin created successfully", flush=True)
 
             # Redirect to platform's authorization endpoint
             print(f"Target link URI: {target_link_uri}", flush=True)
             print(f"Auth login URL: {platform.auth_login_url}", flush=True)
 
             try:
-                redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
+                print("Calling enable_check_cookies()...", flush=True)
+                oidc_with_cookies = oidc_login.enable_check_cookies()
+                print(f"Calling redirect({target_link_uri})...", flush=True)
+                redirect_url = oidc_with_cookies.redirect(target_link_uri)
+                print(f"Redirect returned: '{redirect_url}'", flush=True)
                 print(f"OIDC redirect URL type: {type(redirect_url)}", flush=True)
                 print(f"OIDC redirecting to: {redirect_url}", flush=True)
                 logger.info(f"OIDC redirecting to: {redirect_url}")
