@@ -103,11 +103,26 @@ class OIDCLoginView(View):
             oidc_login = OIDCLogin(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Redirect to platform's authorization endpoint
-            redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
-            print(f"OIDC redirecting to: {redirect_url}", flush=True)
-            logger.info(f"OIDC redirecting to: {redirect_url}")
+            print(f"Target link URI: {target_link_uri}", flush=True)
+            print(f"Auth login URL: {platform.auth_login_url}", flush=True)
 
-            return HttpResponseRedirect(redirect_url)
+            try:
+                redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
+                print(f"OIDC redirect URL type: {type(redirect_url)}", flush=True)
+                print(f"OIDC redirecting to: {redirect_url}", flush=True)
+                logger.info(f"OIDC redirecting to: {redirect_url}")
+
+                if not redirect_url:
+                    print("ERROR: Empty redirect URL!", flush=True)
+                    return JsonResponse({'error': 'Failed to generate OIDC redirect URL'}, status=500)
+
+                return HttpResponseRedirect(redirect_url)
+            except Exception as e:
+                print(f"ERROR in OIDC redirect: {str(e)}", flush=True)
+                import traceback
+
+                traceback.print_exc()
+                raise
 
         except LtiException as e:
             logger.error(f"LTI OIDC Login Error: {str(e)}")
