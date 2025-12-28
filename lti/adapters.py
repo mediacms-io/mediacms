@@ -135,6 +135,21 @@ class DjangoSessionService:
         print("State is valid!", flush=True)
         return True
 
+    def check_nonce(self, nonce):
+        """Check if nonce is valid (not used before) and mark it as used"""
+        nonce_key = f'nonce-{nonce}'
+        print(f"Checking nonce: {nonce}", flush=True)
+
+        # Check if nonce was already used
+        if self.check_launch_data_storage_exists(nonce_key):
+            print(f"ERROR: Nonce {nonce} was already used!", flush=True)
+            return False
+
+        # Mark nonce as used
+        self.save_launch_data(nonce_key, {'used': True})
+        print(f"Nonce {nonce} is valid and marked as used", flush=True)
+        return True
+
     def get_cookie(self, key):
         """Get cookie value (for cookie service compatibility)"""
         return self.request.COOKIES.get(key)
