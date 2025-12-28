@@ -2,7 +2,7 @@
 Django Admin for LTI models
 """
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import (
@@ -59,6 +59,7 @@ class LTIResourceLinkAdmin(admin.ModelAdmin):
     list_filter = ['platform', 'created_at', 'last_launch']
     search_fields = ['context_id', 'context_title', 'resource_link_id']
     readonly_fields = ['created_at', 'last_launch', 'launch_count']
+    actions = ['sync_course_members']
 
     fieldsets = (
         ('Platform', {'fields': ('platform',)}),
@@ -81,6 +82,54 @@ class LTIResourceLinkAdmin(admin.ModelAdmin):
         return '-'
 
     rbac_group_link.short_description = 'RBAC Group'
+
+    def sync_course_members(self, request, queryset):
+        """Sync course members from LMS using NRPS"""
+        from .nrps import LTINRPSClient
+
+        synced_count = 0
+        failed_count = 0
+
+        for resource_link in queryset:
+            try:
+                # Check if NRPS is enabled
+                if not resource_link.platform.enable_nrps:
+                    messages.warning(request, f'NRPS is disabled for platform: {resource_link.platform.name}')
+                    failed_count += 1
+                    continue
+
+                # Check if RBAC group exists
+                if not resource_link.rbac_group:
+                    messages.warning(request, f'No RBAC group for: {resource_link.context_title}')
+                    failed_count += 1
+                    continue
+
+                # Get last successful launch for NRPS endpoint
+                last_launch = LTILaunchLog.objects.filter(platform=resource_link.platform, resource_link=resource_link, success=True).order_by('-created_at').first()
+
+                if not last_launch:
+                    messages.warning(request, f'No launch data for: {resource_link.context_title}')
+                    failed_count += 1
+                    continue
+
+                # Perform NRPS sync
+                nrps_client = LTINRPSClient(resource_link.platform, last_launch.claims)
+                result = nrps_client.sync_members_to_rbac_group(resource_link.rbac_group)
+
+                synced_count += result.get('synced', 0)
+                messages.success(request, f'Synced {result.get("synced", 0)} members for: {resource_link.context_title}')
+
+            except Exception as e:
+                messages.error(request, f'Error syncing {resource_link.context_title}: {str(e)}')
+                failed_count += 1
+
+        # Summary message
+        if synced_count > 0:
+            self.message_user(request, f'Successfully synced members from {queryset.count() - failed_count} course(s). Total members: {synced_count}', messages.SUCCESS)
+        if failed_count > 0:
+            self.message_user(request, f'{failed_count} course(s) failed to sync', messages.WARNING)
+
+    sync_course_members.short_description = 'Sync course members from LMS (NRPS)'
 
 
 @admin.register(LTIUserMapping)
