@@ -128,8 +128,35 @@ class OIDCLoginView(View):
                 logger.info(f"OIDC redirecting to: {redirect_url}")
 
                 if not redirect_url:
-                    print("ERROR: Empty redirect URL!", flush=True)
-                    return JsonResponse({'error': 'Failed to generate OIDC redirect URL'}, status=500)
+                    print("PyLTI1p3 redirect failed, building URL manually...", flush=True)
+                    # Manual OIDC redirect construction
+                    import uuid
+                    from urllib.parse import urlencode
+
+                    state = str(uuid.uuid4())
+                    nonce = str(uuid.uuid4())
+
+                    # Store state and nonce in session
+                    session_service.save_launch_data(f'state-{state}', {'target_link_uri': target_link_uri, 'nonce': nonce})
+
+                    # Build redirect URL
+                    params = {
+                        'iss': iss,
+                        'client_id': client_id,
+                        'login_hint': login_hint,
+                        'target_link_uri': target_link_uri,
+                        'lti_message_hint': lti_message_hint,
+                        'nonce': nonce,
+                        'state': state,
+                        'redirect_uri': target_link_uri,
+                        'response_type': 'id_token',
+                        'response_mode': 'form_post',
+                        'scope': 'openid',
+                        'prompt': 'none',
+                    }
+
+                    redirect_url = f"{platform.auth_login_url}?{urlencode(params)}"
+                    print(f"Manually built redirect URL: {redirect_url}", flush=True)
 
                 return HttpResponseRedirect(redirect_url)
             except Exception as e:
