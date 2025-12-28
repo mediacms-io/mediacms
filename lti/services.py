@@ -62,7 +62,7 @@ class LTINRPSClient:
             return []
 
         try:
-            service_url = self.nrps_claim.get('context_memberships_url')
+            print(f"NRPS claim data: {self.nrps_claim}", flush=True)
 
             # Use PyLTI1p3's NRPS service
             # Note: This requires proper configuration in the tool config
@@ -70,15 +70,19 @@ class LTINRPSClient:
 
             tool_config = DjangoToolConfig.from_platform(self.platform)
 
-            nrps = NamesRolesProvisioningService(tool_config, service_url)
+            # Pass the entire NRPS claim as service_data, not just the URL
+            nrps = NamesRolesProvisioningService(tool_config, self.nrps_claim)
 
             # Fetch members
+            print("Calling nrps.get_members()...", flush=True)
             members = nrps.get_members()
 
+            print(f"Fetched {len(members)} members from NRPS", flush=True)
             logger.info(f"Fetched {len(members)} members from NRPS for platform {self.platform.name}")
             return members
 
         except Exception as e:
+            print(f"NRPS fetch error: {str(e)}", flush=True)
             logger.error(f"NRPS fetch error: {str(e)}", exc_info=True)
             return []
 
@@ -154,18 +158,67 @@ class LTINRPSClient:
             logger.warning("NRPS member missing user_id")
             return None
 
-        # Check for existing mapping
-        mapping = LTIUserMapping.objects.filter(platform=self.platform, lti_user_id=user_id).select_related('user').first()
-
-        if mapping:
-            # User already exists
-            return mapping.user
-
-        # Create new user from NRPS data
+        # Get user details from NRPS data
         name = member.get('name', '')
         email = member.get('email', '')
         given_name = member.get('given_name', '')
         family_name = member.get('family_name', '')
+
+        # Check for existing mapping
+        mapping = LTIUserMapping.objects.filter(platform=self.platform, lti_user_id=user_id).select_related('user').first()
+
+        if mapping:
+            # Update existing user details if they changed
+            user = mapping.user
+            update_fields = []
+
+            # Update email if changed and not empty
+            if email and user.email != email:
+                user.email = email
+                update_fields.append('email')
+                print(f"Updating email for {user.username}: {user.email} -> {email}", flush=True)
+
+            # Update name fields if changed
+            if given_name and user.first_name != given_name:
+                user.first_name = given_name
+                update_fields.append('first_name')
+                print(f"Updating first_name for {user.username}: {user.first_name} -> {given_name}", flush=True)
+
+            if family_name and user.last_name != family_name:
+                user.last_name = family_name
+                update_fields.append('last_name')
+                print(f"Updating last_name for {user.username}: {user.last_name} -> {family_name}", flush=True)
+
+            if name and user.name != name:
+                user.name = name
+                update_fields.append('name')
+                print(f"Updating name for {user.username}: {user.name} -> {name}", flush=True)
+
+            if update_fields:
+                user.save(update_fields=update_fields)
+                logger.info(f"Updated user details for {user.username} via NRPS sync")
+
+            # Update mapping cache
+            mapping_update_fields = []
+            if email and mapping.email != email:
+                mapping.email = email
+                mapping_update_fields.append('email')
+            if given_name and mapping.given_name != given_name:
+                mapping.given_name = given_name
+                mapping_update_fields.append('given_name')
+            if family_name and mapping.family_name != family_name:
+                mapping.family_name = family_name
+                mapping_update_fields.append('family_name')
+            if name and mapping.name != name:
+                mapping.name = name
+                mapping_update_fields.append('name')
+
+            if mapping_update_fields:
+                mapping.save(update_fields=mapping_update_fields)
+
+            return user
+
+        # Create new user from NRPS data
 
         # Generate username
         username = generate_username_from_lti(user_id, email, given_name, family_name)
