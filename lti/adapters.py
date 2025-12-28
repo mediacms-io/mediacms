@@ -120,7 +120,7 @@ class DjangoSessionService:
     def check_state_is_valid(self, state, nonce):
         """Check if state is valid"""
         state_key = f'state-{state}'
-        print(f"Checking state validity: state={state}", flush=True)
+        print(f"Checking state validity: state={state}, nonce={nonce}", flush=True)
         print(f"Looking for state_key: {state_key}", flush=True)
 
         state_data = self.get_launch_data(state_key)
@@ -130,8 +130,12 @@ class DjangoSessionService:
             print("ERROR: State data not found in session!", flush=True)
             return False
 
-        # State exists, which is sufficient for CSRF protection
-        # Nonce is validated by PyLTI1p3 through JWT signature verification
+        # Check if nonce matches (if we stored one)
+        stored_nonce = state_data.get('nonce')
+        if stored_nonce and stored_nonce != nonce:
+            print(f"ERROR: Nonce mismatch! Expected: {stored_nonce}, Got: {nonce}", flush=True)
+            return False
+
         print("State is valid!", flush=True)
         return True
 
