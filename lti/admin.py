@@ -87,7 +87,7 @@ class LTIResourceLinkAdmin(admin.ModelAdmin):
         """Sync course members from LMS using NRPS"""
         import traceback
 
-        from .nrps import LTINRPSClient
+        from .services import LTINRPSClient
 
         print("=" * 80, flush=True)
         print("ADMIN ACTION: Sync course members started", flush=True)
