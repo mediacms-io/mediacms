@@ -70,6 +70,7 @@ class OIDCLoginView(View):
 
     def handle_oidc_login(self, request):
         """Handle OIDC login initiation"""
+        print("=== OIDC Login Started ===", flush=True)
         logger.info("=== OIDC Login Started ===")
         try:
             # Get target_link_uri and other OIDC params
@@ -77,14 +78,17 @@ class OIDCLoginView(View):
             iss = request.GET.get('iss') or request.POST.get('iss')
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
 
+            print(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}", flush=True)
             logger.info(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}")
 
             if not all([target_link_uri, iss, client_id]):
+                print("ERROR: Missing OIDC parameters", flush=True)
                 logger.error("Missing OIDC parameters")
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id, active=True)
+            print(f"Found platform: {platform.name}", flush=True)
             logger.info(f"Found platform: {platform.name}")
 
             # Create tool config for this platform
@@ -100,6 +104,7 @@ class OIDCLoginView(View):
 
             # Redirect to platform's authorization endpoint
             redirect_url = oidc_login.enable_check_cookies().redirect(target_link_uri)
+            print(f"OIDC redirecting to: {redirect_url}", flush=True)
             logger.info(f"OIDC redirecting to: {redirect_url}")
 
             return HttpResponseRedirect(redirect_url)
@@ -123,6 +128,7 @@ class LaunchView(View):
 
     def post(self, request):
         """Handle LTI launch with JWT validation"""
+        print("=== LTI Launch Started ===", flush=True)
         logger.info("=== LTI Launch Started ===")
         platform = None
         user = None
@@ -144,6 +150,7 @@ class LaunchView(View):
 
             # Get platform
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud, active=True)
+            print(f"Launch from platform: {platform.name}", flush=True)
             logger.info(f"Launch from platform: {platform.name}")
 
             # Create tool config
@@ -175,9 +182,11 @@ class LaunchView(View):
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Provision user
+            print(f"Provisioning user, sub: {sub}", flush=True)
             logger.info(f"Provisioning user, sub: {sub}")
             if platform.auto_create_users:
                 user = provision_lti_user(platform, launch_data)
+                print(f"User provisioned: {user.username}", flush=True)
                 logger.info(f"User provisioned: {user.username}")
             else:
                 # Must find existing user
@@ -211,6 +220,7 @@ class LaunchView(View):
 
             # Determine where to redirect
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
+            print(f"=== Launch Success - Redirecting to: {redirect_url} ===", flush=True)
             logger.info(f"=== Launch Success - Redirecting to: {redirect_url} ===")
 
             return HttpResponseRedirect(redirect_url)
@@ -297,19 +307,23 @@ class MyMediaLTIView(View):
 
     def get(self, request):
         """Display my media page"""
+        print(f"=== My Media LTI View - User: {request.user} ===", flush=True)
         logger.info(f"=== My Media LTI View - User: {request.user} ===")
 
         # Validate LTI session
         lti_session = validate_lti_session(request)
+        print(f"LTI session valid: {bool(lti_session)}", flush=True)
         logger.info(f"LTI session valid: {bool(lti_session)}")
 
         if not lti_session:
+            print("ERROR: LTI session validation failed", flush=True)
             logger.error("LTI session validation failed")
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
         # Redirect to user's profile page
         # The existing user profile page is already iframe-compatible
         profile_url = f"/user/{request.user.username}"
+        print(f"Redirecting to profile: {profile_url}", flush=True)
         logger.info(f"Redirecting to profile: {profile_url}")
         return HttpResponseRedirect(profile_url)
 
