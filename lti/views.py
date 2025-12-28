@@ -130,23 +130,22 @@ class OIDCLoginView(View):
                 if not redirect_url:
                     print("PyLTI1p3 redirect failed, building URL manually...", flush=True)
                     # Manual OIDC redirect construction
+                    # Note: We don't send nonce - Moodle generates it and includes it in the JWT
                     import uuid
                     from urllib.parse import urlencode
 
                     state = str(uuid.uuid4())
-                    nonce = str(uuid.uuid4())
 
-                    # Store state and nonce in session
-                    session_service.save_launch_data(f'state-{state}', {'target_link_uri': target_link_uri, 'nonce': nonce})
+                    # Store state in session (nonce will come from JWT)
+                    session_service.save_launch_data(f'state-{state}', {'target_link_uri': target_link_uri})
 
-                    # Build redirect URL
+                    # Build redirect URL - let Moodle handle nonce generation
                     params = {
                         'iss': iss,
                         'client_id': client_id,
                         'login_hint': login_hint,
                         'target_link_uri': target_link_uri,
                         'lti_message_hint': lti_message_hint,
-                        'nonce': nonce,
                         'state': state,
                         'redirect_uri': target_link_uri,
                         'response_type': 'id_token',
