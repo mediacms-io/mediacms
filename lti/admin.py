@@ -85,45 +85,72 @@ class LTIResourceLinkAdmin(admin.ModelAdmin):
 
     def sync_course_members(self, request, queryset):
         """Sync course members from LMS using NRPS"""
+        import traceback
+
         from .nrps import LTINRPSClient
+
+        print("=" * 80, flush=True)
+        print("ADMIN ACTION: Sync course members started", flush=True)
+        print(f"User: {request.user.username}", flush=True)
+        print(f"Number of resource links selected: {queryset.count()}", flush=True)
 
         synced_count = 0
         failed_count = 0
 
         for resource_link in queryset:
+            print(f"\n--- Processing: {resource_link.context_title} (ID: {resource_link.id}) ---", flush=True)
             try:
                 # Check if NRPS is enabled
+                print(f"Platform: {resource_link.platform.name}", flush=True)
+                print(f"NRPS enabled: {resource_link.platform.enable_nrps}", flush=True)
                 if not resource_link.platform.enable_nrps:
+                    print("ERROR: NRPS is disabled", flush=True)
                     messages.warning(request, f'NRPS is disabled for platform: {resource_link.platform.name}')
                     failed_count += 1
                     continue
 
                 # Check if RBAC group exists
+                print(f"RBAC group: {resource_link.rbac_group}", flush=True)
                 if not resource_link.rbac_group:
+                    print("ERROR: No RBAC group", flush=True)
                     messages.warning(request, f'No RBAC group for: {resource_link.context_title}')
                     failed_count += 1
                     continue
 
                 # Get last successful launch for NRPS endpoint
+                print("Looking for last successful launch...", flush=True)
                 last_launch = LTILaunchLog.objects.filter(platform=resource_link.platform, resource_link=resource_link, success=True).order_by('-created_at').first()
 
                 if not last_launch:
+                    print("ERROR: No launch data found", flush=True)
                     messages.warning(request, f'No launch data for: {resource_link.context_title}')
                     failed_count += 1
                     continue
 
+                print(f"Found launch from: {last_launch.created_at}", flush=True)
+                print("Creating NRPS client...", flush=True)
+
                 # Perform NRPS sync
                 nrps_client = LTINRPSClient(resource_link.platform, last_launch.claims)
+                print("Calling sync_members_to_rbac_group...", flush=True)
                 result = nrps_client.sync_members_to_rbac_group(resource_link.rbac_group)
 
+                print(f"Sync result: {result}", flush=True)
                 synced_count += result.get('synced', 0)
                 messages.success(request, f'Synced {result.get("synced", 0)} members for: {resource_link.context_title}')
 
             except Exception as e:
+                print(f"ERROR during sync: {str(e)}", flush=True)
+                print(f"Traceback:\n{traceback.format_exc()}", flush=True)
                 messages.error(request, f'Error syncing {resource_link.context_title}: {str(e)}')
                 failed_count += 1
 
         # Summary message
+        print("\n=== Sync Complete ===", flush=True)
+        print(f"Total synced: {synced_count}", flush=True)
+        print(f"Failed: {failed_count}", flush=True)
+        print("=" * 80, flush=True)
+
         if synced_count > 0:
             self.message_user(request, f'Successfully synced members from {queryset.count() - failed_count} course(s). Total members: {synced_count}', messages.SUCCESS)
         if failed_count > 0:
