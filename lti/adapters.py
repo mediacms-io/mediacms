@@ -8,6 +8,7 @@ import json
 from typing import Any, Dict, Optional
 
 from django.core.cache import cache
+from pylti1p3.registration import Registration
 from pylti1p3.request import Request
 from pylti1p3.tool_config import ToolConfAbstract
 
@@ -221,9 +222,22 @@ class DjangoToolConfig(ToolConfAbstract):
         if iss not in self._config:
             print("  -> Not found in config", flush=True)
             return None
-        result = self._config[iss]
-        print(f"  -> Found: {result.get('client_id')}", flush=True)
-        return result
+        config = self._config[iss]
+        print(f"  -> Found: {config.get('client_id')}", flush=True)
+
+        # Create Registration object from config dict
+        registration = Registration()
+        registration.set_issuer(iss)
+        registration.set_client_id(config.get('client_id'))
+        registration.set_auth_login_url(config.get('auth_login_url'))
+        registration.set_auth_token_url(config.get('auth_token_url'))
+        if config.get('auth_audience'):
+            registration.set_auth_audience(config.get('auth_audience'))
+        registration.set_key_set_url(config.get('key_set_url'))
+        if config.get('key_set'):
+            registration.set_key_set(config.get('key_set'))
+
+        return registration
 
     def find_registration_by_params(self, iss, client_id, *args, **kwargs):
         """Find registration by issuer and client ID"""
@@ -233,12 +247,25 @@ class DjangoToolConfig(ToolConfAbstract):
             return None
 
         config = self._config[iss]
-        if config.get('client_id') == client_id:
-            print("  -> Match found", flush=True)
-            return config
+        if config.get('client_id') != client_id:
+            print(f"  -> Client ID mismatch: expected {client_id}, got {config.get('client_id')}", flush=True)
+            return None
 
-        print(f"  -> Client ID mismatch: expected {client_id}, got {config.get('client_id')}", flush=True)
-        return None
+        print("  -> Match found", flush=True)
+
+        # Create Registration object from config dict
+        registration = Registration()
+        registration.set_issuer(iss)
+        registration.set_client_id(config.get('client_id'))
+        registration.set_auth_login_url(config.get('auth_login_url'))
+        registration.set_auth_token_url(config.get('auth_token_url'))
+        if config.get('auth_audience'):
+            registration.set_auth_audience(config.get('auth_audience'))
+        registration.set_key_set_url(config.get('key_set_url'))
+        if config.get('key_set'):
+            registration.set_key_set(config.get('key_set'))
+
+        return registration
 
     def find_deployment(self, iss, deployment_id):
         """Find deployment by issuer and deployment ID"""
