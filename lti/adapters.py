@@ -121,6 +121,16 @@ class DjangoSessionService:
             return False
         return state_data.get('nonce') == nonce
 
+    def get_cookie(self, key):
+        """Get cookie value (for cookie service compatibility)"""
+        return self.request.COOKIES.get(key)
+
+    def set_cookie(self, key, value, exp=3600):
+        """Set cookie value (for cookie service compatibility)"""
+        # Note: Actual cookie setting happens in the response, not here
+        # This is just for interface compatibility
+        return True
+
 
 class DjangoCacheDataStorage:
     """Key/value storage using Django cache"""
