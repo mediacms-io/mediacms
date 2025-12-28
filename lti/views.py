@@ -73,12 +73,19 @@ class OIDCLoginView(View):
         print("=== OIDC Login Started ===", flush=True)
         logger.info("=== OIDC Login Started ===")
         try:
+            # Get all request parameters for debugging
+            all_params = dict(request.GET.items()) if request.method == 'GET' else dict(request.POST.items())
+            print(f"All OIDC request params: {all_params}", flush=True)
+
             # Get target_link_uri and other OIDC params
             target_link_uri = request.GET.get('target_link_uri') or request.POST.get('target_link_uri')
             iss = request.GET.get('iss') or request.POST.get('iss')
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
+            login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
+            lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
 
             print(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}", flush=True)
+            print(f"login_hint: {login_hint}, lti_message_hint: {lti_message_hint}", flush=True)
             logger.info(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}")
 
             if not all([target_link_uri, iss, client_id]):
