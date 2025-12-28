@@ -104,8 +104,12 @@ class DjangoSessionService:
     def save_launch_data(self, key, data):
         """Save launch data to session"""
         session_key = self._session_key_prefix + key
+        print(f"Saving launch data: key={key}, session_key={session_key}, data={data}", flush=True)
+        print(f"Session ID before save: {self.request.session.session_key}", flush=True)
         self.request.session[session_key] = json.dumps(data)
         self.request.session.modified = True
+        print(f"Session ID after save: {self.request.session.session_key}", flush=True)
+        print("Data saved successfully", flush=True)
         return True
 
     def check_launch_data_storage_exists(self, key):
@@ -116,10 +120,20 @@ class DjangoSessionService:
     def check_state_is_valid(self, state, nonce):
         """Check if state is valid"""
         state_key = f'state-{state}'
+        print(f"Checking state validity: state={state}, nonce={nonce}", flush=True)
+        print(f"Looking for state_key: {state_key}", flush=True)
+        print(f"Session keys: {list(self.request.session.keys())}", flush=True)
+
         state_data = self.get_launch_data(state_key)
+        print(f"State data found: {state_data}", flush=True)
+
         if not state_data:
+            print("ERROR: State data not found in session!", flush=True)
             return False
-        return state_data.get('nonce') == nonce
+
+        is_valid = state_data.get('nonce') == nonce
+        print(f"State valid: {is_valid} (expected nonce: {state_data.get('nonce')}, got: {nonce})", flush=True)
+        return is_valid
 
     def get_cookie(self, key):
         """Get cookie value (for cookie service compatibility)"""
