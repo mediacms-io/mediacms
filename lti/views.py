@@ -30,7 +30,7 @@ from rest_framework.views import APIView
 from files.models import Media
 from rbac.models import RBACMembership
 
-from .adapters import DjangoSessionService, DjangoToolConfig
+from .adapters import DjangoRequest, DjangoSessionService, DjangoToolConfig
 from .handlers import (
     apply_lti_roles,
     create_lti_session,
@@ -85,10 +85,13 @@ class OIDCLoginView(View):
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
 
+            # Wrap Django request for PyLTI1p3
+            lti_request = DjangoRequest(request)
+
             # Create OIDC login handler with session and cookie services
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)  # Using same service for cookies
-            oidc_login = OIDCLogin(request, tool_config, session_service=session_service, cookie_service=cookie_service)
+            oidc_login = OIDCLogin(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Redirect to platform's authorization endpoint
             redirect_obj = oidc_login.enable_check_cookies().redirect(target_link_uri)
@@ -138,10 +141,13 @@ class LaunchView(View):
             # Create tool config
             tool_config = DjangoToolConfig.from_platform(platform)
 
+            # Wrap Django request for PyLTI1p3
+            lti_request = DjangoRequest(request)
+
             # Validate JWT and get launch data
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)
-            message_launch = MessageLaunch(request, tool_config, session_service=session_service, cookie_service=cookie_service)
+            message_launch = MessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             # Get validated launch data
             launch_data = message_launch.get_launch_data()

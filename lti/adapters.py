@@ -8,7 +8,36 @@ import json
 from typing import Any, Dict, Optional
 
 from django.core.cache import cache
+from pylti1p3.request import Request
 from pylti1p3.tool_config import ToolConfAbstract
+
+
+class DjangoRequest(Request):
+    """Django request adapter for PyLTI1p3"""
+
+    def __init__(self, request):
+        self._request = request
+        self._cookies = request.COOKIES
+        self._session = request.session
+
+    def get_param(self, key):
+        """Get parameter from GET or POST"""
+        if self._request.method == 'POST':
+            return self._request.POST.get(key)
+        return self._request.GET.get(key)
+
+    def get_cookie(self, key):
+        """Get cookie value"""
+        return self._cookies.get(key)
+
+    def is_secure(self):
+        """Check if request is secure (HTTPS)"""
+        return self._request.is_secure()
+
+    @property
+    def session(self):
+        """Get session"""
+        return self._session
 
 
 class DjangoOIDCLogin:
@@ -16,6 +45,7 @@ class DjangoOIDCLogin:
 
     def __init__(self, request, tool_config, launch_data_storage=None):
         self.request = request
+        self.lti_request = DjangoRequest(request)
         self.tool_config = tool_config
         self.launch_data_storage = launch_data_storage or DjangoSessionService(request)
 
@@ -23,7 +53,7 @@ class DjangoOIDCLogin:
         """Get the redirect object for OIDC login"""
         from pylti1p3.oidc_login import OIDCLogin
 
-        oidc_login = OIDCLogin(self.request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
+        oidc_login = OIDCLogin(self.lti_request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return oidc_login.enable_check_cookies().redirect(redirect_url)
 
@@ -33,6 +63,7 @@ class DjangoMessageLaunch:
 
     def __init__(self, request, tool_config, launch_data_storage=None):
         self.request = request
+        self.lti_request = DjangoRequest(request)
         self.tool_config = tool_config
         self.launch_data_storage = launch_data_storage or DjangoSessionService(request)
 
@@ -40,7 +71,7 @@ class DjangoMessageLaunch:
         """Validate the LTI launch message"""
         from pylti1p3.message_launch import MessageLaunch
 
-        message_launch = MessageLaunch(self.request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
+        message_launch = MessageLaunch(self.lti_request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return message_launch
 
