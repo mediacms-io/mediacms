@@ -159,19 +159,27 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def find_registration_by_issuer(self, iss, *args, **kwargs):
         """Find registration by issuer"""
+        print(f"DjangoToolConfig.find_registration_by_issuer('{iss}')", flush=True)
         if iss not in self._config:
+            print("  -> Not found in config", flush=True)
             return None
-        return self._config[iss]
+        result = self._config[iss]
+        print(f"  -> Found: {result.get('client_id')}", flush=True)
+        return result
 
     def find_registration_by_params(self, iss, client_id, *args, **kwargs):
         """Find registration by issuer and client ID"""
+        print(f"DjangoToolConfig.find_registration_by_params('{iss}', '{client_id}')", flush=True)
         if iss not in self._config:
+            print("  -> Issuer not found", flush=True)
             return None
 
         config = self._config[iss]
         if config.get('client_id') == client_id:
+            print("  -> Match found", flush=True)
             return config
 
+        print(f"  -> Client ID mismatch: expected {client_id}, got {config.get('client_id')}", flush=True)
         return None
 
     def find_deployment(self, iss, deployment_id):
