@@ -31,12 +31,6 @@ class SelectMediaView(View):
     def get(self, request):
         """Display media selection interface"""
 
-        # Get deep link session data
-        deep_link_data = request.session.get('lti_deep_link')
-
-        if not deep_link_data:
-            return JsonResponse({'error': 'Invalid session', 'message': 'No deep linking session data found'}, status=400)
-
         # Get accessible media for user
         user = request.user
 
@@ -58,7 +52,6 @@ class SelectMediaView(View):
 
         context = {
             'media_list': media_list,
-            'deep_link_data': deep_link_data,
             'show_my_media_only': show_my_media_only,
         }
 
