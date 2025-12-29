@@ -396,6 +396,69 @@ class PublicKeyPEMView(View):
         )
 
 
+class TestKeysView(View):
+    """
+    Test JWT signing and verification with our keys
+    """
+
+    def get(self, request):
+        """Sign a test JWT and verify it"""
+        import time
+
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from jwcrypto import jwk
+
+        from .models import LTIToolKeys
+
+        try:
+            # Get keys
+            key_obj = LTIToolKeys.get_or_create_keys()
+
+            # Get private key for signing
+            jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+            pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+            private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
+
+            # Get public key for verification
+            public_jwk_obj = jwk.JWK(**key_obj.public_key_jwk)
+            public_pem_bytes = public_jwk_obj.export_to_pem()
+            public_key = serialization.load_pem_public_key(public_pem_bytes, backend=default_backend())
+
+            # Create test payload
+            payload = {
+                'iss': 'test',
+                'aud': 'test',
+                'exp': int(time.time()) + 3600,
+                'iat': int(time.time()),
+                'test': 'data',
+            }
+
+            # Sign JWT
+            kid = key_obj.private_key_jwk['kid']
+            token = jwt.encode(payload, private_key, algorithm='RS256', headers={'kid': kid})
+
+            # Try to verify JWT
+            try:
+                decoded = jwt.decode(token, public_key, algorithms=['RS256'], options={'verify_aud': False})
+                result = "SUCCESS: JWT signature verified correctly!\n\n"
+                result += f"Signed with kid: {kid}\n"
+                result += f"Token: {token[:100]}...\n\n"
+                result += f"Decoded payload: {decoded}\n\n"
+                result += "✓ Your key pair is valid and working correctly.\n"
+                result += "✓ The issue must be with Moodle's configuration or how it's fetching the public key.\n"
+            except Exception as verify_error:
+                result = "FAILED: Could not verify JWT signature!\n\n"
+                result += f"Error: {str(verify_error)}\n\n"
+                result += "✗ Your key pair is BROKEN - private and public keys don't match!\n"
+                result += "✗ You need to regenerate the keys.\n"
+
+            return HttpResponse(result, content_type='text/plain')
+
+        except Exception as e:
+            return HttpResponse(f"ERROR: {str(e)}\n\n{traceback.format_exc()}", content_type='text/plain')
+
+
 @method_decorator(xframe_options_exempt, name='dispatch')
 class MyMediaLTIView(View):
     """
