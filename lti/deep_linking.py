@@ -111,7 +111,11 @@ class SelectMediaView(View):
 
                 # Add thumbnail if available
                 if media.thumbnail_url:
-                    content_item['thumbnail'] = {'url': media.thumbnail_url, 'width': 344, 'height': 194}
+                    # Ensure thumbnail URL is absolute
+                    thumbnail_url = media.thumbnail_url
+                    if not thumbnail_url.startswith('http'):
+                        thumbnail_url = request.build_absolute_uri(thumbnail_url)
+                    content_item['thumbnail'] = {'url': thumbnail_url, 'width': 344, 'height': 194}
 
                 # Add iframe configuration
                 content_item['iframe'] = {'width': 960, 'height': 540}
@@ -203,6 +207,9 @@ class SelectMediaView(View):
             # Some implementations (like Moodle) may expect both platform_id and client_id
             audience = [platform.platform_id, platform.client_id]
 
+            # Get sub (subject) from original launch
+            sub = message_launch_data.get('sub')
+
             payload = {
                 'iss': tool_issuer,  # Tool's issuer (MediaCMS URL)
                 'aud': audience,
@@ -214,6 +221,10 @@ class SelectMediaView(View):
                 'https://purl.imsglobal.org/spec/lti/claim/deployment_id': deployment_id,
                 'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': lti_content_items,
             }
+
+            # Add sub claim if present in original request
+            if sub:
+                payload['sub'] = sub
 
             # Echo back data claim if it was present in the request
             if 'data' in deep_linking_settings:
