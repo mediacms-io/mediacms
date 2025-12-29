@@ -157,10 +157,21 @@ class SelectMediaView(View):
                     thumb = item['thumbnail']
                     resource.set_icon_url(thumb['url'])
 
-                # Set window target to iframe (instead of set_iframe which doesn't exist)
+                # Set iframe presentation properties directly on the resource dict
+                # PyLTI1p3's DeepLinkResource doesn't expose all setters, so we access internal dict
                 if item.get('iframe'):
                     iframe = item['iframe']
-                    resource.set_window_target('iframe').set_width(iframe.get('width', 960)).set_height(iframe.get('height', 540))
+                    # Access the internal _resource dict to set presentation properties
+                    if not hasattr(resource, '_resource'):
+                        resource._resource = {}
+                    if 'iframe' not in resource._resource:
+                        resource._resource['iframe'] = {}
+                    resource._resource['iframe']['width'] = iframe.get('width', 960)
+                    resource._resource['iframe']['height'] = iframe.get('height', 540)
+                    # Set window target name
+                    if 'window' not in resource._resource:
+                        resource._resource['window'] = {}
+                    resource._resource['window']['targetName'] = 'iframe'
 
                 resources.append(resource)
 
