@@ -4,7 +4,6 @@ LTI Deep Linking 2.0 for MediaCMS
 Allows instructors to select media from MediaCMS library and embed in Moodle courses
 """
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -14,6 +13,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from files.models import Media
+from files.views.media import MediaList
 
 from .adapters import DjangoToolConfig
 from .models import LTIPlatform
@@ -31,28 +31,29 @@ class SelectMediaView(View):
     def get(self, request):
         """Display media selection interface"""
 
-        # Get accessible media for user
-        user = request.user
+        # Get deep link session data
+        deep_link_data = request.session.get('lti_deep_link')
+        if not deep_link_data:
+            return JsonResponse({'error': 'No deep linking session data found'}, status=400)
 
-        if getattr(settings, 'USE_RBAC', False):
-            # Get categories user has access to
-            categories = user.get_rbac_categories_as_member()
-            media_queryset = Media.objects.filter(listable=True, category__in=categories)
-        else:
-            # Get all public media
-            media_queryset = Media.objects.filter(listable=True, state='public')
+        # Reuse MediaList logic to get media with proper permissions
+        media_list_view = MediaList()
 
-        # Optionally filter by user's own media
+        # Get base queryset with all permission/RBAC logic applied
+        media_queryset = media_list_view._get_media_queryset(request)
+
+        # Apply filtering based on query params
         show_my_media_only = request.GET.get('my_media_only', 'false').lower() == 'true'
         if show_my_media_only:
-            media_queryset = media_queryset.filter(user=user)
+            media_queryset = media_queryset.filter(user=request.user)
 
-        # Order by recent
-        media_list = media_queryset.order_by('-add_date')[:100]  # Limit to 100 for performance
+        # Order by recent and limit for performance
+        media_list = media_queryset.order_by('-add_date')[:100]
 
         context = {
             'media_list': media_list,
             'show_my_media_only': show_my_media_only,
+            'deep_link_data': deep_link_data,
         }
 
         return render(request, 'lti/select_media.html', context)
