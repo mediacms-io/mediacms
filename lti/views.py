@@ -72,6 +72,10 @@ class OIDCLoginView(View):
     def handle_oidc_login(self, request):
         """Handle OIDC login initiation"""
         try:
+            print("=" * 80)
+            print("OIDC LOGIN INITIATED")
+            print("=" * 80)
+
             # Get target_link_uri and other OIDC params
             target_link_uri = request.GET.get('target_link_uri') or request.POST.get('target_link_uri')
             iss = request.GET.get('iss') or request.POST.get('iss')
@@ -79,7 +83,14 @@ class OIDCLoginView(View):
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
 
+            print(f"Target Link URI: {target_link_uri}")
+            print(f"Issuer (iss): {iss}")
+            print(f"Client ID: {client_id}")
+            print(f"Login Hint: {login_hint}")
+            print(f"LTI Message Hint: {lti_message_hint}")
+
             if not all([target_link_uri, iss, client_id]):
+                print("ERROR: Missing required OIDC parameters")
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
