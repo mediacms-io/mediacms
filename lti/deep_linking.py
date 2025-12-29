@@ -144,8 +144,8 @@ class SelectMediaView(View):
             # Get deep linking settings from original launch data
             deep_linking_settings = message_launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
 
-            # Create DeepLink instance directly
-            deep_link = DeepLink(registration, deployment_id, deep_linking_settings)
+            # Create DeepLink instance with tool_config for key retrieval
+            deep_link = DeepLink(registration, deployment_id, deep_linking_settings, tool_config=tool_config)
 
             # Convert content_items to DeepLinkResource objects
             resources = []

@@ -229,8 +229,12 @@ class DjangoToolConfig(ToolConfAbstract):
 
         # Set tool's private key for signing (e.g., Deep Linking responses)
         key_obj = LTIToolKeys.get_or_create_keys()
-        # Pass the full JWK dict (includes kid) - PyLTI1p3 will handle conversion
-        registration.set_tool_private_key(key_obj.private_key_jwk)
+        jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+        pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+
+        # Set both the key and kid directly on Registration internal attributes
+        registration._tool_private_key = pem_bytes.decode('utf-8')
+        registration._tool_private_key_kid = key_obj.private_key_jwk['kid']
 
         return registration
 
@@ -255,8 +259,12 @@ class DjangoToolConfig(ToolConfAbstract):
 
         # Set tool's private key for signing (e.g., Deep Linking responses)
         key_obj = LTIToolKeys.get_or_create_keys()
-        # Pass the full JWK dict (includes kid) - PyLTI1p3 will handle conversion
-        registration.set_tool_private_key(key_obj.private_key_jwk)
+        jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+        pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+
+        # Set both the key and kid directly on Registration internal attributes
+        registration._tool_private_key = pem_bytes.decode('utf-8')
+        registration._tool_private_key_kid = key_obj.private_key_jwk['kid']
 
         return registration
 
