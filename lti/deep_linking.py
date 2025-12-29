@@ -200,7 +200,8 @@ class SelectMediaView(View):
             tool_issuer = request.build_absolute_uri('/')[:-1]
 
             # Per LTI spec, aud should be the platform's issuer URL (or an array with issuer and optionally client_id)
-            audience = [platform.platform_id]
+            # Some implementations (like Moodle) may expect both platform_id and client_id
+            audience = [platform.platform_id, platform.client_id]
 
             payload = {
                 'iss': tool_issuer,  # Tool's issuer (MediaCMS URL)
