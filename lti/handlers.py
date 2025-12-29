@@ -11,6 +11,7 @@ Provides functions to:
 import hashlib
 import logging
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import login
 from django.utils import timezone
@@ -48,6 +49,10 @@ def provision_lti_user(platform, claims):
 
     Pattern: Similar to saml_auth.adapter.perform_user_actions()
     """
+    print("\n" + "=" * 80, flush=True)
+    print("LTI USER PROVISIONING - User data from Moodle:", flush=True)
+    print("=" * 80, flush=True)
+
     lti_user_id = claims.get('sub')
     if not lti_user_id:
         raise ValueError("Missing 'sub' claim in LTI launch")
@@ -56,6 +61,33 @@ def provision_lti_user(platform, claims):
     given_name = claims.get('given_name', '')
     family_name = claims.get('family_name', '')
     name = claims.get('name', f"{given_name} {family_name}").strip()
+
+    print(f"LTI User ID (sub): {lti_user_id}", flush=True)
+    print(f"Email: {email if email else 'NOT PROVIDED'}", flush=True)
+    print(f"Given Name: {given_name if given_name else 'NOT PROVIDED'}", flush=True)
+    print(f"Family Name: {family_name if family_name else 'NOT PROVIDED'}", flush=True)
+    print(f"Full Name: {name if name else 'NOT PROVIDED'}", flush=True)
+
+    # Check what username would be generated
+    test_username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
+    print(f"\nGenerated username: {test_username}", flush=True)
+
+    # Explain why this username was chosen
+    if email and '@' in email:
+        email_part = email.split('@')[0]
+        if len(email_part) >= 4:
+            print(f"  -> Using email-based username (from '{email}')", flush=True)
+        else:
+            print(f"  -> Email part '{email_part}' too short (< 4 chars), trying name...", flush=True)
+            if given_name and family_name and len(f"{given_name}.{family_name}") >= 4:
+                print(f"  -> Using name-based username ('{given_name}.{family_name}')", flush=True)
+            else:
+                print("  -> Name too short or missing, using fallback (hashed user ID)", flush=True)
+    elif given_name and family_name and len(f"{given_name}.{family_name}") >= 4:
+        print(f"  -> No email, using name-based username ('{given_name}.{family_name}')", flush=True)
+    else:
+        print("  -> No usable email or name, using fallback (hashed user ID)", flush=True)
+    print("=" * 80 + "\n", flush=True)
 
     # Check for existing mapping
     mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=lti_user_id).select_related('user').first()
@@ -107,8 +139,6 @@ def provision_lti_user(platform, claims):
         # Mark email as verified via allauth
         if email:
             try:
-                from allauth.account.models import EmailAddress
-
                 EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
             except Exception as e:
                 logger.warning(f"Could not create EmailAddress for LTI user: {e}")
