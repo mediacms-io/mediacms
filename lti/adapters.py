@@ -7,15 +7,17 @@ Provides Django-specific implementations for PyLTI1p3 interfaces
 import json
 from typing import Any, Dict, Optional
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from django.core.cache import cache
+from jwcrypto import jwk
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
 from pylti1p3.registration import Registration
 from pylti1p3.request import Request
 from pylti1p3.tool_config import ToolConfAbstract
 
-from .keys import load_private_key
-from .models import LTIPlatform
+from .models import LTIPlatform, LTIToolKeys
 
 
 class DjangoRequest(Request):
@@ -292,8 +294,15 @@ class DjangoToolConfig(ToolConfAbstract):
 
         PyLTI1p3 calls this to get the tool's private key for signing
         """
-        # Return MediaCMS's private key (same for all platforms)
-        return load_private_key()
+        # Load JWK and convert to cryptography RSA key object
+        key_obj = LTIToolKeys.get_or_create_keys()
+        jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+
+        # Export to PEM and load as cryptography object
+        pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+        private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
+
+        return private_key
 
     @classmethod
     def from_platform(cls, platform):
