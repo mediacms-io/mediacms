@@ -7,6 +7,8 @@ Provides Django-specific implementations for PyLTI1p3 interfaces
 import json
 from typing import Any, Dict, Optional
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from django.core.cache import cache
 from jwcrypto import jwk
 from pylti1p3.message_launch import MessageLaunch
@@ -306,18 +308,31 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def get_jwk(self, iss=None, client_id=None):
         """
-        Get private JWK for signing Deep Linking responses
+        Get private key for signing Deep Linking responses
 
         PyLTI1p3 calls this to get the tool's private key for signing
+        Returns a cryptography RSA key object that PyJWT can use directly
         """
-        # Load JWK and convert to PEM string
+        # Load JWK and convert to PEM bytes
         key_obj = LTIToolKeys.get_or_create_keys()
         jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
 
-        # Export to PEM string (PyJWT accepts PEM strings)
+        # Export to PEM bytes
         pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
 
-        return pem_bytes.decode('utf-8')
+        # Load as cryptography key object (PyJWT accepts this)
+        private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
+
+        return private_key
+
+    def get_kid(self, iss=None, client_id=None):
+        """
+        Get key ID for JWT header
+
+        PyLTI1p3 calls this to get the kid to include in JWT headers
+        """
+        key_obj = LTIToolKeys.get_or_create_keys()
+        return key_obj.private_key_jwk.get('kid')
 
     @classmethod
     def from_platform(cls, platform):
