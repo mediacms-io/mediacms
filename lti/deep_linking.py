@@ -203,9 +203,9 @@ class SelectMediaView(View):
             # Create JWT payload
             tool_issuer = request.build_absolute_uri('/')[:-1]
 
-            # Per LTI spec, aud should be the platform's issuer URL (or an array with issuer and optionally client_id)
-            # Some implementations (like Moodle) may expect both platform_id and client_id
-            audience = [platform.platform_id, platform.client_id]
+            # Per LTI spec, aud should be the platform's issuer URL
+            # Try just the platform URL (some Moodle versions don't accept arrays)
+            audience = platform.platform_id
 
             # Get sub (subject) from original launch
             sub = message_launch_data.get('sub')
