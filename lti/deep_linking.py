@@ -69,16 +69,25 @@ class SelectMediaView(View):
     def post(self, request):
         """Return selected media as deep linking content items"""
 
+        print("=" * 80)
+        print("DEEP LINKING - MEDIA SELECTION SUBMITTED")
+        print("=" * 80)
+
         # Get deep link session data
         deep_link_data = request.session.get('lti_deep_link')
 
         if not deep_link_data:
+            print("ERROR: No deep link session data found")
             return JsonResponse({'error': 'Invalid session'}, status=400)
+
+        print(f"Deep link data: {deep_link_data}")
 
         # Get selected media IDs
         selected_ids = request.POST.getlist('media_ids[]')
+        print(f"Selected media IDs: {selected_ids}")
 
         if not selected_ids:
+            print("ERROR: No media selected")
             return JsonResponse({'error': 'No media selected'}, status=400)
 
         # Build content items
@@ -113,12 +122,18 @@ class SelectMediaView(View):
                 continue
 
         if not content_items:
+            print("ERROR: No valid media found after processing")
             return JsonResponse({'error': 'No valid media found'}, status=400)
+
+        print(f"Built {len(content_items)} content items")
 
         # Create deep linking JWT response
         # Note: This is a simplified version
         # Full implementation would use PyLTI1p3's DeepLink response builder
+        print("Creating deep linking JWT...")
         jwt_response = self.create_deep_link_jwt(deep_link_data, content_items, request)
+        print(f"JWT created successfully (length: {len(jwt_response)})")
+        print(f"JWT (first 100 chars): {jwt_response[:100]}...")
 
         # Return auto-submit form that posts JWT back to Moodle
         context = {
@@ -126,6 +141,7 @@ class SelectMediaView(View):
             'jwt': jwt_response,
         }
 
+        print(f"Returning to Moodle at: {deep_link_data['deep_link_return_url']}")
         return render(request, 'lti/deep_link_return.html', context)
 
     def create_deep_link_jwt(self, deep_link_data, content_items, request):
@@ -133,13 +149,23 @@ class SelectMediaView(View):
         Create JWT response for deep linking - manual implementation
         """
         try:
+            print("=" * 80)
+            print("CREATING DEEP LINKING JWT")
+            print("=" * 80)
+
             platform_id = deep_link_data['platform_id']
             platform = LTIPlatform.objects.get(id=platform_id)
             deployment_id = deep_link_data['deployment_id']
             message_launch_data = deep_link_data['message_launch_data']
 
+            print(f"Platform: {platform.name}")
+            print(f"Platform ID: {platform.platform_id}")
+            print(f"Client ID: {platform.client_id}")
+            print(f"Deployment ID: {deployment_id}")
+
             # Get deep linking settings from original launch data
             deep_linking_settings = message_launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
+            print(f"Deep linking settings: {deep_linking_settings}")
 
             # Get tool's private key for signing
             key_obj = LTIToolKeys.get_or_create_keys()
@@ -171,8 +197,9 @@ class SelectMediaView(View):
                 lti_content_items.append(lti_item)
 
             # Create JWT payload
+            tool_issuer = request.build_absolute_uri('/')[:-1]
             payload = {
-                'iss': request.build_absolute_uri('/')[:-1],  # Tool's issuer (MediaCMS URL)
+                'iss': tool_issuer,  # Tool's issuer (MediaCMS URL)
                 'aud': [platform.client_id],
                 'exp': now + 3600,
                 'iat': now,
@@ -184,9 +211,17 @@ class SelectMediaView(View):
                 'https://purl.imsglobal.org/spec/lti-dl/claim/data': deep_linking_settings.get('data', ''),
             }
 
+            print("JWT Payload:")
+            print(f"  iss (issuer): {tool_issuer}")
+            print(f"  aud (audience): {platform.client_id}")
+            print(f"  deployment_id: {deployment_id}")
+            print(f"  content_items count: {len(lti_content_items)}")
+
             # Sign JWT with tool's private key
             kid = key_obj.private_key_jwk['kid']
+            print(f"Signing JWT with kid: {kid}")
             response_jwt = jwt.encode(payload, private_key, algorithm='RS256', headers={'kid': kid})
+            print("JWT signed successfully")
 
             return response_jwt
 
