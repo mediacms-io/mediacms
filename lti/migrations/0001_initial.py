@@ -53,19 +53,10 @@ class Migration(migrations.Migration):
                 ('context_label', models.CharField(blank=True, help_text='Course short name/code', max_length=100)),
                 ('resource_link_id', models.CharField(db_index=True, help_text='LTI resource link ID', max_length=255)),
                 ('resource_link_title', models.CharField(blank=True, help_text='Resource link title', max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('last_launch', models.DateTimeField(auto_now=True)),
-                ('launch_count', models.IntegerField(default=0, help_text='Number of times this resource has been launched')),
                 (
                     'category',
                     models.ForeignKey(
                         blank=True, help_text='Mapped MediaCMS category', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lti_resource_links', to='files.category'
-                    ),
-                ),
-                (
-                    'media',
-                    models.ForeignKey(
-                        blank=True, help_text='Specific media for embedded links', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lti_resource_links', to='files.media'
                     ),
                 ),
                 ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='resource_links', to='lti.ltiplatform')),
@@ -147,10 +138,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('lti_user_id', models.CharField(db_index=True, help_text="LTI 'sub' claim (unique user identifier from platform)", max_length=255)),
-                ('email', models.EmailField(blank=True, max_length=254)),
-                ('given_name', models.CharField(blank=True, max_length=100)),
-                ('family_name', models.CharField(blank=True, max_length=100)),
-                ('name', models.CharField(blank=True, max_length=255)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('last_login', models.DateTimeField(auto_now=True)),
                 ('platform', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_mappings', to='lti.ltiplatform')),

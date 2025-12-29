@@ -56,18 +56,16 @@ class LTIPlatformAdmin(admin.ModelAdmin):
 class LTIResourceLinkAdmin(admin.ModelAdmin):
     """Admin for LTI Resource Links"""
 
-    list_display = ['context_title', 'platform', 'category_link', 'rbac_group_link', 'launch_count', 'last_launch']
-    list_filter = ['platform', 'created_at', 'last_launch']
+    list_display = ['context_title', 'platform', 'category_link', 'rbac_group_link']
+    list_filter = ['platform']
     search_fields = ['context_id', 'context_title', 'resource_link_id']
-    readonly_fields = ['created_at', 'last_launch', 'launch_count']
     actions = ['sync_course_members']
 
     fieldsets = (
         ('Platform', {'fields': ('platform',)}),
         ('Context (Course)', {'fields': ('context_id', 'context_title', 'context_label')}),
         ('Resource Link', {'fields': ('resource_link_id', 'resource_link_title')}),
-        ('MediaCMS Mappings', {'fields': ('category', 'rbac_group', 'media')}),
-        ('Metrics', {'fields': ('launch_count', 'last_launch', 'created_at'), 'classes': ('collapse',)}),
+        ('MediaCMS Mappings', {'fields': ('category', 'rbac_group')}),
     )
 
     def category_link(self, obj):
@@ -134,14 +132,13 @@ class LTIResourceLinkAdmin(admin.ModelAdmin):
 class LTIUserMappingAdmin(admin.ModelAdmin):
     """Admin for LTI User Mappings"""
 
-    list_display = ['user_link', 'lti_user_id', 'platform', 'email', 'last_login']
+    list_display = ['user_link', 'lti_user_id', 'platform', 'user_email', 'last_login']
     list_filter = ['platform', 'created_at', 'last_login']
-    search_fields = ['lti_user_id', 'user__username', 'user__email', 'email']
+    search_fields = ['lti_user_id', 'user__username', 'user__email']
     readonly_fields = ['created_at', 'last_login']
 
     fieldsets = (
         ('Mapping', {'fields': ('platform', 'lti_user_id', 'user')}),
-        ('User Info (Cached)', {'fields': ('email', 'given_name', 'family_name', 'name')}),
         ('Timestamps', {'fields': ('created_at', 'last_login')}),
     )
 
@@ -149,6 +146,11 @@ class LTIUserMappingAdmin(admin.ModelAdmin):
         return format_html('<a href="/admin/users/user/{}/change/">{}</a>', obj.user.id, obj.user.username)
 
     user_link.short_description = 'MediaCMS User'
+
+    def user_email(self, obj):
+        return obj.user.email
+
+    user_email.short_description = 'User Email'
 
 
 @admin.register(LTIRoleMapping)

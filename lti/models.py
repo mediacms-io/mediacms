@@ -4,27 +4,22 @@ from django.db import models
 class LTIPlatform(models.Model):
     """LTI 1.3 Platform (Moodle instance) configuration"""
 
-    # Basic identification
     name = models.CharField(max_length=255, unique=True, help_text="Platform name (e.g., 'Moodle Production')")
     platform_id = models.URLField(help_text="Platform's issuer URL (iss claim, e.g., https://moodle.example.com)")
     client_id = models.CharField(max_length=255, help_text="Client ID provided by the platform")
 
-    # OIDC endpoints
     auth_login_url = models.URLField(help_text="OIDC authentication endpoint URL")
     auth_token_url = models.URLField(help_text="OAuth2 token endpoint URL")
     auth_audience = models.URLField(blank=True, null=True, help_text="OAuth2 audience (optional)")
 
-    # JWK configuration
     key_set_url = models.URLField(help_text="Platform's public JWK Set URL")
     key_set = models.JSONField(blank=True, null=True, help_text="Cached JWK Set (auto-fetched)")
     key_set_updated = models.DateTimeField(null=True, blank=True, help_text="Last time JWK Set was fetched")
 
-    # Deployment & features
     deployment_ids = models.JSONField(default=list, help_text="List of deployment IDs for this platform")
     enable_nrps = models.BooleanField(default=True, help_text="Enable Names and Role Provisioning Service")
     enable_deep_linking = models.BooleanField(default=True, help_text="Enable Deep Linking 2.0")
 
-    # Auto-provisioning settings
     auto_create_categories = models.BooleanField(default=True, help_text="Automatically create categories for courses")
     auto_create_users = models.BooleanField(default=True, help_text="Automatically create users on first launch")
     auto_sync_roles = models.BooleanField(default=True, help_text="Automatically sync user roles from LTI")
@@ -73,13 +68,7 @@ class LTIResourceLink(models.Model):
 
     # MediaCMS mappings
     category = models.ForeignKey('files.Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='lti_resource_links', help_text="Mapped MediaCMS category")
-    media = models.ForeignKey('files.Media', on_delete=models.SET_NULL, null=True, blank=True, related_name='lti_resource_links', help_text="Specific media for embedded links")
     rbac_group = models.ForeignKey('rbac.RBACGroup', on_delete=models.SET_NULL, null=True, blank=True, related_name='lti_resource_links', help_text="RBAC group for course members")
-
-    # Metrics
-    created_at = models.DateTimeField(auto_now_add=True)
-    last_launch = models.DateTimeField(auto_now=True)
-    launch_count = models.IntegerField(default=0, help_text="Number of times this resource has been launched")
 
     class Meta:
         verbose_name = 'LTI Resource Link'
@@ -101,13 +90,6 @@ class LTIUserMapping(models.Model):
     lti_user_id = models.CharField(max_length=255, db_index=True, help_text="LTI 'sub' claim (unique user identifier from platform)")
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='lti_mappings')
 
-    # User info from LTI (cached)
-    email = models.EmailField(blank=True)
-    given_name = models.CharField(max_length=100, blank=True)
-    family_name = models.CharField(max_length=100, blank=True)
-    name = models.CharField(max_length=255, blank=True)
-
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
 
@@ -127,7 +109,7 @@ class LTIUserMapping(models.Model):
 class LTIRoleMapping(models.Model):
     """Maps LTI institutional roles to MediaCMS roles"""
 
-    GLOBAL_ROLE_CHOICES = [('user', 'Authenticated User'), ('advancedUser', 'Advanced User'), ('editor', 'MediaCMS Editor'), ('manager', 'MediaCMS Manager'), ('admin', 'MediaCMS Administrator')]
+    GLOBAL_ROLE_CHOICES = [('advancedUser', 'Advanced User'), ('editor', 'MediaCMS Editor'), ('manager', 'MediaCMS Manager'), ('admin', 'MediaCMS Administrator')]
 
     GROUP_ROLE_CHOICES = [('member', 'Member'), ('contributor', 'Contributor'), ('manager', 'Manager')]
 

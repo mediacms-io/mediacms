@@ -23,12 +23,12 @@ from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
 
 # Default LTI role mappings
 DEFAULT_LTI_ROLE_MAPPINGS = {
-    'Instructor': {'global_role': 'advancedUser', 'group_role': 'manager'},
-    'TeachingAssistant': {'global_role': 'user', 'group_role': 'contributor'},
-    'Learner': {'global_role': 'user', 'group_role': 'member'},
-    'Student': {'global_role': 'user', 'group_role': 'member'},
-    'Administrator': {'global_role': 'manager', 'group_role': 'manager'},
-    'Faculty': {'global_role': 'advancedUser', 'group_role': 'manager'},
+    'Instructor': {'global_role': '', 'group_role': 'manager'},
+    'TeachingAssistant': {'global_role': '', 'group_role': 'contributor'},
+    'Learner': {'global_role': '', 'group_role': 'member'},
+    'Student': {'global_role': '', 'group_role': 'member'},
+    'Administrator': {'global_role': '', 'group_role': 'manager'},
+    'Faculty': {'global_role': '', 'group_role': 'manager'},
 }
 
 
@@ -107,7 +107,7 @@ def provision_lti_user(platform, claims):
                 pass
 
         # Create mapping
-        LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user, email=email, given_name=given_name, family_name=family_name, name=name)
+        LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
 
     return user
 
@@ -207,11 +207,6 @@ def provision_lti_context(platform, claims, resource_link_id):
             'rbac_group': rbac_group,
         },
     )
-
-    # Update launch metrics
-    resource_link.launch_count += 1
-    resource_link.last_launch = timezone.now()
-    resource_link.save(update_fields=['launch_count', 'last_launch'])
 
     if not created:
         # Update relationships if needed

@@ -10,7 +10,8 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
-import json
+import logging
+import traceback
 import uuid
 from urllib.parse import urlencode
 
@@ -41,8 +42,10 @@ from .handlers import (
     provision_lti_user,
     validate_lti_session,
 )
-from .models import LTILaunchLog, LTIPlatform, LTIResourceLink, LTIUserMapping
+from .models import LTILaunchLog, LTIPlatform, LTIResourceLink
 from .services import LTINRPSClient
+
+logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request):
@@ -71,7 +74,13 @@ class OIDCLoginView(View):
 
     def handle_oidc_login(self, request):
         """Handle OIDC login initiation"""
+        print("=== OIDC Login Started ===", flush=True)
+        logger.info("=== OIDC Login Started ===")
         try:
+            # Get all request parameters for debugging
+            all_params = dict(request.GET.items()) if request.method == 'GET' else dict(request.POST.items())
+            print(f"All OIDC request params: {all_params}", flush=True)
+
             # Get target_link_uri and other OIDC params
             target_link_uri = request.GET.get('target_link_uri') or request.POST.get('target_link_uri')
             iss = request.GET.get('iss') or request.POST.get('iss')
@@ -79,14 +88,23 @@ class OIDCLoginView(View):
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
 
+            print(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}", flush=True)
+            print(f"login_hint: {login_hint}, lti_message_hint: {lti_message_hint}", flush=True)
+            logger.info(f"OIDC params - iss: {iss}, client_id: {client_id}, target: {target_link_uri}")
+
             if not all([target_link_uri, iss, client_id]):
+                print("ERROR: Missing OIDC parameters", flush=True)
+                logger.error("Missing OIDC parameters")
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id, active=True)
+            print(f"Found platform: {platform.name}", flush=True)
+            logger.info(f"Found platform: {platform.name}")
 
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
+            print(f"Tool config: {tool_config._config}", flush=True)
 
             # Wrap Django request for PyLTI1p3
             lti_request = DjangoRequest(request)
@@ -95,15 +113,28 @@ class OIDCLoginView(View):
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)  # Using same service for cookies
 
+            print("Creating OIDCLogin...", flush=True)
             oidc_login = OIDCLogin(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
+            print("OIDCLogin created successfully", flush=True)
 
             # Redirect to platform's authorization endpoint
+            print(f"Target link URI: {target_link_uri}", flush=True)
+            print(f"Auth login URL: {platform.auth_login_url}", flush=True)
+
             try:
+                print("Calling enable_check_cookies()...", flush=True)
                 oidc_with_cookies = oidc_login.enable_check_cookies()
+                print(f"Calling redirect({target_link_uri})...", flush=True)
                 redirect_url = oidc_with_cookies.redirect(target_link_uri)
+                print(f"Redirect returned: '{redirect_url}'", flush=True)
+                print(f"OIDC redirect URL type: {type(redirect_url)}", flush=True)
+                print(f"OIDC redirecting to: {redirect_url}", flush=True)
+                logger.info(f"OIDC redirecting to: {redirect_url}")
 
                 if not redirect_url:
+                    print("PyLTI1p3 redirect failed, building URL manually...", flush=True)
                     # Manual OIDC redirect construction with all required OAuth 2.0 parameters
+
                     state = str(uuid.uuid4())
                     nonce = str(uuid.uuid4())
 
@@ -128,14 +159,20 @@ class OIDCLoginView(View):
                         params['lti_message_hint'] = lti_message_hint
 
                     redirect_url = f"{platform.auth_login_url}?{urlencode(params)}"
+                    print(f"Manually built redirect URL: {redirect_url}", flush=True)
 
                 return HttpResponseRedirect(redirect_url)
-            except Exception:
+            except Exception as e:
+                print(f"ERROR in OIDC redirect: {str(e)}", flush=True)
+
+                traceback.print_exc()
                 raise
 
         except LtiException as e:
+            logger.error(f"LTI OIDC Login Error: {str(e)}")
             return render(request, 'lti/launch_error.html', {'error': 'OIDC Login Failed', 'message': str(e)}, status=400)
-        except Exception:
+        except Exception as e:
+            logger.error(f"OIDC Login Error: {str(e)}", exc_info=True)
             return JsonResponse({'error': 'Internal server error during OIDC login'}, status=500)
 
 
@@ -150,6 +187,8 @@ class LaunchView(View):
 
     def post(self, request):
         """Handle LTI launch with JWT validation"""
+        print("=== LTI Launch Started ===", flush=True)
+        logger.info("=== LTI Launch Started ===")
         platform = None
         user = None
         error_message = ''
@@ -162,12 +201,15 @@ class LaunchView(View):
                 raise ValueError("Missing id_token in launch request")
 
             # Decode JWT to get issuer (without validation first)
+
             unverified = jwt.decode(id_token, options={"verify_signature": False})
             iss = unverified.get('iss')
             aud = unverified.get('aud')
 
             # Get platform
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud, active=True)
+            print(f"Launch from platform: {platform.name}", flush=True)
+            logger.info(f"Launch from platform: {platform.name}")
 
             # Create tool config
             tool_config = DjangoToolConfig.from_platform(platform)
@@ -191,28 +233,6 @@ class LaunchView(View):
             launch_data = message_launch.get_launch_data()
             claims = self.sanitize_claims(launch_data)
 
-            # Print all JWT information for debugging
-            print("\n" + "=" * 80)
-            print("LTI JWT DECRYPTED - ALL CLAIMS:")
-            print("=" * 80)
-            print(f"Issuer (iss): {launch_data.get('iss')}")
-            print(f"Subject (sub): {launch_data.get('sub')}")
-            print(f"Email: {launch_data.get('email')}")
-            print(f"Given Name: {launch_data.get('given_name')}")
-            print(f"Family Name: {launch_data.get('family_name')}")
-            print(f"Full Name: {launch_data.get('name')}")
-            print(f"Roles: {launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles')}")
-            context = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
-            print(f"Context ID: {context.get('id')}")
-            print(f"Context Title: {context.get('title')}")
-            print(f"Context Label: {context.get('label')}")
-            resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
-            print(f"Resource Link ID: {resource_link.get('id')}")
-            print(f"Resource Link Title: {resource_link.get('title')}")
-            print("\nFull Launch Data:")
-            print(json.dumps(launch_data, indent=2))
-            print("=" * 80 + "\n")
-
             # Extract key claims
             sub = launch_data.get('sub')
             resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
@@ -227,10 +247,16 @@ class LaunchView(View):
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Provision user
+            print(f"Provisioning user, sub: {sub}", flush=True)
+            logger.info(f"Provisioning user, sub: {sub}")
             if platform.auto_create_users:
                 user = provision_lti_user(platform, launch_data)
+                print(f"User provisioned: {user.username}", flush=True)
+                logger.info(f"User provisioned: {user.username}")
             else:
                 # Must find existing user
+                from .models import LTIUserMapping
+
                 mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=sub).first()
                 if not mapping:
                     raise ValueError("User auto-creation disabled and no existing mapping found")
@@ -238,29 +264,38 @@ class LaunchView(View):
 
             # Provision context (category + RBAC group)
             if 'https://purl.imsglobal.org/spec/lti/claim/context' in launch_data:
+                logger.info("Provisioning context...")
                 category, rbac_group, resource_link_obj = provision_lti_context(platform, launch_data, resource_link_id)
+                logger.info(f"Context provisioned: category={category.title if category else None}")
 
                 # Apply roles
                 apply_lti_roles(user, platform, roles, rbac_group)
+                logger.info(f"Roles applied: {roles}")
             else:
                 # No context - might be a direct media embed
                 resource_link_obj = None
 
             # Create session
             create_lti_session(request, user, message_launch, platform)
+            logger.info("LTI session created")
 
             # Log successful launch
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims, ip_address=get_client_ip(request))
+            logger.info("Launch logged")
 
             # Determine where to redirect
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
+            print(f"=== Launch Success - Redirecting to: {redirect_url} ===", flush=True)
+            logger.info(f"=== Launch Success - Redirecting to: {redirect_url} ===")
 
             return HttpResponseRedirect(redirect_url)
 
         except LtiException as e:
             error_message = f"LTI Launch Error: {str(e)}"
+            logger.error(error_message)
         except Exception as e:
             error_message = f"Launch Error: {str(e)}"
+            logger.error(error_message, exc_info=True)
 
         # Log failed launch
         if platform:
@@ -337,15 +372,24 @@ class MyMediaLTIView(View):
 
     def get(self, request):
         """Display my media page"""
+        print(f"=== My Media LTI View - User: {request.user} ===", flush=True)
+        logger.info(f"=== My Media LTI View - User: {request.user} ===")
+
         # Validate LTI session
         lti_session = validate_lti_session(request)
+        print(f"LTI session valid: {bool(lti_session)}", flush=True)
+        logger.info(f"LTI session valid: {bool(lti_session)}")
 
         if not lti_session:
+            print("ERROR: LTI session validation failed", flush=True)
+            logger.error("LTI session validation failed")
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
         # Redirect to user's profile page
         # The existing user profile page is already iframe-compatible
         profile_url = f"/user/{request.user.username}"
+        print(f"Redirecting to profile: {profile_url}", flush=True)
+        logger.info(f"Redirecting to profile: {profile_url}")
         return HttpResponseRedirect(profile_url)
 
 
@@ -370,9 +414,9 @@ class EmbedMediaLTIView(View):
                 can_view = True
             else:
                 can_view = False
-        else:
-            # Fall back to public state check
-            can_view = media.state == 'public'
+
+        if media.state in ["public", "unlisted"]:
+            can_view = True
 
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
@@ -440,4 +484,5 @@ class ManualSyncView(APIView):
             )
 
         except Exception as e:
+            logger.error(f"NRPS sync error: {str(e)}", exc_info=True)
             return Response({'error': 'Sync failed', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
