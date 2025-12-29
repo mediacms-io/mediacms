@@ -259,8 +259,18 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if role_group:
                 group_role = get_higher_privilege_group(group_role, role_group)
 
-    # Create or update RBAC membership
-    membership, created = RBACMembership.objects.update_or_create(user=user, rbac_group=rbac_group, defaults={'role': group_role})
+    # Create or update RBAC membership (defensive: handle multiple memberships)
+    memberships = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
+
+    if memberships.exists():
+        # Update all existing memberships to the correct role
+        for membership in memberships:
+            if membership.role != group_role:
+                membership.role = group_role
+                membership.save()
+    else:
+        # No existing membership, create new one
+        RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
 
     return global_role, group_role
 
