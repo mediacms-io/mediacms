@@ -94,10 +94,20 @@ class OIDCLoginView(View):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
-            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id)
+            print(f"Looking for platform with iss={iss}, client_id={client_id}")
+            try:
+                platform = LTIPlatform.objects.get(platform_id=iss, client_id=client_id)
+                print(f"Platform found: {platform.name}")
+            except LTIPlatform.DoesNotExist:
+                print(f"ERROR: No platform found with iss={iss}, client_id={client_id}")
+                print("Available platforms:")
+                for p in LTIPlatform.objects.all():
+                    print(f"  - {p.name}: platform_id={p.platform_id}, client_id={p.client_id}")
+                return JsonResponse({'error': 'Platform not found'}, status=404)
 
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
+            print("Tool config created")
 
             # Wrap Django request for PyLTI1p3
             lti_request = DjangoRequest(request)
@@ -168,16 +178,26 @@ class LaunchView(View):
         claims = {}
 
         try:
+            print("=" * 80)
+            print("LTI LAUNCH INITIATED")
+            print("=" * 80)
+
             # Get issuer from request
             id_token = request.POST.get('id_token')
             if not id_token:
+                print("ERROR: Missing id_token in launch request")
                 raise ValueError("Missing id_token in launch request")
+
+            print(f"Received id_token (first 50 chars): {id_token[:50]}...")
 
             # Decode JWT to get issuer (without validation first)
 
             unverified = jwt.decode(id_token, options={"verify_signature": False})
             iss = unverified.get('iss')
             aud = unverified.get('aud')
+
+            print(f"Decoded JWT - Issuer (iss): {iss}")
+            print(f"Decoded JWT - Audience (aud): {aud}")
 
             # Get platform
             platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud)
