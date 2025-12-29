@@ -315,6 +315,20 @@ class LaunchView(View):
         # Check for custom parameters indicating what to show
         custom = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
 
+        # Debug: Print custom parameters
+        print(f"DEBUG: Custom parameters received: {custom}", flush=True)
+
+        # Check for custom redirect URL (any MediaCMS path)
+        custom_path = custom.get('redirect_path')
+        print(f"DEBUG: redirect_path value: {custom_path}", flush=True)
+
+        if custom_path:
+            # Ensure it starts with / and doesn't include domain
+            if not custom_path.startswith('/'):
+                custom_path = '/' + custom_path
+            print(f"DEBUG: Redirecting to custom path: {custom_path}", flush=True)
+            return custom_path
+
         # Check if specific media is requested
         media_id = custom.get('media_id') or custom.get('media_friendly_token')
         if media_id:
@@ -325,6 +339,7 @@ class LaunchView(View):
                 pass
 
         # Default: redirect to my media
+        print("DEBUG: No custom parameters, using default (my media)", flush=True)
         return reverse('lti:my_media')
 
     def handle_deep_linking_launch(self, request, message_launch, platform, launch_data):
@@ -405,7 +420,6 @@ class EmbedMediaLTIView(View):
         lti_session = validate_lti_session(request)
 
         if lti_session and request.user.is_authenticated:
-            # Check RBAC access via course membership
             if request.user.has_member_access_to_media(media):
                 can_view = True
             else:
