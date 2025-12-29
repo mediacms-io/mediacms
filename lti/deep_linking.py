@@ -4,8 +4,13 @@ LTI Deep Linking 2.0 for MediaCMS
 Allows instructors to select media from MediaCMS library and embed in Moodle courses
 """
 
+import time
 import traceback
+import uuid
 
+import jwt
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -13,14 +18,12 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from pylti1p3.deep_link import DeepLink
-from pylti1p3.deep_link_resource import DeepLinkResource
+from jwcrypto import jwk
 
 from files.models import Media
 from files.views.media import MediaList
 
-from .adapters import DjangoToolConfig
-from .models import LTIPlatform
+from .models import LTIPlatform, LTIToolKeys
 
 
 @method_decorator(login_required, name='dispatch')
@@ -127,7 +130,7 @@ class SelectMediaView(View):
 
     def create_deep_link_jwt(self, deep_link_data, content_items, request):
         """
-        Create JWT response for deep linking using PyLTI1p3
+        Create JWT response for deep linking - manual implementation
         """
         try:
             platform_id = deep_link_data['platform_id']
@@ -135,49 +138,55 @@ class SelectMediaView(View):
             deployment_id = deep_link_data['deployment_id']
             message_launch_data = deep_link_data['message_launch_data']
 
-            # Recreate tool config
-            tool_config = DjangoToolConfig.from_platform(platform)
-
-            # Get registration (tool config for this platform)
-            registration = tool_config.find_registration_by_issuer(platform.platform_id, client_id=platform.client_id)
-
             # Get deep linking settings from original launch data
             deep_linking_settings = message_launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
 
-            # Create DeepLink instance with tool_config for key retrieval
-            deep_link = DeepLink(registration, deployment_id, deep_linking_settings, tool_config=tool_config)
+            # Get tool's private key for signing
+            key_obj = LTIToolKeys.get_or_create_keys()
+            jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+            pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+            private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
 
-            # Convert content_items to DeepLinkResource objects
-            resources = []
+            # Build JWT payload according to LTI Deep Linking spec
+            now = int(time.time())
+
+            # Convert content_items to LTI content item format
+            lti_content_items = []
             for item in content_items:
-                resource = DeepLinkResource()
-                resource.set_url(item['url']).set_title(item['title']).set_custom_params(item.get('custom', {}))
+                lti_item = {
+                    'type': item['type'],
+                    'title': item['title'],
+                    'url': item['url'],
+                }
 
-                # Add thumbnail if available
+                if item.get('custom'):
+                    lti_item['custom'] = item['custom']
+
                 if item.get('thumbnail'):
-                    thumb = item['thumbnail']
-                    resource.set_icon_url(thumb['url'])
+                    lti_item['thumbnail'] = item['thumbnail']
 
-                # Set iframe presentation properties directly on the resource dict
-                # PyLTI1p3's DeepLinkResource doesn't expose all setters, so we access internal dict
                 if item.get('iframe'):
-                    iframe = item['iframe']
-                    # Access the internal _resource dict to set presentation properties
-                    if not hasattr(resource, '_resource'):
-                        resource._resource = {}
-                    if 'iframe' not in resource._resource:
-                        resource._resource['iframe'] = {}
-                    resource._resource['iframe']['width'] = iframe.get('width', 960)
-                    resource._resource['iframe']['height'] = iframe.get('height', 540)
-                    # Set window target name
-                    if 'window' not in resource._resource:
-                        resource._resource['window'] = {}
-                    resource._resource['window']['targetName'] = 'iframe'
+                    lti_item['iframe'] = item['iframe']
 
-                resources.append(resource)
+                lti_content_items.append(lti_item)
 
-            # Get the JWT token (not the full HTML form)
-            response_jwt = deep_link.get_response_jwt(resources)
+            # Create JWT payload
+            payload = {
+                'iss': request.build_absolute_uri('/')[:-1],  # Tool's issuer (MediaCMS URL)
+                'aud': [platform.client_id],
+                'exp': now + 3600,
+                'iat': now,
+                'nonce': str(uuid.uuid4()),
+                'https://purl.imsglobal.org/spec/lti/claim/message_type': 'LtiDeepLinkingResponse',
+                'https://purl.imsglobal.org/spec/lti/claim/version': '1.3.0',
+                'https://purl.imsglobal.org/spec/lti/claim/deployment_id': deployment_id,
+                'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': lti_content_items,
+                'https://purl.imsglobal.org/spec/lti-dl/claim/data': deep_linking_settings.get('data', ''),
+            }
+
+            # Sign JWT with tool's private key
+            kid = key_obj.private_key_jwk['kid']
+            response_jwt = jwt.encode(payload, private_key, algorithm='RS256', headers={'kid': kid})
 
             return response_jwt
 
