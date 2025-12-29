@@ -82,7 +82,7 @@ def stuff(request):
                     category = Category.objects.get(lti_platform_id=platform_id, lti_context_id=context_id)
 
                     # Check if user has permission to upload to this category
-                    if request.user.has_upload_access_to_category(category):
+                    if request.user.has_member_access_to_category(category):
                         ret['lti_category_uid'] = category.uid
                 except Category.DoesNotExist:
                     pass

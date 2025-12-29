@@ -283,7 +283,7 @@ class MediaList(APIView):
                     category = Category.objects.get(uid=publish_to_category)
 
                     # Check if user has upload access to this category
-                    if request.user.has_upload_access_to_category(category):
+                    if request.user.has_member_access_to_category(category):
                         media.category.add(category)
                 except Category.DoesNotExist:
                     # Category doesn't exist, silently ignore
