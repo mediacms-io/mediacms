@@ -272,39 +272,7 @@ class MediaList(APIView):
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]
-            media = serializer.save(user=request.user, media_file=media_file)
-
-            # Handle LTI category assignment if publish_to_category parameter is provided
-            publish_to_category = request.data.get('publish_to_category', '').strip()
-            print("=" * 80)
-            print("MEDIA UPLOAD - CATEGORY ASSIGNMENT")
-            print(f"publish_to_category parameter: '{publish_to_category}'")
-            print(f"User: {request.user.username}")
-
-            if publish_to_category:
-                from ..models import Category
-
-                try:
-                    category = Category.objects.get(uid=publish_to_category)
-                    print(f"Category found: {category.title} (uid={category.uid})")
-
-                    # Check if user has upload access to this category
-                    has_access = request.user.has_member_access_to_category(category)
-                    print(f"User has member access to category: {has_access}")
-
-                    if has_access:
-                        media.category.add(category)
-                        print(f"SUCCESS: Added media '{media.title}' to category '{category.title}'")
-                    else:
-                        print(f"SKIPPED: User does not have member access to category '{category.title}'")
-                except Category.DoesNotExist:
-                    # Category doesn't exist, silently ignore
-                    print(f"ERROR: Category with uid='{publish_to_category}' does not exist")
-                    pass
-            else:
-                print("No publish_to_category parameter provided")
-            print("=" * 80)
-
+            serializer.save(user=request.user, media_file=media_file)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
