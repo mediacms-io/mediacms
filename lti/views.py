@@ -284,13 +284,23 @@ class LaunchView(View):
 
     def handle_deep_linking_launch(self, request, message_launch, platform, launch_data):
         """Handle deep linking request"""
-        # Store deep link data in session
-        deep_link = message_launch.get_deep_link()
+        # Get deep linking settings from launch data
+        deep_linking_settings = launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
 
+        if not deep_linking_settings:
+            raise ValueError("Missing deep linking settings in launch data")
+
+        deep_link_return_url = deep_linking_settings.get('deep_link_return_url')
+
+        if not deep_link_return_url:
+            raise ValueError("Missing deep_link_return_url in deep linking settings")
+
+        # Store deep link data in session for use in SelectMediaView
         request.session['lti_deep_link'] = {
-            'deep_link_return_url': deep_link.get_response_url(),
+            'deep_link_return_url': deep_link_return_url,
             'deployment_id': launch_data.get('https://purl.imsglobal.org/spec/lti/claim/deployment_id'),
             'platform_id': platform.id,
+            'message_launch_data': launch_data,  # Store full launch data for JWT creation
         }
 
         # Redirect to media selection page
