@@ -160,7 +160,7 @@
 			debug: false,
 			element: document.querySelector('.media-uploader'),
 			request: {
-				endpoint: '{% url 'uploader:upload' %}',
+				endpoint: '{% url 'uploader:upload' %}{% if lti_category_uid %}?publish_to_category={{ lti_category_uid }}{% endif %}',
 				customHeaders: {
 					'X-CSRFToken': getCSRFToken('csrftoken'),
 				},
@@ -179,7 +179,7 @@
 					enabled: true,
 				},
 				success: {
-					endpoint: '{% url 'uploader:upload' %}?done',
+					endpoint: '{% url 'uploader:upload' %}?done{% if lti_category_uid %}&publish_to_category={{ lti_category_uid }}{% endif %}',
 				},
 			},
 			callbacks: {
