@@ -263,14 +263,23 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
     memberships = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
 
     if memberships.exists():
-        # Update all existing memberships to the correct role
-        for membership in memberships:
-            if membership.role != group_role:
-                membership.role = group_role
-                membership.save()
+        # Check if any membership already has the correct role
+        if not memberships.filter(role=group_role).exists():
+            # None have the correct role, update the first one
+            first_membership = memberships.first()
+            first_membership.role = group_role
+            try:
+                first_membership.save()
+            except Exception:
+                # Save failed (e.g., uniqueness constraint), skip
+                pass
     else:
         # No existing membership, create new one
-        RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
+        try:
+            RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
+        except Exception:
+            # Creation failed (e.g., uniqueness constraint), skip
+            pass
 
     return global_role, group_role
 
