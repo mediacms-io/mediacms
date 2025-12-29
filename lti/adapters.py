@@ -26,7 +26,6 @@ class DjangoRequest(Request):
         """Get parameter from GET or POST"""
         # Check both POST and GET, POST takes priority
         value = self._request.POST.get(key) or self._request.GET.get(key)
-        print(f"DjangoRequest.get_param('{key}') = {value}", flush=True)
         return value
 
     def get_cookie(self, key):
@@ -105,12 +104,8 @@ class DjangoSessionService:
     def save_launch_data(self, key, data):
         """Save launch data to session"""
         session_key = self._session_key_prefix + key
-        print(f"Saving launch data: key={key}, session_key={session_key}, data={data}", flush=True)
-        print(f"Session ID before save: {self.request.session.session_key}", flush=True)
         self.request.session[session_key] = json.dumps(data)
         self.request.session.modified = True
-        print(f"Session ID after save: {self.request.session.session_key}", flush=True)
-        print("Data saved successfully", flush=True)
         return True
 
     def check_launch_data_storage_exists(self, key):
@@ -121,40 +116,31 @@ class DjangoSessionService:
     def check_state_is_valid(self, state, nonce):
         """Check if state is valid - state is for CSRF protection, nonce is validated separately by JWT"""
         state_key = f'state-{state}'
-        print(f"Checking state validity: state={state}", flush=True)
-        print(f"Looking for state_key: {state_key}", flush=True)
 
         state_data = self.get_launch_data(state_key)
-        print(f"State data found: {state_data}", flush=True)
 
         if not state_data:
-            print("ERROR: State data not found in session!", flush=True)
             return False
 
         # State exists - that's sufficient for CSRF protection
         # Nonce validation is handled by PyLTI1p3 through JWT signature and claims validation
-        print("State is valid!", flush=True)
         return True
 
     def check_nonce(self, nonce):
         """Check if nonce is valid (not used before) and mark it as used"""
         nonce_key = f'nonce-{nonce}'
-        print(f"Checking nonce: {nonce}", flush=True)
 
         # Check if nonce was already used
         if self.check_launch_data_storage_exists(nonce_key):
-            print(f"ERROR: Nonce {nonce} was already used!", flush=True)
             return False
 
         # Mark nonce as used
         self.save_launch_data(nonce_key, {'used': True})
-        print(f"Nonce {nonce} is valid and marked as used", flush=True)
         return True
 
     def set_state_valid(self, state, id_token_hash):
         """Mark state as valid and associate it with the id_token_hash"""
         state_key = f'state-{state}'
-        print(f"Setting state valid: state={state}, id_token_hash={id_token_hash}", flush=True)
         self.save_launch_data(state_key, {'valid': True, 'id_token_hash': id_token_hash})
         return True
 
@@ -225,12 +211,9 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def find_registration_by_issuer(self, iss, *args, **kwargs):
         """Find registration by issuer"""
-        print(f"DjangoToolConfig.find_registration_by_issuer('{iss}')", flush=True)
         if iss not in self._config:
-            print("  -> Not found in config", flush=True)
             return None
         config = self._config[iss]
-        print(f"  -> Found: {config.get('client_id')}", flush=True)
 
         # Create Registration object from config dict
         registration = Registration()
@@ -248,17 +231,12 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def find_registration_by_params(self, iss, client_id, *args, **kwargs):
         """Find registration by issuer and client ID"""
-        print(f"DjangoToolConfig.find_registration_by_params('{iss}', '{client_id}')", flush=True)
         if iss not in self._config:
-            print("  -> Issuer not found", flush=True)
             return None
 
         config = self._config[iss]
         if config.get('client_id') != client_id:
-            print(f"  -> Client ID mismatch: expected {client_id}, got {config.get('client_id')}", flush=True)
             return None
-
-        print("  -> Match found", flush=True)
 
         # Create Registration object from config dict
         registration = Registration()

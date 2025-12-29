@@ -9,7 +9,6 @@ Provides functions to:
 """
 
 import hashlib
-import logging
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -21,9 +20,6 @@ from rbac.models import RBACGroup, RBACMembership
 from users.models import User
 
 from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
-
-logger = logging.getLogger(__name__)
-
 
 # Default LTI role mappings
 DEFAULT_LTI_ROLE_MAPPINGS = {
@@ -49,10 +45,6 @@ def provision_lti_user(platform, claims):
 
     Pattern: Similar to saml_auth.adapter.perform_user_actions()
     """
-    print("\n" + "=" * 80, flush=True)
-    print("LTI USER PROVISIONING - User data from Moodle:", flush=True)
-    print("=" * 80, flush=True)
-
     lti_user_id = claims.get('sub')
     if not lti_user_id:
         raise ValueError("Missing 'sub' claim in LTI launch")
@@ -61,33 +53,6 @@ def provision_lti_user(platform, claims):
     given_name = claims.get('given_name', '')
     family_name = claims.get('family_name', '')
     name = claims.get('name', f"{given_name} {family_name}").strip()
-
-    print(f"LTI User ID (sub): {lti_user_id}", flush=True)
-    print(f"Email: {email if email else 'NOT PROVIDED'}", flush=True)
-    print(f"Given Name: {given_name if given_name else 'NOT PROVIDED'}", flush=True)
-    print(f"Family Name: {family_name if family_name else 'NOT PROVIDED'}", flush=True)
-    print(f"Full Name: {name if name else 'NOT PROVIDED'}", flush=True)
-
-    # Check what username would be generated
-    test_username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
-    print(f"\nGenerated username: {test_username}", flush=True)
-
-    # Explain why this username was chosen
-    if email and '@' in email:
-        email_part = email.split('@')[0]
-        if len(email_part) >= 4:
-            print(f"  -> Using email-based username (from '{email}')", flush=True)
-        else:
-            print(f"  -> Email part '{email_part}' too short (< 4 chars), trying name...", flush=True)
-            if given_name and family_name and len(f"{given_name}.{family_name}") >= 4:
-                print(f"  -> Using name-based username ('{given_name}.{family_name}')", flush=True)
-            else:
-                print("  -> Name too short or missing, using fallback (hashed user ID)", flush=True)
-    elif given_name and family_name and len(f"{given_name}.{family_name}") >= 4:
-        print(f"  -> No email, using name-based username ('{given_name}.{family_name}')", flush=True)
-    else:
-        print("  -> No usable email or name, using fallback (hashed user ID)", flush=True)
-    print("=" * 80 + "\n", flush=True)
 
     # Check for existing mapping
     mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=lti_user_id).select_related('user').first()
@@ -123,8 +88,6 @@ def provision_lti_user(platform, claims):
             mapping.email = email
             mapping.save(update_fields=['email'])
 
-        logger.info(f"Updated LTI user: {user.username} (platform: {platform.name})")
-
     else:
         # Create new user
         username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
@@ -140,13 +103,11 @@ def provision_lti_user(platform, claims):
         if email:
             try:
                 EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
-            except Exception as e:
-                logger.warning(f"Could not create EmailAddress for LTI user: {e}")
+            except Exception:
+                pass
 
         # Create mapping
         LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user, email=email, given_name=given_name, family_name=family_name, name=name)
-
-        logger.info(f"Created new LTI user: {user.username} (platform: {platform.name})")
 
     return user
 
@@ -214,7 +175,7 @@ def provision_lti_context(platform, claims, resource_link_id):
     )
 
     if created:
-        logger.info(f"Created category for LTI context: {category.title} (uid: {uid})")
+        pass
     else:
         # Update title if changed
         if context_title and category.title != context_title:
@@ -230,13 +191,9 @@ def provision_lti_context(platform, claims, resource_link_id):
         },
     )
 
-    if created:
-        logger.info(f"Created RBAC group for LTI context: {rbac_group.name}")
-
     # Link category to RBAC group
     if category not in rbac_group.categories.all():
         rbac_group.categories.add(category)
-        logger.info(f"Linked category {category.title} to RBAC group {rbac_group.name}")
 
     # Get or create resource link
     resource_link, created = LTIResourceLink.objects.get_or_create(
@@ -316,7 +273,6 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
     # Apply global role if auto_sync_roles is enabled
     if platform.auto_sync_roles:
         user.set_role_from_mapping(global_role)
-        logger.info(f"Applied global role '{global_role}' to user {user.username}")
 
     # Determine group role
     group_role = 'member'
@@ -328,11 +284,6 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
 
     # Create or update RBAC membership
     membership, created = RBACMembership.objects.update_or_create(user=user, rbac_group=rbac_group, defaults={'role': group_role})
-
-    if created:
-        logger.info(f"Added user {user.username} to RBAC group {rbac_group.name} as {group_role}")
-    else:
-        logger.info(f"Updated user {user.username} in RBAC group {rbac_group.name} to {group_role}")
 
     return global_role, group_role
 
@@ -393,8 +344,6 @@ def create_lti_session(request, user, launch_data, platform):
     # Session timeout from settings or default 1 hour
     timeout = getattr(settings, 'LTI_SESSION_TIMEOUT', 3600)
     request.session.set_expiry(timeout)
-
-    logger.info(f"Created LTI session for user {user.username} (expires in {timeout}s)")
 
     return True
 

@@ -4,8 +4,6 @@ LTI Deep Linking 2.0 for MediaCMS
 Allows instructors to select media from MediaCMS library and embed in Moodle courses
 """
 
-import logging
-
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -17,9 +15,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from files.models import Media
 
+from .adapters import DjangoToolConfig
 from .models import LTIPlatform
-
-logger = logging.getLogger(__name__)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -112,7 +109,6 @@ class SelectMediaView(View):
                 content_items.append(content_item)
 
             except Media.DoesNotExist:
-                logger.warning(f"Media {media_id} not found during deep linking")
                 continue
 
         if not content_items:
@@ -141,8 +137,6 @@ class SelectMediaView(View):
         # For now, return a placeholder
 
         try:
-            from .adapters import DjangoToolConfig
-
             platform_id = deep_link_data['platform_id']
             platform = LTIPlatform.objects.get(id=platform_id)
 
@@ -156,10 +150,7 @@ class SelectMediaView(View):
             # 2. Call launch.get_deep_link()
             # 3. Call deep_link.output_response_form(content_items)
 
-            logger.warning("Deep linking JWT creation not fully implemented")
-
             return "JWT_TOKEN_PLACEHOLDER"
 
-        except Exception as e:
-            logger.error(f"Error creating deep link JWT: {str(e)}", exc_info=True)
+        except Exception:
             return "ERROR_CREATING_JWT"
