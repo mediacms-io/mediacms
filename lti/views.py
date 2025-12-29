@@ -10,6 +10,7 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
+import traceback
 import uuid
 from urllib.parse import urlencode
 
@@ -156,8 +157,12 @@ class OIDCLoginView(View):
                 raise
 
         except LtiException as e:
+            print(f"LtiException during OIDC login: {str(e)}")
+            traceback.print_exc()
             return render(request, 'lti/launch_error.html', {'error': 'OIDC Login Failed', 'message': str(e)}, status=400)
-        except Exception:
+        except Exception as e:
+            print(f"Exception during OIDC login: {str(e)}")
+            traceback.print_exc()
             return JsonResponse({'error': 'Internal server error during OIDC login'}, status=500)
 
 
@@ -200,10 +205,20 @@ class LaunchView(View):
             print(f"Decoded JWT - Audience (aud): {aud}")
 
             # Get platform
-            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud)
+            print(f"Looking for platform with platform_id={iss}, client_id={aud}")
+            try:
+                platform = LTIPlatform.objects.get(platform_id=iss, client_id=aud)
+                print(f"Platform found: {platform.name}")
+            except LTIPlatform.DoesNotExist:
+                print(f"ERROR: No platform found with platform_id={iss}, client_id={aud}")
+                print("Available platforms:")
+                for p in LTIPlatform.objects.all():
+                    print(f"  - {p.name}: platform_id={p.platform_id}, client_id={p.client_id}")
+                raise
 
             # Create tool config
             tool_config = DjangoToolConfig.from_platform(platform)
+            print("Tool config created")
 
             # Wrap Django request for PyLTI1p3
             lti_request = DjangoRequest(request)
@@ -261,8 +276,12 @@ class LaunchView(View):
 
         except LtiException as e:
             error_message = f"LTI Launch Error: {str(e)}"
+            print(f"LtiException during launch: {error_message}")
+            traceback.print_exc()
         except Exception as e:
             error_message = f"Launch Error: {str(e)}"
+            print(f"Exception during launch: {error_message}")
+            traceback.print_exc()
 
         # Log failed launch
         if platform:
