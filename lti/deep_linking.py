@@ -198,9 +198,13 @@ class SelectMediaView(View):
 
             # Create JWT payload
             tool_issuer = request.build_absolute_uri('/')[:-1]
+
+            # Per LTI spec, aud should be the platform's issuer URL (or an array with issuer and optionally client_id)
+            audience = [platform.platform_id]
+
             payload = {
                 'iss': tool_issuer,  # Tool's issuer (MediaCMS URL)
-                'aud': [platform.client_id],
+                'aud': audience,
                 'exp': now + 3600,
                 'iat': now,
                 'nonce': str(uuid.uuid4()),
@@ -213,7 +217,7 @@ class SelectMediaView(View):
 
             print("JWT Payload:")
             print(f"  iss (issuer): {tool_issuer}")
-            print(f"  aud (audience): {platform.client_id}")
+            print(f"  aud (audience): {audience}")
             print(f"  deployment_id: {deployment_id}")
             print(f"  content_items count: {len(lti_content_items)}")
 
