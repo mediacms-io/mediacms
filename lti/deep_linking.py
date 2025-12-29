@@ -213,14 +213,21 @@ class SelectMediaView(View):
                 'https://purl.imsglobal.org/spec/lti/claim/version': '1.3.0',
                 'https://purl.imsglobal.org/spec/lti/claim/deployment_id': deployment_id,
                 'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': lti_content_items,
-                'https://purl.imsglobal.org/spec/lti-dl/claim/data': deep_linking_settings.get('data', ''),
             }
+
+            # Echo back data claim if it was present in the request
+            if 'data' in deep_linking_settings:
+                payload['https://purl.imsglobal.org/spec/lti-dl/claim/data'] = deep_linking_settings['data']
 
             print("JWT Payload:")
             print(f"  iss (issuer): {tool_issuer}")
             print(f"  aud (audience): {audience}")
-            print(f"  deployment_id: {deployment_id}")
+            print(f"  deployment_id: {deployment_id} (type: {type(deployment_id).__name__})")
             print(f"  content_items count: {len(lti_content_items)}")
+            print("  Full payload:")
+            import json
+
+            print(json.dumps(payload, indent=2, default=str))
 
             # Sign JWT with tool's private key
             kid = key_obj.private_key_jwk['kid']

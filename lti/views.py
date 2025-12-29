@@ -15,7 +15,7 @@ import uuid
 from urllib.parse import urlencode
 
 import jwt
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -360,6 +360,40 @@ class JWKSView(View):
         jwks = get_jwks()
 
         return JsonResponse(jwks, content_type='application/json')
+
+
+class PublicKeyPEMView(View):
+    """
+    Display public key in PEM format for easy copy/paste into Moodle
+    """
+
+    def get(self, request):
+        """Return public key in PEM format"""
+        from jwcrypto import jwk
+
+        from .models import LTIToolKeys
+
+        # Get key from database
+        key_obj = LTIToolKeys.get_or_create_keys()
+
+        # Convert to PEM
+        jwk_obj = jwk.JWK(**key_obj.public_key_jwk)
+        pem_bytes = jwk_obj.export_to_pem()
+        pem_string = pem_bytes.decode('utf-8')
+
+        # Return as plain text for easy copy/paste
+        return HttpResponse(
+            f"MediaCMS LTI Public Key (PEM Format)\n"
+            f"{'=' * 80}\n\n"
+            f"{pem_string}\n"
+            f"{'=' * 80}\n\n"
+            f"Instructions:\n"
+            f"1. Copy the entire key above (including BEGIN/END lines)\n"
+            f"2. In Moodle LTI tool configuration, change 'Public key type' to 'Public key'\n"
+            f"3. Paste the key into the 'Public key' field\n"
+            f"4. Save and try Deep Linking again\n",
+            content_type='text/plain',
+        )
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')
