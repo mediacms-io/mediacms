@@ -83,11 +83,6 @@ def provision_lti_user(platform, claims):
         if update_fields:
             user.save(update_fields=update_fields)
 
-        # Update mapping cache
-        if email and mapping.email != email:
-            mapping.email = email
-            mapping.save(update_fields=['email'])
-
     else:
         # Create new user
         username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
