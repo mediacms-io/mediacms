@@ -272,7 +272,23 @@ class MediaList(APIView):
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]
-            serializer.save(user=request.user, media_file=media_file)
+            media = serializer.save(user=request.user, media_file=media_file)
+
+            # Handle LTI category assignment if publish_to_category parameter is provided
+            publish_to_category = request.data.get('publish_to_category', '').strip()
+            if publish_to_category:
+                from ..models import Category
+
+                try:
+                    category = Category.objects.get(uid=publish_to_category)
+
+                    # Check if user has upload access to this category
+                    if request.user.has_upload_access_to_category(category):
+                        media.category.add(category)
+                except Category.DoesNotExist:
+                    # Category doesn't exist, silently ignore
+                    pass
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

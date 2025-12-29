@@ -152,65 +152,54 @@ def provision_lti_context(platform, claims, resource_link_id):
     context_title = context.get('title', '')
     context_label = context.get('label', '')
 
-    # Unique identifier for this course
-    uid = f"lti_{platform.id}_{context_id}"
+    # Try to get existing resource link first to reuse category/group
+    try:
+        resource_link = LTIResourceLink.objects.get(
+            platform=platform,
+            context_id=context_id,
+            resource_link_id=resource_link_id,
+        )
+        category = resource_link.category
+        rbac_group = resource_link.rbac_group
 
-    # Get or create category
-    category, created = Category.objects.get_or_create(
-        uid=uid,
-        defaults={
-            'title': context_title or context_label or f"Course {context_id}",
-            'description': f"Auto-created from {platform.name}: {context_title}",
-            'is_global': False,
-            'is_rbac_category': True,
-            'is_lms_course': True,  # New field!
-            'lti_platform': platform,
-            'lti_context_id': context_id,
-        },
-    )
+        # Update context title if changed
+        if context_title and resource_link.context_title != context_title:
+            resource_link.context_title = context_title
+            resource_link.save(update_fields=['context_title'])
+            if category and category.title != context_title:
+                category.title = context_title
+                category.save(update_fields=['title'])
 
-    if created:
-        pass
-    else:
-        # Update title if changed
-        if context_title and category.title != context_title:
-            category.title = context_title
-            category.save(update_fields=['title'])
+    except LTIResourceLink.DoesNotExist:
+        # Create new category and RBAC group with auto-generated UIDs
+        category = Category.objects.create(
+            title=context_title or context_label or f"Course {context_id}",
+            description=f"Auto-created from {platform.name}: {context_title}",
+            is_global=False,
+            is_rbac_category=True,
+            is_lms_course=True,
+            lti_platform=platform,
+            lti_context_id=context_id,
+        )
 
-    # Get or create RBAC group
-    rbac_group, created = RBACGroup.objects.get_or_create(
-        uid=uid,
-        defaults={
-            'name': f"{context_title or context_label} ({platform.name})",
-            'description': f"LTI course group from {platform.name}",
-        },
-    )
+        rbac_group = RBACGroup.objects.create(
+            name=f"{context_title or context_label} ({platform.name})",
+            description=f"LTI course group from {platform.name}",
+        )
 
-    # Link category to RBAC group
-    if category not in rbac_group.categories.all():
+        # Link category to RBAC group
         rbac_group.categories.add(category)
 
-    # Get or create resource link
-    resource_link, created = LTIResourceLink.objects.get_or_create(
-        platform=platform,
-        context_id=context_id,
-        resource_link_id=resource_link_id,
-        defaults={
-            'context_title': context_title,
-            'context_label': context_label,
-            'category': category,
-            'rbac_group': rbac_group,
-        },
-    )
-
-    if not created:
-        # Update relationships if needed
-        if resource_link.category != category:
-            resource_link.category = category
-            resource_link.save(update_fields=['category'])
-        if resource_link.rbac_group != rbac_group:
-            resource_link.rbac_group = rbac_group
-            resource_link.save(update_fields=['rbac_group'])
+        # Create resource link
+        resource_link = LTIResourceLink.objects.create(
+            platform=platform,
+            context_id=context_id,
+            resource_link_id=resource_link_id,
+            context_title=context_title,
+            context_label=context_label,
+            category=category,
+            rbac_group=rbac_group,
+        )
 
     return category, rbac_group, resource_link
 

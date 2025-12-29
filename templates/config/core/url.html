@@ -14,7 +14,7 @@ MediaCMS.url = {
     likedMedia: "/liked",
     history: "/history",
     /* Add pages */
-    addMedia: "/upload",
+    addMedia: "/upload{% if lti_category_uid %}?publish_to_category={{ lti_category_uid }}{% endif %}",
     recordScreen: "/record_screen",
     /* Profile/account edit pages */
     editProfile: "{{user.edit_url}}",
