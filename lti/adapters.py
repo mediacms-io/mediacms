@@ -227,6 +227,11 @@ class DjangoToolConfig(ToolConfAbstract):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
 
+        # Set tool's private key for signing (e.g., Deep Linking responses)
+        private_key_pem = self.get_jwk(iss, config.get('client_id'))
+        if private_key_pem:
+            registration.set_tool_private_key(private_key_pem)
+
         return registration
 
     def find_registration_by_params(self, iss, client_id, *args, **kwargs):
@@ -247,6 +252,11 @@ class DjangoToolConfig(ToolConfAbstract):
         if config.get('auth_audience'):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
+
+        # Set tool's private key for signing (e.g., Deep Linking responses)
+        private_key_pem = self.get_jwk(iss, config.get('client_id'))
+        if private_key_pem:
+            registration.set_tool_private_key(private_key_pem)
 
         return registration
 
