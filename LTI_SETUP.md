@@ -90,6 +90,9 @@ You'll need these URLs when configuring your LMS:
 - ✓ IMS LTI Names and Role Provisioning (for roster sync)
 - ✓ IMS LTI Deep Linking (for media selection)
 
+**Tool Settings (Important for Deep Linking):**
+- ✓ **Supports Deep Linking (Content-Item Message)** - Enable this to allow instructors to browse and select media from MediaCMS when adding activities
+
 3. Save the tool configuration
 
 ### B. Copy Platform Details to MediaCMS
@@ -134,10 +137,17 @@ Copy these values back to the LTIPlatform configuration in MediaCMS admin (step 
   - Any other MediaCMS page path
 
 **Option 4: Embed Specific Media via Deep Linking (Interactive)**
-- Add activity → External tool → MediaCMS
-- Click "Select content" (if Deep Linking is enabled)
-- Browse and select media from MediaCMS
-- Selected media will be automatically configured and embedded
+
+⚠️ **Prerequisite:** Ensure "Supports Deep Linking (Content-Item Message)" is enabled in the External Tool configuration (see section 3.A above)
+
+When adding the activity to your course:
+1. Add activity → External tool → MediaCMS
+2. In the activity settings, enable **"Supports Deep Linking"** checkbox (may be under "Tool settings" or "Privacy" section)
+3. Click **"Select content"** button → This launches the MediaCMS media browser
+4. Browse and select media from MediaCMS (you can select multiple)
+5. Click **"Add to course"** → Returns to Moodle with selected media configured
+6. The activity will be automatically configured with the selected media's title and embed URL
+7. Students clicking this activity will go directly to the selected media
 
 ### D. Custom Parameters - Complete Examples
 

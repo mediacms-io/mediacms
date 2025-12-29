@@ -157,10 +157,10 @@ class SelectMediaView(View):
                     thumb = item['thumbnail']
                     resource.set_icon_url(thumb['url'])
 
-                # Add iframe settings
+                # Set window target to iframe (instead of set_iframe which doesn't exist)
                 if item.get('iframe'):
                     iframe = item['iframe']
-                    resource.set_iframe(iframe.get('width', 960), iframe.get('height', 540))
+                    resource.set_window_target('iframe').set_width(iframe.get('width', 960)).set_height(iframe.get('height', 540))
 
                 resources.append(resource)
 
