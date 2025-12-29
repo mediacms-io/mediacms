@@ -81,8 +81,10 @@ You'll need these URLs when configuring your LMS:
 **Launch Settings:**
 - **Default launch container:** Embed (without blocks) or New window
 - **Accept grades from tool:** Optional
-- **Share launcher's name:** Always
-- **Share launcher's email:** Always
+- **Share launcher's name:** Always ⚠️ **REQUIRED for user names**
+- **Share launcher's email:** Always ⚠️ **REQUIRED for user emails**
+
+> **Important:** MediaCMS creates user accounts automatically on first LTI launch. To ensure users have proper names and email addresses in MediaCMS, you **must** set both "Share launcher's name with tool" and "Share launcher's email with tool" to **Always** in the Privacy settings. Without these settings, users will be created with only a username based on their LTI user ID.
 
 **Services:**
 - ✓ IMS LTI Names and Role Provisioning (for roster sync)
@@ -140,7 +142,32 @@ The system automatically maps LMS roles to MediaCMS:
 
 You can customize these in Django admin under **LTI Role Mappings**.
 
-## 6. User Authentication
+## 6. User Creation and Authentication
+
+### User Creation via LTI
+
+When a user launches MediaCMS from your LMS for the first time, a MediaCMS account is automatically created with:
+- **Username:** Generated from email (preferred) or name, or a unique ID if neither is available
+- **Email:** From LTI claim (if shared by LMS)
+- **Name:** From LTI given_name/family_name claims (if shared by LMS)
+- **Roles:** Mapped from LTI roles to MediaCMS permissions
+- **Course membership:** Automatically added to the RBAC group for the course
+
+### Privacy Settings Are Critical
+
+⚠️ **For proper user accounts, you must configure the LTI tool's privacy settings in Moodle:**
+
+1. Edit the External Tool configuration in Moodle
+2. Go to the **Privacy** section
+3. Set **"Share launcher's name with tool"** to **Always**
+4. Set **"Share launcher's email with tool"** to **Always**
+
+Without these settings:
+- Users will not have proper names in MediaCMS
+- Users will not have email addresses
+- Usernames will be generic hashes (e.g., `lti_user_abc123def`)
+
+### Authentication
 
 Users created through LTI integration do **not** have a password set. They can only access MediaCMS through LTI launches from your LMS. This is intentional for security.
 
