@@ -69,22 +69,43 @@ def stuff(request):
     if getattr(settings, 'USE_LTI', False):
         # Check if user has an active LTI session
         lti_session = request.session.get('lti_session')
+        print("=" * 80)
+        print("CONTEXT PROCESSOR - LTI CATEGORY LOOKUP")
+        print("USE_LTI: True")
+        print(f"User authenticated: {request.user.is_authenticated}")
+        print(f"LTI session exists: {lti_session is not None}")
+
         if lti_session and request.user.is_authenticated:
             ret['lti_session'] = lti_session
+            print(f"LTI session data: {lti_session}")
 
             # Get the category for this LTI context via lti_platform and lti_context_id
             platform_id = lti_session.get('platform_id')
             context_id = lti_session.get('context_id')
+            print(f"Platform ID: {platform_id}, Context ID: {context_id}")
 
             if platform_id and context_id:
                 try:
                     # Look up category by LTI platform and context
                     category = Category.objects.get(lti_platform_id=platform_id, lti_context_id=context_id)
+                    print(f"Category found: {category.title} (uid={category.uid})")
 
                     # Check if user has permission to upload to this category
-                    if request.user.has_member_access_to_category(category):
+                    has_access = request.user.has_member_access_to_category(category)
+                    print(f"User has member access: {has_access}")
+
+                    if has_access:
                         ret['lti_category_uid'] = category.uid
+                        print(f"SUCCESS: Set lti_category_uid = {category.uid}")
+                    else:
+                        print("SKIPPED: User does not have member access to category")
                 except Category.DoesNotExist:
+                    print(f"ERROR: No category found with lti_platform_id={platform_id}, lti_context_id={context_id}")
                     pass
+            else:
+                print("SKIPPED: Missing platform_id or context_id")
+        else:
+            print("SKIPPED: No LTI session or user not authenticated")
+        print("=" * 80)
 
     return ret
