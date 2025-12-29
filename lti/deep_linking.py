@@ -123,28 +123,55 @@ class SelectMediaView(View):
 
     def create_deep_link_jwt(self, deep_link_data, content_items, request):
         """
-        Create JWT response for deep linking
-
-        This is a placeholder - full implementation would use PyLTI1p3
+        Create JWT response for deep linking using PyLTI1p3
         """
-        # TODO: Implement proper JWT creation using PyLTI1p3's DeepLink.output_response_form()
-        # For now, return a placeholder
+        from pylti1p3.deep_link import DeepLink
+        from pylti1p3.deep_link_resource import DeepLinkResource
 
         try:
             platform_id = deep_link_data['platform_id']
             platform = LTIPlatform.objects.get(id=platform_id)
+            deployment_id = deep_link_data['deployment_id']
+            message_launch_data = deep_link_data['message_launch_data']
 
-            DjangoToolConfig.from_platform(platform)
+            # Recreate tool config
+            tool_config = DjangoToolConfig.from_platform(platform)
 
-            # This requires the full message launch object to create properly
-            # For now, we'll create a simple response
+            # Get registration (tool config for this platform)
+            registration = tool_config.find_registration_by_issuer(platform.platform_id, client_id=platform.client_id)
 
-            # In a real implementation, you would:
-            # 1. Get the MessageLaunch object from session
-            # 2. Call launch.get_deep_link()
-            # 3. Call deep_link.output_response_form(content_items)
+            # Get deep linking settings from original launch data
+            deep_linking_settings = message_launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
 
-            return "JWT_TOKEN_PLACEHOLDER"
+            # Create DeepLink instance directly
+            deep_link = DeepLink(registration, deployment_id, deep_linking_settings)
 
-        except Exception:
-            return "ERROR_CREATING_JWT"
+            # Convert content_items to DeepLinkResource objects
+            resources = []
+            for item in content_items:
+                resource = DeepLinkResource()
+                resource.set_url(item['url']).set_title(item['title']).set_custom_params(item.get('custom', {}))
+
+                # Add thumbnail if available
+                if item.get('thumbnail'):
+                    thumb = item['thumbnail']
+                    resource.set_icon_url(thumb['url'])
+
+                # Add iframe settings
+                if item.get('iframe'):
+                    iframe = item['iframe']
+                    resource.set_iframe(iframe.get('width', 960), iframe.get('height', 540))
+
+                resources.append(resource)
+
+            # Get the JWT token (not the full HTML form)
+            response_jwt = deep_link.get_response_jwt(resources)
+
+            return response_jwt
+
+        except Exception as e:
+            # Log error for debugging
+            import traceback
+
+            traceback.print_exc()
+            raise ValueError(f"Failed to create Deep Linking JWT: {str(e)}")
