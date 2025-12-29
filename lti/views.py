@@ -324,10 +324,6 @@ class LaunchView(View):
             except Media.DoesNotExist:
                 pass
 
-        # Check resource link for linked media
-        if resource_link and resource_link.media:
-            return reverse('lti:embed_media', args=[resource_link.media.friendly_token])
-
         # Default: redirect to my media
         return reverse('lti:my_media')
 
@@ -421,9 +417,8 @@ class EmbedMediaLTIView(View):
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
 
-        # Redirect to existing embed page
-        # The existing embed page already handles media display in iframes
-        return HttpResponseRedirect(f"/embed?m={friendly_token}")
+        # Redirect to media view page
+        return HttpResponseRedirect(f"/view?m={friendly_token}")
 
 
 class ManualSyncView(APIView):

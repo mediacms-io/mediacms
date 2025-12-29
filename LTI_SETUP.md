@@ -103,20 +103,77 @@ Copy these values back to the LTIPlatform configuration in MediaCMS admin (step 
 
 ### C. Using MediaCMS in Courses
 
-**Option 1: Embed "My Media" view**
+**Option 1: Embed "My Media" view (Default)**
 - In a course, add activity → External tool → MediaCMS
 - Leave the custom URL blank (uses default launch URL)
 - Students/teachers will see their MediaCMS profile in an iframe
 
-**Option 2: Embed specific media via Deep Linking**
+**Option 2: Link to a Specific Video**
+- Add activity → External tool → MediaCMS
+- Activity name: "November 2020 Video" (or any descriptive name)
+- In the activity settings, find **"Custom parameters"** (may be under "Privacy" or "Additional Settings")
+- Add this parameter:
+  ```
+  media_friendly_token=abc123def
+  ```
+- Replace `abc123def` with your video's token from MediaCMS (found in the URL: `/view?m=abc123def`)
+- Students clicking this activity will go directly to that specific video
+
+**Option 3: Link to Any MediaCMS Page**
+- Add activity → External tool → MediaCMS
+- In **"Custom parameters"**, add:
+  ```
+  redirect_path=/featured
+  ```
+- Supported paths:
+  - `/featured` - Featured videos page
+  - `/latest` - Latest videos
+  - `/search/?q=keyword` - Search results
+  - `/category/category-name` - Specific category
+  - `/user/username` - User's profile
+  - Any other MediaCMS page path
+
+**Option 4: Embed Specific Media via Deep Linking (Interactive)**
 - Add activity → External tool → MediaCMS
 - Click "Select content" (if Deep Linking is enabled)
 - Browse and select media from MediaCMS
-- Selected media will be embedded in the course
+- Selected media will be automatically configured and embedded
 
-**Option 3: Direct media link**
-- Manually create external tool activity with custom URL:
-  `https://your-mediacms-domain.com/lti/embed/{media_friendly_token}/`
+### D. Custom Parameters - Complete Examples
+
+**Example 1: Link to a specific video titled "Lecture 1 - Introduction"**
+```
+Activity Name: Lecture 1 - Introduction
+Custom Parameters:
+media_friendly_token=a1b2c3d4e5
+```
+
+**Example 2: Link to course-specific videos**
+```
+Activity Name: Course Videos
+Custom Parameters:
+redirect_path=/category/biology101
+```
+
+**Example 3: Link to search results for "genetics"**
+```
+Activity Name: Genetics Videos
+Custom Parameters:
+redirect_path=/search/?q=genetics
+```
+
+**Example 4: Link to featured content**
+```
+Activity Name: Featured Videos
+Custom Parameters:
+redirect_path=/featured
+```
+
+**Where to find Custom Parameters in Moodle:**
+1. When creating/editing the External Tool activity
+2. Expand **"Privacy"** section, or look for **"Additional Settings"**
+3. Find the **"Custom parameters"** text field
+4. Enter one parameter per line in the format: `key=value`
 
 ## 4. Testing Checklist
 
