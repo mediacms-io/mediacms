@@ -4,6 +4,8 @@ LTI Deep Linking 2.0 for MediaCMS
 Allows instructors to select media from MediaCMS library and embed in Moodle courses
 """
 
+import traceback
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -11,6 +13,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from pylti1p3.deep_link import DeepLink
+from pylti1p3.deep_link_resource import DeepLinkResource
 
 from files.models import Media
 from files.views.media import MediaList
@@ -125,9 +129,6 @@ class SelectMediaView(View):
         """
         Create JWT response for deep linking using PyLTI1p3
         """
-        from pylti1p3.deep_link import DeepLink
-        from pylti1p3.deep_link_resource import DeepLinkResource
-
         try:
             platform_id = deep_link_data['platform_id']
             platform = LTIPlatform.objects.get(id=platform_id)
@@ -182,7 +183,5 @@ class SelectMediaView(View):
 
         except Exception as e:
             # Log error for debugging
-            import traceback
-
             traceback.print_exc()
             raise ValueError(f"Failed to create Deep Linking JWT: {str(e)}")

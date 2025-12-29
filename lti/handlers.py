@@ -260,9 +260,7 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if role_global:
                 global_role = get_higher_privilege_global(global_role, role_global)
 
-    # Apply global role if auto_sync_roles is enabled
-    if platform.auto_sync_roles:
-        user.set_role_from_mapping(global_role)
+    user.set_role_from_mapping(global_role)
 
     # Determine group role
     group_role = 'member'

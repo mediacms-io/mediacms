@@ -1,4 +1,10 @@
+import json
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from django.db import models
+from jwcrypto import jwk
 
 
 class LTIPlatform(models.Model):
@@ -13,22 +19,16 @@ class LTIPlatform(models.Model):
     auth_audience = models.URLField(blank=True, null=True, help_text="OAuth2 audience (optional)")
 
     key_set_url = models.URLField(help_text="Platform's public JWK Set URL")
-    key_set = models.JSONField(blank=True, null=True, help_text="Cached JWK Set (auto-fetched)")
-    key_set_updated = models.DateTimeField(null=True, blank=True, help_text="Last time JWK Set was fetched")
 
     deployment_ids = models.JSONField(default=list, help_text="List of deployment IDs for this platform")
     enable_nrps = models.BooleanField(default=True, help_text="Enable Names and Role Provisioning Service")
     enable_deep_linking = models.BooleanField(default=True, help_text="Enable Deep Linking 2.0")
 
-    auto_create_categories = models.BooleanField(default=True, help_text="Automatically create categories for courses")
-    auto_create_users = models.BooleanField(default=True, help_text="Automatically create users on first launch")
-    auto_sync_roles = models.BooleanField(default=True, help_text="Automatically sync user roles from LTI")
     remove_from_groups_on_unenroll = models.BooleanField(default=False, help_text="Remove users from RBAC groups when they're no longer in the course")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    active = models.BooleanField(default=True, help_text="Whether this platform is currently active")
 
     class Meta:
         verbose_name = 'LTI Platform'
@@ -47,7 +47,6 @@ class LTIPlatform(models.Model):
             'auth_token_url': self.auth_token_url,
             'auth_audience': self.auth_audience,
             'key_set_url': self.key_set_url,
-            'key_set': self.key_set,
             'deployment_ids': self.deployment_ids,
         }
 
@@ -149,7 +148,6 @@ class LTILaunchLog(models.Model):
     error_message = models.TextField(blank=True, help_text="Error message if launch failed")
     claims = models.JSONField(help_text="Sanitized LTI claims from the launch")
 
-    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="IP address of the user")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -165,3 +163,75 @@ class LTILaunchLog(models.Model):
         status = "✓" if self.success else "✗"
         user_str = self.user.username if self.user else "Unknown"
         return f"{status} {user_str} @ {self.platform.name} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
+
+
+class LTIToolKeys(models.Model):
+    """
+    Stores MediaCMS's RSA key pair for signing LTI responses (e.g., Deep Linking)
+
+    Only one instance should exist (singleton pattern)
+    """
+
+    key_id = models.CharField(max_length=255, unique=True, default='mediacms-lti-key', help_text='Key identifier')
+
+    # JWK format keys
+    private_key_jwk = models.JSONField(help_text='Private key in JWK format (for signing)')
+    public_key_jwk = models.JSONField(help_text='Public key in JWK format (for JWKS endpoint)')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'LTI Tool Keys'
+        verbose_name_plural = 'LTI Tool Keys'
+
+    def __str__(self):
+        return f"LTI Keys ({self.key_id})"
+
+    @classmethod
+    def get_or_create_keys(cls):
+        """Get or create the default key pair"""
+        key_obj, created = cls.objects.get_or_create(
+            key_id='mediacms-lti-key',
+            defaults={'private_key_jwk': {}, 'public_key_jwk': {}},  # Will be populated by save()
+        )
+
+        # If keys are empty, generate them
+        if created or not key_obj.private_key_jwk or not key_obj.public_key_jwk:
+            key_obj.generate_keys()
+
+        return key_obj
+
+    def generate_keys(self):
+        """Generate new RSA key pair"""
+        # Generate RSA key pair
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+
+        public_key = private_key.public_key()
+
+        # Convert to PEM
+        private_pem = private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption())
+
+        public_pem = public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
+
+        # Convert to JWK
+        private_jwk = jwk.JWK.from_pem(private_pem)
+        public_jwk = jwk.JWK.from_pem(public_pem)
+
+        # Add metadata
+        private_jwk_dict = json.loads(private_jwk.export())
+        private_jwk_dict['kid'] = self.key_id
+        private_jwk_dict['alg'] = 'RS256'
+        private_jwk_dict['use'] = 'sig'
+
+        public_jwk_dict = json.loads(public_jwk.export_public())
+        public_jwk_dict['kid'] = self.key_id
+        public_jwk_dict['alg'] = 'RS256'
+        public_jwk_dict['use'] = 'sig'
+
+        # Save to database
+        self.private_key_jwk = private_jwk_dict
+        self.public_key_jwk = public_jwk_dict
+        self.save()
+
+        return private_jwk_dict, public_jwk_dict

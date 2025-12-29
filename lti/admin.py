@@ -10,6 +10,7 @@ from .models import (
     LTIPlatform,
     LTIResourceLink,
     LTIRoleMapping,
+    LTIToolKeys,
     LTIUserMapping,
 )
 from .services import LTINRPSClient
@@ -19,27 +20,19 @@ from .services import LTINRPSClient
 class LTIPlatformAdmin(admin.ModelAdmin):
     """Admin for LTI Platforms (Moodle instances)"""
 
-    list_display = ['name', 'platform_id', 'client_id', 'active_badge', 'nrps_enabled', 'deep_linking_enabled', 'created_at']
-    list_filter = ['active', 'enable_nrps', 'enable_deep_linking', 'created_at']
+    list_display = ['name', 'platform_id', 'client_id', 'nrps_enabled', 'deep_linking_enabled', 'created_at']
+    list_filter = ['enable_nrps', 'enable_deep_linking', 'created_at']
     search_fields = ['name', 'platform_id', 'client_id']
-    readonly_fields = ['created_at', 'updated_at', 'key_set_updated']
+    readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
-        ('Basic Information', {'fields': ('name', 'platform_id', 'client_id', 'active')}),
+        ('Basic Information', {'fields': ('name', 'platform_id', 'client_id')}),
         ('OIDC Endpoints', {'fields': ('auth_login_url', 'auth_token_url', 'auth_audience')}),
-        ('JWK Configuration', {'fields': ('key_set_url', 'key_set', 'key_set_updated'), 'classes': ('collapse',)}),
+        ('JWK Configuration', {'fields': ('key_set_url',), 'classes': ('collapse',)}),
         ('Deployment & Features', {'fields': ('deployment_ids', 'enable_nrps', 'enable_deep_linking')}),
-        ('Auto-Provisioning Settings', {'fields': ('auto_create_categories', 'auto_create_users', 'auto_sync_roles', 'remove_from_groups_on_unenroll')}),
+        ('Auto-Provisioning Settings', {'fields': ('remove_from_groups_on_unenroll',)}),
         ('Timestamps', {'fields': ('created_at', 'updated_at'), 'classes': ('collapse',)}),
     )
-
-    def active_badge(self, obj):
-        """Display active status as badge"""
-        if obj.active:
-            return format_html('<span style="color: green;">✓ Active</span>')
-        return format_html('<span style="color: red;">✗ Inactive</span>')
-
-    active_badge.short_description = 'Status'
 
     def nrps_enabled(self, obj):
         return '✓' if obj.enable_nrps else '✗'
@@ -171,14 +164,14 @@ class LTIRoleMappingAdmin(admin.ModelAdmin):
 class LTILaunchLogAdmin(admin.ModelAdmin):
     """Admin for LTI Launch Logs"""
 
-    list_display = ['created_at', 'platform', 'user_link', 'launch_type', 'success_badge', 'ip_address']
+    list_display = ['created_at', 'platform', 'user_link', 'launch_type', 'success_badge']
     list_filter = ['success', 'launch_type', 'platform', 'created_at']
-    search_fields = ['user__username', 'ip_address', 'error_message']
+    search_fields = ['user__username', 'error_message']
     readonly_fields = ['created_at', 'claims']
     date_hierarchy = 'created_at'
 
     fieldsets = (
-        ('Launch Info', {'fields': ('platform', 'user', 'resource_link', 'launch_type', 'success', 'ip_address', 'created_at')}),
+        ('Launch Info', {'fields': ('platform', 'user', 'resource_link', 'launch_type', 'success', 'created_at')}),
         ('Error Details', {'fields': ('error_message',), 'classes': ('collapse',)}),
         ('Claims Data', {'fields': ('claims',), 'classes': ('collapse',)}),
     )
@@ -203,4 +196,44 @@ class LTILaunchLogAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         """Make launch logs read-only"""
+        return False
+
+
+@admin.register(LTIToolKeys)
+class LTIToolKeysAdmin(admin.ModelAdmin):
+    """Admin for LTI Tool RSA Keys"""
+
+    list_display = ['key_id', 'created_at', 'updated_at']
+    readonly_fields = ['key_id', 'created_at', 'updated_at', 'public_key_display']
+
+    fieldsets = (
+        ('Key Information', {'fields': ('key_id', 'created_at', 'updated_at')}),
+        ('Public Key (for JWKS)', {'fields': ('public_key_display',)}),
+        ('Private Key (Keep Secure!)', {'fields': ('private_key_jwk',), 'classes': ('collapse',), 'description': '⚠️ This is your private signing key. Do not share it!'}),
+    )
+
+    actions = ['regenerate_keys']
+
+    def public_key_display(self, obj):
+        """Display public key in readable format"""
+        import json
+
+        return format_html('<pre>{}</pre>', json.dumps(obj.public_key_jwk, indent=2))
+
+    public_key_display.short_description = 'Public Key (JWK)'
+
+    def regenerate_keys(self, request, queryset):
+        """Regenerate keys for selected instances"""
+        for key_obj in queryset:
+            key_obj.generate_keys()
+            self.message_user(request, f"Keys regenerated for {key_obj.key_id}", messages.SUCCESS)
+
+    regenerate_keys.short_description = 'Regenerate RSA keys'
+
+    def has_add_permission(self, request):
+        """Only allow one key pair - disable manual add if exists"""
+        return not LTIToolKeys.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        """Prevent accidental deletion of keys"""
         return False

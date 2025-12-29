@@ -40,6 +40,7 @@ from .handlers import (
     provision_lti_user,
     validate_lti_session,
 )
+from .keys import get_jwks
 from .models import LTILaunchLog, LTIPlatform, LTIResourceLink
 from .services import LTINRPSClient
 
@@ -82,7 +83,7 @@ class OIDCLoginView(View):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
             # Get platform configuration
-            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id, active=True)
+            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=client_id)
 
             # Create tool config for this platform
             tool_config = DjangoToolConfig.from_platform(platform)
@@ -168,7 +169,7 @@ class LaunchView(View):
             aud = unverified.get('aud')
 
             # Get platform
-            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud, active=True)
+            platform = get_object_or_404(LTIPlatform, platform_id=iss, client_id=aud)
 
             # Create tool config
             tool_config = DjangoToolConfig.from_platform(platform)
@@ -193,7 +194,6 @@ class LaunchView(View):
             claims = self.sanitize_claims(launch_data)
 
             # Extract key claims
-            sub = launch_data.get('sub')
             resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
             resource_link_id = resource_link.get('id', 'default')
             roles = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
@@ -205,17 +205,7 @@ class LaunchView(View):
                 # Deep linking request - handle separately
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
-            # Provision user
-            if platform.auto_create_users:
-                user = provision_lti_user(platform, launch_data)
-            else:
-                # Must find existing user
-                from .models import LTIUserMapping
-
-                mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=sub).first()
-                if not mapping:
-                    raise ValueError("User auto-creation disabled and no existing mapping found")
-                user = mapping.user
+            user = provision_lti_user(platform, launch_data)
 
             # Provision context (category + RBAC group)
             if 'https://purl.imsglobal.org/spec/lti/claim/context' in launch_data:
@@ -231,7 +221,7 @@ class LaunchView(View):
             create_lti_session(request, user, message_launch, platform)
 
             # Log successful launch
-            LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims, ip_address=get_client_ip(request))
+            LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
             # Determine where to redirect
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
@@ -245,7 +235,7 @@ class LaunchView(View):
 
         # Log failed launch
         if platform:
-            LTILaunchLog.objects.create(platform=platform, user=user, launch_type='resource_link', success=False, error_message=error_message, claims=claims, ip_address=get_client_ip(request))
+            LTILaunchLog.objects.create(platform=platform, user=user, launch_type='resource_link', success=False, error_message=error_message, claims=claims)
 
         return render(request, 'lti/launch_error.html', {'error': 'LTI Launch Failed', 'message': error_message}, status=400)
 
@@ -311,14 +301,13 @@ class JWKSView(View):
     """
     JWKS Endpoint - Provides tool's public keys
 
-    Used by Moodle to validate signatures from MediaCMS
+    Used by Moodle to validate signatures from MediaCMS (e.g., Deep Linking responses)
     """
 
     def get(self, request):
         """Return tool's public JWK Set"""
-        # For now, return empty JWKS since we're not signing responses
-        # In the future, we can generate and store keys for signing deep linking responses
-        jwks = {"keys": []}
+        # Return public keys for signature validation
+        jwks = get_jwks()
 
         return JsonResponse(jwks, content_type='application/json')
 
@@ -390,7 +379,7 @@ class ManualSyncView(APIView):
         """Manually trigger NRPS sync"""
         try:
             # Get platform
-            platform = get_object_or_404(LTIPlatform, id=platform_id, active=True)
+            platform = get_object_or_404(LTIPlatform, id=platform_id)
 
             # Find resource link by context
             resource_link = LTIResourceLink.objects.filter(platform=platform, context_id=context_id).first()

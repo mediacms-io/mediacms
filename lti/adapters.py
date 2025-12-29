@@ -8,9 +8,14 @@ import json
 from typing import Any, Dict, Optional
 
 from django.core.cache import cache
+from pylti1p3.message_launch import MessageLaunch
+from pylti1p3.oidc_login import OIDCLogin
 from pylti1p3.registration import Registration
 from pylti1p3.request import Request
 from pylti1p3.tool_config import ToolConfAbstract
+
+from .keys import load_private_key
+from .models import LTIPlatform
 
 
 class DjangoRequest(Request):
@@ -57,8 +62,6 @@ class DjangoOIDCLogin:
 
     def get_redirect(self, redirect_url):
         """Get the redirect object for OIDC login"""
-        from pylti1p3.oidc_login import OIDCLogin
-
         oidc_login = OIDCLogin(self.lti_request, self.tool_config, session_service=self.launch_data_storage, cookie_service=self.launch_data_storage)
 
         return oidc_login.enable_check_cookies().redirect(redirect_url)
@@ -75,7 +78,6 @@ class DjangoMessageLaunch:
 
     def validate(self):
         """Validate the LTI launch message"""
-        from pylti1p3.message_launch import MessageLaunch
 
         # Create custom MessageLaunch that properly implements _get_request_param
         class CustomMessageLaunch(MessageLaunch):
@@ -224,8 +226,6 @@ class DjangoToolConfig(ToolConfAbstract):
         if config.get('auth_audience'):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
-        if config.get('key_set'):
-            registration.set_key_set(config.get('key_set'))
 
         return registration
 
@@ -247,8 +247,6 @@ class DjangoToolConfig(ToolConfAbstract):
         if config.get('auth_audience'):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
-        if config.get('key_set'):
-            registration.set_key_set(config.get('key_set'))
 
         return registration
 
@@ -280,25 +278,26 @@ class DjangoToolConfig(ToolConfAbstract):
         return self.find_registration_by_params(iss, client_id)
 
     def get_jwks(self, iss, client_id=None):
-        """Get JWKS from configuration"""
-        if iss not in self._config:
-            return None
-
-        config_dict = self._config[iss]
-        if client_id and config_dict.get('client_id') != client_id:
-            return None
-
-        return config_dict.get('key_set')
+        """Get JWKS from configuration - returns None to fetch from URL"""
+        # No caching - PyLTI1p3 will fetch from key_set_url
+        return None
 
     def get_iss(self):
         """Get all issuers"""
         return list(self._config.keys())
 
+    def get_jwk(self, iss=None, client_id=None):
+        """
+        Get private JWK for signing Deep Linking responses
+
+        PyLTI1p3 calls this to get the tool's private key for signing
+        """
+        # Return MediaCMS's private key (same for all platforms)
+        return load_private_key()
+
     @classmethod
     def from_platform(cls, platform):
         """Create ToolConfig from LTIPlatform model instance"""
-        from .models import LTIPlatform
-
         if isinstance(platform, LTIPlatform):
             config = {platform.platform_id: platform.get_lti_config()}
             return cls(config)
@@ -307,10 +306,8 @@ class DjangoToolConfig(ToolConfAbstract):
 
     @classmethod
     def from_all_platforms(cls):
-        """Create ToolConfig with all active platforms"""
-        from .models import LTIPlatform
-
-        platforms = LTIPlatform.objects.filter(active=True)
+        """Create ToolConfig with all platforms"""
+        platforms = LTIPlatform.objects.filter()
         config = {}
 
         for platform in platforms:
