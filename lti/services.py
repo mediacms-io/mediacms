@@ -13,7 +13,7 @@ from pylti1p3.names_roles import NamesRolesProvisioningService
 from rbac.models import RBACMembership
 from users.models import User
 
-from .adapters import DjangoToolConfig
+from .adapters import DjangoServiceConnector, DjangoToolConfig
 from .handlers import apply_lti_roles, generate_username_from_lti
 from .models import LTIUserMapping
 
@@ -49,19 +49,18 @@ class LTINRPSClient:
         return True
 
     def fetch_members(self):
-        """
-        Fetch all course members from Moodle via NRPS
-
-        Returns:
-            List of member dicts with keys: user_id, name, email, roles, etc.
-        """
         if not self.can_sync():
             return []
 
         try:
             tool_config = DjangoToolConfig.from_platform(self.platform)
-            nrps = NamesRolesProvisioningService(tool_config, self.nrps_claim)
+            registration = tool_config.find_registration_by_issuer(self.platform.platform_id)
 
+            if not registration:
+                return []
+
+            service_connector = DjangoServiceConnector(registration)
+            nrps = NamesRolesProvisioningService(service_connector, self.nrps_claim)
             members = nrps.get_members()
 
             return members
