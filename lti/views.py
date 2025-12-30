@@ -339,12 +339,11 @@ class EmbedMediaLTIView(View):
         media = get_object_or_404(Media, friendly_token=friendly_token)
 
         lti_session = validate_lti_session(request)
+        can_view = False
 
         if lti_session and request.user.is_authenticated:
             if request.user.has_member_access_to_media(media):
                 can_view = True
-            else:
-                can_view = False
 
         if media.state in ["public", "unlisted"]:
             can_view = True
