@@ -138,37 +138,33 @@ def provision_lti_context(platform, claims, resource_link_id):
     context_title = context.get('title', '')
     context_label = context.get('label', '')
 
-    existing_link = LTIResourceLink.objects.filter(
+    resource_link = LTIResourceLink.objects.filter(
         platform=platform,
         context_id=context_id,
     ).first()
 
-    if existing_link:
-        category = existing_link.category
-        rbac_group = existing_link.rbac_group
+    if resource_link:
+        category = resource_link.category
+        rbac_group = resource_link.rbac_group
 
-        if context_title and existing_link.context_title != context_title:
-            existing_link.context_title = context_title
-            existing_link.save(update_fields=['context_title'])
-            if category and category.title != context_title:
-                category.title = context_title
-                category.save(update_fields=['title'])
-
-        resource_link, created = LTIResourceLink.objects.get_or_create(
-            platform=platform,
-            context_id=context_id,
-            resource_link_id=resource_link_id,
-            defaults={
-                'context_title': context_title,
-                'context_label': context_label,
-                'category': category,
-                'rbac_group': rbac_group,
-            },
-        )
-
-        if not created and context_title and resource_link.context_title != context_title:
+        update_fields = []
+        if context_title and resource_link.context_title != context_title:
             resource_link.context_title = context_title
-            resource_link.save(update_fields=['context_title'])
+            update_fields.append('context_title')
+        if context_label and resource_link.context_label != context_label:
+            resource_link.context_label = context_label
+            update_fields.append('context_label')
+        # TODO / TOCHECK: consider whether we need to update this or not
+        if resource_link.resource_link_id != resource_link_id:
+            resource_link.resource_link_id = resource_link_id
+            update_fields.append('resource_link_id')
+
+        if update_fields:
+            resource_link.save(update_fields=update_fields)
+
+        if context_title and category and category.title != context_title:
+            category.title = context_title
+            category.save(update_fields=['title'])
 
     else:
         category = Category.objects.create(
