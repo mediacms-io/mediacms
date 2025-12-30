@@ -247,6 +247,11 @@ class DjangoServiceConnector(ServiceConnector):
 
         response.raise_for_status()
 
+        try:
+            response_body = response.json()
+        except ValueError:
+            raise ValueError(f"NRPS endpoint returned non-JSON response. Status: {response.status_code}, Content-Type: {response.headers.get('Content-Type')}, Body: {response.text[:500]}")
+
         next_page_url = None
         link_header = response.headers.get('Link')
         if link_header:
@@ -255,7 +260,7 @@ class DjangoServiceConnector(ServiceConnector):
                     next_page_url = link.split(';')[0].strip('<> ')
 
         return {
-            'body': response.json(),
+            'body': response_body,
             'status_code': response.status_code,
             'headers': dict(response.headers),
             'next_page_url': next_page_url,
