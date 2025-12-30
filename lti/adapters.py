@@ -31,7 +31,6 @@ class DjangoRequest(Request):
 
     def get_param(self, key):
         """Get parameter from GET or POST"""
-        # Check both POST and GET, POST takes priority
         value = self._request.POST.get(key) or self._request.GET.get(key)
         return value
 
@@ -81,7 +80,6 @@ class DjangoMessageLaunch:
     def validate(self):
         """Validate the LTI launch message"""
 
-        # Create custom MessageLaunch that properly implements _get_request_param
         class CustomMessageLaunch(MessageLaunch):
             def _get_request_param(self, key):
                 """Override to properly get request parameters"""
@@ -210,7 +208,6 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def check_iss_has_many_clients(self, iss):
         """Check if issuer has multiple clients"""
-        # For now, we support one client per issuer
         return False
 
     def find_registration_by_issuer(self, iss, *args, **kwargs):
@@ -219,7 +216,6 @@ class DjangoToolConfig(ToolConfAbstract):
             return None
         config = self._config[iss]
 
-        # Create Registration object from config dict
         registration = Registration()
         registration.set_issuer(iss)
         registration.set_client_id(config.get('client_id'))
@@ -229,12 +225,10 @@ class DjangoToolConfig(ToolConfAbstract):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
 
-        # Set tool's private key for signing (e.g., Deep Linking responses)
         key_obj = LTIToolKeys.get_or_create_keys()
         jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
         pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
 
-        # Set both the key and kid directly on Registration internal attributes
         registration._tool_private_key = pem_bytes.decode('utf-8')
         registration._tool_private_key_kid = key_obj.private_key_jwk['kid']
 
@@ -249,7 +243,6 @@ class DjangoToolConfig(ToolConfAbstract):
         if config.get('client_id') != client_id:
             return None
 
-        # Create Registration object from config dict
         registration = Registration()
         registration.set_issuer(iss)
         registration.set_client_id(config.get('client_id'))
@@ -259,12 +252,10 @@ class DjangoToolConfig(ToolConfAbstract):
             registration.set_auth_audience(config.get('auth_audience'))
         registration.set_key_set_url(config.get('key_set_url'))
 
-        # Set tool's private key for signing (e.g., Deep Linking responses)
         key_obj = LTIToolKeys.get_or_create_keys()
         jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
         pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
 
-        # Set both the key and kid directly on Registration internal attributes
         registration._tool_private_key = pem_bytes.decode('utf-8')
         registration._tool_private_key_kid = key_obj.private_key_jwk['kid']
 
@@ -299,7 +290,6 @@ class DjangoToolConfig(ToolConfAbstract):
 
     def get_jwks(self, iss, client_id=None):
         """Get JWKS from configuration - returns None to fetch from URL"""
-        # No caching - PyLTI1p3 will fetch from key_set_url
         return None
 
     def get_iss(self):
@@ -313,14 +303,11 @@ class DjangoToolConfig(ToolConfAbstract):
         PyLTI1p3 calls this to get the tool's private key for signing
         Returns a cryptography RSA key object that PyJWT can use directly
         """
-        # Load JWK and convert to PEM bytes
         key_obj = LTIToolKeys.get_or_create_keys()
         jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
 
-        # Export to PEM bytes
         pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
 
-        # Load as cryptography key object (PyJWT accepts this)
         private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
 
         return private_key

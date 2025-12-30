@@ -32,7 +32,6 @@ class LTINRPSClient:
         self.platform = platform
         self.launch_claims = launch_claims
 
-        # Extract NRPS claim
         self.nrps_claim = launch_claims.get('https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice')
 
     def can_sync(self):
@@ -60,14 +59,9 @@ class LTINRPSClient:
             return []
 
         try:
-            # Use PyLTI1p3's NRPS service
-            # Note: This requires proper configuration in the tool config
             tool_config = DjangoToolConfig.from_platform(self.platform)
-
-            # Pass the entire NRPS claim as service_data, not just the URL
             nrps = NamesRolesProvisioningService(tool_config, self.nrps_claim)
 
-            # Fetch members
             members = nrps.get_members()
 
             return members
@@ -101,10 +95,8 @@ class LTINRPSClient:
 
                 processed_users.add(user.id)
 
-                # Get roles from member
                 roles = member.get('roles', [])
 
-                # Apply role mapping
                 apply_lti_roles(user, self.platform, roles, rbac_group)
 
                 synced_count += 1
@@ -112,7 +104,6 @@ class LTINRPSClient:
             except Exception:
                 continue
 
-        # Remove unenrolled users if configured
         removed_count = 0
         if self.platform.remove_from_groups_on_unenroll:
             removed = RBACMembership.objects.filter(rbac_group=rbac_group).exclude(user_id__in=processed_users)
@@ -138,26 +129,21 @@ class LTINRPSClient:
         if not user_id:
             return None
 
-        # Get user details from NRPS data
         name = member.get('name', '')
         email = member.get('email', '')
         given_name = member.get('given_name', '')
         family_name = member.get('family_name', '')
 
-        # Check for existing mapping
         mapping = LTIUserMapping.objects.filter(platform=self.platform, lti_user_id=user_id).select_related('user').first()
 
         if mapping:
-            # Update existing user details if they changed
             user = mapping.user
             update_fields = []
 
-            # Update email if changed and not empty
             if email and user.email != email:
                 user.email = email
                 update_fields.append('email')
 
-            # Update name fields if changed
             if given_name and user.first_name != given_name:
                 user.first_name = given_name
                 update_fields.append('first_name')
@@ -173,42 +159,17 @@ class LTINRPSClient:
             if update_fields:
                 user.save(update_fields=update_fields)
 
-            # Update mapping cache
-            mapping_update_fields = []
-            if email and mapping.email != email:
-                mapping.email = email
-                mapping_update_fields.append('email')
-            if given_name and mapping.given_name != given_name:
-                mapping.given_name = given_name
-                mapping_update_fields.append('given_name')
-            if family_name and mapping.family_name != family_name:
-                mapping.family_name = family_name
-                mapping_update_fields.append('family_name')
-            if name and mapping.name != name:
-                mapping.name = name
-                mapping_update_fields.append('name')
-
-            if mapping_update_fields:
-                mapping.save(update_fields=mapping_update_fields)
-
             return user
 
-        # Create new user from NRPS data
-
-        # Generate username
         username = generate_username_from_lti(user_id, email, given_name, family_name)
 
-        # Check if username exists
         if User.objects.filter(username=username).exists():
             username = f"{username}_{hashlib.md5(user_id.encode()).hexdigest()[:6]}"
 
-        # Create user
         user = User.objects.create_user(username=username, email=email or '', first_name=given_name, last_name=family_name, name=name or username, is_active=True)
 
-        # Create mapping
-        LTIUserMapping.objects.create(platform=self.platform, lti_user_id=user_id, user=user, email=email, given_name=given_name, family_name=family_name, name=name)
+        LTIUserMapping.objects.create(platform=self.platform, lti_user_id=user_id, user=user)
 
-        # Mark email as verified
         if email:
             try:
                 EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)

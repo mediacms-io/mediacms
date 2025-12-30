@@ -26,7 +26,6 @@ class LTIPlatform(models.Model):
 
     remove_from_groups_on_unenroll = models.BooleanField(default=False, help_text="Remove users from RBAC groups when they're no longer in the course")
 
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,16 +55,13 @@ class LTIResourceLink(models.Model):
 
     platform = models.ForeignKey(LTIPlatform, on_delete=models.CASCADE, related_name='resource_links')
 
-    # LTI context (course)
     context_id = models.CharField(max_length=255, db_index=True, help_text="LTI context ID (typically course ID)")
     context_title = models.CharField(max_length=255, blank=True, help_text="Course title")
     context_label = models.CharField(max_length=100, blank=True, help_text="Course short name/code")
 
-    # Resource link
     resource_link_id = models.CharField(max_length=255, db_index=True, help_text="LTI resource link ID")
     resource_link_title = models.CharField(max_length=255, blank=True, help_text="Resource link title")
 
-    # MediaCMS mappings
     category = models.ForeignKey('files.Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='lti_resource_links', help_text="Mapped MediaCMS category")
     rbac_group = models.ForeignKey('rbac.RBACGroup', on_delete=models.SET_NULL, null=True, blank=True, related_name='lti_resource_links', help_text="RBAC group for course members")
 
@@ -115,10 +111,8 @@ class LTIRoleMapping(models.Model):
     platform = models.ForeignKey(LTIPlatform, on_delete=models.CASCADE, related_name='role_mappings')
     lti_role = models.CharField(max_length=255, help_text="LTI role URI or short name (e.g., 'Instructor', 'Learner')")
 
-    # Global role (optional)
     global_role = models.CharField(max_length=20, blank=True, choices=GLOBAL_ROLE_CHOICES, help_text="MediaCMS global role to assign")
 
-    # Group role for RBAC
     group_role = models.CharField(max_length=20, blank=True, choices=GROUP_ROLE_CHOICES, help_text="RBAC group role to assign")
 
     class Meta:
@@ -174,7 +168,6 @@ class LTIToolKeys(models.Model):
 
     key_id = models.CharField(max_length=255, unique=True, default='mediacms-lti-key', help_text='Key identifier')
 
-    # JWK format keys
     private_key_jwk = models.JSONField(help_text='Private key in JWK format (for signing)')
     public_key_jwk = models.JSONField(help_text='Public key in JWK format (for JWKS endpoint)')
 
@@ -196,7 +189,6 @@ class LTIToolKeys(models.Model):
             defaults={'private_key_jwk': {}, 'public_key_jwk': {}},  # Will be populated by save()
         )
 
-        # If keys are empty, generate them
         if created or not key_obj.private_key_jwk or not key_obj.public_key_jwk:
             key_obj.generate_keys()
 
@@ -204,32 +196,21 @@ class LTIToolKeys(models.Model):
 
     def generate_keys(self):
         """Generate new RSA key pair"""
-        # Generate RSA key pair
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
-
         public_key = private_key.public_key()
-
-        # Convert to PEM
         private_pem = private_key.private_bytes(encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption())
-
         public_pem = public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
-
-        # Convert to JWK
         private_jwk = jwk.JWK.from_pem(private_pem)
         public_jwk = jwk.JWK.from_pem(public_pem)
-
-        # Add metadata
         private_jwk_dict = json.loads(private_jwk.export())
         private_jwk_dict['kid'] = self.key_id
         private_jwk_dict['alg'] = 'RS256'
         private_jwk_dict['use'] = 'sig'
-
         public_jwk_dict = json.loads(public_jwk.export_public())
         public_jwk_dict['kid'] = self.key_id
         public_jwk_dict['alg'] = 'RS256'
         public_jwk_dict['use'] = 'sig'
 
-        # Save to database
         self.private_key_jwk = private_jwk_dict
         self.public_key_jwk = public_jwk_dict
         self.save()

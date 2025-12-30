@@ -10,9 +10,7 @@ class LtiConfig(AppConfig):
 
     def ready(self):
         """Initialize LTI app - ensure keys exist"""
-        # Ensure RSA key pair exists for signing Deep Linking responses
         try:
             ensure_keys_exist()
         except Exception:
-            # Don't block startup if key generation fails
             pass

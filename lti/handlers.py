@@ -21,7 +21,6 @@ from users.models import User
 
 from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
 
-# Default LTI role mappings
 DEFAULT_LTI_ROLE_MAPPINGS = {
     'Instructor': {'global_role': '', 'group_role': 'manager'},
     'TeachingAssistant': {'global_role': '', 'group_role': 'contributor'},
@@ -54,20 +53,16 @@ def provision_lti_user(platform, claims):
     family_name = claims.get('family_name', '')
     name = claims.get('name', f"{given_name} {family_name}").strip()
 
-    # Check for existing mapping
     mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=lti_user_id).select_related('user').first()
 
     if mapping:
-        # Update existing user
         user = mapping.user
         update_fields = []
 
-        # Update email if changed and not empty
         if email and user.email != email:
             user.email = email
             update_fields.append('email')
 
-        # Update name fields if changed
         if given_name and user.first_name != given_name:
             user.first_name = given_name
             update_fields.append('first_name')
@@ -84,24 +79,19 @@ def provision_lti_user(platform, claims):
             user.save(update_fields=update_fields)
 
     else:
-        # Create new user
         username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
 
-        # Check if username already exists
         if User.objects.filter(username=username).exists():
-            # Add random suffix
             username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
 
         user = User.objects.create_user(username=username, email=email or '', first_name=given_name, last_name=family_name, name=name or username, is_active=True)
 
-        # Mark email as verified via allauth
         if email:
             try:
                 EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
             except Exception:
                 pass
 
-        # Create mapping
         LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
 
     return user
@@ -110,22 +100,18 @@ def provision_lti_user(platform, claims):
 def generate_username_from_lti(lti_user_id, email, given_name, family_name):
     """Generate a username from LTI user info"""
 
-    # Try email username
     if email and '@' in email:
         username = email.split('@')[0]
-        # Clean up username - only alphanumeric, underscore, hyphen
         username = ''.join(c if c.isalnum() or c in '_-' else '_' for c in username)
         if len(username) >= 4:
             return username[:30]  # Max 30 chars
 
-    # Try first.last
     if given_name and family_name:
         username = f"{given_name}.{family_name}".lower()
         username = ''.join(c if c.isalnum() or c in '_-.' else '_' for c in username)
         if len(username) >= 4:
             return username[:30]
 
-    # Use hashed LTI user ID as fallback
     user_hash = hashlib.md5(lti_user_id.encode()).hexdigest()[:10]
     return f"lti_user_{user_hash}"
 
@@ -152,26 +138,39 @@ def provision_lti_context(platform, claims, resource_link_id):
     context_title = context.get('title', '')
     context_label = context.get('label', '')
 
-    # Try to get existing resource link first to reuse category/group
-    try:
-        resource_link = LTIResourceLink.objects.get(
-            platform=platform,
-            context_id=context_id,
-            resource_link_id=resource_link_id,
-        )
-        category = resource_link.category
-        rbac_group = resource_link.rbac_group
+    existing_link = LTIResourceLink.objects.filter(
+        platform=platform,
+        context_id=context_id,
+    ).first()
 
-        # Update context title if changed
-        if context_title and resource_link.context_title != context_title:
-            resource_link.context_title = context_title
-            resource_link.save(update_fields=['context_title'])
+    if existing_link:
+        category = existing_link.category
+        rbac_group = existing_link.rbac_group
+
+        if context_title and existing_link.context_title != context_title:
+            existing_link.context_title = context_title
+            existing_link.save(update_fields=['context_title'])
             if category and category.title != context_title:
                 category.title = context_title
                 category.save(update_fields=['title'])
 
-    except LTIResourceLink.DoesNotExist:
-        # Create new category and RBAC group with auto-generated UIDs
+        resource_link, created = LTIResourceLink.objects.get_or_create(
+            platform=platform,
+            context_id=context_id,
+            resource_link_id=resource_link_id,
+            defaults={
+                'context_title': context_title,
+                'context_label': context_label,
+                'category': category,
+                'rbac_group': rbac_group,
+            },
+        )
+
+        if not created and context_title and resource_link.context_title != context_title:
+            resource_link.context_title = context_title
+            resource_link.save(update_fields=['context_title'])
+
+    else:
         category = Category.objects.create(
             title=context_title or context_label or f"Course {context_id}",
             description=f"Auto-created from {platform.name}: {context_title}",
@@ -187,10 +186,8 @@ def provision_lti_context(platform, claims, resource_link_id):
             description=f"LTI course group from {platform.name}",
         )
 
-        # Link category to RBAC group
         rbac_group.categories.add(category)
 
-        # Create resource link
         resource_link = LTIResourceLink.objects.create(
             platform=platform,
             context_id=context_id,
@@ -219,8 +216,6 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
     if not lti_roles:
         lti_roles = []
 
-    # Extract short role names from URIs
-    # e.g., "http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor" -> "Instructor"
     short_roles = []
     for role in lti_roles:
         if '#' in role:
@@ -230,7 +225,6 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
         else:
             short_roles.append(role)
 
-    # Get custom role mappings from database
     custom_mappings = {}
     for mapping in LTIRoleMapping.objects.filter(platform=platform):
         custom_mappings[mapping.lti_role] = {
@@ -238,10 +232,8 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             'group_role': mapping.group_role,
         }
 
-    # Combine default and custom mappings (custom takes precedence)
     all_mappings = {**DEFAULT_LTI_ROLE_MAPPINGS, **custom_mappings}
 
-    # Determine highest privilege global role
     global_role = 'user'
     for role in short_roles:
         if role in all_mappings:
@@ -251,7 +243,6 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
 
     user.set_role_from_mapping(global_role)
 
-    # Determine group role
     group_role = 'member'
     for role in short_roles:
         if role in all_mappings:
@@ -259,26 +250,20 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if role_group:
                 group_role = get_higher_privilege_group(group_role, role_group)
 
-    # Create or update RBAC membership (defensive: handle multiple memberships)
     memberships = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
 
     if memberships.exists():
-        # Check if any membership already has the correct role
         if not memberships.filter(role=group_role).exists():
-            # None have the correct role, update the first one
             first_membership = memberships.first()
             first_membership.role = group_role
             try:
                 first_membership.save()
             except Exception:
-                # Save failed (e.g., uniqueness constraint), skip
                 pass
     else:
-        # No existing membership, create new one
         try:
             RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
         except Exception:
-            # Creation failed (e.g., uniqueness constraint), skip
             pass
 
     return global_role, group_role
@@ -318,15 +303,12 @@ def create_lti_session(request, user, launch_data, platform):
 
     Pattern: Uses Django's session framework
     """
-    # Django login (creates session in Redis)
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-    # Extract key context info
     context = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/context', {})
     resource_link = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
     roles = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
 
-    # Store LTI context in session
     request.session['lti_session'] = {
         'platform_id': platform.id,
         'platform_name': platform.name,
@@ -337,7 +319,6 @@ def create_lti_session(request, user, launch_data, platform):
         'launch_time': timezone.now().isoformat(),
     }
 
-    # Session timeout from settings or default 1 hour
     timeout = getattr(settings, 'LTI_SESSION_TIMEOUT', 3600)
     request.session.set_expiry(timeout)
 
@@ -356,7 +337,6 @@ def validate_lti_session(request):
     if not lti_session:
         return None
 
-    # Check if session has expired (Django handles this, but double-check)
     if not request.user.is_authenticated:
         return None
 
