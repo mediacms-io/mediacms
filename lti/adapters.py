@@ -8,11 +8,12 @@ import json
 import time
 from typing import Any, Dict, Optional
 
+import jwt
 import requests
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.core.cache import cache
-from jwcrypto import jwk, jwt
+from jwcrypto import jwk
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
 from pylti1p3.registration import Registration
@@ -196,9 +197,11 @@ class DjangoServiceConnector(ServiceConnector):
 
         key_obj = LTIToolKeys.get_or_create_keys()
         jwk_obj = jwk.JWK(**key_obj.private_key_jwk)
+        pem_bytes = jwk_obj.export_to_pem(private_key=True, password=None)
+        private_key = serialization.load_pem_private_key(pem_bytes, password=None, backend=default_backend())
 
         now = int(time.time())
-        claims = {
+        payload = {
             'iss': self._registration.get_client_id(),
             'sub': self._registration.get_client_id(),
             'aud': self._registration.get_auth_token_url(),
@@ -207,9 +210,7 @@ class DjangoServiceConnector(ServiceConnector):
             'jti': str(time.time()),
         }
 
-        jwt_token = jwt.JWT(header={'alg': 'RS256', 'kid': key_obj.private_key_jwk['kid']}, claims=claims)
-        jwt_token.make_signed_token(jwk_obj)
-        client_assertion = jwt_token.serialize()
+        client_assertion = jwt.encode(payload, private_key, algorithm='RS256', headers={'kid': key_obj.private_key_jwk['kid']})
 
         token_url = self._registration.get_auth_token_url()
         data = {
