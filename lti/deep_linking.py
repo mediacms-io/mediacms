@@ -201,7 +201,8 @@ class SelectMediaView(View):
                 lti_content_items.append(lti_item)
 
             # Create JWT payload
-            tool_issuer = request.build_absolute_uri('/')[:-1]
+            # Use client_id as issuer to avoid "wrong consumer key" errors in Moodle
+            tool_issuer = platform.client_id
 
             # Per LTI spec, aud should be the platform's issuer URL
             # Try just the platform URL (some Moodle versions don't accept arrays)
