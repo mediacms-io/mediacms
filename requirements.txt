@@ -5,7 +5,7 @@ django-allauth==65.4.1
 PyLTI1p3==2.0.0
 cryptography>=41.0.0
 psycopg[binary,pool]==3.2.4
-uwsgi==2.0.28
+uwsgi==2.0.31
 django-redis==5.4.0
 celery==5.4.0
 drf-yasg==1.21.8
