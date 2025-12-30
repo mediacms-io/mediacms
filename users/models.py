@@ -131,6 +131,10 @@ class User(AbstractUser):
         rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories=category)
         return rbac_groups.exists()
 
+    def has_contributor_access_to_category(self, category):
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"], categories=category)
+        return rbac_groups.exists()
+
     def has_member_access_to_media(self, media):
         # First check if user is the owner
         if media.user == self:
