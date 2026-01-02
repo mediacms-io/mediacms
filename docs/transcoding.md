@@ -50,6 +50,8 @@ Additional transcoding settings in `settings.py` include:
 
 - `TRANSCODING_OPTIONS_FILESIZE`: File size threshold in MB (used with `file_size_gt` or `file_size_lt` options)
 
+- `DELETE_ORIGINAL_VIDEO_IF_TRANSCODED`: If set to `True`, the original video file will be deleted after successful transcoding to save storage space. Only applies when videos were actually transcoded (not skipped via `TRANSCODING_OPTIONS` or `DO_NOT_TRANSCODE_VIDEO`). Default is `False`.
+
 ## Advanced Configuration
 
 For more advanced transcoding settings, you may need to modify the following in `files/helpers.py`:

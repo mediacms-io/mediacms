@@ -626,6 +626,15 @@ class Media(models.Model):
                 tasks.post_trim_action.delay(self.friendly_token)
                 vt_request.status = "success"
                 vt_request.save(update_fields=["status"])
+
+        # Check if we should delete original file after transcoding
+        # Only check if all encodings are complete
+        all_encodings = Encoding.objects.filter(media=self)
+        encoding_statuses = set([enc.status for enc in all_encodings])
+        if not ("running" in encoding_statuses or "pending" in encoding_statuses):
+            # All encodings complete, check if we should delete original
+            self.delete_original_if_transcoded()
+
         return True
 
     def set_encoding_status(self):
@@ -646,6 +655,60 @@ class Media(models.Model):
         self.encoding_status = encoding_status
 
         return True
+
+    def delete_original_if_transcoded(self):
+        """
+        Delete original video file if all conditions are met:
+        - Setting DELETE_ORIGINAL_VIDEO_IF_TRANSCODED is True
+        - All encodings are complete (no pending or running)
+        - At least one encoding succeeded
+        - Video was actually transcoded (not skipped)
+        - Original file exists
+        """
+        # Check if setting is enabled
+        if not getattr(settings, 'DELETE_ORIGINAL_VIDEO_IF_TRANSCODED', False):
+            return False
+
+        # Only for videos
+        if self.media_type != "video":
+            return False
+
+        # Check if video was actually transcoded (not skipped)
+        if settings.DO_NOT_TRANSCODE_VIDEO:
+            return False
+
+        if not helpers.should_transcode_video(self):
+            return False
+
+        # Check if all encodings are complete
+        all_encodings = Encoding.objects.filter(media=self)
+        encoding_statuses = set([enc.status for enc in all_encodings])
+
+        if "running" in encoding_statuses or "pending" in encoding_statuses:
+            # Still encoding, don't delete yet
+            return False
+
+        # Check if at least one encoding succeeded
+        if self.encoding_status != "success":
+            return False
+
+        # Check if we have at least one successful encoding
+        successful_encodings = all_encodings.filter(status="success", chunk=False)
+        if not successful_encodings.exists():
+            return False
+
+        # Check if original file exists
+        if not (self.media_file and self.media_file.path and os.path.exists(self.media_file.path)):
+            return False
+
+        # All conditions met, delete the original file
+        try:
+            helpers.rm_file(self.media_file.path)
+            logger.info(f"Deleted original video file for media {self.friendly_token} after successful transcoding")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete original video file for media {self.friendly_token}: {e}")
+            return False
 
     @property
     def trim_video_url(self):

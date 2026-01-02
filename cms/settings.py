@@ -473,6 +473,10 @@ DO_NOT_TRANSCODE_VIDEO = False
 TRANSCODING_OPTIONS = 'always'
 TRANSCODING_OPTIONS_FILESIZE = 1000  # Size threshold in MB
 
+# If True, delete original video file after successful transcoding to save storage space
+# Only applies when video was actually transcoded (not skipped)
+DELETE_ORIGINAL_VIDEO_IF_TRANSCODED = False
+
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 LANGUAGES = [
