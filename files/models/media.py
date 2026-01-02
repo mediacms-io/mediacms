@@ -397,13 +397,14 @@ class Media(models.Model):
 
         if self.media_type == "video":
             self.set_thumbnail(force=True)
-            if settings.DO_NOT_TRANSCODE_VIDEO:
+            if helpers.should_transcode_video(self):
+                self.produce_sprite_from_video()
+                self.encode()
+            else:
+                # Mark as success so video can be displayed without transcoding
                 self.encoding_status = "success"
                 self.save()
                 self.produce_sprite_from_video()
-            else:
-                self.produce_sprite_from_video()
-                self.encode()
         elif self.media_type == "image":
             self.set_thumbnail(force=True)
         return True
@@ -680,23 +681,33 @@ class Media(models.Model):
         for key in ENCODE_RESOLUTIONS_KEYS:
             ret[key] = {}
 
-        # if DO_NOT_TRANSCODE_VIDEO enabled, return original file on a way
-        # that video.js can consume. Or also if encoding_status is running, do the
-        # same so that the video appears on the player
-        if settings.DO_NOT_TRANSCODE_VIDEO:
+        # Check if transcoding should be skipped (either via DO_NOT_TRANSCODE_VIDEO or new options)
+        should_skip_transcoding = settings.DO_NOT_TRANSCODE_VIDEO or not helpers.should_transcode_video(self)
+
+        # If transcoding is skipped, return original file so video.js can consume it
+        if should_skip_transcoding:
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
+        # If encoding is running or pending, show original temporarily
         if self.encoding_status in ["running", "pending"]:
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
+        # Check if we have any successful encodings
+        has_encodings = False
         for encoding in self.encodings.select_related("profile").filter(chunk=False):
             if encoding.profile.extension == "gif":
                 continue
             enc = self.get_encoding_info(encoding, full=full)
             resolution = encoding.profile.resolution
             ret[resolution][encoding.profile.codec] = enc
+            has_encodings = True
+
+        # If no encodings exist but transcoding was expected, show original as fallback
+        if not has_encodings and self.encoding_status == "success":
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
 
         # TODO: the following code is untested/needs optimization
 

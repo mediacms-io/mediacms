@@ -34,10 +34,21 @@ Additional transcoding settings in `settings.py` include:
 
 - `FFMPEG_COMMAND`: Path to the FFmpeg executable
 - `FFPROBE_COMMAND`: Path to the FFprobe executable
-- `DO_NOT_TRANSCODE_VIDEO`: If set to True, only the original video is shown without transcoding
+- `DO_NOT_TRANSCODE_VIDEO`: Legacy setting, if set to True, only the original video is shown without transcoding (superseded by `TRANSCODING_OPTIONS = 'never'`)
 - `CHUNKIZE_VIDEO_DURATION`: For videos longer than this duration (in seconds), they get split into chunks and encoded independently
 - `VIDEO_CHUNKS_DURATION`: Duration of each chunk (must be smaller than CHUNKIZE_VIDEO_DURATION)
 - `MINIMUM_RESOLUTIONS_TO_ENCODE`: Always encode these resolutions, even if upscaling is required
+
+### Transcoding Options
+
+- `TRANSCODING_OPTIONS`: Controls when videos should be transcoded
+  - `'always'` (default): Always transcode videos
+  - `'never'`: Never transcode videos (same as `DO_NOT_TRANSCODE_VIDEO = True`)
+  - `'file_size_gt'`: Only transcode videos larger than the threshold
+  - `'file_size_lt'`: Only transcode videos smaller than the threshold
+  - `'non_mp4_only'`: Only transcode videos that are not MP4 format
+
+- `TRANSCODING_OPTIONS_FILESIZE`: File size threshold in MB (used with `file_size_gt` or `file_size_lt` options)
 
 ## Advanced Configuration
 

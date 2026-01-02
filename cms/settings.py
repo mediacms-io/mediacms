@@ -464,6 +464,15 @@ if os.environ.get("TESTING"):
 # if True, only show original, don't perform any action on videos
 DO_NOT_TRANSCODE_VIDEO = False
 
+# Transcoding options: 'always', 'never', 'file_size_gt', 'file_size_lt', 'non_mp4_only'
+# - 'always': Always transcode (default, maintains backward compatibility)
+# - 'never': Never transcode (same as DO_NOT_TRANSCODE_VIDEO = True)
+# - 'file_size_gt': Only transcode if file size > TRANSCODING_OPTIONS_FILESIZE (MB)
+# - 'file_size_lt': Only transcode if file size < TRANSCODING_OPTIONS_FILESIZE (MB)
+# - 'non_mp4_only': Only transcode if video is not MP4 format
+TRANSCODING_OPTIONS = 'always'
+TRANSCODING_OPTIONS_FILESIZE = 1000  # Size threshold in MB
+
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 LANGUAGES = [
