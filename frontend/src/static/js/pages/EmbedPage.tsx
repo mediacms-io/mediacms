@@ -59,9 +59,20 @@ export const EmbedPage: React.FC = () => {
 
       {loadedVideo && (
         <SiteConsumer>
-        {(site) => (
-            <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} containerStyles={containerStyles} />
-          )} 
+        {(site) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showTitle = urlParams.get('showTitle') !== '0';
+            const showRelated = urlParams.get('showRelated') !== '0';
+            return (
+              <VideoViewer 
+                data={MediaPageStore.get('media-data')} 
+                siteUrl={site.url} 
+                containerStyles={containerStyles} 
+                showTitle={showTitle}
+                showRelated={showRelated}
+              />
+            );
+          }} 
         </SiteConsumer>
       )}
     </div>

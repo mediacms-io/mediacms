@@ -412,6 +412,8 @@ export default class VideoViewer extends React.PureComponent {
                                             subtitlesInfo: this.props.data.subtitles_info,
                                             enableAutoplay: !this.props.inEmbed,
                                             inEmbed: this.props.inEmbed,
+                                            showTitle: this.props.showTitle,
+                                            showRelated: this.props.showRelated,
                                             hasTheaterMode: !this.props.inEmbed,
                                             hasNextLink: !!nextLink,
                                             nextLink: nextLink,

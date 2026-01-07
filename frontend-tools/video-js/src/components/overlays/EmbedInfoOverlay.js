@@ -15,6 +15,7 @@ class EmbedInfoOverlay extends Component {
         this.videoTitle = options.videoTitle || 'Video';
         this.videoUrl = options.videoUrl || '';
         this.showTitle = options.showTitle !== undefined ? options.showTitle : true;
+        this.showRelated = options.showRelated !== undefined ? options.showRelated : true;
 
         // Initialize after player is ready
         this.player().ready(() => {

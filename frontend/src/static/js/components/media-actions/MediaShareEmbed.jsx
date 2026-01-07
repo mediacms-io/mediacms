@@ -20,6 +20,7 @@ export function MediaShareEmbed(props) {
   const [maxHeight, setMaxHeight] = useState(window.innerHeight - 144 + 56);
   const [keepAspectRatio, setKeepAspectRatio] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
+  const [showRelated, setShowRelated] = useState(true);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [embedWidthValue, setEmbedWidthValue] = useState(embedVideoDimensions.width);
   const [embedWidthUnit, setEmbedWidthUnit] = useState(embedVideoDimensions.widthUnit);
@@ -97,6 +98,10 @@ export function MediaShareEmbed(props) {
     setShowTitle(!showTitle);
   }
 
+  function onShowRelatedChange() {
+    setShowRelated(!showRelated);
+  }
+
   function onAspectRatioChange() {
     const newVal = aspectRatioValueRef.current.value;
 
@@ -142,8 +147,8 @@ export function MediaShareEmbed(props) {
           <div className="media-embed-wrap">
             <SiteConsumer>
               {(site) => <>
-              {/*  <VideoViewer key={`embed-${showTitle}`} data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} showTitle={showTitle} /> */}
-               <iframe width="100%" height="480px" src={`${links.embed + MediaPageStore.get('media-id')}&showTitle=${showTitle ? '1' : '0'}`} frameborder="0" allowfullscreen></iframe>
+              {/*  <VideoViewer key={`embed-${showTitle}-${showRelated}`} data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} showTitle={showTitle} showRelated={showRelated} /> */}
+               <iframe width="100%" height="480px" src={`${links.embed + MediaPageStore.get('media-id')}&showTitle=${showTitle ? '1' : '0'}&showRelated=${showRelated ? '1' : '0'}`} frameborder="0" allowfullscreen></iframe>
                </>}
             </SiteConsumer>
           </div>
@@ -174,7 +179,9 @@ export function MediaShareEmbed(props) {
                 '" src="' +
                 links.embed +
                 MediaPageStore.get('media-id') +
-                (showTitle ? (links.embed.includes('?') ? '&showTitle=1' : '?showTitle=1') : '') +
+                (links.embed.includes('?') ? '&' : '?') +
+                'showTitle=' + (showTitle ? '1' : '0') +
+                '&showRelated=' + (showRelated ? '1' : '0') +
                 '" frameborder="0" allowfullscreen></iframe>'
               }
             ></textarea>
@@ -193,6 +200,13 @@ export function MediaShareEmbed(props) {
                       <label style={{ minHeight: '36px' }}>
                         <input type="checkbox" checked={showTitle} onChange={onShowTitleChange} />
                         Show title
+                      </label>
+                    </div>
+
+                    <div className="options-group">
+                      <label style={{ minHeight: '36px' }}>
+                        <input type="checkbox" checked={showRelated} onChange={onShowRelatedChange} />
+                        Show related
                       </label>
                     </div>
 

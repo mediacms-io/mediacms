@@ -170,7 +170,7 @@ const enableStandardButtonTooltips = (player) => {
     }, 500); // Delay to ensure all components are ready
 };
 
-function VideoJSPlayer({ videoId = 'default-video', showTitle = true }) {
+function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelated = true }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
@@ -197,8 +197,21 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true }) {
         return showTitle;
     }, [isEmbedPlayer, showTitle]);
 
+    // Read showRelated from URL parameter if available (for embed players)
+    const getShowRelatedFromURL = useMemo(() => {
+        if (isEmbedPlayer && typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlShowRelated = urlParams.get('showRelated');
+            if (urlShowRelated !== null) {
+                return urlShowRelated === '1' || urlShowRelated === 'true';
+            }
+        }
+        return showRelated;
+    }, [isEmbedPlayer, showRelated]);
+
     // Use URL parameter value if available, otherwise use prop value
     const finalShowTitle = isEmbedPlayer ? getShowTitleFromURL : showTitle;
+    const finalShowRelated = isEmbedPlayer ? getShowRelatedFromURL : showRelated;
 
     // Utility function to detect touch devices
     const isTouchDevice = useMemo(() => {
@@ -1304,6 +1317,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true }) {
                         currentVideo,
                         relatedVideos,
                         goToNextVideo,
+                        showRelated: finalShowRelated,
                     });
                     customComponents.current.endScreenHandler = endScreenHandler; // Store for cleanup
 
@@ -2224,6 +2238,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true }) {
                             videoTitle: currentVideo.title,
                             videoUrl: currentVideo.url,
                             showTitle: finalShowTitle,
+                            showRelated: finalShowRelated,
                         });
                     }
                     // END: Add Embed Info Overlay Component

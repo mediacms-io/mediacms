@@ -34,6 +34,7 @@ const VideoJSEmbed = ({
     enableAutoplay,
     inEmbed,
     showTitle,
+    showRelated,
     hasTheaterMode,
     hasNextLink,
     nextLink,
@@ -65,6 +66,7 @@ const VideoJSEmbed = ({
             const urlTimestamp = getUrlParameter('t');
             const urlAutoplay = getUrlParameter('autoplay');
             const urlMuted = getUrlParameter('muted');
+            const urlShowRelated = getUrlParameter('showRelated');
             
             window.MEDIA_DATA = {
                 data: data || {}, 
@@ -86,6 +88,8 @@ const VideoJSEmbed = ({
                 subtitlesInfo: subtitlesInfo || [],
                 enableAutoplay: enableAutoplay || (urlAutoplay === '1'),
                 inEmbed: inEmbed || false,
+                showTitle: showTitle || false,
+                showRelated: showRelated !== undefined ? showRelated : (urlShowRelated === '1' || urlShowRelated === 'true' || urlShowRelated === null),
                 hasTheaterMode: hasTheaterMode || false,
                 hasNextLink: hasNextLink || false,
                 nextLink: nextLink || null,
@@ -95,6 +99,7 @@ const VideoJSEmbed = ({
                 urlTimestamp: urlTimestamp ? parseInt(urlTimestamp, 10) : null,
                 urlAutoplay: urlAutoplay === '1',
                 urlMuted: urlMuted === '1',
+                urlShowRelated: urlShowRelated === '1' || urlShowRelated === 'true',
                 onClickNextCallback: onClickNextCallback || null,
                 onClickPreviousCallback: onClickPreviousCallback || null,
                 onStateUpdateCallback: onStateUpdateCallback || null,
