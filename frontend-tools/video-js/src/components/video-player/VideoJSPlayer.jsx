@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import '../../styles/embed.css';
@@ -17,6 +17,7 @@ import CustomRemainingTime from '../controls/CustomRemainingTime';
 import CustomChaptersOverlay from '../controls/CustomChaptersOverlay';
 import CustomSettingsMenu from '../controls/CustomSettingsMenu';
 import SeekIndicator from '../controls/SeekIndicator';
+import VideoContextMenu from '../overlays/VideoContextMenu';
 import UserPreferences from '../../utils/UserPreferences';
 import PlayerConfig from '../../config/playerConfig';
 import { AutoplayHandler } from '../../utils/AutoplayHandler';
@@ -169,7 +170,7 @@ const enableStandardButtonTooltips = (player) => {
     }, 500); // Delay to ensure all components are ready
 };
 
-function VideoJSPlayer({ videoId = 'default-video' }) {
+function VideoJSPlayer({ videoId = 'default-video', showTitle = true }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
@@ -177,8 +178,27 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
     const keyboardHandler = useRef(null); // Keyboard handler instance
     const playbackEventHandler = useRef(null); // Playback event handler instance
 
+    // Context menu state
+    const [contextMenuVisible, setContextMenuVisible] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+
     // Check if this is an embed player (disable next video and autoplay features)
     const isEmbedPlayer = videoId === 'video-embed';
+
+    // Read showTitle from URL parameter if available (for embed players)
+    const getShowTitleFromURL = useMemo(() => {
+        if (isEmbedPlayer && typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlShowTitle = urlParams.get('showTitle');
+            if (urlShowTitle !== null) {
+                return urlShowTitle === '1' || urlShowTitle === 'true';
+            }
+        }
+        return showTitle;
+    }, [isEmbedPlayer, showTitle]);
+
+    // Use URL parameter value if available, otherwise use prop value
+    const finalShowTitle = isEmbedPlayer ? getShowTitleFromURL : showTitle;
 
     // Utility function to detect touch devices
     const isTouchDevice = useMemo(() => {
@@ -737,6 +757,212 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
             mediaData.onClickNextCallback();
         }
     };
+
+    // Context menu handlers
+    const handleContextMenu = useCallback((e) => {
+        // Only handle if clicking on video player area
+        const target = e.target;
+        const isVideoPlayerArea =
+            target.closest('.video-js') ||
+            target.classList.contains('vjs-tech') ||
+            target.tagName === 'VIDEO' ||
+            target.closest('video');
+
+        if (isVideoPlayerArea) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            setContextMenuPosition({ x: e.clientX, y: e.clientY });
+            setContextMenuVisible(true);
+        }
+    }, []);
+
+    const closeContextMenu = () => {
+        setContextMenuVisible(false);
+    };
+
+    // Helper function to get media ID
+    const getMediaId = () => {
+        if (typeof window !== 'undefined' && window.MEDIA_DATA?.data?.friendly_token) {
+            return window.MEDIA_DATA.data.friendly_token;
+        }
+        if (mediaData?.data?.friendly_token) {
+            return mediaData.data.friendly_token;
+        }
+        // Try to get from URL (works for both main page and embed page)
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mediaIdFromUrl = urlParams.get('m');
+            if (mediaIdFromUrl) {
+                return mediaIdFromUrl;
+            }
+            // Also check if we're on an embed page with media ID in path
+            const pathMatch = window.location.pathname.match(/\/embed\/([^/?]+)/);
+            if (pathMatch) {
+                return pathMatch[1];
+            }
+        }
+        return currentVideo.id || 'default-video';
+    };
+
+    // Helper function to get base origin URL (handles embed mode)
+    const getBaseOrigin = () => {
+        if (typeof window !== 'undefined') {
+            // In embed mode, try to get origin from parent window if possible
+            // Otherwise use current window origin
+            try {
+                // Check if we're in an iframe and can access parent
+                if (window.parent !== window && window.parent.location.origin) {
+                    return window.parent.location.origin;
+                }
+            } catch {
+                // Cross-origin iframe, use current origin
+            }
+            return window.location.origin;
+        }
+        return mediaData.siteUrl || 'https://deic.mediacms.io';
+    };
+
+    // Helper function to get embed URL
+    const getEmbedUrl = () => {
+        const mediaId = getMediaId();
+        const origin = getBaseOrigin();
+
+        // Try to get embed URL from config or construct it
+        if (typeof window !== 'undefined' && window.MediaCMS?.config?.url?.embed) {
+            return window.MediaCMS.config.url.embed + mediaId;
+        }
+
+        // Fallback: construct embed URL (check if current URL is embed format)
+        if (typeof window !== 'undefined' && window.location.pathname.includes('/embed')) {
+            // If we're already on an embed page, use current URL format
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('m', mediaId);
+            return currentUrl.toString();
+        }
+
+        // Default embed URL format
+        return `${origin}/embed?m=${mediaId}`;
+    };
+
+    // Copy video URL to clipboard
+    const handleCopyVideoUrl = async () => {
+        const mediaId = getMediaId();
+        const origin = getBaseOrigin();
+        const videoUrl = `${origin}/view?m=${mediaId}`;
+
+        // Show copy icon
+        if (customComponents.current?.seekIndicator) {
+            customComponents.current.seekIndicator.show('copy-url');
+        }
+
+        try {
+            await navigator.clipboard.writeText(videoUrl);
+            closeContextMenu();
+            // You can add a notification here if needed
+        } catch (err) {
+            console.error('Failed to copy video URL:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = videoUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            closeContextMenu();
+        }
+    };
+
+    // Copy video URL at current time to clipboard
+    const handleCopyVideoUrlAtTime = async () => {
+        if (!playerRef.current) {
+            closeContextMenu();
+            return;
+        }
+
+        const currentTime = Math.floor(playerRef.current.currentTime() || 0);
+        const mediaId = getMediaId();
+        const origin = getBaseOrigin();
+        const videoUrl = `${origin}/view?m=${mediaId}&t=${currentTime}`;
+
+        // Show copy icon
+        if (customComponents.current?.seekIndicator) {
+            customComponents.current.seekIndicator.show('copy-url');
+        }
+
+        try {
+            await navigator.clipboard.writeText(videoUrl);
+            closeContextMenu();
+        } catch (err) {
+            console.error('Failed to copy video URL at time:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = videoUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            closeContextMenu();
+        }
+    };
+
+    // Copy embed code to clipboard
+    const handleCopyEmbedCode = async () => {
+        const embedUrl = getEmbedUrl();
+        const embedCode = `<iframe width="560" height="315" src="${embedUrl}" frameborder="0" allowfullscreen></iframe>`;
+
+        // Show copy embed icon
+        if (customComponents.current?.seekIndicator) {
+            customComponents.current.seekIndicator.show('copy-embed');
+        }
+
+        try {
+            await navigator.clipboard.writeText(embedCode);
+            closeContextMenu();
+        } catch (err) {
+            console.error('Failed to copy embed code:', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = embedCode;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            closeContextMenu();
+        }
+    };
+
+    // Add context menu handler directly to video element and document (works before and after Video.js initialization)
+    useEffect(() => {
+        const videoElement = videoRef.current;
+
+        // Attach to document with capture to catch all contextmenu events, then filter
+        const documentHandler = (e) => {
+            // Check if the event originated from within the video player
+            const target = e.target;
+            const playerWrapper =
+                videoElement?.closest('.video-js') || document.querySelector(`#${videoId}`)?.closest('.video-js');
+
+            if (playerWrapper && (playerWrapper.contains(target) || target === playerWrapper)) {
+                handleContextMenu(e);
+            }
+        };
+
+        // Use capture phase on document to catch before anything else
+        document.addEventListener('contextmenu', documentHandler, true);
+
+        // Also attach directly to video element
+        if (videoElement) {
+            videoElement.addEventListener('contextmenu', handleContextMenu, true);
+        }
+
+        return () => {
+            document.removeEventListener('contextmenu', documentHandler, true);
+            if (videoElement) {
+                videoElement.removeEventListener('contextmenu', handleContextMenu, true);
+            }
+        };
+    }, [handleContextMenu, videoId]);
 
     useEffect(() => {
         // Only initialize if we don't already have a player and element exists
@@ -1997,6 +2223,7 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                             authorThumbnail: currentVideo.author_thumbnail,
                             videoTitle: currentVideo.title,
                             videoUrl: currentVideo.url,
+                            showTitle: finalShowTitle,
                         });
                     }
                     // END: Add Embed Info Overlay Component
@@ -2084,51 +2311,109 @@ function VideoJSPlayer({ videoId = 'default-video' }) {
                         const videoElement = playerRef.current.el();
                         videoElement.setAttribute('tabindex', '0');
                         videoElement.focus();
+
+                        // Add context menu (right-click) handler to the player wrapper and video element
+                        // Attach to player wrapper (this catches all clicks on the player)
+                        videoElement.addEventListener('contextmenu', handleContextMenu, true);
+
+                        // Also try to attach to the actual video tech element
+                        const attachContextMenu = () => {
+                            const techElement =
+                                playerRef.current.el().querySelector('.vjs-tech') ||
+                                playerRef.current.el().querySelector('video') ||
+                                (playerRef.current.tech() && playerRef.current.tech().el());
+
+                            if (techElement && techElement !== videoRef.current && techElement !== videoElement) {
+                                // Use capture phase to catch before Video.js might prevent it
+                                techElement.addEventListener('contextmenu', handleContextMenu, true);
+                                return true;
+                            }
+                            return false;
+                        };
+
+                        // Try to attach immediately
+                        attachContextMenu();
+
+                        // Also try after a short delay in case elements aren't ready yet
+                        setTimeout(() => {
+                            attachContextMenu();
+                        }, 100);
+
+                        // Also try when video is loaded
+                        playerRef.current.one('loadedmetadata', () => {
+                            attachContextMenu();
+                        });
                     }
                 });
             }
             //}, 0);
         }
+
+        // Cleanup: Remove context menu event listener
+        return () => {
+            if (playerRef.current && playerRef.current.el()) {
+                const playerEl = playerRef.current.el();
+                playerEl.removeEventListener('contextmenu', handleContextMenu, true);
+
+                const techElement =
+                    playerEl.querySelector('.vjs-tech') ||
+                    playerEl.querySelector('video') ||
+                    (playerRef.current.tech() && playerRef.current.tech().el());
+                if (techElement) {
+                    techElement.removeEventListener('contextmenu', handleContextMenu, true);
+                }
+            }
+        };
     }, []);
 
     return (
-        <video
-            ref={videoRef}
-            id={videoId}
-            controls={true}
-            className={`video-js vjs-fluid vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
-            preload="auto"
-            poster={currentVideo.poster}
-            tabIndex="0"
-        >
-            {/* <source src="/videos/sample-video.mp4" type="video/mp4" />
-            <source src="/videos/sample-video.webm" type="video/webm" /> */}
-            <p className="vjs-no-js">
-                To view this video please enable JavaScript, and consider upgrading to a web browser that
-                <a href="https://videojs.com/html5-video-support/" target="_blank">
-                    supports HTML5 video
-                </a>
-            </p>
+        <>
+            <video
+                ref={videoRef}
+                id={videoId}
+                controls={true}
+                className={`video-js vjs-fluid vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
+                preload="auto"
+                poster={currentVideo.poster}
+                tabIndex="0"
+            >
+                {/* <source src="/videos/sample-video.mp4" type="video/mp4" />
+                <source src="/videos/sample-video.webm" type="video/webm" /> */}
+                <p className="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">
+                        supports HTML5 video
+                    </a>
+                </p>
 
-            {/* Add subtitle tracks */}
-            {/* {subtitleTracks &&
-                subtitleTracks.map((track, index) => (
-                    <track
-                        key={index}
-                        kind={track.kind}
-                        src={track.src}
-                        srcLang={track.srclang}
-                        label={track.label}
-                        default={track.default}
-                    />
-                ))} */}
-            {/* 
-            <track kind="chapters" src="/sample-chapters.vtt" /> */}
-            {/* Add chapters track */}
-            {/*  {chaptersData &&
-                chaptersData.length > 0 &&
-                (console.log('chaptersData', chaptersData), (<track kind="chapters" src="/sample-chapters.vtt" />))} */}
-        </video>
+                {/* Add subtitle tracks */}
+                {/* {subtitleTracks &&
+                    subtitleTracks.map((track, index) => (
+                        <track
+                            key={index}
+                            kind={track.kind}
+                            src={track.src}
+                            srcLang={track.srclang}
+                            label={track.label}
+                            default={track.default}
+                        />
+                    ))} */}
+                {/* 
+                <track kind="chapters" src="/sample-chapters.vtt" /> */}
+                {/* Add chapters track */}
+                {/*  {chaptersData &&
+                    chaptersData.length > 0 &&
+                    (console.log('chaptersData', chaptersData), (<track kind="chapters" src="/sample-chapters.vtt" />))} */}
+            </video>
+            <VideoContextMenu
+                visible={contextMenuVisible}
+                position={contextMenuPosition}
+                onClose={closeContextMenu}
+                onCopyVideoUrl={handleCopyVideoUrl}
+                onCopyVideoUrlAtTime={handleCopyVideoUrlAtTime}
+                onCopyEmbedCode={handleCopyEmbedCode}
+            />
+        </>
     );
 }
 
