@@ -16,6 +16,7 @@ class EmbedInfoOverlay extends Component {
         this.videoUrl = options.videoUrl || '';
         this.showTitle = options.showTitle !== undefined ? options.showTitle : true;
         this.showRelated = options.showRelated !== undefined ? options.showRelated : true;
+        this.showUserAvatar = options.showUserAvatar !== undefined ? options.showUserAvatar : true;
 
         // Initialize after player is ready
         this.player().ready(() => {
@@ -59,7 +60,7 @@ class EmbedInfoOverlay extends Component {
         `;
 
         // Create avatar container
-        if (this.authorThumbnail) {
+        if (this.authorThumbnail && this.showUserAvatar) {
             const avatarContainer = document.createElement('div');
             avatarContainer.className = 'embed-avatar-container';
             avatarContainer.style.cssText = `

@@ -63,6 +63,7 @@ export const EmbedPage: React.FC = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const showTitle = urlParams.get('showTitle') !== '0';
             const showRelated = urlParams.get('showRelated') !== '0';
+            const showUserAvatar = urlParams.get('showUserAvatar') !== '0';
             return (
               <VideoViewer 
                 data={MediaPageStore.get('media-data')} 
@@ -70,6 +71,7 @@ export const EmbedPage: React.FC = () => {
                 containerStyles={containerStyles} 
                 showTitle={showTitle}
                 showRelated={showRelated}
+                showUserAvatar={showUserAvatar}
               />
             );
           }} 

@@ -170,7 +170,7 @@ const enableStandardButtonTooltips = (player) => {
     }, 500); // Delay to ensure all components are ready
 };
 
-function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelated = true }) {
+function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelated = true, showUserAvatar = true }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
@@ -209,9 +209,22 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
         return showRelated;
     }, [isEmbedPlayer, showRelated]);
 
+    // Read showUserAvatar from URL parameter if available (for embed players)
+    const getShowUserAvatarFromURL = useMemo(() => {
+        if (isEmbedPlayer && typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlShowUserAvatar = urlParams.get('showUserAvatar');
+            if (urlShowUserAvatar !== null) {
+                return urlShowUserAvatar === '1' || urlShowUserAvatar === 'true';
+            }
+        }
+        return showUserAvatar;
+    }, [isEmbedPlayer, showUserAvatar]);
+
     // Use URL parameter value if available, otherwise use prop value
     const finalShowTitle = isEmbedPlayer ? getShowTitleFromURL : showTitle;
     const finalShowRelated = isEmbedPlayer ? getShowRelatedFromURL : showRelated;
+    const finalShowUserAvatar = isEmbedPlayer ? getShowUserAvatarFromURL : showUserAvatar;
 
     // Utility function to detect touch devices
     const isTouchDevice = useMemo(() => {
@@ -1318,6 +1331,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                         relatedVideos,
                         goToNextVideo,
                         showRelated: finalShowRelated,
+                        showUserAvatar: finalShowUserAvatar,
                     });
                     customComponents.current.endScreenHandler = endScreenHandler; // Store for cleanup
 
@@ -2239,6 +2253,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                             videoUrl: currentVideo.url,
                             showTitle: finalShowTitle,
                             showRelated: finalShowRelated,
+                            showUserAvatar: finalShowUserAvatar,
                         });
                     }
                     // END: Add Embed Info Overlay Component
