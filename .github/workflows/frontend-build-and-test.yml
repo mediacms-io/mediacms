@@ -1,0 +1,42 @@
+name: Frontend build and test
+
+on:
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.head_ref ||  github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build-and-test:
+        strategy:
+            matrix:
+                os: [ubuntu-latest]
+                node: [20]
+        runs-on: ${{ matrix.os }}
+        name: '${{ matrix.os }} - node v${{ matrix.node }}'
+        permissions:
+            contents: read
+        defaults:
+            run:
+                working-directory: ./frontend
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node }}
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Build script
+              run: npm run dist
+
+            - name: Test script
+              run: npm run test
