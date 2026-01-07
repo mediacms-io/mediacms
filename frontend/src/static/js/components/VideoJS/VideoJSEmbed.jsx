@@ -33,6 +33,7 @@ const VideoJSEmbed = ({
     subtitlesInfo,
     enableAutoplay,
     inEmbed,
+    showTitle,
     hasTheaterMode,
     hasNextLink,
     nextLink,
@@ -220,7 +221,14 @@ const VideoJSEmbed = ({
 
     return (
         <div className="video-js-wrapper" ref={containerRef}>
-            {inEmbed ? <div id="video-js-root-embed" className="video-js-root-embed" /> : <div id="video-js-root-main" className="video-js-root-main" />}
+            {inEmbed ? (
+                <div 
+                    id="video-js-root-embed" 
+                    className="video-js-root-embed"
+                />
+            ) : (
+                <div id="video-js-root-main" className="video-js-root-main" />
+            )}
         </div>
     );
 };

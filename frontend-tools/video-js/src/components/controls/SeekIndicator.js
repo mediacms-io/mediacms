@@ -204,6 +204,54 @@ class SeekIndicator extends Component {
     </div>
   `;
             textEl.textContent = 'Pause';
+        } else if (direction === 'copy-url') {
+            iconEl.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; animation: youtubeSeekPulse 0.3s ease-out;">
+      <div style="
+          width: ${circleSize};
+          height: ${circleSize};
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          outline: none;
+          box-sizing: border-box;
+          overflow: hidden;
+      ">
+        <svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      </div>
+    </div>
+  `;
+            textEl.textContent = '';
+        } else if (direction === 'copy-embed') {
+            iconEl.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; animation: youtubeSeekPulse 0.3s ease-out;">
+      <div style="
+          width: ${circleSize};
+          height: ${circleSize};
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          outline: none;
+          box-sizing: border-box;
+          overflow: hidden;
+      ">
+        <svg viewBox="0 0 24 24" width="${iconSize}" height="${iconSize}" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));">
+          <path d="M16 18l6-6-6-6"/>
+          <path d="M8 6l-6 6 6 6"/>
+        </svg>
+      </div>
+    </div>
+  `;
+            textEl.textContent = '';
         }
 
         // Clear any text content in the text element
@@ -236,6 +284,11 @@ class SeekIndicator extends Component {
             }, 1000);
         } else if (direction === 'play' || direction === 'pause' || direction === 'pause-mobile') {
             // Play/pause operations: 500ms
+            this.showTimeout = setTimeout(() => {
+                this.hide();
+            }, 500);
+        } else if (direction === 'copy-url' || direction === 'copy-embed') {
+            // Copy operations: 500ms (same as play/pause)
             this.showTimeout = setTimeout(() => {
                 this.hide();
             }, 500);

@@ -19,6 +19,7 @@ export function MediaShareEmbed(props) {
 
   const [maxHeight, setMaxHeight] = useState(window.innerHeight - 144 + 56);
   const [keepAspectRatio, setKeepAspectRatio] = useState(false);
+  const [showTitle, setShowTitle] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [embedWidthValue, setEmbedWidthValue] = useState(embedVideoDimensions.width);
   const [embedWidthUnit, setEmbedWidthUnit] = useState(embedVideoDimensions.widthUnit);
@@ -92,6 +93,10 @@ export function MediaShareEmbed(props) {
     );
   }
 
+  function onShowTitleChange() {
+    setShowTitle(!showTitle);
+  }
+
   function onAspectRatioChange() {
     const newVal = aspectRatioValueRef.current.value;
 
@@ -136,7 +141,10 @@ export function MediaShareEmbed(props) {
         <div className="on-left">
           <div className="media-embed-wrap">
             <SiteConsumer>
-              {(site) => <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} />}
+              {(site) => <>
+              {/*  <VideoViewer key={`embed-${showTitle}`} data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} showTitle={showTitle} /> */}
+               <iframe width="100%" height="480px" src={`${links.embed + MediaPageStore.get('media-id')}&showTitle=${showTitle ? '1' : '0'}`} frameborder="0" allowfullscreen></iframe>
+               </>}
             </SiteConsumer>
           </div>
         </div>
@@ -166,6 +174,7 @@ export function MediaShareEmbed(props) {
                 '" src="' +
                 links.embed +
                 MediaPageStore.get('media-id') +
+                (showTitle ? (links.embed.includes('?') ? '&showTitle=1' : '?showTitle=1') : '') +
                 '" frameborder="0" allowfullscreen></iframe>'
               }
             ></textarea>
@@ -180,6 +189,13 @@ export function MediaShareEmbed(props) {
 
                 <div className="option-content">
                   <div className="ratio-options">
+                    <div className="options-group">
+                      <label style={{ minHeight: '36px' }}>
+                        <input type="checkbox" checked={showTitle} onChange={onShowTitleChange} />
+                        Show title
+                      </label>
+                    </div>
+
                     <div className="options-group">
                       <label style={{ minHeight: '36px' }}>
                         <input type="checkbox" checked={keepAspectRatio} onChange={onKeepAspectRatioChange} />
