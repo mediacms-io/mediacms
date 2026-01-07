@@ -22,6 +22,7 @@ export function MediaShareEmbed(props) {
   const [showTitle, setShowTitle] = useState(false);
   const [showRelated, setShowRelated] = useState(true);
   const [showUserAvatar, setShowUserAvatar] = useState(true);
+  const [linkTitle, setLinkTitle] = useState(true);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [embedWidthValue, setEmbedWidthValue] = useState(embedVideoDimensions.width);
   const [embedWidthUnit, setEmbedWidthUnit] = useState(embedVideoDimensions.widthUnit);
@@ -107,6 +108,10 @@ export function MediaShareEmbed(props) {
     setShowUserAvatar(!showUserAvatar);
   }
 
+  function onLinkTitleChange() {
+    setLinkTitle(!linkTitle);
+  }
+
   function onAspectRatioChange() {
     const newVal = aspectRatioValueRef.current.value;
 
@@ -152,8 +157,8 @@ export function MediaShareEmbed(props) {
           <div className="media-embed-wrap">
             <SiteConsumer>
               {(site) => <>
-              {/*  <VideoViewer key={`embed-${showTitle}-${showRelated}-${showUserAvatar}`} data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} showTitle={showTitle} showRelated={showRelated} showUserAvatar={showUserAvatar} /> */}
-               <iframe width="100%" height="480px" src={`${links.embed + MediaPageStore.get('media-id')}&showTitle=${showTitle ? '1' : '0'}&showRelated=${showRelated ? '1' : '0'}&showUserAvatar=${showUserAvatar ? '1' : '0'}`} frameborder="0" allowfullscreen></iframe>
+              {/*  <VideoViewer key={`embed-${showTitle}-${showRelated}-${showUserAvatar}-${linkTitle}`} data={MediaPageStore.get('media-data')} siteUrl={site.url} inEmbed={true} showTitle={showTitle} showRelated={showRelated} showUserAvatar={showUserAvatar} linkTitle={linkTitle} /> */}
+               <iframe width="100%" height="480px" src={`${links.embed + MediaPageStore.get('media-id')}&showTitle=${showTitle ? '1' : '0'}&showRelated=${showRelated ? '1' : '0'}&showUserAvatar=${showUserAvatar ? '1' : '0'}&linkTitle=${linkTitle ? '1' : '0'}`} frameborder="0" allowfullscreen></iframe>
                </>}
             </SiteConsumer>
           </div>
@@ -188,6 +193,7 @@ export function MediaShareEmbed(props) {
                 'showTitle=' + (showTitle ? '1' : '0') +
                 '&showRelated=' + (showRelated ? '1' : '0') +
                 '&showUserAvatar=' + (showUserAvatar ? '1' : '0') +
+                '&linkTitle=' + (linkTitle ? '1' : '0') +
                 '" frameborder="0" allowfullscreen></iframe>'
               }
             ></textarea>
@@ -208,6 +214,15 @@ export function MediaShareEmbed(props) {
                         Show title
                       </label>
                     </div>
+
+                    {showTitle && (
+                      <div className="options-group" style={{ paddingLeft: '20px' }}>
+                        <label style={{ minHeight: '36px' }}>
+                          <input type="checkbox" checked={linkTitle} onChange={onLinkTitleChange} />
+                          Link title
+                        </label>
+                      </div>
+                    )}
 
                     <div className="options-group">
                       <label style={{ minHeight: '36px' }}>

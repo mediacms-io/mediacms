@@ -61,9 +61,12 @@ export const EmbedPage: React.FC = () => {
         <SiteConsumer>
         {(site) => {
             const urlParams = new URLSearchParams(window.location.search);
-            const showTitle = urlParams.get('showTitle') !== '0';
-            const showRelated = urlParams.get('showRelated') !== '0';
-            const showUserAvatar = urlParams.get('showUserAvatar') !== '0';
+            const urlShowRelated = urlParams.get('showRelated');
+            const showRelated = urlShowRelated !== '0';
+            const urlShowUserAvatar = urlParams.get('showUserAvatar');
+            const showUserAvatar = urlShowUserAvatar !== '0';
+            const urlLinkTitle = urlParams.get('linkTitle');
+            const linkTitle = urlLinkTitle !== '0';
             return (
               <VideoViewer 
                 data={MediaPageStore.get('media-data')} 
@@ -72,6 +75,7 @@ export const EmbedPage: React.FC = () => {
                 showTitle={showTitle}
                 showRelated={showRelated}
                 showUserAvatar={showUserAvatar}
+                linkTitle={linkTitle}
               />
             );
           }} 

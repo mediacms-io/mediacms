@@ -415,6 +415,7 @@ export default class VideoViewer extends React.PureComponent {
                                             showTitle: this.props.showTitle,
                                             showRelated: this.props.showRelated,
                                             showUserAvatar: this.props.showUserAvatar,
+                                            linkTitle: this.props.linkTitle,
                                             hasTheaterMode: !this.props.inEmbed,
                                             hasNextLink: !!nextLink,
                                             nextLink: nextLink,
@@ -441,6 +442,7 @@ VideoViewer.defaultProps = {
     showTitle: !0,
     showRelated: !0,
     showUserAvatar: !0,
+    linkTitle: !0,
     siteUrl: PropTypes.string.isRequired,
 };
 
@@ -449,4 +451,5 @@ VideoViewer.propTypes = {
     showTitle: PropTypes.bool,
     showRelated: PropTypes.bool,
     showUserAvatar: PropTypes.bool,
+    linkTitle: PropTypes.bool,
 };

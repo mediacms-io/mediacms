@@ -17,6 +17,7 @@ class EmbedInfoOverlay extends Component {
         this.showTitle = options.showTitle !== undefined ? options.showTitle : true;
         this.showRelated = options.showRelated !== undefined ? options.showRelated : true;
         this.showUserAvatar = options.showUserAvatar !== undefined ? options.showUserAvatar : true;
+        this.linkTitle = options.linkTitle !== undefined ? options.linkTitle : true;
 
         // Initialize after player is ready
         this.player().ready(() => {
@@ -136,7 +137,7 @@ class EmbedInfoOverlay extends Component {
             overflow: hidden;
         `;
 
-        if (this.videoUrl) {
+        if (this.videoUrl && this.linkTitle) {
             const titleLink = document.createElement('a');
             titleLink.href = this.videoUrl;
             titleLink.target = '_blank';

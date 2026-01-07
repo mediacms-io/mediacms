@@ -36,6 +36,7 @@ const VideoJSEmbed = ({
     showTitle,
     showRelated,
     showUserAvatar,
+    linkTitle,
     hasTheaterMode,
     hasNextLink,
     nextLink,
@@ -69,6 +70,7 @@ const VideoJSEmbed = ({
             const urlMuted = getUrlParameter('muted');
             const urlShowRelated = getUrlParameter('showRelated');
             const urlShowUserAvatar = getUrlParameter('showUserAvatar');
+            const urlLinkTitle = getUrlParameter('linkTitle');
             
             window.MEDIA_DATA = {
                 data: data || {}, 
@@ -93,6 +95,7 @@ const VideoJSEmbed = ({
                 showTitle: showTitle || false,
                 showRelated: showRelated !== undefined ? showRelated : (urlShowRelated === '1' || urlShowRelated === 'true' || urlShowRelated === null),
                 showUserAvatar: showUserAvatar !== undefined ? showUserAvatar : (urlShowUserAvatar === '1' || urlShowUserAvatar === 'true' || urlShowUserAvatar === null),
+                linkTitle: linkTitle !== undefined ? linkTitle : (urlLinkTitle === '1' || urlLinkTitle === 'true' || urlLinkTitle === null),
                 hasTheaterMode: hasTheaterMode || false,
                 hasNextLink: hasNextLink || false,
                 nextLink: nextLink || null,
@@ -104,6 +107,7 @@ const VideoJSEmbed = ({
                 urlMuted: urlMuted === '1',
                 urlShowRelated: urlShowRelated === '1' || urlShowRelated === 'true',
                 urlShowUserAvatar: urlShowUserAvatar === '1' || urlShowUserAvatar === 'true',
+                urlLinkTitle: urlLinkTitle === '1' || urlLinkTitle === 'true',
                 onClickNextCallback: onClickNextCallback || null,
                 onClickPreviousCallback: onClickPreviousCallback || null,
                 onStateUpdateCallback: onStateUpdateCallback || null,
