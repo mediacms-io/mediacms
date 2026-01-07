@@ -207,39 +207,37 @@ export function MediaShareEmbed(props) {
 									</div>*/}
 
                 <div className="option-content">
-                  <div className="ratio-options">
+                  <div className="ratio-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 10px' }}>
                     <div className="options-group">
-                      <label style={{ minHeight: '36px' }}>
+                      <label style={{ minHeight: '36px', whiteSpace: 'nowrap' }}>
                         <input type="checkbox" checked={showTitle} onChange={onShowTitleChange} />
                         Show title
                       </label>
                     </div>
 
-                    {showTitle && (
-                      <div className="options-group" style={{ paddingLeft: '20px' }}>
-                        <label style={{ minHeight: '36px' }}>
-                          <input type="checkbox" checked={linkTitle} onChange={onLinkTitleChange} />
-                          Link title
-                        </label>
-                      </div>
-                    )}
+                    <div className="options-group">
+                      <label style={{ minHeight: '36px', whiteSpace: 'nowrap', opacity: showTitle ? 1 : 0.5 }}>
+                        <input type="checkbox" checked={linkTitle} onChange={onLinkTitleChange} disabled={!showTitle} />
+                        Link title
+                      </label>
+                    </div>
 
                     <div className="options-group">
-                      <label style={{ minHeight: '36px' }}>
+                      <label style={{ minHeight: '36px', whiteSpace: 'nowrap' }}>
                         <input type="checkbox" checked={showRelated} onChange={onShowRelatedChange} />
                         Show related
                       </label>
                     </div>
 
                     <div className="options-group">
-                      <label style={{ minHeight: '36px' }}>
-                        <input type="checkbox" checked={showUserAvatar} onChange={onShowUserAvatarChange} />
+                      <label style={{ minHeight: '36px', whiteSpace: 'nowrap', opacity: showTitle ? 1 : 0.5 }}>
+                        <input type="checkbox" checked={showUserAvatar} onChange={onShowUserAvatarChange} disabled={!showTitle} />
                         Show user avatar
                       </label>
                     </div>
 
                     <div className="options-group">
-                      <label style={{ minHeight: '36px' }}>
+                      <label style={{ minHeight: '36px', whiteSpace: 'nowrap' }}>
                         <input type="checkbox" checked={keepAspectRatio} onChange={onKeepAspectRatioChange} />
                         Keep aspect ratio
                       </label>
