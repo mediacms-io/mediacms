@@ -170,7 +170,7 @@ const enableStandardButtonTooltips = (player) => {
     }, 500); // Delay to ensure all components are ready
 };
 
-function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelated = true, showUserAvatar = true, linkTitle = true }) {
+function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelated = true, showUserAvatar = true, linkTitle = true, urlTimestamp = null }) {
     const videoRef = useRef(null);
     const playerRef = useRef(null); // Track the player instance
     const userPreferences = useRef(new UserPreferences()); // User preferences instance
@@ -185,76 +185,10 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
     // Check if this is an embed player (disable next video and autoplay features)
     const isEmbedPlayer = videoId === 'video-embed';
 
-    // Read showTitle from URL parameter if available (for embed players)
-    const getShowTitleFromURL = useMemo(() => {
-        if (isEmbedPlayer && typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlShowTitle = urlParams.get('showTitle');
-            if (urlShowTitle !== null) {
-                return urlShowTitle === '1' || urlShowTitle === 'true';
-            }
-        }
-        return showTitle;
-    }, [isEmbedPlayer, showTitle]);
-
-    // Read showRelated from URL parameter if available (for embed players)
-    const getShowRelatedFromURL = useMemo(() => {
-        if (isEmbedPlayer && typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlShowRelated = urlParams.get('showRelated');
-            if (urlShowRelated !== null) {
-                return urlShowRelated === '1' || urlShowRelated === 'true';
-            }
-        }
-        return showRelated;
-    }, [isEmbedPlayer, showRelated]);
-
-    // Read showUserAvatar from URL parameter if available (for embed players)
-    const getShowUserAvatarFromURL = useMemo(() => {
-        if (isEmbedPlayer && typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlShowUserAvatar = urlParams.get('showUserAvatar');
-            if (urlShowUserAvatar !== null) {
-                return urlShowUserAvatar === '1' || urlShowUserAvatar === 'true';
-            }
-        }
-        return showUserAvatar;
-    }, [isEmbedPlayer, showUserAvatar]);
-
-    // Read linkTitle from URL parameter if available (for embed players)
-    const getLinkTitleFromURL = useMemo(() => {
-        if (isEmbedPlayer && typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlLinkTitle = urlParams.get('linkTitle');
-            if (urlLinkTitle !== null) {
-                return urlLinkTitle === '1' || urlLinkTitle === 'true';
-            }
-        }
-        return linkTitle;
-    }, [isEmbedPlayer, linkTitle]);
-
-    // Use URL parameter value if available, otherwise use prop value
-    const finalShowTitle = isEmbedPlayer ? getShowTitleFromURL : showTitle;
-    const finalShowRelated = isEmbedPlayer ? getShowRelatedFromURL : showRelated;
-    const finalShowUserAvatar = isEmbedPlayer ? getShowUserAvatarFromURL : showUserAvatar;
-    const finalLinkTitle = isEmbedPlayer ? getLinkTitleFromURL : linkTitle;
-
-    // Utility function to detect touch devices
-    const isTouchDevice = useMemo(() => {
-        return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-    }, []);
-
-    // Utility function to detect iOS devices
-    const isIOS = useMemo(() => {
-        return (
-            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-        );
-    }, []);
-
     // Environment-based development mode configuration
     const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || window.location.hostname.includes('vercel.app');
-    // Safely access window.MEDIA_DATA with fallback using useMemo
+
+    // Read options from window.MEDIA_DATA if available (for consistency with embed logic)
     const mediaData = useMemo(
         () =>
             typeof window !== 'undefined' && window.MEDIA_DATA
@@ -273,11 +207,36 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                       },
                       siteUrl: 'https://deic.mediacms.io',
                       nextLink: 'https://deic.mediacms.io/view?m=elygiagorgechania',
-                      urlAutoplay: true,
-                      urlMuted: false,
                   },
         []
     );
+
+    // Helper to get effective value (prop or MEDIA_DATA or default)
+    const getOption = (propKey, mediaDataKey, defaultValue) => {
+        if (isEmbedPlayer) {
+            if (mediaData[mediaDataKey] !== undefined) return mediaData[mediaDataKey];
+        }
+        return propKey !== undefined ? propKey : defaultValue;
+    };
+
+    const finalShowTitle = getOption(showTitle, 'showTitle', true);
+    const finalShowRelated = getOption(showRelated, 'showRelated', true);
+    const finalShowUserAvatar = getOption(showUserAvatar, 'showUserAvatar', true);
+    const finalLinkTitle = getOption(linkTitle, 'linkTitle', true);
+    const finalTimestamp = getOption(urlTimestamp, 'urlTimestamp', null);
+
+    // Utility function to detect touch devices
+    const isTouchDevice = useMemo(() => {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    }, []);
+
+    // Utility function to detect iOS devices
+    const isIOS = useMemo(() => {
+        return (
+            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        );
+    }, []);
 
     // Define chapters as JSON object
     // Note: The sample-chapters.vtt file is no longer needed as chapters are now loaded from this JSON
@@ -590,8 +549,6 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
             isPlayList: mediaData?.isPlayList,
             related_media: mediaData.data?.related_media || [],
             nextLink: mediaData?.nextLink || null,
-            urlAutoplay: mediaData?.urlAutoplay || true,
-            urlMuted: mediaData?.urlMuted || false,
             sources: getVideoSources(),
         };
 
@@ -1366,8 +1323,8 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                     }
 
                     // Handle URL timestamp parameter
-                    if (mediaData.urlTimestamp !== null && mediaData.urlTimestamp >= 0) {
-                        const timestamp = mediaData.urlTimestamp;
+                    if (finalTimestamp !== null && finalTimestamp >= 0) {
+                        const timestamp = finalTimestamp;
 
                         // Wait for video metadata to be loaded before seeking
                         if (playerRef.current.readyState() >= 1) {
@@ -2417,7 +2374,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                 ref={videoRef}
                 id={videoId}
                 controls={true}
-                className={`video-js vjs-fluid vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
+                className={`video-js ${isEmbedPlayer ? 'vjs-fill' : 'vjs-fluid'} vjs-default-skin${currentVideo.useRoundedCorners ? ' video-js-rounded-corners' : ''}`}
                 preload="auto"
                 poster={currentVideo.poster}
                 tabIndex="0"

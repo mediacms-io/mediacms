@@ -1930,9 +1930,21 @@
         }
     }
 
+  .media-embed-wrap {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #000;
     .media-embed-wrap {
         display: block;
 
+    .player-container,
+    .player-container-inner {
+      width: 100%;
+      height: 100%;
+      padding-top: 0;
+      background: #000;
+    }
         .player-container,
         .player-container-inner {
             width: 100%;
@@ -1946,6 +1958,10 @@
         .circle-icon-button {
         }
 
+    .video-js.vjs-mediacms {
+      padding-top: 0;
+    }
+  }
         .video-js.vjs-mediacms {
             padding-top: math.div(9, 16) * 100%;
         }

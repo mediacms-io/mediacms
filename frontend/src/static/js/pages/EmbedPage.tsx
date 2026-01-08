@@ -41,7 +41,7 @@ export const EmbedPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="embed-wrap" style={wrapperStyles}>
+    <div className="embed-wrap media-embed-wrap" style={wrapperStyles}>
       {failedMediaLoad && (
         <div className="player-container player-container-error" style={containerStyles}>
           <div className="player-container-inner" style={containerStyles}>
@@ -61,12 +61,17 @@ export const EmbedPage: React.FC = () => {
         <SiteConsumer>
         {(site) => {
             const urlParams = new URLSearchParams(window.location.search);
+            const urlShowTitle = urlParams.get('showTitle');
+            const showTitle = urlShowTitle !== '0';
             const urlShowRelated = urlParams.get('showRelated');
             const showRelated = urlShowRelated !== '0';
             const urlShowUserAvatar = urlParams.get('showUserAvatar');
             const showUserAvatar = urlShowUserAvatar !== '0';
             const urlLinkTitle = urlParams.get('linkTitle');
             const linkTitle = urlLinkTitle !== '0';
+            const urlTimestamp = urlParams.get('t');
+            const timestamp = urlTimestamp ? parseInt(urlTimestamp, 10) : null;
+
             return (
               <VideoViewer 
                 data={MediaPageStore.get('media-data')} 
@@ -76,6 +81,7 @@ export const EmbedPage: React.FC = () => {
                 showRelated={showRelated}
                 showUserAvatar={showUserAvatar}
                 linkTitle={linkTitle}
+                timestamp={timestamp}
               />
             );
           }} 

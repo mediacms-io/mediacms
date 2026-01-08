@@ -31,7 +31,6 @@ const VideoJSEmbed = ({
     poster,
     previewSprite,
     subtitlesInfo,
-    enableAutoplay,
     inEmbed,
     showTitle,
     showRelated,
@@ -66,7 +65,6 @@ const VideoJSEmbed = ({
         if (typeof window !== 'undefined') {
             // Get URL parameters for autoplay, muted, and timestamp
             const urlTimestamp = getUrlParameter('t');
-            const urlAutoplay = getUrlParameter('autoplay');
             const urlMuted = getUrlParameter('muted');
             const urlShowRelated = getUrlParameter('showRelated');
             const urlShowUserAvatar = getUrlParameter('showUserAvatar');
@@ -78,7 +76,7 @@ const VideoJSEmbed = ({
                 version: version,
                 isPlayList: isPlayList,
                 playerVolume: playerVolume || 0.5,
-                playerSoundMuted: playerSoundMuted || (urlMuted === '1'),
+                playerSoundMuted: urlMuted === '1',
                 videoQuality: videoQuality || 'auto',
                 videoPlaybackSpeed: videoPlaybackSpeed || 1,
                 inTheaterMode: inTheaterMode || false,
@@ -90,7 +88,6 @@ const VideoJSEmbed = ({
                 poster: poster || '',
                 previewSprite: previewSprite || null,
                 subtitlesInfo: subtitlesInfo || [],
-                enableAutoplay: enableAutoplay || (urlAutoplay === '1'),
                 inEmbed: inEmbed || false,
                 showTitle: showTitle || false,
                 showRelated: showRelated !== undefined ? showRelated : (urlShowRelated === '1' || urlShowRelated === 'true' || urlShowRelated === null),
@@ -103,7 +100,6 @@ const VideoJSEmbed = ({
                 errorMessage: errorMessage || '',
                 // URL parameters
                 urlTimestamp: urlTimestamp ? parseInt(urlTimestamp, 10) : null,
-                urlAutoplay: urlAutoplay === '1',
                 urlMuted: urlMuted === '1',
                 urlShowRelated: urlShowRelated === '1' || urlShowRelated === 'true',
                 urlShowUserAvatar: urlShowUserAvatar === '1' || urlShowUserAvatar === 'true',
