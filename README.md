@@ -108,7 +108,7 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 
 ## Technology
 
-This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
+This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, Gunicorn, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
 ## Who is using it
