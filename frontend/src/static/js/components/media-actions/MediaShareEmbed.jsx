@@ -17,12 +17,12 @@ export function MediaShareEmbed(props) {
   const onRightBottomRef = useRef(null);
 
   const [maxHeight, setMaxHeight] = useState(window.innerHeight - 144 + 56);
-  const [keepAspectRatio, setKeepAspectRatio] = useState(false);
-  const [showTitle, setShowTitle] = useState(false);
+  const [keepAspectRatio, setKeepAspectRatio] = useState(true);
+  const [showTitle, setShowTitle] = useState(true);
   const [showRelated, setShowRelated] = useState(true);
   const [showUserAvatar, setShowUserAvatar] = useState(true);
   const [linkTitle, setLinkTitle] = useState(true);
-  const [responsive, setResponsive] = useState(true);
+  const [responsive, setResponsive] = useState(false);
   const [startAt, setStartAt] = useState(false);
   const [startTime, setStartTime] = useState('0:00');
   const [aspectRatio, setAspectRatio] = useState('16:9');
@@ -103,16 +103,9 @@ export function MediaShareEmbed(props) {
       const y = arr[1];
 
       setKeepAspectRatio(true);
-      setEmbedWidthUnit('px');
-      setEmbedHeightUnit('px');
       setEmbedHeightValue(parseInt((embedWidthValue * y) / x, 10));
-      setUnitOptions([{ key: 'px', label: 'px' }]);
     } else {
       setKeepAspectRatio(false);
-      setUnitOptions([
-        { key: 'px', label: 'px' },
-        { key: 'percent', label: '%' },
-      ]);
     }
   }
 
