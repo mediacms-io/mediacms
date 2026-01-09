@@ -2312,7 +2312,10 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                         // Make the video element focusable
                         const videoElement = playerRef.current.el();
                         videoElement.setAttribute('tabindex', '0');
-                        videoElement.focus();
+                        
+                        if (!isEmbedPlayer) {
+                            videoElement.focus();
+                        }
 
                         // Add context menu (right-click) handler to the player wrapper and video element
                         // Attach to player wrapper (this catches all clicks on the player)

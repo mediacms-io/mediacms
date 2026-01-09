@@ -186,11 +186,17 @@ const VideoJSEmbed = ({
                     // Scroll to the video player with smooth behavior
                     const videoElement = document.querySelector(inEmbedRef.current ? '#video-embed' : '#video-main');
                     if (videoElement) {
-                        videoElement.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'center',
-                            inline: 'nearest'
-                        });
+                        const urlScroll = getUrlParameter('scroll');
+                        const isIframe = window.parent !== window;
+                        
+                        // Only scroll if not in an iframe, OR if explicitly requested via scroll=1 parameter
+                        if (!isIframe || urlScroll === '1' || urlScroll === 'true') {
+                            videoElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }
                     }
                 } else {
                     console.warn('VideoJS player not found for timestamp navigation');
