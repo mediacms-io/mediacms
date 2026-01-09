@@ -10,7 +10,7 @@ from django.views import generic
 
 from files.helpers import rm_file
 from files.methods import user_allowed_to_upload
-from files.models import Category, Media
+from files.models import Category, Media, Tag
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
@@ -67,14 +67,21 @@ class FineUploaderView(generic.FormView):
             myfile = File(f)
             new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
 
-        publish_to_category = self.request.GET.get('publish_to_category', '').strip()
-
+        publish_to_category = self.request.POST.get('publish_to_category', '') or self.request.GET.get('publish_to_category', '')
+        publish_to_category = publish_to_category.strip()
         if publish_to_category:
-            category = Category.objects.filter(uid=publish_to_category).first()
-            if category:
-                has_access = self.request.user.has_contributor_access_to_category(category)
-                if has_access:
-                    new.category.add(category)
+            category_uids = [uid.strip() for uid in publish_to_category.split(',') if uid.strip()]
+
+            for category_uid in category_uids:
+                category = Category.objects.filter(uid=category_uid).first()
+                if category:
+                    has_access = self.request.user.has_contributor_access_to_category(category) or category.is_rbac_category is False
+                    if has_access:
+                        new.category.add(category)
+
+                        if category.is_lms_course:
+                            tag, created = Tag.objects.get_or_create(title=category.title)
+                            new.tags.add(tag)
 
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))

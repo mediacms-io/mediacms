@@ -144,7 +144,7 @@ class Tag(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        self.title = helpers.get_alphanumeric_only(self.title)
+        self.title = helpers.get_alphanumeric_and_spaces(self.title)
         self.title = self.title[:100]
         super(Tag, self).save(*args, **kwargs)
 

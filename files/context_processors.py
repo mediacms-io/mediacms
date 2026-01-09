@@ -4,7 +4,6 @@ from cms.version import VERSION
 
 from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
-from .models import Category
 
 
 def stuff(request):
@@ -70,13 +69,5 @@ def stuff(request):
 
         if lti_session and request.user.is_authenticated:
             ret['lti_session'] = lti_session
-            platform_id = lti_session.get('platform_id')
-            context_id = lti_session.get('context_id')
 
-            if platform_id and context_id:
-                category = Category.objects.filter(lti_platform_id=platform_id, lti_context_id=context_id).first()
-                if category:
-                    has_access = request.user.has_contributor_access_to_category(category)
-                    if has_access:
-                        ret['lti_category_uid'] = category.uid
     return ret

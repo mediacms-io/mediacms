@@ -965,3 +965,13 @@ def get_alphanumeric_only(string):
     """
     string = "".join([char for char in string if char.isalnum()])
     return string.lower()
+
+
+def get_alphanumeric_and_spaces(string):
+    """Returns a query that contains only alphanumeric characters and spaces
+    This include characters other than the English alphabet too
+    """
+    string = "".join([char for char in string if char.isalnum() or char.isspace()])
+    # Replace multiple spaces with single space and strip
+    string = " ".join(string.split())
+    return string.lower()

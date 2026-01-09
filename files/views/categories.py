@@ -43,6 +43,40 @@ class CategoryList(APIView):
         return Response(ret)
 
 
+class CategoryListContributor(APIView):
+    """List categories where user has contributor access"""
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Categories'],
+        operation_summary='Lists Categories for Contributors',
+        operation_description='Lists all categories where the user has contributor access',
+        responses={
+            200: openapi.Response('response description', CategorySerializer),
+        },
+    )
+    def get(self, request, format=None):
+        if not request.user.is_authenticated:
+            return Response([])
+
+        categories = Category.objects.none()
+
+        # Get global/public categories (non-RBAC)
+        public_categories = Category.objects.filter(is_rbac_category=False).prefetch_related("user")
+
+        # Get RBAC categories where user has contributor access
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_categories = request.user.get_rbac_categories_as_contributor()
+            categories = public_categories.union(rbac_categories)
+        else:
+            categories = public_categories
+
+        categories = categories.order_by("title")
+
+        serializer = CategorySerializer(categories, many=True, context={"request": request})
+        return Response(serializer.data)
+
+
 class TagList(APIView):
     """List tags"""
 
