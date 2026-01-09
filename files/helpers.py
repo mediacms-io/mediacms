@@ -974,4 +974,4 @@ def get_alphanumeric_and_spaces(string):
     string = "".join([char for char in string if char.isalnum() or char.isspace()])
     # Replace multiple spaces with single space and strip
     string = " ".join(string.split())
-    return string.lower()
+    return string
