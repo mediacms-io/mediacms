@@ -8,6 +8,7 @@ from django.core.files import File
 from django.http import JsonResponse
 from django.views import generic
 
+from files import helpers
 from files.helpers import rm_file
 from files.methods import user_allowed_to_upload
 from files.models import Category, Media, Tag
@@ -80,7 +81,9 @@ class FineUploaderView(generic.FormView):
                         new.category.add(category)
 
                         if category.is_lms_course:
-                            tag, created = Tag.objects.get_or_create(title=category.title)
+                            # Transform the title before get_or_create to match what Tag.save() does
+                            tag_title = helpers.get_alphanumeric_and_spaces(category.title)
+                            tag, created = Tag.objects.get_or_create(title=tag_title)
                             new.tags.add(tag)
 
         rm_file(media_file)
