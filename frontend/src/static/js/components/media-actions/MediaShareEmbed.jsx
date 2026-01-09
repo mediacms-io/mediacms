@@ -183,7 +183,10 @@ export function MediaShareEmbed(props) {
     const finalUrl = `${links.embed}${mediaId}${separator}${params.toString()}`;
 
     if (responsive) {
-      return `<iframe src="${finalUrl}" width="100%" height="100%" frameBorder="0" allowFullScreen></iframe>`;
+      const arr = aspectRatio.split(':');
+      const ratio = `${arr[0]} / ${arr[1]}`;
+      const maxWidth = `calc(100vh * ${arr[0]} / ${arr[1]})`;
+      return `<iframe src="${finalUrl}" style="width:100%;max-width:${maxWidth};aspect-ratio:${ratio};display:block;margin:auto;border:0;" allowFullScreen></iframe>`;
     }
 
     const width = 'percent' === embedWidthUnit ? embedWidthValue + '%' : embedWidthValue;
@@ -295,30 +298,28 @@ export function MediaShareEmbed(props) {
                       )}
                     </div>
 
-                    {!responsive && (
-                      <div className="options-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ fontSize: '12px', marginBottom: '4px', color: 'rgba(0,0,0,0.6)' }}>Aspect Ratio</div>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                          <select 
-                            ref={aspectRatioValueRef} 
-                            onChange={onAspectRatioChange} 
-                            value={aspectRatio}
-                            style={{ height: '28px', fontSize: '12px' }}
-                          >
-                            <optgroup label="Horizontal orientation">
-                              <option value="16:9">16:9</option>
-                              <option value="4:3">4:3</option>
-                              <option value="3:2">3:2</option>
-                            </optgroup>
-                            <optgroup label="Vertical orientation">
-                              <option value="9:16">9:16</option>
-                              <option value="3:4">3:4</option>
-                              <option value="2:3">2:3</option>
-                            </optgroup>
-                          </select>
-                        </div>
+                    <div className="options-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <div style={{ fontSize: '12px', marginBottom: '4px', color: 'rgba(0,0,0,0.6)' }}>Aspect Ratio</div>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <select 
+                          ref={aspectRatioValueRef} 
+                          onChange={onAspectRatioChange} 
+                          value={aspectRatio}
+                          style={{ height: '28px', fontSize: '12px' }}
+                        >
+                          <optgroup label="Horizontal orientation">
+                            <option value="16:9">16:9</option>
+                            <option value="4:3">4:3</option>
+                            <option value="3:2">3:2</option>
+                          </optgroup>
+                          <optgroup label="Vertical orientation">
+                            <option value="9:16">9:16</option>
+                            <option value="3:4">3:4</option>
+                            <option value="2:3">2:3</option>
+                          </optgroup>
+                        </select>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   <br />
