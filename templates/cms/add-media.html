@@ -315,8 +315,7 @@
 							listEl.addEventListener( 'click', function(ev){
 								ev.preventDefault();
 								ev.stopPropagation();
-								var win = window.open( fileUrl, '_blank' );
-								win.focus();
+								window.location.href = fileUrl;
 							});
 						}
 
