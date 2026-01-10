@@ -352,20 +352,11 @@ class Media(models.Model):
         # first get anything interesting out of the media
         # that needs to be search able
 
-        a_tags = b_tags = ""
+        a_tags = ""
         if self.id:
             a_tags = " ".join([tag.title for tag in self.tags.all()])
-            b_tags = " ".join([tag.title.replace("-", " ") for tag in self.tags.all()])
 
-        items = [
-            self.title,
-            self.user.username,
-            self.user.email,
-            self.user.name,
-            self.description,
-            a_tags,
-            b_tags,
-        ]
+        items = [self.friendly_token, self.title, self.user.username, self.user.email, self.user.name, self.description, a_tags]
 
         for subtitle in self.subtitles.all():
             items.append(subtitle.subtitle_text)

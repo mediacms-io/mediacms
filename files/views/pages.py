@@ -24,7 +24,7 @@ from ..forms import (
     WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
-from ..helpers import get_alphanumeric_only
+from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
     can_transcribe_video,
     create_video_trim_request,
@@ -310,8 +310,8 @@ def edit_media(request):
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
                 for tag in form.cleaned_data.get("new_tags").split(","):
-                    tag = get_alphanumeric_only(tag)
-                    tag = tag[:99]
+                    tag = get_alphanumeric_and_spaces(tag)
+                    tag = tag[:100]
                     if tag:
                         try:
                             tag = Tag.objects.get(title=tag)
