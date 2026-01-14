@@ -121,12 +121,16 @@ export function MediaShareEmbed(props) {
     setResponsive(nextResponsive);
 
     if (!nextResponsive) {
-      const arr = aspectRatio.split(':');
-      const x = arr[0];
-      const y = arr[1];
+      if (aspectRatio !== 'custom') {
+        const arr = aspectRatio.split(':');
+        const x = arr[0];
+        const y = arr[1];
 
-      setKeepAspectRatio(true);
-      setEmbedHeightValue(parseInt((embedWidthValue * y) / x, 10));
+        setKeepAspectRatio(true);
+        setEmbedHeightValue(parseInt((embedWidthValue * y) / x, 10));
+      } else {
+        setKeepAspectRatio(false);
+      }
     } else {
       setKeepAspectRatio(false);
     }
@@ -143,12 +147,18 @@ export function MediaShareEmbed(props) {
   function onAspectRatioChange() {
     const newVal = aspectRatioValueRef.current.value;
 
-    const arr = newVal.split(':');
-    const x = arr[0];
-    const y = arr[1];
+    if (newVal === 'custom') {
+      setAspectRatio(newVal);
+      setKeepAspectRatio(false);
+    } else {
+      const arr = newVal.split(':');
+      const x = arr[0];
+      const y = arr[1];
 
-    setAspectRatio(newVal);
-    setEmbedHeightValue(keepAspectRatio ? parseInt((embedWidthValue * y) / x, 10) : embedHeightValue);
+      setAspectRatio(newVal);
+      setKeepAspectRatio(true);
+      setEmbedHeightValue(parseInt((embedWidthValue * y) / x, 10));
+    }
   }
 
   function onWindowResize() {
@@ -223,6 +233,12 @@ export function MediaShareEmbed(props) {
     const finalUrl = `${links.embed}${mediaId}${separator}${params.toString()}`;
 
     if (responsive) {
+      if (aspectRatio === 'custom') {
+        // Use current width/height values to calculate aspect ratio for custom
+        const ratio = `${embedWidthValue} / ${embedHeightValue}`;
+        const maxWidth = `calc(100vh * ${embedWidthValue} / ${embedHeightValue})`;
+        return `<iframe src="${finalUrl}" style="width:100%;max-width:${maxWidth};aspect-ratio:${ratio};display:block;margin:auto;border:0;" allowFullScreen></iframe>`;
+      }
       const arr = aspectRatio.split(':');
       const ratio = `${arr[0]} / ${arr[1]}`;
       const maxWidth = `calc(100vh * ${arr[0]} / ${arr[1]})`;
@@ -357,6 +373,7 @@ export function MediaShareEmbed(props) {
                             <option value="3:4">3:4</option>
                             <option value="2:3">2:3</option>
                           </optgroup>
+                          <option value="custom">Custom</option>
                         </select>
                       </div>
                     </div>
