@@ -5,8 +5,31 @@ import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon, NumericInputWithUnit } from '../_shared/';
 
+const EMBED_OPTIONS_STORAGE_KEY = 'mediacms_embed_options';
+
+function loadEmbedOptions() {
+  try {
+    const saved = localStorage.getItem(EMBED_OPTIONS_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  return null;
+}
+
+function saveEmbedOptions(options) {
+  try {
+    localStorage.setItem(EMBED_OPTIONS_STORAGE_KEY, JSON.stringify(options));
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+}
+
 export function MediaShareEmbed(props) {
   const embedVideoDimensions = PageStore.get('config-options').embedded.video.dimensions;
+  const savedOptions = loadEmbedOptions();
 
   const links = useContext(LinksContext);
 
@@ -17,19 +40,19 @@ export function MediaShareEmbed(props) {
   const onRightBottomRef = useRef(null);
 
   const [maxHeight, setMaxHeight] = useState(window.innerHeight - 144 + 56);
-  const [keepAspectRatio, setKeepAspectRatio] = useState(true);
-  const [showTitle, setShowTitle] = useState(true);
-  const [showRelated, setShowRelated] = useState(true);
-  const [showUserAvatar, setShowUserAvatar] = useState(true);
-  const [linkTitle, setLinkTitle] = useState(true);
-  const [responsive, setResponsive] = useState(false);
+  const [keepAspectRatio, setKeepAspectRatio] = useState(savedOptions?.keepAspectRatio ?? true);
+  const [showTitle, setShowTitle] = useState(savedOptions?.showTitle ?? true);
+  const [showRelated, setShowRelated] = useState(savedOptions?.showRelated ?? true);
+  const [showUserAvatar, setShowUserAvatar] = useState(savedOptions?.showUserAvatar ?? true);
+  const [linkTitle, setLinkTitle] = useState(savedOptions?.linkTitle ?? true);
+  const [responsive, setResponsive] = useState(savedOptions?.responsive ?? false);
   const [startAt, setStartAt] = useState(false);
   const [startTime, setStartTime] = useState('0:00');
-  const [aspectRatio, setAspectRatio] = useState('16:9');
-  const [embedWidthValue, setEmbedWidthValue] = useState(embedVideoDimensions.width);
-  const [embedWidthUnit, setEmbedWidthUnit] = useState(embedVideoDimensions.widthUnit);
-  const [embedHeightValue, setEmbedHeightValue] = useState(embedVideoDimensions.height);
-  const [embedHeightUnit, setEmbedHeightUnit] = useState(embedVideoDimensions.heightUnit);
+  const [aspectRatio, setAspectRatio] = useState(savedOptions?.aspectRatio ?? '16:9');
+  const [embedWidthValue, setEmbedWidthValue] = useState(savedOptions?.embedWidthValue ?? embedVideoDimensions.width);
+  const [embedWidthUnit, setEmbedWidthUnit] = useState(savedOptions?.embedWidthUnit ?? embedVideoDimensions.widthUnit);
+  const [embedHeightValue, setEmbedHeightValue] = useState(savedOptions?.embedHeightValue ?? embedVideoDimensions.height);
+  const [embedHeightUnit, setEmbedHeightUnit] = useState(savedOptions?.embedHeightUnit ?? embedVideoDimensions.heightUnit);
   const [rightMiddlePositionTop, setRightMiddlePositionTop] = useState(60);
   const [rightMiddlePositionBottom, setRightMiddlePositionBottom] = useState(60);
   const [unitOptions, setUnitOptions] = useState([
@@ -154,6 +177,23 @@ export function MediaShareEmbed(props) {
       MediaPageStore.removeListener('copied_embed_media_code', onCompleteCopyMediaLink);
     };
   }, []);
+
+  // Save embed options to localStorage when they change (except startAt/startTime)
+  useEffect(() => {
+    saveEmbedOptions({
+      showTitle,
+      showRelated,
+      showUserAvatar,
+      linkTitle,
+      responsive,
+      aspectRatio,
+      embedWidthValue,
+      embedWidthUnit,
+      embedHeightValue,
+      embedHeightUnit,
+      keepAspectRatio,
+    });
+  }, [showTitle, showRelated, showUserAvatar, linkTitle, responsive, aspectRatio, embedWidthValue, embedWidthUnit, embedHeightValue, embedHeightUnit, keepAspectRatio]);
 
   function getEmbedCode() {
     const mediaId = MediaPageStore.get('media-id');
