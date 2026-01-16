@@ -38,10 +38,14 @@ class SelectMediaView(View):
     def get(self, request):
         """Display media selection interface"""
 
-        # Get deep link session data
-        deep_link_data = request.session.get('lti_deep_link')
-        if not deep_link_data:
-            return JsonResponse({'error': 'No deep linking session data found'}, status=400)
+        # Check if this is a TinyMCE request (no deep linking session required)
+        is_tinymce = request.GET.get('mode') == 'tinymce'
+
+        if not is_tinymce:
+            # Get deep link session data for regular deep linking flow
+            deep_link_data = request.session.get('lti_deep_link')
+            if not deep_link_data:
+                return JsonResponse({'error': 'No deep linking session data found'}, status=400)
 
         # Reuse MediaList logic to get media with proper permissions
         media_list_view = MediaList()
@@ -54,8 +58,25 @@ class SelectMediaView(View):
         if show_my_media_only:
             media_queryset = media_queryset.filter(user=request.user)
 
-        # Order by recent and limit for performance
-        media_list = media_queryset.order_by('-add_date')[:100]
+        # Order by recent
+        media_queryset = media_queryset.order_by('-add_date')
+
+        # TinyMCE mode: Use pagination
+        if is_tinymce:
+            from django.core.paginator import Paginator
+
+            paginator = Paginator(media_queryset, 24)  # 24 items per page
+            page_number = request.GET.get('page', 1)
+            page_obj = paginator.get_page(page_number)
+
+            context = {
+                'media_list': page_obj,
+                'page_obj': page_obj,
+            }
+            return render(request, 'lti/tinymce_select_media.html', context)
+
+        # Deep linking mode: Limit for performance
+        media_list = media_queryset[:100]
 
         context = {
             'media_list': media_list,

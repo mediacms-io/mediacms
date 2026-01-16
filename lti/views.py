@@ -407,3 +407,39 @@ class ManualSyncView(APIView):
 
         except Exception as e:
             return Response({'error': 'Sync failed', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(xframe_options_exempt, name='dispatch')
+class TinyMCEGetEmbedView(View):
+    """
+    API endpoint to get embed code for a specific media item (for TinyMCE integration).
+
+    Returns JSON with the embed code for the requested media.
+    Requires: User must be logged in (via LTI session)
+    """
+
+    def get(self, request, friendly_token):
+        """Get embed code for the specified media."""
+        # Verify user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+
+        # Verify media exists
+        media = Media.objects.filter(friendly_token=friendly_token).first()
+
+        if not media:
+            return JsonResponse({'error': 'Media not found'}, status=404)
+
+        # Build embed URL
+        embed_url = request.build_absolute_uri(reverse('get_embed') + f'?m={friendly_token}')
+
+        # Generate iframe embed code
+        embed_code = f'<iframe src="{embed_url}" ' f'width="960" height="540" ' f'frameborder="0" ' f'allowfullscreen ' f'title="{media.title}">' f'</iframe>'
+
+        return JsonResponse(
+            {
+                'embedCode': embed_code,
+                'title': media.title,
+                'thumbnail': media.thumbnail_url if hasattr(media, 'thumbnail_url') else '',
+            }
+        )
