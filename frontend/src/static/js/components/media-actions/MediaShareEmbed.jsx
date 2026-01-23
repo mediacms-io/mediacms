@@ -363,16 +363,9 @@ export function MediaShareEmbed(props) {
                           value={aspectRatio}
                           style={{ height: '28px', fontSize: '12px' }}
                         >
-                          <optgroup label="Horizontal orientation">
-                            <option value="16:9">16:9</option>
-                            <option value="4:3">4:3</option>
-                            <option value="3:2">3:2</option>
-                          </optgroup>
-                          <optgroup label="Vertical orientation">
-                            <option value="9:16">9:16</option>
-                            <option value="3:4">3:4</option>
-                            <option value="2:3">2:3</option>
-                          </optgroup>
+                          <option value="16:9">16:9</option>
+                          <option value="4:3">4:3</option>
+                          <option value="3:2">3:2</option>
                           <option value="custom">Custom</option>
                         </select>
                       </div>
