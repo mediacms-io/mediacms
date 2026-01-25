@@ -4,7 +4,7 @@ LTI 1.3 URL Configuration for MediaCMS
 
 from django.urls import path
 
-from . import deep_linking, views
+from . import deep_linking, filter_embed, views
 
 app_name = 'lti'
 
@@ -23,4 +23,6 @@ urlpatterns = [
     path('sync/<int:platform_id>/<str:context_id>/', views.ManualSyncView.as_view(), name='manual_sync'),
     # TinyMCE integration (reuses select-media with mode=tinymce parameter)
     path('tinymce-embed/<str:friendly_token>/', views.TinyMCEGetEmbedView.as_view(), name='tinymce_embed'),
+    # Filter embed token API
+    path('api/v1/get-filter-embed-token/', filter_embed.FilterEmbedTokenView.as_view(), name='filter_embed_token'),
 ]
