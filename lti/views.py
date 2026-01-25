@@ -10,6 +10,7 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
+import json
 import traceback
 import uuid
 from urllib.parse import urlencode
@@ -79,6 +80,7 @@ class OIDCLoginView(View):
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
+            media_friendly_token = request.GET.get('media_friendly_token') or request.POST.get('media_friendly_token')
 
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
@@ -104,7 +106,12 @@ class OIDCLoginView(View):
                     state = str(uuid.uuid4())
                     nonce = str(uuid.uuid4())
 
-                    session_service.save_launch_data(f'state-{state}', {'target_link_uri': target_link_uri, 'nonce': nonce})
+                    launch_data = {'target_link_uri': target_link_uri, 'nonce': nonce}
+                    # Store media token if provided (for filter-based launches)
+                    if media_friendly_token:
+                        launch_data['media_friendly_token'] = media_friendly_token
+
+                    session_service.save_launch_data(f'state-{state}', launch_data)
 
                     params = {
                         'response_type': 'id_token',
@@ -201,6 +208,20 @@ class LaunchView(View):
 
             create_lti_session(request, user, message_launch, platform)
 
+            # Extract and store message hint data if present (for filter-based launches)
+            custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
+            lti_message_hint_str = custom_claims.get('lti_message_hint', '')
+            if lti_message_hint_str:
+                try:
+                    message_hint_data = json.loads(lti_message_hint_str)
+                    if isinstance(message_hint_data, dict):
+                        # Store in session for later use
+                        if 'lti_session' in request.session:
+                            request.session['lti_session']['message_hint'] = message_hint_data
+                            request.session.modified = True
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
@@ -235,6 +256,11 @@ class LaunchView(View):
             return custom_path
 
         media_id = custom.get('media_id') or custom.get('media_friendly_token')
+
+        # Also check session for media token (from filter-based launches)
+        if not media_id and hasattr(self, 'request'):
+            media_id = self.request.session.get('filter_media_token')
+
         if media_id:
             try:
                 media = Media.objects.get(friendly_token=media_id)
