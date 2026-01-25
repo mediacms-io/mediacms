@@ -81,6 +81,7 @@ class OIDCLoginView(View):
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
             media_friendly_token = request.GET.get('media_friendly_token') or request.POST.get('media_friendly_token')
+            cmid = request.GET.get('cmid') or request.POST.get('cmid')
 
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
@@ -107,9 +108,11 @@ class OIDCLoginView(View):
                     nonce = str(uuid.uuid4())
 
                     launch_data = {'target_link_uri': target_link_uri, 'nonce': nonce}
-                    # Store media token if provided (for filter-based launches)
+                    # Store media token and cmid if provided (for filter-based launches)
                     if media_friendly_token:
                         launch_data['media_friendly_token'] = media_friendly_token
+                    if cmid:
+                        launch_data['cmid'] = cmid
 
                     session_service.save_launch_data(f'state-{state}', launch_data)
 
