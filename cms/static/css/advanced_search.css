@@ -1,0 +1,284 @@
+.advanced-search-page .container.mt-4 {
+    padding: 0px 15px 0px 15px;
+}
+
+/* Tag pills */
+.advanced-search-page .tag-pills label {
+    background-color: #dedfe4;
+    border: 2px solid #ccc;
+    padding: 5px 11px;
+    margin-right: 5px;
+    border-radius: 11px;
+    cursor: pointer;
+}
+
+.dark_theme .advanced-search-page .tag-pills label {
+    background-color: #555;
+    border: 2px solid #ccc;
+    padding: 5px 11px;
+}
+
+/* Checked state */
+.advanced-search-page .tag-pills input[type="checkbox"]:checked + span {
+    font-weight: bold;
+}
+
+/* Match MediaCMS built-in camera icon */
+.advanced-search-page .item.image-item .item-type-icon::before {
+    content: "photo_camera"; /* material icon name */
+    font-family: "Material Icons";
+    font-size: 22px;
+    line-height: 22px;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    color: #fff;
+}
+
+.advanced-search-page .item.video-item .item-type-icon::before {
+    content: "videocam";
+    font-family: "Material Icons";
+    font-size: 22px;
+    line-height: 22px;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    color: #fff;
+}
+
+.advanced-search-page .item-type-icon {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+}
+
+.advanced-search-page .items-list .item {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+}
+
+.advanced-search-page #other-tags-picker-wrapper {
+    position: relative;
+}
+
+/* Hidden by default; shows when .is-open is added via JS */
+.advanced-search-page .tag-dropdown {
+    position: absolute;
+    top: 100%;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    z-index: 1050;
+    display: none;
+    padding: 15px;
+    z-index: 1000;
+    background-color: #fff;
+}
+
+/* Checkbox column: fixed width column on the left of each .item */
+.advanced-search-page .item-select-col {
+    width: 48px !important;
+    flex: 0 0 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding-right: 8px !important;
+    align-self: center !important; /* vertically center the checkbox column within .item */
+}
+
+.advanced-search-page .item .item-content {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 12px !important;
+        align-items: flex-start !important;
+}
+
+.advanced-search-page .item .item-thumb {
+        flex: 0 0 auto !important;
+        margin-right: 12px !important;
+}
+
+.advanced-search-page .item .item-main {
+        flex: 1 1 auto !important;
+}
+
+.dark_theme .advanced-search-page .tag-dropdown {
+    background: #333;
+}
+
+.advanced-search-page .item-select-col input[type="checkbox"] {
+        transform: translateY(0) !important;
+        margin: 0 !important;
+}
+
+.advanced-search-page .tag-dropdown.is-open {
+    display: block;
+}
+
+/* Optional: keep pills from stretching too wide */
+.advanced-search-page .tag-dropdown .tag-pill {
+  white-space: nowrap;
+}
+
+.advanced-search-page fieldset {
+  margin-bottom: 10px;
+}
+
+.advanced-search-page form button {
+  padding:5px;
+  margin-top: 4px;
+}
+
+#dc-year-heading,
+#dc-year-tags-hidden {
+    display: none;
+}
+
+.advanced-search-page .search-results-wrap .item-meta .item-tags {
+  margin-bottom: 5px;
+  font-style: italic;
+  color: rgba(17, 17, 17, 0.6);
+}
+
+.dark_theme .advanced-search-page .search-results-wrap .item-meta .item-tags {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.advanced-search-page .search-summary {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.advanced-search-page .search-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.15rem;
+}
+
+.advanced-search-page .search-summary-label {
+    font-weight: 500;
+}
+
+.advanced-search-page .search-summary-value {
+    opacity: 0.9;
+}
+
+.search-pagination {
+    margin-top: 1.25rem;
+    font-size: 0.9rem;
+}
+
+.search-pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.search-pagination-link {
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.search-pagination-link.disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.search-pagination-info {
+    opacity: 0.85;
+}
+
+.search-pagination-jump {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.search-pagination-label {
+    opacity: 0.7;
+    margin-bottom:0px;
+}
+
+.search-pagination-select {
+    font-size: 0.85rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.25); /* adjust for dark mode */
+    background: rgba(0,0,0,0.2);
+    margin-bottom: 0px;
+}
+
+/* Bulk select column and layout adjustments */
+.advanced-search-page .items-list .item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.advanced-search-page .item-select-col {
+    width: 48px;
+    flex: 0 0 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 8px;
+}
+
+.advanced-search-page .item .item-content {
+    flex: 1 1 auto;
+}
+
+/* Move bulk actions to be visually separated at bottom */
+#bulk-actions {
+    border-top: 1px solid rgba(0,0,0,0.06);
+    padding-top: 12px;
+}
+
+/* Ensure bulk-actions children align to the top (thumbnails, controls, buttons) */
+#bulk-actions {
+    display: flex;
+    align-items: flex-start; /* align children to top */
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Bulk tags picker styling (dropdown) */
+.bulk-tags-picker {
+    position: relative;
+    display: inline-block;
+}
+
+.bulk-tags-picker .bulk-tags-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    max-height: 240px;
+    overflow: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    background: #fff;
+    z-index: 1100;
+    padding: 8px;
+    display: none;
+}
+
+.bulk-tags-picker .bulk-tags-dropdown.is-open {
+    display: block;
+}
+
+/* Make tag pills inside dropdown wrap nicely */
+.bulk-tags-picker .bulk-tags-dropdown .tag-pill {
+    margin-right: 6px;
+}
+
+/* Small visual tweak for the toggle button */
+#bulk-tags-toggle {
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 5px;
+}	

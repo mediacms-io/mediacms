@@ -1,0 +1,271 @@
+{# templates/uploader/import_jobs.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/import_from_metadata.css' %}?v={{ VERSION }}">
+{% endblock head %}
+
+{% block content %}
+
+<div class="import-from-metadata-page">
+<div class="container mt-4">
+  <h1>Import Jobs</h1>
+
+  <div style="margin: 12px 0; display:flex; gap:10px; align-items:center;">
+    <button class="button" id="refreshBtn">Refresh</button>
+    <span id="lastRefresh" style="opacity:0.8;"></span>
+  </div>
+
+  <div id="jobsStatus"></div>
+
+  <div class="module">
+    <h2>Queued</h2>
+    <div id="jobsQueued"></div>
+  </div>
+
+  <div class="module">
+    <h2>In progress</h2>
+    <div id="jobsRunning"></div>
+  </div>
+
+  <div class="module">
+    <h2>Failed</h2>
+    <div id="jobsFailed"></div>
+  </div>
+
+  <div class="module">
+    <h2>Finished</h2>
+    <div id="jobsFinished"></div>
+  </div>
+</div>
+
+<!-- Job Tracker Modal -->
+<div id="jobModal" class="mt-modal" style="display:none;">
+  <div style="padding: 16px; border-radius: 6px;">
+    <div style="display:flex; justify-content: space-between; align-items:center;">
+      <h2 style="margin:0;">Job Tracker</h2>
+      <button type="button" class="button" id="closeJobModalBtn">Close</button>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <div><strong>Job:</strong> <code id="jobModalId"></code></div>
+      <div><strong>Status:</strong> <span id="jobModalStatus">—</span></div>
+      <div><strong>Folder:</strong> <code id="jobModalFolder"></code></div>
+      <div><strong>Log file:</strong> <code id="jobModalLogFile">(none)</code></div>
+    </div>
+
+    <div style="margin-top: 12px; border: 1px solid #ddd; max-height: 45vh; overflow:auto;">
+      <pre id="jobModalLog" style="margin:0; padding:12px; font-size:12px; white-space:pre-wrap;"></pre>
+    </div>
+  </div>
+</div>
+
+
+</div>
+
+<script>
+(function() {
+  const jobsStatus = document.getElementById("jobsStatus");
+  const refreshBtn = document.getElementById("refreshBtn");
+  const lastRefresh = document.getElementById("lastRefresh");
+
+  const jobsQueued = document.getElementById("jobsQueued");
+  const jobsRunning = document.getElementById("jobsRunning");
+  const jobsFailed = document.getElementById("jobsFailed");
+  const jobsFinished = document.getElementById("jobsFinished");
+
+  const jobModal = document.getElementById("jobModal");
+  const closeJobModalBtn = document.getElementById("closeJobModalBtn");
+  const jobModalIdEl = document.getElementById("jobModalId");
+  const jobModalStatusEl = document.getElementById("jobModalStatus");
+  const jobModalFolderEl = document.getElementById("jobModalFolder");
+  const jobModalLogFileEl = document.getElementById("jobModalLogFile");
+  const jobModalLogEl = document.getElementById("jobModalLog");
+
+  let pollTimer = null;
+  let currentJobId = null;
+  let refreshInFlight = false;
+  let modalInFlight = false;
+
+  function esc(s) {
+    return (s || "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function setStatus(msg, isError=false) {
+    jobsStatus.innerHTML = `<div class="${isError ? 'errornote' : 'messagelist'}" style="padding:10px;">${msg}</div>`;
+  }
+
+  async function apiListJobs() {
+    // cache-bust so proxies don't hand back stale JSON
+    const url = `/uploader/import-from-metadata/api/jobs/?_=${Date.now()}`;
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) throw new Error(`Jobs list failed (${res.status})`);
+    return res.json();
+  }
+
+  async function apiJobStatus(jobId) {
+    const url = `/uploader/import-from-metadata/api/job/${jobId}/?_=${Date.now()}`;
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) throw new Error(`Job status failed (${res.status})`);
+    return res.json();
+  }
+
+  async function apiJobLog(jobId, tail=400) {
+    const url = `/uploader/import-from-metadata/api/job/${jobId}/log/?tail=${tail}&_=${Date.now()}`;
+    const res = await fetch(url, {
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) throw new Error(`Job log failed (${res.status})`);
+    return res.json();
+  }
+
+  function renderTable(targetEl, jobs, opts={}) {
+    const showRequeue = !!opts.showRequeue;
+
+    if (!jobs || !jobs.length) {
+      targetEl.innerHTML = `<div style="opacity:.7; padding:6px 0;">(none)</div>`;
+      return;
+    }
+
+    targetEl.innerHTML = `
+      <table class="listing" style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px;">ID</th>
+            <th style="text-align:left; padding:8px;">Created</th>
+            <th style="text-align:left; padding:8px;">Folder</th>
+            <th style="text-align:left; padding:8px;">Status</th>
+            <th style="text-align:right; padding:8px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${jobs.map(j => `
+            <tr>
+              <td style="padding:8px;"><code>${esc(String(j.id))}</code></td>
+              <td style="padding:8px;"><code>${esc(j.created_at || "")}</code></td>
+              <td style="padding:8px;"><code>${esc(j.source_folder || "")}</code></td>
+              <td style="padding:8px;">${esc(j.status || "")}</td>
+              <td style="padding:8px; text-align:right;">
+                <button type="button" class="button" data-track="${esc(String(j.id))}">Track</button>
+                ${showRequeue ? `<button type="button" class="button" data-requeue="${esc(String(j.id))}">Requeue</button>` : ``}
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    // (re)wire Track buttons after each render
+    targetEl.querySelectorAll("button[data-track]").forEach(btn => {
+      btn.addEventListener("click", () => openJobModal(parseInt(btn.getAttribute("data-track"), 10)));
+    });
+
+    // Requeue wiring can be added later (POST + CSRF) once you want it from UI
+  }
+
+  function setLastRefresh() {
+    lastRefresh.textContent = "Last refresh: " + new Date().toLocaleString();
+  }
+
+  async function refresh() {
+    if (refreshInFlight) return;
+    refreshInFlight = true;
+
+    try {
+      setStatus("Loading…");
+      const data = await apiListJobs();
+      if (!data || data.ok !== true) throw new Error("API returned ok=false");
+
+      // Debug guard: if backend ever returns HTML, you’ll see it immediately.
+      // (e.g., wrong view wired, auth redirect, template response, etc.)
+      if (!("queued" in data) && !("finished" in data)) {
+        throw new Error("Unexpected API shape (missing expected keys).");
+      }
+
+      renderTable(jobsQueued,   data.queued || []);
+      renderTable(jobsRunning, data.in_progress || []);
+      renderTable(jobsFailed,  data.failed || [], { showRequeue: true });
+      renderTable(jobsFinished,data.finished || []);
+
+      setLastRefresh();
+      setStatus("Loaded.");
+    } catch (e) {
+      setStatus(`Error: ${esc(e.message)}`, true);
+    } finally {
+      refreshInFlight = false;
+    }
+  }
+
+  function openJobModal(jobId) {
+    currentJobId = jobId;
+    jobModalIdEl.textContent = String(jobId);
+    jobModalStatusEl.textContent = "Loading…";
+    jobModalFolderEl.textContent = "";
+    jobModalLogFileEl.textContent = "(loading)";
+    jobModalLogEl.textContent = "";
+    jobModal.style.display = "block";
+
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(refreshJobModal, 2000);
+    refreshJobModal();
+  }
+
+  function closeJobModal() {
+    jobModal.style.display = "none";
+    currentJobId = null;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  async function refreshJobModal() {
+    if (!currentJobId) return;
+    if (modalInFlight) return;
+    modalInFlight = true;
+
+    try {
+      const statusResp = await apiJobStatus(currentJobId);
+      if (!statusResp || statusResp.ok !== true) throw new Error("job status ok=false");
+      const job = statusResp.job || {};
+
+      jobModalStatusEl.textContent = job.status || "unknown";
+      jobModalFolderEl.textContent = job.source_folder || "";
+
+      const logResp = await apiJobLog(currentJobId, 400);
+      if (!logResp || logResp.ok !== true) throw new Error("job log ok=false");
+
+      jobModalLogFileEl.textContent = logResp.log_file || "(none)";
+      jobModalLogEl.textContent = (logResp.lines || []).join("\n");
+
+      // If finished/failed, stop polling after one last update
+      if (["finished", "failed"].includes(job.status)) {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        refresh(); // move sections quickly
+      }
+    } catch (e) {
+      jobModalStatusEl.textContent = "Error";
+      jobModalLogEl.textContent = "Error polling job:\n" + e.message + "\n\n" + (jobModalLogEl.textContent || "");
+    } finally {
+      modalInFlight = false;
+    }
+  }
+
+  closeJobModalBtn.addEventListener("click", closeJobModal);
+  refreshBtn.addEventListener("click", refresh);
+
+  // initial load + auto-refresh
+  refresh();
+  setInterval(refresh, 10000);
+})();
+</script>
+{% endblock %}
+

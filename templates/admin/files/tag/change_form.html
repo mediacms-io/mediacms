@@ -1,0 +1,26 @@
+{% extends 'admin/change_form.html' %}
+{% load i18n %}
+
+{% block content %}
+{{ block.super }}
+
+<div class="module">
+  <h2>Merge tag</h2>
+  <p>Merge <strong>{{ original.title }}</strong> into:</p>
+  <form method="post" action="{% url 'admin:files_tag_merge' original.pk %}">
+    {% csrf_token %}
+    <div style="margin: .5em 0;">
+      <select name="target_tag">
+        {% for t in other_tags %}
+          <option value="{{ t.pk }}">{{ t.title }}</option>
+        {% empty %}
+          <option disabled>{% trans "No other tags available" %}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="default" onclick="return confirm('{% trans "Merge this tag into selected tag?" %}');">{% trans "Merge" %}</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+

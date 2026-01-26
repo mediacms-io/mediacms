@@ -1,0 +1,673 @@
+{% extends "base.html" %}
+{% load static %}
+{% load duration %}
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/import_from_metadata.css' %}?v={{ VERSION }}">
+{% endblock head %}
+{% block externallinks %}
+  {{ block.super }}
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- jQuery UI -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+
+{% endblock externallinks %}
+{% block content %}
+<div class="import-from-metadata-page">
+<div class="import-from-metadata-page container mt-4">
+<h1>Bulk Import</h1>
+
+<div class="module">
+  <p><strong>Source root on server:</strong> <code>{{ source_root }}</code></p>
+
+  <div style="margin-top: 12px;">
+    <label><strong>Selected folder</strong></label><br>
+    <input id="selectedPath" type="text" style="width: 60%;" readonly value="">
+    <button type="button" class="button" id="browseBtn">Browse server folders…</button>
+  </div>
+
+  <div style="margin-top: 12px;">
+    <button type="button" class="button" id="validateBtn" disabled>Validate metadata.txt</button>
+    <button type="button" class="button default" id="runBtn" disabled>Run import</button>
+    <button type="button" class="button" id="createMetaBtn" style="display:none;">Create new metadata.txt file</button>
+  </div>
+
+  <div style="margin-top: 12px;">
+    <button type="button" class="button" onclick="goToUrl('/uploader/import-from-metadata/jobs');">View import progress</button>
+  </div>
+
+  <!-- Create metadata modal -->
+  <div id="createMetaModal" class="mt-modal" style="display:none;">
+    <div style="padding: 16px; border-radius: 6px; max-width: 720px; margin: 0 auto;">
+      <div style="display:flex; justify-content: space-between; align-items:center;">
+        <h2 style="margin:0;">Create a new metadata.txt</h2>
+        <button type="button" class="button" id="closeCreateMetaBtn">Close</button>
+      </div>
+
+      <div id="createMetaErrors" style="margin-top:10px;"></div>
+
+      <div style="margin-top:12px;">
+        <label><strong>Username</strong></label><br>
+        <input id="metaUsername" type="text" style="width:100%;" placeholder="e.g. ArchiveUploader (no spaces)" />
+      </div>
+
+      <div style="margin-top:12px;">
+        <label><strong>Full name</strong></label><br>
+        <input id="metaFullName" type="text" style="width:100%;" placeholder="e.g. Archive Uploader"/>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label><strong>Year</strong></label><br>
+        <input id="metaYear" type="text" style="width:180px;" placeholder="e.g. 2025" />
+      </div>
+
+      <div style="margin-top:12px;">
+        <label><strong>Tags</strong> (separate with <code>;</code> or <code>,</code>)</label><br>
+        <input id="metaTags" type="text" style="width:100%;" placeholder="parade, cosplay" />
+      </div>
+
+      <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="button default" id="submitCreateMetaBtn">Create metadata.txt</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="status" style="margin-top: 12px;"></div>
+
+  <div id="metadataPreview" style="margin-top:12px; display:none;">
+    <details open>
+      <summary style="cursor:pointer;">
+        <strong>Detected metadata.txt</strong>
+        <span id="metadataPreviewNote" style="opacity:.7;"></span>
+      </summary>
+      <pre id="metadataPreviewBody"
+         style="margin-top:8px; padding:10px; border:1px solid #ddd;
+                max-height:40vh; overflow:auto;
+                white-space:pre-wrap; font-size:13px;"></pre>
+    </details>
+
+    <!-- Update tags UI -->
+    <div id="updateTagsBar" style="margin-top:10px; display:none;">
+      <button type="button" class="button" id="updateTagsBtn">Update tags</button>
+    </div>
+  </div>
+
+  <!-- Update tags modal -->
+  <div id="updateTagsModal" class="mt-modal" style="display:none;">
+    <div style="padding: 16px; border-radius: 6px; max-width: 720px; margin: 0 auto;">
+      <div style="display:flex; justify-content: space-between; align-items:center;">
+        <h2 style="margin:0;">Update Tags</h2>
+        <button type="button" class="button" id="closeUpdateTagsBtn">Close</button>
+      </div>
+
+      <div id="updateTagsErrors" style="margin-top:10px;"></div>
+
+      <div style="margin-top:12px;">
+        <label><strong>Tags</strong> (separate with <code>;</code> or <code>,</code>)</label><br>
+        <input id="updateTagsInput" type="text" style="width:100%;" placeholder="dragoncon; parade; cosplay" />
+        <div style="margin-top:6px; opacity:.75; font-size:13px;">
+          This will replace the <code>Tags:</code> line in <code>metadata.txt</code>.
+          A backup will be saved as <code>metadata.ORIGINAL</code> (never overwritten).
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="button default" id="submitUpdateTagsBtn">Save tags</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Directory Browser Modal -->
+<div id="dirModal" class="mt-modal" style="display:none;">
+  <div style="padding: 16px; border-radius: 6px;">
+    <div style="display:flex; justify-content: space-between; align-items:center;">
+      <h2 style="margin:0;">Select a folder</h2>
+      <button type="button" class="button" id="closeModalBtn">Close</button>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <div>
+        <strong>Current:</strong> <code id="currentDir">/</code>
+      </div>
+      <div style="margin-top: 8px;">
+        <button type="button" class="button" id="upBtn">Up a level</button>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; border: 1px solid #ddd; max-height: 45vh; overflow:auto;">
+      <table class="listing" style="width:100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px;">Name</th>
+            <th style="text-align:left; padding:8px;">Type</th>
+            <th style="text-align:right; padding:8px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="dirTable"></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 12px; display:flex; justify-content: space-between; align-items:center;">
+      <div>
+        <strong>Selected:</strong> <code id="selectedDirInModal">(none)</code>
+      </div>
+      <div>
+        <button type="button" class="button default" id="chooseBtn" disabled>Continue with selection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function() {
+  const browseBtn = document.getElementById("browseBtn");
+  const validateBtn = document.getElementById("validateBtn");
+  const runBtn = document.getElementById("runBtn");
+  const selectedPathEl = document.getElementById("selectedPath");
+  const statusEl = document.getElementById("status");
+
+  const modal = document.getElementById("dirModal");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const currentDirEl = document.getElementById("currentDir");
+  const dirTableEl = document.getElementById("dirTable");
+  const upBtn = document.getElementById("upBtn");
+  const selectedDirInModalEl = document.getElementById("selectedDirInModal");
+  const chooseBtn = document.getElementById("chooseBtn");
+
+  const createMetaBtn = document.getElementById("createMetaBtn");
+  const createMetaModal = document.getElementById("createMetaModal");
+  const closeCreateMetaBtn = document.getElementById("closeCreateMetaBtn");
+  const submitCreateMetaBtn = document.getElementById("submitCreateMetaBtn");
+  const createMetaErrors = document.getElementById("createMetaErrors");
+
+  const metaUsername = document.getElementById("metaUsername");
+  const metaFullName = document.getElementById("metaFullName");
+  const metaYear = document.getElementById("metaYear");
+  const metaTags = document.getElementById("metaTags");
+
+  const updateTagsBar = document.getElementById("updateTagsBar");
+  const updateTagsBtn = document.getElementById("updateTagsBtn");
+  const updateTagsModal = document.getElementById("updateTagsModal");
+  const closeUpdateTagsBtn = document.getElementById("closeUpdateTagsBtn");
+  const submitUpdateTagsBtn = document.getElementById("submitUpdateTagsBtn");
+  const updateTagsErrors = document.getElementById("updateTagsErrors");
+  const updateTagsInput = document.getElementById("updateTagsInput");
+
+  let currentPath = "";       // relative to source_root; "" means root
+  let selectedModalPath = ""; // relative path chosen in modal
+  let selectedFinalPath = ""; // relative path chosen on page
+  let lastValidatedTags = "";
+
+  function esc(s) {
+    return (s || "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function showMetadataPreview(preview) {
+    const panel = document.getElementById("metadataPreview");
+    const body  = document.getElementById("metadataPreviewBody");
+    const note  = document.getElementById("metadataPreviewNote");
+
+    if (!preview || !preview.ok) {
+      panel.style.display = "none";
+      body.textContent = "";
+      note.textContent = "";
+      setUpdateTagsVisible(false);
+      lastValidatedTags = "";
+      return;
+    }
+
+    panel.style.display = "block";
+    body.textContent = preview.text || "";
+    note.textContent = preview.truncated ? " (preview truncated)" : "";
+  }
+
+  function setStatus(html, isError=false) {
+    statusEl.innerHTML = `<div class="${isError ? 'errornote' : 'messagelist'}" style="padding:10px;">${html}</div>`;
+  }
+
+  function showCreateErrors(errors) {
+    if (!errors || errors.length === 0) {
+      createMetaErrors.innerHTML = "";
+      return;
+    }
+    createMetaErrors.innerHTML =
+      `<div class="errornote" style="padding:10px;">` +
+      `<strong>Fix the following:</strong><ul>` +
+      errors.map(e => `<li>${esc(e)}</li>`).join("") +
+      `</ul></div>`;
+  }
+
+  function normalizeTags(raw) {
+    return (raw || "")
+      .split(/[;,]/)
+      .map(t => t.trim())
+      .filter(Boolean);
+  }
+
+  function validateCreateMetaForm() {
+    const username = (metaUsername.value || "").trim();
+    const full_name = (metaFullName.value || "").trim();
+    const year = (metaYear.value || "").trim();
+    const tags_raw = (metaTags.value || "").trim();
+
+    const errors = [];
+    if (!username) errors.push("Username is required.");
+    if (!full_name) errors.push("Full name is required.");
+
+    if (!year) errors.push("Year is required.");
+    else if (!/^\d{4}$/.test(year)) errors.push("Year must be a 4-digit number (e.g., 2003).");
+
+    const tagsList = normalizeTags(tags_raw);
+
+    return {
+      ok: errors.length === 0,
+      errors,
+      payload: {
+        username,
+        full_name,
+        year,
+        tags: tagsList.join("; "),
+      }
+    };
+  }
+
+  function setCreateButtonVisible(visible) {
+    createMetaBtn.style.display = visible ? "inline-block" : "none";
+  }
+
+  function openCreateMetaModal() {
+    showCreateErrors([]);
+    createMetaModal.style.display = "block";
+    metaUsername.focus();
+  }
+
+  function closeCreateMetaModal() {
+    createMetaModal.style.display = "none";
+  }
+
+  createMetaBtn.addEventListener("click", openCreateMetaModal);
+  closeCreateMetaBtn.addEventListener("click", closeCreateMetaModal);
+
+  // Enter submits the create form
+  [metaUsername, metaFullName, metaYear, metaTags].forEach(el => {
+    el.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        submitCreateMetaBtn.click();
+      }
+    });
+  });
+
+  function setUpdateTagsVisible(visible) {
+    updateTagsBar.style.display = visible ? "block" : "none";
+  }
+
+  function openUpdateTagsModal(initialTags) {
+    updateTagsErrors.innerHTML = "";
+    updateTagsInput.value = (initialTags || "").trim();
+    updateTagsModal.style.display = "block";
+    updateTagsInput.focus();
+  }
+
+  function closeUpdateTagsModal() {
+    updateTagsModal.style.display = "none";
+  }
+
+  function renderErrors(el, errors) {
+    const msgs = (errors || []).map(e => `<li>${esc(e)}</li>`).join("");
+    el.innerHTML = msgs ? `<div class="errornote" style="padding:10px;"><ul>${msgs}</ul></div>` : "";
+  }
+
+  updateTagsBtn.addEventListener("click", () => {
+    openUpdateTagsModal(lastValidatedTags || "");
+  });
+
+  closeUpdateTagsBtn.addEventListener("click", closeUpdateTagsModal);
+
+  submitUpdateTagsBtn.addEventListener("click", async () => {
+    if (!selectedFinalPath) return;
+
+    const tags = normalizeTags(updateTagsInput.value);
+    if (tags.length === 0) {
+      renderErrors(updateTagsErrors, ["Please provide at least one tag."]);
+      return;
+    }
+
+    const tagsRaw = tags.join("; ");
+
+    submitUpdateTagsBtn.disabled = true;
+    closeUpdateTagsBtn.disabled = true;
+    updateTagsBtn.disabled = true;
+    validateBtn.disabled = true;
+    runBtn.disabled = true;
+
+    setStatus("Updating tags…");
+
+    try {
+      const resp = await apiUpdateTags(selectedFinalPath, tagsRaw);
+      if (!resp || !resp.ok) {
+        renderErrors(updateTagsErrors, (resp && resp.errors) ? resp.errors : ["Update failed."]);
+        setStatus("Update tags failed.", true);
+        return;
+      }
+      closeUpdateTagsModal();
+      setStatus("Tags updated. Re-validating…");
+    } catch (e) {
+      renderErrors(updateTagsErrors, [`Update failed: ${e.message}`]);
+      setStatus(`Update tags failed: ${esc(e.message)}`, true);
+    } finally {
+      submitUpdateTagsBtn.disabled = false;
+      closeUpdateTagsBtn.disabled = false;
+      updateTagsBtn.disabled = false;
+      validateBtn.disabled = false;
+
+      // Always revalidate, even on failure
+      try { validateBtn.click(); } catch (_) {}
+    }
+  });
+
+  async function apiCreateMetadataA(path, payload) {
+    const res = await fetch(`/uploader/import-from-metadata/api/create-metadata-a/`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body:
+        `path=${encodeURIComponent(path || "")}` +
+        `&username=${encodeURIComponent(payload.username || "")}` +
+        `&full_name=${encodeURIComponent(payload.full_name || "")}` +
+        `&year=${encodeURIComponent(payload.year || "")}` +
+        `&tags=${encodeURIComponent(payload.tags || "")}`,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, errors: data.errors || [`Create failed (${res.status})`] };
+    }
+    return data;
+  }
+
+  async function apiUpdateTags(path, tagsRaw) {
+    const res = await fetch(`/uploader/import-from-metadata/api/update-tags/`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body:
+        `path=${encodeURIComponent(path || "")}` +
+        `&tags=${encodeURIComponent(tagsRaw || "")}`,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, errors: data.errors || [`Update failed (${res.status})`] };
+    }
+    return data;
+  }
+
+  submitCreateMetaBtn.addEventListener("click", async () => {
+    if (!selectedFinalPath) return;
+
+    const { ok, errors, payload } = validateCreateMetaForm();
+    if (!ok) {
+      showCreateErrors(errors);
+      return;
+    }
+
+    showCreateErrors([]);
+    submitCreateMetaBtn.disabled = true;
+    closeCreateMetaBtn.disabled = true;
+
+    setStatus("Creating metadata.txt…");
+
+    try {
+      const resp = await apiCreateMetadataA(selectedFinalPath, payload);
+
+      if (!resp || !resp.ok) {
+        showCreateErrors((resp && resp.errors) ? resp.errors : ["Create failed."]);
+        setStatus("Create failed.", true);
+        return;
+      }
+
+      closeCreateMetaModal();
+      setCreateButtonVisible(false);
+      validateBtn.click();
+    } catch (e) {
+      showCreateErrors([`Create failed: ${e.message}`]);
+      setStatus(`Create failed: ${esc(e.message)}`, true);
+    } finally {
+      submitCreateMetaBtn.disabled = false;
+      closeCreateMetaBtn.disabled = false;
+    }
+  });
+
+  async function apiList(path) {
+    const url = `/uploader/import-from-metadata/api/list/?path=${encodeURIComponent(path || "")}`;
+    const res = await fetch(url, { credentials: "same-origin" });
+    if (!res.ok) throw new Error(`List failed (${res.status})`);
+    return res.json();
+  }
+
+  async function apiValidate(path) {
+    const url = `/uploader/import-from-metadata/api/validate/?path=${encodeURIComponent(path || "")}`;
+    const res = await fetch(url, { credentials: "same-origin" });
+    const data = await res.json();
+    if (!res.ok) return { ok:false, errors: data.errors || [`Validate failed (${res.status})`] };
+    return data;
+  }
+
+  function getCSRFToken() {
+    const m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  async function apiRun(path) {
+    const res = await fetch(`/uploader/import-from-metadata/api/run/`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: `path=${encodeURIComponent(path || "")}`,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((data && data.errors && data.errors.join("; ")) || `Run failed (${res.status})`);
+    return data;
+  }
+
+  function openModal() {
+    modal.style.display = "block";
+    selectedModalPath = "";
+    selectedDirInModalEl.textContent = "(none)";
+    chooseBtn.disabled = true;
+    loadDir(currentPath);
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  function parentPath(p) {
+    if (!p) return "";
+    const parts = p.split("/").filter(Boolean);
+    parts.pop();
+    return parts.join("/");
+  }
+
+  function formatBytes(bytes) {
+    if (bytes == null || isNaN(bytes)) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    const mb = kb / 1024;
+    if (mb < 1024) return `${mb.toFixed(1)} MB`;
+    const gb = mb / 1024;
+    return `${gb.toFixed(1)} GB`;
+  }
+
+  async function loadDir(path) {
+    try {
+      const data = await apiList(path);
+      currentPath = data.current || "";
+      currentDirEl.textContent = "/" + (currentPath || "");
+      dirTableEl.innerHTML = "";
+
+      const dirs = data.dirs || [];
+      const files = data.files || [];
+
+      if (dirs.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td style="padding:8px;" colspan="3"><em>No subfolders</em></td>`;
+        dirTableEl.appendChild(tr);
+      } else {
+        dirs.forEach(d => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="padding:8px;"><code>${esc(d.name)}</code></td>
+            <td style="padding:8px;">Folder</td>
+            <td style="padding:8px; text-align:right;">
+              <button type="button" class="button" data-open="${esc(d.path)}">Open</button>
+              <button type="button" class="button" data-select="${esc(d.path)}">Select</button>
+            </td>
+          `;
+          dirTableEl.appendChild(tr);
+        });
+      }
+
+      const sep = document.createElement("tr");
+      sep.innerHTML = `
+        <td style="padding:8px; border-top:1px solid #ddd;" colspan="3">
+          <strong>Files</strong>
+        </td>
+      `;
+      dirTableEl.appendChild(sep);
+
+      if (files.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td style="padding:8px;" colspan="3"><em>No files</em></td>`;
+        dirTableEl.appendChild(tr);
+      } else {
+        files.forEach(f => {
+          const tr = document.createElement("tr");
+          const sizeText = (typeof f.size === "number") ? formatBytes(f.size) : "";
+          tr.innerHTML = `
+            <td style="padding:8px;"><code>${esc(f.name)}</code></td>
+            <td style="padding:8px;">File</td>
+            <td style="padding:8px; text-align:right; color:#999;">
+              ${esc(sizeText)}
+            </td>
+          `;
+          dirTableEl.appendChild(tr);
+        });
+      }
+
+      dirTableEl.querySelectorAll("button[data-open]").forEach(btn => {
+        btn.addEventListener("click", () => loadDir(btn.getAttribute("data-open")));
+      });
+      dirTableEl.querySelectorAll("button[data-select]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          selectedModalPath = btn.getAttribute("data-select") || "";
+          selectedDirInModalEl.textContent = "/" + selectedModalPath;
+          chooseBtn.disabled = false;
+        });
+      });
+
+      upBtn.disabled = (currentPath === "");
+    } catch (e) {
+      setStatus(`Error listing directories: ${esc(e.message)}`, true);
+    }
+  }
+
+  browseBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  upBtn.addEventListener("click", () => loadDir(parentPath(currentPath)));
+
+  chooseBtn.addEventListener("click", async () => {
+    selectedFinalPath = selectedModalPath;
+    selectedPathEl.value = "/" + selectedFinalPath;
+    closeModal();
+
+    validateBtn.disabled = !selectedFinalPath;
+    runBtn.disabled = true;
+    showMetadataPreview(null);
+    setCreateButtonVisible(false);
+    setUpdateTagsVisible(false);
+
+    setStatus(`Selected <code>/${esc(selectedFinalPath)}</code>. Validating metadata.txt…`);
+
+    if (selectedFinalPath) validateBtn.click();
+  });
+
+  validateBtn.addEventListener("click", async () => {
+    if (!selectedFinalPath) return;
+    setStatus("Validating…");
+    const report = await apiValidate(selectedFinalPath);
+
+    if (!report.ok) {
+      runBtn.disabled = true;
+      validateBtn.disabled = false;
+
+      const missingMeta = (report.errors || []).some(e =>
+        (e || "").toLowerCase().includes("metadata.txt not found")
+      );
+      setCreateButtonVisible(missingMeta);
+
+      setStatus(`<strong>Validation failed:</strong><br><ul>${
+        (report.errors || []).map(e => `<li>${esc(e)}</li>`).join("")
+      }</ul>`, true);
+
+      showMetadataPreview(report.metadata_preview);
+      setUpdateTagsVisible(false);
+      lastValidatedTags = "";
+      return;
+    }
+
+    runBtn.disabled = false;
+    setCreateButtonVisible(false);
+
+    setStatus(
+      `Validation OK. Found metadata.txt at <code>${esc(report.metadata_file)}</code>.`
+    );
+    showMetadataPreview(report.metadata_preview);
+
+    // Prefer server-provided parsed tags, fallback to empty
+    const tagsList = (report.metadata && report.metadata.tags) ? report.metadata.tags : [];
+    lastValidatedTags = Array.isArray(tagsList) ? tagsList.join("; ") : "";
+    setUpdateTagsVisible(true);
+  });
+
+  runBtn.addEventListener("click", async () => {
+    if (!selectedFinalPath) return;
+    runBtn.disabled = true;
+    validateBtn.disabled = true;
+    setStatus("Queueing import…");
+    try {
+      const resp = await apiRun(selectedFinalPath);
+      setStatus(`Import queued. Job ID: <code>${esc(String(resp.job_id))}</code>.`);
+    } catch (e) {
+      setStatus(`Import failed: ${esc(e.message)}`, true);
+      validateBtn.disabled = false;
+    }
+  });
+
+})();
+function goToUrl(link){
+  window.location.href = "https://" + window.location.hostname + link;
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,64 @@
+.mt-modal{position:fixed;left:50%;top:20%;transform:translateX(-50%);width:640px;max-width:94%;background:#fff;border:1px solid #ddd;border-radius:6px;z-index:4000;box-shadow:0 8px 30px rgba(0,0,0,0.18);} 
+.mt-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:3990;display:none}
+.mt-modal .mt-header{padding:10px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+.mt-modal .mt-body{padding:12px}
+.mt-modal .tag-picker{position:relative}
+.mt-modal .suggestions-dropdown {
+  position:absolute;
+  top:calc(100% + 8px);
+  left:0;width:100%;
+  background:#fff;
+  border:1px solid #e0e0e0;
+  border-radius:6px;
+  padding:10px;
+  display:none;
+  box-shadow:0 6px 18px rgba(0,0,0,0.12);
+  max-height:220px;
+  overflow:auto;
+  gap:8px;
+  z-index:1000;
+}
+.mt-modal .tag-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:18px;background:#f6f7fb;border:1px solid #e6e7f0;cursor:pointer;margin:4px}
+.mt-modal .section{background:#fafafa;border:1px solid #eee;border-radius:6px;padding:12px;margin-top:12px}
+.mt-modal .controls{display:flex;align-items:center;gap:8px;margin-top:14px}
+ .mt-modal .primary{background:#1570ff;border:1px solid #0f5fdf;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer}
+ .mt-modal .secondary{background:#fff;border:1px solid #bdbdbd;padding:8px 12px;border-radius:6px;cursor:pointer}
+/* small helpers */
+.mt-modal .tag-picker input[type=text]{box-sizing:border-box}
+
+.dark_theme .mt-modal {
+  background-color: #121212;
+}
+
+.dark_theme .section {
+  background-color: #55565B;
+}
+
+.dark_theme .section .tag-pill {
+  color: #000;
+}
+
+.mt-modal button.primary {
+  background-color: #009933;
+  border: 1px solid #009933;
+}
+
+.import-from-metadata-page .container.mt-4 {
+  padding: 0px 15px 0px 15px;
+}
+
+.import-from-metadata-page button {
+  padding: 8px;
+}
+
+/* Styles for the disabled state */
+.import-from-metadata-page button:disabled,
+.import-from-metadata-page button[disabled] {
+  background-color: pink;
+  color: #000;
+  cursor: not-allowed;
+  opacity: 0.65;
+  pointer-events: none;
+  border-color: red;
+  border-radius: 5px;
+}

@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+{% load static %}
+{% load duration %}
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/advanced_search.css' %}?v={{ VERSION }}">
+{% endblock head %}
+{% block externallinks %}
+  {{ block.super }}
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- jQuery UI -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+
+{% endblock externallinks %}
+{% block content %}
+<div id="page-search">
+   <div class="page-main advanced-search-page">
+      <div class="container mt-4">
+         <h1>Advanced Tag Search</h1>
+         <form method="get" class="mb-4">
+            <fieldset>
+               <legend>Filter by tags</legend>
+               {# --- Dragon Con year tags --- #}
+               <h2 class="h6 mt-3">Year selector</h2>
+               <select name="year_select" id="year-select" class="form-select form-select-sm mb-3" style="max-width: 250px;">
+                  <option value="">All</option>
+                  {% for tag in dc_tags|dictsortreversed:"title" %}
+                  <option value="{{ tag.id }}"
+                  {% if tag.id in selected_tag_ids %}selected{% endif %}>
+                  {{ tag.title }}
+                  </option>
+                  {% endfor %}
+               </select>
+               {# --- Dragon Con year tags (technical inputs, hidden) --- #}
+               <h2 id="dc-year-heading" class="h5 mt-1">Dragon Con year tags</h2>
+               <div id="dc-year-tags-hidden" class="d-flex flex-wrap tag-pills mb-3">
+                  {% for tag in dc_tags %}
+                  <label class="tag-pill me-3 mb-2">
+                  <input
+                  type="checkbox"
+                  name="tags"
+                  value="{{ tag.id }}"
+                  {% if tag.id in selected_tag_ids %}checked{% endif %}
+                  >
+                  <span>{{ tag.title }}</span>
+                  {% if tag.media_count %}
+                  <span class="text-muted">({{ tag.media_count }})</span>
+                  {% endif %}
+                  </label>
+                  {% empty %}
+                  <p class="text-muted">No Dragon Con year tags defined.</p>
+                  {% endfor %}
+               </div>
+               {# --- Other tags already selected --- #}
+               <h2 class="h5 mt-2">Media tags</h2>
+               <div id="selected-other-tags" class="d-flex flex-wrap tag-pills mb-2">
+                  {% for tag in selected_other_tags %}
+                  <label class="tag-pill me-3 mb-2">
+                  <input
+                  type="checkbox"
+                  name="tags"
+                  value="{{ tag.id }}"
+                  {% if tag.id in selected_tag_ids %}checked{% endif %}
+                  >
+                  <span>{{ tag.title }}</span>
+                  {% if tag.media_count %}
+                  {#  <span class="text-muted">({{ tag.media_count }})</span> #}
+                  {% endif %}
+                  </label>
+                  {% empty %}
+                  <p id="no-other-tags-msg" class="text-muted small mb-2">
+		      <i>No tags selected.</i>
+                  </p>
+                  {% endfor %}
+               </div>
+               {# --- Autocomplete / picker for other tags --- #}
+               <div id="other-tags-picker-wrapper" class="mb-3 position-relative">
+                  <input
+                     type="text"
+                     id="other-tags-search"
+                     class="form-control form-control-sm"
+                     placeholder="Start here to add tags"
+                     autocomplete="off"
+                     >
+                  <div id="other-tags-dropdown" class="tag-dropdown">
+                     <div id="other-tags-dropdown-inner"
+                        class="d-flex flex-wrap tag-pills p-2">
+                        {% for tag in available_other_tags %}
+                        <label class="tag-pill me-2 mb-2"
+                           data-tag-title="{{ tag.title|lower }}">
+                        <input
+                           type="checkbox"
+                           name="tags"
+                           value="{{ tag.id }}"
+                           >
+                        <span>{{ tag.title }}</span>
+                        {% if tag.media_count %}
+                        {#  <span class="text-muted">({{ tag.media_count }})</span> #}
+                        {% endif %}
+                        </label>
+                        {% empty %}
+                        <p class="text-muted small mb-0">
+                           No more tags available to add.
+                        </p>
+                        {% endfor %}
+
+                  <label class="tag-pill me-3 mb-2">
+                  <input
+                  type="checkbox"
+                  name="untagged"
+                  value="1"
+                  {% if include_untagged %}checked{% endif %}
+                  >
+                  <span>untagged (no year)</span>
+                  </label>
+
+
+                  <label class="tag-pill me-3 mb-2">
+                  <input
+                  type="checkbox"
+                  name="untagged-yo"
+                  value="1"
+                  {% if include_untaggedyo %}checked{% endif %}
+                  >
+                  <span>untagged (has year)</span>
+                  </label>
+
+
+                     </div>
+                  </div>
+               </div>
+            </fieldset>
+
+	    <div class="mt-3">
+  <label class="me-2">Match:</label>
+
+  <label class="me-3">
+    <input
+      type="radio"
+      name="tag_mode"
+      value="any"
+      {% if tag_mode != "all" %}checked{% endif %}
+    >
+    Any selected tags (OR)
+  </label>
+
+  <label class="me-3">
+    <input
+      type="radio"
+      name="tag_mode"
+      value="all"
+      {% if tag_mode == "all" %}checked{% endif %}
+    >
+    All selected tags (AND)
+  </label>
+</div>
+
+
+            <div class="mt-3">
+               <label class="me-2">Media type:</label>
+               <label class="me-3">
+               <input
+               type="radio"
+               name="media_type"
+               value=""
+               {% if not media_type %}checked{% endif %}
+               >
+               Any
+               </label>
+               <label class="me-3">
+               <input
+               type="radio"
+               name="media_type"
+               value="video"
+               {% if media_type == "video" %}checked{% endif %}
+               >
+               Video
+               </label>
+               <label class="me-3">
+               <input
+               type="radio"
+               name="media_type"
+               value="image"
+               {% if media_type == "image" %}checked{% endif %}
+               >
+               Photo
+               </label>
+            </div>
+            <div id="tag-validation-message" class="text-warning mt-2" style="display:none;"></div>
+            <button id="apply-button" type="submit" class="btn btn-primary">Apply</button>
+            <a href="{% url 'advanced_search' %}?clear=1" class="btn btn-sm btn-secondary">
+              New search
+            </a>
+	 </form>
+         <hr>
+      {# --- Results area --- #}
+      {% if not has_filters %}
+        <p>Select one or more tags above and click <strong>Apply</strong> to see results.</p>
+      {% else %}
+        {% if page_obj and page_obj.object_list %}
+
+          <div class="search-results-wrap items-list-hor media-list-wrapper">
+            <div class="media-list-row">
+
+
+              <div class="search-summary">
+		    <div class="search-summary-row">
+		    {% if not include_untagged and not include_untaggedyo %}
+                        <span class="search-summary-label">Year:</span>
+                        <span class="search-summary-value">
+                          {% if selected_year_tag %}
+                              {{ selected_year_tag.title }}
+                          {% else %}
+                              All
+                          {% endif %}
+                        </span>
+			</br>
+		    {% endif %}
+		    {% if not include_untagged and not include_untaggedyo %}
+                        {% if selected_other_tags %}
+                              <span class="search-summary-label">Tags selected:</span>
+	                      <span class="search-summary-value">
+                                  {% for tag in selected_other_tags %}
+                                      {{ tag.title }}{% if not forloop.last %}, {% endif %}
+                                  {% endfor %}
+                              </span>
+                        {% else %}
+                              <span class="search-summary-label">Tags selected:</span>
+                              <span class="search-summary-value">None</span>
+                        {% endif %}
+		    {% endif %}
+		    {% if include_untagged %}
+                          <span class="search-summary-label">Untagged media: </span>
+                          <span class="search-summary-value">No year specified, no tags at all</span>
+		    {% endif %}
+                    {% if include_untaggedyo %}
+                          <span class="search-summary-label">Untagged media: </span>
+                          <span class="search-summary-value">Year specified, no other tags</span>
+                    {% endif %}
+                    </div>
+              </div>
+              <div class="media-list-header">
+                <h2>
+                  {% if total_results == 1 %}
+                    1 media item
+                  {% else %}
+                    {{ total_results }} media items
+                  {% endif %}
+                </h2>
+              </div>
+
+
+
+
+              <div class="items-list-outer">
+                <div class="items-list-wrap">
+                  <div class="items-list">
+
+                    {% for media in page_obj.object_list %}
+                      <div class="item {% if media.media_type %}{{ media.media_type }}-item{% endif %} pl-active-item">
+                        {% if is_editor %}
+                        <div class="item-select-col">
+                          <input type="checkbox" class="bulk-select" data-token="{{ media.friendly_token }}">
+                        </div>
+                        {% endif %}
+                        <div class="item-content">
+
+                          <a
+                            href="{{ media.get_absolute_url }}"
+                            title="{{ media.title }}"
+                            class="item-thumb"
+                            {% if media.poster %}
+                              style="background-image: url('{{ media.poster.url }}');"
+                            {% endif %}
+                          >
+                            {% if media.duration %}
+                              <span class="item-duration">
+                                <span>{{ media.duration|format_duration }}</span>
+                              </span>
+			     {% else %}
+                                <div class="item-type-icon"><div></div></div>
+			     {% endif %}
+
+                          </a>
+
+                          <div class="item-main">
+                            <h3>
+                              <a
+                                href="{{ media.get_absolute_url }}"
+                                title="{{ media.title }}"
+                              >
+                                <span aria-label="{{ media.title }}">{{ media.title }}</span>
+                              </a>
+                            </h3>
+
+                            <span class="item-meta">
+
+                             {% with media_tags=media.tags.all %}
+                               {% if media_tags %}
+                                 <div class="item-tags">
+                                     <span>Tags:</span>
+                                     {% for tag in media_tags %}
+                                         <span>
+                                             {{ tag.title }}
+                                         </span>
+                                     {% endfor %}
+                                 </div>
+                               {% endif %}
+                             {% endwith %}
+
+		              {# adjust field names to match your Media model #}
+                              {% if media.user %}
+                                <span class="item-author">
+                                  <a
+                                    href="{% if media.user.get_absolute_url %}{{ media.user.get_absolute_url }}{% else %}#{% endif %}"
+                                    title="{{ media.user.get_full_name|default:media.user.username }}"
+                                  >
+                                    <span>{{ media.user.get_full_name|default:media.user.username }}</span>
+                                  </a>
+                                </span>
+                              {% endif %}
+
+                              {% if media.views %}
+                                <span class="item-views">{{ media.views }} views</span>
+                              {% endif %}
+
+                              {% if media.publish_date %}
+                                <span class="item-date">
+                                  <time datetime="{{ media.publish_date|date:'c' }}">
+                                    {{ media.publish_date|timesince }} ago
+                                  </time>
+                                </span>
+                              {% endif %}
+			    </span>
+
+                            {% if media.description %}
+                              <div class="item-description">
+                                <div>{{ media.description }}</div>
+                              </div>
+                            {% endif %}
+
+			  </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+
+                  </div> {# .items-list #}
+                </div>   {# .items-list-wrap #}
+              </div>     {# .items-list-outer #}
+
+              {# Bulk actions (editors only) - moved to bottom of results #}
+              {% if is_editor %}
+              <div id="bulk-actions" class="mb-3 mt-3">
+                <label><input type="checkbox" id="bulk-select-all"> Select all results on this page</label>
+                <div style="display:inline-block; margin-left:1em;">
+                  <select id="bulk-tags-select" multiple style="min-width:220px;">
+                    {% for t in all_tags %}
+                      <option value="{{ t.id }}">{{ t.title }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button id="bulk-add-tags" class="btn btn-sm btn-primary ms-2">Add tags to selected</button>
+                <button id="bulk-remove-tags" class="btn btn-sm btn-danger ms-2">Remove tags from selected</button>
+              </div>
+              {% endif %}
+
+              {# Pagination styled below the list #}
+
+<nav aria-label="Search results pagination" class="search-pagination mt-4">
+
+  {# LEFT SIDE: previous | page info | next #}
+  <div class="search-pagination-left">
+    {% if page_obj.has_previous %}
+      <a
+        class="search-pagination-link"
+        href="?{% for t in selected_tag_ids %}tags={{ t }}&{% endfor %}{% if include_untagged %}untagged=1&{% endif %}{% if include_untaggedyo %}untagged-yo=1&{% endif %}{% if media_type %}media_type={{ media_type }}&{% endif %}{% if selected_year_tag %}year_select={{ selected_year_tag.id }}&{% endif %}tag_mode={{ tag_mode }}&page={{ page_obj.previous_page_number }}"
+      >
+        &laquo; Previous
+      </a>
+    {% else %}
+      <span class="search-pagination-link disabled">&laquo; Previous</span>
+    {% endif %}
+
+    <span class="search-pagination-info">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a
+        class="search-pagination-link"
+        href="?{% for t in selected_tag_ids %}tags={{ t }}&{% endfor %}{% if include_untagged %}untagged=1&{% endif %}{% if include_untaggedyo %}untagged-yo=1&{% endif %}{% if media_type %}media_type={{ media_type }}&{% endif %}{% if selected_year_tag %}year_select={{ selected_year_tag.id }}&{% endif %}tag_mode={{ tag_mode }}&page={{ page_obj.next_page_number }}"
+      >
+        Next &raquo;
+      </a>
+    {% else %}
+      <span class="search-pagination-link disabled">Next &raquo;</span>
+    {% endif %}
+
+    {# INLINE: Jump-to-page form #}
+    <form method="get" class="search-pagination-jump" id="page-jump-form">
+
+      {# Preserve all active filters #}
+      {% for t in selected_tag_ids %}
+        <input type="hidden" name="tags" value="{{ t }}">
+      {% endfor %}
+      {% if include_untagged %}
+        <input type="hidden" name="untagged" value="1">
+      {% endif %}
+      {% if include_untaggedyo %}
+        <input type="hidden" name="untagged-yo" value="1">
+      {% endif %}
+      {% if media_type %}
+        <input type="hidden" name="media_type" value="{{ media_type }}">
+      {% endif %}
+      {% if selected_year_tag %}
+        <input type="hidden" name="year_select" value="{{ selected_year_tag.id }}">
+      {% endif %}
+      <input type="hidden" name="tag_mode" value="{{ tag_mode }}">
+
+      <label for="page-select" class="search-pagination-label">Jump to page:</label>
+      <select
+        id="page-select"
+        name="page"
+        class="search-pagination-select"
+        onchange="this.form.submit()"
+      >
+        {% for num in page_obj.paginator.page_range %}
+          <option value="{{ num }}"{% if num == page_obj.number %} selected{% endif %}>
+            {{ num }}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+
+  </div>
+</nav>
+
+
+
+
+            </div> {# .media-list-row #}
+          </div>   {# .search-results-wrap items-list-hor media-list-wrapper #}
+
+        {% else %}
+          <p>No media found for the selected filters.</p>
+        {% endif %}
+      {% endif %}
+    </div> {# .container #}
+
+  </div> {# .page-main #}
+</div>   {# #page-search #}
+<script src="{% static 'js/advanced_search.js' %}?v={{ VERSION }}"></script>
+{% endblock %}
+
