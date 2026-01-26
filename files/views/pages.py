@@ -323,10 +323,18 @@ def edit_media(request):
             return HttpResponseRedirect(media.get_absolute_url())
     else:
         form = MediaMetadataForm(request.user, instance=media)
+
+    # ---- ACSN NEW: provide all tag titles to the template for the picker ----
+    all_tag_titles = list(
+        Tag.objects.order_by("title").values_list("title", flat=True)
+    )
+    all_tag_titles_json = json.dumps(all_tag_titles)
+
+
     return render(
         request,
         "cms/edit_media.html",
-        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url},
+        {"form": form, "media_object": media, "add_subtitle_url": media.add_subtitle_url, "all_tag_titles_json": all_tag_titles_json },
     )
 
 

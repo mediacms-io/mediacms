@@ -1,3 +1,4 @@
+# files/models/playlist.py
 import uuid
 
 from django.db import models
@@ -22,7 +23,32 @@ class Playlist(models.Model):
 
     uid = models.UUIDField(unique=True, default=uuid.uuid4)
 
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, db_index=True, related_name="playlists")
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="playlists",
+    )
+
+    # NEW: sharing fields
+    # Users who can view the playlist (read-only)
+    shared_readers = models.ManyToManyField(
+        "users.User",
+        related_name="shared_playlists_readonly",
+        blank=True,
+        help_text="Users who can view this playlist",
+    )
+
+    # Users who can view AND edit the playlist (media + metadata)
+    shared_editors = models.ManyToManyField(
+        "users.User",
+        related_name="shared_playlists_editable",
+        blank=True,
+        help_text="Users who can edit this playlist",
+    )
+
+    class Meta:
+        ordering = ["-add_date"]  # newest playlists first
 
     def __str__(self):
         return self.title
@@ -49,6 +75,44 @@ class Playlist(models.Model):
         if self.user.logo:
             return helpers.url_from_path(self.user.logo.path)
         return None
+
+    # ---- Sharing helpers -------------------------------------------
+
+    def can_user_view(self, user):
+        """Return True if the given user can see this playlist."""
+        if not user or not user.is_authenticated:
+            return False
+
+        # owner always can view
+        if user.pk == self.user_id:
+            return True
+
+        # global editor / staff still have full rights
+        if getattr(user, "is_editor", False) or user.is_staff:
+            return True
+
+        return (
+            self.shared_readers.filter(pk=user.pk).exists()
+            or self.shared_editors.filter(pk=user.pk).exists()
+        )
+
+    def can_user_edit(self, user):
+        """Return True if the given user can modify this playlist."""
+        if not user or not user.is_authenticated:
+            return False
+
+        # owner
+        if user.pk == self.user_id:
+            return True
+
+        # global editor / staff
+        if getattr(user, "is_editor", False) or user.is_staff:
+            return True
+
+        # explicit editors
+        return self.shared_editors.filter(pk=user.pk).exists()
+
+    # ---- Ordering helper -------------------------------------------
 
     def set_ordering(self, media, ordering):
         if media not in self.media.all():

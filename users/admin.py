@@ -16,9 +16,10 @@ class UserAdmin(admin.ModelAdmin):
         "is_superuser",
         "is_editor",
         "is_manager",
+        "can_delete_media", 
         "media_count",
     ]
-    list_filter = ["is_superuser", "is_editor", "is_manager"]
+    list_filter = ["is_superuser", "is_editor", "is_manager", "can_delete_media", ]
     ordering = ("-date_added",)
 
     if settings.USERS_NEEDS_TO_BE_APPROVED:

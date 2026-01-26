@@ -42,10 +42,13 @@ from ..models import (
     PlaylistMedia,
     Tag,
 )
-from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer
+from django.db import transaction
+from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer, TagSerializer
 from ..stop_words import STOP_WORDS
 from ..tasks import save_user_action
 
+import re
+from django.db.models import Count, Q
 
 class MediaList(APIView):
     """Media listings views"""
@@ -72,10 +75,11 @@ class MediaList(APIView):
         base_queryset = Media.objects.prefetch_related("user", "tags")
 
         if not request.user.is_authenticated:
-            return base_queryset.filter(base_filters)
+            return base_queryset.filter(base_filters).order_by("-add_date")
 
         conditions = base_filters
 
+        # Add user permissions
         permission_filter = {'user': request.user}
         if user:
             permission_filter['owner_user'] = user
@@ -86,6 +90,7 @@ class MediaList(APIView):
                 perm_conditions &= Q(user=user)
             conditions |= perm_conditions
 
+        # Add RBAC conditions
         if getattr(settings, 'USE_RBAC', False):
             rbac_categories = request.user.get_rbac_categories_as_member()
             rbac_conditions = Q(category__in=rbac_categories)
@@ -93,9 +98,10 @@ class MediaList(APIView):
                 rbac_conditions &= Q(user=user)
             conditions |= rbac_conditions
 
-        return base_queryset.filter(conditions).distinct()
+        return base_queryset.filter(conditions).distinct().order_by("-add_date")[:1000]
 
     def get(self, request, format=None):
+        # Show media
         # authenticated users can see:
 
         # All listable media (public access)
@@ -159,7 +165,7 @@ class MediaList(APIView):
             media = show_recommended_media(request, limit=50)
             already_sorted = True
         elif show_param == "featured":
-            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user", "tags")
+            media = Media.objects.filter(listable=True, featured=True).prefetch_related("user", "tags").order_by("-add_date")
         elif show_param == "shared_by_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
@@ -179,11 +185,12 @@ class MediaList(APIView):
                     conditions |= Q(category__in=rbac_categories)
 
                 media = base_queryset.filter(conditions).distinct()
+                media = media.order_by("-add_date")[:1000]  # limit to 1000 results
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
             if self.request.user == user or is_mediacms_editor(self.request.user):
-                media = Media.objects.filter(user=user).prefetch_related("user", "tags")
+                media = Media.objects.filter(user=user).prefetch_related("user", "tags").order_by("-add_date")
             else:
                 media = self._get_media_queryset(request, user)
                 already_sorted = True
@@ -354,23 +361,32 @@ class MediaBulkUserActions(APIView):
         },
     )
     def post(self, request, format=None):
+        # Check if user is authenticated
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        # Get required parameters
         media_ids = request.data.get('media_ids', [])
         action = request.data.get('action')
 
+        # Validate required parameters
         if not media_ids:
             return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         if not action:
             return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
+        # Determine target media set
+        # Editors may operate on any media; regular users only on their own media
+        if is_mediacms_editor(request.user):
+            media = Media.objects.filter(friendly_token__in=media_ids)
+        else:
+            media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
         if not media:
             return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Process based on action
         if action == "enable_comments":
             media.update(enable_comments=True)
             return Response({"detail": f"Comments enabled for {media.count()} media items"})
@@ -380,6 +396,16 @@ class MediaBulkUserActions(APIView):
             return Response({"detail": f"Comments disabled for {media.count()} media items"})
 
         elif action == "delete_media":
+            # Only allow users with explicit delete permission (or superusers)
+            if not (
+                request.user.is_superuser
+                or getattr(request.user, "can_delete_media", False)
+            ):
+                return Response(
+                    {"detail": "not allowed"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             count = media.count()
             media.delete()
             return Response({"detail": f"{count} media items deleted"})
@@ -432,6 +458,43 @@ class MediaBulkUserActions(APIView):
 
             return Response({"detail": f"Removed {removed_count} media items from {playlists.count()} playlists"})
 
+        elif action == "add_tags" or action == "remove_tags":
+            # Only editors allowed to bulk-edit tags
+            if not is_mediacms_editor(request.user):
+                return Response({"detail": "not allowed"}, status=status.HTTP_403_FORBIDDEN)
+
+            tag_ids = request.data.get('tag_ids', [])
+            if not tag_ids:
+                return Response({"detail": "tag_ids is required for add_tags/remove_tags action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Resolve Tag objects
+            tags = list(Tag.objects.filter(pk__in=tag_ids))
+            if not tags:
+                return Response({"detail": "No matching tags found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            affected_count = 0
+            try:
+                with transaction.atomic():
+                    for m in media:
+                        if action == "add_tags":
+                            # add tags (no-op if already present)
+                            m.tags.add(*tags)
+                        else:
+                            # remove tags
+                            m.tags.remove(*tags)
+                        affected_count += 1
+
+                    # Best-effort: update tag media counts
+                    for t in tags:
+                        try:
+                            t.update_tag_media()
+                        except Exception:
+                            pass
+
+                return Response({"detail": f"{action} applied to {affected_count} media items"})
+            except Exception as e:
+                return Response({"detail": f"Failed to apply tags: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+
         elif action == "set_state":
             state = request.data.get('state')
             if not state:
@@ -441,10 +504,12 @@ class MediaBulkUserActions(APIView):
             if state not in valid_states:
                 return Response({"detail": f"state must be one of {valid_states}"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Check if user can set public state
             if not is_mediacms_editor(request.user) and settings.PORTAL_WORKFLOW != "public":
                 if state == "public":
                     return Response({"detail": "You are not allowed to set media to public state"}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Update media state
             for m in media:
                 m.state = state
                 if m.state == "public" and m.encoding_status == "success" and m.is_reviewed is True:
@@ -831,6 +896,22 @@ class MediaDetail(APIView):
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
+
+        # Require explicit delete permission (or superuser)
+        if not (
+            request.user.is_authenticated
+            and (
+                request.user.is_superuser
+                or getattr(request.user, "can_delete_media", False)
+            )
+        ):
+            return Response(
+                {"detail": "not allowed"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # At this point, object-level permission has already been checked
+        # by IsUserOrEditor via get_object() / check_object_permissions.
         media.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -995,7 +1076,19 @@ class MediaSearch(APIView):
         if media_type not in ["video", "image", "audio", "pdf"]:
             media_type = None
 
-        if not (query or category or tag):
+        # ---------- NEW: parse multiple tags ----------
+        def parse_tags_param(s: str):
+            # accept separators: comma, space or plus
+            if not s:
+                return []
+            parts = re.split(r'[,\s\+]+', s.strip())
+            # dedupe, keep truthy, preserve original case (existing code uses exact match on title)
+            return [p for p in {p for p in parts if p}]
+
+        tags = parse_tags_param(tag_param)
+        # ------------------------------------------------
+
+        if not (query or category or tags):
             ret = {}
             return Response(ret, status=status.HTTP_200_OK)
 
@@ -1028,8 +1121,22 @@ class MediaSearch(APIView):
         if query:
             media = media.filter(search=query)
 
-        if tag:
-            media = media.filter(tags__title=tag)
+        # ---------- CHANGED: tags filtering (AND semantics) ----------
+        if tags:
+            # match items that include *all* requested tags
+            media = (
+                media
+                .filter(tags__title__in=tags)
+                .annotate(
+                    matched_tags=Count(
+                        'tags',
+                        filter=Q(tags__title__in=tags),
+                        distinct=True,
+                    )
+                )
+                .filter(matched_tags=len(tags))
+            )
+        # -------------------------------------------------------------
 
         if category:
             media = media.filter(category__title__contains=category)
@@ -1073,3 +1180,96 @@ class MediaSearch(APIView):
             page = paginator.paginate_queryset(media, request)
             serializer = MediaSearchSerializer(page, many=True, context={"request": request})
             return paginator.get_paginated_response(serializer.data)
+
+
+# Helper to fetch a media object with basic privacy checks (used by small media-related endpoints)
+def _get_media_for_request(request, friendly_token):
+    try:
+        media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
+
+        # privacy check: if private, only owner members or editors can access
+        if media.state == "private":
+            if request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user):
+                pass
+            else:
+                return Response({"detail": "media is private"}, status=status.HTTP_401_UNAUTHORIZED)
+        return media
+    except PermissionDenied:
+        return Response({"detail": "bad permissions"}, status=status.HTTP_401_UNAUTHORIZED)
+    except BaseException:
+        return Response({"detail": "media file does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MediaTags(APIView):
+    """Return tags assigned to a media item"""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, friendly_token, format=None):
+        media = _get_media_for_request(request, friendly_token)
+        if isinstance(media, Response):
+            return media
+        serializer = TagSerializer(media.tags.all(), many=True, context={"request": request})
+        return Response(serializer.data)
+
+
+class MediaManageTags(APIView):
+    """Manage tags for a single media item (add/remove). Editor-only in this implementation."""
+
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser,)
+
+    def post(self, request, friendly_token, format=None):
+        if not is_mediacms_editor(request.user):
+            return Response({"detail": "not allowed"}, status=status.HTTP_403_FORBIDDEN)
+
+        media = _get_media_for_request(request, friendly_token)
+        if isinstance(media, Response):
+            return media
+
+        add_items = request.data.get("add", []) or []
+        remove_items = request.data.get("remove", []) or []
+
+        add_tags = []
+        for item in add_items:
+            # accept id (int) or name (str)
+            t = None
+            if isinstance(item, int):
+                t = Tag.objects.filter(pk=item).first()
+            else:
+                t = Tag.objects.filter(title__iexact=str(item)).first()
+                if not t:
+                    t = Tag.objects.create(title=str(item), user=request.user)
+            if t and t not in add_tags:
+                add_tags.append(t)
+
+        remove_tags = []
+        for item in remove_items:
+            t = None
+            if isinstance(item, int):
+                t = Tag.objects.filter(pk=item).first()
+            else:
+                t = Tag.objects.filter(title__iexact=str(item)).first()
+            if t and t not in remove_tags:
+                remove_tags.append(t)
+
+        try:
+            with transaction.atomic():
+                if add_tags:
+                    media.tags.add(*add_tags)
+                if remove_tags:
+                    media.tags.remove(*remove_tags)
+
+                # best-effort update
+                for t in set(add_tags + remove_tags):
+                    try:
+                        t.update_tag_media()
+                    except Exception:
+                        pass
+
+            serializer = TagSerializer(media.tags.all(), many=True, context={"request": request})
+            return Response({"detail": "ok", "tags": serializer.data})
+        except Exception as e:
+            return Response({"detail": f"Failed to apply tags: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+

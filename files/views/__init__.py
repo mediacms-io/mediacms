@@ -9,6 +9,8 @@ from .media import MediaBulkUserActions  # noqa: F401
 from .media import MediaDetail  # noqa: F401
 from .media import MediaList  # noqa: F401
 from .media import MediaSearch  # noqa: F401
+from .media import MediaTags  # noqa: F401
+from .media import MediaManageTags  # noqa: F401
 from .pages import about  # noqa: F401
 from .pages import add_subtitle  # noqa: F401
 from .pages import approval_required  # noqa: F401
@@ -43,6 +45,6 @@ from .pages import upload_media  # noqa: F401
 from .pages import video_chapters  # noqa: F401
 from .pages import view_media  # noqa: F401
 from .pages import view_playlist  # noqa: F401
-from .playlists import PlaylistDetail, PlaylistList  # noqa: F401
+from .playlists import PlaylistDetail, PlaylistList, PlaylistShare, PlaylistUnshare, UserSearch  # noqa: F401
 from .tasks import TaskDetail, TasksList  # noqa: F401
 from .user import UserActions  # noqa: F401

@@ -4,15 +4,104 @@
 
 {% block headtitle %}Edit media - {{PORTAL_NAME}}{% endblock headtitle %}
 
-{% block headermeta %}{% endblock headermeta %}
+{% block externallinks %}
+  {{ block.super }}
+
+     <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- jQuery UI -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"></script>
+
+{% endblock externallinks %}
+
+{% block headermeta %}
+{{ block.super }}
+<style>
+    .tag-helper-tip {
+      width: 100%;
+      padding: 6px 4px 8px;
+      font-size: 0.78rem;
+      color: #aaa;
+      border-bottom: 1px solid #333;
+      margin-bottom: 6px;
+      font-style: italic;
+    }
+    .tag-picker-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .tag-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 50vh;
+      margin-top: 4px;
+      border: 1px solid #444;
+      background: #fafafa;
+      z-index: 1000;
+      overflow: auto;
+      display: none;
+    }
+
+    .dark_theme .tag-dropdown {
+      background: #333;
+    }
+
+    .tag-dropdown-inner {
+      padding: 6px 6px 15px 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .tag-pill {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid #666;
+      cursor: pointer;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .tag-pill:hover {
+      background: #28a745;
+      border-color: #28a745;
+      color: #fff;
+    }
+    .no-tags-msg {
+      padding: 8px;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .tag-dropdown.is-open {
+      display: block;
+    }
+  </style>
+{% endblock headermeta %}
 
 {% block innercontent %}
-    <div class="user-action-form-wrap">
-			{% include "cms/media_nav.html" with active_tab="metadata" %}
-			<div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
-				{% csrf_token %}
-				{% crispy form %}
-			</div>
-	</div>
+  <div class="user-action-form-wrap">
+    {% include "cms/media_nav.html" with active_tab="metadata" %}
+
+    <div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
+      {% csrf_token %}
+      {% crispy form %}
+    </div>
+  </div>
+
+  <script>
+    window.DCSMHUB = window.DCSMHUB || {};
+    window.DCSMHUB.editMediaAvailableTags = {{ all_tag_titles_json|safe }};
+  </script>
+
+  <script src="{% static 'js/media_edit_tags.js' %}?v={{ VERSION }}"></script>
+
+  <script>
+    if (window.DCSMHUB && typeof window.DCSMHUB.initMediaEditTags === "function") {
+      window.DCSMHUB.initMediaEditTags();
+    }
+  </script>
 
 {% endblock innercontent %}

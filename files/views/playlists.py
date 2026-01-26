@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db.models import Q
 from drf_yasg import openapi
+from django.contrib.auth import get_user_model
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
@@ -13,17 +14,20 @@ from rest_framework.parsers import (
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
 
-from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
+from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor, IsPlaylistOwnerEditorOrShared
+from files.methods import is_mediacms_editor, is_mediacms_manager
 
 from ..models import Media, Playlist, PlaylistMedia
 from ..serializers import MediaSerializer, PlaylistDetailSerializer, PlaylistSerializer
 
+User = get_user_model()
 
 class PlaylistList(APIView):
     """Playlists listings and creation views"""
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorizedToAdd)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorizedToAdd, IsPlaylistOwnerEditorOrShared)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
     @swagger_auto_schema(
@@ -40,6 +44,29 @@ class PlaylistList(APIView):
         paginator = pagination_class()
         playlists = Playlist.objects.filter().prefetch_related("user")
 
+        # Start with all playlists
+        playlists = Playlist.objects.all().prefetch_related("user")
+        user = request.user
+
+        if user.is_authenticated:
+            # Editors / managers / superusers can see all playlists
+            if user.is_superuser or is_mediacms_editor(user) or is_mediacms_manager(user):
+                pass  # no extra filtering
+            else:
+                # Normal users see:
+                # - their own playlists
+                # - playlists shared with them as reader
+                # - playlists shared with them as editor
+                playlists = playlists.filter(
+                    Q(user=user)
+                    | Q(shared_readers=user)
+                    | Q(shared_editors=user)
+                ).distinct()
+        else:
+            # Anonymous users see nothing for now
+            playlists = Playlist.objects.none()
+
+        # Optional filter by author username (applied after visibility filter)
         if "author" in self.request.query_params:
             author = self.request.query_params["author"].strip()
             playlists = playlists.filter(user__username=author)
@@ -66,7 +93,7 @@ class PlaylistList(APIView):
 class PlaylistDetail(APIView):
     """Playlist related views"""
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor, IsPlaylistOwnerEditorOrShared)
     parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
 
     def get_playlist(self, friendly_token):
@@ -198,3 +225,197 @@ class PlaylistDetail(APIView):
 
         playlist.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class PlaylistShare(APIView):
+    """
+    Add a user as reader or editor on a playlist.
+    Only the playlist owner (or staff/editor/manager) can modify sharing.
+    """
+
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    def get_playlist(self, friendly_token):
+        try:
+            playlist = Playlist.objects.get(friendly_token=friendly_token)
+        except Playlist.DoesNotExist:
+            # 404 if playlist not found
+            raise NotFound({"detail": "Playlist does not exist"})
+
+        user = self.request.user
+
+        # Only owner or staff/editor/manager can modify sharing
+        if not (
+            user.is_authenticated
+            and (
+                user == playlist.user
+                or user.is_superuser
+                or is_mediacms_editor(user)
+                or is_mediacms_manager(user)
+            )
+        ):
+            # Return explicit 403 instead of raising PermissionDenied,
+            # so it's obvious this is our code, not global DRF permissions.
+            return Response(
+                {"detail": "You do not have permission to modify sharing for this playlist."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return playlist
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Playlists'],
+        operation_summary='Share playlist with a user',
+        operation_description='Add a user as reader or editor on a playlist.',
+    )
+    def put(self, request, friendly_token, format=None):
+        playlist = self.get_playlist(friendly_token)
+        # If get_playlist returned a Response (403), just bubble it up
+        if isinstance(playlist, Response):
+            return playlist
+
+        username = (request.data.get("user") or "").strip()
+        mode = (request.data.get("mode") or "").strip().lower()  # "reader" or "editor"
+
+        if not username or mode not in ("reader", "editor"):
+            return Response(
+                {"detail": "Fields 'user' and 'mode' (reader/editor) are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": f"User '{username}' does not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Owner already has full access
+        if target_user == playlist.user:
+            return Response(
+                {"detail": "Owner already has full access."},
+                status=status.HTTP_200_OK,
+            )
+
+        if mode == "reader":
+            playlist.shared_readers.add(target_user)
+        else:  # editor
+            playlist.shared_editors.add(target_user)
+            # Optional: also ensure they're in readers
+            playlist.shared_readers.add(target_user)
+
+        return Response(
+            {
+                "detail": "Sharing updated.",
+                "playlist": playlist.friendly_token,
+                "user": target_user.username,
+                "mode": mode,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PlaylistUnshare(APIView):
+    """
+    Remove a user as reader or editor on a playlist.
+    Only the playlist owner (or staff/editor/manager) can modify sharing.
+    """
+
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser, MultiPartParser, FormParser, FileUploadParser)
+
+    def get_playlist(self, friendly_token):
+        try:
+            playlist = Playlist.objects.get(friendly_token=friendly_token)
+        except Playlist.DoesNotExist:
+            raise NotFound({"detail": "Playlist does not exist"})
+
+        user = self.request.user
+
+        if not (
+            user.is_authenticated
+            and (
+                user == playlist.user
+                or user.is_superuser
+                or is_mediacms_editor(user)
+                or is_mediacms_manager(user)
+            )
+        ):
+            return Response(
+                {"detail": "You do not have permission to modify sharing for this playlist."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return playlist
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Playlists'],
+        operation_summary='Unshare playlist with a user',
+        operation_description='Remove a user from reader or editor access.',
+    )
+    def put(self, request, friendly_token, format=None):
+        playlist = self.get_playlist(friendly_token)
+        if isinstance(playlist, Response):
+            return playlist
+
+        username = (request.data.get("user") or "").strip()
+        mode = (request.data.get("mode") or "").strip().lower()
+
+        if not username or mode not in ("reader", "editor"):
+            return Response(
+                {"detail": "Fields 'user' and 'mode' (reader/editor) are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": f"User '{username}' does not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if mode == "reader":
+            playlist.shared_readers.remove(target_user)
+        else:  # editor
+            playlist.shared_editors.remove(target_user)
+
+        return Response(
+            {
+                "detail": "Sharing updated (user removed).",
+                "playlist": playlist.friendly_token,
+                "user": target_user.username,
+                "mode": mode,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+class UserSearch(APIView):
+    """
+    Lightweight username search for sharing.
+    Any authenticated user can search by username prefix.
+    """
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, format=None):
+        term = request.query_params.get("q", "").strip()
+        if not term or len(term) < 2:
+            return Response([], status=status.HTTP_200_OK)
+
+        qs = (
+            User.objects.filter(username__istartswith=term)
+            .order_by("username")
+        )[:10]
+
+        data = [
+            {
+                "username": u.username,
+                "full_name": u.get_full_name() or "",
+            }
+            for u in qs
+        ]
+        return Response(data, status=status.HTTP_200_OK)

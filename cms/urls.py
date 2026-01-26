@@ -2,11 +2,12 @@ import debug_toolbar
 from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 from django.views.generic.base import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
+from . import views 
 
 schema_view = get_schema_view(
     openapi.Info(title="MediaCMS API", default_version='v1', contact=openapi.Contact(url="https://mediacms.io"), x_logo={"url": "../../static/images/logo_dark.svg"}),
@@ -22,6 +23,9 @@ urlpatterns = [
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),
+    path("advanced_search/", views.advanced_search, name="advanced_search"),
+    path("advanced_search", views.advanced_search),
+    path("uploader/", include(("uploader.urls_dcsmhub", "uploader_dcsmhub"), namespace="uploader_dcsmhub")),
     re_path(r"^", include("files.urls")),
     re_path(r"^", include("users.urls")),
     re_path(r"^accounts/", include("allauth.urls")),

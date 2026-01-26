@@ -17,6 +17,8 @@ from django.core.files import File
 from django.db import DatabaseError
 from django.db.models import Q
 
+from uploader.tasks_import_from_metadata import run_import_media_from_metadata
+
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
 

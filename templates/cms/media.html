@@ -142,4 +142,13 @@
 
 {% block bottomimports %}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>
+        <script>
+            window.DCSMHUB = window.DCSMHUB || {};
+            window.DCSMHUB.mediaToken = "{{ media }}";
+            window.DCSMHUB.isEditor = {% if CAN_EDIT_MEDIA %}true{% else %}false{% endif %};
+            window.DCSMHUB.canDeleteMedia = {{ request.user.has_media_delete_permission|yesno:"true,false" }};
+        </script>
+        <link href="{% static 'css/media_manage_tags.css' %}?v={{ VERSION }}" rel="stylesheet">
+        <script src="{% static 'js/media_manage_tags.js' %}?v={{ VERSION }}"></script>
+        <script src="{% static 'js/media_hide_delete.js' %}?v={{ VERSION }}"></script>    
 {% endblock bottomimports %}

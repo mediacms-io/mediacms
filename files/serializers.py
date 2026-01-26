@@ -1,11 +1,11 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .methods import is_mediacms_editor
+from .methods import is_mediacms_editor, is_mediacms_manager
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
-# TODO: put them in a more DRY way
-
+User = get_user_model()  
 
 class MediaSerializer(serializers.ModelSerializer):
     # to be used in APIs as show related media
@@ -247,11 +247,21 @@ class PlaylistSerializer(serializers.ModelSerializer):
 class PlaylistDetailSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
 
+    shared_readers = serializers.SerializerMethodField()
+    shared_editors = serializers.SerializerMethodField()
+
     class Meta:
         model = Playlist
         read_only_fields = ("add_date", "user")
-        fields = ("title", "add_date", "user_thumbnail_url", "description", "user", "media_count", "url", "thumbnail_url")
+        fields = ("title", "add_date", "user_thumbnail_url", "description", "user", "media_count", "url", "thumbnail_url", "shared_readers", "shared_editors")
 
+    def get_shared_readers(self, obj):
+        # return list of usernames
+        return [u.username for u in obj.shared_readers.all().order_by("username")]
+
+    def get_shared_editors(self, obj):
+        # return list of usernames
+        return [u.username for u in obj.shared_editors.all().order_by("username")]
 
 class CommentSerializer(serializers.ModelSerializer):
     author_profile = serializers.ReadOnlyField(source="user.get_absolute_url")

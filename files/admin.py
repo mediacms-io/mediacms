@@ -21,6 +21,9 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+from django.urls import path
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
 
 
 class CommentAdmin(admin.ModelAdmin):
@@ -186,6 +189,81 @@ class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]
     list_display = ["title", "user", "media_count"]
     readonly_fields = ("user", "media_count")
+    change_form_template = 'admin/files/tag/change_form.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/merge/',
+                self.admin_site.admin_view(self.merge_tag),
+                name='files_tag_merge',
+            ),
+        ]
+        return custom_urls + urls
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """Ensure the change form template always receives `other_tags` for the merge select."""
+        extra = extra_context.copy() if extra_context else {}
+        tag = get_object_or_404(Tag, pk=object_id)
+        extra['other_tags'] = Tag.objects.exclude(pk=tag.pk).order_by('title')
+        return super().change_view(request, object_id, form_url, extra_context=extra)
+    def merge_tag(self, request, object_id):
+        tag = get_object_or_404(Tag, pk=object_id)
+
+        if not self.has_change_permission(request, tag):
+            messages.error(request, "Permission denied.")
+            return redirect('admin:files_tag_change', object_id=object_id)
+
+        other_tags = Tag.objects.exclude(pk=tag.pk).order_by('title')
+
+        if request.method == 'POST':
+            target_id = request.POST.get('target_tag')
+            if not target_id:
+                messages.error(request, "No target tag selected.")
+                return redirect('admin:files_tag_change', object_id=object_id)
+
+            try:
+                target = Tag.objects.get(pk=target_id)
+            except Tag.DoesNotExist:
+                messages.error(request, "Selected target tag does not exist.")
+                return redirect('admin:files_tag_change', object_id=object_id)
+
+            if target.pk == tag.pk:
+                messages.error(request, "Cannot merge a tag into itself.")
+                return redirect('admin:files_tag_change', object_id=object_id)
+
+            # Move Media relations from source tag to target tag
+            try:
+                with transaction.atomic():
+                    medias = Media.objects.filter(tags=tag)
+                    for m in medias:
+                        # add target (no-op if already present)
+                        m.tags.add(target)
+                        # remove source tag
+                        m.tags.remove(tag)
+
+                    # update counts (best-effort)
+                    try:
+                        target.update_tag_media()
+                    except Exception:
+                        pass
+                    try:
+                        tag.update_tag_media()
+                    except Exception:
+                        pass
+
+                    # delete the source tag now that relations moved
+                    tag.delete()
+
+                messages.success(request, f"Tag '{tag.title}' merged into '{target.title}'.")
+                return redirect('admin:files_tag_change', object_id=target.pk)
+            except Exception as e:
+                messages.error(request, f"Failed to merge tags: {e}")
+                return redirect('admin:files_tag_change', object_id=object_id)
+
+        # GET: redirect to the normal change view where `other_tags` is provided
+        return redirect('admin:files_tag_change', object_id=object_id)
 
 
 class EncodeProfileAdmin(admin.ModelAdmin):

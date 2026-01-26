@@ -87,6 +87,14 @@ urlpatterns = [
         views.CommentDetail.as_view(),
     ),
     re_path(
+        rf"^api/v1/media/{friendly_token}/tags$",
+        views.MediaTags.as_view(),
+    ),
+    re_path(
+        rf"^api/v1/media/{friendly_token}/manage_tags$",
+        views.MediaManageTags.as_view(),
+    ),
+    re_path(
         rf"^api/v1/media/{friendly_token}/comments/(?P<uid>[\w-]*)$",
         views.CommentDetail.as_view(),
     ),
@@ -97,6 +105,43 @@ urlpatterns = [
         views.PlaylistDetail.as_view(),
         name="api_get_playlist",
     ),
+
+    # Playlist sharing (owner-only)
+    re_path(
+        rf"^api/v1/playlists/{friendly_token}/share$",
+        views.PlaylistShare.as_view(),
+        name="api_playlist_share",
+    ),
+    re_path(
+        rf"^api/v1/playlists/{friendly_token}/share/$",
+        views.PlaylistShare.as_view(),
+        name="api_playlist_share_slash",
+    ),
+    re_path(
+        rf"^api/v1/playlists/{friendly_token}/unshare$",
+        views.PlaylistUnshare.as_view(),
+        name="api_playlist_unshare",
+    ),
+    re_path(
+        rf"^api/v1/playlists/{friendly_token}/unshare/$",
+        views.PlaylistUnshare.as_view(),
+        name="api_playlist_unshare_slash",
+    ),
+
+    re_path(
+        rf"^api/playlists/{friendly_token}/share/$",
+        views.PlaylistShare.as_view(),
+        name="api_playlist_share_compat",
+    ),
+    re_path(
+        rf"^api/playlists/{friendly_token}/unshare/$",
+        views.PlaylistUnshare.as_view(),
+        name="api_playlist_unshare_compat",
+    ),
+
+    re_path(r"^api/v1/users/search$", views.UserSearch.as_view(), name="api_user_search"),
+
+
     re_path(r"^api/v1/user/action/(?P<action>[\w]*)$", views.UserActions.as_view()),
     # ADMIN VIEWS
     re_path(r"^api/v1/encode_profiles/$", views.EncodeProfileList.as_view()),

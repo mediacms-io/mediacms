@@ -43,6 +43,9 @@ class User(AbstractUser):
     is_manager = models.BooleanField("MediaCMS Manager", default=False, db_index=True)
     allow_contact = models.BooleanField("Whether allow contact will be shown on profile page", default=False)
 
+    # DC custom property
+    can_delete_media = models.BooleanField("DC SM can delete media", default=False)
+
     class Meta:
         ordering = ["-date_added", "name"]
         indexes = [models.Index(fields=["-date_added", "name"])]
@@ -110,7 +113,7 @@ class User(AbstractUser):
         return ret
 
     def save(self, *args, **kwargs):
-        strip_text_items = ["name", "description", "title"]
+        strip_text_items = ["name", "title"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
         super(User, self).save(*args, **kwargs)
@@ -149,6 +152,9 @@ class User(AbstractUser):
         ).exists()
 
         return media_permission_exists
+
+    def has_media_delete_permission(self):
+        return self.is_superuser or self.can_delete_media
 
     def has_contributor_access_to_media(self, media):
         # First check if user is the owner
@@ -253,7 +259,7 @@ class Channel(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        strip_text_items = ["description", "title"]
+        strip_text_items = ["title"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
 

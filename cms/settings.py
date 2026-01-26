@@ -182,6 +182,11 @@ STATIC_ROOT = BASE_DIR + "/static/"
 # where uploaded + encoded media are stored
 MEDIA_ROOT = BASE_DIR + "/media_files/"
 
+STATICFILES_DIRS = [
+    BASE_DIR + "/frontend/dist/static",
+    BASE_DIR + "/cms/static",
+]
+
 # these used to be os.path.join(MEDIA_ROOT, "folder/") but update to
 # Django 3.1.9 requires not absolute paths to be utilized...
 
@@ -385,18 +390,68 @@ if not os.path.isfile(error_filename):
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+
+    "formatters": {
+        "verbose_with_user": {
+            "format": (
+                "%(asctime)s "
+                "[%(levelname)s] "
+                "[user=%(username)s session=%(session_key)s] "
+                "%(name)s: %(message)s"
+            ),
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+
+    "filters": {
+        "request_info": {
+            "()": "cms.logging.RequestInfoFilter",
+        },
+    },
+
     "handlers": {
+        # Existing error logger
         "file": {
             "level": "ERROR",
             "class": "logging.FileHandler",
             "filename": error_filename,
         },
+
+        # debug log
+        "debug_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": error_filename,
+            "formatter": "verbose_with_user",
+            "filters": ["request_info"],
+        },
     },
     "loggers": {
+        # Django framework errors (keep as is)
         "django": {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True,
+        },
+
+        # log all debug
+        # e.g. cms.views, uploader, dcsmhub_tags, etc.
+        "cms": {
+            "handlers": ["debug_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+
+        # optional: if you want logs from files app or uploader too
+        "files": {
+            "handlers": ["debug_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "uploader": {
+            "handlers": ["debug_file"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }
@@ -438,11 +493,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     "get_list_of_popular_media": {
         "task": "get_list_of_popular_media",
-        "schedule": crontab(minute=1, hour="*/10"),
+        "schedule": crontab(minute="*/45"),
     },
     "update_listings_thumbnails": {
         "task": "update_listings_thumbnails",
-        "schedule": crontab(minute=2, hour="*/30"),
+        "schedule": crontab(minute="2,32"),
     },
 }
 # TODO: beat, delete chunks from media root
@@ -650,3 +705,6 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+# ACSN: Try to work around bulk submissions in admin screen .... out of box, Django limits 1000
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
