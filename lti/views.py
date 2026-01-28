@@ -11,6 +11,7 @@ Implements the LTI 1.3 / LTI Advantage flow:
 """
 
 import json
+import logging
 import traceback
 import uuid
 from urllib.parse import urlencode
@@ -46,6 +47,8 @@ from .handlers import (
 from .keys import get_jwks
 from .models import LTILaunchLog, LTIPlatform, LTIResourceLink, LTIToolKeys
 from .services import LTINRPSClient
+
+logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request):
@@ -133,6 +136,12 @@ class OIDCLoginView(View):
 
                     redirect_url = f"{platform.auth_login_url}?{urlencode(params)}"
 
+                    # Debug logging for filter launches
+                    logger.error(f"[OIDC LOGIN DEBUG] Redirecting to: {redirect_url}")
+                    logger.error(f"[OIDC LOGIN DEBUG] Has lti_message_hint: {bool(lti_message_hint)}")
+                    logger.error(f"[OIDC LOGIN DEBUG] Has media_friendly_token: {bool(media_friendly_token)}")
+                    logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
+
                 return HttpResponseRedirect(redirect_url)
             except Exception:
                 raise
@@ -215,10 +224,10 @@ class LaunchView(View):
             custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
 
             # DEBUG: Log custom claims to see what we're receiving
-            print(f"[Launch] Custom claims received: {custom_claims}")
-            print(f"[Launch] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
+            logger.error(f"[LTI LAUNCH DEBUG] Custom claims received: {custom_claims}")
+            logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
             if custom_claims.get('media_friendly_token'):
-                print(f"[Launch] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
+                logger.error(f"[LTI LAUNCH DEBUG] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
 
             lti_message_hint_str = custom_claims.get('lti_message_hint', '')
             if lti_message_hint_str:
