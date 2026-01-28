@@ -10,7 +10,6 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
-import json
 import logging
 import traceback
 import uuid
@@ -237,24 +236,31 @@ class LaunchView(View):
             create_lti_session(request, user, message_launch, platform)
 
             # Check for media_friendly_token in custom claims
-            if custom_claims.get('media_friendly_token'):
-                logger.error(f"[LTI LAUNCH DEBUG] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
+            media_token = custom_claims.get('media_friendly_token')
+            if media_token:
+                logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
 
-            lti_message_hint_str = custom_claims.get('lti_message_hint', '')
-            if lti_message_hint_str:
-                try:
-                    message_hint_data = json.loads(lti_message_hint_str)
-                    if isinstance(message_hint_data, dict):
-                        # Store in session for later use
-                        if 'lti_session' in request.session:
-                            request.session['lti_session']['message_hint'] = message_hint_data
-                            request.session.modified = True
-                except (json.JSONDecodeError, ValueError):
-                    pass
+            # Check if media token was passed via OIDC session data (from filter launch)
+            # The state from the OIDC flow is used to retrieve session data
+            state = request.POST.get('state')
+            if state and not media_token:
+                session_key = f'state-{state}'
+                launch_session_data = request.session.get(session_key, {})
+                logger.error(f"[LTI LAUNCH DEBUG] Checking OIDC session data for state {state}: {launch_session_data}")
+                media_token = launch_session_data.get('media_friendly_token')
+                if media_token:
+                    logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in OIDC session data: {media_token}")
+
+            # Store media_token in session for determine_redirect to use
+            if media_token:
+                request.session['filter_media_token'] = media_token
+                request.session.modified = True
+                logger.error(f"[LTI LAUNCH DEBUG] Stored media_token in session: {media_token}")
 
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
+            logger.error(f"[LTI LAUNCH DEBUG] Redirecting to: {redirect_url}")
 
             return HttpResponseRedirect(redirect_url)
 

@@ -67,29 +67,23 @@ $instance->instructorchoicesendname = 1;
 $instance->instructorchoicesendemailaddr = 1;
 $instance->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
 
-// Add custom parameters for media token
-$instance->instructorcustomparameters = "media_friendly_token={$mediatoken}";
-
-// Get type config and merge in our custom parameters
+// Get type config
 $typeconfig = lti_get_type_type_config($ltitoolid);
 
-// Add custom parameters to typeconfig to ensure they're included in the launch
-// typeconfig might be an array or object, handle both cases
-if (is_array($typeconfig)) {
-    if (!isset($typeconfig['customparameters'])) {
-        $typeconfig['customparameters'] = '';
-    }
-    $typeconfig['customparameters'] .= "\nmedia_friendly_token={$mediatoken}";
-} else {
-    if (!isset($typeconfig->customparameters)) {
-        $typeconfig->customparameters = '';
-    }
-    $typeconfig->customparameters .= "\nmedia_friendly_token={$mediatoken}";
+// Store media token in session so we can add it to lti_message_hint
+// This is how Moodle passes extra data through the LTI launch
+$launchid = 'filter_mediacms_' . uniqid();
+if (!isset($SESSION->lti_initiatelogin_data)) {
+    $SESSION->lti_initiatelogin_data = [];
 }
+$SESSION->lti_initiatelogin_data[$launchid] = [
+    'media_friendly_token' => $mediatoken,
+    'courseid' => $courseid,
+];
 
 // Use Moodle's LTI launch function to initiate OIDC properly
-// This ensures Moodle generates and tracks the state/nonce
-$content = lti_initiate_login($course->id, null, $instance, $typeconfig, null, 'MediaCMS video resource');
+// Pass the launchid so Moodle includes it in lti_message_hint
+$content = lti_initiate_login($course->id, $launchid, $instance, $typeconfig, null, 'MediaCMS video resource');
 
 echo $OUTPUT->header();
 echo $content;
