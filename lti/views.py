@@ -205,6 +205,17 @@ class LaunchView(View):
             logger.error(f"[LTI LAUNCH DEBUG] Full launch_data keys: {list(launch_data.keys())}")
             logger.error(f"[LTI LAUNCH DEBUG] Launch data has custom claim: {'https://purl.imsglobal.org/spec/lti/claim/custom' in launch_data}")
 
+            # Extract and log custom claims EARLY before any other processing
+            try:
+                custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
+                logger.error(f"[LTI LAUNCH DEBUG] Custom claims type: {type(custom_claims)}")
+                logger.error(f"[LTI LAUNCH DEBUG] Custom claims keys: {list(custom_claims.keys()) if isinstance(custom_claims, dict) else 'not a dict'}")
+                logger.error(f"[LTI LAUNCH DEBUG] Custom claims full content: {custom_claims}")
+                logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
+            except Exception as e:
+                logger.error(f"[LTI LAUNCH DEBUG] Error getting custom claims: {e}")
+                custom_claims = {}
+
             resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
             resource_link_id = resource_link.get('id', 'default')
             roles = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
@@ -225,14 +236,7 @@ class LaunchView(View):
 
             create_lti_session(request, user, message_launch, platform)
 
-            # Extract and store message hint data if present (for filter-based launches)
-            custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
-
-            # DEBUG: Log custom claims to see what we're receiving
-            logger.error(f"[LTI LAUNCH DEBUG] Custom claims type: {type(custom_claims)}")
-            logger.error(f"[LTI LAUNCH DEBUG] Custom claims keys: {list(custom_claims.keys()) if isinstance(custom_claims, dict) else 'not a dict'}")
-            logger.error(f"[LTI LAUNCH DEBUG] Custom claims full content: {custom_claims}")
-            logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
+            # Check for media_friendly_token in custom claims
             if custom_claims.get('media_friendly_token'):
                 logger.error(f"[LTI LAUNCH DEBUG] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
 
