@@ -213,6 +213,13 @@ class LaunchView(View):
 
             # Extract and store message hint data if present (for filter-based launches)
             custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
+
+            # DEBUG: Log custom claims to see what we're receiving
+            print(f"[Launch] Custom claims received: {custom_claims}")
+            print(f"[Launch] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
+            if custom_claims.get('media_friendly_token'):
+                print(f"[Launch] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
+
             lti_message_hint_str = custom_claims.get('lti_message_hint', '')
             if lti_message_hint_str:
                 try:
