@@ -237,10 +237,12 @@ class LaunchView(View):
 
             # Check for media_friendly_token in custom claims
             media_token = custom_claims.get('media_friendly_token')
+            logger.error(f"[LTI LAUNCH DEBUG] media_token from custom_claims: {media_token}")
             if media_token:
                 logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
 
             # Check if media token was passed via target_link_uri query parameter (from filter launch)
+            logger.error(f"[LTI LAUNCH DEBUG] About to check target_link_uri, media_token is: {media_token}")
             if not media_token:
                 target_link_uri = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/target_link_uri', '')
                 logger.error(f"[LTI LAUNCH DEBUG] target_link_uri: {target_link_uri}")
