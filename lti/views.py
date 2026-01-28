@@ -240,16 +240,18 @@ class LaunchView(View):
             if media_token:
                 logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
 
-            # Check if media token was passed via OIDC session data (from filter launch)
-            # The state from the OIDC flow is used to retrieve session data
-            state = request.POST.get('state')
-            if state and not media_token:
-                session_key = f'state-{state}'
-                launch_session_data = request.session.get(session_key, {})
-                logger.error(f"[LTI LAUNCH DEBUG] Checking OIDC session data for state {state}: {launch_session_data}")
-                media_token = launch_session_data.get('media_friendly_token')
-                if media_token:
-                    logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in OIDC session data: {media_token}")
+            # Check if media token was passed via target_link_uri query parameter (from filter launch)
+            if not media_token:
+                target_link_uri = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/target_link_uri', '')
+                logger.error(f"[LTI LAUNCH DEBUG] target_link_uri: {target_link_uri}")
+                if '?media_token=' in target_link_uri or '&media_token=' in target_link_uri:
+                    from urllib.parse import parse_qs, urlparse
+
+                    parsed = urlparse(target_link_uri)
+                    params = parse_qs(parsed.query)
+                    media_token = params.get('media_token', [None])[0]
+                    if media_token:
+                        logger.error(f"[LTI LAUNCH DEBUG] Found media_token in target_link_uri: {media_token}")
 
             # Store media_token in session for determine_redirect to use
             if media_token:

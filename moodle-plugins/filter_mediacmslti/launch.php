@@ -70,20 +70,27 @@ $instance->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
 // Get type config
 $typeconfig = lti_get_type_type_config($ltitoolid);
 
-// Store media token in session so we can add it to lti_message_hint
-// This is how Moodle passes extra data through the LTI launch
-$launchid = 'filter_mediacms_' . uniqid();
-if (!isset($SESSION->lti_initiatelogin_data)) {
-    $SESSION->lti_initiatelogin_data = [];
+// Override the tool URL to include media token as query parameter
+// This way MediaCMS receives it in the target_link_uri
+if (is_array($typeconfig)) {
+    $baseurl = $typeconfig['toolurl'] ?? $mediacmsurl . '/lti/launch/';
+    $typeconfig['toolurl'] = $baseurl . '?media_token=' . urlencode($mediatoken);
+    if (isset($typeconfig['toolurl_secure'])) {
+        $baseurl_secure = $typeconfig['toolurl_secure'];
+        $typeconfig['toolurl_secure'] = $baseurl_secure . '?media_token=' . urlencode($mediatoken);
+    }
+} else {
+    $baseurl = $typeconfig->toolurl ?? $mediacmsurl . '/lti/launch/';
+    $typeconfig->toolurl = $baseurl . '?media_token=' . urlencode($mediatoken);
+    if (isset($typeconfig->toolurl_secure)) {
+        $baseurl_secure = $typeconfig->toolurl_secure;
+        $typeconfig->toolurl_secure = $baseurl_secure . '?media_token=' . urlencode($mediatoken);
+    }
 }
-$SESSION->lti_initiatelogin_data[$launchid] = [
-    'media_friendly_token' => $mediatoken,
-    'courseid' => $courseid,
-];
 
 // Use Moodle's LTI launch function to initiate OIDC properly
-// Pass the launchid so Moodle includes it in lti_message_hint
-$content = lti_initiate_login($course->id, $launchid, $instance, $typeconfig, null, 'MediaCMS video resource');
+// Pass null for cmid since we don't have a real course module
+$content = lti_initiate_login($course->id, null, $instance, $typeconfig, null, 'MediaCMS video resource');
 
 echo $OUTPUT->header();
 echo $content;
