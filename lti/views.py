@@ -170,6 +170,8 @@ class LaunchView(View):
         error_message = ''
         claims = {}
 
+        logger.error("[LTI LAUNCH DEBUG] Launch view POST called")
+
         try:
             id_token = request.POST.get('id_token')
             if not id_token:
@@ -200,6 +202,9 @@ class LaunchView(View):
             launch_data = message_launch.get_launch_data()
             claims = self.sanitize_claims(launch_data)
 
+            logger.error(f"[LTI LAUNCH DEBUG] Full launch_data keys: {list(launch_data.keys())}")
+            logger.error(f"[LTI LAUNCH DEBUG] Launch data has custom claim: {'https://purl.imsglobal.org/spec/lti/claim/custom' in launch_data}")
+
             resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
             resource_link_id = resource_link.get('id', 'default')
             roles = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
@@ -224,7 +229,9 @@ class LaunchView(View):
             custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
 
             # DEBUG: Log custom claims to see what we're receiving
-            logger.error(f"[LTI LAUNCH DEBUG] Custom claims received: {custom_claims}")
+            logger.error(f"[LTI LAUNCH DEBUG] Custom claims type: {type(custom_claims)}")
+            logger.error(f"[LTI LAUNCH DEBUG] Custom claims keys: {list(custom_claims.keys()) if isinstance(custom_claims, dict) else 'not a dict'}")
+            logger.error(f"[LTI LAUNCH DEBUG] Custom claims full content: {custom_claims}")
             logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
             if custom_claims.get('media_friendly_token'):
                 logger.error(f"[LTI LAUNCH DEBUG] media_friendly_token value: {custom_claims.get('media_friendly_token')}")
