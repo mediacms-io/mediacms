@@ -77,13 +77,6 @@ class OIDCLoginView(View):
     def handle_oidc_login(self, request):
         """Handle OIDC login initiation"""
         try:
-            # Ensure session exists and has a session key
-            if not request.session.session_key:
-                request.session.create()
-                logger.error(f"[OIDC LOGIN DEBUG] Created new session: {request.session.session_key}")
-            else:
-                logger.error(f"[OIDC LOGIN DEBUG] Using existing session: {request.session.session_key}")
-
             target_link_uri = request.GET.get('target_link_uri') or request.POST.get('target_link_uri')
             iss = request.GET.get('iss') or request.POST.get('iss')
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
@@ -155,10 +148,7 @@ class OIDCLoginView(View):
                     logger.error(f"[OIDC LOGIN DEBUG] Has media_friendly_token: {bool(media_friendly_token)}")
                     logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
 
-                response = HttpResponseRedirect(redirect_url)
-                # Ensure session is saved (state is now in cache, so this is for other session data)
-                request.session.save()
-                return response
+                return HttpResponseRedirect(redirect_url)
             except Exception:
                 raise
 
