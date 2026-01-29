@@ -118,22 +118,17 @@ class DjangoSessionService:
 
     def save_launch_data(self, key, data):
         """Save launch data to session and cache (for state keys)"""
-        # For state keys, save to both session and cache
+        # Always save to session first
+        session_key = self._session_key_prefix + key
+        self.request.session[session_key] = json.dumps(data)
+        self.request.session.modified = True
+
+        # For state keys, ALSO save to cache as backup (for cross-site cookie issues)
         if key.startswith('state-'):
             cache_key = self._cache_prefix + key
             # Store in cache for 10 minutes (longer than typical LTI flow)
             cache.set(cache_key, json.dumps(data), timeout=600)
 
-        # Also save to session
-        session_key = self._session_key_prefix + key
-        self.request.session[session_key] = json.dumps(data)
-        self.request.session.modified = True
-        # Force immediate session save for concurrent requests
-        try:
-            self.request.session.save()
-        except Exception:
-            # If session save fails, we still have cache
-            pass
         return True
 
     def check_launch_data_storage_exists(self, key):
