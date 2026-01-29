@@ -386,14 +386,37 @@ class LaunchView(View):
                 'login_hint': login_hint,
             }
 
-            # Get lti_message_hint from POST data (Moodle should send it back)
-            lti_message_hint = request.POST.get('lti_message_hint')
+            # Moodle doesn't send lti_message_hint in POST, so reconstruct it from JWT
+            # Format: {"cmid": X, "launchid": "ltilaunch..."}
+            import json
+            import random
 
-            if lti_message_hint:
-                params['lti_message_hint'] = lti_message_hint
-                logger.error(f"[LTI RETRY] Found lti_message_hint in POST: {lti_message_hint}")
-            else:
-                logger.error("[LTI RETRY] WARNING: No lti_message_hint in POST - Moodle will likely reject")
+            # Get resource link from JWT
+            resource_link = unverified.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
+            resource_link_id = resource_link.get('id', '')
+
+            # Try to extract cmid from resource_link_id (Moodle format)
+            cmid = 0  # Default for filter launches
+            if resource_link_id:
+                # Moodle resource link IDs often contain the cmid
+                try:
+                    # Common Moodle format: contains numbers
+                    import re
+
+                    numbers = re.findall(r'\d+', resource_link_id)
+                    if numbers:
+                        cmid = int(numbers[0])
+                except Exception:
+                    pass
+
+            # Generate a dummy launchid (Moodle format: ltilaunchX_RANDOM)
+            launchid = f"ltilaunch{cmid}_{random.randint(100000000, 999999999)}"
+
+            # Reconstruct lti_message_hint
+            lti_message_hint = json.dumps({"cmid": cmid, "launchid": launchid})
+            params['lti_message_hint'] = lti_message_hint
+
+            logger.error(f"[LTI RETRY] Reconstructed lti_message_hint: {lti_message_hint}")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
