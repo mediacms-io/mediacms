@@ -156,19 +156,8 @@ class OIDCLoginView(View):
                     logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
 
                 response = HttpResponseRedirect(redirect_url)
-                # Ensure session cookie is set in response
-                if request.session.session_key:
-                    response.set_cookie(
-                        key=request.session.cookie_name,
-                        value=request.session.session_key,
-                        max_age=request.session.get_expiry_age(),
-                        expires=request.session.get_expiry_date(),
-                        domain=request.session.get_cookie_domain(),
-                        path=request.session.get_cookie_path(),
-                        secure=request.session.cookie_secure,
-                        httponly=request.session.cookie_httponly,
-                        samesite=request.session.cookie_samesite,
-                    )
+                # Ensure session is saved (state is now in cache, so this is for other session data)
+                request.session.save()
                 return response
             except Exception:
                 raise
