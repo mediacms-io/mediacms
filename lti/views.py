@@ -116,14 +116,7 @@ class OIDCLoginView(View):
                     if cmid:
                         launch_data['cmid'] = cmid
 
-                    logger.error(f"[OIDC LOGIN DEBUG] Generated state: {state}")
-                    logger.error(f"[OIDC LOGIN DEBUG] Saving launch data with media_friendly_token: {launch_data.get('media_friendly_token')}")
-
                     session_service.save_launch_data(f'state-{state}', launch_data)
-
-                    # Verify state was saved
-                    saved_data = session_service.get_launch_data(f'state-{state}')
-                    logger.error(f"[OIDC LOGIN DEBUG] Verified saved state data: {saved_data}")
 
                     params = {
                         'response_type': 'id_token',
@@ -180,10 +173,6 @@ class LaunchView(View):
 
         try:
             id_token = request.POST.get('id_token')
-            state = request.POST.get('state')
-
-            logger.error(f"[LTI LAUNCH DEBUG] Received state: {state}")
-
             if not id_token:
                 raise ValueError("Missing id_token in launch request")
 
@@ -201,12 +190,6 @@ class LaunchView(View):
 
             session_service = DjangoSessionService(request)
             cookie_service = DjangoSessionService(request)
-
-            # Retrieve stored OIDC login data using state parameter
-            stored_oidc_data = None
-            if state:
-                stored_oidc_data = session_service.get_launch_data(f'state-{state}')
-                logger.error(f"[LTI LAUNCH DEBUG] Retrieved stored OIDC data: {stored_oidc_data}")
 
             class CustomMessageLaunch(MessageLaunch):
                 def _get_request_param(self, key):
@@ -252,17 +235,14 @@ class LaunchView(View):
 
             create_lti_session(request, user, message_launch, platform)
 
-            # Check for media_friendly_token in multiple places:
-            # 1. Custom claims (from Moodle LTI configuration)
+            # Check for media_friendly_token in custom claims
             media_token = custom_claims.get('media_friendly_token')
             logger.error(f"[LTI LAUNCH DEBUG] media_token from custom_claims: {media_token}")
+            if media_token:
+                logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
 
-            # 2. Stored OIDC data (from filter-based launches)
-            if not media_token and stored_oidc_data:
-                media_token = stored_oidc_data.get('media_friendly_token')
-                logger.error(f"[LTI LAUNCH DEBUG] media_token from stored OIDC data: {media_token}")
-
-            # 3. Target link URI query parameters (fallback)
+            # Check if media token was passed via target_link_uri query parameter (from filter launch)
+            logger.error(f"[LTI LAUNCH DEBUG] About to check target_link_uri, media_token is: {media_token}")
             if not media_token:
                 target_link_uri = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/target_link_uri', '')
                 logger.error(f"[LTI LAUNCH DEBUG] target_link_uri: {target_link_uri}")
