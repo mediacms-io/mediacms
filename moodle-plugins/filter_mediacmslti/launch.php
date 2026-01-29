@@ -67,30 +67,16 @@ $instance->instructorchoicesendname = 1;
 $instance->instructorchoicesendemailaddr = 1;
 $instance->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
 
-// Get type config
+// Set custom parameters to pass media token (like deep linking does)
+// This will be included in the LTI custom claims JWT
+$instance->instructorcustomparameters = "media_friendly_token=" . $mediatoken;
+
+// Get type config (standard tool URL, no modifications needed)
 $typeconfig = lti_get_type_type_config($ltitoolid);
 
-// Override the tool URL to include media token as query parameter
-// This way MediaCMS receives it in the target_link_uri
-if (is_array($typeconfig)) {
-    $baseurl = $typeconfig['toolurl'] ?? $mediacmsurl . '/lti/launch/';
-    $typeconfig['toolurl'] = $baseurl . '?media_token=' . urlencode($mediatoken);
-    if (isset($typeconfig['toolurl_secure'])) {
-        $baseurl_secure = $typeconfig['toolurl_secure'];
-        $typeconfig['toolurl_secure'] = $baseurl_secure . '?media_token=' . urlencode($mediatoken);
-    }
-} else {
-    $baseurl = $typeconfig->toolurl ?? $mediacmsurl . '/lti/launch/';
-    $typeconfig->toolurl = $baseurl . '?media_token=' . urlencode($mediatoken);
-    if (isset($typeconfig->toolurl_secure)) {
-        $baseurl_secure = $typeconfig->toolurl_secure;
-        $typeconfig->toolurl_secure = $baseurl_secure . '?media_token=' . urlencode($mediatoken);
-    }
-}
-
 // Use Moodle's LTI launch function to initiate OIDC properly
-// Pass null for cmid since we don't have a real course module
-$content = lti_initiate_login($course->id, null, $instance, $typeconfig, null, 'MediaCMS video resource');
+// Pass 0 as dummy cmid since we don't have a real course module
+$content = lti_initiate_login($course->id, 0, $instance, $typeconfig, null, 'MediaCMS video resource');
 
 echo $OUTPUT->header();
 echo $content;

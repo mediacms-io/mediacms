@@ -82,7 +82,6 @@ class OIDCLoginView(View):
             client_id = request.GET.get('client_id') or request.POST.get('client_id')
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
-            media_friendly_token = request.GET.get('media_friendly_token') or request.POST.get('media_friendly_token')
             cmid = request.GET.get('cmid') or request.POST.get('cmid')
 
             if not all([target_link_uri, iss, client_id]):
@@ -110,10 +109,8 @@ class OIDCLoginView(View):
                     nonce = str(uuid.uuid4())
 
                     launch_data = {'target_link_uri': target_link_uri, 'nonce': nonce}
-                    # Store media token and cmid if provided (for filter-based launches)
-                    if media_friendly_token:
-                        launch_data['media_friendly_token'] = media_friendly_token
-                    if cmid:
+                    # Store cmid if provided (including 0 for filter-based launches)
+                    if cmid is not None:
                         launch_data['cmid'] = cmid
 
                     session_service.save_launch_data(f'state-{state}', launch_data)
@@ -138,7 +135,6 @@ class OIDCLoginView(View):
                     # Debug logging for filter launches
                     logger.error(f"[OIDC LOGIN DEBUG] Redirecting to: {redirect_url}")
                     logger.error(f"[OIDC LOGIN DEBUG] Has lti_message_hint: {bool(lti_message_hint)}")
-                    logger.error(f"[OIDC LOGIN DEBUG] Has media_friendly_token: {bool(media_friendly_token)}")
                     logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
 
                 return HttpResponseRedirect(redirect_url)
@@ -235,31 +231,10 @@ class LaunchView(View):
 
             create_lti_session(request, user, message_launch, platform)
 
-            # Check for media_friendly_token in custom claims
+            # Check for media_friendly_token in custom claims (for both deep linking and filter launches)
             media_token = custom_claims.get('media_friendly_token')
-            logger.error(f"[LTI LAUNCH DEBUG] media_token from custom_claims: {media_token}")
             if media_token:
                 logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
-
-            # Check if media token was passed via target_link_uri query parameter (from filter launch)
-            logger.error(f"[LTI LAUNCH DEBUG] About to check target_link_uri, media_token is: {media_token}")
-            if not media_token:
-                target_link_uri = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/target_link_uri', '')
-                logger.error(f"[LTI LAUNCH DEBUG] target_link_uri: {target_link_uri}")
-                if '?media_token=' in target_link_uri or '&media_token=' in target_link_uri:
-                    from urllib.parse import parse_qs, urlparse
-
-                    parsed = urlparse(target_link_uri)
-                    params = parse_qs(parsed.query)
-                    media_token = params.get('media_token', [None])[0]
-                    if media_token:
-                        logger.error(f"[LTI LAUNCH DEBUG] Found media_token in target_link_uri: {media_token}")
-
-            # Store media_token in session for determine_redirect to use
-            if media_token:
-                request.session['filter_media_token'] = media_token
-                request.session.modified = True
-                logger.error(f"[LTI LAUNCH DEBUG] Stored media_token in session: {media_token}")
 
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
@@ -295,11 +270,8 @@ class LaunchView(View):
                 custom_path = '/' + custom_path
             return custom_path
 
+        # Check custom claims for media token (from both deep linking and filter launches)
         media_id = custom.get('media_id') or custom.get('media_friendly_token')
-
-        # Also check session for media token (from filter-based launches)
-        if not media_id and hasattr(self, 'request'):
-            media_id = self.request.session.get('filter_media_token')
 
         if media_id:
             try:
