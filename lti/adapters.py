@@ -95,39 +95,80 @@ class DjangoMessageLaunch:
 
 
 class DjangoSessionService:
-    """Launch data storage using Django sessions"""
+    """Launch data storage using Django sessions with cache fallback for state"""
 
     def __init__(self, request):
         self.request = request
         self._session_key_prefix = 'lti1p3_'
+        self._cache_prefix = 'lti1p3_cache_'
 
     def get_launch_data(self, key):
-        """Get launch data from session"""
+        """Get launch data from session or cache (for state keys)"""
+        # For state keys, try cache first (more reliable for cross-site flows)
+        if key.startswith('state-'):
+            cache_key = self._cache_prefix + key
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return json.loads(cached_data) if isinstance(cached_data, str) else cached_data
+
+        # Try session
         session_key = self._session_key_prefix + key
         data = self.request.session.get(session_key)
         return json.loads(data) if data else None
 
     def save_launch_data(self, key, data):
-        """Save launch data to session"""
+        """Save launch data to session and cache (for state keys)"""
+        # For state keys, save to both session and cache
+        if key.startswith('state-'):
+            cache_key = self._cache_prefix + key
+            # Store in cache for 10 minutes (longer than typical LTI flow)
+            cache.set(cache_key, json.dumps(data), timeout=600)
+
+        # Also save to session
         session_key = self._session_key_prefix + key
         self.request.session[session_key] = json.dumps(data)
         self.request.session.modified = True
+        # Force immediate session save for concurrent requests
+        try:
+            self.request.session.save()
+        except Exception:
+            # If session save fails, we still have cache
+            pass
         return True
 
     def check_launch_data_storage_exists(self, key):
-        """Check if launch data exists in session"""
+        """Check if launch data exists in session or cache"""
+        # For state keys, check cache first
+        if key.startswith('state-'):
+            cache_key = self._cache_prefix + key
+            if cache.get(cache_key) is not None:
+                return True
+
+        # Check session
         session_key = self._session_key_prefix + key
         return session_key in self.request.session
 
     def check_state_is_valid(self, state, nonce):
         """Check if state is valid - state is for CSRF protection, nonce is validated separately by JWT"""
+        import logging
+
+        logger = logging.getLogger(__name__)
+
         state_key = f'state-{state}'
+        logger.error(f"[STATE VALIDATION] Checking state: {state}")
+        logger.error(f"[STATE VALIDATION] Looking for session key: {self._session_key_prefix + state_key}")
+
+        # List all session keys for debugging
+        all_keys = [k for k in self.request.session.keys() if k.startswith(self._session_key_prefix)]
+        logger.error(f"[STATE VALIDATION] All LTI session keys: {all_keys}")
 
         state_data = self.get_launch_data(state_key)
 
         if not state_data:
+            logger.error("[STATE VALIDATION] State NOT found in session")
             return False
 
+        logger.error(f"[STATE VALIDATION] State found successfully: {state_data}")
         # State exists - that's sufficient for CSRF protection
         # Nonce validation is handled by PyLTI1p3 through JWT signature and claims validation
         return True
@@ -136,12 +177,25 @@ class DjangoSessionService:
         """Check if nonce is valid (not used before) and mark it as used"""
         nonce_key = f'nonce-{nonce}'
 
+        # Use cache for nonce checking (more reliable for cross-site flows)
+        cache_key = self._cache_prefix + nonce_key
+
         # Check if nonce was already used
-        if self.check_launch_data_storage_exists(nonce_key):
+        if cache.get(cache_key) is not None:
             return False
 
-        # Mark nonce as used
-        self.save_launch_data(nonce_key, {'used': True})
+        # Mark nonce as used in cache (expires in 10 minutes)
+        cache.set(cache_key, json.dumps({'used': True}), timeout=600)
+
+        # Also save to session for redundancy
+        try:
+            session_key = self._session_key_prefix + nonce_key
+            self.request.session[session_key] = json.dumps({'used': True})
+            self.request.session.modified = True
+        except Exception:
+            # If session fails, cache is sufficient
+            pass
+
         return True
 
     def set_state_valid(self, state, id_token_hash):
