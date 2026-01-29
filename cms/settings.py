@@ -418,7 +418,7 @@ CACHES = {
 
 # Use cached_db for reliability - stores in both cache AND database
 # This prevents session loss during multiple simultaneous LTI launches
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 # CELERY STUFF
