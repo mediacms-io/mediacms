@@ -10,6 +10,7 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
+import json
 import logging
 import traceback
 import uuid
@@ -262,6 +263,19 @@ class LaunchView(View):
                 request.session['filter_media_token'] = media_token
                 request.session.modified = True
                 logger.error(f"[LTI LAUNCH DEBUG] Stored media_token in session: {media_token}")
+
+            # Handle lti_message_hint from custom claims
+            lti_message_hint_str = custom_claims.get('lti_message_hint', '')
+            if lti_message_hint_str:
+                try:
+                    message_hint_data = json.loads(lti_message_hint_str)
+                    if isinstance(message_hint_data, dict):
+                        # Store in session for later use
+                        if 'lti_session' in request.session:
+                            request.session['lti_session']['message_hint'] = message_hint_data
+                            request.session.modified = True
+                except (json.JSONDecodeError, ValueError):
+                    pass
 
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
