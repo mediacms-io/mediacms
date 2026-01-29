@@ -341,6 +341,12 @@ class LaunchView(View):
             id_token = request.POST.get('id_token')
             state = request.POST.get('state')
 
+            # Log all POST parameters to debug
+            logger.error(f"[LTI RETRY DEBUG] POST keys: {list(request.POST.keys())}")
+            for key in request.POST.keys():
+                if key != 'id_token':  # Don't log the full JWT
+                    logger.error(f"[LTI RETRY DEBUG] POST[{key}] = {request.POST.get(key)}")
+
             if not id_token:
                 raise ValueError("No id_token available for retry")
 
@@ -380,13 +386,14 @@ class LaunchView(View):
                 'login_hint': login_hint,
             }
 
-            # Include lti_message_hint - try POST first, then session fallback
-            lti_message_hint = request.POST.get('lti_message_hint') or request.session.get('lti_last_message_hint')
+            # Get lti_message_hint from POST data (Moodle should send it back)
+            lti_message_hint = request.POST.get('lti_message_hint')
+
             if lti_message_hint:
                 params['lti_message_hint'] = lti_message_hint
-                logger.info(f"[LTI RETRY] Using lti_message_hint for retry: {lti_message_hint[:50]}...")
+                logger.error(f"[LTI RETRY] Found lti_message_hint in POST: {lti_message_hint}")
             else:
-                logger.warning("[LTI RETRY] No lti_message_hint available for retry - Moodle may reject")
+                logger.error("[LTI RETRY] WARNING: No lti_message_hint in POST - Moodle will likely reject")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
