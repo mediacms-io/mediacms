@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Filter class for converting MediaCMS URLs to LTI iframes.
  */
-class text_filter extends \core_filters\text_filter {
+class text_filter extends \core_filters	ext_filter {
 
     /**
      * Apply the filter to the given text.
@@ -70,7 +70,8 @@ class text_filter extends \core_filters\text_filter {
         // - https://lti.mediacms.io/view?m=TOKEN
         // - https://lti.mediacms.io/embed?m=TOKEN
         // - http versions
-        $pattern = '/https?:\/\/' . $escapeddomain . '\/(view|embed)\?m=([a-zA-Z0-9_-]+)/i';
+        // Improved regex to handle parameters in any order
+        $pattern = '/https?:\/\/' . $escapeddomain . '\/(view|embed)\?(?:[^"\s]*&)?m=([a-zA-Z0-9_-]+)(?:&[^"\s]*)?/i';
 
         // Find all matches.
         if (!preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
@@ -106,19 +107,25 @@ class text_filter extends \core_filters\text_filter {
                 'height' => $iframeheight
             ]);
 
-            // Generate iframe (like Kaltura does)
+            // Calculate aspect ratio percentage for responsive container
+            $ratio = ($iframeheight / $iframewidth) * 100;
+
+            // Generate iframe (responsive)
             $iframe = \html_writer::tag('iframe', '', array(
-                'width' => $iframewidth,
-                'height' => $iframeheight,
+                'width' => '100%',
+                'height' => '100%',
                 'class' => 'mediacms-player-iframe',
                 'allowfullscreen' => 'true',
                 'allow' => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *; display-capture *;',
                 'src' => $launchurl->out(false),
-                'frameborder' => '0'
+                'frameborder' => '0',
+                'style' => 'position: absolute; top: 0; left: 0; width: 100%; height: 100%;',
+                'title' => 'MediaCMS Video'
             ));
 
             $iframeContainer = \html_writer::tag('div', $iframe, array(
-                'class' => 'mediacms-player-container'
+                'class' => 'mediacms-player-container',
+                'style' => 'position: relative; padding-bottom: ' . $ratio . '%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 4px;'
             ));
 
             $text = str_replace($fullurl, $iframeContainer, $text);

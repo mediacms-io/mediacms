@@ -239,7 +239,7 @@ CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
 FILE_STORAGE = "django.core.files.storage.DefaultStorage"
 
-X_FRAME_OPTIONS = "ALLOWALL"
+X_FRAME_OPTIONS = "SAMEORIGIN"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 CELERY_EMAIL_TASK_CONFIG = {
     "queue": "short_tasks",
@@ -416,8 +416,6 @@ CACHES = {
     }
 }
 
-# Use cached_db for reliability - stores in both cache AND database
-# This prevents session loss during multiple simultaneous LTI launches
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
@@ -667,3 +665,6 @@ if USE_LTI:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_SECURE = True
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+# Use cached_db for reliability - stores in both cache AND database
+# This prevents session loss during multiple simultaneous LTI launches
