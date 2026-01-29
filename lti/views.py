@@ -105,8 +105,21 @@ class OIDCLoginView(View):
                 redirect_url = oidc_with_cookies.redirect(target_link_uri)
 
                 if not redirect_url:
-                    state = str(uuid.uuid4())
+                    # Generate base state UUID
+                    state_uuid = str(uuid.uuid4())
                     nonce = str(uuid.uuid4())
+
+                    # Encode lti_message_hint IN the state parameter for retry reliability
+                    # This survives session/cookie issues since it's passed through URLs
+                    import base64
+                    import json as json_module
+
+                    state_data = {'uuid': state_uuid}
+                    if lti_message_hint:
+                        state_data['hint'] = lti_message_hint
+
+                    # Encode as base64 URL-safe string
+                    state = base64.urlsafe_b64encode(json_module.dumps(state_data).encode()).decode().rstrip('=')
 
                     launch_data = {'target_link_uri': target_link_uri, 'nonce': nonce}
                     # Store cmid if provided (including 0 for filter-based launches)
@@ -116,7 +129,8 @@ class OIDCLoginView(View):
                     if lti_message_hint:
                         launch_data['lti_message_hint'] = lti_message_hint
 
-                    session_service.save_launch_data(f'state-{state}', launch_data)
+                    # Store using the UUID part of state
+                    session_service.save_launch_data(f'state-{state_uuid}', launch_data)
 
                     # Also store lti_message_hint in regular session for retry mechanism
                     # (state-specific storage might be lost due to cookie issues)
@@ -341,14 +355,29 @@ class LaunchView(View):
             id_token = request.POST.get('id_token')
             state = request.POST.get('state')
 
-            # Log all POST parameters to debug
-            logger.error(f"[LTI RETRY DEBUG] POST keys: {list(request.POST.keys())}")
-            for key in request.POST.keys():
-                if key != 'id_token':  # Don't log the full JWT
-                    logger.error(f"[LTI RETRY DEBUG] POST[{key}] = {request.POST.get(key)}")
-
             if not id_token:
                 raise ValueError("No id_token available for retry")
+
+            # Decode state to extract lti_message_hint (encoded during OIDC login)
+            import base64
+            import json as json_module
+
+            lti_message_hint_from_state = None
+            try:
+                # Add padding if needed for base64 decode
+                padding = 4 - (len(state) % 4)
+                if padding and padding != 4:
+                    state_padded = state + ('=' * padding)
+                else:
+                    state_padded = state
+
+                state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
+                state_data = json_module.loads(state_decoded)
+                lti_message_hint_from_state = state_data.get('hint')
+                logger.error(f"[LTI RETRY] Decoded state, found hint: {bool(lti_message_hint_from_state)}")
+            except Exception as e:
+                logger.error(f"[LTI RETRY] Could not decode state (might be plain UUID): {e}")
+                # State might be a plain UUID from older code, that's OK
 
             # Decode JWT to extract issuer and target info (no verification needed for this)
             unverified = jwt.decode(id_token, options={"verify_signature": False})
@@ -386,37 +415,12 @@ class LaunchView(View):
                 'login_hint': login_hint,
             }
 
-            # Moodle doesn't send lti_message_hint in POST, so reconstruct it from JWT
-            # Format: {"cmid": X, "launchid": "ltilaunch..."}
-            import json
-            import random
-
-            # Get resource link from JWT
-            resource_link = unverified.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
-            resource_link_id = resource_link.get('id', '')
-
-            # Try to extract cmid from resource_link_id (Moodle format)
-            cmid = 0  # Default for filter launches
-            if resource_link_id:
-                # Moodle resource link IDs often contain the cmid
-                try:
-                    # Common Moodle format: contains numbers
-                    import re
-
-                    numbers = re.findall(r'\d+', resource_link_id)
-                    if numbers:
-                        cmid = int(numbers[0])
-                except Exception:
-                    pass
-
-            # Generate a dummy launchid (Moodle format: ltilaunchX_RANDOM)
-            launchid = f"ltilaunch{cmid}_{random.randint(100000000, 999999999)}"
-
-            # Reconstruct lti_message_hint
-            lti_message_hint = json.dumps({"cmid": cmid, "launchid": launchid})
-            params['lti_message_hint'] = lti_message_hint
-
-            logger.error(f"[LTI RETRY] Reconstructed lti_message_hint: {lti_message_hint}")
+            # Use lti_message_hint decoded from state parameter
+            if lti_message_hint_from_state:
+                params['lti_message_hint'] = lti_message_hint_from_state
+                logger.error(f"[LTI RETRY] Using lti_message_hint from state: {lti_message_hint_from_state}")
+            else:
+                logger.error("[LTI RETRY] No lti_message_hint available - Moodle may reject retry")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
