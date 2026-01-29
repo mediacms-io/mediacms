@@ -39,6 +39,26 @@
             font-size: 14px;
             margin-top: 20px;
         }
+        .troubleshooting {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .troubleshooting h3 {
+            color: #1976d2;
+            margin-top: 0;
+            font-size: 16px;
+        }
+        .troubleshooting ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .troubleshooting li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -47,11 +67,27 @@
         <h1>{{ error }}</h1>
         <div class="error-message">
             <strong>Error Details:</strong><br>
-            {{ message }}
+            <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: inherit;">{{ message }}</pre>
         </div>
+
+        {% if 'cookie' in message|lower or 'session' in message|lower or 'Authentication Failed' in error %}
+        <div class="troubleshooting">
+            <h3>🔧 Troubleshooting Steps:</h3>
+            <ol>
+                <li><strong>Enable Cookies:</strong> Ensure your browser allows cookies for this site. Check your browser settings under Privacy & Security.</li>
+                <li><strong>Disable Tracking Protection:</strong> Turn off Enhanced Tracking Protection, Shield, or similar privacy features for this site.</li>
+                <li><strong>Allow Third-Party Cookies:</strong> Some browsers block cookies from embedded content. Try allowing cookies from all sites temporarily.</li>
+                <li><strong>Clear Browser Cache:</strong> Clear cookies and cached data for this site, then try launching again from your course.</li>
+                <li><strong>Try a Different Browser:</strong> Test with Chrome, Firefox, Safari, or Edge to rule out browser-specific issues.</li>
+                <li><strong>Disable Extensions:</strong> Browser extensions (ad blockers, privacy tools) can interfere with authentication. Try disabling them.</li>
+                <li><strong>Contact Support:</strong> If the issue persists after trying the above, contact your system administrator with the error details above.</li>
+            </ol>
+        </div>
+        {% endif %}
+
         <div class="help-text">
             <p>If this problem persists, please contact your system administrator.</p>
-            <p>You may close this window and try again.</p>
+            <p>You may close this window and return to your course to try again.</p>
         </div>
     </div>
 </body>
