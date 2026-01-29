@@ -272,14 +272,18 @@ class LaunchView(View):
 
         except LtiException as e:  # noqa
             error_message = str(e)
-
-            # Special handling for "State not found" errors - attempt retry
-            if "State not found" in error_message or "state not found" in error_message.lower():
-                logger.warning("[LTI LAUNCH] State not found error detected, attempting recovery")
-                return self.handle_state_not_found(request, platform)
-
-            # Other LTI exceptions - fail normally
             traceback.print_exc()
+
+            # Log state errors but don't retry - retry causes Moodle launch data expiration issues
+            if "State not found" in error_message or "state not found" in error_message.lower():
+                logger.error("[LTI LAUNCH] State not found - this indicates session persistence issues")
+                error_message = (
+                    "Session authentication failed. This usually resolves by refreshing the page. "
+                    "If the issue persists, try:\n"
+                    "1. Clearing browser cookies\n"
+                    "2. Disabling browser tracking protection for this site\n"
+                    "3. Using a different browser"
+                )
         except Exception as e:  # noqa
             traceback.print_exc()
 
