@@ -129,8 +129,9 @@ class OIDCLoginView(View):
                     if lti_message_hint:
                         launch_data['lti_message_hint'] = lti_message_hint
 
-                    # Store using the UUID part of state
-                    session_service.save_launch_data(f'state-{state_uuid}', launch_data)
+                    # CRITICAL: Store using the FULL encoded state, not just the UUID
+                    # PyLTI1p3 looks for the full state value during validation
+                    session_service.save_launch_data(f'state-{state}', launch_data)
 
                     # Also store lti_message_hint in regular session for retry mechanism
                     # (state-specific storage might be lost due to cookie issues)
