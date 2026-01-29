@@ -112,8 +112,17 @@ class OIDCLoginView(View):
                     # Store cmid if provided (including 0 for filter-based launches)
                     if cmid is not None:
                         launch_data['cmid'] = cmid
+                    # Store lti_message_hint for retry mechanism
+                    if lti_message_hint:
+                        launch_data['lti_message_hint'] = lti_message_hint
 
                     session_service.save_launch_data(f'state-{state}', launch_data)
+
+                    # Also store lti_message_hint in regular session for retry mechanism
+                    # (state-specific storage might be lost due to cookie issues)
+                    if lti_message_hint:
+                        request.session['lti_last_message_hint'] = lti_message_hint
+                        request.session.modified = True
 
                     params = {
                         'response_type': 'id_token',
@@ -371,10 +380,13 @@ class LaunchView(View):
                 'login_hint': login_hint,
             }
 
-            # Include lti_message_hint if we have it
-            lti_message_hint = request.POST.get('lti_message_hint')
+            # Include lti_message_hint - try POST first, then session fallback
+            lti_message_hint = request.POST.get('lti_message_hint') or request.session.get('lti_last_message_hint')
             if lti_message_hint:
                 params['lti_message_hint'] = lti_message_hint
+                logger.info(f"[LTI RETRY] Using lti_message_hint for retry: {lti_message_hint[:50]}...")
+            else:
+                logger.warning("[LTI RETRY] No lti_message_hint available for retry - Moodle may reject")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
