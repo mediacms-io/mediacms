@@ -78,6 +78,13 @@ $typeconfig = lti_get_type_type_config($ltitoolid);
 // Pass 0 as dummy cmid since we don't have a real course module
 $content = lti_initiate_login($course->id, 0, $instance, $typeconfig, null, 'MediaCMS video resource');
 
+// Inject media_token as a hidden field in the OIDC login form
+// This allows MediaCMS to receive and store it in the state parameter
+$hidden_field = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
+
+// Insert the hidden field before the closing </form> tag
+$content = str_replace('</form>', $hidden_field . '</form>', $content);
+
 echo $OUTPUT->header();
 echo $content;
 echo $OUTPUT->footer();

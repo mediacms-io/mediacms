@@ -83,6 +83,7 @@ class OIDCLoginView(View):
             login_hint = request.GET.get('login_hint') or request.POST.get('login_hint')
             lti_message_hint = request.GET.get('lti_message_hint') or request.POST.get('lti_message_hint')
             cmid = request.GET.get('cmid') or request.POST.get('cmid')
+            media_token = request.GET.get('media_token') or request.POST.get('media_token')
 
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
@@ -117,6 +118,8 @@ class OIDCLoginView(View):
                     state_data = {'uuid': state_uuid}
                     if lti_message_hint:
                         state_data['hint'] = lti_message_hint
+                    if media_token:
+                        state_data['media_token'] = media_token
 
                     # Encode as base64 URL-safe string
                     state = base64.urlsafe_b64encode(json_module.dumps(state_data).encode()).decode().rstrip('=')
@@ -159,6 +162,8 @@ class OIDCLoginView(View):
                     # Debug logging for filter launches
                     logger.error(f"[OIDC LOGIN DEBUG] Redirecting to: {redirect_url}")
                     logger.error(f"[OIDC LOGIN DEBUG] Has lti_message_hint: {bool(lti_message_hint)}")
+                    logger.error(f"[OIDC LOGIN DEBUG] Has media_token: {bool(media_token)}")
+                    logger.error(f"[OIDC LOGIN DEBUG] media_token value: {media_token}")
                     logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
 
                 return HttpResponseRedirect(redirect_url)
@@ -190,6 +195,29 @@ class LaunchView(View):
         claims = {}
 
         logger.error("[LTI LAUNCH DEBUG] Launch view POST called")
+
+        # Extract media_token from state parameter if present (for filter launches)
+        media_token_from_state = None
+        state = request.POST.get('state')
+        if state:
+            try:
+                import base64
+                import json as json_module
+
+                # Add padding if needed for base64 decode
+                padding = 4 - (len(state) % 4)
+                if padding and padding != 4:
+                    state_padded = state + ('=' * padding)
+                else:
+                    state_padded = state
+
+                state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
+                state_data = json_module.loads(state_decoded)
+                media_token_from_state = state_data.get('media_token')
+                if media_token_from_state:
+                    logger.error(f"[LTI LAUNCH DEBUG] Extracted media_token from state: {media_token_from_state}")
+            except Exception as e:
+                logger.error(f"[LTI LAUNCH DEBUG] Could not decode state for media_token (might be plain UUID): {e}")
 
         try:
             id_token = request.POST.get('id_token')
@@ -231,6 +259,14 @@ class LaunchView(View):
                 logger.error(f"[LTI LAUNCH DEBUG] Custom claims keys: {list(custom_claims.keys()) if isinstance(custom_claims, dict) else 'not a dict'}")
                 logger.error(f"[LTI LAUNCH DEBUG] Custom claims full content: {custom_claims}")
                 logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
+
+                # Inject media_token from state if present (for filter launches)
+                if media_token_from_state and not custom_claims.get('media_friendly_token'):
+                    custom_claims['media_friendly_token'] = media_token_from_state
+                    # Update launch_data with the modified custom claims
+                    launch_data['https://purl.imsglobal.org/spec/lti/claim/custom'] = custom_claims
+                    logger.error(f"[LTI LAUNCH DEBUG] Injected media_friendly_token from state: {media_token_from_state}")
+
             except Exception as e:
                 logger.error(f"[LTI LAUNCH DEBUG] Error getting custom claims: {e}")
                 custom_claims = {}
