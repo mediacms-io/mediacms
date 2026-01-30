@@ -239,7 +239,6 @@ CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
 FILE_STORAGE = "django.core.files.storage.DefaultStorage"
 
-X_FRAME_OPTIONS = "SAMEORIGIN"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 CELERY_EMAIL_TASK_CONFIG = {
     "queue": "short_tasks",
