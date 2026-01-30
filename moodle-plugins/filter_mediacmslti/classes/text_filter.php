@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Filter class for converting MediaCMS URLs to LTI iframes.
  */
-class text_filter extends \core_filters	ext_filter {
+class text_filter extends \core_filters\text_filter {
 
     /**
      * Apply the filter to the given text.
