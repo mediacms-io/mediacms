@@ -298,7 +298,11 @@ class LaunchView(View):
 
             # Clear retry counter on successful launch
             if 'lti_retry_count' in request.session:
+                retry_attempts = request.session['lti_retry_count']
                 del request.session['lti_retry_count']
+                logger.error(f"========== [LTI RETRY SUCCESS] Launch succeeded after {retry_attempts} retry attempt(s) ==========")
+            else:
+                logger.error("[LTI LAUNCH SUCCESS] Launch succeeded on first attempt (no retry needed)")
 
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
@@ -311,16 +315,10 @@ class LaunchView(View):
             error_message = str(e)
             traceback.print_exc()
 
-            # Log state errors but don't retry - retry causes Moodle launch data expiration issues
+            # Attempt automatic retry for state errors (handles concurrent launches and session issues)
             if "State not found" in error_message or "state not found" in error_message.lower():
-                logger.error("[LTI LAUNCH] State not found - this indicates session persistence issues")
-                error_message = (
-                    "Session authentication failed. This usually resolves by refreshing the page. "
-                    "If the issue persists, try:\n"
-                    "1. Clearing browser cookies\n"
-                    "2. Disabling browser tracking protection for this site\n"
-                    "3. Using a different browser"
-                )
+                logger.warning("[LTI LAUNCH] State not found error detected, attempting recovery")
+                return self.handle_state_not_found(request, platform)
         except Exception as e:  # noqa
             traceback.print_exc()
 
@@ -370,18 +368,20 @@ class LaunchView(View):
         try:
             # Check retry count to prevent infinite loops
             retry_count = request.session.get('lti_retry_count', 0)
-            MAX_RETRIES = 2
+            MAX_RETRIES = 5  # Increased for concurrent launches (e.g., multiple videos on same page)
+
+            logger.error(f"========== [LTI RETRY START] Attempt #{retry_count + 1} of {MAX_RETRIES} ==========")
 
             if retry_count >= MAX_RETRIES:
-                logger.error(f"[LTI RETRY] Max retries ({MAX_RETRIES}) exceeded for state recovery")
+                logger.error(f"========== [LTI RETRY FAILED] Max retries ({MAX_RETRIES}) exceeded ==========")
                 return render(
                     request,
                     'lti/launch_error.html',
                     {
                         'error': 'Authentication Failed',
                         'message': (
-                            'Unable to establish a secure session. This may be due to browser '
-                            'cookie settings or privacy features. Please try:\n\n'
+                            'Unable to establish a secure session after multiple attempts. '
+                            'This may be due to browser cookie settings or privacy features. Please try:\n\n'
                             '1. Enabling cookies for this site\n'
                             '2. Disabling tracking protection for this site\n'
                             '3. Using a different browser\n'
@@ -396,14 +396,19 @@ class LaunchView(View):
             id_token = request.POST.get('id_token')
             state = request.POST.get('state')
 
+            logger.error("[LTI RETRY] Extracting parameters from failed launch request")
+            logger.error(f"[LTI RETRY] Has id_token: {bool(id_token)}")
+            logger.error(f"[LTI RETRY] State value: {state[:50]}..." if state else "[LTI RETRY] No state")
+
             if not id_token:
                 raise ValueError("No id_token available for retry")
 
-            # Decode state to extract lti_message_hint (encoded during OIDC login)
+            # Decode state to extract lti_message_hint and media_token (encoded during OIDC login)
             import base64
             import json as json_module
 
             lti_message_hint_from_state = None
+            media_token_from_retry = None
             try:
                 # Add padding if needed for base64 decode
                 padding = 4 - (len(state) % 4)
@@ -415,12 +420,15 @@ class LaunchView(View):
                 state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
                 state_data = json_module.loads(state_decoded)
                 lti_message_hint_from_state = state_data.get('hint')
+                media_token_from_retry = state_data.get('media_token')
                 logger.error(f"[LTI RETRY] Decoded state, found hint: {bool(lti_message_hint_from_state)}")
+                logger.error(f"[LTI RETRY] Decoded state, found media_token: {bool(media_token_from_retry)}")
             except Exception as e:
                 logger.error(f"[LTI RETRY] Could not decode state (might be plain UUID): {e}")
                 # State might be a plain UUID from older code, that's OK
 
             # Decode JWT to extract issuer and target info (no verification needed for this)
+            logger.error("[LTI RETRY] Decoding JWT to extract launch parameters")
             unverified = jwt.decode(id_token, options={"verify_signature": False})
 
             iss = unverified.get('iss')
@@ -429,6 +437,8 @@ class LaunchView(View):
 
             # Get login_hint and lti_message_hint if available
             login_hint = request.POST.get('login_hint') or unverified.get('sub')
+
+            logger.error(f"[LTI RETRY] Extracted: iss={iss}, aud={aud}, target={target_link_uri}, login_hint={login_hint}")
 
             if not all([iss, aud, target_link_uri]):
                 raise ValueError("Missing required parameters for OIDC retry")
@@ -444,7 +454,10 @@ class LaunchView(View):
             request.session['lti_retry_count'] = retry_count + 1
             request.session.modified = True
 
-            logger.warning(f"[LTI RETRY] State not found, attempting retry #{retry_count + 1}. " f"Platform: {platform.name}, State: {state}, Target: {target_link_uri}")
+            logger.error(f"========== [LTI RETRY] Attempting retry #{retry_count + 1} of {MAX_RETRIES} ==========")
+            logger.error(f"[LTI RETRY] Platform: {platform.name}")
+            logger.error(f"[LTI RETRY] Original State: {state[:50]}...")
+            logger.error(f"[LTI RETRY] Target: {target_link_uri}")
 
             # Build OIDC login URL with all parameters
             oidc_login_url = request.build_absolute_uri(reverse('lti:oidc_login'))
@@ -456,19 +469,27 @@ class LaunchView(View):
                 'login_hint': login_hint,
             }
 
-            # Use lti_message_hint decoded from state parameter
+            # DON'T pass lti_message_hint in retry - it's single-use and causes Moodle 404
+            # The launchid in lti_message_hint is only valid for one authentication flow
+            # Moodle will handle the retry without the hint
             if lti_message_hint_from_state:
-                params['lti_message_hint'] = lti_message_hint_from_state
-                logger.error(f"[LTI RETRY] Using lti_message_hint from state: {lti_message_hint_from_state}")
+                logger.error(f"[LTI RETRY] NOT passing stale lti_message_hint: {lti_message_hint_from_state}")
             else:
-                logger.error("[LTI RETRY] No lti_message_hint available - Moodle may reject retry")
+                logger.error("[LTI RETRY] No lti_message_hint in state")
+
+            # Pass media_token in retry for filter launches (our custom parameter, not Moodle's)
+            if media_token_from_retry:
+                params['media_token'] = media_token_from_retry
+                logger.error(f"[LTI RETRY] Using media_token from state: {media_token_from_retry}")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
 
             redirect_url = f"{oidc_login_url}?{urlencode(params)}"
 
-            logger.error(f"[LTI RETRY] Redirecting to OIDC login: {redirect_url}")
+            logger.error("[LTI RETRY] Building retry OIDC login URL")
+            logger.error(f"[LTI RETRY] Retry params: {params}")
+            logger.error(f"========== [LTI RETRY REDIRECT] Redirecting to: {redirect_url} ==========")
 
             return HttpResponseRedirect(redirect_url)
 
