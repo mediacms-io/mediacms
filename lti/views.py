@@ -601,7 +601,7 @@ class EmbedMediaLTIView(View):
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
 
-        return HttpResponseRedirect(f"/view?m={friendly_token}")
+        return HttpResponseRedirect(f"/embed?m={friendly_token}")
 
 
 class ManualSyncView(APIView):
