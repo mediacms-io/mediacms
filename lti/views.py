@@ -505,6 +505,14 @@ class LaunchView(View):
             'message_launch_data': launch_data,  # Store full launch data for JWT creation
         }
 
+        # Check if we have a media_friendly_token from filter launches
+        custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
+        media_token = custom_claims.get('media_friendly_token')
+
+        if media_token:
+            logger.error(f"[DEEP LINKING] Found media_friendly_token, redirecting directly to embed: {media_token}")
+            return HttpResponseRedirect(reverse('lti:embed_media', args=[media_token]))
+
         return HttpResponseRedirect(reverse('lti:select_media'))
 
 
