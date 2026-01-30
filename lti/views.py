@@ -10,6 +10,8 @@ Implements the LTI 1.3 / LTI Advantage flow:
 - Manual NRPS Sync
 """
 
+import base64
+import json
 import logging
 import traceback
 import uuid
@@ -112,9 +114,6 @@ class OIDCLoginView(View):
 
                     # Encode lti_message_hint IN the state parameter for retry reliability
                     # This survives session/cookie issues since it's passed through URLs
-                    import base64
-                    import json as json_module
-
                     state_data = {'uuid': state_uuid}
                     if lti_message_hint:
                         state_data['hint'] = lti_message_hint
@@ -122,7 +121,7 @@ class OIDCLoginView(View):
                         state_data['media_token'] = media_token
 
                     # Encode as base64 URL-safe string
-                    state = base64.urlsafe_b64encode(json_module.dumps(state_data).encode()).decode().rstrip('=')
+                    state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
 
                     launch_data = {'target_link_uri': target_link_uri, 'nonce': nonce}
                     # Store cmid if provided (including 0 for filter-based launches)
@@ -159,13 +158,6 @@ class OIDCLoginView(View):
 
                     redirect_url = f"{platform.auth_login_url}?{urlencode(params)}"
 
-                    # Debug logging for filter launches
-                    logger.error(f"[OIDC LOGIN DEBUG] Redirecting to: {redirect_url}")
-                    logger.error(f"[OIDC LOGIN DEBUG] Has lti_message_hint: {bool(lti_message_hint)}")
-                    logger.error(f"[OIDC LOGIN DEBUG] Has media_token: {bool(media_token)}")
-                    logger.error(f"[OIDC LOGIN DEBUG] media_token value: {media_token}")
-                    logger.error(f"[OIDC LOGIN DEBUG] cmid: {cmid}")
-
                 return HttpResponseRedirect(redirect_url)
             except Exception:
                 raise
@@ -194,16 +186,11 @@ class LaunchView(View):
         error_message = ''
         claims = {}
 
-        logger.error("[LTI LAUNCH DEBUG] Launch view POST called")
-
         # Extract media_token from state parameter if present (for filter launches)
         media_token_from_state = None
         state = request.POST.get('state')
         if state:
             try:
-                import base64
-                import json as json_module
-
                 # Add padding if needed for base64 decode
                 padding = 4 - (len(state) % 4)
                 if padding and padding != 4:
@@ -212,12 +199,10 @@ class LaunchView(View):
                     state_padded = state
 
                 state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
-                state_data = json_module.loads(state_decoded)
+                state_data = json.loads(state_decoded)
                 media_token_from_state = state_data.get('media_token')
-                if media_token_from_state:
-                    logger.error(f"[LTI LAUNCH DEBUG] Extracted media_token from state: {media_token_from_state}")
-            except Exception as e:
-                logger.error(f"[LTI LAUNCH DEBUG] Could not decode state for media_token (might be plain UUID): {e}")
+            except Exception:
+                pass
 
         try:
             id_token = request.POST.get('id_token')
@@ -249,37 +234,25 @@ class LaunchView(View):
             launch_data = message_launch.get_launch_data()
             claims = self.sanitize_claims(launch_data)
 
-            logger.error(f"[LTI LAUNCH DEBUG] Full launch_data keys: {list(launch_data.keys())}")
-            logger.error(f"[LTI LAUNCH DEBUG] Launch data has custom claim: {'https://purl.imsglobal.org/spec/lti/claim/custom' in launch_data}")
-
-            # Extract and log custom claims EARLY before any other processing
+            # Extract custom claims and inject media_token from state if present
             try:
                 custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
-                logger.error(f"[LTI LAUNCH DEBUG] Custom claims type: {type(custom_claims)}")
-                logger.error(f"[LTI LAUNCH DEBUG] Custom claims keys: {list(custom_claims.keys()) if isinstance(custom_claims, dict) else 'not a dict'}")
-                logger.error(f"[LTI LAUNCH DEBUG] Custom claims full content: {custom_claims}")
-                logger.error(f"[LTI LAUNCH DEBUG] Has media_friendly_token: {bool(custom_claims.get('media_friendly_token'))}")
 
                 # Inject media_token from state if present (for filter launches)
                 if media_token_from_state and not custom_claims.get('media_friendly_token'):
                     custom_claims['media_friendly_token'] = media_token_from_state
                     # Update launch_data with the modified custom claims
                     launch_data['https://purl.imsglobal.org/spec/lti/claim/custom'] = custom_claims
-                    logger.error(f"[LTI LAUNCH DEBUG] Injected media_friendly_token from state: {media_token_from_state}")
 
-            except Exception as e:
-                logger.error(f"[LTI LAUNCH DEBUG] Error getting custom claims: {e}")
+            except Exception:
                 custom_claims = {}
 
             resource_link = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
             resource_link_id = resource_link.get('id', 'default')
             roles = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
 
-            message_type = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
-
-            if message_type == 'LtiDeepLinkingRequest':
-                return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
-
+            # IMPORTANT: Provision user and create session BEFORE handling deep linking
+            # This ensures filter launches (which are deep linking) have authenticated user
             user = provision_lti_user(platform, launch_data)
 
             if 'https://purl.imsglobal.org/spec/lti/claim/context' in launch_data:
@@ -291,25 +264,54 @@ class LaunchView(View):
 
             create_lti_session(request, user, message_launch, platform)
 
-            # Check for media_friendly_token in custom claims (for both deep linking and filter launches)
-            media_token = custom_claims.get('media_friendly_token')
-            if media_token:
-                logger.error(f"[LTI LAUNCH DEBUG] Found media_friendly_token in custom claims: {media_token}")
+            message_type = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
+
+            if message_type == 'LtiDeepLinkingRequest':
+                return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Clear retry counter on successful launch
             if 'lti_retry_count' in request.session:
-                retry_attempts = request.session['lti_retry_count']
                 del request.session['lti_retry_count']
-                logger.error(f"========== [LTI RETRY SUCCESS] Launch succeeded after {retry_attempts} retry attempt(s) ==========")
-            else:
-                logger.error("[LTI LAUNCH SUCCESS] Launch succeeded on first attempt (no retry needed)")
 
             LTILaunchLog.objects.create(platform=platform, user=user, resource_link=resource_link_obj, launch_type='resource_link', success=True, claims=claims)
 
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
-            logger.error(f"[LTI LAUNCH DEBUG] Redirecting to: {redirect_url}")
 
-            return HttpResponseRedirect(redirect_url)
+            # Use HTML meta refresh instead of HTTP redirect to ensure session cookie is sent
+            # In cross-site/iframe contexts, HTTP 302 redirects may not preserve session cookies
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta http-equiv="refresh" content="0;url={redirect_url}">
+                <title>Loading...</title>
+                <style>
+                    body {{
+                        font-family: sans-serif;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                        background: #f5f5f5;
+                    }}
+                    .loader {{
+                        text-align: center;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="loader">
+                    <p>Loading MediaCMS...</p>
+                    <p><small>If you are not redirected, <a href="{redirect_url}">click here</a></small></p>
+                </div>
+            </body>
+            </html>
+            """
+            response = HttpResponse(html_content, content_type='text/html')
+            # Ensure session cookie is set in this response
+            request.session.modified = True
+            return response
 
         except LtiException as e:  # noqa
             error_message = str(e)
@@ -317,7 +319,6 @@ class LaunchView(View):
 
             # Attempt automatic retry for state errors (handles concurrent launches and session issues)
             if "State not found" in error_message or "state not found" in error_message.lower():
-                logger.warning("[LTI LAUNCH] State not found error detected, attempting recovery")
                 return self.handle_state_not_found(request, platform)
         except Exception as e:  # noqa
             traceback.print_exc()
@@ -370,10 +371,7 @@ class LaunchView(View):
             retry_count = request.session.get('lti_retry_count', 0)
             MAX_RETRIES = 5  # Increased for concurrent launches (e.g., multiple videos on same page)
 
-            logger.error(f"========== [LTI RETRY START] Attempt #{retry_count + 1} of {MAX_RETRIES} ==========")
-
             if retry_count >= MAX_RETRIES:
-                logger.error(f"========== [LTI RETRY FAILED] Max retries ({MAX_RETRIES}) exceeded ==========")
                 return render(
                     request,
                     'lti/launch_error.html',
@@ -396,18 +394,10 @@ class LaunchView(View):
             id_token = request.POST.get('id_token')
             state = request.POST.get('state')
 
-            logger.error("[LTI RETRY] Extracting parameters from failed launch request")
-            logger.error(f"[LTI RETRY] Has id_token: {bool(id_token)}")
-            logger.error(f"[LTI RETRY] State value: {state[:50]}..." if state else "[LTI RETRY] No state")
-
             if not id_token:
                 raise ValueError("No id_token available for retry")
 
-            # Decode state to extract lti_message_hint and media_token (encoded during OIDC login)
-            import base64
-            import json as json_module
-
-            lti_message_hint_from_state = None
+            # Decode state to extract media_token (encoded during OIDC login)
             media_token_from_retry = None
             try:
                 # Add padding if needed for base64 decode
@@ -418,17 +408,13 @@ class LaunchView(View):
                     state_padded = state
 
                 state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
-                state_data = json_module.loads(state_decoded)
-                lti_message_hint_from_state = state_data.get('hint')
+                state_data = json.loads(state_decoded)
                 media_token_from_retry = state_data.get('media_token')
-                logger.error(f"[LTI RETRY] Decoded state, found hint: {bool(lti_message_hint_from_state)}")
-                logger.error(f"[LTI RETRY] Decoded state, found media_token: {bool(media_token_from_retry)}")
-            except Exception as e:
-                logger.error(f"[LTI RETRY] Could not decode state (might be plain UUID): {e}")
+            except Exception:
                 # State might be a plain UUID from older code, that's OK
+                pass
 
             # Decode JWT to extract issuer and target info (no verification needed for this)
-            logger.error("[LTI RETRY] Decoding JWT to extract launch parameters")
             unverified = jwt.decode(id_token, options={"verify_signature": False})
 
             iss = unverified.get('iss')
@@ -437,8 +423,6 @@ class LaunchView(View):
 
             # Get login_hint and lti_message_hint if available
             login_hint = request.POST.get('login_hint') or unverified.get('sub')
-
-            logger.error(f"[LTI RETRY] Extracted: iss={iss}, aud={aud}, target={target_link_uri}, login_hint={login_hint}")
 
             if not all([iss, aud, target_link_uri]):
                 raise ValueError("Missing required parameters for OIDC retry")
@@ -454,11 +438,6 @@ class LaunchView(View):
             request.session['lti_retry_count'] = retry_count + 1
             request.session.modified = True
 
-            logger.error(f"========== [LTI RETRY] Attempting retry #{retry_count + 1} of {MAX_RETRIES} ==========")
-            logger.error(f"[LTI RETRY] Platform: {platform.name}")
-            logger.error(f"[LTI RETRY] Original State: {state[:50]}...")
-            logger.error(f"[LTI RETRY] Target: {target_link_uri}")
-
             # Build OIDC login URL with all parameters
             oidc_login_url = request.build_absolute_uri(reverse('lti:oidc_login'))
 
@@ -472,29 +451,19 @@ class LaunchView(View):
             # DON'T pass lti_message_hint in retry - it's single-use and causes Moodle 404
             # The launchid in lti_message_hint is only valid for one authentication flow
             # Moodle will handle the retry without the hint
-            if lti_message_hint_from_state:
-                logger.error(f"[LTI RETRY] NOT passing stale lti_message_hint: {lti_message_hint_from_state}")
-            else:
-                logger.error("[LTI RETRY] No lti_message_hint in state")
 
             # Pass media_token in retry for filter launches (our custom parameter, not Moodle's)
             if media_token_from_retry:
                 params['media_token'] = media_token_from_retry
-                logger.error(f"[LTI RETRY] Using media_token from state: {media_token_from_retry}")
 
             # Add retry indicator
             params['retry'] = retry_count + 1
 
             redirect_url = f"{oidc_login_url}?{urlencode(params)}"
 
-            logger.error("[LTI RETRY] Building retry OIDC login URL")
-            logger.error(f"[LTI RETRY] Retry params: {params}")
-            logger.error(f"========== [LTI RETRY REDIRECT] Redirecting to: {redirect_url} ==========")
-
             return HttpResponseRedirect(redirect_url)
 
         except Exception as retry_error:
-            logger.error(f"[LTI RETRY] Failed to handle state recovery: {retry_error}")
             traceback.print_exc()
 
             return render(
@@ -509,6 +478,10 @@ class LaunchView(View):
 
     def handle_deep_linking_launch(self, request, message_launch, platform, launch_data):
         """Handle deep linking request"""
+        # Clear retry counter on successful launch
+        if 'lti_retry_count' in request.session:
+            del request.session['lti_retry_count']
+
         deep_linking_settings = launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings', {})
 
         if not deep_linking_settings:
@@ -531,10 +504,25 @@ class LaunchView(View):
         media_token = custom_claims.get('media_friendly_token')
 
         if media_token:
-            logger.error(f"[DEEP LINKING] Found media_friendly_token, redirecting directly to embed: {media_token}")
-            return HttpResponseRedirect(reverse('lti:embed_media', args=[media_token]))
+            redirect_url = reverse('lti:embed_media', args=[media_token])
+        else:
+            redirect_url = reverse('lti:select_media')
 
-        return HttpResponseRedirect(reverse('lti:select_media'))
+        # Use HTML meta refresh to ensure session cookie is preserved in cross-site contexts
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="0;url={redirect_url}">
+            <title>Loading...</title>
+        </head>
+        <body>
+            <p>Loading...</p>
+        </body>
+        </html>
+        """
+        request.session.modified = True
+        return HttpResponse(html_content, content_type='text/html')
 
 
 class JWKSView(View):

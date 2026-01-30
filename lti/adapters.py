@@ -5,6 +5,7 @@ Provides Django-specific implementations for PyLTI1p3 interfaces
 """
 
 import json
+import logging
 import time
 from typing import Any, Dict, Optional
 
@@ -22,6 +23,8 @@ from pylti1p3.service_connector import ServiceConnector
 from pylti1p3.tool_config import ToolConfAbstract
 
 from .models import LTIPlatform, LTIToolKeys
+
+logger = logging.getLogger(__name__)
 
 
 class DjangoRequest(Request):
@@ -95,29 +98,58 @@ class DjangoMessageLaunch:
 
 
 class DjangoSessionService:
-    """Launch data storage using Django sessions"""
+    """
+    Launch data storage using Django cache for state/nonce (to avoid race conditions)
+    and Django sessions for other data
+    """
 
     def __init__(self, request):
         self.request = request
         self._session_key_prefix = 'lti1p3_'
+        self._cache_prefix = 'lti1p3_cache_'
+
+    def _use_cache_for_key(self, key):
+        """Determine if this key should use cache (for concurrent access safety)"""
+        # Use cache for state and nonce to avoid race conditions in concurrent launches
+        return key.startswith('state-') or key.startswith('nonce-')
 
     def get_launch_data(self, key):
-        """Get launch data from session"""
-        session_key = self._session_key_prefix + key
-        data = self.request.session.get(session_key)
+        """Get launch data from cache or session depending on key type"""
+        if self._use_cache_for_key(key):
+            # Get from cache (atomic, no race condition)
+            cache_key = self._cache_prefix + key
+            data = cache.get(cache_key)
+        else:
+            # Get from session (for non-concurrent data)
+            session_key = self._session_key_prefix + key
+            data = self.request.session.get(session_key)
+
         return json.loads(data) if data else None
 
     def save_launch_data(self, key, data):
-        """Save launch data to session"""
-        session_key = self._session_key_prefix + key
-        self.request.session[session_key] = json.dumps(data)
-        self.request.session.modified = True
+        """Save launch data to cache or session depending on key type"""
+        if self._use_cache_for_key(key):
+            # Save to cache with 10 minute expiration (atomic operation, no race condition)
+            cache_key = self._cache_prefix + key
+            cache.set(cache_key, json.dumps(data), timeout=600)
+        else:
+            # Save to session (for non-concurrent data)
+            session_key = self._session_key_prefix + key
+            self.request.session[session_key] = json.dumps(data)
+            self.request.session.modified = True
+
         return True
 
     def check_launch_data_storage_exists(self, key):
-        """Check if launch data exists in session"""
-        session_key = self._session_key_prefix + key
-        return session_key in self.request.session
+        """Check if launch data exists in cache or session"""
+        if self._use_cache_for_key(key):
+            # Check cache
+            cache_key = self._cache_prefix + key
+            return cache.get(cache_key) is not None
+        else:
+            # Check session
+            session_key = self._session_key_prefix + key
+            return session_key in self.request.session
 
     def check_state_is_valid(self, state, nonce):
         """Check if state is valid - state is for CSRF protection, nonce is validated separately by JWT"""

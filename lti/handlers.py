@@ -9,6 +9,7 @@ Provides functions to:
 """
 
 import hashlib
+import logging
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -20,6 +21,8 @@ from rbac.models import RBACGroup, RBACMembership
 from users.models import User
 
 from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_LTI_ROLE_MAPPINGS = {
     'Instructor': {'global_role': '', 'group_role': 'manager'},
@@ -318,6 +321,10 @@ def create_lti_session(request, user, launch_data, platform):
     timeout = getattr(settings, 'LTI_SESSION_TIMEOUT', 3600)
     request.session.set_expiry(timeout)
 
+    # CRITICAL: Explicitly save session before redirect (for cross-site contexts)
+    request.session.modified = True
+    request.session.save()
+
     return True
 
 
@@ -328,6 +335,7 @@ def validate_lti_session(request):
     Returns:
         Dict of LTI session data or None
     """
+
     lti_session = request.session.get('lti_session')
 
     if not lti_session:
