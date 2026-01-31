@@ -4,7 +4,7 @@ import { useUser, usePopup } from '../../utils/hooks/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { formatInnerLink, publishedOnDate } from '../../utils/helpers/';
-import { PopupMain, CircleIconButton, MaterialIcon, NavigationMenuList, NavigationContentApp } from '../_shared/';
+import { PopupMain } from '../_shared/';
 import CommentsList from '../comments/Comments';
 import { replaceString } from '../../utils/helpers/';
 import { translateString } from '../../utils/helpers/';
@@ -72,103 +72,13 @@ function MediaMetaField(props) {
   );
 }
 
-function getEditMenuItems() {
-  const items = [];
-  const friendlyToken = window.MediaCMS.mediaId;
-  const mediaData = MediaPageStore.get('media-data');
-  const mediaType = mediaData ? mediaData.media_type : null;
-  const isVideoOrAudio = mediaType === 'video' || mediaType === 'audio';
-  const allowMediaReplacement = window.MediaCMS.features.media.actions.allowMediaReplacement;
-
-  // Edit metadata - always available
-  items.push({
-    itemType: 'link',
-    link: `/edit?m=${friendlyToken}`,
-    text: translateString('Edit metadata'),
-    icon: 'edit',
-  });
-
-  // Trim - only for video/audio
-  if (isVideoOrAudio) {
-    items.push({
-      itemType: 'link',
-      link: `/edit_video?m=${friendlyToken}`,
-      text: translateString('Trim'),
-      icon: 'content_cut',
-    });
-  }
-
-  // Captions - only for video/audio
-  if (isVideoOrAudio) {
-    items.push({
-      itemType: 'link',
-      link: `/add_subtitle?m=${friendlyToken}`,
-      text: translateString('Captions'),
-      icon: 'closed_caption',
-    });
-  }
-
-  // Chapters - only for video/audio
-  if (isVideoOrAudio) {
-    items.push({
-      itemType: 'link',
-      link: `/edit_chapters?m=${friendlyToken}`,
-      text: 'Chapters',
-      icon: 'menu_book',
-    });
-  }
-
-  // Publish - always available
-  items.push({
-    itemType: 'link',
-    link: `/publish?m=${friendlyToken}`,
-    text: translateString('Publish'),
-    icon: 'publish',
-  });
-
-  // Replace - only if enabled
-  if (allowMediaReplacement) {
-    items.push({
-      itemType: 'link',
-      link: `/replace_media?m=${friendlyToken}`,
-      text: translateString('Replace'),
-      icon: 'swap_horiz',
-    });
-  }
-
-  return items;
-}
-
 function EditMediaButton(props) {
-  const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
-
-  const menuItems = getEditMenuItems();
-
-  const popupPages = {
-    main: (
-      <div className="edit-options">
-        <PopupMain>
-          <NavigationMenuList items={menuItems} />
-        </PopupMain>
-      </div>
-    ),
-  };
+  const friendlyToken = window.MediaCMS.mediaId;
 
   return (
-    <div className="edit-media-dropdown">
-      <PopupTrigger contentRef={popupContentRef}>
-        <button className="edit-media-icon" title={translateString('Edit media')}>
-          <i className="material-icons">edit</i>
-        </button>
-      </PopupTrigger>
-      <PopupContent contentRef={popupContentRef}>
-        <NavigationContentApp
-          initPage="main"
-          focusFirstItemOnPageChange={false}
-          pages={popupPages}
-        />
-      </PopupContent>
-    </div>
+    <a href={`/edit?m=${friendlyToken}`} className="edit-media-icon" title={translateString('Edit metadata')}>
+      <i className="material-icons">edit</i>
+    </a>
   );
 }
 
