@@ -36,7 +36,7 @@ class SelectMediaView(View):
 
     def get(self, request):
         """Display media selection interface - redirects to user's profile page"""
-        profile_url = f"/user/{request.user.username}"
+        profile_url = f"/user/{request.user.username}?mode=embed_mode"
         return HttpResponseRedirect(profile_url)
 
     @method_decorator(csrf_exempt)

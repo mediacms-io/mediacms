@@ -351,11 +351,11 @@ class LaunchView(View):
         if media_id:
             try:
                 media = Media.objects.get(friendly_token=media_id)
-                return reverse('lti:embed_media', args=[media.friendly_token])
+                return reverse('lti:embed_media', args=[media.friendly_token]) + '?mode=embed_mode'
             except Media.DoesNotExist:
                 pass
 
-        return reverse('lti:my_media')
+        return reverse('lti:my_media') + '?mode=embed_mode'
 
     def handle_state_not_found(self, request, platform=None):
         """
@@ -504,9 +504,9 @@ class LaunchView(View):
         media_token = custom_claims.get('media_friendly_token')
 
         if media_token:
-            redirect_url = reverse('lti:embed_media', args=[media_token])
+            redirect_url = reverse('lti:embed_media', args=[media_token]) + '?mode=embed_mode'
         else:
-            redirect_url = reverse('lti:select_media')
+            redirect_url = reverse('lti:select_media') + '?mode=embed_mode'
 
         # Use HTML meta refresh to ensure session cookie is preserved in cross-site contexts
         html_content = f"""
@@ -581,7 +581,7 @@ class MyMediaLTIView(View):
         if not lti_session:
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
-        profile_url = f"/user/{request.user.username}"
+        profile_url = f"/user/{request.user.username}?mode=embed_mode"
         return HttpResponseRedirect(profile_url)
 
 
@@ -610,7 +610,7 @@ class EmbedMediaLTIView(View):
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
 
-        return HttpResponseRedirect(f"/embed?m={friendly_token}")
+        return HttpResponseRedirect(f"/embed?m={friendly_token}&mode=embed_mode")
 
 
 class ManualSyncView(APIView):
