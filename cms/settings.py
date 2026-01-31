@@ -665,6 +665,5 @@ if USE_LTI:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_SECURE = True
-    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-# Use cached_db for reliability - stores in both cache AND database
-# This prevents session loss during multiple simultaneous LTI launches
+    # SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+    # Consider using cached_db for reliability if sessions are lost between many LTI launches
