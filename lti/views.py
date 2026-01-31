@@ -679,20 +679,16 @@ class TinyMCEGetEmbedView(View):
 
     def get(self, request, friendly_token):
         """Get embed code for the specified media."""
-        # Verify user is authenticated
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
 
-        # Verify media exists
         media = Media.objects.filter(friendly_token=friendly_token).first()
 
         if not media:
             return JsonResponse({'error': 'Media not found'}, status=404)
 
-        # Build embed URL
         embed_url = request.build_absolute_uri(reverse('get_embed') + f'?m={friendly_token}')
 
-        # Generate iframe embed code
         embed_code = f'<iframe src="{embed_url}" ' f'width="960" height="540" ' f'frameborder="0" ' f'allowfullscreen ' f'title="{media.title}">' f'</iframe>'
 
         return JsonResponse(

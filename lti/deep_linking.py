@@ -12,7 +12,7 @@ import jwt
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -21,7 +21,6 @@ from django.views.decorators.csrf import csrf_exempt
 from jwcrypto import jwk
 
 from files.models import Media
-from files.views.media import MediaList
 
 from .models import LTIPlatform, LTIToolKeys
 
@@ -36,55 +35,9 @@ class SelectMediaView(View):
     """
 
     def get(self, request):
-        """Display media selection interface"""
-
-        # Check if this is a TinyMCE request (no deep linking session required)
-        is_tinymce = request.GET.get('mode') == 'tinymce'
-
-        if not is_tinymce:
-            # Get deep link session data for regular deep linking flow
-            deep_link_data = request.session.get('lti_deep_link')
-            if not deep_link_data:
-                return JsonResponse({'error': 'No deep linking session data found'}, status=400)
-
-        # Reuse MediaList logic to get media with proper permissions
-        media_list_view = MediaList()
-
-        # Get base queryset with all permission/RBAC logic applied
-        media_queryset = media_list_view._get_media_queryset(request)
-
-        # Apply filtering based on query params
-        show_my_media_only = request.GET.get('my_media_only', 'false').lower() == 'true'
-        if show_my_media_only:
-            media_queryset = media_queryset.filter(user=request.user)
-
-        # Order by recent
-        media_queryset = media_queryset.order_by('-add_date')
-
-        # TinyMCE mode: Use pagination
-        if is_tinymce:
-            from django.core.paginator import Paginator
-
-            paginator = Paginator(media_queryset, 24)  # 24 items per page
-            page_number = request.GET.get('page', 1)
-            page_obj = paginator.get_page(page_number)
-
-            context = {
-                'media_list': page_obj,
-                'page_obj': page_obj,
-            }
-            return render(request, 'lti/tinymce_select_media.html', context)
-
-        # Deep linking mode: Limit for performance
-        media_list = media_queryset[:100]
-
-        context = {
-            'media_list': media_list,
-            'show_my_media_only': show_my_media_only,
-            'deep_link_data': deep_link_data,
-        }
-
-        return render(request, 'lti/select_media.html', context)
+        """Display media selection interface - redirects to user's profile page"""
+        profile_url = f"/user/{request.user.username}"
+        return HttpResponseRedirect(profile_url)
 
     @method_decorator(csrf_exempt)
     def post(self, request):
