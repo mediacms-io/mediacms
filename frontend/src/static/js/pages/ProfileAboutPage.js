@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import UrlParse from 'url-parse';
 import { ApiUrlContext, MemberContext, SiteContext } from '../utils/contexts/';
-import { formatInnerLink, csrfToken, postRequest } from '../utils/helpers/';
+import { formatInnerLink, csrfToken, postRequest, inEmbeddedApp } from '../utils/helpers/';
 import { PageActions } from '../utils/actions/';
 import { PageStore, ProfilePageStore } from '../utils/stores/';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
@@ -268,7 +268,7 @@ export class ProfileAboutPage extends ProfileMediaPage {
 
     return [
       this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="about" />
+        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="about" hideChannelBanner={inEmbeddedApp()} />
       ) : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent" enabledContactForm={this.enabledContactForm}>

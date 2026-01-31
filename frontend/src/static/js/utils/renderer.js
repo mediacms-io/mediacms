@@ -16,13 +16,13 @@ const AppProviders = ({ children }) => (
 import { PageHeader, PageSidebar } from '../components/page-layout';
 
 export function renderPage(idSelector, PageComponent) {
-    const appContent = idSelector ? document.getElementById(idSelector) : undefined;
-
-    if (inEmbeddedApp() && appContent) {
+    if (inEmbeddedApp()) {
         globalThis.document.body.classList.add('embedded-app');
         globalThis.document.body.classList.remove('visible-sidebar');
 
-        if (PageComponent) {
+        const appContent = idSelector ? document.getElementById(idSelector) : undefined;
+
+        if (appContent && PageComponent) {
             ReactDOM.render(
                 <AppProviders>
                     <PageComponent />
@@ -34,6 +34,7 @@ export function renderPage(idSelector, PageComponent) {
         return;
     }
 
+    const appContent = idSelector ? document.getElementById(idSelector) : undefined;
     const appHeader = document.getElementById('app-header');
     const appSidebar = document.getElementById('app-sidebar');
 
