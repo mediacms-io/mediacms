@@ -113,8 +113,8 @@ $string['videowidth'] = 'Video width';
 $string['width'] = 'Width';
 
 // Iframe embed strings.
-$string['iframebuttontitle'] = 'Insert MediaCMS Video';
-$string['iframemodaltitle'] = 'Insert MediaCMS Video';
+$string['iframebuttontitle'] = 'Insert MediaCMS Media';
+$string['iframemodaltitle'] = 'Insert MediaCMS Media';
 $string['iframeurl'] = 'MediaCMS Video URL or embed code';
 $string['iframeurlplaceholder'] = 'Paste MediaCMS Video URL or iframe embed code';
 $string['iframeurlinvalid'] = 'Please enter a valid MediaCMS Video URL or embed code';
@@ -140,7 +140,7 @@ $string['removeiframeconfirm'] = 'Are you sure you want to remove this video fro
 // Iframe modal tabs.
 $string['tabembedurl'] = 'Embed URL';
 $string['tabvideolibrary'] = 'Video Library';
-$string['tabvideolibraryiframe'] = 'Video Library from Iframe';
+$string['tabvideolibraryiframe'] = 'Media Library';
 
 // Video library strings.
 $string['librarysearchplaceholder'] = 'Search videos...';
