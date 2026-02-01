@@ -202,13 +202,29 @@ export class ProfileMediaPage extends Page {
     }
 
     handleMediaSelection(mediaId, isSelected) {
+        const isEmbedMode = inEmbeddedApp();
+
         this.setState((prevState) => {
-            const newSelectedMedia = new Set(prevState.selectedMedia);
-            if (isSelected) {
-                newSelectedMedia.add(mediaId);
+            const newSelectedMedia = new Set();
+
+            // In embed mode, only allow single selection
+            if (isEmbedMode) {
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                    console.log('Selected media item:', mediaId);
+                }
             } else {
-                newSelectedMedia.delete(mediaId);
+                // Normal mode: allow multiple selection
+                newSelectedMedia.clear();
+                prevState.selectedMedia.forEach((id) => newSelectedMedia.add(id));
+
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                } else {
+                    newSelectedMedia.delete(mediaId);
+                }
             }
+
             return { selectedMedia: newSelectedMedia };
         });
     }
@@ -917,6 +933,7 @@ export class ProfileMediaPage extends Page {
         const authorData = ProfilePageStore.get('author-data');
 
         const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isEmbedMode = inEmbeddedApp();
 
         // Check if any filters are active (excluding default sort and tags)
         const hasActiveFilters =
@@ -948,15 +965,16 @@ export class ProfileMediaPage extends Page {
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
                     <MediaListWrapper
-                        title={this.state.title}
+                        title={isEmbedMode ? undefined : this.state.title}
                         className="items-list-ver"
-                        showBulkActions={isMediaAuthor}
+                        style={isEmbedMode ? { marginTop: '24px' } : undefined}
+                        showBulkActions={!isEmbedMode && isMediaAuthor}
                         selectedCount={this.state.selectedMedia.size}
                         totalCount={this.state.availableMediaIds.length}
                         onBulkAction={this.handleBulkAction}
                         onSelectAll={this.handleSelectAll}
                         onDeselectAll={this.handleDeselectAll}
-                        showAddMediaButton={isMediaAuthor}
+                        showAddMediaButton={!isEmbedMode && isMediaAuthor}
                     >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
@@ -979,7 +997,7 @@ export class ProfileMediaPage extends Page {
                             hideViews={!PageStore.get('config-media-item').displayViews}
                             hideDate={!PageStore.get('config-media-item').displayPublishDate}
                             canEdit={isMediaAuthor}
-                            showSelection={isMediaAuthor}
+                            showSelection={isMediaAuthor || isEmbedMode}
                             hasAnySelection={this.state.selectedMedia.size > 0}
                             selectedMedia={this.state.selectedMedia}
                             onMediaSelection={this.handleMediaSelection}

@@ -5,7 +5,7 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import { translateString } from '../../utils/helpers/';
+import { translateString, inEmbeddedApp } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
@@ -372,18 +372,22 @@ class NavMenuInlineTabs extends React.PureComponent {
     }
 
     render() {
+        const isEmbedMode = inEmbeddedApp();
+
         return (
             <nav ref="tabsNav" className="profile-nav items-list-outer list-inline list-slider">
                 <div className="profile-nav-inner items-list-outer">
                     {this.state.displayPrev ? this.previousBtn : null}
 
                     <ul className="items-list-wrap" ref="itemsListWrap">
-                        <InlineTab
-                            id="about"
-                            isActive={'about' === this.props.type}
-                            label={translateString('About')}
-                            link={LinksContext._currentValue.profile.about}
-                        />
+                        {!isEmbedMode ? (
+                            <InlineTab
+                                id="about"
+                                isActive={'about' === this.props.type}
+                                label={translateString('About')}
+                                link={LinksContext._currentValue.profile.about}
+                            />
+                        ) : null}
                         <InlineTab
                             id="media"
                             isActive={'media' === this.props.type}
@@ -407,7 +411,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                             />
                         ) : null}
 
-                        {MemberContext._currentValue.can.saveMedia ? (
+                        {!isEmbedMode && MemberContext._currentValue.can.saveMedia ? (
                             <InlineTab
                                 id="playlists"
                                 isActive={'playlists' === this.props.type}
@@ -768,7 +772,15 @@ export default function ProfilePagesHeader(props) {
             )}
 
             <div className="profile-info-nav-wrap">
-                {props.author.thumbnail_url || props.author.name ? (
+                {inEmbeddedApp() ? (
+                    <div className="profile-info">
+                        <div className="profile-info-inner">
+                            <div>
+                                <h1>{translateString('Embed Media')}</h1>
+                            </div>
+                        </div>
+                    </div>
+                ) : props.author.thumbnail_url || props.author.name ? (
                     <div className="profile-info">
                         <div className="profile-info-inner">
                             <div>

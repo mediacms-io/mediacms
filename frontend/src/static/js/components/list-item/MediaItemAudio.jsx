@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveIntegerOrZero } from '../../utils/helpers/';
+import { PositiveIntegerOrZero, inEmbeddedApp } from '../../utils/helpers/';
 import { MediaDurationInfo } from '../../utils/classes/';
 import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOptions';
 import { MediaItemDuration, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
@@ -9,9 +9,25 @@ import { MediaItem } from './MediaItem';
 
 export function MediaItemAudio(props) {
   const type = props.type;
+  const isEmbedMode = inEmbeddedApp();
 
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents, viewMediaComponent] =
+  const [titleComponentOrig, descriptionComponent, thumbnailUrl, UnderThumbWrapperOrig, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
+
+  // In embed mode, override components to remove links
+  const ItemTitle = ({ title }) => (
+    <h3>
+      <span>{title}</span>
+    </h3>
+  );
+
+  const ItemMain = ({ children }) => <div className="item-main">{children}</div>;
+
+  const titleComponent = isEmbedMode
+    ? () => <ItemTitle title={props.title} />
+    : titleComponentOrig;
+
+  const UnderThumbWrapper = isEmbedMode ? ItemMain : UnderThumbWrapperOrig;
 
   const _MediaDurationInfo = new MediaDurationInfo();
 
@@ -22,6 +38,21 @@ export function MediaItemAudio(props) {
   const durationISO8601 = _MediaDurationInfo.ISO8601();
 
   function thumbnailComponent() {
+    if (isEmbedMode) {
+      // In embed mode, render thumbnail without link
+      return (
+        <div
+          key="item-thumb"
+          className={'item-thumb' + (!thumbnailUrl ? ' no-thumb' : '')}
+          style={!thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" }}
+        >
+          {props.inPlaylistView ? null : (
+            <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
+          )}
+        </div>
+      );
+    }
+
     const attr = {
       key: 'item-thumb',
       href: props.link,
@@ -66,13 +97,13 @@ export function MediaItemAudio(props) {
   );
 
   const finalClassname = containerClassname +
-    (props.showSelection ? ' with-selection' : '') +
+    (props.showSelection && !isEmbedMode ? ' with-selection' : '') +
     (props.isSelected ? ' selected' : '') +
-    (props.hasAnySelection ? ' has-any-selection' : '');
+    (props.hasAnySelection || isEmbedMode ? ' has-any-selection' : '');
 
   const handleItemClick = (e) => {
-    // If there's any selection active, clicking the item should toggle selection
-    if (props.hasAnySelection && props.onCheckboxChange) {
+    // In embed mode or if there's any selection active, clicking the item should toggle selection
+    if ((isEmbedMode || props.hasAnySelection) && props.onCheckboxChange) {
       // Check if clicking on the checkbox itself, edit icon, or view icon
       if (e.target.closest('.item-selection-checkbox') ||
           e.target.closest('.item-edit-icon') ||
@@ -104,16 +135,24 @@ export function MediaItemAudio(props) {
           </div>
         )}
 
-        {editMediaComponent()}
-        {viewMediaComponent()}
+        {!isEmbedMode && editMediaComponent()}
+        {!isEmbedMode && viewMediaComponent()}
 
         {thumbnailComponent()}
 
-        <UnderThumbWrapper title={props.title} link={props.link}>
-          {titleComponent()}
-          {metaComponents()}
-          {descriptionComponent()}
-        </UnderThumbWrapper>
+        {isEmbedMode ? (
+          <UnderThumbWrapper>
+            {titleComponent()}
+            {metaComponents()}
+            {descriptionComponent()}
+          </UnderThumbWrapper>
+        ) : (
+          <UnderThumbWrapper title={props.title} link={props.link}>
+            {titleComponent()}
+            {metaComponents()}
+            {descriptionComponent()}
+          </UnderThumbWrapper>
+        )}
 
         {playlistOptionsComponent()}
       </div>

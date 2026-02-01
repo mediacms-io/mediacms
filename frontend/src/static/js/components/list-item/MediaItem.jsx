@@ -1,18 +1,50 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveInteger, PositiveIntegerOrZero } from '../../utils/helpers/';
+import { PositiveInteger, PositiveIntegerOrZero, inEmbeddedApp } from '../../utils/helpers/';
 import { MediaItemThumbnailLink, itemClassname } from './includes/items/';
 import { Item } from './Item';
 
 export function MediaItem(props) {
   const type = props.type;
+  const isEmbedMode = inEmbeddedApp();
 
-  const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents, viewMediaComponent] =
+  const [titleComponentOrig, descriptionComponent, thumbnailUrl, UnderThumbWrapperOrig, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
 
+  // In embed mode, override components to remove links
+  const ItemTitle = ({ title }) => (
+    <h3>
+      <span>{title}</span>
+    </h3>
+  );
+
+  const ItemMain = ({ children }) => <div className="item-main">{children}</div>;
+
+  const titleComponent = isEmbedMode
+    ? () => <ItemTitle title={props.title} />
+    : titleComponentOrig;
+
+  const UnderThumbWrapper = isEmbedMode ? ItemMain : UnderThumbWrapperOrig;
 
   function thumbnailComponent() {
+    if (isEmbedMode) {
+      // In embed mode, render thumbnail without link
+      const thumbStyle = thumbnailUrl ? { backgroundImage: "url('" + thumbnailUrl + "')" } : null;
+      return (
+        <div
+          key="item-thumb"
+          className={'item-thumb' + (!thumbnailUrl ? ' no-thumb' : '')}
+          style={thumbStyle}
+        >
+          {thumbnailUrl ? (
+            <div key="item-type-icon" className="item-type-icon">
+              <div></div>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
     return <MediaItemThumbnailLink src={thumbnailUrl} title={props.title} link={props.link} />;
   }
 
@@ -23,13 +55,15 @@ export function MediaItem(props) {
   );
 
   const finalClassname = containerClassname +
-    (props.showSelection ? ' with-selection' : '') +
+    (props.showSelection && !isEmbedMode ? ' with-selection' : '') +
     (props.isSelected ? ' selected' : '') +
-    (props.hasAnySelection ? ' has-any-selection' : '');
+    (props.hasAnySelection || isEmbedMode ? ' has-any-selection' : '');
 
   const handleItemClick = (e) => {
-    // If there's any selection active, clicking the item should toggle selection
-    if (props.hasAnySelection && props.onCheckboxChange) {
+    const isEmbedMode = inEmbeddedApp();
+
+    // In embed mode or if there's any selection active, clicking the item should toggle selection
+    if ((isEmbedMode || props.hasAnySelection) && props.onCheckboxChange) {
       // Check if clicking on the checkbox itself, edit icon, or view icon
       if (e.target.closest('.item-selection-checkbox') ||
           e.target.closest('.item-edit-icon') ||
@@ -59,16 +93,24 @@ export function MediaItem(props) {
           </div>
         )}
 
-        {editMediaComponent()}
-        {viewMediaComponent()}
+        {!isEmbedMode && editMediaComponent()}
+        {!isEmbedMode && viewMediaComponent()}
 
         {thumbnailComponent()}
 
-        <UnderThumbWrapper title={props.title} link={props.link}>
-          {titleComponent()}
-          {metaComponents()}
-          {descriptionComponent()}
-        </UnderThumbWrapper>
+        {isEmbedMode ? (
+          <UnderThumbWrapper>
+            {titleComponent()}
+            {metaComponents()}
+            {descriptionComponent()}
+          </UnderThumbWrapper>
+        ) : (
+          <UnderThumbWrapper title={props.title} link={props.link}>
+            {titleComponent()}
+            {metaComponents()}
+            {descriptionComponent()}
+          </UnderThumbWrapper>
+        )}
       </div>
     </div>
   );
