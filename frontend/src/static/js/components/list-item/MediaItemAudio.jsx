@@ -97,7 +97,7 @@ export function MediaItemAudio(props) {
   );
 
   const finalClassname = containerClassname +
-    (props.showSelection && !isEmbedMode ? ' with-selection' : '') +
+    (props.showSelection ? ' with-selection' : '') +
     (props.isSelected ? ' selected' : '') +
     (props.hasAnySelection || isEmbedMode ? ' has-any-selection' : '');
 
