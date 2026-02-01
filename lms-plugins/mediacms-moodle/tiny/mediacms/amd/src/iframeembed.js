@@ -8,16 +8,15 @@ import Selectors from './selectors';
 import { getLti, getLaunchUrl, getMediaCMSUrl } from './options';
 
 export default class IframeEmbed {
-    editor = null;
-    currentModal = null;
-    isUpdating = false;
-    selectedIframe = null;
-    debounceTimer = null;
-    iframeLibraryLoaded = false;
-    selectedLibraryVideo = null;
     
     constructor(editor) {
         this.editor = editor;
+        this.currentModal = null;
+        this.isUpdating = false;
+        this.selectedIframe = null;
+        this.debounceTimer = null;
+        this.iframeLibraryLoaded = false;
+        this.selectedLibraryVideo = null;
     }
 
     parseInput(input) {
@@ -44,11 +43,8 @@ export default class IframeEmbed {
             const urlObj = new URL(url);
             const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
             
-            // Check if it matches configured MediaCMS URL (if strictly required)
-            // For now we accept any valid MediaCMS-like structure
-            
             // /view?m=ID
-            if (urlObj.pathname.includes('/view') && urlObj.searchParams.has('m')) {
+            if (urlObj.pathname.indexOf('/view') !== -1 && urlObj.searchParams.has('m')) {
                 return {
                     baseUrl: baseUrl,
                     videoId: urlObj.searchParams.get('m'),
@@ -57,7 +53,7 @@ export default class IframeEmbed {
             }
             
             // /embed?m=ID
-            if (urlObj.pathname.includes('/embed') && urlObj.searchParams.has('m')) {
+            if (urlObj.pathname.indexOf('/embed') !== -1 && urlObj.searchParams.has('m')) {
                 return {
                     baseUrl: baseUrl,
                     videoId: urlObj.searchParams.get('m'),
@@ -71,7 +67,7 @@ export default class IframeEmbed {
             }
             
             // Check if it's already a launch.php URL
-            if (urlObj.pathname.includes('/filter/mediacms/launch.php') && urlObj.searchParams.has('token')) {
+            if (urlObj.pathname.indexOf('/filter/mediacms/launch.php') !== -1 && urlObj.searchParams.has('token')) {
                  return {
                     baseUrl: baseUrl,
                     videoId: urlObj.searchParams.get('token'),
@@ -112,7 +108,12 @@ export default class IframeEmbed {
         return url.toString();
     }
 
-    async getTemplateContext(data = {}) {
+    async getTemplateContext(data) {
+        data = data || {};
+        const width = data.width || 560;
+        const height = data.height || 315;
+        const aspectRatio = data.aspectRatio || '16:9';
+
         return {
             elementid: this.editor.getElement().id,
             isupdating: this.isUpdating,
@@ -124,12 +125,12 @@ export default class IframeEmbed {
             responsive: data.responsive !== false,
             startAtEnabled: data.startAtEnabled || false,
             startAt: data.startAt || '0:00',
-            width: data.width || 560,
-            height: data.height || 315,
-            is16_9: !data.aspectRatio || data.aspectRatio === '16:9',
-            is4_3: data.aspectRatio === '4:3',
-            is1_1: data.aspectRatio === '1:1',
-            isCustom: data.aspectRatio === 'custom',
+            width: width,
+            height: height,
+            is16_9: aspectRatio === '16:9',
+            is4_3: aspectRatio === '4:3',
+            is1_1: aspectRatio === '1:1',
+            isCustom: aspectRatio === 'custom',
         };
     }
 
@@ -139,9 +140,12 @@ export default class IframeEmbed {
         this.isUpdating = data !== null;
         this.iframeLibraryLoaded = false;
 
+        const title = await getString('iframemodaltitle', component);
+        const templateContext = await this.getTemplateContext(data || {});
+
         this.currentModal = await IframeModal.create({
-            title: await getString('iframemodaltitle', component),
-            templateContext: await this.getTemplateContext(data || {}),
+            title: title,
+            templateContext: templateContext,
         });
 
         await this.registerEventListeners(this.currentModal);
@@ -158,20 +162,31 @@ export default class IframeEmbed {
         const src = this.selectedIframe.getAttribute('src');
         const parsed = this.parseInput(src);
         
+        // Defaults
+        let showTitle = true;
+        if (parsed && typeof parsed.showTitle !== 'undefined') {
+            showTitle = parsed.showTitle;
+        }
+
         return {
             url: src,
             width: this.selectedIframe.getAttribute('width') || 560,
             height: this.selectedIframe.getAttribute('height') || 315,
-            showTitle: parsed?.showTitle ?? true,
-            // ... other defaults
+            showTitle: showTitle,
         };
     }
 
     getFormValues(root) {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         // Helper to safely get value or checked state
-        const getVal = (sel) => form.querySelector(sel)?.value;
-        const getCheck = (sel) => form.querySelector(sel)?.checked;
+        const getVal = (sel) => {
+            const el = form.querySelector(sel);
+            return el ? el.value : '';
+        };
+        const getCheck = (sel) => {
+            const el = form.querySelector(sel);
+            return el ? el.checked : false;
+        };
 
         return {
             url: getVal(Selectors.IFRAME.elements.url).trim(),
@@ -207,11 +222,11 @@ export default class IframeEmbed {
             aspectRatioValue: aspectRatioCalcs[values.aspectRatio] || '16 / 9',
         };
 
-        const { html } = await Templates.renderForPromise(
+        const template = await Templates.renderForPromise(
             `${component}/iframe_embed_output`,
             context
         );
-        return html;
+        return template.html;
     }
 
     async updatePreview(root) {
@@ -234,16 +249,16 @@ export default class IframeEmbed {
         previewContainer.innerHTML = `<iframe src="${embedUrl}" width="100%" height="200" frameborder="0"></iframe>`;
     }
     
-    // ... Event listeners and Modal handling ...
-    // Simplified for brevity, assuming standard handlers
-    
     async registerEventListeners(modal) {
         const root = modal.getRoot()[0];
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         
         // Input changes update preview
         form.addEventListener('change', () => this.updatePreview(root));
-        form.querySelector(Selectors.IFRAME.elements.url).addEventListener('input', () => this.updatePreview(root));
+        const urlInput = form.querySelector(Selectors.IFRAME.elements.url);
+        if (urlInput) {
+             urlInput.addEventListener('input', () => this.updatePreview(root));
+        }
         
         // Tab switching
         const tabUrl = form.querySelector(Selectors.IFRAME.elements.tabUrlBtn);
@@ -278,15 +293,15 @@ export default class IframeEmbed {
         const libBtn = form.querySelector(Selectors.IFRAME.elements.tabIframeLibraryBtn);
         
         if (tab === 'url') {
-            urlPane.classList.add('show', 'active');
-            libPane.classList.remove('show', 'active');
-            urlBtn.classList.add('active');
-            libBtn.classList.remove('active');
+            if(urlPane) { urlPane.classList.add('show', 'active'); }
+            if(libPane) { libPane.classList.remove('show', 'active'); }
+            if(urlBtn) { urlBtn.classList.add('active'); }
+            if(libBtn) { libBtn.classList.remove('active'); }
         } else {
-            urlPane.classList.remove('show', 'active');
-            libPane.classList.add('show', 'active');
-            urlBtn.classList.remove('active');
-            libBtn.classList.add('active');
+            if(urlPane) { urlPane.classList.remove('show', 'active'); }
+            if(libPane) { libPane.classList.add('show', 'active'); }
+            if(urlBtn) { urlBtn.classList.remove('active'); }
+            if(libBtn) { libBtn.classList.add('active'); }
         }
     }
     
@@ -295,13 +310,16 @@ export default class IframeEmbed {
         if (ltiConfig && ltiConfig.contentItemUrl) {
             const iframe = root.querySelector(Selectors.IFRAME.elements.iframeLibraryFrame);
             const loading = root.querySelector(Selectors.IFRAME.elements.iframeLibraryLoading);
+            const placeholder = root.querySelector(Selectors.IFRAME.elements.iframeLibraryPlaceholder);
             
+            if (placeholder) placeholder.classList.add('d-none');
+
             if (iframe && !iframe.src) {
-                loading.classList.remove('d-none');
+                if (loading) loading.classList.remove('d-none');
                 iframe.classList.add('d-none');
                 
                 iframe.onload = () => {
-                    loading.classList.add('d-none');
+                    if (loading) loading.classList.add('d-none');
                     iframe.classList.remove('d-none');
                 };
                 
@@ -322,9 +340,6 @@ export default class IframeEmbed {
              const items = data.content_items || data.contentItems || [];
              if (items.length) {
                  embedUrl = items[0].url || items[0].embed_url;
-                 // Try to extract ID from URL if not provided
-                 // But actually we just need the ID to build the launch URL
-                 // If the response gives us a full embed URL, we can parse it
                  if (embedUrl) {
                      const parsed = this.parseInput(embedUrl);
                      if (parsed) videoId = parsed.videoId;
@@ -339,18 +354,15 @@ export default class IframeEmbed {
         }
         
         if (videoId) {
-            // Populate URL field with the clean embed URL (launch URL) if possible, 
-            // or just the direct URL which parseInput will handle
-            
-            // Actually, best to set the raw MediaCMS URL and let parseInput -> buildEmbedUrl handle the conversion
-            // But if we have the ID, we can construct a view URL
             const mediaCMSUrl = getMediaCMSUrl(this.editor);
             if (mediaCMSUrl) {
                 const viewUrl = `${mediaCMSUrl}/view?m=${videoId}`;
                 const urlInput = root.querySelector(Selectors.IFRAME.elements.url);
-                urlInput.value = viewUrl;
-                this.updatePreview(root);
-                this.switchToTab(root, 'url');
+                if (urlInput) {
+                    urlInput.value = viewUrl;
+                    this.updatePreview(root);
+                    this.switchToTab(root, 'url');
+                }
             }
         }
     }

@@ -1,0 +1,18 @@
+{
+  "name": "mediacms-moodle",
+  "version": "1.0.0",
+  "description": "This package provides the integration between MediaCMS and Moodle (versions 4.x and 5.x). It consists of two components that work together to provide a seamless video experience:",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/plugin-transform-modules-amd": "^7.27.1",
+    "@babel/preset-env": "^7.29.0"
+  }
+}

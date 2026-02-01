@@ -1,0 +1,36 @@
+
+
+step 1
+# nvm use 22
+
+step 2
+cd lms-plugins/mediacms-moodle
+
+step 3
+npm init -y
+
+step 4
+npm install --save-dev @babel/core @babel/cli @babel/preset-env @babel/plugin-transform-modules-amd
+
+step 5
+catn  >  .babelrc
+{
+  "presets": [
+    ["@babel/preset-env", {
+      "modules": "amd",
+      "targets": {
+        "browsers": ["> 1%", "last 2 versions", "not ie <= 10"]
+      }
+    }]
+  ],
+  "plugins": [
+    "@babel/plugin-transform-modules-amd"
+  ]
+}
+
+step 6
+npx babel tiny/mediacms/amd/src --out-dir tiny/mediacms/amd/build
+
+step 7
+cd tiny/mediacms/amd/build
+for f in *.js; do cp "$f" "${f%.js}.min.js"; done

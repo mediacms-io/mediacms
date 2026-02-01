@@ -24,7 +24,7 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
      */
     public static function get_available_buttons(): array {
         return [
-            'tiny_mediacms/tiny_mediacms',
+            'tiny_mediacms/tiny_mediacms_video',
         ];
     }
 
@@ -33,7 +33,7 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
      */
     public static function get_available_menuitems(): array {
         return [
-            'tiny_mediacms/tiny_mediacms',
+            'tiny_mediacms/tiny_mediacms_video',
         ];
     }
 
