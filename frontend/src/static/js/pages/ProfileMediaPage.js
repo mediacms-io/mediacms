@@ -212,6 +212,22 @@ export class ProfileMediaPage extends Page {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
+
+                    // Send postMessage to parent window (Moodle TinyMCE plugin)
+                    if (window.parent !== window) {
+                        // Construct the embed URL
+                        const baseUrl = window.location.origin;
+                        const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+
+                        // Send message in the format expected by the Moodle plugin
+                        window.parent.postMessage({
+                            type: 'videoSelected',
+                            embedUrl: embedUrl,
+                            videoId: mediaId
+                        }, '*');
+
+                        console.log('Sent postMessage to parent:', { embedUrl, videoId: mediaId });
+                    }
                 }
             } else {
                 // Normal mode: allow multiple selection
