@@ -25,39 +25,39 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    // LTI Tool ID setting.
-    // This should be the ID of the external tool (LTI) configured in Moodle for MediaCMS.
-    $setting = new admin_setting_configtext(
+    global $DB;
+
+    // LTI Tool ID setting (Dropdown).
+    $ltioptions = [0 => get_string('noltitoolsfound', 'tiny_mediacms')];
+    try {
+        $tools = $DB->get_records('lti_types', null, 'name ASC', 'id, name, baseurl');
+        if (!empty($tools)) {
+            $ltioptions = [0 => get_string('choose', 'tiny_mediacms')];
+            foreach ($tools as $tool) {
+                $ltioptions[$tool->id] = $tool->name . ' (' . $tool->baseurl . ')';
+            }
+        }
+    } catch (Exception $e) {
+        // Database might not be ready during install
+    }
+
+    $setting = new admin_setting_configselect(
         'tiny_mediacms/ltitoolid',
         new lang_string('ltitoolid', 'tiny_mediacms'),
         new lang_string('ltitoolid_desc', 'tiny_mediacms'),
-        '',
-        PARAM_INT
+        0,
+        $ltioptions
     );
     $settings->add($setting);
-
-    // Auto-convert heading.
-    $settings->add(new admin_setting_heading(
-        'tiny_mediacms/autoconvertheading',
-        new lang_string('autoconvertheading', 'tiny_mediacms'),
-        new lang_string('autoconvertheading_desc', 'tiny_mediacms')
-    ));
-
-    // Enable/disable auto-convert of pasted MediaCMS URLs.
-    $setting = new admin_setting_configcheckbox(
-        'tiny_mediacms/autoconvertenabled',
-        new lang_string('autoconvertenabled', 'tiny_mediacms'),
-        new lang_string('autoconvertenabled_desc', 'tiny_mediacms'),
-        1
-    );
-    $settings->add($setting);
-
+    
+    // Auto-convert is enabled by default in plugininfo.php (data.autoConvertEnabled = true).
+    
     // MediaCMS base URL for auto-convert.
     $setting = new admin_setting_configtext(
         'tiny_mediacms/autoconvert_baseurl',
         new lang_string('autoconvert_baseurl', 'tiny_mediacms'),
         new lang_string('autoconvert_baseurl_desc', 'tiny_mediacms'),
-        '',
+        'https://lti.mediacms.io', // Default matching filter
         PARAM_URL
     );
     $settings->add($setting);

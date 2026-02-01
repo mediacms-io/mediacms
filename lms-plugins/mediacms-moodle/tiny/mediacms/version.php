@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026020102; // Bumped version to ensure upgrade
+$plugin->version   = 2026020103; // Bumped version to ensure upgrade
 $plugin->requires  = 2024100100;
 $plugin->component = 'tiny_mediacms';
 $plugin->dependencies = ['filter_mediacms' => 2026020100]; // Keep dependency on our filter

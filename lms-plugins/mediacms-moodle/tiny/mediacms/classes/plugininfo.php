@@ -121,7 +121,7 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
 
         return [
             'data' => [
-                'autoConvertEnabled' => $getboolconfig('autoconvertenabled'),
+                'autoConvertEnabled' => true, // Always enabled
                 'autoConvertBaseUrl' => !empty($baseurl) ? $baseurl : '',
                 'autoConvertOptions' => [
                     'showTitle' => $getboolconfig('autoconvert_showtitle'),
@@ -168,6 +168,8 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
             $contentitemurl = (new moodle_url('/mod/lti/contentitem.php', [
                 'id' => $ltitoolid,
                 'course' => $courseid,
+                'title' => 'MediaCMS Library',
+                'return_types' => 1 // LTI_DEEPLINKING_RETURN_TYPE_LTI_LINK
             ]))->out(false);
         }
 

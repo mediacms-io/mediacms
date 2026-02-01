@@ -159,8 +159,10 @@ $string['librarypage'] = 'Page {$a->current} of {$a->total}';
 $string['libraryvideoselected'] = 'Video selected. Configure embed options below.';
 
 // LTI settings strings.
-$string['ltitoolid'] = 'MediaCMS LTI tool ID';
-$string['ltitoolid_desc'] = 'The ID of the external tool (LTI) configured in Moodle for MediaCMS. This enables the authenticated video library in the editor.';
+$string['ltitoolid'] = 'LTI Tool';
+$string['ltitoolid_desc'] = 'Select the External Tool configuration for MediaCMS. This enables the authenticated video library in the editor.';
+$string['noltitoolsfound'] = 'No LTI tools found';
+$string['choose'] = 'Choose...';
 $string['ltitoolid_help'] = 'To find the LTI tool ID, go to Site administration > Plugins > Activity modules > External tool > Manage tools. The ID is shown in the URL when editing a tool (e.g., id=2).';
 
 // Iframe library from LTI strings.
@@ -173,9 +175,9 @@ $string['iframelibrarynotconfigured'] = 'The MediaCMS LTI tool has not been conf
 $string['autoconvertheading'] = 'Auto-convert MediaCMS URLs';
 $string['autoconvertheading_desc'] = 'Configure automatic conversion of pasted MediaCMS URLs to embedded videos.';
 $string['autoconvertenabled'] = 'Enable auto-convert';
-$string['autoconvertenabled_desc'] = 'When enabled, pasting a MediaCMS video URL (e.g., https://deic.mediacms.io/view?m=VIDEO_ID) into the editor will automatically convert it to an embedded video player.';
-$string['autoconvert_baseurl'] = 'MediaCMS base URL';
-$string['autoconvert_baseurl_desc'] = 'The base URL of your MediaCMS instance (e.g., https://deic.mediacms.io). If specified, only URLs from this domain will be auto-converted. Leave empty to allow any MediaCMS URL.';
+$string['autoconvertenabled_desc'] = 'When enabled, pasting a MediaCMS video URL (e.g., https://lti.mediacms.io/view?m=VIDEO_ID) into the editor will automatically convert it to an embedded video player.';
+$string['autoconvert_baseurl'] = 'MediaCMS URL';
+$string['autoconvert_baseurl_desc'] = 'The base URL of your MediaCMS instance (e.g., https://lti.mediacms.io). If specified, only URLs from this domain will be auto-converted. Leave empty to allow any MediaCMS URL.';
 $string['autoconvert_showtitle'] = 'Show video title';
 $string['autoconvert_showtitle_desc'] = 'Display the video title in the embedded player.';
 $string['autoconvert_linktitle'] = 'Link video title';

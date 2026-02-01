@@ -12,11 +12,14 @@ if ($ADMIN->fulltree) {
     ));
 
     // LTI Tool Selector
-    $ltioptions = [0 => get_string('autodetect', 'filter_mediacms')];
+    $ltioptions = [0 => get_string('noltitoolsfound', 'filter_mediacms')];
     try {
         $tools = $DB->get_records('lti_types', null, 'name ASC', 'id, name, baseurl');
-        foreach ($tools as $tool) {
-            $ltioptions[$tool->id] = $tool->name . ' (' . $tool->baseurl . ')';
+        if (!empty($tools)) {
+            $ltioptions = [0 => get_string('choose')];
+            foreach ($tools as $tool) {
+                $ltioptions[$tool->id] = $tool->name . ' (' . $tool->baseurl . ')';
+            }
         }
     } catch (Exception $e) {
         // Database might not be ready during install
