@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveIntegerOrZero, inEmbeddedApp } from '../../utils/helpers/';
+import { PositiveIntegerOrZero, inSelectMediaEmbedMode } from '../../utils/helpers/';
 import { MediaDurationInfo } from '../../utils/classes/';
 import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOptions.jsx';
 import { MediaItemVideoPlayer, MediaItemDuration, MediaItemVideoPreviewer, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
@@ -9,7 +9,7 @@ import { MediaItem } from './MediaItem';
 
 export function MediaItemVideo(props) {
   const type = props.type;
-  const isEmbedMode = inEmbeddedApp();
+  const isSelectMediaMode = inSelectMediaEmbedMode();
 
   const [titleComponentOrig, descriptionComponent, thumbnailUrl, UnderThumbWrapperOrig, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
@@ -23,11 +23,11 @@ export function MediaItemVideo(props) {
 
   const ItemMain = ({ children }) => <div className="item-main">{children}</div>;
 
-  const titleComponent = isEmbedMode
+  const titleComponent = isSelectMediaMode
     ? () => <ItemTitle title={props.title} />
     : titleComponentOrig;
 
-  const UnderThumbWrapper = isEmbedMode ? ItemMain : UnderThumbWrapperOrig;
+  const UnderThumbWrapper = isSelectMediaMode ? ItemMain : UnderThumbWrapperOrig;
 
   const _MediaDurationInfo = new MediaDurationInfo();
 
@@ -42,8 +42,8 @@ export function MediaItemVideo(props) {
   }
 
   function thumbnailComponent() {
-    if (isEmbedMode) {
-      // In embed mode, render thumbnail without link
+    if (isSelectMediaMode) {
+      // In select media mode, render thumbnail without link
       return (
         <div
           key="item-thumb"
@@ -109,11 +109,11 @@ export function MediaItemVideo(props) {
   const finalClassname = containerClassname +
     (props.showSelection ? ' with-selection' : '') +
     (props.isSelected ? ' selected' : '') +
-    (props.hasAnySelection || isEmbedMode ? ' has-any-selection' : '');
+    (props.hasAnySelection || isSelectMediaMode ? ' has-any-selection' : '');
 
   const handleItemClick = (e) => {
-    // In embed mode or if there's any selection active, clicking the item should toggle selection
-    if ((isEmbedMode || props.hasAnySelection) && props.onCheckboxChange) {
+    // In select media mode or if there's any selection active, clicking the item should toggle selection
+    if ((isSelectMediaMode || props.hasAnySelection) && props.onCheckboxChange) {
       // Check if clicking on the checkbox itself, edit icon, or view icon
       if (e.target.closest('.item-selection-checkbox') ||
           e.target.closest('.item-edit-icon') ||
@@ -145,12 +145,12 @@ export function MediaItemVideo(props) {
           </div>
         )}
 
-        {!isEmbedMode && editMediaComponent()}
-        {!isEmbedMode && viewMediaComponent()}
+        {!isSelectMediaMode && editMediaComponent()}
+        {!isSelectMediaMode && viewMediaComponent()}
 
         {props.hasMediaViewer ? videoViewerComponent() : thumbnailComponent()}
 
-        {isEmbedMode ? (
+        {isSelectMediaMode ? (
           <UnderThumbWrapper>
             {titleComponent()}
             {metaComponents()}

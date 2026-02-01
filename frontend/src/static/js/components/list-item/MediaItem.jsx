@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveInteger, PositiveIntegerOrZero, inEmbeddedApp } from '../../utils/helpers/';
+import { PositiveInteger, PositiveIntegerOrZero, inSelectMediaEmbedMode } from '../../utils/helpers/';
 import { MediaItemThumbnailLink, itemClassname } from './includes/items/';
 import { Item } from './Item';
 
 export function MediaItem(props) {
   const type = props.type;
-  const isEmbedMode = inEmbeddedApp();
+  const isSelectMediaMode = inSelectMediaEmbedMode();
 
   const [titleComponentOrig, descriptionComponent, thumbnailUrl, UnderThumbWrapperOrig, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
@@ -21,14 +21,14 @@ export function MediaItem(props) {
 
   const ItemMain = ({ children }) => <div className="item-main">{children}</div>;
 
-  const titleComponent = isEmbedMode
+  const titleComponent = isSelectMediaMode
     ? () => <ItemTitle title={props.title} />
     : titleComponentOrig;
 
-  const UnderThumbWrapper = isEmbedMode ? ItemMain : UnderThumbWrapperOrig;
+  const UnderThumbWrapper = isSelectMediaMode ? ItemMain : UnderThumbWrapperOrig;
 
   function thumbnailComponent() {
-    if (isEmbedMode) {
+    if (isSelectMediaMode) {
       // In embed mode, render thumbnail without link
       const thumbStyle = thumbnailUrl ? { backgroundImage: "url('" + thumbnailUrl + "')" } : null;
       return (
@@ -57,13 +57,13 @@ export function MediaItem(props) {
   const finalClassname = containerClassname +
     (props.showSelection ? ' with-selection' : '') +
     (props.isSelected ? ' selected' : '') +
-    (props.hasAnySelection || isEmbedMode ? ' has-any-selection' : '');
+    (props.hasAnySelection || isSelectMediaMode ? ' has-any-selection' : '');
 
   const handleItemClick = (e) => {
-    const isEmbedMode = inEmbeddedApp();
+    const isSelectMediaMode = inSelectMediaEmbedMode();
 
-    // In embed mode or if there's any selection active, clicking the item should toggle selection
-    if ((isEmbedMode || props.hasAnySelection) && props.onCheckboxChange) {
+    // In select media mode or if there's any selection active, clicking the item should toggle selection
+    if ((isSelectMediaMode || props.hasAnySelection) && props.onCheckboxChange) {
       // Check if clicking on the checkbox itself, edit icon, or view icon
       if (e.target.closest('.item-selection-checkbox') ||
           e.target.closest('.item-edit-icon') ||
@@ -93,12 +93,12 @@ export function MediaItem(props) {
           </div>
         )}
 
-        {!isEmbedMode && editMediaComponent()}
-        {!isEmbedMode && viewMediaComponent()}
+        {!isSelectMediaMode && editMediaComponent()}
+        {!isSelectMediaMode && viewMediaComponent()}
 
         {thumbnailComponent()}
 
-        {isEmbedMode ? (
+        {isSelectMediaMode ? (
           <UnderThumbWrapper>
             {titleComponent()}
             {metaComponents()}

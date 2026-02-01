@@ -5,7 +5,7 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import { translateString, inEmbeddedApp } from '../../utils/helpers/';
+import { translateString, inEmbeddedApp, inSelectMediaEmbedMode } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
@@ -372,7 +372,7 @@ class NavMenuInlineTabs extends React.PureComponent {
     }
 
     render() {
-        const isEmbedMode = inEmbeddedApp();
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         return (
             <nav ref="tabsNav" className="profile-nav items-list-outer list-inline list-slider">
@@ -380,7 +380,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                     {this.state.displayPrev ? this.previousBtn : null}
 
                     <ul className="items-list-wrap" ref="itemsListWrap">
-                        {!isEmbedMode ? (
+                        {!isSelectMediaMode ? (
                             <InlineTab
                                 id="about"
                                 isActive={'about' === this.props.type}
@@ -411,7 +411,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                             />
                         ) : null}
 
-                        {!isEmbedMode && MemberContext._currentValue.can.saveMedia ? (
+                        {!isSelectMediaMode && MemberContext._currentValue.can.saveMedia ? (
                             <InlineTab
                                 id="playlists"
                                 isActive={'playlists' === this.props.type}
@@ -772,7 +772,7 @@ export default function ProfilePagesHeader(props) {
             )}
 
             <div className="profile-info-nav-wrap">
-                {inEmbeddedApp() ? (
+                {inSelectMediaEmbedMode() ? (
                     <div className="profile-info">
                         <div className="profile-info-inner">
                             <div>

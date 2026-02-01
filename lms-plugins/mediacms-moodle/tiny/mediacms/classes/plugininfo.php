@@ -4,10 +4,38 @@ namespace tiny_mediacms;
 
 use context;
 use moodle_url;
+use editor_tiny\plugin;
+use editor_tiny\plugin_with_buttons;
+use editor_tiny\plugin_with_menuitems;
 
 defined('MOODLE_INTERNAL') || die();
 
-class plugininfo extends \editor_tiny\plugin {
+class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menuitems {
+
+    /**
+     * Whether the plugin is enabled
+     */
+    public static function is_enabled(context $context, array $options, array $fpoptions, ?\editor_tiny\editor $editor = null): bool {
+        return isloggedin() && !isguestuser();
+    }
+
+    /**
+     * Get available buttons
+     */
+    public static function get_available_buttons(): array {
+        return [
+            'tiny_mediacms/tiny_mediacms',
+        ];
+    }
+
+    /**
+     * Get available menu items
+     */
+    public static function get_available_menuitems(): array {
+        return [
+            'tiny_mediacms/tiny_mediacms',
+        ];
+    }
 
     /**
      * Get the plugin configuration for the editor.

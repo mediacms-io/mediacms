@@ -1,5 +1,5 @@
 import React from 'react';
-import { translateString, inEmbeddedApp } from '../utils/helpers/';
+import { translateString, inSelectMediaEmbedMode } from '../utils/helpers/';
 
 interface MediaListHeaderProps {
   title?: string;
@@ -11,12 +11,12 @@ interface MediaListHeaderProps {
 
 export const MediaListHeader: React.FC<MediaListHeaderProps> = (props) => {
   const viewAllText = props.viewAllText || translateString('VIEW ALL');
-  const isEmbedMode = inEmbeddedApp();
+  const isSelectMediaMode = inSelectMediaEmbedMode();
 
   return (
     <div className={(props.className ? props.className + ' ' : '') + 'media-list-header'} style={props.style}>
       <h2>{props.title}</h2>
-      {!isEmbedMode && props.viewAllLink ? (
+      {!isSelectMediaMode && props.viewAllLink ? (
         <h3>
           {' '}
           <a href={props.viewAllLink} title={viewAllText}>

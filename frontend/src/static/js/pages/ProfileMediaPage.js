@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions, PageActions } from '../utils/actions';
-import { inEmbeddedApp, translateString } from '../utils/helpers/';
+import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
@@ -202,13 +202,13 @@ export class ProfileMediaPage extends Page {
     }
 
     handleMediaSelection(mediaId, isSelected) {
-        const isEmbedMode = inEmbeddedApp();
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         this.setState((prevState) => {
             const newSelectedMedia = new Set();
 
-            // In embed mode, only allow single selection
-            if (isEmbedMode) {
+            // In select media mode, only allow single selection
+            if (isSelectMediaMode) {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
@@ -933,7 +933,7 @@ export class ProfileMediaPage extends Page {
         const authorData = ProfilePageStore.get('author-data');
 
         const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
-        const isEmbedMode = inEmbeddedApp();
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active (excluding default sort and tags)
         const hasActiveFilters =
@@ -965,16 +965,16 @@ export class ProfileMediaPage extends Page {
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
                     <MediaListWrapper
-                        title={isEmbedMode ? undefined : this.state.title}
+                        title={isSelectMediaMode ? undefined : this.state.title}
                         className="items-list-ver"
-                        style={isEmbedMode ? { marginTop: '24px' } : undefined}
-                        showBulkActions={!isEmbedMode && isMediaAuthor}
+                        style={isSelectMediaMode ? { marginTop: '24px' } : undefined}
+                        showBulkActions={!isSelectMediaMode && isMediaAuthor}
                         selectedCount={this.state.selectedMedia.size}
                         totalCount={this.state.availableMediaIds.length}
                         onBulkAction={this.handleBulkAction}
                         onSelectAll={this.handleSelectAll}
                         onDeselectAll={this.handleDeselectAll}
-                        showAddMediaButton={!isEmbedMode && isMediaAuthor}
+                        showAddMediaButton={!isSelectMediaMode && isMediaAuthor}
                     >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
@@ -997,7 +997,7 @@ export class ProfileMediaPage extends Page {
                             hideViews={!PageStore.get('config-media-item').displayViews}
                             hideDate={!PageStore.get('config-media-item').displayPublishDate}
                             canEdit={isMediaAuthor}
-                            showSelection={isMediaAuthor || isEmbedMode}
+                            showSelection={isMediaAuthor || isSelectMediaMode}
                             hasAnySelection={this.state.selectedMedia.size > 0}
                             selectedMedia={this.state.selectedMedia}
                             onMediaSelection={this.handleMediaSelection}
