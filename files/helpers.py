@@ -489,6 +489,63 @@ def show_file_size(size):
     return size
 
 
+def should_transcode_video(media):
+    """
+    Determine if a video should be transcoded based on TRANSCODING_OPTIONS setting.
+
+    Args:
+        media: Media model instance
+
+    Returns:
+        bool: True if video should be transcoded, False otherwise
+    """
+    option = getattr(settings, 'TRANSCODING_OPTIONS', 'always')
+
+    # Handle backward compatibility with DO_NOT_TRANSCODE_VIDEO
+    if getattr(settings, 'DO_NOT_TRANSCODE_VIDEO', False):
+        return False
+
+    if option == 'never':
+        return False
+    elif option == 'always':
+        return True
+    elif option in ['file_size_gt', 'file_size_lt']:
+        # Get file size in bytes
+        if hasattr(media.media_file, 'size') and media.media_file.size:
+            file_size_bytes = media.media_file.size
+        else:
+            # Fallback: get from file system
+            try:
+                file_size_bytes = os.path.getsize(media.media_file.path)
+            except (OSError, AttributeError):
+                # If we can't determine size, default to transcoding for safety
+                return True
+
+        # Convert to MB
+        file_size_mb = file_size_bytes / (1024 * 1024)
+        threshold_mb = getattr(settings, 'TRANSCODING_OPTIONS_FILESIZE', 1000)
+
+        if option == 'file_size_gt':
+            return file_size_mb > threshold_mb
+        elif option == 'file_size_lt':
+            return file_size_mb < threshold_mb
+    elif option == 'non_mp4_only':
+        # Check if video is MP4 format
+        if media.media_info:
+            try:
+                media_info = json.loads(media.media_info)
+                format_name = media_info.get('format_name', '').lower()
+                # Check if format contains mp4
+                return 'mp4' not in format_name
+            except (json.JSONDecodeError, AttributeError):
+                pass
+        # If we can't determine format, default to transcoding
+        return True
+
+    # Default to transcoding if option is unrecognized
+    return True
+
+
 def get_base_ffmpeg_command(
     input_file,
     output_file,
