@@ -24,18 +24,7 @@ export function isSelectMediaMode() {
         const params = new URL(globalThis.location.href).searchParams;
         const action = params.get('action');
 
-        if (action === 'select_media') {
-            sessionStorage.setItem('media_cms_select_media', 'true');
-            return true;
-        }
-
-        // Clear if action is explicitly something else
-        if (action && action !== 'select_media') {
-            sessionStorage.removeItem('media_cms_select_media');
-            return false;
-        }
-
-        return sessionStorage.getItem('media_cms_select_media') === 'true';
+        return action === 'select_media';
     } catch (e) {
         return false;
     }
