@@ -582,11 +582,19 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
 
             added_count = 0
+            media_to_update = set()
             for category in categories:
                 for m in media:
                     if not m.category.filter(uid=category.uid).exists():
                         m.category.add(category)
                         added_count += 1
+                        media_to_update.add(m.id)
+
+            # Update search vectors for all affected media
+            for m_id in media_to_update:
+                m = Media.objects.get(id=m_id)
+                m.refresh_from_db()
+                m.update_search_vector()
 
             return Response({"detail": f"Added {added_count} media items to {categories.count()} categories"})
 
@@ -600,11 +608,19 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
+            media_to_update = set()
             for category in categories:
                 for m in media:
                     if m.category.filter(uid=category.uid).exists():
                         m.category.remove(category)
                         removed_count += 1
+                        media_to_update.add(m.id)
+
+            # Update search vectors for all affected media
+            for m_id in media_to_update:
+                m = Media.objects.get(id=m_id)
+                m.refresh_from_db()
+                m.update_search_vector()
 
             return Response({"detail": f"Removed {removed_count} media items from {categories.count()} categories"})
 
@@ -618,11 +634,19 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching tags found"}, status=status.HTTP_400_BAD_REQUEST)
 
             added_count = 0
+            media_to_update = set()
             for tag in tags:
                 for m in media:
                     if not m.tags.filter(title=tag.title).exists():
                         m.tags.add(tag)
                         added_count += 1
+                        media_to_update.add(m.id)
+
+            # Update search vectors for all affected media
+            for m_id in media_to_update:
+                m = Media.objects.get(id=m_id)
+                m.refresh_from_db()
+                m.update_search_vector()
 
             return Response({"detail": f"Added {added_count} media items to {tags.count()} tags"})
 
@@ -636,11 +660,19 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching tags found"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
+            media_to_update = set()
             for tag in tags:
                 for m in media:
                     if m.tags.filter(title=tag.title).exists():
                         m.tags.remove(tag)
                         removed_count += 1
+                        media_to_update.add(m.id)
+
+            # Update search vectors for all affected media
+            for m_id in media_to_update:
+                m = Media.objects.get(id=m_id)
+                m.refresh_from_db()
+                m.update_search_vector()
 
             return Response({"detail": f"Removed {removed_count} media items from {tags.count()} tags"})
 
