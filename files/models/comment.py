@@ -1,10 +1,15 @@
+import logging
 import uuid
 
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.html import strip_tags
 from mptt.models import MPTTModel, TreeForeignKey
+
+logger = logging.getLogger(__name__)
 
 
 class Comment(MPTTModel):
@@ -44,3 +49,36 @@ class Comment(MPTTModel):
     @property
     def media_url(self):
         return self.get_absolute_url()
+
+
+@receiver(post_save, sender=Comment)
+def comment_save(sender, instance, created, **kwargs):
+    """Log comment creation and updates"""
+    if created:
+        logger.info(
+            "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            bool(instance.parent),
+        )
+    else:
+        logger.debug(
+            "Comment updated - comment_id=%s, user_id=%s, media_friendly_token=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+        )
+
+
+@receiver(post_delete, sender=Comment)
+def comment_delete(sender, instance, **kwargs):
+    """Log comment deletion"""
+    logger.info(
+        "Comment deleted - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s",
+        instance.id,
+        instance.user.id if instance.user else None,
+        instance.user.username if instance.user else None,
+        instance.media.friendly_token if instance.media else None,
+    )

@@ -8,6 +8,7 @@
 - [5. Working with Docker tips](#5-working-with-docker-tips)
 - [6. Working with the automated tests](#6-working-with-the-automated-tests)
 - [7. How video is transcoded](#7-how-video-is-transcoded)
+- [8. Logging in MediaCMS](#8-logging-in-mediacms)
 
 ## 1. Welcome
 This page is created for MediaCMS developers and contains related information.
@@ -153,3 +154,1426 @@ docker compose exec --env TESTING=True -T web pytest --cov=. --cov-report=html
 ```
 
 and of course...you are very welcome to help us increase it ;)
+
+## 8. Logging in MediaCMS
+
+MediaCMS uses Python's standard `logging` module throughout the codebase to capture exceptions, errors, and important events. This section covers logging patterns, best practices, and how to add logging to your code.
+
+### Overview
+
+MediaCMS implements consistent exception logging across the application to help with debugging and monitoring. All exception handlers use a standardized logging format that includes the exception type and message.
+
+### Logger Initialization
+
+To use logging in a new module, follow this pattern:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+```
+
+**Important**: Always use `logging.getLogger(__name__)` to ensure loggers are properly namespaced by module. This allows fine-grained control over logging levels per module.
+
+**For Celery Tasks**: Use the Celery task logger instead:
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+```
+
+### Log Levels
+
+MediaCMS uses the following log levels:
+
+- **DEBUG**: Detailed information for diagnosing problems (only when DEBUG=True)
+- **INFO**: General informational messages about application flow
+- **WARNING**: Warning messages for potentially problematic situations (used for exceptions)
+- **ERROR**: Error messages for serious problems
+- **CRITICAL**: Critical errors that may cause the application to stop
+
+**When to use each level:**
+
+- **DEBUG**: Detailed diagnostic information, variable values during development
+- **INFO**: Important application events (task started, media encoded, etc.)
+- **WARNING**: Exception handling, recoverable errors, deprecated feature usage
+- **ERROR**: Unrecoverable errors, failed operations
+- **CRITICAL**: System-level failures, data corruption risks
+
+### Exception Logging Pattern
+
+MediaCMS uses a consistent pattern for logging exceptions throughout the codebase:
+
+```python
+except ExceptionType as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # existing exception handling logic
+```
+
+**Key principles:**
+
+1. **Preserve existing exception handling**: Only add logging statements, don't modify exception handling logic
+2. **Use structured format**: Include exception type and message for better log parsing
+3. **Use WARNING level**: Exceptions are typically logged at WARNING level unless they're critical
+4. **Use `as e` syntax**: Always capture the exception object to access its properties
+
+### Logging Locations
+
+Logging is implemented in the following areas:
+
+#### Celery Tasks (`files/tasks.py`)
+
+Exception logging in background tasks:
+
+```python
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@task(name="encode_media")
+def encode_media(self, friendly_token, profile_id, encoding_id):
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        # handle exception
+        return False
+```
+
+#### FFmpeg Backend (`files/backends.py`)
+
+Logging encoding-related exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def _spawn(self, cmd):
+    try:
+        return Popen(cmd, ...)
+    except OSError as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        raise VideoEncodingError("Error while running ffmpeg", e)
+```
+
+#### File Operations (`files/helpers.py`)
+
+Logging file I/O and command execution errors:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def run_command(cmd, cwd=None):
+    # ... command execution ...
+    try:
+        ret["out"] = stdout.decode("utf-8")
+    except BaseException as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        ret["out"] = ""
+```
+
+#### Django Views (`users/views.py`, `uploader/views.py`)
+
+Logging view-level exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def get_user(username):
+    try:
+        user = User.objects.get(username=username)
+        return user
+    except User.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return None
+```
+
+#### Model Methods (`files/models/media.py`)
+
+Logging model operation exceptions:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class Media(models.Model):
+    def media_init(self):
+        try:
+            self.media_info = json.dumps(ret)
+        except TypeError as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            self.media_info = ""
+```
+
+### Best Practices
+
+#### 1. Always Preserve Exception Handling Logic
+
+**Good:**
+```python
+except BaseException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # existing handling logic unchanged
+    return False
+```
+
+**Bad:**
+```python
+except BaseException as e:
+    # Don't replace existing logic with logging
+    logger.error("Error occurred")
+    # missing original handling logic
+```
+
+#### 2. Use Structured Logging Format
+
+**Good:**
+```python
+logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+```
+
+**Bad:**
+```python
+logger.warning(f"Error: {e}")  # Less structured, harder to parse
+```
+
+#### 3. Don't Log Sensitive Information
+
+**Good:**
+```python
+except AuthenticationError as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # Don't log passwords, tokens, or user credentials
+```
+
+**Bad:**
+```python
+logger.warning(f"Login failed for user {username} with password {password}")  # Never log passwords!
+```
+
+#### 4. Use Appropriate Log Levels
+
+- **WARNING**: For exceptions that are handled gracefully
+- **ERROR**: For exceptions that cause operation failure
+- **CRITICAL**: For exceptions that may cause system instability
+
+#### 5. Add Context When Helpful
+
+For complex operations, add context to log messages:
+
+```python
+except Exception as e:
+    logger.warning("Caught exception during media encoding: type=%s, message=%s, media_id=%s", 
+                   type(e).__name__, str(e), media.id)
+```
+
+### Examples
+
+#### Adding Logging to a New Exception Handler
+
+**Before:**
+```python
+def process_media(media_id):
+    try:
+        media = Media.objects.get(id=media_id)
+        # process media
+    except Media.DoesNotExist:
+        return False
+```
+
+**After:**
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+def process_media(media_id):
+    try:
+        media = Media.objects.get(id=media_id)
+        # process media
+    except Media.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return False
+```
+
+#### Logging in Celery Tasks
+
+```python
+from celery import shared_task as task
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+@task(name="process_video")
+def process_video(video_id):
+    try:
+        video = Video.objects.get(id=video_id)
+        # process video
+    except Video.DoesNotExist as e:
+        logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+        return False
+    except Exception as e:
+        logger.error("Unexpected error processing video: type=%s, message=%s", 
+                     type(e).__name__, str(e))
+        raise
+```
+
+#### Logging in Django Views
+
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MediaDetail(APIView):
+    def get(self, request, friendly_token):
+        try:
+            media = Media.objects.get(friendly_token=friendly_token)
+            return Response({"title": media.title})
+        except Media.DoesNotExist as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            return Response({"error": "Media not found"}, status=404)
+```
+
+#### Logging in Model Methods
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class Media(models.Model):
+    def save(self, *args, **kwargs):
+        try:
+            # custom save logic
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+            # handle exception
+            raise
+```
+
+### Common Patterns
+
+#### Handling Multiple Exception Types
+
+```python
+try:
+    # operation
+except SpecificException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # specific handling
+except BaseException as e:
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # general handling
+```
+
+#### Logging Before Re-raising
+
+```python
+try:
+    # operation
+except CriticalException as e:
+    logger.error("Caught critical exception: type=%s, message=%s", type(e).__name__, str(e))
+    raise  # Re-raise after logging
+```
+
+#### Conditional Logging
+
+```python
+try:
+    # operation
+except Exception as e:
+    if settings.DEBUG:
+        logger.debug("Detailed error info: type=%s, message=%s", type(e).__name__, str(e))
+    logger.warning("Caught exception: type=%s, message=%s", type(e).__name__, str(e))
+    # handle exception
+```
+
+### Signal Handler Logging
+
+MediaCMS uses Django signals to automatically log important application events. Signal handlers provide a clean way to add logging without modifying core application code.
+
+#### Django-Allauth Signal Handlers
+
+MediaCMS includes signal handlers for django-allauth authentication events:
+
+**User Login** (`user_logged_in`):
+```python
+from allauth.account.signals import user_logged_in
+from django.dispatch import receiver
+import logging
+
+from cms.utils import get_client_ip_for_logging
+
+logger = logging.getLogger(__name__)
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    client_ip = get_client_ip_for_logging(request)
+    logger.info(
+        "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
+        user.id,
+        user.username,
+        client_ip,
+    )
+```
+
+**User Logout** (`user_logged_out`):
+```python
+from allauth.account.signals import user_logged_out
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    if user:
+        logger.info(
+            "Logout (django-allauth) - user_id=%s, username=%s",
+            user.id,
+            user.username,
+        )
+```
+
+**Password Reset** (`password_reset`):
+```python
+from allauth.account.signals import password_reset
+from cms.utils import get_client_ip_for_logging
+
+@receiver(password_reset)
+def log_password_reset(sender, request, user, **kwargs):
+    client_ip = get_client_ip_for_logging(request)
+    logger.info(
+        "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+```
+
+**Email Confirmation** (`email_confirmed`):
+```python
+from allauth.account.signals import email_confirmed
+
+@receiver(email_confirmed)
+def log_email_confirmed(sender, request, email_address, **kwargs):
+    user = email_address.user if email_address else None
+    logger.info(
+        "Email confirmed - user_id=%s, username=%s, email=%s",
+        user.id if user else None,
+        user.username if user else None,
+        email_address.email if email_address else None,
+    )
+```
+
+**Password Change** (`password_changed`):
+```python
+from allauth.account.signals import password_changed
+from cms.utils import get_client_ip_for_logging
+
+@receiver(password_changed)
+def log_password_changed(sender, request, user, **kwargs):
+    client_ip = get_client_ip_for_logging(request)
+    logger.info(
+        "Password changed - user_id=%s, username=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        client_ip,
+    )
+```
+
+**Account Signup** (`user_signed_up`):
+```python
+from allauth.account.signals import user_signed_up
+from cms.utils import get_client_ip_for_logging
+
+@receiver(user_signed_up)
+def log_account_signup(sender, request, user, **kwargs):
+    client_ip = get_client_ip_for_logging(request)
+    logger.info(
+        "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
+        user.id if user else None,
+        user.username if user else None,
+        user.email if user else None,
+        client_ip,
+    )
+```
+
+#### Django Model Signal Handlers
+
+MediaCMS includes signal handlers for Django model events:
+
+**User Creation** (`post_save` for User):
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def post_user_create(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "User registered - user_id=%s, username=%s, email=%s",
+            instance.id,
+            instance.username,
+            instance.email,
+        )
+```
+
+**User Deletion** (`post_delete` for User):
+```python
+from django.db.models.signals import post_delete
+
+@receiver(post_delete, sender=User)
+def delete_content(sender, instance, **kwargs):
+    # Count content before deletion
+    media_count = Media.objects.filter(user=instance).count()
+    tag_count = Tag.objects.filter(user=instance).count()
+    category_count = Category.objects.filter(user=instance).count()
+    
+    logger.info(
+        "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+        instance.id,
+        instance.username,
+        instance.email,
+        media_count,
+        tag_count,
+        category_count,
+    )
+```
+
+**Media Creation/Updates** (`post_save` for Media):
+```python
+@receiver(post_save, sender=Media)
+def media_save(sender, instance, created, **kwargs):
+    if not instance.friendly_token:
+        return False
+
+    if created:
+        logger.info(
+            "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media_type,
+            instance.title[:50] if instance.title else None,
+        )
+    else:
+        logger.debug(
+            "Media updated - friendly_token=%s, user_id=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Media Deletion** (`pre_delete` and `post_delete` for Media):
+```python
+from django.db.models.signals import pre_delete, post_delete
+
+@receiver(pre_delete, sender=Media)
+def media_file_pre_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion initiated - friendly_token=%s, user_id=%s, media_type=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+    )
+
+@receiver(post_delete, sender=Media)
+def media_file_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion completed - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+        instance.title[:50] if instance.title else None,
+    )
+```
+
+**Media Category Changes** (`m2m_changed` for Media.category):
+```python
+from django.db.models.signals import m2m_changed
+
+@receiver(m2m_changed, sender=Media.category.through)
+def media_m2m(sender, instance, action, pk_set, **kwargs):
+    # Only log post_add and post_remove actions
+    if action in ['post_add', 'post_remove']:
+        from .category import Category
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "Media category %s - friendly_token=%s, user_id=%s, action=%s, category_count=%s, category_names=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.friendly_token if instance.friendly_token else None,
+            instance.user.id if instance.user else None,
+            action,
+            len(categories),
+            category_names,
+        )
+```
+
+**Subtitle Creation/Updates** (`post_save` for Subtitle):
+```python
+@receiver(post_save, sender=Subtitle)
+def subtitle_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Subtitle created - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
+    else:
+        logger.debug(
+            "Subtitle updated - friendly_token=%s, language=%s, user_id=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.language.code if instance.language else None,
+            instance.media.user.id if instance.media and instance.media.user else None,
+        )
+```
+
+**Encoding Creation/Updates** (`post_save` for Encoding):
+```python
+@receiver(post_save, sender=Encoding)
+def encoding_file_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.profile.name if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
+    else:
+        logger.debug(
+            "Encoding updated - friendly_token=%s, profile_id=%s, status=%s, chunk=%s",
+            instance.media.friendly_token if instance.media else None,
+            instance.profile.id if instance.profile else None,
+            instance.status,
+            instance.chunk,
+        )
+```
+
+**Encoding Deletion** (`post_delete` for Encoding):
+```python
+@receiver(post_delete, sender=Encoding)
+def encoding_file_delete(sender, instance, **kwargs):
+    logger.info(
+        "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.profile.id if instance.profile else None,
+        instance.profile.name if instance.profile else None,
+        instance.status,
+        instance.chunk,
+        bool(instance.media_file),
+    )
+```
+
+**Video Chapter Deletion** (`post_delete` for VideoChapterData):
+```python
+@receiver(post_delete, sender=VideoChapterData)
+def videochapterdata_delete(sender, instance, **kwargs):
+    logger.info(
+        "Video chapter data deleted - friendly_token=%s, user_id=%s, chapters_folder=%s",
+        instance.media.friendly_token if instance.media else None,
+        instance.media.user.id if instance.media and instance.media.user else None,
+        instance.media.video_chapters_folder if instance.media else None,
+    )
+```
+
+**RBAC Group Category Changes** (`m2m_changed` for RBACGroup.categories):
+```python
+@receiver(m2m_changed, sender=RBACGroup.categories.through)
+def handle_rbac_group_categories_change(sender, instance, action, pk_set, **kwargs):
+    if action in ['post_add', 'post_remove']:
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+        
+        logger.info(
+            "RBAC group category %s - group_id=%s, group_name=%s, group_uid=%s, action=%s, category_count=%s, category_names=%s, identity_provider=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.id,
+            instance.name,
+            instance.uid,
+            action,
+            len(categories),
+            category_names,
+            instance.identity_provider.provider if instance.identity_provider else None,
+        )
+```
+
+**Category Creation/Updates** (`post_save` for Category):
+```python
+@receiver(post_save, sender=Category)
+def category_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Category created - category_id=%s, title=%s, user_id=%s, is_global=%s, is_rbac_category=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.is_global,
+            instance.is_rbac_category,
+        )
+    else:
+        logger.debug(
+            "Category updated - category_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Tag Creation/Updates** (`post_save` for Tag):
+```python
+@receiver(post_save, sender=Tag)
+def tag_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Tag created - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Tag updated - tag_id=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Comment Creation/Updates** (`post_save` for Comment):
+```python
+@receiver(post_save, sender=Comment)
+def comment_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            bool(instance.parent),
+        )
+    else:
+        logger.debug(
+            "Comment updated - comment_id=%s, user_id=%s, media_friendly_token=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+        )
+```
+
+**Playlist Creation/Updates** (`post_save` for Playlist):
+```python
+@receiver(post_save, sender=Playlist)
+def playlist_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Playlist updated - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**Media Added to Playlist** (`post_save` for PlaylistMedia):
+```python
+@receiver(post_save, sender=PlaylistMedia)
+def playlistmedia_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Media added to playlist - playlist_id=%s, playlist_friendly_token=%s, media_friendly_token=%s, ordering=%s",
+            instance.playlist.id if instance.playlist else None,
+            instance.playlist.friendly_token if instance.playlist else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.ordering,
+        )
+```
+
+**Rating Creation/Updates** (`post_save` for Rating):
+```python
+@receiver(post_save, sender=Rating)
+def rating_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Rating created - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.rating_category.id if instance.rating_category else None,
+            instance.rating_category.title if instance.rating_category else None,
+            instance.score,
+        )
+    else:
+        logger.debug(
+            "Rating updated - rating_id=%s, user_id=%s, media_friendly_token=%s, score=%s",
+            instance.id,
+            instance.user.id if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.score,
+        )
+```
+
+**Page Creation/Updates** (`post_save` for Page):
+```python
+@receiver(post_save, sender=Page)
+def page_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Page created - page_id=%s, slug=%s, title=%s",
+            instance.id,
+            instance.slug,
+            instance.title,
+        )
+    else:
+        logger.debug(
+            "Page updated - page_id=%s, slug=%s, title=%s",
+            instance.id,
+            instance.slug,
+            instance.title,
+        )
+```
+
+**TinyMCE Media Upload** (`post_save` for TinyMCEMedia):
+```python
+@receiver(post_save, sender=TinyMCEMedia)
+def tinymcemedia_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "TinyMCE media uploaded - file_id=%s, original_filename=%s, file_type=%s, user_id=%s",
+            instance.id,
+            instance.original_filename,
+            instance.file_type,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**License Creation/Updates** (`post_save` for License):
+```python
+@receiver(post_save, sender=License)
+def license_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "License created - license_id=%s, title=%s",
+            instance.id,
+            instance.title,
+        )
+    else:
+        logger.debug(
+            "License updated - license_id=%s, title=%s",
+            instance.id,
+            instance.title,
+        )
+```
+
+**Channel Creation/Updates** (`post_save` for Channel):
+```python
+@receiver(post_save, sender=Channel)
+def channel_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+        )
+    else:
+        logger.debug(
+            "Channel updated - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
+            instance.id,
+            instance.friendly_token,
+            instance.title,
+            instance.user.id if instance.user else None,
+        )
+```
+
+**User Action** (`post_save` for MediaAction):
+```python
+@receiver(post_save, sender=MediaAction)
+def mediaaction_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "User action - action_id=%s, action=%s, user_id=%s, username=%s, media_friendly_token=%s, session_key=%s, remote_ip=%s",
+            instance.id,
+            instance.action,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media.friendly_token if instance.media else None,
+            instance.session_key if instance.session_key else None,
+            instance.remote_ip if instance.remote_ip else None,
+        )
+```
+
+**Identity Provider Group Role Mapping** (`post_save` for IdentityProviderGroupRole):
+```python
+@receiver(post_save, sender=IdentityProviderGroupRole)
+def identity_provider_group_role_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "Identity provider group role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+    else:
+        logger.debug(
+            "Identity provider group role mapping updated - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+```
+
+**SAML Configuration Creation/Updates** (`post_save` for SAMLConfiguration):
+```python
+@receiver(post_save, sender=SAMLConfiguration)
+def saml_configuration_save(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "SAML configuration created - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.social_app.name if instance.social_app else None,
+            instance.idp_id,
+        )
+    else:
+        logger.debug(
+            "SAML configuration updated - config_id=%s, social_app_id=%s, idp_id=%s",
+            instance.id,
+            instance.social_app.id if instance.social_app else None,
+            instance.idp_id,
+        )
+```
+
+### Event Logging Patterns
+
+MediaCMS uses consistent logging patterns for different types of events:
+
+#### Authentication Event Logging
+
+Authentication events are logged at INFO level for successful operations and WARNING level for failures:
+
+```python
+from cms.utils import get_client_ip_for_logging
+
+# Successful login
+client_ip = get_client_ip_for_logging(request)
+logger.info(
+    "Login successful - user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
+    client_ip,
+)
+
+# Failed login attempts - different failure types
+# User not found
+client_ip = get_client_ip_for_logging(request)
+logger.warning(
+    "Login failed - user_not_found, attempted_username_or_email=%s, ip=%s",
+    username_or_email,
+    client_ip,
+)
+
+# Wrong password (user exists but password incorrect)
+client_ip = get_client_ip_for_logging(request)
+logger.warning(
+    "Login failed - wrong_password, attempted_username_or_email=%s, ip=%s",
+    username_or_email,
+    client_ip,
+)
+
+# User deactivated
+client_ip = get_client_ip_for_logging(request)
+logger.warning(
+    "Login failed - user_deactivated, user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
+    client_ip,
+)
+
+# User not approved
+client_ip = get_client_ip_for_logging(request)
+logger.warning(
+    "Login failed - user_not_approved, user_id=%s, username=%s, ip=%s",
+    user.id,
+    user.username,
+    client_ip,
+)
+```
+
+#### User Management Event Logging
+
+User management events include creation, deletion, password changes, and role changes:
+
+```python
+# User creation
+logger.info(
+    "User registered - user_id=%s, username=%s, email=%s",
+    instance.id,
+    instance.username,
+    instance.email,
+)
+
+# User deletion with content counts
+logger.info(
+    "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+    instance.id,
+    instance.username,
+    instance.email,
+    media_count,
+    tag_count,
+    category_count,
+)
+
+# Role changes
+logger.info(
+    "User role(s) changed - user_id=%s, username=%s, changed_roles=%s, source=role_mapping",
+    self.id,
+    self.username,
+    changed_roles,
+)
+```
+
+#### Media Operation Event Logging
+
+Media operations include creation, updates, deletion, and bulk actions:
+
+```python
+# Media creation
+logger.info(
+    "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+    instance.friendly_token,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media_type,
+    instance.title[:50] if instance.title else None,
+)
+
+# Media updates
+logger.info(
+    "Media updated via API - friendly_token=%s, user_id=%s, changed_fields=%s",
+    friendly_token,
+    request.user.id if request.user.is_authenticated else None,
+    changed_fields,
+)
+
+# Bulk operations
+logger.info(
+    "Bulk action: download enabled - count=%s, user_id=%s, media_ids=%s",
+    count,
+    request.user.id,
+    list(media.values_list('friendly_token', flat=True)),
+)
+```
+
+#### Subtitle Operation Event Logging
+
+Subtitle operations use INFO for creation and DEBUG for updates:
+
+```python
+# Subtitle creation
+logger.info(
+    "Subtitle created - friendly_token=%s, language=%s, user_id=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.language.code if instance.language else None,
+    instance.media.user.id if instance.media and instance.media.user else None,
+)
+
+# Subtitle updates
+logger.debug(
+    "Subtitle updated - friendly_token=%s, language=%s, user_id=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.language.code if instance.language else None,
+    instance.media.user.id if instance.media and instance.media.user else None,
+)
+```
+
+#### Encoding Operation Event Logging
+
+Encoding operations track creation, updates, and deletion:
+
+```python
+# Encoding creation
+logger.info(
+    "Encoding created - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.profile.id if instance.profile else None,
+    instance.profile.name if instance.profile else None,
+    instance.status,
+    instance.chunk,
+)
+
+# Encoding deletion
+logger.info(
+    "Encoding deleted - friendly_token=%s, profile_id=%s, profile_name=%s, status=%s, chunk=%s, has_media_file=%s",
+    instance.media.friendly_token if instance.media else None,
+    instance.profile.id if instance.profile else None,
+    instance.profile.name if instance.profile else None,
+    instance.status,
+    instance.chunk,
+    bool(instance.media_file),
+)
+```
+
+#### RBAC Operation Event Logging
+
+RBAC operations track group category changes:
+
+```python
+logger.info(
+    "RBAC group category %s - group_id=%s, group_name=%s, group_uid=%s, action=%s, category_count=%s, category_names=%s, identity_provider=%s",
+    "added" if action == 'post_add' else "removed",
+    instance.id,
+    instance.name,
+    instance.uid,
+    action,
+    len(categories),
+    category_names,
+    instance.identity_provider.provider if instance.identity_provider else None,
+)
+```
+
+#### Category and Tag Operation Event Logging
+
+Category and tag operations track creation, updates, and deletion:
+
+```python
+# Category creation
+logger.info(
+    "Category created - category_id=%s, title=%s, user_id=%s, is_global=%s, is_rbac_category=%s",
+    instance.id,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.is_global,
+    instance.is_rbac_category,
+)
+
+# Tag creation
+logger.info(
+    "Tag created - tag_id=%s, title=%s, user_id=%s",
+    instance.id,
+    instance.title,
+    instance.user.id if instance.user else None,
+)
+```
+
+#### Comment Operation Event Logging
+
+Comment operations track creation, updates, and deletion:
+
+```python
+# Comment creation
+logger.info(
+    "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+    instance.id,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    bool(instance.parent),
+)
+```
+
+#### Playlist Operation Event Logging
+
+Playlist operations track playlist and playlist media changes:
+
+```python
+# Playlist creation
+logger.info(
+    "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+    instance.id,
+    instance.friendly_token,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+)
+
+# Media added to playlist
+logger.info(
+    "Media added to playlist - playlist_id=%s, playlist_friendly_token=%s, media_friendly_token=%s, ordering=%s",
+    instance.playlist.id if instance.playlist else None,
+    instance.playlist.friendly_token if instance.playlist else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.ordering,
+)
+```
+
+#### Rating Operation Event Logging
+
+Rating operations track user ratings and rating categories:
+
+```python
+# Rating creation
+logger.info(
+    "Rating created - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
+    instance.id,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.rating_category.id if instance.rating_category else None,
+    instance.rating_category.title if instance.rating_category else None,
+    instance.score,
+)
+
+# Rating category creation
+logger.info(
+    "Rating category created - rating_category_id=%s, title=%s, enabled=%s",
+    instance.id,
+    instance.title,
+    instance.enabled,
+)
+```
+
+#### Page Operation Event Logging
+
+Page operations track static pages and TinyMCE media:
+
+```python
+# Page creation
+logger.info(
+    "Page created - page_id=%s, slug=%s, title=%s",
+    instance.id,
+    instance.slug,
+    instance.title,
+)
+
+# TinyMCE media upload
+logger.info(
+    "TinyMCE media uploaded - file_id=%s, original_filename=%s, file_type=%s, user_id=%s",
+    instance.id,
+    instance.original_filename,
+    instance.file_type,
+    instance.user.id if instance.user else None,
+)
+```
+
+#### License Operation Event Logging
+
+License operations track license creation and updates:
+
+```python
+# License creation
+logger.info(
+    "License created - license_id=%s, title=%s",
+    instance.id,
+    instance.title,
+)
+```
+
+#### Channel Operation Event Logging
+
+Channel operations track user channel creation and updates:
+
+```python
+# Channel creation
+logger.info(
+    "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+    instance.id,
+    instance.friendly_token,
+    instance.title,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+)
+```
+
+#### MediaAction Operation Event Logging
+
+MediaAction operations track user interactions with media:
+
+```python
+# User action (like, dislike, watch, report, rate)
+logger.info(
+    "User action - action_id=%s, action=%s, user_id=%s, username=%s, media_friendly_token=%s, session_key=%s, remote_ip=%s",
+    instance.id,
+    instance.action,
+    instance.user.id if instance.user else None,
+    instance.user.username if instance.user else None,
+    instance.media.friendly_token if instance.media else None,
+    instance.session_key if instance.session_key else None,
+    instance.remote_ip if instance.remote_ip else None,
+)
+```
+
+#### Identity Provider Operation Event Logging
+
+Identity provider operations track role and category mappings:
+
+```python
+# Identity provider group role mapping creation
+logger.info(
+    "Identity provider group role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+    instance.id,
+    instance.identity_provider.id if instance.identity_provider else None,
+    instance.name,
+    instance.map_to,
+)
+
+# Identity provider category mapping creation
+logger.info(
+    "Identity provider category mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, category_id=%s, category_title=%s",
+    instance.id,
+    instance.identity_provider.id if instance.identity_provider else None,
+    instance.name,
+    instance.map_to.id if instance.map_to else None,
+    instance.map_to.title if instance.map_to else None,
+)
+```
+
+#### SAML Configuration Operation Event Logging
+
+SAML configuration operations track SAML setup changes:
+
+```python
+# SAML configuration creation
+logger.info(
+    "SAML configuration created - config_id=%s, social_app_id=%s, social_app_name=%s, idp_id=%s",
+    instance.id,
+    instance.social_app.id if instance.social_app else None,
+    instance.social_app.name if instance.social_app else None,
+    instance.idp_id,
+)
+```
+
+### Best Practices for Signal Handler Logging
+
+1. **Use Appropriate Log Levels**:
+   - **INFO**: For important events that should always be logged (creation, deletion, authentication)
+   - **DEBUG**: For frequent updates that are only needed during development
+   - **WARNING**: For failed operations or permission denials
+
+2. **Structured Logging Format**:
+   - Always use key-value pairs: `key=value`
+   - Include relevant identifiers (user_id, friendly_token, etc.)
+   - Use conditional checks to avoid AttributeError: `instance.user.id if instance.user else None`
+
+3. **Include Context**:
+   - Always include user information when available
+   - Include IP addresses for authentication events
+   - Include counts for bulk operations
+   - Include changed fields for update operations
+
+4. **Handle Edge Cases**:
+   - Check for None values before accessing attributes
+   - Use conditional expressions: `value if condition else None`
+   - Truncate long strings (e.g., `title[:50]`)
+
+5. **Signal Handler Placement**:
+   - Place signal handlers in the same module as the model when possible
+   - Use `@receiver` decorator for clarity
+   - Import signals at the top of the file
+
+### Adding Logging to New Signal Handlers
+
+When adding logging to a new signal handler:
+
+1. **Import logging and get logger**:
+```python
+import logging
+logger = logging.getLogger(__name__)
+```
+
+2. **Add logging at appropriate points**:
+```python
+@receiver(post_save, sender=YourModel)
+def your_signal_handler(sender, instance, created, **kwargs):
+    if created:
+        logger.info(
+            "YourModel created - id=%s, field1=%s, field2=%s",
+            instance.id,
+            instance.field1,
+            instance.field2,
+        )
+    else:
+        logger.debug(
+            "YourModel updated - id=%s, field1=%s",
+            instance.id,
+            instance.field1,
+        )
+```
+
+3. **Follow structured logging format**:
+   - Use key-value pairs
+   - Include relevant identifiers
+   - Handle None values safely
+
+### Integration with Configuration
+
+Logging behavior is controlled by the logging configuration in `cms/settings.py`. See [Administrator Documentation - Logging Configuration](admins_docs.md#29-logging-configuration-and-management) for details on:
+
+- Configuring log levels
+- Setting up log handlers
+- Customizing log formats
+- Enabling debug logging
+
+#### SQL Debug Logging
+
+By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable detailed SQL query logging for debugging database operations, set `ENABLE_SQL_DEBUG_LOGGING=True` in your `local_settings.py` or via environment variable:
+
+```python
+# In local_settings.py
+DEBUG = True
+ENABLE_SQL_DEBUG_LOGGING = True
+```
+
+**Note**: SQL debug logging requires both `DEBUG=True` and `ENABLE_SQL_DEBUG_LOGGING=True` to be enabled.
+
+#### Celery Logging Behavior
+
+MediaCMS includes optimized Celery logging configuration:
+
+- **`celery.task` logger**: Set to DEBUG level when `DEBUG=True` to capture useful task execution details
+- **`celery` logger**: Set to INFO level to reduce noise while preserving important messages
+- **`celery.utils.functional` logger**: Suppressed at WARNING level to avoid useless debug messages from Celery's internal function introspection
+
+This configuration ensures you get useful task execution logs without being overwhelmed by internal Celery debug messages.
+
+### Testing Logging
+
+When writing tests, you can verify logging behavior:
+
+```python
+import logging
+from unittest.mock import patch
+
+def test_exception_logging():
+    with patch('files.helpers.logger') as mock_logger:
+        # trigger code that should log
+        result = function_that_logs()
+        
+        # verify logging was called
+        mock_logger.warning.assert_called_once()
+        call_args = mock_logger.warning.call_args
+        assert "Caught exception" in str(call_args)
+```
+
+### Related Documentation
+
+- For logging configuration options, see [Administrator Documentation - Logging Configuration](admins_docs.md#29-logging-configuration-and-management)
+- For Python logging module documentation, see [Python Logging Documentation](https://docs.python.org/3/library/logging.html)

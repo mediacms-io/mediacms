@@ -7,11 +7,11 @@
 
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
 
-<meta name="description" content="{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}">
+<meta name="description" content="{{media_object.description}}">
 
 <meta property="og:title" content="{{media_object.title}} - {{PORTAL_NAME}}">
 <meta property="og:url" content="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
-<meta property="og:description" content="{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}">
+<meta property="og:description" content="{{media_object.description}}">
 <meta property="og:updated_time" content="{{media_object.edit_date}}">
 
 {% if media_object.media_type == "video" %}
@@ -34,7 +34,7 @@
         "@type": "VideoObject",
         "name": "{{media_object.title}} - {{PORTAL_NAME}}",
         "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "description": "{{media_object.description}}",
         "thumbnailUrl": [
             "{{FRONTEND_HOST}}{{media_object.poster_url}}"
         ],
@@ -61,7 +61,7 @@
         "@type": "AudioObject",
         "name": "{{media_object.title}} - {{PORTAL_NAME}}",
         "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "description": "{{media_object.description}}",
         "uploadDate": "{{media_object.add_date}}",
         "dateModified": "{{media_object.edit_date}}",
         "duration": "T{{media_object.duration}}S",
@@ -84,7 +84,7 @@
         "@type": "ImageObject",
         "name": "{{media_object.title}} - {{PORTAL_NAME}}",
         "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "description": "{{media_object.description}}",
         "uploadDate": "{{media_object.add_date}}",
         "dateModified": "{{media_object.edit_date}}",
         "potentialAction": {
@@ -104,7 +104,7 @@
         "@type": "MediaObject",
         "name": "{{media_object.title}} - {{PORTAL_NAME}}",
         "url": "{{FRONTEND_HOST}}{{media_object.get_absolute_url}}",
-        "description": "{% if media_object.summary %}{{media_object.summary}}{% else %}{{media_object.description}}{% endif %}",
+        "description": "{{media_object.description}}",
         "uploadDate": "{{media_object.add_date}}",
         "dateModified": "{{media_object.edit_date}}",
         "potentialAction": {
