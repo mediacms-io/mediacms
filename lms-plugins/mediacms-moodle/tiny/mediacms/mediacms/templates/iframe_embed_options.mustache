@@ -1,0 +1,127 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tiny_mediacms/iframe_embed_options
+
+    Embed options partial for iframe modal.
+
+    Example context (json):
+    {
+        "elementid": "editor1",
+        "showTitle": true,
+        "linkTitle": true,
+        "showRelated": true,
+        "showUserAvatar": true,
+        "responsive": true,
+        "startAtEnabled": false,
+        "startAt": "0:00"
+    }
+}}
+<!-- Embed Options -->
+<div class="mb-3">
+    <label class="form-label font-weight-bold">
+        {{#str}} embedoptions, tiny_mediacms {{/str}}
+    </label>
+    <div class="row">
+        <div class="col-6">
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_showtitle" 
+                       id="{{elementid}}_showtitle" {{#showTitle}}checked{{/showTitle}}>
+                <label class="form-check-label" for="{{elementid}}_showtitle">
+                    {{#str}} showtitle, tiny_mediacms {{/str}}
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_linktitle" 
+                       id="{{elementid}}_linktitle" {{#linkTitle}}checked{{/linkTitle}}>
+                <label class="form-check-label" for="{{elementid}}_linktitle">
+                    {{#str}} linktitle, tiny_mediacms {{/str}}
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_showrelated" 
+                       id="{{elementid}}_showrelated" {{#showRelated}}checked{{/showRelated}}>
+                <label class="form-check-label" for="{{elementid}}_showrelated">
+                    {{#str}} showrelated, tiny_mediacms {{/str}}
+                </label>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_showuseravatar" 
+                       id="{{elementid}}_showuseravatar" {{#showUserAvatar}}checked{{/showUserAvatar}}>
+                <label class="form-check-label" for="{{elementid}}_showuseravatar">
+                    {{#str}} showuseravatar, tiny_mediacms {{/str}}
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_responsive" 
+                       id="{{elementid}}_responsive" {{#responsive}}checked{{/responsive}}>
+                <label class="form-check-label" for="{{elementid}}_responsive">
+                    {{#str}} responsive, tiny_mediacms {{/str}}
+                </label>
+            </div>
+            <div class="form-check mb-2 d-flex align-items-center">
+                <input type="checkbox" class="form-check-input tiny_iframecms_startat_enabled" 
+                       id="{{elementid}}_startat_enabled" {{#startAtEnabled}}checked{{/startAtEnabled}}>
+                <label class="form-check-label me-2" for="{{elementid}}_startat_enabled">
+                    {{#str}} startat, tiny_mediacms {{/str}}
+                </label>
+                <input type="text" class="form-control form-control-sm tiny_iframecms_startat" 
+                       id="{{elementid}}_startat" value="{{startAt}}" placeholder="0:00" style="width: 70px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aspect Ratio -->
+<div class="mb-3">
+    <label for="{{elementid}}_aspectratio" class="form-label font-weight-bold">
+        {{#str}} aspectratio, tiny_mediacms {{/str}}
+    </label>
+    <select class="form-control tiny_iframecms_aspectratio" id="{{elementid}}_aspectratio">
+        <option value="16:9" {{#is16_9}}selected{{/is16_9}}>{{#str}} aspectratio_16_9, tiny_mediacms {{/str}}</option>
+        <option value="4:3" {{#is4_3}}selected{{/is4_3}}>{{#str}} aspectratio_4_3, tiny_mediacms {{/str}}</option>
+        <option value="1:1" {{#is1_1}}selected{{/is1_1}}>{{#str}} aspectratio_1_1, tiny_mediacms {{/str}}</option>
+        <option value="custom" {{#isCustom}}selected{{/isCustom}}>{{#str}} aspectratio_custom, tiny_mediacms {{/str}}</option>
+    </select>
+</div>
+
+<!-- Dimensions -->
+<div class="mb-3">
+    <label class="form-label font-weight-bold">
+        {{#str}} dimensions, tiny_mediacms {{/str}}
+    </label>
+    <div class="row">
+        <div class="col-6">
+            <div class="input-group">
+                <input type="number" class="form-control tiny_iframecms_width" 
+                       id="{{elementid}}_width" value="{{width}}" placeholder="560">
+                <span class="input-group-text">px</span>
+            </div>
+            <small class="text-muted">{{#str}} width, tiny_mediacms {{/str}}</small>
+        </div>
+        <div class="col-6">
+            <div class="input-group">
+                <input type="number" class="form-control tiny_iframecms_height" 
+                       id="{{elementid}}_height" value="{{height}}" placeholder="315">
+                <span class="input-group-text">px</span>
+            </div>
+            <small class="text-muted">{{#str}} height, tiny_mediacms {{/str}}</small>
+        </div>
+    </div>
+</div>
