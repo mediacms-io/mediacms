@@ -63,7 +63,17 @@ export class EndScreenHandler {
     }
 
     handleVideoEnded() {
-        const { isEmbedPlayer, userPreferences, mediaData, currentVideo, relatedVideos, goToNextVideo } = this.options;
+        const {
+            isEmbedPlayer,
+            userPreferences,
+            mediaData,
+            currentVideo,
+            relatedVideos,
+            goToNextVideo,
+            showRelated,
+            showUserAvatar,
+            linkTitle,
+        } = this.options;
 
         // For embed players, show big play button when video ends
         if (isEmbedPlayer) {
@@ -71,6 +81,34 @@ export class EndScreenHandler {
             if (bigPlayButton) {
                 bigPlayButton.show();
             }
+        }
+
+        // If showRelated is false, we don't show the end screen or autoplay countdown
+        if (showRelated === false) {
+            // But we still want to keep the control bar visible and hide the poster
+            setTimeout(() => {
+                if (this.player && !this.player.isDisposed()) {
+                    const playerEl = this.player.el();
+                    if (playerEl) {
+                        // Hide poster elements
+                        const posterElements = playerEl.querySelectorAll('.vjs-poster');
+                        posterElements.forEach((posterEl) => {
+                            posterEl.style.display = 'none';
+                            posterEl.style.visibility = 'hidden';
+                            posterEl.style.opacity = '0';
+                        });
+
+                        // Keep control bar visible
+                        const controlBar = this.player.getChild('controlBar');
+                        if (controlBar) {
+                            controlBar.show();
+                            controlBar.el().style.opacity = '1';
+                            controlBar.el().style.pointerEvents = 'auto';
+                        }
+                    }
+                }
+            }, 50);
+            return;
         }
 
         // Keep controls active after video ends
