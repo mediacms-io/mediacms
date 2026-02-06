@@ -31,8 +31,11 @@ const VideoJSEmbed = ({
     poster,
     previewSprite,
     subtitlesInfo,
-    enableAutoplay,
     inEmbed,
+    showTitle,
+    showRelated,
+    showUserAvatar,
+    linkTitle,
     hasTheaterMode,
     hasNextLink,
     nextLink,
@@ -62,8 +65,10 @@ const VideoJSEmbed = ({
         if (typeof window !== 'undefined') {
             // Get URL parameters for autoplay, muted, and timestamp
             const urlTimestamp = getUrlParameter('t');
-            const urlAutoplay = getUrlParameter('autoplay');
             const urlMuted = getUrlParameter('muted');
+            const urlShowRelated = getUrlParameter('showRelated');
+            const urlShowUserAvatar = getUrlParameter('showUserAvatar');
+            const urlLinkTitle = getUrlParameter('linkTitle');
             
             window.MEDIA_DATA = {
                 data: data || {}, 
@@ -71,7 +76,7 @@ const VideoJSEmbed = ({
                 version: version,
                 isPlayList: isPlayList,
                 playerVolume: playerVolume || 0.5,
-                playerSoundMuted: playerSoundMuted || (urlMuted === '1'),
+                playerSoundMuted: urlMuted === '1',
                 videoQuality: videoQuality || 'auto',
                 videoPlaybackSpeed: videoPlaybackSpeed || 1,
                 inTheaterMode: inTheaterMode || false,
@@ -83,8 +88,11 @@ const VideoJSEmbed = ({
                 poster: poster || '',
                 previewSprite: previewSprite || null,
                 subtitlesInfo: subtitlesInfo || [],
-                enableAutoplay: enableAutoplay || (urlAutoplay === '1'),
                 inEmbed: inEmbed || false,
+                showTitle: showTitle || false,
+                showRelated: showRelated !== undefined ? showRelated : (urlShowRelated === '1' || urlShowRelated === 'true' || urlShowRelated === null),
+                showUserAvatar: showUserAvatar !== undefined ? showUserAvatar : (urlShowUserAvatar === '1' || urlShowUserAvatar === 'true' || urlShowUserAvatar === null),
+                linkTitle: linkTitle !== undefined ? linkTitle : (urlLinkTitle === '1' || urlLinkTitle === 'true' || urlLinkTitle === null),
                 hasTheaterMode: hasTheaterMode || false,
                 hasNextLink: hasNextLink || false,
                 nextLink: nextLink || null,
@@ -92,8 +100,10 @@ const VideoJSEmbed = ({
                 errorMessage: errorMessage || '',
                 // URL parameters
                 urlTimestamp: urlTimestamp ? parseInt(urlTimestamp, 10) : null,
-                urlAutoplay: urlAutoplay === '1',
                 urlMuted: urlMuted === '1',
+                urlShowRelated: urlShowRelated === '1' || urlShowRelated === 'true',
+                urlShowUserAvatar: urlShowUserAvatar === '1' || urlShowUserAvatar === 'true',
+                urlLinkTitle: urlLinkTitle === '1' || urlLinkTitle === 'true',
                 onClickNextCallback: onClickNextCallback || null,
                 onClickPreviousCallback: onClickPreviousCallback || null,
                 onStateUpdateCallback: onStateUpdateCallback || null,
@@ -176,11 +186,17 @@ const VideoJSEmbed = ({
                     // Scroll to the video player with smooth behavior
                     const videoElement = document.querySelector(inEmbedRef.current ? '#video-embed' : '#video-main');
                     if (videoElement) {
-                        videoElement.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'center',
-                            inline: 'nearest'
-                        });
+                        const urlScroll = getUrlParameter('scroll');
+                        const isIframe = window.parent !== window;
+                        
+                        // Only scroll if not in an iframe, OR if explicitly requested via scroll=1 parameter
+                        if (!isIframe || urlScroll === '1' || urlScroll === 'true') {
+                            videoElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center',
+                                inline: 'nearest'
+                            });
+                        }
                     }
                 } else {
                     console.warn('VideoJS player not found for timestamp navigation');
@@ -220,7 +236,14 @@ const VideoJSEmbed = ({
 
     return (
         <div className="video-js-wrapper" ref={containerRef}>
-            {inEmbed ? <div id="video-js-root-embed" className="video-js-root-embed" /> : <div id="video-js-root-main" className="video-js-root-main" />}
+            {inEmbed ? (
+                <div 
+                    id="video-js-root-embed" 
+                    className="video-js-root-embed"
+                />
+            ) : (
+                <div id="video-js-root-main" className="video-js-root-main" />
+            )}
         </div>
     );
 };
