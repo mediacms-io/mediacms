@@ -1,6 +1,6 @@
 {
   "name": "mediacms",
-  "version": "7.4.0",
+  "version": "7.5.0",
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",

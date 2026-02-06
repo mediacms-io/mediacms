@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.5.0](https://github.com/mediacms-io/mediacms/compare/v7.4.0...v7.5.0) (2026-02-06)
+
+### Features
+
+* bump version ([36d815c](https://github.com/mediacms-io/mediacms/commit/36d815c0cfbe21d3136541d410d545742b9ebecd))
+
 ## [7.4.0](https://github.com/mediacms-io/mediacms/compare/v7.3.0...v7.4.0) (2026-02-06)
 
 ### Features
