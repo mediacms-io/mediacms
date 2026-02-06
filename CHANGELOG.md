@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.4.0](https://github.com/mediacms-io/mediacms/compare/v7.3.0...v7.4.0) (2026-02-06)
+
+### Features
+
+* Add video player context menu with share/embed options ([#1472](https://github.com/mediacms-io/mediacms/issues/1472)) ([74952f6](https://github.com/mediacms-io/mediacms/commit/74952f68d79bc67617edb38eac62d2f5e7457565))
+
 ## [7.3.0](https://github.com/mediacms-io/mediacms/compare/v7.2.0...v7.3.0) (2026-02-06)
 
 ### Features
