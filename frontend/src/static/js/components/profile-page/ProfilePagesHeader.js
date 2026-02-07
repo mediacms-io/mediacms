@@ -374,6 +374,19 @@ class NavMenuInlineTabs extends React.PureComponent {
     render() {
         const isSelectMediaMode = inSelectMediaEmbedMode();
 
+        // Append action=select_media to links when in select mode
+        const mediaLink = isSelectMediaMode
+            ? `${LinksContext._currentValue.profile.media}${LinksContext._currentValue.profile.media.includes('?') ? '&' : '?'}action=select_media`
+            : LinksContext._currentValue.profile.media;
+
+        const sharedByMeLink = isSelectMediaMode
+            ? `${LinksContext._currentValue.profile.shared_by_me}${LinksContext._currentValue.profile.shared_by_me.includes('?') ? '&' : '?'}action=select_media`
+            : LinksContext._currentValue.profile.shared_by_me;
+
+        const sharedWithMeLink = isSelectMediaMode
+            ? `${LinksContext._currentValue.profile.shared_with_me}${LinksContext._currentValue.profile.shared_with_me.includes('?') ? '&' : '?'}action=select_media`
+            : LinksContext._currentValue.profile.shared_with_me;
+
         return (
             <nav ref="tabsNav" className="profile-nav items-list-outer list-inline list-slider">
                 <div className="profile-nav-inner items-list-outer">
@@ -392,14 +405,14 @@ class NavMenuInlineTabs extends React.PureComponent {
                             id="media"
                             isActive={'media' === this.props.type}
                             label={translateString(this.userIsAuthor ? 'Media I own' : 'Media')}
-                            link={LinksContext._currentValue.profile.media}
+                            link={mediaLink}
                         />
                         {this.userIsAuthor ? (
                             <InlineTab
                                 id="shared_by_me"
                                 isActive={'shared_by_me' === this.props.type}
                                 label={translateString('Shared by me')}
-                                link={LinksContext._currentValue.profile.shared_by_me}
+                                link={sharedByMeLink}
                             />
                         ) : null}
                         {this.userIsAuthor ? (
@@ -407,7 +420,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 id="shared_with_me"
                                 isActive={'shared_with_me' === this.props.type}
                                 label={translateString('Shared with me')}
-                                link={LinksContext._currentValue.profile.shared_with_me}
+                                link={sharedWithMeLink}
                             />
                         ) : null}
 

@@ -10,7 +10,7 @@ import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListA
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
-import { inEmbeddedApp, translateString } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers';
 
 import { Page } from './_Page';
 
@@ -49,6 +49,7 @@ export class ProfileSharedWithMePage extends Page {
             availableTags: [],
             selectedTag: 'all',
             selectedSort: 'date_added_desc',
+            selectedMedia: new Set(), // For select media mode
         };
 
         this.authorDataLoad = this.authorDataLoad.bind(this);
@@ -62,6 +63,7 @@ export class ProfileSharedWithMePage extends Page {
         this.onTagSelect = this.onTagSelect.bind(this);
         this.onSortSelect = this.onSortSelect.bind(this);
         this.onResponseDataLoaded = this.onResponseDataLoaded.bind(this);
+        this.handleMediaSelection = this.handleMediaSelection.bind(this);
 
         ProfilePageStore.on('load-author-data', this.authorDataLoad);
     }
@@ -341,10 +343,55 @@ export class ProfileSharedWithMePage extends Page {
         }
     }
 
+    handleMediaSelection(mediaId, isSelected) {
+        const isSelectMediaMode = inSelectMediaEmbedMode();
+
+        this.setState((prevState) => {
+            const newSelectedMedia = new Set();
+
+            // In select media mode, only allow single selection
+            if (isSelectMediaMode) {
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                    console.log('Selected media item:', mediaId);
+
+                    // Send postMessage to parent window (Moodle TinyMCE plugin)
+                    if (window.parent !== window) {
+                        // Construct the embed URL
+                        const baseUrl = window.location.origin;
+                        const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+
+                        // Send message in the format expected by the Moodle plugin
+                        window.parent.postMessage({
+                            type: 'videoSelected',
+                            embedUrl: embedUrl,
+                            videoId: mediaId
+                        }, '*');
+
+                        console.log('Sent postMessage to parent:', { embedUrl, videoId: mediaId });
+                    }
+                }
+            } else {
+                // Normal mode: no selection UI in this page normally
+                newSelectedMedia.clear();
+                prevState.selectedMedia.forEach((id) => newSelectedMedia.add(id));
+
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                } else {
+                    newSelectedMedia.delete(mediaId);
+                }
+            }
+
+            return { selectedMedia: newSelectedMedia };
+        });
+    }
+
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
         const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active
         const hasActiveFilters =
@@ -372,7 +419,11 @@ export class ProfileSharedWithMePage extends Page {
             ) : null,
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
-                    <MediaListWrapper title={this.state.title} className="items-list-ver">
+                    <MediaListWrapper
+                        title={isSelectMediaMode ? undefined : this.state.title}
+                        className="items-list-ver"
+                        style={isSelectMediaMode ? { marginTop: '24px' } : undefined}
+                    >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
                             tags={this.state.availableTags}
@@ -393,6 +444,10 @@ export class ProfileSharedWithMePage extends Page {
                             hideDate={!PageStore.get('config-media-item').displayPublishDate}
                             canEdit={false}
                             onResponseDataLoaded={this.onResponseDataLoaded}
+                            showSelection={isSelectMediaMode}
+                            hasAnySelection={this.state.selectedMedia.size > 0}
+                            selectedMedia={this.state.selectedMedia}
+                            onMediaSelection={this.handleMediaSelection}
                         />
                         {isMediaAuthor && 0 === this.state.channelMediaCount && !this.state.query ? (
                             <EmptySharedWithMe name={this.state.author.name} />
