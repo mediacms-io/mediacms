@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.6.0](https://github.com/mediacms-io/mediacms/compare/v7.5.0...v7.6.0) (2026-02-07)
+
+### Features
+
+* Create SECURITY.md ([#1485](https://github.com/mediacms-io/mediacms/issues/1485)) ([11449c2](https://github.com/mediacms-io/mediacms/commit/11449c2187d0f450b86915d88f92595a1825e4cf))
+
 ## [7.5.0](https://github.com/mediacms-io/mediacms/compare/v7.4.0...v7.5.0) (2026-02-06)
 
 ### Features
