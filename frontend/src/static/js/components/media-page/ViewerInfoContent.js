@@ -274,7 +274,7 @@ export default function ViewerInfoContent(props) {
                 </div>
             </div>
 
-            {!inEmbeddedApp() && <CommentsList />}
+            <CommentsList />
         </div>
     );
 }

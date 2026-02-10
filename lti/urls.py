@@ -19,8 +19,4 @@ urlpatterns = [
     # LTI-authenticated pages
     path('my-media/', views.MyMediaLTIView.as_view(), name='my_media'),
     path('embed/<str:friendly_token>/', views.EmbedMediaLTIView.as_view(), name='embed_media'),
-    # Manual sync
-    path('sync/<int:platform_id>/<str:context_id>/', views.ManualSyncView.as_view(), name='manual_sync'),
-    # TinyMCE integration (reuses select-media with mode=tinymce parameter)
-    path('tinymce-embed/<str:friendly_token>/', views.TinyMCEGetEmbedView.as_view(), name='tinymce_embed'),
 ]

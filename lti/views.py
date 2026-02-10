@@ -29,13 +29,8 @@ from jwcrypto import jwk
 from pylti1p3.exception import LtiException
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from files.models import Media
-from rbac.models import RBACMembership
 
 from .adapters import DjangoRequest, DjangoSessionService, DjangoToolConfig
 from .handlers import (
@@ -46,8 +41,7 @@ from .handlers import (
     validate_lti_session,
 )
 from .keys import get_jwks
-from .models import LTILaunchLog, LTIPlatform, LTIResourceLink, LTIToolKeys
-from .services import LTINRPSClient
+from .models import LTILaunchLog, LTIPlatform, LTIToolKeys
 
 logger = logging.getLogger(__name__)
 
@@ -611,90 +605,3 @@ class EmbedMediaLTIView(View):
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
 
         return HttpResponseRedirect(f"/embed?m={friendly_token}&mode=embed_mode")
-
-
-class ManualSyncView(APIView):
-    """
-    Manual NRPS sync for course members/roles
-
-    Endpoint: POST /lti/sync/<platform_id>/<context_id>/
-    Requires: User must be manager in the course RBAC group
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, platform_id, context_id):
-        """Manually trigger NRPS sync"""
-        try:
-            platform = get_object_or_404(LTIPlatform, id=platform_id)
-
-            resource_link = LTIResourceLink.objects.filter(platform=platform, context_id=context_id).first()
-
-            if not resource_link:
-                return Response({'error': 'Context not found', 'message': f'No resource link found for context {context_id}'}, status=status.HTTP_404_NOT_FOUND)
-
-            rbac_group = resource_link.rbac_group
-            if not rbac_group:
-                return Response({'error': 'No RBAC group', 'message': 'This context does not have an associated RBAC group'}, status=status.HTTP_400_BAD_REQUEST)
-
-            is_manager = RBACMembership.objects.filter(user=request.user, rbac_group=rbac_group, role='manager').exists()
-
-            if not is_manager:
-                return Response({'error': 'Insufficient permissions', 'message': 'You must be a course manager to sync members'}, status=status.HTTP_403_FORBIDDEN)
-
-            if not platform.enable_nrps:
-                return Response({'error': 'NRPS disabled', 'message': 'Names and Role Provisioning Service is disabled for this platform'}, status=status.HTTP_400_BAD_REQUEST)
-
-            last_launch = LTILaunchLog.objects.filter(platform=platform, resource_link=resource_link, success=True).order_by('-created_at').first()
-
-            if not last_launch:
-                return Response({'error': 'No launch data', 'message': 'No successful launch data found for NRPS'}, status=status.HTTP_400_BAD_REQUEST)
-
-            nrps_client = LTINRPSClient(platform, last_launch.claims)
-            result = nrps_client.sync_members_to_rbac_group(rbac_group)
-
-            return Response(
-                {
-                    'status': 'success',
-                    'message': f'Successfully synced {result["synced"]} members',
-                    'synced_count': result['synced'],
-                    'removed_count': result.get('removed', 0),
-                    'synced_at': result['synced_at'],
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        except Exception as e:
-            return Response({'error': 'Sync failed', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@method_decorator(xframe_options_exempt, name='dispatch')
-class TinyMCEGetEmbedView(View):
-    """
-    API endpoint to get embed code for a specific media item (for TinyMCE integration).
-
-    Returns JSON with the embed code for the requested media.
-    Requires: User must be logged in (via LTI session)
-    """
-
-    def get(self, request, friendly_token):
-        """Get embed code for the specified media."""
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Authentication required'}, status=401)
-
-        media = Media.objects.filter(friendly_token=friendly_token).first()
-
-        if not media:
-            return JsonResponse({'error': 'Media not found'}, status=404)
-
-        embed_url = request.build_absolute_uri(reverse('get_embed') + f'?m={friendly_token}')
-
-        embed_code = f'<iframe src="{embed_url}" ' f'width="960" height="540" ' f'frameborder="0" ' f'allowfullscreen ' f'title="{media.title}">' f'</iframe>'
-
-        return JsonResponse(
-            {
-                'embedCode': embed_code,
-                'title': media.title,
-                'thumbnail': media.thumbnail_url if hasattr(media, 'thumbnail_url') else '',
-            }
-        )
