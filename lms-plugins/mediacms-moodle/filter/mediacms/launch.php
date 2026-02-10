@@ -41,16 +41,18 @@ function filter_mediacms_get_dummy_activity($courseid, $typeid) {
         return $existing->id;
     }
 
-    // No existing activity - create dummy (accessible but hidden from course page)
+    // No existing activity - create dummy in stealth mode (accessible but completely hidden)
     $moduleinfo = new stdClass();
     $moduleinfo->course = $courseid;
     $moduleinfo->module = $DB->get_field('modules', 'id', ['name' => 'lti']);
     $moduleinfo->modulename = 'lti';
     $moduleinfo->section = 0;
-    $moduleinfo->visible = 1;  // Accessible to students
-    $moduleinfo->visibleoncoursepage = 0;  // But hidden from course page
-    $moduleinfo->name = 'MediaCMS Dummy';
-    $moduleinfo->intro = 'Placeholder for filter launches';
+    $moduleinfo->visible = 1;  // Accessible to all
+    $moduleinfo->visibleoncoursepage = 0;  // Hidden from course page
+    $moduleinfo->availability = null;  // No restrictions
+    $moduleinfo->showdescription = 0;  // Don't show description
+    $moduleinfo->name = 'MediaCMS Filter Launcher';
+    $moduleinfo->intro = '';  // Empty intro
     $moduleinfo->introformat = FORMAT_HTML;
     $moduleinfo->typeid = $typeid;
     $moduleinfo->instructorchoiceacceptgrades = 0;
@@ -58,9 +60,13 @@ function filter_mediacms_get_dummy_activity($courseid, $typeid) {
     $moduleinfo->instructorchoicesendname = 1;
     $moduleinfo->instructorchoicesendemailaddr = 1;
     $moduleinfo->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
-    $moduleinfo->instructorcustomparameters = '';  // Empty - we'll override per launch
+    $moduleinfo->instructorcustomparameters = '';
 
     $result = add_moduleinfo($moduleinfo, get_course($courseid));
+
+    // Additionally hide from activity navigation by setting it as orphaned
+    set_coursemodule_visible($result->coursemodule, 1, 0);  // visible but not on course page
+
     return $result->coursemodule;
 }
 
