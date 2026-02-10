@@ -711,6 +711,7 @@ export default class IframeEmbed {
         const urlTabBtn = form.querySelector(
             Selectors.IFRAME.elements.tabUrlBtn,
         );
+        const urlTabItem = form.querySelector('.tiny_iframecms_tab_url_item');
         const iframeLibraryTabBtn = form.querySelector(
             Selectors.IFRAME.elements.tabIframeLibraryBtn,
         );
@@ -720,6 +721,11 @@ export default class IframeEmbed {
         const iframeLibraryPane = form.querySelector(
             Selectors.IFRAME.elements.paneIframeLibrary,
         );
+
+        // Show the Configure tab
+        if (urlTabItem) {
+            urlTabItem.style.display = '';
+        }
 
         // Update tab button states
         if (urlTabBtn) {
@@ -752,6 +758,7 @@ export default class IframeEmbed {
         const urlTabBtn = form.querySelector(
             Selectors.IFRAME.elements.tabUrlBtn,
         );
+        const urlTabItem = form.querySelector('.tiny_iframecms_tab_url_item');
         const iframeLibraryTabBtn = form.querySelector(
             Selectors.IFRAME.elements.tabIframeLibraryBtn,
         );
@@ -761,6 +768,11 @@ export default class IframeEmbed {
         const iframeLibraryPane = form.querySelector(
             Selectors.IFRAME.elements.paneIframeLibrary,
         );
+
+        // Hide the Configure tab when switching to My Media
+        if (urlTabItem) {
+            urlTabItem.style.display = 'none';
+        }
 
         // Update tab button states
         if (urlTabBtn) {

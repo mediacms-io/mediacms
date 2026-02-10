@@ -75,11 +75,8 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
             editBtn.className = 'tiny-mediacms-edit-btn';
             editBtn.setAttribute('type', 'button');
             editBtn.setAttribute('title', 'Edit video embed options');
-            // Use clean inline SVG to avoid TinyMCE wrapper issues
-            editBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-                '<circle cx="50" cy="50" r="48" fill="#2EAF5A"/>' +
-                '<polygon points="38,28 38,72 75,50" fill="#FFFFFF"/>' +
-                '</svg>';
+            // Use text "EDIT" instead of icon
+            editBtn.textContent = 'EDIT';
 
             // Wrap the iframe: insert wrapper, move iframe into it, add button
             iframe.parentNode.insertBefore(wrapper, iframe);
@@ -116,32 +113,28 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: 48px;
-                left: 6px;
-                width: 28px;
-                height: 28px;
-                background: #ffffff;
+                top: 5px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: #ffffff;
                 border: none;
-                border-radius: 50%;
+                border-radius: 3px;
                 cursor: pointer;
                 z-index: 10;
-                padding: 0;
+                padding: 4px 12px;
                 margin: 0;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-                transition: transform 0.15s, box-shadow 0.15s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                font-size: 12px;
+                font-weight: bold;
+                text-decoration: none;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                transition: background 0.15s, box-shadow 0.15s;
+                display: inline-block;
                 box-sizing: border-box;
             }
             .tiny-mediacms-edit-btn:hover {
-                transform: scale(1.15);
-                box-shadow: 0 3px 10px rgba(0,0,0,0.45);
-            }
-            .tiny-mediacms-edit-btn svg {
-                width: 18px !important;
-                height: 18px !important;
-                display: block !important;
+                background: rgba(0, 0, 0, 0.85);
+                box-shadow: 0 3px 6px rgba(0,0,0,0.4);
             }
         `;
         editorDoc.head.appendChild(style);

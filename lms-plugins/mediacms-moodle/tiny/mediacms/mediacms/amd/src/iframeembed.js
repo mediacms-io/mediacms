@@ -431,11 +431,11 @@ export default class IframeEmbed {
         const previewHeight = Math.round(values.height * scale);
 
         previewContainer.innerHTML = `
-            <iframe 
-                src="${embedUrl}" 
-                width="${previewWidth}" 
-                height="${previewHeight}" 
-                frameborder="0" 
+            <iframe
+                src="${embedUrl}"
+                width="${previewWidth}"
+                height="${previewHeight}"
+                frameborder="0"
                 allowfullscreen
                 style="max-width: 100%;">
             </iframe>
@@ -992,12 +992,6 @@ export default class IframeEmbed {
      */
     handleIframeLibraryMessage(root, event) {
         // eslint-disable-next-line no-console
-        console.log(
-            'handleIframeLibraryMessage received:',
-            event.data,
-            'from origin:',
-            event.origin,
-        );
 
         const data = event.data;
 
