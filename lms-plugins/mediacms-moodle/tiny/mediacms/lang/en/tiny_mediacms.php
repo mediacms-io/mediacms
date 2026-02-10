@@ -132,15 +132,15 @@ $string['aspectratio_1_1'] = '1:1';
 $string['aspectratio_custom'] = 'Custom';
 $string['dimensions'] = 'Dimensions';
 $string['preview'] = 'Preview';
-$string['insertiframe'] = 'Insert video';
+$string['insertiframe'] = 'Insert';
 $string['updateiframe'] = 'Update video';
 $string['removeiframe'] = 'Remove video';
 $string['removeiframeconfirm'] = 'Are you sure you want to remove this video from the editor?';
 
 // Iframe modal tabs.
-$string['tabembedurl'] = 'Embed URL';
+$string['tabembedurl'] = 'Configure';
 $string['tabvideolibrary'] = 'Video Library';
-$string['tabvideolibraryiframe'] = 'Media Library';
+$string['tabvideolibraryiframe'] = 'My Media';
 
 // Video library strings.
 $string['librarysearchplaceholder'] = 'Search videos...';

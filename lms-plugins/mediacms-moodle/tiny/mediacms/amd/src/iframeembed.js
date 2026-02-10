@@ -694,6 +694,9 @@ export default class IframeEmbed {
 
         // Iframe library event listeners
         this.registerIframeLibraryEventListeners(root);
+
+        // Since My Media tab is now default/active, load it immediately on modal open
+        setTimeout(() => this.handleIframeLibraryTabClick(root), 100);
     }
 
     /**
@@ -796,24 +799,6 @@ export default class IframeEmbed {
      * @param {HTMLElement} root - Modal root element
      */
     handleIframeLibraryTabClick(root) {
-        const form = root.querySelector(Selectors.IFRAME.elements.form);
-        const pane = form.querySelector(
-            Selectors.IFRAME.elements.paneIframeLibrary,
-        );
-        const iframeEl = pane
-            ? pane.querySelector(Selectors.IFRAME.elements.iframeLibraryFrame)
-            : null;
-
-        // eslint-disable-next-line no-console
-        console.log(
-            'handleIframeLibraryTabClick called, iframeLibraryLoaded:',
-            this.iframeLibraryLoaded,
-            'iframe src:',
-            iframeEl ? iframeEl.src : 'no iframe',
-            'pane:',
-            pane,
-        );
-
         // Always refetch content when tab is clicked (no caching)
         // Reset the loaded state to ensure fresh content is fetched
         this.iframeLibraryLoaded = false;
@@ -827,13 +812,9 @@ export default class IframeEmbed {
      */
     loadIframeLibrary(root) {
         const ltiConfig = getLti(this.editor);
-
-        // eslint-disable-next-line no-console
-        console.log('loadIframeLibrary called, LTI config:', ltiConfig);
-
         // Check if LTI is configured with a content item URL
         if (ltiConfig?.contentItemUrl) {
-            this.loadIframeLibraryViaLti(root, ltiConfig);
+            this.loadIframeLibraryViaLti(root);
         } else {
             // Fallback to static URL if LTI not configured
             this.loadIframeLibraryStatic(root);
@@ -847,21 +828,14 @@ export default class IframeEmbed {
      * tool's content selection interface (e.g., /lti/select-media/).
      *
      * @param {HTMLElement} root - Modal root element
-     * @param {Object} ltiConfig - LTI configuration
      */
-    loadIframeLibraryViaLti(root, ltiConfig) {
-        // eslint-disable-next-line no-console
-        console.log('loadIframeLibraryViaLti called, config:', ltiConfig);
-
+    loadIframeLibraryViaLti(root) {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         const pane = form.querySelector(
             Selectors.IFRAME.elements.paneIframeLibrary,
         );
 
-        if (!pane) {
-            // eslint-disable-next-line no-console
-            console.log('paneIframeLibrary not found!');
-            return;
+        if (!pane) {            return;
         }
 
         const placeholderEl = pane.querySelector(
@@ -874,10 +848,7 @@ export default class IframeEmbed {
             Selectors.IFRAME.elements.iframeLibraryFrame,
         );
 
-        if (!iframeEl) {
-            // eslint-disable-next-line no-console
-            console.log('iframeEl not found!');
-            return;
+        if (!iframeEl) {            return;
         }
 
         // Hide placeholder, show loading state
@@ -890,10 +861,7 @@ export default class IframeEmbed {
         iframeEl.classList.add('d-none');
 
         // Set up load listener - note: this may fire multiple times during LTI redirects
-        const loadHandler = () => {
-            // eslint-disable-next-line no-console
-            console.log('LTI iframe loaded');
-            this.handleIframeLibraryLoad(root);
+        const loadHandler = () => {            this.handleIframeLibraryLoad(root);
         };
         iframeEl.addEventListener('load', loadHandler);
 
@@ -902,12 +870,8 @@ export default class IframeEmbed {
         // 1. contentitem.php initiates OIDC login
         // 2. LTI provider authenticates
         // 3. Moodle sends LtiDeepLinkingRequest
-        // 4. Tool provider shows content selection interface (e.g., /lti/select-media/)
-        // eslint-disable-next-line no-console
-        console.log(
-            'Setting iframe src to LTI content item URL:',
-            ltiConfig.contentItemUrl,
-        );
+        // 4. Tool provider shows content selection interface
+        const ltiConfig = getLti(this.editor);
         iframeEl.src = ltiConfig.contentItemUrl;
     }
 
@@ -917,21 +881,12 @@ export default class IframeEmbed {
      * @param {HTMLElement} root - Modal root element
      */
     loadIframeLibraryStatic(root) {
-        // eslint-disable-next-line no-console
-        console.log(
-            'loadIframeLibraryStatic called, URL:',
-            this.iframeLibraryUrl,
-        );
-
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         const pane = form.querySelector(
             Selectors.IFRAME.elements.paneIframeLibrary,
         );
 
-        if (!pane) {
-            // eslint-disable-next-line no-console
-            console.log('paneIframeLibrary not found!');
-            return;
+        if (!pane) {            return;
         }
 
         const placeholderEl = pane.querySelector(
@@ -943,14 +898,7 @@ export default class IframeEmbed {
         const iframeEl = pane.querySelector(
             Selectors.IFRAME.elements.iframeLibraryFrame,
         );
-
-        // eslint-disable-next-line no-console
-        console.log('Elements found:', { placeholderEl, loadingEl, iframeEl });
-
-        if (!iframeEl) {
-            // eslint-disable-next-line no-console
-            console.log('iframeEl not found!');
-            return;
+        if (!iframeEl) {            return;
         }
 
         // Hide placeholder, show loading state
@@ -963,10 +911,7 @@ export default class IframeEmbed {
         iframeEl.classList.add('d-none');
 
         // Set up load listener before setting src
-        const loadHandler = () => {
-            // eslint-disable-next-line no-console
-            console.log('iframe loaded, src:', iframeEl.src);
-            // Only handle if the src matches our target URL
+        const loadHandler = () => {            // Only handle if the src matches our target URL
             if (iframeEl.src === this.iframeLibraryUrl) {
                 this.handleIframeLibraryLoad(root);
                 // Remove the listener after successful load
@@ -976,10 +921,7 @@ export default class IframeEmbed {
         iframeEl.addEventListener('load', loadHandler);
 
         // Set the iframe source
-        iframeEl.src = this.iframeLibraryUrl;
-        // eslint-disable-next-line no-console
-        console.log('iframe src set to:', iframeEl.src);
-    }
+        iframeEl.src = this.iframeLibraryUrl;    }
 
     /**
      * Handle iframe library load event.
@@ -987,9 +929,6 @@ export default class IframeEmbed {
      * @param {HTMLElement} root - Modal root element
      */
     handleIframeLibraryLoad(root) {
-        // eslint-disable-next-line no-console
-        console.log('handleIframeLibraryLoad called');
-
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         const pane = form.querySelector(
             Selectors.IFRAME.elements.paneIframeLibrary,
@@ -1031,29 +970,14 @@ export default class IframeEmbed {
      * @param {MessageEvent} event - The message event
      */
     handleIframeLibraryMessage(root, event) {
-        // eslint-disable-next-line no-console
-        console.log(
-            'handleIframeLibraryMessage received:',
-            event.data,
-            'from origin:',
-            event.origin,
-        );
-
         const data = event.data;
 
         if (!data) {
             return;
         }
 
-        // Handle custom videoSelected message format (from static iframe or custom MediaCMS implementation)
+        // Handle custom videoSelected message format
         if (data.type === 'videoSelected' && data.embedUrl) {
-            // eslint-disable-next-line no-console
-            console.log(
-                'Video selected (videoSelected):',
-                data.embedUrl,
-                'videoId:',
-                data.videoId,
-            );
             this.selectIframeLibraryVideo(root, data.embedUrl, data.videoId);
             return;
         }
@@ -1062,25 +986,14 @@ export default class IframeEmbed {
         if (
             data.type === 'ltiDeepLinkingResponse' ||
             data.messageType === 'LtiDeepLinkingResponse'
-        ) {
-            // eslint-disable-next-line no-console
-            console.log('LTI Deep Linking response received:', data);
-            const contentItems = data.content_items || data.contentItems || [];
+        ) {            const contentItems = data.content_items || data.contentItems || [];
             if (contentItems.length > 0) {
                 const item = contentItems[0];
                 // Extract embed URL from the content item
                 const embedUrl =
                     item.url || item.embed_url || item.embedUrl || '';
                 const videoId = item.id || item.mediaId || '';
-                if (embedUrl) {
-                    // eslint-disable-next-line no-console
-                    console.log(
-                        'Video selected (LTI):',
-                        embedUrl,
-                        'videoId:',
-                        videoId,
-                    );
-                    this.selectIframeLibraryVideo(root, embedUrl, videoId);
+                if (embedUrl) {                    this.selectIframeLibraryVideo(root, embedUrl, videoId);
                 }
             }
             return;
@@ -1090,15 +1003,7 @@ export default class IframeEmbed {
         if (data.action === 'selectMedia' || data.action === 'mediaSelected') {
             const embedUrl = data.embedUrl || data.url || '';
             const videoId = data.mediaId || data.videoId || data.id || '';
-            if (embedUrl) {
-                // eslint-disable-next-line no-console
-                console.log(
-                    'Video selected (mediaSelected):',
-                    embedUrl,
-                    'videoId:',
-                    videoId,
-                );
-                this.selectIframeLibraryVideo(root, embedUrl, videoId);
+            if (embedUrl) {                this.selectIframeLibraryVideo(root, embedUrl, videoId);
             }
             return;
         }
@@ -1118,7 +1023,13 @@ export default class IframeEmbed {
         const urlInput = form.querySelector(Selectors.IFRAME.elements.url);
         urlInput.value = embedUrl;
 
-        // Switch to the URL tab using our method
+        // Show the Configure tab (it starts hidden)
+        const configureTabItem = root.querySelector('.tiny_iframecms_tab_url_item');
+        if (configureTabItem) {
+            configureTabItem.style.display = '';
+        }
+
+        // Switch to the Configure tab to show embed options
         this.switchToUrlTab(root);
 
         // Update the preview
