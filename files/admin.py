@@ -146,6 +146,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_filter.insert(0, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_filter.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_filter.append("is_lms_course")
 
         return list_filter
 
@@ -155,6 +157,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_display.insert(-1, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_display.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_display.insert(-1, "is_lms_course")
 
         return list_display
 

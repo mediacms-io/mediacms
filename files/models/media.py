@@ -736,7 +736,7 @@ class Media(models.Model):
 
         ret = []
         for cat in self.category.all():
-            ret.append({"title": cat.title, "url": cat.get_absolute_url()})
+            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
         return ret
 
     @property

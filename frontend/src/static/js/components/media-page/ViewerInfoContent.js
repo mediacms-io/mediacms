@@ -94,11 +94,18 @@ export default function ViewerInfoContent(props) {
         !PageStore.get('config-enabled').taxonomies.tags || PageStore.get('config-enabled').taxonomies.tags.enabled
             ? metafield(MediaPageStore.get('media-tags'))
             : [];
+    let mediaCategories = MediaPageStore.get('media-categories');
+
+    // Filter to show only LMS courses when in embed mode
+    if (inEmbeddedApp()) {
+        mediaCategories = mediaCategories.filter(cat => cat.is_lms_course === true);
+    }
+
     const categoriesContent = PageStore.get('config-options').pages.media.categoriesWithTitle
         ? []
         : !PageStore.get('config-enabled').taxonomies.categories ||
             PageStore.get('config-enabled').taxonomies.categories.enabled
-          ? metafield(MediaPageStore.get('media-categories'))
+          ? metafield(mediaCategories)
           : [];
 
     let summary = MediaPageStore.get('media-summary');
@@ -220,9 +227,13 @@ export default function ViewerInfoContent(props) {
                         <MediaMetaField
                             value={categoriesContent}
                             title={
-                                1 < categoriesContent.length
-                                    ? translateString('Categories')
-                                    : translateString('Category')
+                                inEmbeddedApp()
+                                    ? (1 < categoriesContent.length
+                                        ? translateString('Courses')
+                                        : translateString('Course'))
+                                    : (1 < categoriesContent.length
+                                        ? translateString('Categories')
+                                        : translateString('Category'))
                             }
                             id="categories"
                         />
