@@ -142,6 +142,11 @@ $typeconfig = lti_get_type_type_config($type->id);
 // Initiate LTI Login with proper cmid (for permissions) and custom token
 $content = lti_initiate_login($course->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
 
+// CRITICAL: Inject media_token as hidden field in OIDC form
+// MediaCMS will encode it in state and inject into custom claims (fallback mechanism)
+$media_token_field = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
+$content = str_replace('</form>', $media_token_field . '</form>', $content);
+
 echo $OUTPUT->header();
 echo $content;
 echo $OUTPUT->footer();
