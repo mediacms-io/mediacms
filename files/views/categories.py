@@ -47,7 +47,14 @@ class CategoryListContributor(APIView):
     """List categories where user has contributor access"""
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(
+                name='lms_courses_only',
+                type=openapi.TYPE_BOOLEAN,
+                in_=openapi.IN_QUERY,
+                description='Filter to show only LMS courses (categories with is_lms_course=True)',
+            ),
+        ],
         tags=['Categories'],
         operation_summary='Lists Categories for Contributors',
         operation_description='Lists all categories where the user has contributor access',
@@ -70,6 +77,11 @@ class CategoryListContributor(APIView):
             categories = public_categories.union(rbac_categories)
         else:
             categories = public_categories
+
+        # Filter for LMS courses only if requested
+        lms_courses_only = request.GET.get('lms_courses_only', '').lower() in ['true', '1', 'yes']
+        if lms_courses_only:
+            categories = categories.filter(is_lms_course=True)
 
         categories = categories.order_by("title")
 

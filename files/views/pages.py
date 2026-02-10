@@ -350,13 +350,13 @@ def publish_media(request):
         return HttpResponseRedirect(media.get_absolute_url())
 
     if request.method == "POST":
-        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
+        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media, request=request)
         if form.is_valid():
             media = form.save()
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
-        form = MediaPublishForm(request.user, instance=media)
+        form = MediaPublishForm(request.user, instance=media, request=request)
 
     return render(
         request,

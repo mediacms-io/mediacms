@@ -226,6 +226,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "media_count",
             "user",
             "thumbnail_url",
+            "is_lms_course",
         )
 
 

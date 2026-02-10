@@ -224,8 +224,27 @@
 			}).join('');
 		}
 
+		// Check if in embed mode
+		function isInEmbedMode() {
+			try {
+				const params = new URLSearchParams(window.location.search);
+				const mode = params.get('mode');
+				if (mode === 'embed_mode') {
+					return true;
+				}
+				return sessionStorage.getItem('media_cms_embed_mode') === 'true';
+			} catch (e) {
+				return false;
+			}
+		}
+
 		// Fetch categories from API
-		fetch('/api/v1/categories/contributor')
+		var apiUrl = '/api/v1/categories/contributor';
+		if (isInEmbedMode()) {
+			apiUrl += '?lms_courses_only=true';
+		}
+
+		fetch(apiUrl)
 			.then(function(response) { return response.json(); })
 			.then(function(categories) {
 				allCategories = categories;

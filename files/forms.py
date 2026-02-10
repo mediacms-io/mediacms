@@ -127,6 +127,7 @@ class MediaPublishForm(forms.ModelForm):
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
+        self.request = kwargs.pop('request', None)
         super(MediaPublishForm, self).__init__(*args, **kwargs)
 
         self.has_custom_permissions = self.instance.permissions.exists() if self.instance.pk else False
@@ -169,6 +170,13 @@ class MediaPublishForm(forms.ModelForm):
 
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
 
+        # Filter for LMS courses only when in embed mode
+        if self.request and 'category' in self.fields:
+            is_embed_mode = self._check_embed_mode()
+            if is_embed_mode:
+                current_queryset = self.fields['category'].queryset
+                self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -185,6 +193,22 @@ class MediaPublishForm(forms.ModelForm):
         )
 
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
+
+    def _check_embed_mode(self):
+        """Check if the current request is in embed mode"""
+        if not self.request:
+            return False
+
+        # Check query parameter
+        mode = self.request.GET.get('mode', '')
+        if mode == 'embed_mode':
+            return True
+
+        # Check session storage
+        if self.request.session.get('media_cms_embed_mode') == 'true':
+            return True
+
+        return False
 
     def clean(self):
         cleaned_data = super().clean()
