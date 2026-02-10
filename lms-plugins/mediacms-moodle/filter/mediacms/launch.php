@@ -10,8 +10,59 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/lti/lib.php');
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
+require_once($CFG->dirroot . '/course/modlib.php');
 
 global $SITE, $DB, $PAGE, $OUTPUT, $CFG;
+
+/**
+ * Find first LTI activity for the MediaCMS tool, or create dummy if none exists
+ */
+function filter_mediacms_get_dummy_activity($courseid, $typeid) {
+    global $DB;
+
+    // Find any existing LTI activity with this tool
+    $sql = "SELECT cm.id
+            FROM {course_modules} cm
+            JOIN {modules} m ON m.id = cm.module
+            JOIN {lti} lti ON lti.id = cm.instance
+            WHERE cm.course = :courseid
+              AND m.name = 'lti'
+              AND lti.typeid = :typeid
+              AND cm.deletioninprogress = 0
+            LIMIT 1";
+
+    $existing = $DB->get_record_sql($sql, ['courseid' => $courseid, 'typeid' => $typeid]);
+    if ($existing) {
+        // Ensure it's accessible (fix if created with visible=0)
+        $cm = get_coursemodule_from_id('lti', $existing->id, 0, false, IGNORE_MISSING);
+        if ($cm && !$cm->visible) {
+            set_coursemodule_visible($existing->id, 1);
+        }
+        return $existing->id;
+    }
+
+    // No existing activity - create dummy (accessible but hidden from course page)
+    $moduleinfo = new stdClass();
+    $moduleinfo->course = $courseid;
+    $moduleinfo->module = $DB->get_field('modules', 'id', ['name' => 'lti']);
+    $moduleinfo->modulename = 'lti';
+    $moduleinfo->section = 0;
+    $moduleinfo->visible = 1;  // Accessible to students
+    $moduleinfo->visibleoncoursepage = 0;  // But hidden from course page
+    $moduleinfo->name = 'MediaCMS Dummy';
+    $moduleinfo->intro = 'Placeholder for filter launches';
+    $moduleinfo->introformat = FORMAT_HTML;
+    $moduleinfo->typeid = $typeid;
+    $moduleinfo->instructorchoiceacceptgrades = 0;
+    $moduleinfo->grade = 0;
+    $moduleinfo->instructorchoicesendname = 1;
+    $moduleinfo->instructorchoicesendemailaddr = 1;
+    $moduleinfo->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
+    $moduleinfo->instructorcustomparameters = '';  // Empty - we'll override per launch
+
+    $result = add_moduleinfo($moduleinfo, get_course($courseid));
+    return $result->coursemodule;
+}
 
 require_login();
 
@@ -56,6 +107,24 @@ if ($courseid && $courseid != SITEID) {
     $course = $SITE;
 }
 
+// Get or create dummy activity for this course
+try {
+    $dummy_cmid = filter_mediacms_get_dummy_activity($courseid, $type->id);
+} catch (Exception $e) {
+    if (!has_capability('moodle/course:manageactivities', $context)) {
+        die('No MediaCMS activity found. Please ask a teacher to add one first.');
+    }
+    throw $e;
+}
+
+// Get the dummy activity instance from DB
+$cm = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
+$instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
+
+// Override with our media token for THIS launch only (doesn't save to DB)
+$instance->instructorcustomparameters = "media_friendly_token=" . $mediatoken;
+$instance->name = 'MediaCMS Video: ' . $mediatoken;
+
 // Set up page
 $PAGE->set_url(new moodle_url('/filter/mediacms/launch.php', [
     'token' => $mediatoken,
@@ -67,34 +136,11 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('embedded');
 $PAGE->set_title('MediaCMS');
 
-// Create a dummy LTI instance object
-$instance = new stdClass();
-$instance->id = 0;
-$instance->course = $course->id;
-$instance->typeid = $type->id;
-$instance->name = 'MediaCMS Video';
-$instance->instructorchoiceacceptgrades = 0;
-$instance->grade = 0;
-$instance->instructorchoicesendname = 1;
-$instance->instructorchoicesendemailaddr = 1;
-$instance->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
-
-// Pass the token in custom parameters
-// MediaCMS expects 'media_friendly_token' to identify the video
-$instance->instructorcustomparameters = "media_friendly_token=" . $mediatoken;
-
 // Get type config
 $typeconfig = lti_get_type_type_config($type->id);
 
-// Initiate LTI Login
-$content = lti_initiate_login($course->id, 0, $instance, $typeconfig, null, 'MediaCMS Video');
-
-// Inject media_token as a hidden field for OIDC flow state if needed
-// This ensures the token survives the OIDC roundtrip if the provider supports it
-// Standard LTI 1.3 passes it via Custom Claims (instructorcustomparameters) which is handled above.
-// However, the original plugin also injected it into the form. We'll keep it for safety.
-$hidden_field = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
-$content = str_replace('</form>', $hidden_field . '</form>', $content);
+// Initiate LTI Login with proper cmid (for permissions) and custom token
+$content = lti_initiate_login($course->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
 
 echo $OUTPUT->header();
 echo $content;
