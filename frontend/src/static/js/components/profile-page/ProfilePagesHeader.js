@@ -5,7 +5,7 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import { translateString, inEmbeddedApp, inSelectMediaEmbedMode } from '../../utils/helpers/';
+import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
@@ -721,7 +721,11 @@ export default function ProfilePagesHeader(props) {
     }, []);
 
     return (
-        <div ref={profilePageHeaderRef} className={'profile-page-header' + (fixedNav ? ' fixed-nav' : '')}>
+        <div
+            ref={profilePageHeaderRef}
+            className={'profile-page-header' + (fixedNav ? ' fixed-nav' : '')}
+            {...(isSelectMediaMode() ? { 'data-action': 'select_media' } : {})}
+        >
             {!props.hideChannelBanner && (
                 <span className="profile-banner-wrap">
                     {props.author.banner_thumbnail_url ? (

@@ -680,6 +680,17 @@
       }
     }
   }
+
+  // Disable sticky navigation when in select_media mode (for LTI iframe)
+  &.fixed-nav[data-action="select_media"] {
+    .profile-nav {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      z-index: 1;
+    }
+  }
 }
 
 .page-main {
