@@ -124,6 +124,7 @@ $string['linktitle'] = 'Link title';
 $string['showrelated'] = 'Show related';
 $string['showuseravatar'] = 'Show user avatar';
 $string['responsive'] = 'Responsive';
+$string['textlinkonly'] = 'Insert text link only';
 $string['startat'] = 'Start at';
 $string['aspectratio'] = 'Aspect Ratio';
 $string['aspectratio_16_9'] = '16:9';

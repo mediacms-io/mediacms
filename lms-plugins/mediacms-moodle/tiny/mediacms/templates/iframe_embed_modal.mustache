@@ -31,19 +31,19 @@
         <form class="tiny_iframecms_form" id="{{elementid}}_tiny_iframecms_form">
             <!-- Tab Navigation -->
             <ul class="nav nav-tabs mb-3 tiny_iframecms_tabs" role="tablist">
-                <!-- My Media tab (first, active by default) -->
+                <!-- My Media tab (first, active by default when not editing) -->
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active tiny_iframecms_tab_iframe_library_btn" id="{{elementid}}_tab_iframe_library"
+                    <button class="nav-link {{^isupdating}}active{{/isupdating}} tiny_iframecms_tab_iframe_library_btn" id="{{elementid}}_tab_iframe_library"
                             data-bs-toggle="tab" data-bs-target="#{{elementid}}_pane_iframe_library"
-                            type="button" role="tab" aria-controls="{{elementid}}_pane_iframe_library" aria-selected="true">
+                            type="button" role="tab" aria-controls="{{elementid}}_pane_iframe_library" aria-selected="{{^isupdating}}true{{/isupdating}}{{#isupdating}}false{{/isupdating}}">
                         {{#str}} tabvideolibraryiframe, tiny_mediacms {{/str}}
                     </button>
                 </li>
-                <!-- Configure tab (second, hidden initially) -->
-                <li class="nav-item tiny_iframecms_tab_url_item" role="presentation" style="display: none;">
-                    <button class="nav-link tiny_iframecms_tab_url_btn" id="{{elementid}}_tab_url"
+                <!-- Configure tab (second, hidden initially when inserting, visible when editing) -->
+                <li class="nav-item tiny_iframecms_tab_url_item" role="presentation" {{^isupdating}}style="display: none;"{{/isupdating}}>
+                    <button class="nav-link {{#isupdating}}active{{/isupdating}} tiny_iframecms_tab_url_btn" id="{{elementid}}_tab_url"
                             data-bs-toggle="tab" data-bs-target="#{{elementid}}_pane_url"
-                            type="button" role="tab" aria-controls="{{elementid}}_pane_url" aria-selected="false">
+                            type="button" role="tab" aria-controls="{{elementid}}_pane_url" aria-selected="{{#isupdating}}true{{/isupdating}}{{^isupdating}}false{{/isupdating}}">
                         {{#str}} tabembedurl, tiny_mediacms {{/str}}
                     </button>
                 </li>
@@ -51,8 +51,8 @@
 
             <!-- Tab Content -->
             <div class="tab-content">
-                <!-- Tab 1: My Media (now first and active) -->
-                <div class="tab-pane fade show active tiny_iframecms_pane_iframe_library" id="{{elementid}}_pane_iframe_library" role="tabpanel" aria-labelledby="{{elementid}}_tab_iframe_library">
+                <!-- Tab 1: My Media (active when not editing) -->
+                <div class="tab-pane fade {{^isupdating}}show active{{/isupdating}} tiny_iframecms_pane_iframe_library" id="{{elementid}}_pane_iframe_library" role="tabpanel" aria-labelledby="{{elementid}}_tab_iframe_library">
                     <div class="tiny_iframecms_iframe_library_container" style="min-height: 500px;">
                         <div class="tiny_iframecms_iframe_library_placeholder text-center py-5">
                             <p class="text-muted">{{#str}} libraryloading, tiny_mediacms {{/str}}</p>
@@ -73,8 +73,8 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Configure (now second) -->
-                <div class="tab-pane fade tiny_iframecms_pane_url" id="{{elementid}}_pane_url" role="tabpanel" aria-labelledby="{{elementid}}_tab_url">
+                <!-- Tab 2: Configure (active when editing) -->
+                <div class="tab-pane fade {{#isupdating}}show active{{/isupdating}} tiny_iframecms_pane_url" id="{{elementid}}_pane_url" role="tabpanel" aria-labelledby="{{elementid}}_tab_url">
                     <div class="container-fluid p-0">
                         <div class="row">
                             <!-- Left column: Options only (URL field removed) -->
@@ -117,11 +117,6 @@
                 {{#str}} insertiframe, tiny_mediacms {{/str}}
             {{/isupdating}}
         </button>
-        {{#isupdating}}
-        <button type="button" class="btn btn-danger tiny_iframecms_remove_btn" data-action="remove">
-            {{#str}} removeiframe, tiny_mediacms {{/str}}
-        </button>
-        {{/isupdating}}
         <button type="button" class="btn btn-secondary" data-action="cancel">{{#str}} cancel, moodle {{/str}}</button>
     {{/footer}}
 

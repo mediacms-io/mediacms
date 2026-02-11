@@ -62,26 +62,33 @@
         </div>
         <div class="col-6">
             <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input tiny_iframecms_showuseravatar" 
+                <input type="checkbox" class="form-check-input tiny_iframecms_showuseravatar"
                        id="{{elementid}}_showuseravatar" {{#showUserAvatar}}checked{{/showUserAvatar}}>
                 <label class="form-check-label" for="{{elementid}}_showuseravatar">
                     {{#str}} showuseravatar, tiny_mediacms {{/str}}
                 </label>
             </div>
             <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input tiny_iframecms_responsive" 
+                <input type="checkbox" class="form-check-input tiny_iframecms_responsive"
                        id="{{elementid}}_responsive" {{#responsive}}checked{{/responsive}}>
                 <label class="form-check-label" for="{{elementid}}_responsive">
                     {{#str}} responsive, tiny_mediacms {{/str}}
                 </label>
             </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_textlinkonly"
+                       id="{{elementid}}_textlinkonly" {{#textLinkOnly}}checked{{/textLinkOnly}}>
+                <label class="form-check-label" for="{{elementid}}_textlinkonly">
+                    {{#str}} textlinkonly, tiny_mediacms {{/str}}
+                </label>
+            </div>
             <div class="form-check mb-2 d-flex align-items-center">
-                <input type="checkbox" class="form-check-input tiny_iframecms_startat_enabled" 
+                <input type="checkbox" class="form-check-input tiny_iframecms_startat_enabled"
                        id="{{elementid}}_startat_enabled" {{#startAtEnabled}}checked{{/startAtEnabled}}>
                 <label class="form-check-label ms-2 me-2" for="{{elementid}}_startat_enabled">
                     {{#str}} startat, tiny_mediacms {{/str}}
                 </label>
-                <input type="text" class="form-control form-control-sm tiny_iframecms_startat" 
+                <input type="text" class="form-control form-control-sm tiny_iframecms_startat"
                        id="{{elementid}}_startat" value="{{startAt}}" placeholder="0:00" style="width: 70px;">
             </div>
         </div>

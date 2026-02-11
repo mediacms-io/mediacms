@@ -237,6 +237,7 @@ export default class IframeEmbed {
             showRelated: getDefault('showRelated'),
             showUserAvatar: getDefault('showUserAvatar'),
             responsive: data.responsive !== false,
+            textLinkOnly: data.textLinkOnly || false,
             startAtEnabled: data.startAtEnabled || false,
             startAt: data.startAt || '0:00',
             width: data.width || 560,
@@ -350,6 +351,8 @@ export default class IframeEmbed {
             ).checked,
             responsive: form.querySelector(Selectors.IFRAME.elements.responsive)
                 .checked,
+            textLinkOnly: form.querySelector(Selectors.IFRAME.elements.textLinkOnly)
+                .checked,
             startAtEnabled: form.querySelector(
                 Selectors.IFRAME.elements.startAtEnabled,
             ).checked,
@@ -371,7 +374,7 @@ export default class IframeEmbed {
     }
 
     /**
-     * Generate the iframe HTML.
+     * Generate the iframe HTML or text link.
      *
      * @param {Object} values - Form values
      * @returns {Promise<string>} Generated HTML
@@ -380,6 +383,32 @@ export default class IframeEmbed {
         const parsed = this.parseInput(values.url);
         if (!parsed) {
             return '';
+        }
+
+        // If user selected "text link only", generate a link instead of iframe
+        if (values.textLinkOnly) {
+            // Build the view URL (not embed URL) for the link
+            let viewUrl;
+            if (parsed.isGeneric) {
+                viewUrl = parsed.rawUrl;
+            } else {
+                viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
+            }
+
+            // Use the full URL as the link text
+            // Escape HTML entities in the URL for safe display
+            const escapeHtml = (str) => {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+
+            const linkText = escapeHtml(viewUrl);
+            const hrefUrl = viewUrl.replace(/"/g, '&quot;');
+
+            // Add data attribute to mark this as a text-only link
+            // This prevents the filter from converting it to an LTI launch iframe
+            return `<p><a href="${hrefUrl}" target="_blank" data-mediacms-textlink="true">${linkText}</a></p>`;
         }
 
         const embedUrl = this.buildEmbedUrl(parsed, values);
@@ -448,21 +477,49 @@ export default class IframeEmbed {
             urlInput.value = embedUrl;
         }
 
-        // Show a scaled preview
-        const previewWidth = Math.min(values.width, 400);
-        const scale = previewWidth / values.width;
-        const previewHeight = Math.round(values.height * scale);
+        // If text link only is selected, show link preview
+        if (values.textLinkOnly) {
+            let viewUrl;
+            if (parsed.isGeneric) {
+                viewUrl = parsed.rawUrl;
+            } else {
+                viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
+            }
 
-        previewContainer.innerHTML = `
-            <iframe 
-                src="${embedUrl}" 
-                width="${previewWidth}" 
-                height="${previewHeight}" 
-                frameborder="0" 
-                allowfullscreen
-                style="max-width: 100%;">
-            </iframe>
-        `;
+            // Escape HTML entities for safe display
+            const escapeHtml = (str) => {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+
+            const linkText = escapeHtml(viewUrl);
+            const hrefUrl = viewUrl.replace(/"/g, '&quot;');
+
+            previewContainer.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>Text link preview:</strong><br>
+                    <a href="${hrefUrl}" target="_blank" data-mediacms-textlink="true">${linkText}</a>
+                    <br><small class="text-muted mt-2 d-block">This link will not be auto-converted by the MediaCMS filter.</small>
+                </div>
+            `;
+        } else {
+            // Show a scaled preview
+            const previewWidth = Math.min(values.width, 400);
+            const scale = previewWidth / values.width;
+            const previewHeight = Math.round(values.height * scale);
+
+            previewContainer.innerHTML = `
+                <iframe
+                    src="${embedUrl}"
+                    width="${previewWidth}"
+                    height="${previewHeight}"
+                    frameborder="0"
+                    allowfullscreen
+                    style="max-width: 100%;">
+                </iframe>
+            `;
+        }
     }
 
     /**
@@ -609,6 +666,11 @@ export default class IframeEmbed {
             this.handleInputChange(root, false),
         );
 
+        // Text link only checkbox - doesn't affect URL, only output format
+        form.querySelector(Selectors.IFRAME.elements.textLinkOnly).addEventListener('change', () =>
+            this.handleInputChange(root, false),
+        );
+
         // Start at time input - should update URL field
         form.querySelector(Selectors.IFRAME.elements.startAt).addEventListener(
             'input',
@@ -695,8 +757,15 @@ export default class IframeEmbed {
         // Iframe library event listeners
         this.registerIframeLibraryEventListeners(root);
 
-        // Since My Media tab is now default/active, load it immediately on modal open
-        setTimeout(() => this.handleIframeLibraryTabClick(root), 100);
+        // If editing, Configure tab is active - update preview immediately
+        // If inserting, My Media tab is active - load the library
+        if (this.isUpdating) {
+            // When editing, Configure tab is already active, just update preview
+            setTimeout(() => this.updatePreview(root), 100);
+        } else {
+            // When inserting, load My Media library tab
+            setTimeout(() => this.handleIframeLibraryTabClick(root), 100);
+        }
     }
 
     /**
