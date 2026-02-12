@@ -87,6 +87,8 @@ class OIDCLoginView(View):
             embed_show_user_avatar = request.GET.get('embed_show_user_avatar') or request.POST.get('embed_show_user_avatar')
             embed_link_title = request.GET.get('embed_link_title') or request.POST.get('embed_link_title')
             embed_start_time = request.GET.get('embed_start_time') or request.POST.get('embed_start_time')
+            embed_width = request.GET.get('embed_width') or request.POST.get('embed_width')
+            embed_height = request.GET.get('embed_height') or request.POST.get('embed_height')
 
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
@@ -132,6 +134,10 @@ class OIDCLoginView(View):
                         state_data['embed_link_title'] = embed_link_title
                     if embed_start_time:
                         state_data['embed_start_time'] = embed_start_time
+                    if embed_width:
+                        state_data['embed_width'] = embed_width
+                    if embed_height:
+                        state_data['embed_height'] = embed_height
 
                     # Encode as base64 URL-safe string
                     state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
@@ -202,11 +208,15 @@ class LaunchView(View):
             'embed_show_user_avatar': 'showUserAvatar',
             'embed_link_title': 'linkTitle',
             'embed_start_time': 't',
+            'embed_width': 'width',
+            'embed_height': 'height',
             'showTitle': 'showTitle',
             'showRelated': 'showRelated',
             'showUserAvatar': 'showUserAvatar',
             'linkTitle': 'linkTitle',
             't': 't',
+            'width': 'width',
+            'height': 'height',
         }
 
         for key, param_name in param_mapping.items():
@@ -254,7 +264,7 @@ class LaunchView(View):
                 media_token_from_state = state_data.get('media_token')
 
                 # Extract embed parameters from state
-                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time']:
+                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time', 'embed_width', 'embed_height']:
                     if key in state_data:
                         embed_params_from_state[key] = state_data[key]
             except Exception:

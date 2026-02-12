@@ -32,29 +32,4 @@ if ($ADMIN->fulltree) {
         0,
         $ltioptions
     ));
-
-    // Dimensions
-    $settings->add(new admin_setting_configtext(
-        'filter_mediacms/iframewidth',
-        get_string('iframewidth', 'filter_mediacms'),
-        get_string('iframewidth_desc', 'filter_mediacms'),
-        '960',
-        PARAM_INT
-    ));
-
-    $settings->add(new admin_setting_configtext(
-        'filter_mediacms/iframeheight',
-        get_string('iframeheight', 'filter_mediacms'),
-        get_string('iframeheight_desc', 'filter_mediacms'),
-        '540',
-        PARAM_INT
-    ));
-
-    // Auto-convert
-    $settings->add(new admin_setting_configcheckbox(
-        'filter_mediacms/enableautoconvert',
-        get_string('enableautoconvert', 'filter_mediacms'),
-        get_string('enableautoconvert_desc', 'filter_mediacms'),
-        1
-    ));
 }

@@ -98,6 +98,8 @@ export default class IframeEmbed {
             // MediaCMS embed URL: /embed?m=VIDEO_ID&options
             if (urlObj.pathname === '/embed' && urlObj.searchParams.has('m')) {
                 const tParam = urlObj.searchParams.get('t');
+                const widthParam = urlObj.searchParams.get('width');
+                const heightParam = urlObj.searchParams.get('height');
                 return {
                     baseUrl: baseUrl,
                     videoId: urlObj.searchParams.get('m'),
@@ -107,6 +109,8 @@ export default class IframeEmbed {
                     showRelated: urlObj.searchParams.get('showRelated') === '1',
                     showUserAvatar:
                         urlObj.searchParams.get('showUserAvatar') === '1',
+                    width: widthParam ? parseInt(widthParam) : null,
+                    height: heightParam ? parseInt(heightParam) : null,
                     startAt: tParam
                         ? this.secondsToTimeString(parseInt(tParam))
                         : null,
@@ -206,6 +210,14 @@ export default class IframeEmbed {
             options.showUserAvatar ? '1' : '0',
         );
         url.searchParams.set('linkTitle', options.linkTitle ? '1' : '0');
+
+        // Add width and height if provided
+        if (options.width) {
+            url.searchParams.set('width', options.width.toString());
+        }
+        if (options.height) {
+            url.searchParams.set('height', options.height.toString());
+        }
 
         // Add start time if enabled
         if (options.startAtEnabled && options.startAt) {
@@ -338,8 +350,8 @@ export default class IframeEmbed {
 
             return {
                 url: href,
-                width: 560,
-                height: 315,
+                width: parsed?.width || 560,
+                height: parsed?.height || 315,
                 showTitle: parsed?.showTitle ?? true,
                 linkTitle: parsed?.linkTitle ?? true,
                 showRelated: parsed?.showRelated ?? true,
@@ -359,10 +371,14 @@ export default class IframeEmbed {
         const style = this.selectedIframe.getAttribute('style') || '';
         const isResponsive = style.includes('aspect-ratio');
 
+        // Prioritize width/height from URL params, fallback to iframe attributes
+        const width = parsed?.width || parseInt(this.selectedIframe.getAttribute('width')) || 560;
+        const height = parsed?.height || parseInt(this.selectedIframe.getAttribute('height')) || 315;
+
         return {
             url: src,
-            width: this.selectedIframe.getAttribute('width') || 560,
-            height: this.selectedIframe.getAttribute('height') || 315,
+            width: width,
+            height: height,
             showTitle: parsed?.showTitle ?? true,
             linkTitle: parsed?.linkTitle ?? true,
             showRelated: parsed?.showRelated ?? true,

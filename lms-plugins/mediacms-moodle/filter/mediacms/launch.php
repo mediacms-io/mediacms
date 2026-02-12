@@ -87,14 +87,13 @@ $startTime = optional_param('t', '', PARAM_TEXT);
 // Get configuration
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
-$defaultwidth = get_config('filter_mediacms', 'iframewidth') ?: 960;
-$defaultheight = get_config('filter_mediacms', 'iframeheight') ?: 540;
 
+// Use hardcoded defaults if width/height not provided
 if (empty($width)) {
-    $width = $defaultwidth;
+    $width = 960;
 }
 if (empty($height)) {
-    $height = $defaultheight;
+    $height = 540;
 }
 
 if (empty($mediacmsurl)) {
@@ -212,6 +211,12 @@ if ($linkTitle !== '') {
 }
 if ($startTime !== '') {
     $hidden_fields .= '<input type="hidden" name="embed_start_time" value="' . htmlspecialchars($startTime, ENT_QUOTES) . '" />';
+}
+if ($width) {
+    $hidden_fields .= '<input type="hidden" name="embed_width" value="' . htmlspecialchars($width, ENT_QUOTES) . '" />';
+}
+if ($height) {
+    $hidden_fields .= '<input type="hidden" name="embed_height" value="' . htmlspecialchars($height, ENT_QUOTES) . '" />';
 }
 
 $content = str_replace('</form>', $hidden_fields . '</form>', $content);
