@@ -114,7 +114,7 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: -35px;
+                top: -15px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.7);
