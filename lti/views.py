@@ -202,10 +202,13 @@ class LaunchView(View):
     @staticmethod
     def build_url_with_embed_params(base_url, embed_params):
         """Build URL with embed parameters."""
-        query_string = 'mode=embed_mode'
-        if embed_params:
-            query_string += '&' + '&'.join(embed_params)
-        return f"{base_url}?{query_string}"
+        # Check if base_url already has query parameters
+        separator = '&' if '?' in base_url else '?'
+
+        query_parts = ['mode=embed_mode']
+        query_parts.extend(embed_params)
+
+        return f"{base_url}{separator}{'&'.join(query_parts)}"
 
     def post(self, request):
         """Handle LTI launch with JWT validation"""
