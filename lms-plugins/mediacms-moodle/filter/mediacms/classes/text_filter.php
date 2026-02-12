@@ -128,20 +128,26 @@ class text_filter extends \core_filters\text_filter {
     private function generate_iframe($token, $embed_params = []) {
         global $CFG, $COURSE;
 
-        // Use width/height from embed params if provided, otherwise use hardcoded defaults
-        $width = isset($embed_params['width']) ? $embed_params['width'] : 960;
-        $height = isset($embed_params['height']) ? $embed_params['height'] : 540;
+        // Use width/height from embed params if provided, no defaults
+        $width = isset($embed_params['width']) ? $embed_params['width'] : null;
+        $height = isset($embed_params['height']) ? $embed_params['height'] : null;
         $courseid = $COURSE->id ?? 0;
 
         // Build launch URL parameters
         $launch_params = [
             'token' => $token,
-            'courseid' => $courseid,
-            'width' => $width,
-            'height' => $height
+            'courseid' => $courseid
         ];
 
-        // Add other embed parameters if provided (excluding width/height as they're already set)
+        // Add width/height only if provided
+        if ($width !== null) {
+            $launch_params['width'] = $width;
+        }
+        if ($height !== null) {
+            $launch_params['height'] = $height;
+        }
+
+        // Add other embed parameters if provided (excluding width/height as they're already handled)
         foreach ($embed_params as $key => $value) {
             if ($key !== 'width' && $key !== 'height') {
                 $launch_params[$key] = $value;
@@ -150,15 +156,24 @@ class text_filter extends \core_filters\text_filter {
 
         $launchurl = new moodle_url('/filter/mediacms/launch.php', $launch_params);
 
-        $iframe = html_writer::tag('iframe', '', [
+        // Build iframe attributes
+        $iframe_attrs = [
             'src' => $launchurl->out(false),
-            'width' => $width,
-            'height' => $height,
             'frameborder' => 0,
             'allowfullscreen' => 'allowfullscreen',
             'class' => 'mediacms-embed',
             'title' => 'MediaCMS Video'
-        ]);
+        ];
+
+        // Add width/height attributes only if provided
+        if ($width !== null) {
+            $iframe_attrs['width'] = $width;
+        }
+        if ($height !== null) {
+            $iframe_attrs['height'] = $height;
+        }
+
+        $iframe = html_writer::tag('iframe', '', $iframe_attrs);
 
         return $iframe;
     }

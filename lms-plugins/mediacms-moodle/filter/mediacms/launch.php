@@ -88,13 +88,7 @@ $startTime = optional_param('t', '', PARAM_TEXT);
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
 
-// Use hardcoded defaults if width/height not provided
-if (empty($width)) {
-    $width = 960;
-}
-if (empty($height)) {
-    $height = 540;
-}
+// No default dimensions - use what's provided or nothing
 
 if (empty($mediacmsurl)) {
     die('MediaCMS URL not configured');
