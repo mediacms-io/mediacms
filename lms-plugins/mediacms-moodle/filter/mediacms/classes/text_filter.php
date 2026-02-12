@@ -103,6 +103,10 @@ class text_filter extends \core_filters\text_filter {
         // Extract additional embed parameters from the URL
         $embed_params = [];
         $full_url = $matches[1];
+
+        // Decode HTML entities (&amp; -> &) before parsing
+        $full_url = html_entity_decode($full_url, ENT_QUOTES | ENT_HTML5);
+
         $parsed_url = parse_url($full_url);
 
         if (isset($parsed_url['query'])) {

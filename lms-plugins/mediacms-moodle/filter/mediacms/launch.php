@@ -137,20 +137,20 @@ $instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
 // Override with our media token for THIS launch only (doesn't save to DB)
 $custom_params = ["media_friendly_token=" . $mediatoken];
 
-// Add embed parameters if provided
-if (!empty($showTitle)) {
+// Add embed parameters if provided (check !== '' instead of !empty() because '0' is a valid value)
+if ($showTitle !== '') {
     $custom_params[] = "embed_show_title=" . $showTitle;
 }
-if (!empty($showRelated)) {
+if ($showRelated !== '') {
     $custom_params[] = "embed_show_related=" . $showRelated;
 }
-if (!empty($showUserAvatar)) {
+if ($showUserAvatar !== '') {
     $custom_params[] = "embed_show_user_avatar=" . $showUserAvatar;
 }
-if (!empty($linkTitle)) {
+if ($linkTitle !== '') {
     $custom_params[] = "embed_link_title=" . $linkTitle;
 }
-if (!empty($startTime)) {
+if ($startTime !== '') {
     $custom_params[] = "embed_start_time=" . $startTime;
 }
 
@@ -165,20 +165,20 @@ $page_params = [
     'height' => $height
 ];
 
-// Add embed parameters to page URL if provided
-if (!empty($showTitle)) {
+// Add embed parameters to page URL if provided (check !== '' because '0' is valid)
+if ($showTitle !== '') {
     $page_params['showTitle'] = $showTitle;
 }
-if (!empty($showRelated)) {
+if ($showRelated !== '') {
     $page_params['showRelated'] = $showRelated;
 }
-if (!empty($showUserAvatar)) {
+if ($showUserAvatar !== '') {
     $page_params['showUserAvatar'] = $showUserAvatar;
 }
-if (!empty($linkTitle)) {
+if ($linkTitle !== '') {
     $page_params['linkTitle'] = $linkTitle;
 }
-if (!empty($startTime)) {
+if ($startTime !== '') {
     $page_params['t'] = $startTime;
 }
 
@@ -193,10 +193,28 @@ $typeconfig = lti_get_type_type_config($type->id);
 // Initiate LTI Login with proper cmid (for permissions) and custom token
 $content = lti_initiate_login($course->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
 
-// CRITICAL: Inject media_token as hidden field in OIDC form
-// MediaCMS will encode it in state and inject into custom claims (fallback mechanism)
-$media_token_field = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
-$content = str_replace('</form>', $media_token_field . '</form>', $content);
+// CRITICAL: Inject media_token and embed parameters as hidden fields in OIDC form
+// MediaCMS will encode them in state and inject into custom claims (fallback mechanism)
+$hidden_fields = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
+
+// Add embed parameters as hidden fields
+if ($showTitle !== '') {
+    $hidden_fields .= '<input type="hidden" name="embed_show_title" value="' . htmlspecialchars($showTitle, ENT_QUOTES) . '" />';
+}
+if ($showRelated !== '') {
+    $hidden_fields .= '<input type="hidden" name="embed_show_related" value="' . htmlspecialchars($showRelated, ENT_QUOTES) . '" />';
+}
+if ($showUserAvatar !== '') {
+    $hidden_fields .= '<input type="hidden" name="embed_show_user_avatar" value="' . htmlspecialchars($showUserAvatar, ENT_QUOTES) . '" />';
+}
+if ($linkTitle !== '') {
+    $hidden_fields .= '<input type="hidden" name="embed_link_title" value="' . htmlspecialchars($linkTitle, ENT_QUOTES) . '" />';
+}
+if ($startTime !== '') {
+    $hidden_fields .= '<input type="hidden" name="embed_start_time" value="' . htmlspecialchars($startTime, ENT_QUOTES) . '" />';
+}
+
+$content = str_replace('</form>', $hidden_fields . '</form>', $content);
 
 echo $OUTPUT->header();
 echo $content;

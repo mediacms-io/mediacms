@@ -81,6 +81,13 @@ class OIDCLoginView(View):
             cmid = request.GET.get('cmid') or request.POST.get('cmid')
             media_token = request.GET.get('media_token') or request.POST.get('media_token')
 
+            # Extract embed parameters from request
+            embed_show_title = request.GET.get('embed_show_title') or request.POST.get('embed_show_title')
+            embed_show_related = request.GET.get('embed_show_related') or request.POST.get('embed_show_related')
+            embed_show_user_avatar = request.GET.get('embed_show_user_avatar') or request.POST.get('embed_show_user_avatar')
+            embed_link_title = request.GET.get('embed_link_title') or request.POST.get('embed_link_title')
+            embed_start_time = request.GET.get('embed_start_time') or request.POST.get('embed_start_time')
+
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
@@ -113,6 +120,18 @@ class OIDCLoginView(View):
                         state_data['hint'] = lti_message_hint
                     if media_token:
                         state_data['media_token'] = media_token
+
+                    # Add embed parameters to state
+                    if embed_show_title:
+                        state_data['embed_show_title'] = embed_show_title
+                    if embed_show_related:
+                        state_data['embed_show_related'] = embed_show_related
+                    if embed_show_user_avatar:
+                        state_data['embed_show_user_avatar'] = embed_show_user_avatar
+                    if embed_link_title:
+                        state_data['embed_link_title'] = embed_link_title
+                    if embed_start_time:
+                        state_data['embed_start_time'] = embed_start_time
 
                     # Encode as base64 URL-safe string
                     state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
@@ -217,8 +236,9 @@ class LaunchView(View):
         error_message = ''
         claims = {}
 
-        # Extract media_token from state parameter if present (for filter launches)
+        # Extract media_token and embed parameters from state parameter if present (for filter launches)
         media_token_from_state = None
+        embed_params_from_state = {}
         state = request.POST.get('state')
         if state:
             try:
@@ -232,6 +252,11 @@ class LaunchView(View):
                 state_decoded = base64.urlsafe_b64decode(state_padded.encode()).decode()
                 state_data = json.loads(state_decoded)
                 media_token_from_state = state_data.get('media_token')
+
+                # Extract embed parameters from state
+                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time']:
+                    if key in state_data:
+                        embed_params_from_state[key] = state_data[key]
             except Exception:
                 pass
 
@@ -265,15 +290,21 @@ class LaunchView(View):
             launch_data = message_launch.get_launch_data()
             claims = self.sanitize_claims(launch_data)
 
-            # Extract custom claims and inject media_token from state if present
+            # Extract custom claims and inject media_token and embed params from state if present
             try:
                 custom_claims = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/custom', {})
 
                 # Inject media_token from state if present (for filter launches)
                 if media_token_from_state and not custom_claims.get('media_friendly_token'):
                     custom_claims['media_friendly_token'] = media_token_from_state
-                    # Update launch_data with the modified custom claims
-                    launch_data['https://purl.imsglobal.org/spec/lti/claim/custom'] = custom_claims
+
+                # Inject embed parameters from state if present
+                for key, value in embed_params_from_state.items():
+                    if key not in custom_claims:
+                        custom_claims[key] = value
+
+                # Update launch_data with the modified custom claims
+                launch_data['https://purl.imsglobal.org/spec/lti/claim/custom'] = custom_claims
 
             except Exception:
                 custom_claims = {}
