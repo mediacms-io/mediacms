@@ -173,6 +173,40 @@ class LaunchView(View):
     Flow: Moodle → This endpoint (with JWT) → Validate → Provision → Session → Redirect
     """
 
+    @staticmethod
+    def extract_embed_params_from_dict(params_dict):
+        """Extract embed parameters from a dictionary and return as query string list."""
+        embed_params = []
+        param_mapping = {
+            'embed_show_title': 'showTitle',
+            'embed_show_related': 'showRelated',
+            'embed_show_user_avatar': 'showUserAvatar',
+            'embed_link_title': 'linkTitle',
+            'embed_start_time': 't',
+            'showTitle': 'showTitle',
+            'showRelated': 'showRelated',
+            'showUserAvatar': 'showUserAvatar',
+            'linkTitle': 'linkTitle',
+            't': 't',
+        }
+
+        for key, param_name in param_mapping.items():
+            value = params_dict.get(key)
+            if value:
+                param_str = f"{param_name}={value}"
+                if param_str not in embed_params:
+                    embed_params.append(param_str)
+
+        return embed_params
+
+    @staticmethod
+    def build_url_with_embed_params(base_url, embed_params):
+        """Build URL with embed parameters."""
+        query_string = 'mode=embed_mode'
+        if embed_params:
+            query_string += '&' + '&'.join(embed_params)
+        return f"{base_url}?{query_string}"
+
     def post(self, request):
         """Handle LTI launch with JWT validation"""
         platform = None
@@ -345,7 +379,9 @@ class LaunchView(View):
         if media_id:
             try:
                 media = Media.objects.get(friendly_token=media_id)
-                return reverse('lti:embed_media', args=[media.friendly_token]) + '?mode=embed_mode'
+                embed_params = self.extract_embed_params_from_dict(custom)
+                base_url = reverse('lti:embed_media', args=[media.friendly_token])
+                return self.build_url_with_embed_params(base_url, embed_params)
             except Media.DoesNotExist:
                 pass
 
@@ -498,7 +534,9 @@ class LaunchView(View):
         media_token = custom_claims.get('media_friendly_token')
 
         if media_token:
-            redirect_url = reverse('lti:embed_media', args=[media_token]) + '?mode=embed_mode'
+            embed_params = self.extract_embed_params_from_dict(custom_claims)
+            base_url = reverse('lti:embed_media', args=[media_token])
+            redirect_url = self.build_url_with_embed_params(base_url, embed_params)
         else:
             redirect_url = reverse('lti:select_media') + '?mode=embed_mode'
 
@@ -604,4 +642,8 @@ class EmbedMediaLTIView(View):
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
 
-        return HttpResponseRedirect(f"/embed?m={friendly_token}&mode=embed_mode")
+        # Build embed URL with parameters from the request
+        embed_params = LaunchView.extract_embed_params_from_dict(request.GET)
+        embed_url = LaunchView.build_url_with_embed_params(f"/embed?m={friendly_token}", embed_params)
+
+        return HttpResponseRedirect(embed_url)
