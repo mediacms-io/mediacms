@@ -393,7 +393,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                     {this.state.displayPrev ? this.previousBtn : null}
 
                     <ul className="items-list-wrap" ref="itemsListWrap">
-                        {!isSelectMediaMode ? (
+                        {!isSelectMediaMode && !inEmbeddedApp() ? (
                             <InlineTab
                                 id="about"
                                 isActive={'about' === this.props.type}
@@ -789,15 +789,7 @@ export default function ProfilePagesHeader(props) {
             )}
 
             <div className="profile-info-nav-wrap">
-                {inSelectMediaEmbedMode() ? (
-                    <div className="profile-info">
-                        <div className="profile-info-inner">
-                            <div>
-                                <h1>{translateString('Embed Media')}</h1>
-                            </div>
-                        </div>
-                    </div>
-                ) : props.author.thumbnail_url || props.author.name ? (
+                {!inEmbeddedApp() && (props.author.thumbnail_url || props.author.name) ? (
                     <div className="profile-info">
                         <div className="profile-info-inner">
                             <div>

@@ -981,9 +981,9 @@ export class ProfileMediaPage extends Page {
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
                     <MediaListWrapper
-                        title={isSelectMediaMode ? undefined : this.state.title}
+                        title={inEmbeddedApp() ? undefined : this.state.title}
                         className="items-list-ver"
-                        style={isSelectMediaMode ? { marginTop: '24px' } : undefined}
+                        style={inEmbeddedApp() ? { marginTop: '24px' } : undefined}
                         showBulkActions={!isSelectMediaMode && isMediaAuthor}
                         selectedCount={this.state.selectedMedia.size}
                         totalCount={this.state.availableMediaIds.length}

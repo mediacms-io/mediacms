@@ -422,9 +422,9 @@ class ProfileSharedByMePage extends Page {
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
                     <MediaListWrapper
-                        title={isSelectMediaMode ? undefined : this.state.title}
+                        title={inEmbeddedApp() ? undefined : this.state.title}
                         className="items-list-ver"
-                        style={isSelectMediaMode ? { marginTop: '24px' } : undefined}
+                        style={inEmbeddedApp() ? { marginTop: '24px' } : undefined}
                         showBulkActions={!isSelectMediaMode && isMediaAuthor}
                         selectedCount={isSelectMediaMode ? this.state.selectedMedia.size : this.props.bulkActions.selectedMedia.size}
                         totalCount={isSelectMediaMode ? 0 : this.props.bulkActions.availableMediaIds.length}
