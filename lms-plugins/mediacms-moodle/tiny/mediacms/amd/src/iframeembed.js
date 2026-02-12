@@ -118,14 +118,25 @@ export default class IframeEmbed {
             }
 
             // Moodle LTI launch.php URL: /filter/mediacms/launch.php?token=TOKEN
-            // This is used when selecting from "My Media" via LTI
-            // We treat it as a generic iframe URL (keep as-is)
+            // This is used when the filter processes MediaCMS URLs
+            // Extract all embed parameters so they're preserved when editing
             if (urlObj.pathname.includes('/filter/mediacms/launch.php') && urlObj.searchParams.has('token')) {
+                const tParam = urlObj.searchParams.get('t');
+                const widthParam = urlObj.searchParams.get('width');
+                const heightParam = urlObj.searchParams.get('height');
+
                 return {
                     baseUrl: baseUrl,
                     videoId: urlObj.searchParams.get('token'),
                     rawUrl: url,
                     isLtiLaunch: true,
+                    showTitle: urlObj.searchParams.get('showTitle') === '1',
+                    linkTitle: urlObj.searchParams.get('linkTitle') === '1',
+                    showRelated: urlObj.searchParams.get('showRelated') === '1',
+                    showUserAvatar: urlObj.searchParams.get('showUserAvatar') === '1',
+                    width: widthParam ? parseInt(widthParam) : null,
+                    height: heightParam ? parseInt(heightParam) : null,
+                    startAt: tParam ? this.secondsToTimeString(parseInt(tParam)) : null,
                 };
             }
 
@@ -209,12 +220,28 @@ export default class IframeEmbed {
      * @returns {string} The complete embed URL
      */
     buildEmbedUrl(parsed, options) {
-        if (parsed.isGeneric || parsed.isLtiLaunch) {
+        if (parsed.isGeneric) {
             return parsed.rawUrl;
         }
 
-        const url = new URL(`${parsed.baseUrl}/embed`);
-        url.searchParams.set('m', parsed.videoId);
+        // Build URL - either LTI launch.php or direct embed URL
+        let url;
+        if (parsed.isLtiLaunch) {
+            // Rebuild LTI launch URL with updated parameters
+            url = new URL(parsed.rawUrl);
+            // Keep existing token, clear other params to rebuild them
+            const token = url.searchParams.get('token');
+            const courseid = url.searchParams.get('courseid');
+            url.search = '';
+            url.searchParams.set('token', token);
+            if (courseid) {
+                url.searchParams.set('courseid', courseid);
+            }
+        } else {
+            // Build direct MediaCMS embed URL
+            url = new URL(`${parsed.baseUrl}/embed`);
+            url.searchParams.set('m', parsed.videoId);
+        }
 
         // Always include all options with 1 or 0
         url.searchParams.set('showTitle', options.showTitle ? '1' : '0');
