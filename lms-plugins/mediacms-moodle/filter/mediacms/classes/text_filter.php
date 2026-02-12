@@ -80,7 +80,7 @@ class text_filter extends \core_filters\text_filter {
      * Callback for [mediacms:TOKEN]
      */
     public function callback_tag($matches) {
-        return $this->generate_iframe($matches[1]);
+        return $this->generate_iframe($matches[1], []);
     }
 
     /**
@@ -99,25 +99,51 @@ class text_filter extends \core_filters\text_filter {
         // We'll check this in the main filter method instead
 
         $token = $matches[3];
-        return $this->generate_iframe($token);
+
+        // Extract additional embed parameters from the URL
+        $embed_params = [];
+        $full_url = $matches[1];
+        $parsed_url = parse_url($full_url);
+
+        if (isset($parsed_url['query'])) {
+            parse_str($parsed_url['query'], $query_params);
+
+            // Extract embed-related parameters
+            $supported_params = ['showTitle', 'showRelated', 'showUserAvatar', 'linkTitle', 't'];
+            foreach ($supported_params as $param) {
+                if (isset($query_params[$param])) {
+                    $embed_params[$param] = $query_params[$param];
+                }
+            }
+        }
+
+        return $this->generate_iframe($token, $embed_params);
     }
 
     /**
      * Generate the Iframe pointing to launch.php
      */
-    private function generate_iframe($token) {
+    private function generate_iframe($token, $embed_params = []) {
         global $CFG, $COURSE;
 
         $width = get_config('filter_mediacms', 'iframewidth') ?: 960;
         $height = get_config('filter_mediacms', 'iframeheight') ?: 540;
         $courseid = $COURSE->id ?? 0;
 
-        $launchurl = new moodle_url('/filter/mediacms/launch.php', [
+        // Build launch URL parameters
+        $launch_params = [
             'token' => $token,
             'courseid' => $courseid,
             'width' => $width,
             'height' => $height
-        ]);
+        ];
+
+        // Add embed parameters if provided
+        foreach ($embed_params as $key => $value) {
+            $launch_params[$key] = $value;
+        }
+
+        $launchurl = new moodle_url('/filter/mediacms/launch.php', $launch_params);
 
         $iframe = html_writer::tag('iframe', '', [
             'src' => $launchurl->out(false),

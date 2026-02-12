@@ -33,7 +33,8 @@ import {getButtonImage} from 'editor_tiny/utils';
 
 const isIframe = (node) => node.nodeName.toLowerCase() === 'iframe' ||
     (node.classList && node.classList.contains('tiny-iframe-responsive')) ||
-    (node.classList && node.classList.contains('tiny-mediacms-iframe-wrapper'));
+    (node.classList && node.classList.contains('tiny-mediacms-iframe-wrapper')) ||
+    (node.nodeName.toLowerCase() === 'a' && node.getAttribute('data-mediacms-textlink') === 'true');
 
 /**
  * Wrap iframes with overlay containers that allow hover detection.
@@ -227,8 +228,14 @@ const registerIframeCommand = (editor, iframeButtonText, iframeButtonImage) => {
         tooltip: iframeButtonText,
         onAction: handleIframeAction,
         onSetup: api => {
+            const selector = [
+                'iframe:not([data-mce-object]):not([data-mce-placeholder])',
+                '.tiny-iframe-responsive',
+                '.tiny-mediacms-iframe-wrapper',
+                'a[data-mediacms-textlink="true"]'
+            ].join(',');
             return editor.selection.selectorChangedWithUnbind(
-                'iframe:not([data-mce-object]):not([data-mce-placeholder]),.tiny-iframe-responsive,.tiny-mediacms-iframe-wrapper',
+                selector,
                 api.setActive
             ).unbind;
         }

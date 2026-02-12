@@ -77,6 +77,13 @@ $courseid = optional_param('courseid', 0, PARAM_INT);
 $height = optional_param('height', 0, PARAM_INT);
 $width = optional_param('width', 0, PARAM_INT);
 
+// Extract embed parameters
+$showTitle = optional_param('showTitle', '', PARAM_TEXT);
+$showRelated = optional_param('showRelated', '', PARAM_TEXT);
+$showUserAvatar = optional_param('showUserAvatar', '', PARAM_TEXT);
+$linkTitle = optional_param('linkTitle', '', PARAM_TEXT);
+$startTime = optional_param('t', '', PARAM_TEXT);
+
 // Get configuration
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
@@ -128,16 +135,54 @@ $cm = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
 $instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
 
 // Override with our media token for THIS launch only (doesn't save to DB)
-$instance->instructorcustomparameters = "media_friendly_token=" . $mediatoken;
+$custom_params = ["media_friendly_token=" . $mediatoken];
+
+// Add embed parameters if provided
+if (!empty($showTitle)) {
+    $custom_params[] = "embed_show_title=" . $showTitle;
+}
+if (!empty($showRelated)) {
+    $custom_params[] = "embed_show_related=" . $showRelated;
+}
+if (!empty($showUserAvatar)) {
+    $custom_params[] = "embed_show_user_avatar=" . $showUserAvatar;
+}
+if (!empty($linkTitle)) {
+    $custom_params[] = "embed_link_title=" . $linkTitle;
+}
+if (!empty($startTime)) {
+    $custom_params[] = "embed_start_time=" . $startTime;
+}
+
+$instance->instructorcustomparameters = implode("\n", $custom_params);
 $instance->name = 'MediaCMS Video: ' . $mediatoken;
 
 // Set up page
-$PAGE->set_url(new moodle_url('/filter/mediacms/launch.php', [
+$page_params = [
     'token' => $mediatoken,
     'courseid' => $courseid,
     'width' => $width,
     'height' => $height
-]));
+];
+
+// Add embed parameters to page URL if provided
+if (!empty($showTitle)) {
+    $page_params['showTitle'] = $showTitle;
+}
+if (!empty($showRelated)) {
+    $page_params['showRelated'] = $showRelated;
+}
+if (!empty($showUserAvatar)) {
+    $page_params['showUserAvatar'] = $showUserAvatar;
+}
+if (!empty($linkTitle)) {
+    $page_params['linkTitle'] = $linkTitle;
+}
+if (!empty($startTime)) {
+    $page_params['t'] = $startTime;
+}
+
+$PAGE->set_url(new moodle_url('/filter/mediacms/launch.php', $page_params));
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('embedded');
 $PAGE->set_title('MediaCMS');

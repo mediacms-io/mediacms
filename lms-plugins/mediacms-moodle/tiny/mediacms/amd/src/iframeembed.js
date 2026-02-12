@@ -281,12 +281,17 @@ export default class IframeEmbed {
     }
 
     /**
-     * Get the currently selected iframe in the editor.
+     * Get the currently selected iframe or text link in the editor.
      *
-     * @returns {HTMLElement|null} The iframe element or null
+     * @returns {HTMLElement|null} The iframe element, text link, or null
      */
     getSelectedIframe() {
         const node = this.editor.selection.getNode();
+
+        // Check if it's a text-only link
+        if (node.nodeName.toLowerCase() === 'a' && node.getAttribute('data-mediacms-textlink') === 'true') {
+            return node;
+        }
 
         if (node.nodeName.toLowerCase() === 'iframe') {
             return node;
@@ -306,19 +311,47 @@ export default class IframeEmbed {
             return wrapper.querySelector('iframe');
         }
 
+        // Check if we're inside a text-only link
+        const textLink = node.closest('a[data-mediacms-textlink="true"]');
+        if (textLink) {
+            return textLink;
+        }
+
         return null;
     }
 
     /**
-     * Get current iframe data for editing.
+     * Get current iframe or text link data for editing.
      *
-     * @returns {Object|null} Current iframe data or null
+     * @returns {Object|null} Current iframe/link data or null
      */
     getCurrentIframeData() {
         if (!this.selectedIframe) {
             return null;
         }
 
+        // Check if it's a text-only link
+        if (this.selectedIframe.nodeName.toLowerCase() === 'a' &&
+            this.selectedIframe.getAttribute('data-mediacms-textlink') === 'true') {
+            const href = this.selectedIframe.getAttribute('href');
+            const parsed = this.parseInput(href);
+
+            return {
+                url: href,
+                width: 560,
+                height: 315,
+                showTitle: parsed?.showTitle ?? true,
+                linkTitle: parsed?.linkTitle ?? true,
+                showRelated: parsed?.showRelated ?? true,
+                showUserAvatar: parsed?.showUserAvatar ?? true,
+                responsive: true,
+                textLinkOnly: true,
+                startAtEnabled: parsed?.startAt !== null,
+                startAt: parsed?.startAt || '0:00',
+            };
+        }
+
+        // Handle iframe
         const src = this.selectedIframe.getAttribute('src');
         const parsed = this.parseInput(src);
 
