@@ -74,7 +74,7 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
             const editBtn = editor.getDoc().createElement('button');
             editBtn.className = 'tiny-mediacms-edit-btn';
             editBtn.setAttribute('type', 'button');
-            editBtn.setAttribute('title', 'Edit video embed options');
+            editBtn.setAttribute('title', 'Edit media embed options');
             // Use text "EDIT" instead of icon
             editBtn.textContent = 'EDIT';
 
@@ -107,13 +107,14 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 position: relative;
                 line-height: 0;
                 vertical-align: top;
+                margin-top: 40px;
             }
             .tiny-mediacms-iframe-wrapper iframe {
                 display: block;
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: 5px;
+                top: -35px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.7);

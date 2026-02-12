@@ -113,6 +113,18 @@ export default class IframeEmbed {
                 };
             }
 
+            // Moodle LTI launch.php URL: /filter/mediacms/launch.php?token=TOKEN
+            // This is used when selecting from "My Media" via LTI
+            // We treat it as a generic iframe URL (keep as-is)
+            if (urlObj.pathname.includes('/filter/mediacms/launch.php') && urlObj.searchParams.has('token')) {
+                return {
+                    baseUrl: baseUrl,
+                    videoId: urlObj.searchParams.get('token'),
+                    rawUrl: url,
+                    isLtiLaunch: true,
+                };
+            }
+
             // Generic URL - just use as-is
             return {
                 baseUrl: baseUrl,
@@ -179,7 +191,7 @@ export default class IframeEmbed {
      * @returns {string} The complete embed URL
      */
     buildEmbedUrl(parsed, options) {
-        if (parsed.isGeneric) {
+        if (parsed.isGeneric || parsed.isLtiLaunch) {
             return parsed.rawUrl;
         }
 
@@ -389,9 +401,11 @@ export default class IframeEmbed {
         if (values.textLinkOnly) {
             // Build the view URL (not embed URL) for the link
             let viewUrl;
-            if (parsed.isGeneric) {
+            if (parsed.isGeneric || parsed.isLtiLaunch) {
+                // For generic URLs and LTI launch URLs, use as-is
                 viewUrl = parsed.rawUrl;
             } else {
+                // For MediaCMS URLs, convert to view URL
                 viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
             }
 
@@ -480,7 +494,7 @@ export default class IframeEmbed {
         // If text link only is selected, show link preview
         if (values.textLinkOnly) {
             let viewUrl;
-            if (parsed.isGeneric) {
+            if (parsed.isGeneric || parsed.isLtiLaunch) {
                 viewUrl = parsed.rawUrl;
             } else {
                 viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;

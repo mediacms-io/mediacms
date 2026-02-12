@@ -53,10 +53,17 @@
                 </label>
             </div>
             <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input tiny_iframecms_showrelated" 
+                <input type="checkbox" class="form-check-input tiny_iframecms_showrelated"
                        id="{{elementid}}_showrelated" {{#showRelated}}checked{{/showRelated}}>
                 <label class="form-check-label" for="{{elementid}}_showrelated">
                     {{#str}} showrelated, tiny_mediacms {{/str}}
+                </label>
+            </div>
+            <div class="form-check mb-2">
+                <input type="checkbox" class="form-check-input tiny_iframecms_textlinkonly"
+                       id="{{elementid}}_textlinkonly" {{#textLinkOnly}}checked{{/textLinkOnly}}>
+                <label class="form-check-label" for="{{elementid}}_textlinkonly">
+                    {{#str}} textlinkonly, tiny_mediacms {{/str}}
                 </label>
             </div>
         </div>
@@ -73,13 +80,6 @@
                        id="{{elementid}}_responsive" {{#responsive}}checked{{/responsive}}>
                 <label class="form-check-label" for="{{elementid}}_responsive">
                     {{#str}} responsive, tiny_mediacms {{/str}}
-                </label>
-            </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input tiny_iframecms_textlinkonly"
-                       id="{{elementid}}_textlinkonly" {{#textLinkOnly}}checked{{/textLinkOnly}}>
-                <label class="form-check-label" for="{{elementid}}_textlinkonly">
-                    {{#str}} textlinkonly, tiny_mediacms {{/str}}
                 </label>
             </div>
             <div class="form-check mb-2 d-flex align-items-center">

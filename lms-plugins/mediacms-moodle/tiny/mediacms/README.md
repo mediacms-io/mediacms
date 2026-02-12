@@ -4,13 +4,15 @@ A TinyMCE editor plugin for Moodle that provides media embedding capabilities wi
 
 ## Build Information
 
-
+### Preparation
 1. Get and extract Moodle 5.1
 2. cp -r lms-plugins/mediacms-moodle/tiny/mediacms/ moodle/public/lib/editor/tiny/plugins/
 3. nvm use 22 && cd moodle/public && npm install
-4. npx grunt amd --root=lib/editor/tiny/plugins/mediacms
-# i've noticed that this fails, so this should work: npx grunt amd
 
+### Actual build
+4. cd lib/editor/tiny/plugins/mediacms && npx grunt amd
+
+### Test the output
 5. To test the output:
 cp * ../../../../../../../lms-plugins/mediacms-moodle/tiny/mediacms/ -r
 
