@@ -131,7 +131,6 @@ export default {
             linkTitle: '.tiny_iframecms_linktitle',
             showRelated: '.tiny_iframecms_showrelated',
             showUserAvatar: '.tiny_iframecms_showuseravatar',
-            responsive: '.tiny_iframecms_responsive',
             textLinkOnly: '.tiny_iframecms_textlinkonly',
             startAt: '.tiny_iframecms_startat',
             startAtEnabled: '.tiny_iframecms_startat_enabled',

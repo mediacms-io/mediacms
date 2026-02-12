@@ -188,20 +188,16 @@ export default class IframeEmbed {
     }
 
     /**
-     * Parse width/height value - handle both numeric and '100%'.
+     * Parse width/height value.
      *
      * @param {string} value - Width or height value
-     * @returns {number|string|null} Parsed value
+     * @returns {number|null} Parsed value
      */
     parseWidthHeight(value) {
         if (!value) {
             return null;
         }
-        const trimmed = value.trim();
-        if (trimmed === '100%') {
-            return '100%';
-        }
-        const parsed = parseInt(trimmed);
+        const parsed = parseInt(value.trim());
         return isNaN(parsed) ? null : parsed;
     }
 
@@ -229,12 +225,11 @@ export default class IframeEmbed {
         );
         url.searchParams.set('linkTitle', options.linkTitle ? '1' : '0');
 
-        // Add width and height ONLY if responsive is disabled and values are not 100%
-        // When responsive is enabled, dimensions are set to 100% but not included in URL
-        if (!options.responsive && options.width && options.width !== '100%') {
+        // Add width and height if provided
+        if (options.width) {
             url.searchParams.set('width', options.width.toString());
         }
-        if (!options.responsive && options.height && options.height !== '100%') {
+        if (options.height) {
             url.searchParams.set('height', options.height.toString());
         }
 
@@ -271,17 +266,19 @@ export default class IframeEmbed {
                 : fallback;
         };
 
-        // Determine responsive mode:
-        // - If editing with 100% dimensions, responsive is ON
-        // - If editing with numeric dimensions, responsive is OFF
-        // - Otherwise, default to responsive=ON for new embeds
-        let isResponsive;
+        // Determine dimensions:
+        // - For editing: preserve existing dimensions
+        // - For new embeds: default to 640x360
+        let width, height;
+
         if (this.isUpdating && (data.width || data.height)) {
-            // Check if dimensions are 100% (responsive) or numeric (fixed)
-            isResponsive = data.width === '100%' || data.height === '100%';
+            // Editing: preserve existing dimensions
+            width = data.width || 640;
+            height = data.height || 360;
         } else {
-            // New embed or no dimensions: responsive defaults to ON
-            isResponsive = data.responsive !== false;
+            // New embed: default to 640x360 (16:9 aspect ratio)
+            width = 640;
+            height = 360;
         }
 
         return {
@@ -292,13 +289,11 @@ export default class IframeEmbed {
             linkTitle: getDefault('linkTitle'),
             showRelated: getDefault('showRelated'),
             showUserAvatar: getDefault('showUserAvatar'),
-            responsive: isResponsive,
             textLinkOnly: data.textLinkOnly || false,
             startAtEnabled: data.startAtEnabled || false,
             startAt: data.startAt || '0:00',
-            // No default dimensions - only use provided values
-            width: data.width || '',
-            height: data.height || '',
+            width: width,
+            height: height,
             is16_9: !data.aspectRatio || data.aspectRatio === '16:9',
             is4_3: data.aspectRatio === '4:3',
             is1_1: data.aspectRatio === '1:1',
@@ -404,21 +399,9 @@ export default class IframeEmbed {
         let width = parsed?.width || this.selectedIframe.getAttribute('width') || null;
         let height = parsed?.height || this.selectedIframe.getAttribute('height') || null;
 
-        // Check if responsive: either by style (aspect-ratio) or by 100% dimensions
-        const style = this.selectedIframe.getAttribute('style') || '';
-        const hasAspectRatio = style.includes('aspect-ratio');
-        const has100Percent = width === '100%' || height === '100%';
-        const isResponsive = hasAspectRatio || has100Percent;
-
-        // If responsive, set both to 100%
-        if (isResponsive) {
-            width = '100%';
-            height = '100%';
-        } else {
-            // Parse numeric values
-            width = width ? parseInt(width) : null;
-            height = height ? parseInt(height) : null;
-        }
+        // Parse numeric values
+        width = width ? parseInt(width) : null;
+        height = height ? parseInt(height) : null;
 
         return {
             url: src,
@@ -428,7 +411,6 @@ export default class IframeEmbed {
             linkTitle: parsed?.linkTitle ?? true,
             showRelated: parsed?.showRelated ?? true,
             showUserAvatar: parsed?.showUserAvatar ?? true,
-            responsive: isResponsive,
             startAtEnabled: parsed?.startAt !== null,
             startAt: parsed?.startAt || '0:00',
         };
@@ -455,8 +437,6 @@ export default class IframeEmbed {
             showUserAvatar: form.querySelector(
                 Selectors.IFRAME.elements.showUserAvatar,
             ).checked,
-            responsive: form.querySelector(Selectors.IFRAME.elements.responsive)
-                .checked,
             textLinkOnly: form.querySelector(Selectors.IFRAME.elements.textLinkOnly)
                 .checked,
             startAtEnabled: form.querySelector(
@@ -519,21 +499,10 @@ export default class IframeEmbed {
 
         const embedUrl = this.buildEmbedUrl(parsed, values);
 
-        // Calculate aspect ratio values for CSS
-        const aspectRatioCalcs = {
-            '16:9': '16 / 9',
-            '4:3': '4 / 3',
-            '1:1': '1 / 1',
-            custom: `${values.width} / ${values.height}`,
-        };
-
         const context = {
             src: embedUrl,
             width: values.width,
             height: values.height,
-            responsive: values.responsive,
-            aspectRatioCalc: aspectRatioCalcs[values.aspectRatio] || '16 / 9',
-            aspectRatioValue: aspectRatioCalcs[values.aspectRatio] || '16 / 9',
         };
 
         const { html } = await Templates.renderForPromise(
@@ -610,25 +579,10 @@ export default class IframeEmbed {
                 </div>
             `;
         } else {
-            // Show a scaled preview
-            let previewWidth, previewHeight;
-
-            if (values.responsive || values.width === '100%' || values.height === '100%') {
-                // For responsive, use default preview dimensions with aspect ratio
-                const aspectRatioCalcs = {
-                    '16:9': { width: 400, height: 225 },
-                    '4:3': { width: 400, height: 300 },
-                    '1:1': { width: 300, height: 300 },
-                };
-                const defaultDims = aspectRatioCalcs[values.aspectRatio] || { width: 400, height: 225 };
-                previewWidth = defaultDims.width;
-                previewHeight = defaultDims.height;
-            } else {
-                // For fixed dimensions, scale to fit preview
-                previewWidth = Math.min(values.width, 400);
-                const scale = previewWidth / values.width;
-                previewHeight = Math.round(values.height * scale);
-            }
+            // Show a scaled preview - scale to fit preview area
+            const previewWidth = Math.min(values.width, 400);
+            const scale = previewWidth / values.width;
+            const previewHeight = Math.round(values.height * scale);
 
             previewContainer.innerHTML = `
                 <iframe
@@ -684,30 +638,6 @@ export default class IframeEmbed {
      *
      * @param {HTMLElement} root - Modal root element
      */
-    toggleDimensionsEditability(root) {
-        const form = root.querySelector(Selectors.IFRAME.elements.form);
-        const responsiveCheckbox = form.querySelector(Selectors.IFRAME.elements.responsive);
-        const widthInput = form.querySelector(Selectors.IFRAME.elements.width);
-        const heightInput = form.querySelector(Selectors.IFRAME.elements.height);
-
-        if (responsiveCheckbox.checked) {
-            // Responsive mode: disable width/height inputs and set to 100%
-            widthInput.disabled = true;
-            heightInput.disabled = true;
-            widthInput.style.opacity = '0.5';
-            heightInput.style.opacity = '0.5';
-            // Set to 100% to indicate responsive mode
-            widthInput.value = '100%';
-            heightInput.value = '100%';
-        } else {
-            // Fixed mode: enable width/height inputs (no defaults)
-            widthInput.disabled = false;
-            heightInput.disabled = false;
-            widthInput.style.opacity = '1';
-            heightInput.style.opacity = '1';
-            // Leave values as-is (empty if no dimensions specified)
-        }
-    }
 
     /**
      * Handle width change - adjust height to maintain aspect ratio.
@@ -719,12 +649,6 @@ export default class IframeEmbed {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         const aspectRatio = form.querySelector(Selectors.IFRAME.elements.aspectRatio).value;
         const heightInput = form.querySelector(Selectors.IFRAME.elements.height);
-
-        // Skip calculation if value is 100% (responsive mode)
-        if (newWidth === '100%') {
-            this.handleInputChange(root);
-            return;
-        }
 
         // Only adjust height if aspect ratio is not 'custom'
         if (aspectRatio !== 'custom' && newWidth) {
@@ -751,12 +675,6 @@ export default class IframeEmbed {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
         const aspectRatio = form.querySelector(Selectors.IFRAME.elements.aspectRatio).value;
         const widthInput = form.querySelector(Selectors.IFRAME.elements.width);
-
-        // Skip calculation if value is 100% (responsive mode)
-        if (newHeight === '100%') {
-            this.handleInputChange(root);
-            return;
-        }
 
         // Only adjust width if aspect ratio is not 'custom'
         if (aspectRatio !== 'custom' && newHeight) {
@@ -796,7 +714,7 @@ export default class IframeEmbed {
                         '.tiny-mediacms-iframe-wrapper',
                     ) || this.selectedIframe.closest('.tiny-iframe-responsive');
 
-                // Also check if iframe is inside a <p> tag and remove it
+                // Check if iframe is inside a <p> tag
                 const paragraphWrapper = wrapper ? wrapper.closest('p') : this.selectedIframe.closest('p');
 
                 if (paragraphWrapper) {
@@ -808,6 +726,18 @@ export default class IframeEmbed {
                     this.selectedIframe.outerHTML = html;
                 }
                 this.isUpdating = false;
+
+                // Clean up any empty paragraph tags left behind
+                setTimeout(() => {
+                    const body = this.editor.getBody();
+                    const emptyPs = body.querySelectorAll('p:empty, p:blank');
+                    emptyPs.forEach(p => {
+                        if (p.innerHTML.trim() === '' || p.innerHTML === '<br>') {
+                            p.remove();
+                        }
+                    });
+                }, 10);
+
                 // Fire change event to trigger overlay reprocessing
                 this.editor.fire('Change');
             } else {
@@ -889,12 +819,6 @@ export default class IframeEmbed {
             form.querySelector(selector).addEventListener('change', () =>
                 this.handleInputChange(root, true), // Update URL field when embed options change
             );
-        });
-
-        // Responsive checkbox - toggle width/height editability
-        form.querySelector(Selectors.IFRAME.elements.responsive).addEventListener('change', () => {
-            this.toggleDimensionsEditability(root);
-            this.handleInputChange(root, false);
         });
 
         // Text link only checkbox - doesn't affect URL, only output format
@@ -987,9 +911,6 @@ export default class IframeEmbed {
 
         // Iframe library event listeners
         this.registerIframeLibraryEventListeners(root);
-
-        // Set initial state of width/height inputs based on responsive checkbox
-        this.toggleDimensionsEditability(root);
 
         // If editing, Configure tab is active - update preview immediately
         // If inserting, My Media tab is active - load the library

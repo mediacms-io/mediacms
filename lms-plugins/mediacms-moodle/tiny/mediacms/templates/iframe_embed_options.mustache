@@ -75,13 +75,6 @@
                     {{#str}} showuseravatar, tiny_mediacms {{/str}}
                 </label>
             </div>
-            <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input tiny_iframecms_responsive"
-                       id="{{elementid}}_responsive" {{#responsive}}checked{{/responsive}}>
-                <label class="form-check-label" for="{{elementid}}_responsive">
-                    {{#str}} responsive, tiny_mediacms {{/str}}
-                </label>
-            </div>
             <div class="form-check mb-2 d-flex align-items-center">
                 <input type="checkbox" class="form-check-input tiny_iframecms_startat_enabled"
                        id="{{elementid}}_startat_enabled" {{#startAtEnabled}}checked{{/startAtEnabled}}>
@@ -116,16 +109,16 @@
     <div class="row">
         <div class="col-6">
             <div class="input-group">
-                <input type="number" class="form-control tiny_iframecms_width" 
-                       id="{{elementid}}_width" value="{{width}}" placeholder="560">
+                <input type="number" class="form-control tiny_iframecms_width"
+                       id="{{elementid}}_width" value="{{width}}" placeholder="640" min="1" step="1">
                 <span class="input-group-text">px</span>
             </div>
             <small class="text-muted">{{#str}} width, tiny_mediacms {{/str}}</small>
         </div>
         <div class="col-6">
             <div class="input-group">
-                <input type="number" class="form-control tiny_iframecms_height" 
-                       id="{{elementid}}_height" value="{{height}}" placeholder="315">
+                <input type="number" class="form-control tiny_iframecms_height"
+                       id="{{elementid}}_height" value="{{height}}" placeholder="360" min="1" step="1">
                 <span class="input-group-text">px</span>
             </div>
             <small class="text-muted">{{#str}} height, tiny_mediacms {{/str}}</small>
