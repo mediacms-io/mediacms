@@ -9,33 +9,37 @@ function xmldb_filter_mediacms_install() {
     global $CFG, $DB;
     require_once($CFG->libdir . '/filterlib.php');
 
-    // 1. Enable the filter globally.
+    // Enable the filter globally.
     filter_set_global_state('filter_mediacms', TEXTFILTER_ON);
 
-    // 2. Move to top priority (lowest sortorder).
-    // Get all global active filters.
-    $filters = $DB->get_records('filter_active', ['contextid' => SYSCONTEXTID], 'sortorder ASC', 'filter, id, sortorder');
-    
-    // If we are already the only one or something failed, stop.
+    // Move to top priority (lowest sortorder).
+    $syscontextid = context_system::instance()->id;
+    $filters = $DB->get_records('filter_active', ['contextid' => $syscontextid], 'sortorder ASC');
+
     if (empty($filters)) {
         return;
     }
 
-    // Prepare the new order: mediacms first, then everyone else (excluding mediacms if present).
-    $sortedfilters = ['filter_mediacms'];
-    foreach ($filters as $filtername => $record) {
-        if ($filtername !== 'filter_mediacms') {
-            $sortedfilters[] = $filtername;
+    // Separate mediacms from other filters by inspecting the record property,
+    // not the array key (get_records indexes by id, not by filter name).
+    $mediacmsrecord = null;
+    $otherrecords = [];
+    foreach ($filters as $record) {
+        if ($record->filter === 'filter_mediacms') {
+            $mediacmsrecord = $record;
+        } else {
+            $otherrecords[] = $record;
         }
     }
 
-    // Write back the new sort orders.
+    // Reassign sortorders: mediacms first, then everyone else.
     $sortorder = 1;
-    foreach ($sortedfilters as $filtername) {
-        if ($record = $DB->get_record('filter_active', ['filter' => $filtername, 'contextid' => SYSCONTEXTID])) {
-            $record->sortorder = $sortorder;
-            $DB->update_record('filter_active', $record);
-            $sortorder++;
-        }
+    if ($mediacmsrecord) {
+        $mediacmsrecord->sortorder = $sortorder++;
+        $DB->update_record('filter_active', $mediacmsrecord);
+    }
+    foreach ($otherrecords as $record) {
+        $record->sortorder = $sortorder++;
+        $DB->update_record('filter_active', $record);
     }
 }

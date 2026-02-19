@@ -229,10 +229,10 @@
 			try {
 				const params = new URLSearchParams(window.location.search);
 				const mode = params.get('mode');
-				if (mode === 'embed_mode') {
+				if (mode === 'lms_embed_mode') {
 					return true;
 				}
-				return sessionStorage.getItem('media_cms_embed_mode') === 'true';
+				return sessionStorage.getItem('lms_embed_mode') === 'true';
 			} catch (e) {
 				return false;
 			}

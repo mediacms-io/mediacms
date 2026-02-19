@@ -201,11 +201,11 @@ class MediaPublishForm(forms.ModelForm):
 
         # Check query parameter
         mode = self.request.GET.get('mode', '')
-        if mode == 'embed_mode':
+        if mode == 'lms_embed_mode':
             return True
 
         # Check session storage
-        if self.request.session.get('media_cms_embed_mode') == 'true':
+        if self.request.session.get('lms_embed_mode') == 'true':
             return True
 
         return False

@@ -234,7 +234,7 @@ class LaunchView(View):
         # Check if base_url already has query parameters
         separator = '&' if '?' in base_url else '?'
 
-        query_parts = ['mode=embed_mode']
+        query_parts = ['mode=lms_embed_mode']
         query_parts.extend(embed_params)
 
         return f"{base_url}{separator}{'&'.join(query_parts)}"
@@ -429,7 +429,7 @@ class LaunchView(View):
             except Media.DoesNotExist:
                 pass
 
-        return reverse('lti:my_media') + '?mode=embed_mode'
+        return reverse('lti:my_media') + '?mode=lms_embed_mode'
 
     def handle_state_not_found(self, request, platform=None):
         """
@@ -582,7 +582,7 @@ class LaunchView(View):
             base_url = reverse('lti:embed_media', args=[media_token])
             redirect_url = self.build_url_with_embed_params(base_url, embed_params)
         else:
-            redirect_url = reverse('lti:select_media') + '?mode=embed_mode'
+            redirect_url = reverse('lti:select_media') + '?mode=lms_embed_mode'
 
         # Use HTML meta refresh to ensure session cookie is preserved in cross-site contexts
         html_content = f"""
@@ -657,7 +657,7 @@ class MyMediaLTIView(View):
         if not lti_session:
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
-        profile_url = f"/user/{request.user.username}?mode=embed_mode"
+        profile_url = f"/user/{request.user.username}?mode=lms_embed_mode"
         return HttpResponseRedirect(profile_url)
 
 
