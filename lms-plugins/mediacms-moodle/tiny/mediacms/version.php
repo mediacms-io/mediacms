@@ -24,7 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026020200; // Updated 2026-02-02
-$plugin->requires  = 2024100100;
+$plugin->version   = 2026021200; // 2026-02-12 - Unified settings release
+$plugin->requires  = 2024100700; // Requires Moodle 4.5+
 $plugin->component = 'tiny_mediacms';
-$plugin->dependencies = ['filter_mediacms' => 2026020100]; // Keep dependency on our filter
+$plugin->maturity  = MATURITY_STABLE;
+$plugin->release   = 'v1.0.0';
+$plugin->dependencies = ['filter_mediacms' => 2026021200]; // Requires filter plugin for shared settings

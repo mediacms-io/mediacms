@@ -3,10 +3,12 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['filtername'] = 'MediaCMS';
 $string['pluginname'] = 'MediaCMS';
+$string['coresettings'] = 'Core MediaCMS Settings';
+$string['coresettings_desc'] = 'These settings are shared with the TinyMCE MediaCMS editor plugin.';
 $string['mediacmsurl'] = 'MediaCMS URL';
-$string['mediacmsurl_desc'] = 'The base URL of your MediaCMS instance (e.g., https://lti.mediacms.io).';
+$string['mediacmsurl_desc'] = 'The base URL of your MediaCMS instance (e.g., https://lti.mediacms.io). This setting is used by both the filter and the TinyMCE editor plugin.';
 $string['ltitoolid'] = 'LTI Tool';
-$string['ltitoolid_desc'] = 'Select the External Tool configuration for MediaCMS. If "Auto-detect" is selected, the plugin will try to find a tool matching the MediaCMS URL.';
+$string['ltitoolid_desc'] = 'Select the External Tool configuration for MediaCMS. This enables the video library in the TinyMCE editor and LTI authentication. To set up an LTI tool, go to Site Administration > Plugins > Activity modules > External tool > Manage tools.';
 $string['noltitoolsfound'] = 'No LTI tools found';
 $string['iframewidth'] = 'Default Width';
 $string['iframewidth_desc'] = 'Default width for embedded videos (pixels).';

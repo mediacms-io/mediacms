@@ -2,6 +2,13 @@
 defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
+    // Info heading
+    $settings->add(new admin_setting_heading(
+        'filter_mediacms/coresettings',
+        get_string('coresettings', 'filter_mediacms'),
+        get_string('coresettings_desc', 'filter_mediacms')
+    ));
+
     // MediaCMS URL
     $settings->add(new admin_setting_configtext(
         'filter_mediacms/mediacmsurl',

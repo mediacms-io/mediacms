@@ -109,7 +109,8 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
      * @return array Auto-convert configuration data
      */
     protected static function get_autoconvert_configuration(): array {
-        $baseurl = get_config('tiny_mediacms', 'autoconvert_baseurl');
+        // Read MediaCMS base URL from filter settings (unified)
+        $baseurl = get_config('filter_mediacms', 'mediacmsurl');
 
         // Helper function to get config with default value of true.
         $getboolconfig = function($name) {
@@ -142,8 +143,8 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
     protected static function get_lti_configuration(context $context): array {
         global $COURSE;
 
-        // Get the configured LTI tool ID from plugin settings.
-        $ltitoolid = get_config('tiny_mediacms', 'ltitoolid');
+        // Read LTI tool ID from filter settings (unified)
+        $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
 
         // Determine the course ID from context.
         $courseid = 0;

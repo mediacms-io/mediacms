@@ -25,42 +25,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    global $DB;
+    // Note: Core MediaCMS settings (URL, LTI Tool) are configured in the filter plugin
+    // Go to: Site Administration > Plugins > Filters > MediaCMS
+    $settings->add(new admin_setting_heading(
+        'tiny_mediacms/coresettingsheading',
+        new lang_string('coresettingsheading', 'tiny_mediacms'),
+        new lang_string('coresettingsheading_desc', 'tiny_mediacms')
+    ));
 
-    // LTI Tool ID setting (Dropdown).
-    $ltioptions = [0 => get_string('noltitoolsfound', 'tiny_mediacms')];
-    try {
-        $tools = $DB->get_records('lti_types', null, 'name ASC', 'id, name, baseurl');
-        if (!empty($tools)) {
-            $ltioptions = [0 => get_string('choose', 'tiny_mediacms')];
-            foreach ($tools as $tool) {
-                $ltioptions[$tool->id] = $tool->name . ' (' . $tool->baseurl . ')';
-            }
-        }
-    } catch (Exception $e) {
-        // Database might not be ready during install
-    }
-
-    $setting = new admin_setting_configselect(
-        'tiny_mediacms/ltitoolid',
-        new lang_string('ltitoolid', 'tiny_mediacms'),
-        new lang_string('ltitoolid_desc', 'tiny_mediacms'),
-        0,
-        $ltioptions
-    );
-    $settings->add($setting);
-    
-    // Auto-convert is enabled by default in plugininfo.php (data.autoConvertEnabled = true).
-    
-    // MediaCMS base URL for auto-convert.
-    $setting = new admin_setting_configtext(
-        'tiny_mediacms/autoconvert_baseurl',
-        new lang_string('autoconvert_baseurl', 'tiny_mediacms'),
-        new lang_string('autoconvert_baseurl_desc', 'tiny_mediacms'),
-        'https://lti.mediacms.io', // Default matching filter
-        PARAM_URL
-    );
-    $settings->add($setting);
+    // Editor-specific settings: Auto-convert default options
 
     // Auto-convert embed options.
     $setting = new admin_setting_configcheckbox(

@@ -159,12 +159,9 @@ $string['libraryselect'] = 'Select';
 $string['librarypage'] = 'Page {$a->current} of {$a->total}';
 $string['libraryvideoselected'] = 'Video selected. Configure embed options below.';
 
-// LTI settings strings.
-$string['ltitoolid'] = 'LTI Tool';
-$string['ltitoolid_desc'] = 'Select the External Tool configuration for MediaCMS. This enables the authenticated video library in the editor.';
-$string['noltitoolsfound'] = 'No LTI tools found';
-$string['choose'] = 'Choose...';
-$string['ltitoolid_help'] = 'To find the LTI tool ID, go to Site administration > Plugins > Activity modules > External tool > Manage tools. The ID is shown in the URL when editing a tool (e.g., id=2).';
+// Core settings (configured in filter plugin).
+$string['coresettingsheading'] = 'Core MediaCMS Settings';
+$string['coresettingsheading_desc'] = '<strong>Note:</strong> MediaCMS URL and LTI Tool configuration are managed in the filter plugin. Go to: <a href="../filter/manage.php">Site Administration &gt; Plugins &gt; Filters &gt; Manage filters</a>, then click "Settings" next to MediaCMS.';
 
 // Iframe library from LTI strings.
 $string['iframelibraryloading'] = 'Loading MediaCMS video library...';

@@ -1,14 +1,20 @@
 # MediaCMS for Moodle
 
-This package provides the integration between MediaCMS and Moodle (versions 4.x and 5.x).
-It consists of two separate plugins that work together to provide a seamless video experience:
+**Version:** 1.0.0 | **Release Date:** 2026-02-12 | **Moodle:** 4.5+
+
+This package provides complete MediaCMS integration for Moodle, consisting of two plugins that work together with **unified settings**:
 
 1.  **Filter Plugin (filter_mediacms):**
-    *   **Purpose:** Handles the display of videos using secure LTI 1.3 launches and provides "Auto-convert" to turn URLs into players.
+    *   Handles LTI 1.3 authentication and secure video launches
+    *   Auto-converts MediaCMS URLs to embedded players
+    *   **Provides core settings** (MediaCMS URL, LTI Tool ID) used by both plugins
     *   **Location:** `filter/mediacms`
 
 2.  **Editor Plugin (tiny_mediacms):**
-    *   **Purpose:** Adds a "Insert MediaCMS Media" button to the TinyMCE editor, allowing users to select videos from the MediaCMS library or paste URLs.
+    *   Adds MediaCMS button to TinyMCE editor
+    *   Browse authenticated video library via LTI Deep Linking
+    *   Configure embed options (dimensions, display, start time)
+    *   **Reads core settings** from filter plugin
     *   **Location:** `lib/editor/tiny/plugins/mediacms`
 
 ## Installation
@@ -42,21 +48,32 @@ chmod -R 755 /var/www/moodle/public/lib/editor/tiny/plugins/mediacms
 
 ## Configuration
 
-You must configure both plugins to fully enable the integration.
+### Step 1: Core Settings (Required) - Configure Once
 
-### Filter Configuration
-1.  Go to **Site administration > Plugins > Filters > Manage filters**.
-2.  Enable **MediaCMS** (set it to "On").
-3.  Click **Settings** next to MediaCMS.
-4.  **MediaCMS URL:** Enter the base URL of your MediaCMS instance (e.g., `https://lti.mediacms.io`).
-5.  **LTI Tool:** Select the External Tool configuration that corresponds to MediaCMS.
-    *   *Note:* You must first create an LTI 1.3 External Tool in *Site administration > Plugins > Activity modules > External tool > Manage tools*.
-6.  **Auto-convert:** Check "Enable auto-convert" if you want plain text URLs (e.g., `https://video.example.com/view?m=xyz`) to automatically become video players.
+Go to **Site administration > Plugins > Filters > MediaCMS** (Settings)
 
-### Editor Configuration (TinyMCE)
-1.  Go to **Site administration > Plugins > Text editors > TinyMCE editor > MediaCMS settings**.
-2.  **LTI Tool:** Select the same Tool configured for the Filter to enable the "Video Library" picker button.
-3.  **Auto-convert:** (Implicitly enabled) Pasting MediaCMS URLs into the editor will automatically convert them to placeholders.
+*   **MediaCMS URL:** Enter your MediaCMS instance URL (e.g., `https://lti.mediacms.io`)
+*   **LTI Tool:** Select the External Tool configuration for MediaCMS
+    *   *First create an LTI 1.3 tool at: Site administration > Plugins > Activity modules > External tool > Manage tools*
+
+> **✨ Note:** These core settings are automatically used by **both** the filter and TinyMCE editor plugin.
+
+### Step 2: Enable Filter
+
+1.  Go to **Site administration > Plugins > Filters > Manage filters**
+2.  Set **MediaCMS** to "On"
+
+### Step 3: Configure Auto-convert Defaults (Optional)
+
+Go to **Site administration > Plugins > Text editors > TinyMCE editor > MediaCMS settings**
+
+Configure default display options for auto-converted URLs:
+*   Show video title
+*   Link video title
+*   Show related videos
+*   Show user avatar
+
+> **Note:** The core settings (URL, LTI Tool) are managed in the filter plugin settings.
 
 ## Usage
 
