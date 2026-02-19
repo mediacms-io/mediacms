@@ -1,0 +1,102 @@
+================================================================================
+MediaCMS Moodle Plugin Suite v1.0.0
+Installation Guide
+================================================================================
+
+Requirements
+------------
+- Moodle 4.5 or later
+- MediaCMS instance
+- MediaCMS set as External Tool
+
+
+Installation
+------------------
+
+1. Extract zip file to Moodle root public directory:
+
+   cd /var/www/moodle/public
+   unzip mediacms-moodle-v1.0.0.zip
+
+   This will place files in:
+   - filter/mediacms/
+   - lib/editor/tiny/plugins/mediacms/
+
+2. Set permissions
+   chown -R www-data:www-data filter/mediacms
+   chown -R www-data:www-data lib/editor/tiny/plugins/mediacms
+
+3. Install through Moodle
+   - Log in as Administrator
+   - Go to: Site Administration → Notifications
+   - Click "Upgrade Moodle database now"
+   - Both plugins will be installed automatically
+
+4. Make sure Filter is enabled
+   - As Administrator, visit Plugins, 'Manage Filters', find MediaCMS filter and enable it.
+   Then place it at the top of the filter. This is important, otherwise embeds won't load. 
+CONFIGURATION
+-------------
+
+1. CORE SETTINGS (Required)
+   Site Administration → Plugins → Filters → MediaCMS (Settings)
+
+   - MediaCMS URL: https://lti.mediacms.io (your instance)
+   - LTI Tool: Select your MediaCMS tool (see LTI SETUP below)
+
+   ✓ These settings are shared by both plugins!
+
+2. ENABLE FILTER
+   Site Administration → Plugins → Filters → Manage filters
+
+   - Set "MediaCMS" to "On"
+
+3. LTI SETUP (Required for Video Library)
+   Site Administration → Plugins → Activity modules → External tool →
+   Manage tools → "Configure a tool manually"
+
+   - Tool name: MediaCMS
+   - Tool URL: https://lti.mediacms.io/lti/login/
+   - LTI version: LTI 1.3
+   - Public key type: Keyset URL
+   - Public keyset: https://lti.mediacms.io/lti/jwks/
+   - Initiate login URL: https://lti.mediacms.io/lti/login/
+   - Redirection URI(s): https://lti.mediacms.io/lti/launch/
+
+   Services:
+   ✓ IMS LTI Deep Linking (required for video library)
+
+   Save and copy the configuration URLs to provide to MediaCMS admin.
+
+4. AUTO-CONVERT DEFAULTS (Optional)
+   Site Administration → Plugins → Text editors → TinyMCE → MediaCMS
+
+   Configure default display options for pasted URLs.
+
+TESTING
+-------
+
+1. Create a test course
+2. Add a page or label
+3. Click MediaCMS button in TinyMCE editor
+4. Try inserting from video library or pasting a URL
+
+TROUBLESHOOTING
+---------------
+
+Video library won't load:
+  - Check LTI tool is selected in filter settings
+  - Verify you're in a course context
+  - Check LTI tool configuration
+
+URLs not auto-converting:
+  - Enable MediaCMS filter in Manage filters
+  - Verify MediaCMS URL setting matches your instance
+  - Clear caches: Site Administration → Development → Purge caches
+
+SUPPORT
+-------
+Issues: https://github.com/mediacms-io/mediacms/issues
+Docs: https://docs.mediacms.io
+
+================================================================================
