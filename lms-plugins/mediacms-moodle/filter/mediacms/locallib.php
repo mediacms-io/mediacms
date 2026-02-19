@@ -33,15 +33,11 @@ function filter_mediacms_get_dummy_activity($courseid, $typeid) {
 
     $existing = $DB->get_record_sql($sql, ['courseid' => $courseid, 'typeid' => $typeid]);
     if ($existing) {
-        $cm = get_coursemodule_from_id('lti', $existing->id, 0, false, IGNORE_MISSING);
-        if ($cm && (!$cm->visible || !$cm->visibleoncoursepage)) {
-            // Repair hidden or stealth activity so students can access it via LTI flow.
-            set_coursemodule_visible($existing->id, 1);
-        }
         return $existing->id;
     }
 
-    // Create a fully visible dummy activity.
+    // Create the dummy activity then immediately force visibleoncoursepage=0,
+    // because add_moduleinfo() always defaults it to 1.
     $moduleinfo = new stdClass();
     $moduleinfo->course              = $courseid;
     $moduleinfo->module              = $DB->get_field('modules', 'id', ['name' => 'lti']);
@@ -51,7 +47,7 @@ function filter_mediacms_get_dummy_activity($courseid, $typeid) {
     $moduleinfo->visibleoncoursepage = 1;
     $moduleinfo->availability        = null;
     $moduleinfo->showdescription     = 0;
-    $moduleinfo->name                = 'MediaCMS Filter Launcher';
+    $moduleinfo->name                = 'My Media';
     $moduleinfo->intro               = '';
     $moduleinfo->introformat         = FORMAT_HTML;
     $moduleinfo->typeid              = $typeid;
