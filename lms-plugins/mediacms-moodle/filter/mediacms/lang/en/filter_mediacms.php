@@ -17,3 +17,13 @@ $string['iframeheight_desc'] = 'Default height for embedded videos (pixels).';
 $string['enableautoconvert'] = 'Auto-convert URLs';
 $string['enableautoconvert_desc'] = 'Automatically convert MediaCMS URLs (e.g., /view?m=xyz) in text to embedded players.';
 $string['privacy:metadata'] = 'The MediaCMS filter does not store any personal data.';
+
+// My Media page.
+$string['mymedia'] = 'My Media';
+$string['mymedia_placement'] = 'My Media link placement';
+$string['mymedia_placement_desc'] = 'Where to display the My Media link in the Moodle interface.';
+$string['mymedia_placement_top'] = 'Top navigation';
+$string['mymedia_placement_user'] = 'User navigation';
+$string['notconfigured'] = 'MediaCMS is not fully configured. Please set the MediaCMS URL and LTI Tool in Site Administration → Plugins → Filters → MediaCMS.';
+$string['ltitoolnotfound'] = 'The configured LTI tool could not be found. Please check the MediaCMS filter settings.';
+$string['cannotcreatedummyactivity'] = 'Could not create the MediaCMS launcher activity. Please check course permissions.';

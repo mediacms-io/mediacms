@@ -36,6 +36,7 @@ from .adapters import DjangoRequest, DjangoSessionService, DjangoToolConfig
 from .handlers import (
     apply_lti_roles,
     create_lti_session,
+    provision_lti_bulk_contexts,
     provision_lti_context,
     provision_lti_user,
     validate_lti_session,
@@ -327,12 +328,25 @@ class LaunchView(View):
             # This ensures filter launches (which are deep linking) have authenticated user
             user = provision_lti_user(platform, launch_data)
 
-            if 'https://purl.imsglobal.org/spec/lti/claim/context' in launch_data:
-                category, rbac_group, resource_link_obj = provision_lti_context(platform, launch_data, resource_link_id)
+            context_claim = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
+            context_id = context_claim.get('id', '')
 
+            # Skip category/group creation for the Moodle site course (ID 1).
+            # My Media launches use Course 1 as a dummy context; real provisioning
+            # for those launches happens below via provision_lti_bulk_contexts.
+            is_site_context = str(context_id) == '1'
+
+            if context_claim and not is_site_context:
+                category, rbac_group, resource_link_obj = provision_lti_context(platform, launch_data, resource_link_id)
                 apply_lti_roles(user, platform, roles, rbac_group)
             else:
                 resource_link_obj = None
+
+            # Bulk-provision all enrolled courses when the LMS sends custom_publishdata
+            # (only present on My Media launches; transparent on normal course launches).
+            publish_data_raw = custom_claims.get('publishdata') or custom_claims.get('custom_publishdata')
+            if publish_data_raw:
+                provision_lti_bulk_contexts(platform, user, publish_data_raw)
 
             create_lti_session(request, user, message_launch, platform)
 

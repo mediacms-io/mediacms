@@ -8,7 +8,9 @@ Provides functions to:
 - Create and manage LTI sessions
 """
 
+import base64
 import hashlib
+import json
 import logging
 
 from allauth.account.models import EmailAddress
@@ -198,6 +200,134 @@ def provision_lti_context(platform, claims, resource_link_id):
         )
 
     return category, rbac_group, resource_link
+
+
+# Moodle role shortnames → MediaCMS group roles.
+_MOODLE_ROLE_TO_GROUP_ROLE = {
+    'student': 'member',
+    'guest': 'member',
+    'teacher': 'manager',
+    'editingteacher': 'manager',
+    'manager': 'manager',
+    'coursecreator': 'manager',
+    'ta': 'contributor',
+}
+
+
+def provision_lti_bulk_contexts(platform, user, publish_data_raw):
+    """
+    Bulk-provision categories, groups, and memberships for every course the
+    user is enrolled in, as reported by the LMS via the custom_publishdata
+    parameter.
+
+    Called on My Media launches where there is no specific course context.
+    Skips the Moodle site course (ID 1).
+
+    Args:
+        platform:          LTIPlatform instance
+        user:              User instance
+        publish_data_raw:  base64-encoded JSON string — list of dicts with
+                           keys: id, shortname, fullname, role
+    """
+    try:
+        # Restore any stripped base64 padding before decoding.
+        padding = 4 - len(publish_data_raw) % 4
+        if padding != 4:
+            publish_data_raw += '=' * padding
+        courses = json.loads(base64.b64decode(publish_data_raw).decode('utf-8'))
+    except Exception as exc:
+        logger.warning('provision_lti_bulk_contexts: failed to decode publishdata: %s', exc)
+        return
+
+    if not isinstance(courses, list):
+        logger.warning('provision_lti_bulk_contexts: publishdata is not a list')
+        return
+
+    for course in courses:
+        try:
+            course_id = str(course.get('id', '')).strip()
+
+            # Always skip the Moodle site course.
+            if not course_id or course_id == '1':
+                continue
+
+            fullname = course.get('fullname', '')
+            shortname = course.get('shortname', '')
+            group_role = _MOODLE_ROLE_TO_GROUP_ROLE.get(course.get('role', 'student'), 'member')
+
+            # ── Category & group ──────────────────────────────────────────
+            # Reuse the same .filter(...).first() pattern as provision_lti_context
+            # so that a real course-specific launch later finds the same record.
+            resource_link = LTIResourceLink.objects.filter(
+                platform=platform,
+                context_id=course_id,
+            ).first()
+
+            if resource_link:
+                category = resource_link.category
+                rbac_group = resource_link.rbac_group
+
+                # Keep the category title in sync with the LMS.
+                if fullname and category and category.title != fullname:
+                    category.title = fullname
+                    category.save(update_fields=['title'])
+            else:
+                category = Category.objects.create(
+                    title=fullname or shortname or f'Course {course_id}',
+                    description=f'Auto-created from {platform.name}: {fullname}',
+                    is_global=False,
+                    is_rbac_category=True,
+                    is_lms_course=True,
+                    lti_platform=platform,
+                    lti_context_id=course_id,
+                )
+
+                rbac_group = RBACGroup.objects.create(
+                    name=f'{fullname or shortname} ({platform.name})',
+                    description=f'LTI course group from {platform.name}',
+                )
+                rbac_group.categories.add(category)
+
+                # Use a synthetic resource_link_id so provision_lti_context
+                # can find and reuse this record when the user later launches
+                # from an actual course page (it searches by platform+context_id
+                # without filtering on resource_link_id).
+                LTIResourceLink.objects.create(
+                    platform=platform,
+                    context_id=course_id,
+                    resource_link_id=f'bulk_{course_id}',
+                    context_title=fullname,
+                    context_label=shortname,
+                    category=category,
+                    rbac_group=rbac_group,
+                )
+
+            if rbac_group is None:
+                continue
+
+            # ── Membership ────────────────────────────────────────────────
+            existing = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
+            if existing.exists():
+                # Upgrade role if the LMS reports a higher privilege than stored.
+                current_role = existing.first().role
+                final_role = get_higher_privilege_group(current_role, group_role)
+                if final_role != current_role:
+                    m = existing.first()
+                    m.role = final_role
+                    m.save(update_fields=['role'])
+            else:
+                try:
+                    RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
+                except Exception:
+                    pass
+
+        except Exception as exc:
+            logger.warning(
+                'provision_lti_bulk_contexts: error processing course %s: %s',
+                course.get('id'),
+                exc,
+            )
+            continue
 
 
 def apply_lti_roles(user, platform, lti_roles, rbac_group):

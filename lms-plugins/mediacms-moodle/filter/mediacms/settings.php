@@ -39,4 +39,16 @@ if ($ADMIN->fulltree) {
         0,
         $ltioptions
     ));
+
+    // My Media link placement.
+    $settings->add(new admin_setting_configselect(
+        'filter_mediacms/mymedia_placement',
+        get_string('mymedia_placement', 'filter_mediacms'),
+        get_string('mymedia_placement_desc', 'filter_mediacms'),
+        'top',
+        [
+            'top'  => get_string('mymedia_placement_top', 'filter_mediacms'),
+            'user' => get_string('mymedia_placement_user', 'filter_mediacms'),
+        ]
+    ));
 }

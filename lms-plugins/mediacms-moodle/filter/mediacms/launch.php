@@ -11,64 +11,9 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/lti/lib.php');
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
 require_once($CFG->dirroot . '/course/modlib.php');
+require_once(__DIR__ . '/locallib.php');
 
 global $SITE, $DB, $PAGE, $OUTPUT, $CFG;
-
-/**
- * Find first LTI activity for the MediaCMS tool, or create dummy if none exists
- */
-function filter_mediacms_get_dummy_activity($courseid, $typeid) {
-    global $DB;
-
-    // Find any existing LTI activity with this tool
-    $sql = "SELECT cm.id
-            FROM {course_modules} cm
-            JOIN {modules} m ON m.id = cm.module
-            JOIN {lti} lti ON lti.id = cm.instance
-            WHERE cm.course = :courseid
-              AND m.name = 'lti'
-              AND lti.typeid = :typeid
-              AND cm.deletioninprogress = 0
-            LIMIT 1";
-
-    $existing = $DB->get_record_sql($sql, ['courseid' => $courseid, 'typeid' => $typeid]);
-    if ($existing) {
-        // Ensure it's accessible (fix if created with visible=0)
-        $cm = get_coursemodule_from_id('lti', $existing->id, 0, false, IGNORE_MISSING);
-        if ($cm && !$cm->visible) {
-            set_coursemodule_visible($existing->id, 1);
-        }
-        return $existing->id;
-    }
-
-    // No existing activity - create dummy in stealth mode (accessible but completely hidden)
-    $moduleinfo = new stdClass();
-    $moduleinfo->course = $courseid;
-    $moduleinfo->module = $DB->get_field('modules', 'id', ['name' => 'lti']);
-    $moduleinfo->modulename = 'lti';
-    $moduleinfo->section = 0;
-    $moduleinfo->visible = 1;  // Accessible to all
-    $moduleinfo->visibleoncoursepage = 0;  // Hidden from course page
-    $moduleinfo->availability = null;  // No restrictions
-    $moduleinfo->showdescription = 0;  // Don't show description
-    $moduleinfo->name = 'MediaCMS Filter Launcher';
-    $moduleinfo->intro = '';  // Empty intro
-    $moduleinfo->introformat = FORMAT_HTML;
-    $moduleinfo->typeid = $typeid;
-    $moduleinfo->instructorchoiceacceptgrades = 0;
-    $moduleinfo->grade = 0;
-    $moduleinfo->instructorchoicesendname = 1;
-    $moduleinfo->instructorchoicesendemailaddr = 1;
-    $moduleinfo->launchcontainer = LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS;
-    $moduleinfo->instructorcustomparameters = '';
-
-    $result = add_moduleinfo($moduleinfo, get_course($courseid));
-
-    // Additionally hide from activity navigation by setting it as orphaned
-    set_coursemodule_visible($result->coursemodule, 1, 0);  // visible but not on course page
-
-    return $result->coursemodule;
-}
 
 require_login();
 
