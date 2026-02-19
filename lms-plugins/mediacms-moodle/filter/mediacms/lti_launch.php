@@ -60,8 +60,21 @@ foreach ($enrolled_courses as $enrolled_course) {
 
 $publishdata_b64 = base64_encode(json_encode($publish_data));
 
+// Use a course the user is actually enrolled in so they have mod/lti:view during
+// the OIDC flow. Fall back to SITEID only for admins with no course enrolments.
+$launch_courseid = SITEID;
+$launch_course   = $SITE;
+foreach ($enrolled_courses as $ec) {
+    if ((int)$ec->id !== SITEID) {
+        $launch_courseid = (int)$ec->id;
+        $launch_course   = get_course($launch_courseid);
+        break;
+    }
+}
+
+// Get or create the dummy activity (visible, non-stealth).
 try {
-    $dummy_cmid = filter_mediacms_get_dummy_activity(SITEID, $type->id);
+    $dummy_cmid = filter_mediacms_get_dummy_activity($launch_courseid, $type->id);
 } catch (Exception $e) {
     throw new moodle_exception('cannotcreatedummyactivity', 'filter_mediacms');
 }
@@ -73,6 +86,6 @@ $instance->instructorcustomparameters = 'publishdata=' . $publishdata_b64;
 $instance->name = 'MediaCMS My Media';
 
 $typeconfig = lti_get_type_type_config($type->id);
-$content    = lti_initiate_login($SITE->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
+$content    = lti_initiate_login($launch_course->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
 
 echo $content;

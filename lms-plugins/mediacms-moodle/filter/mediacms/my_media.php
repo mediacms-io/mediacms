@@ -27,11 +27,9 @@ echo $OUTPUT->header();
 $attr = [
     'id'              => 'contentframe',
     'src'             => (new moodle_url('/filter/mediacms/lti_launch.php'))->out(false),
-    'width'           => '100%',
-    'height'          => '600px',
     'allowfullscreen' => 'true',
     'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *;',
-    'style'           => 'border:none;display:block;',
+    'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
 ];
 echo html_writer::tag('iframe', '', $attr);
 

@@ -58,7 +58,7 @@ if ($courseid && $courseid != SITEID) {
     $course = $SITE;
 }
 
-// Get or create dummy activity for this course
+// Get or create the dummy activity (visible, non-stealth).
 try {
     $dummy_cmid = filter_mediacms_get_dummy_activity($courseid, $type->id);
 } catch (Exception $e) {
@@ -68,11 +68,9 @@ try {
     throw $e;
 }
 
-// Get the dummy activity instance from DB
-$cm = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
+$cm       = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
 $instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
 
-// Override with our media token for THIS launch only (doesn't save to DB)
 $custom_params = ["media_friendly_token=" . $mediatoken];
 
 // Add embed parameters if provided (check !== '' instead of !empty() because '0' is a valid value)
