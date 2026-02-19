@@ -66,9 +66,9 @@ class text_filter extends \core_filters\text_filter {
 
         $newtext = preg_replace_callback($pattern_url, [$this, 'callback_url'], $newtext);
 
-        // Restore protected text-only links
+        // Restore protected text-only links as modal launchers
         foreach ($textlink_placeholders as $placeholder => $original) {
-            $newtext = str_replace($placeholder, $original, $newtext);
+            $newtext = str_replace($placeholder, $this->transform_textlink($original), $newtext);
         }
 
         return $newtext;
@@ -177,4 +177,63 @@ class text_filter extends \core_filters\text_filter {
 
         return $iframe;
     }
+
+    /**
+     * Transform a text-only link into a link that replaces itself with an inline iframe on click.
+     *
+     * @param string $anchor_html  Original <a ...>...</a> HTML
+     * @return string  Transformed HTML (or original if token cannot be extracted)
+     */
+    private function transform_textlink($anchor_html) {
+        global $COURSE, $PAGE;
+
+        // Extract href.
+        if (!preg_match('/href=["\']([^"\']+)["\']/', $anchor_html, $href_matches)) {
+            return $anchor_html;
+        }
+        $href = html_entity_decode($href_matches[1], ENT_QUOTES | ENT_HTML5);
+
+        // Extract ?m=TOKEN.
+        parse_str(parse_url($href, PHP_URL_QUERY) ?? '', $query_params);
+        $token = $query_params['m'] ?? null;
+        if (!$token || !preg_match('/^[a-zA-Z0-9]+$/', $token)) {
+            return $anchor_html;
+        }
+
+        // Extract inner link text.
+        if (!preg_match('/<a[^>]*>(.*?)<\/a>/is', $anchor_html, $text_matches)) {
+            return $anchor_html;
+        }
+
+        $launch_url = new moodle_url('/filter/mediacms/launch.php', [
+            'token'    => $token,
+            'courseid' => isset($COURSE->id) ? (int)$COURSE->id : 0,
+        ]);
+
+        if (!self::$textlink_js_added) {
+            self::$textlink_js_added = true;
+            $PAGE->requires->js_init_code(
+                'document.addEventListener("click",function(e){'
+                . 'var a=e.target.closest("a.mediacms-textlink-launch");if(!a)return;'
+                . 'e.preventDefault();'
+                . 'var f=document.createElement("iframe");'
+                . 'f.src=a.dataset.launchUrl;'
+                . 'f.style.cssText="width:100%;height:480px;border:none;display:block;";'
+                . 'f.allowFullscreen=true;'
+                . 'f.setAttribute("allow","autoplay *; fullscreen *; encrypted-media *;");'
+                . 'a.parentNode.replaceChild(f,a);'
+                . '});',
+                false
+            );
+        }
+
+        return html_writer::tag('a', $text_matches[1], [
+            'href'            => '#',
+            'class'           => 'mediacms-textlink-launch',
+            'data-launch-url' => $launch_url->out(false),
+        ]);
+    }
+
+    /** @var bool  Whether the inline-iframe JS has already been added to the page. */
+    private static $textlink_js_added = false;
 }
