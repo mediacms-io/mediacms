@@ -82,6 +82,12 @@ try {
 $cm       = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
 $instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
 
+// DEBUG: log enrolled courses retrieved.
+error_log('MediaCMS My Media publishdata courses (' . count($publish_data) . '): ' . json_encode($publish_data));
+
+// Write publishdata to DB — Moodle's auth.php re-reads the instance from DB
+// when building the LTI launch JWT, so in-memory changes are ignored.
+$DB->set_field('lti', 'instructorcustomparameters', 'publishdata=' . $publishdata_b64, ['id' => $cm->instance]);
 $instance->instructorcustomparameters = 'publishdata=' . $publishdata_b64;
 $instance->name = 'MediaCMS My Media';
 

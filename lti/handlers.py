@@ -27,27 +27,117 @@ from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
 logger = logging.getLogger(__name__)
 
 DEFAULT_LTI_ROLE_MAPPINGS = {
+    # LTI role names (used in standard launches)
     'Instructor': {'global_role': '', 'group_role': 'manager'},
     'TeachingAssistant': {'global_role': '', 'group_role': 'contributor'},
     'Learner': {'global_role': '', 'group_role': 'member'},
     'Student': {'global_role': '', 'group_role': 'member'},
     'Administrator': {'global_role': '', 'group_role': 'manager'},
     'Faculty': {'global_role': '', 'group_role': 'manager'},
+    # Moodle role shortnames (used in custom_publishdata from My Media launches)
+    'student': {'global_role': '', 'group_role': 'member'},
+    'guest': {'global_role': '', 'group_role': 'member'},
+    'teacher': {'global_role': '', 'group_role': 'manager'},
+    'editingteacher': {'global_role': '', 'group_role': 'manager'},
+    'manager': {'global_role': '', 'group_role': 'manager'},
+    'coursecreator': {'global_role': '', 'group_role': 'manager'},
+    'ta': {'global_role': '', 'group_role': 'contributor'},
 }
+
+
+def _ensure_course_context(platform, context_id, title, label, resource_link_id):
+    """
+    Find or create the LTIResourceLink, Category, and RBACGroup for a course.
+
+    When a record already exists (e.g. created by a bulk My Media launch), it is
+    reused and its metadata is kept in sync.  The resource_link_id is only
+    promoted when a real launch ID arrives to replace a 'bulk_*' placeholder.
+
+    Returns:
+        Tuple of (category, rbac_group, resource_link)
+    """
+    resource_link = LTIResourceLink.objects.filter(
+        platform=platform,
+        context_id=context_id,
+    ).first()
+
+    if resource_link:
+        category = resource_link.category
+        rbac_group = resource_link.rbac_group
+
+        rl_updates = []
+        if title and resource_link.context_title != title:
+            resource_link.context_title = title
+            rl_updates.append('context_title')
+        if label and resource_link.context_label != label:
+            resource_link.context_label = label
+            rl_updates.append('context_label')
+        # Promote from bulk placeholder to real resource link ID.
+        if resource_link_id and not resource_link_id.startswith('bulk_') and resource_link.resource_link_id != resource_link_id:
+            resource_link.resource_link_id = resource_link_id
+            rl_updates.append('resource_link_id')
+        if rl_updates:
+            resource_link.save(update_fields=rl_updates)
+
+        if title and category and category.title != title:
+            category.title = title
+            category.save(update_fields=['title'])
+
+    else:
+        category = Category.objects.create(
+            title=title or label or f'Course {context_id}',
+            description=f'Auto-created from {platform.name}: {title}',
+            is_global=False,
+            is_rbac_category=True,
+            is_lms_course=True,
+            lti_platform=platform,
+            lti_context_id=context_id,
+        )
+        rbac_group = RBACGroup.objects.create(
+            name=f'{title or label} ({platform.name})',
+            description=f'LTI course group from {platform.name}',
+        )
+        rbac_group.categories.add(category)
+        resource_link = LTIResourceLink.objects.create(
+            platform=platform,
+            context_id=context_id,
+            resource_link_id=resource_link_id,
+            context_title=title,
+            context_label=label,
+            category=category,
+            rbac_group=rbac_group,
+        )
+
+    return category, rbac_group, resource_link
+
+
+def _ensure_membership(user, rbac_group, group_role):
+    """
+    Ensure the user is a member of rbac_group with at least group_role.
+    Upgrades the role if the user already has a lower one; never downgrades.
+    """
+    existing = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
+    if existing:
+        final_role = get_higher_privilege_group(existing.role, group_role)
+        if final_role != existing.role:
+            existing.role = final_role
+            existing.save(update_fields=['role'])
+    else:
+        try:
+            RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
+        except Exception:
+            pass
+
+
+# ── Public API ─────────────────────────────────────────────────────────────────
 
 
 def provision_lti_user(platform, claims):
     """
-    Provision MediaCMS user from LTI launch claims
-
-    Args:
-        platform: LTIPlatform instance
-        claims: Dict of LTI launch claims
+    Provision MediaCMS user from LTI launch claims.
 
     Returns:
         User instance
-
-    Pattern: Similar to saml_auth.adapter.perform_user_actions()
     """
     lti_user_id = claims.get('sub')
     if not lti_user_id:
@@ -67,15 +157,12 @@ def provision_lti_user(platform, claims):
         if email and user.email != email:
             user.email = email
             update_fields.append('email')
-
         if given_name and user.first_name != given_name:
             user.first_name = given_name
             update_fields.append('first_name')
-
         if family_name and user.last_name != family_name:
             user.last_name = family_name
             update_fields.append('last_name')
-
         if name and user.name != name:
             user.name = name
             update_fields.append('name')
@@ -85,11 +172,17 @@ def provision_lti_user(platform, claims):
 
     else:
         username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
-
         if User.objects.filter(username=username).exists():
             username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
 
-        user = User.objects.create_user(username=username, email=email or '', first_name=given_name, last_name=family_name, name=name or username, is_active=True)
+        user = User.objects.create_user(
+            username=username,
+            email=email or '',
+            first_name=given_name,
+            last_name=family_name,
+            name=name or username,
+            is_active=True,
+        )
 
         if email:
             try:
@@ -103,13 +196,12 @@ def provision_lti_user(platform, claims):
 
 
 def generate_username_from_lti(lti_user_id, email, given_name, family_name):
-    """Generate a username from LTI user info"""
-
+    """Generate a username from LTI user info."""
     if email and '@' in email:
         username = email.split('@')[0]
         username = ''.join(c if c.isalnum() or c in '_-' else '_' for c in username)
         if len(username) >= 4:
-            return username[:30]  # Max 30 chars
+            return username[:30]
 
     if given_name and family_name:
         username = f"{given_name}.{family_name}".lower()
@@ -117,120 +209,38 @@ def generate_username_from_lti(lti_user_id, email, given_name, family_name):
         if len(username) >= 4:
             return username[:30]
 
-    user_hash = hashlib.md5(lti_user_id.encode()).hexdigest()[:10]
-    return f"lti_user_{user_hash}"
+    return f"lti_user_{hashlib.md5(lti_user_id.encode()).hexdigest()[:10]}"
 
 
 def provision_lti_context(platform, claims, resource_link_id):
     """
-    Provision MediaCMS category and RBAC group for LTI context (course)
-
-    Args:
-        platform: LTIPlatform instance
-        claims: Dict of LTI launch claims
-        resource_link_id: Resource link ID
+    Provision MediaCMS category and RBAC group for an LTI context (course).
 
     Returns:
         Tuple of (category, rbac_group, resource_link)
-
-    Pattern: Integrates with existing Category and RBACGroup models
     """
     context = claims.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
     context_id = context.get('id')
     if not context_id:
         raise ValueError("Missing context ID in LTI launch")
 
-    context_title = context.get('title', '')
-    context_label = context.get('label', '')
-
-    resource_link = LTIResourceLink.objects.filter(
+    return _ensure_course_context(
         platform=platform,
-        context_id=context_id,
-    ).first()
-
-    if resource_link:
-        category = resource_link.category
-        rbac_group = resource_link.rbac_group
-
-        update_fields = []
-        if context_title and resource_link.context_title != context_title:
-            resource_link.context_title = context_title
-            update_fields.append('context_title')
-        if context_label and resource_link.context_label != context_label:
-            resource_link.context_label = context_label
-            update_fields.append('context_label')
-        # TODO / TOCHECK: consider whether we need to update this or not
-        if resource_link.resource_link_id != resource_link_id:
-            resource_link.resource_link_id = resource_link_id
-            update_fields.append('resource_link_id')
-
-        if update_fields:
-            resource_link.save(update_fields=update_fields)
-
-        if context_title and category and category.title != context_title:
-            category.title = context_title
-            category.save(update_fields=['title'])
-
-    else:
-        category = Category.objects.create(
-            title=context_title or context_label or f"Course {context_id}",
-            description=f"Auto-created from {platform.name}: {context_title}",
-            is_global=False,
-            is_rbac_category=True,
-            is_lms_course=True,
-            lti_platform=platform,
-            lti_context_id=context_id,
-        )
-
-        rbac_group = RBACGroup.objects.create(
-            name=f"{context_title or context_label} ({platform.name})",
-            description=f"LTI course group from {platform.name}",
-        )
-
-        rbac_group.categories.add(category)
-
-        resource_link = LTIResourceLink.objects.create(
-            platform=platform,
-            context_id=context_id,
-            resource_link_id=resource_link_id,
-            context_title=context_title,
-            context_label=context_label,
-            category=category,
-            rbac_group=rbac_group,
-        )
-
-    return category, rbac_group, resource_link
-
-
-# Moodle role shortnames → MediaCMS group roles.
-_MOODLE_ROLE_TO_GROUP_ROLE = {
-    'student': 'member',
-    'guest': 'member',
-    'teacher': 'manager',
-    'editingteacher': 'manager',
-    'manager': 'manager',
-    'coursecreator': 'manager',
-    'ta': 'contributor',
-}
+        context_id=str(context_id),
+        title=context.get('title', ''),
+        label=context.get('label', ''),
+        resource_link_id=resource_link_id,
+    )
 
 
 def provision_lti_bulk_contexts(platform, user, publish_data_raw):
     """
     Bulk-provision categories, groups, and memberships for every course the
-    user is enrolled in, as reported by the LMS via the custom_publishdata
-    parameter.
+    user is enrolled in, as reported by the LMS via custom_publishdata.
 
-    Called on My Media launches where there is no specific course context.
-    Skips the Moodle site course (ID 1).
-
-    Args:
-        platform:          LTIPlatform instance
-        user:              User instance
-        publish_data_raw:  base64-encoded JSON string — list of dicts with
-                           keys: id, shortname, fullname, role
+    Called on My Media launches. Skips the Moodle site course (ID 1).
     """
     try:
-        # Restore any stripped base64 padding before decoding.
         padding = 4 - len(publish_data_raw) % 4
         if padding != 4:
             publish_data_raw += '=' * padding
@@ -246,80 +256,23 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
     for course in courses:
         try:
             course_id = str(course.get('id', '')).strip()
-
-            # Always skip the Moodle site course.
-            if not course_id or course_id == '1':
+            if not course_id:
                 continue
 
             fullname = course.get('fullname', '')
             shortname = course.get('shortname', '')
-            group_role = _MOODLE_ROLE_TO_GROUP_ROLE.get(course.get('role', 'student'), 'member')
+            group_role = DEFAULT_LTI_ROLE_MAPPINGS.get(course.get('role', 'student'), {}).get('group_role', 'member')
 
-            # ── Category & group ──────────────────────────────────────────
-            # Reuse the same .filter(...).first() pattern as provision_lti_context
-            # so that a real course-specific launch later finds the same record.
-            resource_link = LTIResourceLink.objects.filter(
+            _, rbac_group, _ = _ensure_course_context(
                 platform=platform,
                 context_id=course_id,
-            ).first()
+                title=fullname,
+                label=shortname,
+                resource_link_id=f'bulk_{course_id}',
+            )
 
-            if resource_link:
-                category = resource_link.category
-                rbac_group = resource_link.rbac_group
-
-                # Keep the category title in sync with the LMS.
-                if fullname and category and category.title != fullname:
-                    category.title = fullname
-                    category.save(update_fields=['title'])
-            else:
-                category = Category.objects.create(
-                    title=fullname or shortname or f'Course {course_id}',
-                    description=f'Auto-created from {platform.name}: {fullname}',
-                    is_global=False,
-                    is_rbac_category=True,
-                    is_lms_course=True,
-                    lti_platform=platform,
-                    lti_context_id=course_id,
-                )
-
-                rbac_group = RBACGroup.objects.create(
-                    name=f'{fullname or shortname} ({platform.name})',
-                    description=f'LTI course group from {platform.name}',
-                )
-                rbac_group.categories.add(category)
-
-                # Use a synthetic resource_link_id so provision_lti_context
-                # can find and reuse this record when the user later launches
-                # from an actual course page (it searches by platform+context_id
-                # without filtering on resource_link_id).
-                LTIResourceLink.objects.create(
-                    platform=platform,
-                    context_id=course_id,
-                    resource_link_id=f'bulk_{course_id}',
-                    context_title=fullname,
-                    context_label=shortname,
-                    category=category,
-                    rbac_group=rbac_group,
-                )
-
-            if rbac_group is None:
-                continue
-
-            # ── Membership ────────────────────────────────────────────────
-            existing = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
-            if existing.exists():
-                # Upgrade role if the LMS reports a higher privilege than stored.
-                current_role = existing.first().role
-                final_role = get_higher_privilege_group(current_role, group_role)
-                if final_role != current_role:
-                    m = existing.first()
-                    m.role = final_role
-                    m.save(update_fields=['role'])
-            else:
-                try:
-                    RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
-                except Exception:
-                    pass
+            if rbac_group:
+                _ensure_membership(user, rbac_group, group_role)
 
         except Exception as exc:
             logger.warning(
@@ -327,26 +280,17 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
                 course.get('id'),
                 exc,
             )
-            continue
 
 
 def apply_lti_roles(user, platform, lti_roles, rbac_group):
     """
-    Apply role mappings from LTI to MediaCMS
+    Apply role mappings from LTI role URIs to MediaCMS global and group roles.
 
-    Args:
-        user: User instance
-        platform: LTIPlatform instance
-        lti_roles: List of LTI role URIs
-        rbac_group: RBACGroup instance for course
-
-    Pattern: Similar to saml_auth.adapter.handle_role_mapping()
+    Returns:
+        Tuple of (global_role, group_role)
     """
-    if not lti_roles:
-        lti_roles = []
-
     short_roles = []
-    for role in lti_roles:
+    for role in lti_roles or []:
         if '#' in role:
             short_roles.append(role.split('#')[-1])
         elif '/' in role:
@@ -354,89 +298,50 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
         else:
             short_roles.append(role)
 
-    custom_mappings = {}
-    for mapping in LTIRoleMapping.objects.filter(platform=platform):
-        custom_mappings[mapping.lti_role] = {
-            'global_role': mapping.global_role,
-            'group_role': mapping.group_role,
-        }
-
+    custom_mappings = {m.lti_role: {'global_role': m.global_role, 'group_role': m.group_role} for m in LTIRoleMapping.objects.filter(platform=platform)}
     all_mappings = {**DEFAULT_LTI_ROLE_MAPPINGS, **custom_mappings}
 
     global_role = 'user'
-    for role in short_roles:
-        if role in all_mappings:
-            role_global = all_mappings[role].get('global_role')
-            if role_global:
-                global_role = get_higher_privilege_global(global_role, role_global)
-
-    user.set_role_from_mapping(global_role)
-
     group_role = 'member'
     for role in short_roles:
         if role in all_mappings:
-            role_group = all_mappings[role].get('group_role')
-            if role_group:
-                group_role = get_higher_privilege_group(group_role, role_group)
+            if all_mappings[role].get('global_role'):
+                global_role = get_higher_privilege_global(global_role, all_mappings[role]['global_role'])
+            if all_mappings[role].get('group_role'):
+                group_role = get_higher_privilege_group(group_role, all_mappings[role]['group_role'])
 
-    memberships = RBACMembership.objects.filter(user=user, rbac_group=rbac_group)
-
-    if memberships.exists():
-        if not memberships.filter(role=group_role).exists():
-            first_membership = memberships.first()
-            first_membership.role = group_role
-            try:
-                first_membership.save()
-            except Exception:
-                pass
-    else:
-        try:
-            RBACMembership.objects.create(user=user, rbac_group=rbac_group, role=group_role)
-        except Exception:
-            pass
+    user.set_role_from_mapping(global_role)
+    _ensure_membership(user, rbac_group, group_role)
 
     return global_role, group_role
 
 
 def get_higher_privilege_global(role1, role2):
-    """Return the higher privilege global role"""
+    """Return the higher privilege global role."""
     privilege_order = ['user', 'advancedUser', 'editor', 'manager', 'admin']
     try:
-        index1 = privilege_order.index(role1)
-        index2 = privilege_order.index(role2)
-        return privilege_order[max(index1, index2)]
+        return privilege_order[max(privilege_order.index(role1), privilege_order.index(role2))]
     except ValueError:
-        return role2  # Default to role2 if role1 is unknown
+        return role2
 
 
 def get_higher_privilege_group(role1, role2):
-    """Return the higher privilege group role"""
+    """Return the higher privilege group role."""
     privilege_order = ['member', 'contributor', 'manager']
     try:
-        index1 = privilege_order.index(role1)
-        index2 = privilege_order.index(role2)
-        return privilege_order[max(index1, index2)]
+        return privilege_order[max(privilege_order.index(role1), privilege_order.index(role2))]
     except ValueError:
-        return role2  # Default to role2 if role1 is unknown
+        return role2
 
 
 def create_lti_session(request, user, launch_data, platform):
-    """
-    Create MediaCMS session from LTI launch
-
-    Args:
-        request: Django request
-        user: User instance
-        launch_data: Dict of validated LTI launch data
-        platform: LTIPlatform instance
-
-    Pattern: Uses Django's session framework
-    """
+    """Create a MediaCMS session from an LTI launch."""
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-    context = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/context', {})
-    resource_link = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
-    roles = launch_data.get_launch_data().get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
+    ld = launch_data.get_launch_data()
+    context = ld.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
+    resource_link = ld.get('https://purl.imsglobal.org/spec/lti/claim/resource_link', {})
+    roles = ld.get('https://purl.imsglobal.org/spec/lti/claim/roles', [])
 
     request.session['lti_session'] = {
         'platform_id': platform.id,
@@ -448,10 +353,7 @@ def create_lti_session(request, user, launch_data, platform):
         'launch_time': timezone.now().isoformat(),
     }
 
-    timeout = getattr(settings, 'LTI_SESSION_TIMEOUT', 3600)
-    request.session.set_expiry(timeout)
-
-    # CRITICAL: Explicitly save session before redirect (for cross-site contexts)
+    request.session.set_expiry(getattr(settings, 'LTI_SESSION_TIMEOUT', 3600))
     request.session.modified = True
     request.session.save()
 
@@ -460,18 +362,11 @@ def create_lti_session(request, user, launch_data, platform):
 
 def validate_lti_session(request):
     """
-    Validate that an LTI session exists and is valid
+    Validate that an LTI session exists and is valid.
 
     Returns:
         Dict of LTI session data or None
     """
-
-    lti_session = request.session.get('lti_session')
-
-    if not lti_session:
-        return None
-
     if not request.user.is_authenticated:
         return None
-
-    return lti_session
+    return request.session.get('lti_session')

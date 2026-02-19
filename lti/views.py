@@ -331,22 +331,24 @@ class LaunchView(View):
             context_claim = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
             context_id = context_claim.get('id', '')
 
-            # Skip category/group creation for the Moodle site course (ID 1).
-            # My Media launches use Course 1 as a dummy context; real provisioning
-            # for those launches happens below via provision_lti_bulk_contexts.
-            is_site_context = str(context_id) == '1'
+            # Detect My Media launches: publishdata is only sent on My Media launches.
+            publish_data_raw = custom_claims.get('publishdata') or custom_claims.get('custom_publishdata')
 
-            if context_claim and not is_site_context:
+            print(f"[MediaCMS LTI] context_id={context_id!r} publish_data_raw present={bool(publish_data_raw)}")
+            if publish_data_raw:
+                print(f"[MediaCMS LTI] publishdata (raw, first 200 chars): {publish_data_raw[:200]}")
+
+            if publish_data_raw:
+                # My Media launch: provision all enrolled courses from publishdata.
+                # Skip individual context provisioning to avoid double-provisioning.
+                resource_link_obj = None
+                provision_lti_bulk_contexts(platform, user, publish_data_raw)
+            elif context_claim:
+                # Normal course launch: provision only this context.
                 category, rbac_group, resource_link_obj = provision_lti_context(platform, launch_data, resource_link_id)
                 apply_lti_roles(user, platform, roles, rbac_group)
             else:
                 resource_link_obj = None
-
-            # Bulk-provision all enrolled courses when the LMS sends custom_publishdata
-            # (only present on My Media launches; transparent on normal course launches).
-            publish_data_raw = custom_claims.get('publishdata') or custom_claims.get('custom_publishdata')
-            if publish_data_raw:
-                provision_lti_bulk_contexts(platform, user, publish_data_raw)
 
             create_lti_session(request, user, message_launch, platform)
 

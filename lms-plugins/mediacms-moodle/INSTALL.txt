@@ -31,68 +31,24 @@ Installation
    - Go to: Site Administration → Notifications
    - Click "Upgrade Moodle database now"
    - Both plugins will be installed automatically
+   - Set the MediaCMS tool under the LTI Tool
 
 4. Make sure Filter is enabled
    - As Administrator, visit Plugins, 'Manage Filters', find MediaCMS filter and enable it.
-   Then place it at the top of the filter. This is important, otherwise embeds won't load. 
-CONFIGURATION
--------------
+   Then place it at the top of the filter. This is important, otherwise embeds won't load.
 
-1. CORE SETTINGS (Required)
-   Site Administration → Plugins → Filters → MediaCMS (Settings)
+5. Enter 'My Media' on top navigation.
+   - Log in as Administrator
+   - Go to: Site Administration → Appearance → Advanced Theme settings -> Custom menu items:
+      add: My Media|/filter/mediacms/my_media.php
 
-   - MediaCMS URL: https://lti.mediacms.io (your instance)
-   - LTI Tool: Select your MediaCMS tool (see LTI SETUP below)
-
-   ✓ These settings are shared by both plugins!
-
-2. ENABLE FILTER
-   Site Administration → Plugins → Filters → Manage filters
-
-   - Set "MediaCMS" to "On"
-
-3. LTI SETUP (Required for Video Library)
-   Site Administration → Plugins → Activity modules → External tool →
-   Manage tools → "Configure a tool manually"
-
-   - Tool name: MediaCMS
-   - Tool URL: https://lti.mediacms.io/lti/login/
-   - LTI version: LTI 1.3
-   - Public key type: Keyset URL
-   - Public keyset: https://lti.mediacms.io/lti/jwks/
-   - Initiate login URL: https://lti.mediacms.io/lti/login/
-   - Redirection URI(s): https://lti.mediacms.io/lti/launch/
-
-   Services:
-   ✓ IMS LTI Deep Linking (required for video library)
-
-   Save and copy the configuration URLs to provide to MediaCMS admin.
-
-4. AUTO-CONVERT DEFAULTS (Optional)
-   Site Administration → Plugins → Text editors → TinyMCE → MediaCMS
-
-   Configure default display options for pasted URLs.
-
-TESTING
+What to expect
 -------
 
 1. Create a test course
 2. Add a page or label
 3. Click MediaCMS button in TinyMCE editor
 4. Try inserting from video library or pasting a URL
-
-TROUBLESHOOTING
----------------
-
-Video library won't load:
-  - Check LTI tool is selected in filter settings
-  - Verify you're in a course context
-  - Check LTI tool configuration
-
-URLs not auto-converting:
-  - Enable MediaCMS filter in Manage filters
-  - Verify MediaCMS URL setting matches your instance
-  - Clear caches: Site Administration → Development → Purge caches
 
 SUPPORT
 -------
