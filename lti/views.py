@@ -90,6 +90,7 @@ class OIDCLoginView(View):
             embed_start_time = request.GET.get('embed_start_time') or request.POST.get('embed_start_time')
             embed_width = request.GET.get('embed_width') or request.POST.get('embed_width')
             embed_height = request.GET.get('embed_height') or request.POST.get('embed_height')
+            show_media_page = request.GET.get('show_media_page') or request.POST.get('show_media_page')
 
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
@@ -139,6 +140,8 @@ class OIDCLoginView(View):
                         state_data['embed_width'] = embed_width
                     if embed_height:
                         state_data['embed_height'] = embed_height
+                    if show_media_page:
+                        state_data['show_media_page'] = show_media_page
 
                     # Encode as base64 URL-safe string
                     state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip('=')
@@ -218,6 +221,7 @@ class LaunchView(View):
             't': 't',
             'width': 'width',
             'height': 'height',
+            'show_media_page': 'show_media_page',
         }
 
         for key, param_name in param_mapping.items():
@@ -265,7 +269,7 @@ class LaunchView(View):
                 media_token_from_state = state_data.get('media_token')
 
                 # Extract embed parameters from state
-                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time', 'embed_width', 'embed_height']:
+                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time', 'embed_width', 'embed_height', 'show_media_page']:
                     if key in state_data:
                         embed_params_from_state[key] = state_data[key]
             except Exception:
@@ -704,6 +708,13 @@ class EmbedMediaLTIView(View):
 
         # Build embed URL with parameters from the request
         embed_params = LaunchView.extract_embed_params_from_dict(request.GET)
-        embed_url = LaunchView.build_url_with_embed_params(f"/embed?m={friendly_token}", embed_params)
+        show_media_page = request.GET.get('show_media_page')
+
+        if show_media_page == 'true':
+            base_path = f"/view?m={friendly_token}"
+        else:
+            base_path = f"/embed?m={friendly_token}"
+
+        embed_url = LaunchView.build_url_with_embed_params(base_path, embed_params)
 
         return HttpResponseRedirect(embed_url)

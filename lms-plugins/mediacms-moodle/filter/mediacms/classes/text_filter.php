@@ -208,6 +208,7 @@ class text_filter extends \core_filters\text_filter {
         $launch_url = new moodle_url('/filter/mediacms/launch.php', [
             'token'    => $token,
             'courseid' => isset($COURSE->id) ? (int)$COURSE->id : 0,
+            'show_media_page' => 'true',
         ]);
 
         if (!self::$textlink_js_added) {

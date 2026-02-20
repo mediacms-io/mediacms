@@ -28,6 +28,7 @@ $showRelated = optional_param('showRelated', '', PARAM_TEXT);
 $showUserAvatar = optional_param('showUserAvatar', '', PARAM_TEXT);
 $linkTitle = optional_param('linkTitle', '', PARAM_TEXT);
 $startTime = optional_param('t', '', PARAM_TEXT);
+$show_media_page = optional_param('show_media_page', '', PARAM_TEXT);
 
 // Get configuration
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
@@ -89,6 +90,9 @@ if ($linkTitle !== '') {
 if ($startTime !== '') {
     $custom_params[] = "embed_start_time=" . $startTime;
 }
+if ($show_media_page === 'true') {
+    $custom_params[] = "show_media_page=true";
+}
 
 $instance->instructorcustomparameters = implode("\n", $custom_params);
 $instance->name = 'MediaCMS Video: ' . $mediatoken;
@@ -116,6 +120,9 @@ if ($linkTitle !== '') {
 }
 if ($startTime !== '') {
     $page_params['t'] = $startTime;
+}
+if ($show_media_page === 'true') {
+    $page_params['show_media_page'] = 'true';
 }
 
 $PAGE->set_url(new moodle_url('/filter/mediacms/launch.php', $page_params));
@@ -148,6 +155,9 @@ if ($linkTitle !== '') {
 }
 if ($startTime !== '') {
     $hidden_fields .= '<input type="hidden" name="embed_start_time" value="' . htmlspecialchars($startTime, ENT_QUOTES) . '" />';
+}
+if ($show_media_page === 'true') {
+    $hidden_fields .= '<input type="hidden" name="show_media_page" value="true" />';
 }
 if ($width) {
     $hidden_fields .= '<input type="hidden" name="embed_width" value="' . htmlspecialchars($width, ENT_QUOTES) . '" />';
