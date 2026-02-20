@@ -372,6 +372,17 @@ FILE_UPLOAD_HANDLERS = [
 
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
+try:
+    # keep a local_settings.py file for local overrides
+    from .local_settings import *  # noqa
+
+    # ALLOWED_HOSTS needs a url/ip
+    ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
+except ImportError:
+    # local_settings not in use
+    pass
+
+
 error_filename = os.path.join(LOGS_DIR, "debug.log")
 if not os.path.exists(LOGS_DIR):
     try:
@@ -401,7 +412,7 @@ LOGGING = {
     },
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "db", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
@@ -599,16 +610,6 @@ WHISPER_MODEL = "base"
 
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
-
-try:
-    # keep a local_settings.py file for local overrides
-    from .local_settings import *  # noqa
-
-    # ALLOWED_HOSTS needs a url/ip
-    ALLOWED_HOSTS.append(FRONTEND_HOST.replace("http://", "").replace("https://", ""))
-except ImportError:
-    # local_settings not in use
-    pass
 
 # Don't add new settings below that could be overridden in local_settings.py!!!
 

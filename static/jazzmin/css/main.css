@@ -52,12 +52,10 @@ div.inline-related {
 }
 
 [class*=sidebar-dark-] .nav-header {
+    color: rgb(255,255,255,0.3);
     margin-top: 1rem;
 }
 
-.nav-sidebar .nav-header {
-	font-size: 1.2rem !important
-}
 /* Table styles */
 .table tr.form-row {
     display: table-row;
@@ -183,15 +181,6 @@ table.dataTable thead .sorting_desc_disabled::after {
 
 .select2-results__option {
     color: black;
-}
-
-.select2-container--admin-autocomplete .select2-results__option--highlighted[aria-selected] {
-    background-color: #0074f0 !important;
-    color: white !important;
-}
-
-.select2-container--default .select2-results__option--selected {
-	background-color: #ddd !important;
 }
 
 #changelist-search .form-group {
@@ -525,19 +514,6 @@ input[type="text"]
     padding: 0;
     overflow: hidden;
     line-height: 1;
-}
-
-select#id_rbac_groups_from,
-select#id_rbac_groups_to,
-select#id_contributors_field_to,
-select#id_contributors_field_from,
-select#id_members_field_to,
-select#id_members_field_from,
-select#id_managers_field_to,
-select#id_managers_field_from,
-select#id_categories_to,
-select#id_categories_from {
-	height: 285px !important;
 }
 
 /* Might need to import more rules from:
