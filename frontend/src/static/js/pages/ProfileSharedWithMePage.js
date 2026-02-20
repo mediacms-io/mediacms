@@ -10,7 +10,7 @@ import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListA
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
-import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, associateMediaWithLtiCategory, translateString } from '../utils/helpers';
 
 import { Page } from './_Page';
 
@@ -354,6 +354,9 @@ export class ProfileSharedWithMePage extends Page {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
+
+                    // Associate media with the current LTI course category (fire-and-forget)
+                    associateMediaWithLtiCategory(mediaId);
 
                     // Send postMessage to parent window (Moodle TinyMCE plugin)
                     if (window.parent !== window) {

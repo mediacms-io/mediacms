@@ -7,6 +7,7 @@ Allows instructors to select media from MediaCMS library and embed in Moodle cou
 import time
 import traceback
 import uuid
+from urllib.parse import quote
 
 import jwt
 from cryptography.hazmat.backends import default_backend
@@ -37,6 +38,12 @@ class SelectMediaView(View):
     def get(self, request):
         """Display media selection interface - redirects to user's profile page"""
         profile_url = f"/user/{request.user.username}?mode=lms_embed_mode&action=select_media"
+
+        lti_session = request.session.get('lti_session', {})
+        lti_context_id = lti_session.get('context_id', '')
+        if lti_context_id:
+            profile_url += f"&lti_context_id={quote(str(lti_context_id))}"
+
         return HttpResponseRedirect(profile_url)
 
     @method_decorator(csrf_exempt)

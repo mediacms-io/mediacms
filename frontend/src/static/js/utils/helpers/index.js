@@ -14,4 +14,4 @@ export * from './quickSort';
 export * from './requests';
 export { translateString } from './translate';
 export { replaceString } from './replacementStrings';
-export { inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode } from './embeddedApp';
+export { inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode, associateMediaWithLtiCategory } from './embeddedApp';

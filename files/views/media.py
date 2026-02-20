@@ -574,12 +574,32 @@ class MediaBulkUserActions(APIView):
 
         elif action == "add_to_category":
             category_uids = request.data.get('category_uids', [])
-            if not category_uids:
-                return Response({"detail": "category_uids is required for add_to_category action"}, status=status.HTTP_400_BAD_REQUEST)
+            lti_context_id = request.data.get('lti_context_id')
 
-            categories = Category.objects.filter(uid__in=category_uids)
+            if not category_uids and not lti_context_id:
+                return Response({"detail": "category_uids or lti_context_id is required for add_to_category action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            categories = Category.objects.none()
+
+            # Prioritize category_uids
+            if category_uids:
+                # Filter categories by UID and ensure they are NOT RBAC categories
+                categories = Category.objects.filter(uid__in=category_uids, is_rbac_category=False)
+            elif lti_context_id:
+                # Filter categories by lti_context_id and ensure they ARE RBAC categories
+                potential_categories = Category.objects.filter(lti_context_id=lti_context_id, is_rbac_category=True)
+
+                # Check user access (must have contributor access)
+                valid_category_ids = []
+                for cat in potential_categories:
+                    if request.user.has_contributor_access_to_category(cat):
+                        valid_category_ids.append(cat.id)
+
+                if valid_category_ids:
+                    categories = Category.objects.filter(id__in=valid_category_ids)
+
             if not categories:
-                return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "No matching categories found or access denied"}, status=status.HTTP_400_BAD_REQUEST)
 
             added_count = 0
             for category in categories:
