@@ -176,7 +176,7 @@ export default class VideoViewer extends React.PureComponent {
                 topLeftHtml = document.createElement('div');
                 topLeftHtml.setAttribute('class', 'media-links-top-left');
 
-                const linkTarget = inEmbeddedApp() ? '_self' : '_blank';
+                const linkTarget = inEmbeddedApp() || window.location.href.indexOf('lms_embed_mode') > -1 ? '_self' : '_blank';
 
                 if (titleLink) {
                     titleLink.setAttribute('class', 'title-link');
