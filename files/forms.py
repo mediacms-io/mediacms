@@ -177,7 +177,7 @@ class MediaPublishForm(forms.ModelForm):
                 current_queryset = self.fields['category'].queryset
                 self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
                 self.fields['category'].label = 'Course'
-                self.fields['category'].help_text = 'Media can be part of one or more courses'
+                self.fields['category'].help_text = 'Media can be shared with one or more courses'
                 self.fields['category'].widget.is_lms_mode = True
 
         self.helper = FormHelper()
