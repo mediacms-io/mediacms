@@ -25,10 +25,12 @@
 - [22. Role-Based Access Control](#22-role-based-access-control)
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
-- [25. Custom urls](#25-custom-urls)
-- [26. Allowed files](#26-allowed-files)
-- [27. User upload limits](#27-user-upload-limits)
-- [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [25. Reverse Proxy Configuration](#25-reverse-proxy-configuration)
+- [26. Custom urls](#26-custom-urls)
+- [27. Allowed files](#27-allowed-files)
+- [28. User upload limits](#28-user-upload-limits)
+- [29. Whisper Transcribe for Automatic Subtitles](#29-whisper-transcribe-for-automatic-subtitles)
+- [30. Logging Configuration and Management](#30-logging-configuration-and-management)
 
 
 ## 1. Welcome
@@ -1041,18 +1043,77 @@ USE_IDENTITY_PROVIDERS = True
 
 Visiting the admin, you will see the Identity Providers tab and you can add one.
 
-## 25. Custom urls
+## 25. Reverse Proxy Configuration
+
+MediaCMS includes built-in support for reverse proxies (nginx, Apache, load balancers, etc.). When MediaCMS is deployed behind a reverse proxy, proper configuration ensures that client IP addresses are logged correctly and sessions work properly.
+
+### Quick Start
+
+1. **Configure your reverse proxy** to forward required headers (see examples below)
+
+2. **Edit `local_settings.py`** to enable proxy support:
+   ```python
+   # Add your proxy IP to trusted proxies
+   TRUSTED_PROXIES = [
+       '127.0.0.1',      # localhost
+       '192.168.1.10',   # Your reverse proxy IP
+       '10.0.0.0/8',     # Private network range (if applicable)
+   ]
+
+   # Enable proxy-aware middleware
+   PROXY_AWARE_MIDDLEWARE_ENABLED = True
+
+   # If using HTTPS, configure SSL detection
+   USE_X_FORWARDED_HOST = True
+   SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+   SECURE_SSL_REDIRECT = True
+   CSRF_COOKIE_SECURE = True
+   SESSION_COOKIE_SECURE = True
+   ```
+
+3. **Restart MediaCMS** to apply changes
+
+### Basic nginx Configuration
+
+```nginx
+location / {
+    proxy_pass http://mediacms:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+### Common Issues
+
+- **All users appear to share the same IP**: Ensure `TRUSTED_PROXIES` includes your proxy IP
+- **Login sessions shared between users**: Check session cookie domain and host header forwarding
+- **HTTPS/SSL errors**: Enable `SECURE_PROXY_SSL_HEADER` and secure cookie settings
+
+### Full Documentation
+
+For comprehensive documentation including:
+- Detailed architecture explanation
+- Configuration examples for various scenarios (nginx, Apache, cloud load balancers, Docker)
+- Troubleshooting guide
+- Security considerations
+- Advanced middleware configuration
+
+See the [Reverse Proxy Configuration Guide](reverse_proxy.md).
+
+## 26. Custom urls
 To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
 This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.
 
-## 26. Allowed files
+## 27. Allowed files
 MediaCMS performs identification attempts on new file uploads and only allows certain file types specified in the `ALLOWED_MEDIA_UPLOAD_TYPES` setting. By default, only ["video", "audio", "image", "pdf"] files are allowed.
 
 When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
 
 If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file. If 'all' is specified in this list, no check is performed and all files are allowed.
 
-## 27. User upload limits
+## 28. User upload limits
 MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
 
 When a user reaches this limit, they will no longer be able to upload new media until they delete some of their existing content. This limit applies regardless of the user's role or permissions in the system.
@@ -1063,7 +1124,7 @@ To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_
 NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
 ```
 
-## 28. Whisper Transcribe for Automatic Subtitles
+## 29. Whisper Transcribe for Automatic Subtitles
 MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles for your media files. This feature is useful for making your content more accessible.
 
 ### How it works
@@ -1076,3 +1137,1051 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 30. Logging Configuration and Management
+
+MediaCMS includes comprehensive logging capabilities to help administrators monitor, debug, and troubleshoot the application. This section covers logging configuration, log file locations, and common scenarios.
+
+### Overview
+
+MediaCMS uses Python's standard `logging` module to capture application events, errors, and exceptions. The logging system is configured in `cms/settings.py` and can be customized to meet your deployment needs.
+
+### Log File Locations
+
+By default, MediaCMS stores log files in the `logs/` directory within your project root:
+
+- **Django application log file**: `logs/debug.log` - Contains Django application logs (errors, exceptions, etc.)
+- **Celery log files**:
+  - `logs/celery_long.log` - Long-running Celery tasks
+  - `logs/celery_short.log` - Short-running Celery tasks
+  - `logs/celery_beat.log` - Celery beat scheduler logs
+- **Log directory**: Created automatically if it doesn't exist
+- **Permissions**: Ensure the application user has write permissions to the logs directory
+
+**Note**: Celery log files are configured separately via systemd services (local installation) or supervisord (Docker installation), and are independent of Django's LOGGING configuration. These logs use INFO level by default and are controlled by the Celery process configuration, not the `LOGLEVEL` setting.
+
+### Default Logging Configuration
+
+MediaCMS uses a conservative logging approach by default to minimize disk usage and ensure production stability:
+
+- **Log Level**: ERROR (only errors and critical issues are logged)
+- **Handler**: File handler writing to `logs/debug.log`
+- **Format**: Includes level name, timestamp, module name, and message
+
+This default configuration ensures that:
+- Only significant errors are logged
+- Log files don't grow excessively large
+- Production installations maintain consistent behavior
+
+### Enhanced Logging for Development
+
+When `DEBUG = True` in your settings, MediaCMS automatically enables enhanced logging:
+
+- **Console Output**: Logs are also displayed in the console/terminal (in addition to the log file)
+- **Log Level**: Automatically set to `DEBUG` (overrides `LOGLEVEL` setting)
+- **Additional Loggers**:
+  - `celery.task` - Individual Celery task execution (DEBUG level)
+  - `celery` - Celery worker processes (INFO level to reduce noise)
+  - `celery.utils.functional` - Suppressed at WARNING level to avoid useless debug messages
+  - `django.db.backends` - Database queries (only enabled if `ENABLE_SQL_DEBUG_LOGGING=True`)
+  - `django.request` - HTTP request/response logging
+- **All App Loggers**: All application loggers (files, users, uploader, etc.) are set to DEBUG level and output to both file and console
+- **Formatters**: Verbose formatting with timestamps and module names
+
+**Important**: When `DEBUG = True`, the `LOGLEVEL` setting is automatically overridden to `DEBUG` for all loggers. This ensures comprehensive logging during development, regardless of the `LOGLEVEL` value.
+
+**SQL Query Logging**: By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable SQL query logging, you must set `ENABLE_SQL_DEBUG_LOGGING=True` (see [SQL Debug Logging](#sql-debug-logging) section below).
+
+This enhanced logging is useful for:
+- Local development
+- Debugging issues
+- Understanding application flow
+
+### Configuration Options
+
+#### Basic Configuration
+
+The logging configuration is located in `cms/settings.py`. The primary mechanism for configuring log levels is the `LOGLEVEL` variable, which defaults to `"ERROR"` to match current behavior.
+
+```python
+# LOGLEVEL can be overridden via environment variable or local_settings.py
+# Default: "ERROR" (matches current behavior)
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR")
+
+# Enable SQL debug logging (default: False)
+# When DEBUG=True, SQL queries are only logged if ENABLE_SQL_DEBUG_LOGGING is also True
+ENABLE_SQL_DEBUG_LOGGING = os.environ.get("ENABLE_SQL_DEBUG_LOGGING", "False").lower() == "true"
+
+# When DEBUG=True, log level is automatically set to "DEBUG"
+effective_log_level = "DEBUG" if DEBUG else LOGLEVEL
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": effective_log_level,
+            "class": "logging.FileHandler",
+            "filename": error_filename,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": True,
+        },
+        "files": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "users": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "uploader": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "saml_auth": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "rbac": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "identity_providers": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "actions": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+        "cms": {
+            "handlers": ["file"],
+            "level": effective_log_level,
+            "propagate": False,
+        },
+    },
+}
+```
+
+**Configured Loggers:**
+- `django` - Django framework logs
+- `files` - Media file operations and encoding
+- `users` - User management and authentication
+- `uploader` - File upload operations
+- `saml_auth` - SAML authentication
+- `rbac` - Role-based access control
+- `identity_providers` - Identity provider integrations
+- `actions` - User actions (likes, comments, etc.)
+- `cms` - Core CMS functionality
+
+All loggers use the same log level as specified by `LOGLEVEL` (or "DEBUG" when `DEBUG=True`).
+
+#### Customizing Log Levels
+
+The `LOGLEVEL` variable is the primary mechanism for configuring log levels across all MediaCMS components. You can customize it in several ways:
+
+**Method 1: Override in `local_settings.py` (Recommended)**
+
+```python
+# Set LOGLEVEL to INFO for more verbose logging
+LOGLEVEL = "INFO"
+```
+
+This will automatically apply to all configured loggers and handlers. Valid log levels are: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
+
+**Method 2: Use Environment Variable**
+
+```bash
+# Set environment variable before starting MediaCMS
+export LOGLEVEL=INFO
+```
+
+**Method 3: Direct LOGGING Dictionary Modification (Advanced)**
+
+If you need fine-grained control over specific loggers, you can modify the LOGGING dictionary directly:
+
+```python
+# In local_settings.py - modify specific logger levels
+LOGGING["loggers"]["files"]["level"] = "DEBUG"
+LOGGING["loggers"]["django"]["level"] = "INFO"
+```
+
+**Note**: When `DEBUG = True`, the log level is automatically set to `DEBUG` for all loggers, overriding the `LOGLEVEL` setting. This ensures comprehensive logging during development.
+
+#### SQL Debug Logging
+
+By default, SQL query logging is **disabled** even when `DEBUG=True` to prevent excessive log noise. To enable detailed SQL query logging, you must explicitly set `ENABLE_SQL_DEBUG_LOGGING=True`.
+
+**Method 1: Override in `local_settings.py` (Recommended)**
+
+```python
+# Enable SQL debug logging
+DEBUG = True
+ENABLE_SQL_DEBUG_LOGGING = True
+```
+
+**Method 2: Use Environment Variable**
+
+```bash
+# Set environment variable before starting MediaCMS
+export ENABLE_SQL_DEBUG_LOGGING=True
+```
+
+**Note**: SQL debug logging requires both `DEBUG=True` and `ENABLE_SQL_DEBUG_LOGGING=True` to be enabled. This allows you to have detailed application logging without the SQL query noise.
+
+### Logged Events Reference
+
+MediaCMS logs a comprehensive set of events to help administrators monitor application activity, troubleshoot issues, and audit user actions. All events use structured logging with key-value pairs for easy parsing and analysis.
+
+#### Authentication Events
+
+The following authentication-related events are logged:
+
+- **Login (API)**: When users log in via the API endpoint (`/api/v1/login`)
+  - Log level: INFO
+  - Example: `Login successful - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Login (django-allauth)**: When users log in via the web UI using django-allauth
+  - Log level: INFO
+  - Example: `Login successful (django-allauth) - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Login (SAML)**: When users successfully authenticate via SAML/SSO
+  - Log level: INFO (logged via django-allauth user_logged_in signal)
+  - Example: `Login successful (django-allauth) - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Logout**: When users log out via django-allauth
+  - Log level: INFO
+  - Example: `Logout (django-allauth) - user_id=1, username=admin`
+
+- **Failed Login Attempts**: Comprehensive logging of failed login attempts across all authentication methods (API, django-allauth, SAML)
+  - Log level: WARNING
+  - Failure types logged:
+    - `user_not_found`: User account does not exist
+    - `wrong_password`: User exists but password is incorrect
+    - `user_deactivated`: User account is inactive
+    - `user_not_approved`: User account is pending approval (when USERS_NEEDS_TO_BE_APPROVED is enabled)
+    - `saml_error`: SAML authentication error (invalid response, processing errors)
+    - `authentication_cancelled`: SAML authentication was cancelled
+    - `session_missing`: SAML session data missing
+    - `idp_initiated_rejected`: IdP-initiated SSO was rejected
+  - Examples:
+    - API: `Login failed - wrong_password, attempted_username_or_email=testuser, ip=192.168.1.100`
+    - django-allauth: `Login failed (django-allauth) - user_not_found, attempted_username_or_email=testuser, ip=192.168.1.100`
+    - SAML: `Login failed (SAML) - saml_error, organization_slug=myorg, errors=invalid_response, error_reason=Invalid signature, ip=192.168.1.100`
+
+- **Password Reset Request**: When a user requests a password reset
+  - Log level: INFO
+  - Example: `Password reset requested - user_id=1, username=admin, email=admin@example.com, ip=192.168.1.100`
+
+- **Password Changed**: When a user changes their password via django-allauth
+  - Log level: INFO
+  - Example: `Password changed - user_id=1, username=admin, ip=192.168.1.100`
+
+- **Email Confirmed**: When a user confirms their email address
+  - Log level: INFO
+  - Example: `Email confirmed - user_id=1, username=admin, email=admin@example.com`
+
+- **Account Signup**: When a new account is created via django-allauth
+  - Log level: INFO
+  - Example: `Account signup (django-allauth) - user_id=2, username=newuser, email=newuser@example.com, ip=192.168.1.100`
+
+#### User Management Events
+
+The following user management events are logged:
+
+- **User Registration/Creation**: When a new user is created
+  - Log level: INFO
+  - Example: `User registered - user_id=2, username=newuser, email=newuser@example.com`
+
+- **User Deletion**: When a user is deleted (includes content counts)
+  - Log level: INFO
+  - Example: `User deletion - user_id=2, username=olduser, email=olduser@example.com, media_count=5, tag_count=3, category_count=1`
+
+- **User Password Change**: When a user changes their password via API
+  - Log level: INFO
+  - Example: `Password changed - user_id=1, username=admin, changed_by_user_id=1, changed_by_username=admin`
+
+- **User Approval**: When an administrator approves a user
+  - Log level: INFO
+  - Example: `User approved - user_id=2, username=newuser, approved_by_user_id=1, approved_by_username=admin`
+
+- **User Disapproval**: When an administrator disapproves a user
+  - Log level: INFO
+  - Example: `User disapproved - user_id=2, username=newuser, disapproved_by_user_id=1, disapproved_by_username=admin`
+
+- **Role Changes**: When a user's role is changed (via SAML or manual assignment)
+  - Log level: INFO
+  - Example: `User role(s) changed - user_id=2, username=user, changed_roles={'is_editor': {'old': False, 'new': True}}, source=role_mapping`
+
+#### Media Operations
+
+The following media-related events are logged:
+
+- **Media Creation**: When new media is uploaded and created
+  - Log level: INFO
+  - Example: `Media created - friendly_token=abc123, user_id=1, username=admin, media_type=video, title=My Video`
+
+- **Media Updates**: When media metadata is updated via API
+  - Log level: INFO
+  - Example: `Media updated via API - friendly_token=abc123, user_id=1, changed_fields={'title': {'old': 'Old Title', 'new': 'New Title'}}`
+
+- **Media Deletion Initiated**: When media deletion is started
+  - Log level: INFO
+  - Example: `Media deletion initiated - friendly_token=abc123, user_id=1, media_type=video`
+
+- **Media Deletion Completed**: When media deletion is completed and files are removed
+  - Log level: INFO
+  - Example: `Media deletion completed - friendly_token=abc123, user_id=1, media_type=video, title=My Video`
+
+- **Media Deletion via API**: When media is deleted via API endpoint
+  - Log level: INFO
+  - Example: `Media deletion requested via API - friendly_token=abc123, user_id=1, request_user_id=1`
+
+- **Bulk Media Operations**: When bulk actions are performed on media (enable/disable comments, download, delete, set state, change owner, etc.)
+  - Log level: INFO
+  - Example: `Bulk action: download enabled - count=5, user_id=1, media_ids=['abc123', 'def456']`
+
+- **Media Category Changes**: When media is added to or removed from categories
+  - Log level: INFO
+  - Example: `Media category added - friendly_token=abc123, user_id=1, action=post_add, category_count=2, category_names=['Category 1', 'Category 2']`
+
+#### Subtitle Operations
+
+The following subtitle-related events are logged:
+
+- **Subtitle Creation**: When a new subtitle is created
+  - Log level: INFO
+  - Example: `Subtitle created - friendly_token=abc123, language=en, user_id=1`
+
+- **Subtitle Updates**: When an existing subtitle is updated
+  - Log level: DEBUG
+  - Example: `Subtitle updated - friendly_token=abc123, language=en, user_id=1`
+
+#### Encoding Operations
+
+The following encoding-related events are logged:
+
+- **Encoding Creation**: When a new encoding is created
+  - Log level: INFO
+  - Example: `Encoding created - friendly_token=abc123, profile_id=1, profile_name=720p, status=pending, chunk=False`
+
+- **Encoding Updates**: When an encoding status is updated
+  - Log level: DEBUG
+  - Example: `Encoding updated - friendly_token=abc123, profile_id=1, status=success, chunk=False`
+
+- **Encoding Deletion**: When an encoding is deleted
+  - Log level: INFO
+  - Example: `Encoding deleted - friendly_token=abc123, profile_id=1, profile_name=720p, status=success, chunk=False, has_media_file=True`
+
+#### Video Chapter Operations
+
+The following video chapter-related events are logged:
+
+- **Chapter Data Deletion**: When video chapter data is deleted
+  - Log level: INFO
+  - Example: `Video chapter data deleted - friendly_token=abc123, user_id=1, chapters_folder=/path/to/chapters`
+
+#### RBAC Operations
+
+The following RBAC-related events are logged:
+
+- **RBAC Group Category Changes**: When categories are added to or removed from RBAC groups
+  - Log level: INFO
+  - Example: `RBAC group category added - group_id=1, group_name=Students, group_uid=student-group, action=post_add, category_count=2, category_names=['Category 1', 'Category 2'], identity_provider=saml`
+
+#### Category and Tag Operations
+
+The following category and tag-related events are logged:
+
+- **Category Creation**: When a new category is created
+  - Log level: INFO
+  - Example: `Category created - category_id=1, title=Science, user_id=1, is_global=True, is_rbac_category=False`
+
+- **Category Updates**: When a category is updated
+  - Log level: DEBUG
+  - Example: `Category updated - category_id=1, title=Science, user_id=1`
+
+- **Category Deletion**: When a category is deleted
+  - Log level: INFO
+  - Example: `Category deleted - category_id=1, title=Science, user_id=1, is_global=True, media_count=5`
+
+- **Tag Creation**: When a new tag is created
+  - Log level: INFO
+  - Example: `Tag created - tag_id=1, title=educational, user_id=1`
+
+- **Tag Updates**: When a tag is updated
+  - Log level: DEBUG
+  - Example: `Tag updated - tag_id=1, title=educational, user_id=1`
+
+- **Tag Deletion**: When a tag is deleted
+  - Log level: INFO
+  - Example: `Tag deleted - tag_id=1, title=educational, user_id=1, media_count=3`
+
+#### Comment Operations
+
+The following comment-related events are logged:
+
+- **Comment Creation**: When a new comment is created
+  - Log level: INFO
+  - Example: `Comment created - comment_id=1, user_id=1, username=admin, media_friendly_token=abc123, has_parent=False`
+
+- **Comment Updates**: When a comment is updated
+  - Log level: DEBUG
+  - Example: `Comment updated - comment_id=1, user_id=1, media_friendly_token=abc123`
+
+- **Comment Deletion**: When a comment is deleted
+  - Log level: INFO
+  - Example: `Comment deleted - comment_id=1, user_id=1, username=admin, media_friendly_token=abc123`
+
+#### Playlist Operations
+
+The following playlist-related events are logged:
+
+- **Playlist Creation**: When a new playlist is created
+  - Log level: INFO
+  - Example: `Playlist created - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1, username=admin`
+
+- **Playlist Updates**: When a playlist is updated
+  - Log level: DEBUG
+  - Example: `Playlist updated - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1`
+
+- **Playlist Deletion**: When a playlist is deleted
+  - Log level: INFO
+  - Example: `Playlist deleted - playlist_id=1, friendly_token=xyz789, title=My Playlist, user_id=1, username=admin`
+
+- **Media Added to Playlist**: When media is added to a playlist
+  - Log level: INFO
+  - Example: `Media added to playlist - playlist_id=1, playlist_friendly_token=xyz789, media_friendly_token=abc123, ordering=1`
+
+- **Media Removed from Playlist**: When media is removed from a playlist
+  - Log level: INFO
+  - Example: `Media removed from playlist - playlist_id=1, playlist_friendly_token=xyz789, media_friendly_token=abc123`
+
+#### Rating Operations
+
+The following rating-related events are logged:
+
+- **Rating Creation**: When a new rating is created
+  - Log level: INFO
+  - Example: `Rating created - rating_id=1, user_id=1, username=admin, media_friendly_token=abc123, rating_category_id=1, rating_category_title=Quality, score=5`
+
+- **Rating Updates**: When a rating is updated
+  - Log level: DEBUG
+  - Example: `Rating updated - rating_id=1, user_id=1, media_friendly_token=abc123, score=4`
+
+- **Rating Deletion**: When a rating is deleted
+  - Log level: INFO
+  - Example: `Rating deleted - rating_id=1, user_id=1, username=admin, media_friendly_token=abc123, rating_category_title=Quality, score=5`
+
+- **Rating Category Creation**: When a new rating category is created
+  - Log level: INFO
+  - Example: `Rating category created - rating_category_id=1, title=Quality, enabled=True`
+
+- **Rating Category Updates**: When a rating category is updated
+  - Log level: DEBUG
+  - Example: `Rating category updated - rating_category_id=1, title=Quality, enabled=True`
+
+- **Rating Category Deletion**: When a rating category is deleted
+  - Log level: INFO
+  - Example: `Rating category deleted - rating_category_id=1, title=Quality`
+
+#### Page Operations
+
+The following page-related events are logged:
+
+- **Page Creation**: When a new page is created
+  - Log level: INFO
+  - Example: `Page created - page_id=1, slug=about, title=About Us`
+
+- **Page Updates**: When a page is updated
+  - Log level: DEBUG
+  - Example: `Page updated - page_id=1, slug=about, title=About Us`
+
+- **Page Deletion**: When a page is deleted
+  - Log level: INFO
+  - Example: `Page deleted - page_id=1, slug=about, title=About Us`
+
+- **TinyMCE Media Upload**: When a file is uploaded via TinyMCE
+  - Log level: INFO
+  - Example: `TinyMCE media uploaded - file_id=1, original_filename=image.jpg, file_type=image, user_id=1`
+
+- **TinyMCE Media Deletion**: When a TinyMCE media file is deleted
+  - Log level: INFO
+  - Example: `TinyMCE media deleted - file_id=1, original_filename=image.jpg, file_type=image, user_id=1`
+
+#### License Operations
+
+The following license-related events are logged:
+
+- **License Creation**: When a new license is created
+  - Log level: INFO
+  - Example: `License created - license_id=1, title=CC BY 4.0`
+
+- **License Updates**: When a license is updated
+  - Log level: DEBUG
+  - Example: `License updated - license_id=1, title=CC BY 4.0`
+
+- **License Deletion**: When a license is deleted
+  - Log level: INFO
+  - Example: `License deleted - license_id=1, title=CC BY 4.0`
+
+#### Channel Operations
+
+The following channel-related events are logged:
+
+- **Channel Creation**: When a new channel is created
+  - Log level: INFO
+  - Example: `Channel created - channel_id=1, friendly_token=def456, title=My Channel, user_id=1, username=admin`
+
+- **Channel Updates**: When a channel is updated
+  - Log level: DEBUG
+  - Example: `Channel updated - channel_id=1, friendly_token=def456, title=My Channel, user_id=1`
+
+- **Channel Deletion**: When a channel is deleted
+  - Log level: INFO
+  - Example: `Channel deleted - channel_id=1, friendly_token=def456, title=My Channel, user_id=1, username=admin`
+
+#### MediaAction Operations
+
+The following user action events are logged:
+
+- **User Action**: When a user performs an action (like, dislike, watch, report, rate)
+  - Log level: INFO
+  - Example: `User action - action_id=1, action=like, user_id=1, username=admin, media_friendly_token=abc123, session_key=None, remote_ip=192.168.1.100`
+
+#### Identity Provider Operations
+
+The following identity provider-related events are logged:
+
+- **Identity Provider Group Role Mapping Creation**: When a group role mapping is created
+  - Log level: INFO
+  - Example: `Identity provider group role mapping created - mapping_id=1, identity_provider_id=1, name=student-group, map_to=member`
+
+- **Identity Provider Group Role Mapping Updates**: When a group role mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider group role mapping updated - mapping_id=1, identity_provider_id=1, name=student-group, map_to=contributor`
+
+- **Identity Provider Group Role Mapping Deletion**: When a group role mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider group role mapping deleted - mapping_id=1, identity_provider_id=1, name=student-group, map_to=member`
+
+- **Identity Provider Global Role Mapping Creation**: When a global role mapping is created
+  - Log level: INFO
+  - Example: `Identity provider global role mapping created - mapping_id=1, identity_provider_id=1, name=admin, map_to=admin`
+
+- **Identity Provider Global Role Mapping Updates**: When a global role mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider global role mapping updated - mapping_id=1, identity_provider_id=1, name=admin, map_to=manager`
+
+- **Identity Provider Global Role Mapping Deletion**: When a global role mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider global role mapping deleted - mapping_id=1, identity_provider_id=1, name=admin, map_to=admin`
+
+- **Identity Provider Category Mapping Creation**: When a category mapping is created
+  - Log level: INFO
+  - Example: `Identity provider category mapping created - mapping_id=1, identity_provider_id=1, name=student-group, category_id=1, category_title=Science`
+
+- **Identity Provider Category Mapping Updates**: When a category mapping is updated
+  - Log level: DEBUG
+  - Example: `Identity provider category mapping updated - mapping_id=1, identity_provider_id=1, name=student-group, category_id=2`
+
+- **Identity Provider Category Mapping Deletion**: When a category mapping is deleted
+  - Log level: INFO
+  - Example: `Identity provider category mapping deleted - mapping_id=1, identity_provider_id=1, name=student-group, category_id=1, category_title=Science`
+
+#### SAML Configuration Operations
+
+The following SAML configuration-related events are logged:
+
+- **SAML Configuration Creation**: When a new SAML configuration is created
+  - Log level: INFO
+  - Example: `SAML configuration created - config_id=1, social_app_id=1, social_app_name=My SAML Provider, idp_id=https://idp.example.com`
+
+- **SAML Configuration Updates**: When a SAML configuration is updated
+  - Log level: DEBUG
+  - Example: `SAML configuration updated - config_id=1, social_app_id=1, idp_id=https://idp.example.com`
+
+- **SAML Configuration Deletion**: When a SAML configuration is deleted
+  - Log level: INFO
+  - Example: `SAML configuration deleted - config_id=1, social_app_id=1, social_app_name=My SAML Provider, idp_id=https://idp.example.com`
+
+#### Admin Actions
+
+The following admin action events are logged:
+
+- **Admin Media Deletion**: When an administrator deletes media
+  - Log level: INFO
+  - Example: `Admin action: media deleted - count=3, admin_user_id=1, admin_username=admin, deleted_friendly_tokens=['abc123', 'def456', 'ghi789']`
+
+- **Admin Comment Deletion**: When an administrator deletes comments
+  - Log level: INFO
+  - Example: `Admin action: comments deleted - count=5, admin_user_id=1, admin_username=admin`
+
+- **Admin User Deletion**: When an administrator deletes users
+  - Log level: INFO
+  - Example: `Admin action: users deleted - count=2, admin_user_id=1, admin_username=admin, deleted_usernames=['user1', 'user2']`
+
+### Signal Handler Reference
+
+MediaCMS uses Django signals to automatically log important events. The following signal handlers are configured with logging:
+
+#### Django-Allauth Signal Handlers
+
+- **`user_logged_in`** (`users/models.py`)
+  - Triggered: When a user successfully logs in via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, IP address
+
+- **`user_logged_out`** (`users/models.py`)
+  - Triggered: When a user logs out via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username
+
+- **`password_reset`** (`users/models.py`)
+  - Triggered: When a password reset is requested
+  - Log level: INFO
+  - Logs: user_id, username, email, IP address
+
+- **`email_confirmed`** (`users/models.py`)
+  - Triggered: When an email address is confirmed
+  - Log level: INFO
+  - Logs: user_id, username, email
+
+- **`password_changed`** (`users/models.py`)
+  - Triggered: When a password is changed via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, IP address
+
+- **`user_signed_up`** (`users/models.py`)
+  - Triggered: When a new account is created via django-allauth
+  - Log level: INFO
+  - Logs: user_id, username, email, IP address
+
+#### Django Model Signal Handlers
+
+- **`post_save` for User** (`users/models.py`)
+  - Triggered: When a user is created
+  - Log level: INFO
+  - Logs: user_id, username, email
+
+- **`post_delete` for User** (`users/models.py`)
+  - Triggered: When a user is deleted
+  - Log level: INFO
+  - Logs: user_id, username, email, media_count, tag_count, category_count
+
+- **`post_save` for Media** (`files/models/media.py`)
+  - Triggered: When media is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, user_id, username, media_type, title (for creation)
+
+- **`pre_delete` for Media** (`files/models/media.py`)
+  - Triggered: Before media is deleted
+  - Log level: INFO
+  - Logs: friendly_token, user_id, media_type
+
+- **`post_delete` for Media** (`files/models/media.py`)
+  - Triggered: After media is deleted and files are removed
+  - Log level: INFO
+  - Logs: friendly_token, user_id, media_type, title
+
+- **`m2m_changed` for Media.category** (`files/models/media.py`)
+  - Triggered: When media categories are added or removed
+  - Log level: INFO
+  - Logs: friendly_token, user_id, action, category_count, category_names
+
+- **`post_save` for Subtitle** (`files/models/subtitle.py`)
+  - Triggered: When a subtitle is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, language, user_id
+
+- **`post_save` for Encoding** (`files/models/encoding.py`)
+  - Triggered: When an encoding is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: friendly_token, profile_id, profile_name, status, chunk
+
+- **`post_delete` for Encoding** (`files/models/encoding.py`)
+  - Triggered: When an encoding is deleted
+  - Log level: INFO
+  - Logs: friendly_token, profile_id, profile_name, status, chunk, has_media_file
+
+- **`post_delete` for VideoChapterData** (`files/models/video_data.py`)
+  - Triggered: When video chapter data is deleted
+  - Log level: INFO
+  - Logs: friendly_token, user_id, chapters_folder
+
+- **`m2m_changed` for RBACGroup.categories** (`rbac/models.py`)
+  - Triggered: When categories are added to or removed from RBAC groups
+  - Log level: INFO
+  - Logs: group_id, group_name, group_uid, action, category_count, category_names, identity_provider
+
+- **`post_save` for Category** (`files/models/category.py`)
+  - Triggered: When a category is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: category_id, title, user_id, is_global, is_rbac_category
+
+- **`post_delete` for Category** (`files/models/category.py`)
+  - Triggered: When a category is deleted
+  - Log level: INFO
+  - Logs: category_id, title, user_id, is_global, media_count
+
+- **`post_save` for Tag** (`files/models/category.py`)
+  - Triggered: When a tag is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: tag_id, title, user_id
+
+- **`post_delete` for Tag** (`files/models/category.py`)
+  - Triggered: When a tag is deleted
+  - Log level: INFO
+  - Logs: tag_id, title, user_id, media_count
+
+- **`post_save` for Comment** (`files/models/comment.py`)
+  - Triggered: When a comment is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: comment_id, user_id, username, media_friendly_token, has_parent
+
+- **`post_delete` for Comment** (`files/models/comment.py`)
+  - Triggered: When a comment is deleted
+  - Log level: INFO
+  - Logs: comment_id, user_id, username, media_friendly_token
+
+- **`post_save` for Playlist** (`files/models/playlist.py`)
+  - Triggered: When a playlist is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: playlist_id, friendly_token, title, user_id, username
+
+- **`post_delete` for Playlist** (`files/models/playlist.py`)
+  - Triggered: When a playlist is deleted
+  - Log level: INFO
+  - Logs: playlist_id, friendly_token, title, user_id, username
+
+- **`post_save` for PlaylistMedia** (`files/models/playlist.py`)
+  - Triggered: When media is added to or reordered in a playlist
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: playlist_id, playlist_friendly_token, media_friendly_token, ordering
+
+- **`post_delete` for PlaylistMedia** (`files/models/playlist.py`)
+  - Triggered: When media is removed from a playlist
+  - Log level: INFO
+  - Logs: playlist_id, playlist_friendly_token, media_friendly_token
+
+- **`post_save` for Rating** (`files/models/rating.py`)
+  - Triggered: When a rating is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: rating_id, user_id, username, media_friendly_token, rating_category_id, rating_category_title, score
+
+- **`post_delete` for Rating** (`files/models/rating.py`)
+  - Triggered: When a rating is deleted
+  - Log level: INFO
+  - Logs: rating_id, user_id, username, media_friendly_token, rating_category_title, score
+
+- **`post_save` for RatingCategory** (`files/models/rating.py`)
+  - Triggered: When a rating category is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: rating_category_id, title, enabled
+
+- **`post_delete` for RatingCategory** (`files/models/rating.py`)
+  - Triggered: When a rating category is deleted
+  - Log level: INFO
+  - Logs: rating_category_id, title
+
+- **`post_save` for Page** (`files/models/page.py`)
+  - Triggered: When a page is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: page_id, slug, title
+
+- **`post_delete` for Page** (`files/models/page.py`)
+  - Triggered: When a page is deleted
+  - Log level: INFO
+  - Logs: page_id, slug, title
+
+- **`post_save` for TinyMCEMedia** (`files/models/page.py`)
+  - Triggered: When a TinyMCE media file is uploaded or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: file_id, original_filename, file_type, user_id
+
+- **`post_delete` for TinyMCEMedia** (`files/models/page.py`)
+  - Triggered: When a TinyMCE media file is deleted
+  - Log level: INFO
+  - Logs: file_id, original_filename, file_type, user_id
+
+- **`post_save` for License** (`files/models/license.py`)
+  - Triggered: When a license is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: license_id, title
+
+- **`post_delete` for License** (`files/models/license.py`)
+  - Triggered: When a license is deleted
+  - Log level: INFO
+  - Logs: license_id, title
+
+- **`post_save` for Channel** (`users/models.py`)
+  - Triggered: When a channel is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: channel_id, friendly_token, title, user_id, username
+
+- **`post_delete` for Channel** (`users/models.py`)
+  - Triggered: When a channel is deleted
+  - Log level: INFO
+  - Logs: channel_id, friendly_token, title, user_id, username
+
+- **`post_save` for MediaAction** (`actions/models.py`)
+  - Triggered: When a user action is created (like, dislike, watch, report, rate)
+  - Log level: INFO
+  - Logs: action_id, action, user_id, username, media_friendly_token, session_key, remote_ip
+
+- **`post_save` for IdentityProviderGroupRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider group role mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_delete` for IdentityProviderGroupRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider group role mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_save` for IdentityProviderGlobalRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider global role mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_delete` for IdentityProviderGlobalRole** (`identity_providers/models.py`)
+  - Triggered: When an identity provider global role mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, map_to
+
+- **`post_save` for IdentityProviderCategoryMapping** (`identity_providers/models.py`)
+  - Triggered: When an identity provider category mapping is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: mapping_id, identity_provider_id, name, category_id, category_title
+
+- **`post_delete` for IdentityProviderCategoryMapping** (`identity_providers/models.py`)
+  - Triggered: When an identity provider category mapping is deleted
+  - Log level: INFO
+  - Logs: mapping_id, identity_provider_id, name, category_id, category_title
+
+- **`post_save` for SAMLConfiguration** (`saml_auth/models.py`)
+  - Triggered: When a SAML configuration is created or updated
+  - Log level: INFO (creation), DEBUG (updates)
+  - Logs: config_id, social_app_id, social_app_name, idp_id
+
+- **`post_delete` for SAMLConfiguration** (`saml_auth/models.py`)
+  - Triggered: When a SAML configuration is deleted
+  - Log level: INFO
+  - Logs: config_id, social_app_id, social_app_name, idp_id
+
+### Common Scenarios
+
+#### Development Environment
+
+For local development with detailed logging:
+
+1. Set `DEBUG = True` in `cms/settings.py` or `local_settings.py`
+2. Enhanced logging will automatically activate
+3. Logs will appear both in `logs/debug.log` and console output
+
+**Example `local_settings.py` for development:**
+```python
+DEBUG = True
+# Optionally enable SQL query logging (disabled by default to reduce log noise)
+# ENABLE_SQL_DEBUG_LOGGING = True
+```
+
+#### Production Environment
+
+For production deployments:
+
+1. Keep `DEBUG = False` (default)
+2. Default ERROR-level logging will be active (`LOGLEVEL = "ERROR"`)
+3. Only critical errors will be logged to `logs/debug.log`
+4. To enable more verbose logging for troubleshooting, set `LOGLEVEL = "INFO"` or `LOGLEVEL = "WARNING"`
+
+**Example `local_settings.py` for production:**
+```python
+DEBUG = False
+# LOGLEVEL defaults to "ERROR" - only errors are logged
+# Uncomment the line below to enable INFO level logging for troubleshooting:
+# LOGLEVEL = "INFO"
+```
+
+#### Temporarily Enabling Debug Logging
+
+To temporarily enable more verbose logging for troubleshooting:
+
+**Option 1: Use LOGLEVEL in `local_settings.py` (Recommended)**
+```python
+# Temporarily enable INFO level logging
+# This applies to all loggers automatically
+LOGLEVEL = "INFO"
+```
+
+**Option 2: Use Environment Variable**
+```bash
+# Set LOGLEVEL environment variable before starting MediaCMS
+export LOGLEVEL=INFO
+
+# For Docker installations, add to docker-compose.yaml:
+environment:
+  - LOGLEVEL=INFO
+
+# For systemd services, add to service file:
+Environment=LOGLEVEL=INFO
+```
+
+**Option 3: Direct LOGGING Dictionary Modification (Advanced)**
+If you need to modify specific loggers without changing the global level:
+```python
+# In local_settings.py
+LOGGING["handlers"]["file"]["level"] = "INFO"
+LOGGING["loggers"]["django"]["level"] = "INFO"
+LOGGING["loggers"]["files"]["level"] = "DEBUG"  # More verbose for file operations
+```
+
+**Remember**: After troubleshooting, revert these changes to maintain production performance and minimize log file growth.
+
+### Viewing Logs
+
+#### Command Line
+
+**Django Application Logs:**
+```bash
+# View logs in real-time
+tail -f logs/debug.log
+
+# Search for specific errors
+grep -i "error" logs/debug.log
+
+# View recent errors
+tail -n 100 logs/debug.log | grep -i error
+```
+
+**Celery Logs:**
+```bash
+# View Celery long tasks logs
+tail -f logs/celery_long.log
+
+# View Celery short tasks logs
+tail -f logs/celery_short.log
+
+# View Celery beat scheduler logs
+tail -f logs/celery_beat.log
+
+# View all Celery logs together
+tail -f logs/celery_*.log
+```
+
+**Note**: Celery log files are separate from Django's `logs/debug.log` and are configured independently. They use INFO level by default and are controlled by Celery's process configuration.
+
+#### Log Rotation
+
+For production deployments, consider setting up log rotation to prevent log files from growing too large:
+
+**Using logrotate (Linux):**
+```bash
+# Create /etc/logrotate.d/mediacms
+/path/to/mediacms/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 www-data www-data
+    # Adjust user/group to match your MediaCMS installation user
+}
+```
+
+This configuration will rotate all log files in the `logs/` directory, including:
+- `debug.log` (Django application logs)
+- `celery_long.log` (Celery long tasks)
+- `celery_short.log` (Celery short tasks)
+- `celery_beat.log` (Celery beat scheduler)
+
+**Note**: Adjust the `create` directive user/group (`www-data` in the example) to match your MediaCMS installation user. Common values are `www-data`, `mediacms`, or `nginx` depending on your setup.
+
+### Logging Locations in Codebase
+
+MediaCMS logs exceptions and errors from the following areas:
+
+- **Celery Tasks** (`files/tasks.py`): Encoding errors, task failures
+- **FFmpeg Backend** (`files/backends.py`): Video encoding exceptions
+- **File Operations** (`files/helpers.py`): File I/O errors, command execution failures
+- **User Management** (`users/views.py`): User lookup failures, permission errors
+- **Media Upload** (`uploader/views.py`): File upload errors
+- **Media Models** (`files/models/media.py`): Model operation exceptions
+
+### Troubleshooting
+
+#### Logs Not Being Created
+
+1. Check that the `logs/` directory exists and is writable
+2. Verify file permissions: `chmod 755 logs/` and `chmod 644 logs/debug.log`
+3. Check application user has write access to the logs directory
+
+#### Too Many Logs
+
+1. Ensure `DEBUG = False` in production
+2. Verify log level is set to ERROR (default)
+3. Check for misconfigured loggers in `local_settings.py`
+4. **SQL Query Logging**: SQL queries are disabled by default even when `DEBUG=True`. If you're seeing excessive SQL logs, ensure `ENABLE_SQL_DEBUG_LOGGING` is not set to `True`
+5. **Celery Logging**: MediaCMS automatically suppresses useless Celery debug messages (`celery.utils.functional`) and sets the general `celery` logger to INFO level to reduce noise while keeping useful task logs at DEBUG level
+
+#### Missing Log Information
+
+1. Temporarily enable INFO or DEBUG level logging
+2. Check that exception handlers are properly logging (see [Developer Documentation](developers_docs.md#8-logging-in-mediacms))
+3. Verify log file permissions allow writing
+
+### Integration with External Log Aggregation
+
+MediaCMS logs can be integrated with external log aggregation systems:
+
+- **Syslog**: Configure Python logging to use SyslogHandler
+- **ELK Stack**: Use Filebeat to ship logs to Elasticsearch
+- **Cloud Logging**: Configure handlers for cloud providers (AWS CloudWatch, Google Cloud Logging, etc.)
+
+**Example: Adding Syslog Handler**
+```python
+# In local_settings.py
+import logging.handlers
+
+LOGGING["handlers"]["syslog"] = {
+    "level": "ERROR",
+    "class": "logging.handlers.SysLogHandler",
+    "address": "/dev/log",
+    "formatter": "verbose",
+}
+LOGGING["loggers"]["django"]["handlers"].append("syslog")
+```
+
+### Best Practices
+
+1. **Production**: Keep `LOGLEVEL = "ERROR"` (default) to minimize disk usage and log file growth
+2. **Development**: Use `DEBUG = True` for comprehensive logging (automatically sets log level to DEBUG)
+3. **Troubleshooting**: Temporarily set `LOGLEVEL = "INFO"` or `LOGLEVEL = "WARNING"` in `local_settings.py`, then revert after resolving issues
+4. **Monitoring**: Set up log rotation for all log files (Django and Celery) and monitoring for production
+5. **Security**: Ensure log files have appropriate permissions and don't contain sensitive data
+6. **Consistency**: Use `LOGLEVEL` as the primary configuration mechanism rather than modifying the LOGGING dictionary directly
+
+### Related Documentation
+
+- For information on adding logging to code, see [Developer Documentation - Logging in MediaCMS](developers_docs.md#8-logging-in-mediacms)
+- For debugging specific issues, check the relevant sections in this documentation

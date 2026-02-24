@@ -17,7 +17,7 @@ MediaCMS.url = {
     addMedia: "/upload",
     recordScreen: "/record_screen",
     /* Profile/account edit pages */
-    editProfile: "{{user.edit_url}}",
+    editProfile: {% if request.user.is_authenticated and user.edit_url %}"{{user.edit_url}}"{% else %}null{% endif %},
     {% if request.user.is_authenticated %}
     signout: "/accounts/logout/",
     editChannel: "{{user.default_channel_edit_url}}",
