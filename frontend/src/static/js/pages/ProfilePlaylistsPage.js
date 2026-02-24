@@ -1,6 +1,7 @@
 import React from 'react';
 import { ApiUrlConsumer } from '../utils/contexts/';
 import { PageStore } from '../utils/stores/';
+import { inEmbeddedApp } from '../utils/helpers/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
@@ -30,7 +31,7 @@ export class ProfilePlaylistsPage extends ProfileMediaPage {
   pageContent() {
     return [
       this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="playlists" />
+        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="playlists" hideChannelBanner={inEmbeddedApp()} />
       ) : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
