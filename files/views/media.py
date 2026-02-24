@@ -583,8 +583,7 @@ class MediaBulkUserActions(APIView):
 
             # Prioritize category_uids
             if category_uids:
-                # Filter categories by UID and ensure they are NOT RBAC categories
-                categories = Category.objects.filter(uid__in=category_uids, is_rbac_category=False)
+                categories = Category.objects.filter(uid__in=category_uids)
             elif lti_context_id:
                 # Filter categories by lti_context_id and ensure they ARE RBAC categories
                 potential_categories = Category.objects.filter(lti_context_id=lti_context_id, is_rbac_category=True)
