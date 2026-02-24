@@ -14,6 +14,8 @@ class CategoryModalWidget(forms.SelectMultiple):
         js = ('js/category_modal.js',)
 
     def render(self, name, value, attrs=None, renderer=None):
+        is_lms_mode = getattr(self, 'is_lms_mode', False)
+
         # Get all categories as JSON
         categories = []
         for opt_value, opt_label in self.choices:
@@ -30,20 +32,24 @@ class CategoryModalWidget(forms.SelectMultiple):
 
         all_categories_json = json.dumps(categories)
         selected_ids_json = json.dumps([str(v) for v in (value or [])])
+        lms_mode_json = json.dumps(is_lms_mode)
+
+        search_placeholder = "Search courses..." if is_lms_mode else "Search categories..."
+        selected_header = "Selected Courses" if is_lms_mode else "Selected Categories"
 
         html = f'''<div class="category-widget" data-name="{name}">
   <div class="category-content">
     <div class="category-panel">
-      <input type="text" class="category-search" placeholder="Search categories...">
+      <input type="text" class="category-search" placeholder="{search_placeholder}">
       <div class="category-list scrollable" data-panel="left"></div>
     </div>
     <div class="category-panel">
-      <h3>Selected Categories</h3>
+      <h3>{selected_header}</h3>
       <div class="category-list scrollable" data-panel="right"></div>
     </div>
   </div>
   <div class="hidden-inputs"></div>
-  <script type="application/json" class="category-data">{{"all":{all_categories_json},"selected":{selected_ids_json}}}</script>
+  <script type="application/json" class="category-data">{{"all":{all_categories_json},"selected":{selected_ids_json},"lms_mode":{lms_mode_json}}}</script>
 </div>'''
 
         return mark_safe(html)

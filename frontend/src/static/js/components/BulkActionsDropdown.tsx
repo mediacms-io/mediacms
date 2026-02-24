@@ -1,6 +1,7 @@
 import React from 'react';
 import './BulkActionsDropdown.scss';
 import { translateString } from '../utils/helpers/';
+import { inEmbeddedApp } from '../utils/helpers/embeddedApp';
 
 interface BulkActionsDropdownProps {
   selectedCount: number;
@@ -12,7 +13,7 @@ const BULK_ACTIONS = [
   { value: 'add-remove-coeditors', label: translateString('Add / Remove Co-Editors'), enabled: true },
   { value: 'add-remove-coowners', label: translateString('Add / Remove Co-Owners'), enabled: true },
   { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
-  { value: 'add-remove-category', label: translateString('Add to / Remove from Category'), enabled: true },
+  { value: 'add-remove-category', label: inEmbeddedApp() ? translateString('Share with Course') : translateString('Add to / Remove from Category'), enabled: true },
   { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
   { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
   { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
