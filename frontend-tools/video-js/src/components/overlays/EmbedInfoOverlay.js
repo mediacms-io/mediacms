@@ -14,10 +14,22 @@ class EmbedInfoOverlay extends Component {
         this.authorThumbnail = options.authorThumbnail || '';
         this.videoTitle = options.videoTitle || 'Video';
         this.videoUrl = options.videoUrl || '';
+        this.showTitle = options.showTitle !== undefined ? options.showTitle : true;
+        this.showRelated = options.showRelated !== undefined ? options.showRelated : true;
+        this.showUserAvatar = options.showUserAvatar !== undefined ? options.showUserAvatar : true;
+        this.linkTitle = options.linkTitle !== undefined ? options.linkTitle : true;
 
         // Initialize after player is ready
         this.player().ready(() => {
-            this.createOverlay();
+            if (this.showTitle) {
+                this.createOverlay();
+            } else {
+                // Hide overlay element if showTitle is false
+                const overlay = this.el();
+                overlay.style.display = 'none';
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+            }
         });
     }
 
@@ -49,7 +61,7 @@ class EmbedInfoOverlay extends Component {
         `;
 
         // Create avatar container
-        if (this.authorThumbnail) {
+        if (this.authorThumbnail && this.showUserAvatar) {
             const avatarContainer = document.createElement('div');
             avatarContainer.className = 'embed-avatar-container';
             avatarContainer.style.cssText = `
@@ -125,7 +137,7 @@ class EmbedInfoOverlay extends Component {
             overflow: hidden;
         `;
 
-        if (this.videoUrl) {
+        if (this.videoUrl && this.linkTitle) {
             const titleLink = document.createElement('a');
             titleLink.href = this.videoUrl;
             titleLink.target = '_blank';
@@ -186,10 +198,16 @@ class EmbedInfoOverlay extends Component {
         const player = this.player();
         const overlay = this.el();
 
+        // If showTitle is false, ensure overlay is hidden
+        if (!this.showTitle) {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '0';
+            overlay.style.visibility = 'hidden';
+            return;
+        }
+
         // Sync overlay visibility with control bar visibility
         const updateOverlayVisibility = () => {
-            const controlBar = player.getChild('controlBar');
-
             if (!player.hasStarted()) {
                 // Show overlay when video hasn't started (poster is showing) - like before
                 overlay.style.opacity = '1';
