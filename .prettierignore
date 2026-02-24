@@ -1,3 +1,4 @@
 /templates/cms/*
 /templates/*.html
 *.scss
+/frontend/
