@@ -716,12 +716,9 @@ class MediaDetail(APIView):
             return media
 
         serializer = SingleMediaSerializer(media, context={"request": request})
-        if media.state == "private":
-            related_media = []
-        else:
-            related_media = show_related_media(media, request=request, limit=100)
-            related_media_serializer = MediaSerializer(related_media, many=True, context={"request": request})
-            related_media = related_media_serializer.data
+        related_media = show_related_media(media, request=request, limit=100)
+        related_media_serializer = MediaSerializer(related_media, many=True, context={"request": request})
+        related_media = related_media_serializer.data
         ret = serializer.data
 
         # update rattings info with user specific ratings
