@@ -68,20 +68,17 @@ class CategoryListContributor(APIView):
 
         categories = Category.objects.none()
 
-        # Get global/public categories (non-RBAC)
-        public_categories = Category.objects.filter(is_rbac_category=False).prefetch_related("user")
-
         # Filter for LMS courses only if requested
         lms_courses_only = request.GET.get('lms_courses_only', '').lower() in ['true', '1', 'yes']
         if lms_courses_only:
             categories = categories.filter(is_lms_course=True)
+        else:
+            categories = Category.objects.filter(is_rbac_category=False).prefetch_related("user")
 
         # Get RBAC categories where user has contributor access
         if getattr(settings, 'USE_RBAC', False):
             rbac_categories = request.user.get_rbac_categories_as_contributor()
-            categories = public_categories.union(rbac_categories)
-        else:
-            categories = public_categories
+            categories = categories.union(rbac_categories)
 
         categories = categories.order_by("title")
 
