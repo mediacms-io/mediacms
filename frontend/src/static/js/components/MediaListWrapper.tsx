@@ -2,6 +2,9 @@ import React from 'react';
 import { MediaListRow } from './MediaListRow';
 import { BulkActionsDropdown } from './BulkActionsDropdown';
 import { SelectAllCheckbox } from './SelectAllCheckbox';
+import { CircleIconButton, MaterialIcon } from './_shared';
+import { LinksConsumer } from '../utils/contexts';
+import { translateString } from '../utils/helpers/';
 import './MediaListWrapper.scss';
 
 interface MediaListWrapperProps {
@@ -17,6 +20,7 @@ interface MediaListWrapperProps {
   onBulkAction?: (action: string) => void;
   onSelectAll?: () => void;
   onDeselectAll?: () => void;
+  showAddMediaButton?: boolean;
 }
 
 export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
@@ -32,19 +36,35 @@ export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
   onBulkAction = () => {},
   onSelectAll = () => {},
   onDeselectAll = () => {},
+  showAddMediaButton = false,
 }) => (
   <div className={(className ? className + ' ' : '') + 'media-list-wrapper'} style={style}>
     <MediaListRow title={title} viewAllLink={viewAllLink} viewAllText={viewAllText}>
       {showBulkActions && (
-        <div className="bulk-actions-container">
-          <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} />
-          <SelectAllCheckbox
-            totalCount={totalCount}
-            selectedCount={selectedCount}
-            onSelectAll={onSelectAll}
-            onDeselectAll={onDeselectAll}
-          />
-        </div>
+        <LinksConsumer>
+          {(links) => (
+            <div className="bulk-actions-container">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} />
+                <SelectAllCheckbox
+                  totalCount={totalCount}
+                  selectedCount={selectedCount}
+                  onSelectAll={onSelectAll}
+                  onDeselectAll={onDeselectAll}
+                />
+              </div>
+              {showAddMediaButton && (
+                <div className="add-media-button">
+                  <a href={links.user.addMedia} title={translateString('Add media')}>
+                    <CircleIconButton>
+                      <MaterialIcon type="video_call" />
+                    </CircleIconButton>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </LinksConsumer>
       )}
       {children || null}
     </MediaListRow>
