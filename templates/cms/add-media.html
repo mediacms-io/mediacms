@@ -19,7 +19,6 @@
 {% block topimports %}
 <link href="{% static "css/add-media.css" %}" rel="preload" as="style">
 <link href="{% static "css/add-media.css" %}" rel="stylesheet">
-<link href="{% static "css/category_modal.css" %}" rel="stylesheet">
 {%endblock topimports %}
 
 {% block innercontent %}
@@ -120,7 +119,6 @@
 				</div>
 			</script>
 			<div class="media-uploader"></div>
-
 		</div>
 
 	{% else %}
@@ -159,112 +157,12 @@
 			return cookieVal;
 		}
 
-		// Initialize category widget
-		var categoryWidget = document.getElementById('category-widget-container');
-		var selectedCategorySet = new Set();
-		var allCategories = [];
-		var searchInput = categoryWidget.querySelector('.category-search');
-		var leftPanel = categoryWidget.querySelector('[data-panel="left"]');
-		var rightPanel = categoryWidget.querySelector('[data-panel="right"]');
-		var hiddenInputs = categoryWidget.querySelector('.hidden-inputs');
-
-		function updateCategoryUI() {
-			// Update left panel (available categories)
-			var filteredCategories = allCategories.filter(function(c) {
-				return !selectedCategorySet.has(c.uid) &&
-					   (!searchInput.value || c.title.toLowerCase().includes(searchInput.value.toLowerCase()));
-			});
-
-			leftPanel.innerHTML = filteredCategories.map(function(c) {
-				return '<div class="category-item" data-id="' + c.uid + '">' +
-					   '<span>' + c.title + '</span>' +
-					   '<button class="add-btn" type="button">+</button>' +
-					   '</div>';
-			}).join('') || '<div class="empty-message">No categories available</div>';
-
-			// Update right panel (selected categories)
-			var selectedCategories = Array.from(selectedCategorySet).map(function(id) {
-				return allCategories.find(function(c) { return c.uid === id; });
-			}).filter(Boolean);
-
-			rightPanel.innerHTML = selectedCategories.map(function(c) {
-				return '<div class="category-item" data-id="' + c.uid + '">' +
-					   '<span>' + c.title + '</span>' +
-					   '<button class="remove-btn" type="button">&times;</button>' +
-					   '</div>';
-			}).join('') || '<div class="empty-message">No categories selected</div>';
-
-			// Update hidden inputs
-			hiddenInputs.innerHTML = Array.from(selectedCategorySet).map(function(id) {
-				return '<input type="hidden" name="publish_to_category" value="' + id + '">';
-			}).join('');
-		}
-
-		// Check if in embed mode
-		function isInEmbedMode() {
-			try {
-				const params = new URLSearchParams(window.location.search);
-				const mode = params.get('mode');
-				if (mode === 'lms_embed_mode') {
-					return true;
-				}
-				return sessionStorage.getItem('lms_embed_mode') === 'true';
-			} catch (e) {
-				return false;
-			}
-		}
-
-		// Fetch categories from API
-		var apiUrl = '/api/v1/categories/contributor';
-		if (isInEmbedMode()) {
-			apiUrl += '?lms_courses_only=true';
-		}
-
-		fetch(apiUrl)
-			.then(function(response) { return response.json(); })
-			.then(function(categories) {
-				allCategories = categories;
-				updateCategoryUI();
-			})
-			.catch(function(error) {
-				console.error('Error fetching categories:', error);
-				leftPanel.innerHTML = '<div class="empty-message">Error loading categories</div>';
-			});
-
-		// Event handlers
-		searchInput.addEventListener('input', updateCategoryUI);
-
-		leftPanel.addEventListener('click', function(e) {
-			var item = e.target.closest('.category-item');
-			if (item) {
-				selectedCategorySet.add(item.dataset.id);
-				updateCategoryUI();
-			}
-		});
-
-		rightPanel.addEventListener('click', function(e) {
-			var item = e.target.closest('.category-item');
-			if (item) {
-				selectedCategorySet.delete(item.dataset.id);
-				updateCategoryUI();
-			}
-		});
-
-		// Function to get selected categories for FineUploader
-		function getSelectedCategories() {
-			return Array.from(selectedCategorySet).join(',');
-		}
-
 		var default_concurrent_chunked_uploader = new qq.FineUploader({
 			debug: true,
 			element: document.querySelector('.media-uploader'),
 			request: {
 				endpoint: '{% url 'uploader:upload' %}',
-				params: {
-					'publish_to_category': function() {
-						return getSelectedCategories();
-					}
-				},
+				params: {},
 				customHeaders: {
 					'X-CSRFToken': getCSRFToken('csrftoken'),
 				},
