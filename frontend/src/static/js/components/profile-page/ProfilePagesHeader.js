@@ -623,12 +623,6 @@ export default function ProfilePagesHeader(props) {
     const profilePageHeaderRef = useRef(null);
     const profileNavRef = useRef(null);
 
-    const [fixedNav, setFixedNav] = useState(false);
-
-    const positions = {
-        profileNavTop: 0,
-    };
-
     const userIsAdmin = !MemberContext._currentValue.is.anonymous && MemberContext._currentValue.is.admin;
     const userIsAuthor =
         !MemberContext._currentValue.is.anonymous &&
@@ -639,18 +633,6 @@ export default function ProfilePagesHeader(props) {
         userIsAdmin ||
         userIsAuthor ||
         (!MemberContext._currentValue.is.anonymous && MemberContext._currentValue.can.deleteProfile);
-
-    function updateProfileNavTopPosition() {
-        positions.profileHeaderTop = profilePageHeaderRef.current.offsetTop;
-        positions.profileNavTop =
-            positions.profileHeaderTop +
-            profilePageHeaderRef.current.offsetHeight -
-            profileNavRef.current.refs.tabsNav.offsetHeight;
-    }
-
-    function updateFixedNavPosition() {
-        setFixedNav(positions.profileHeaderTop + window.scrollY > positions.profileNavTop);
-    }
 
     function cancelProfileRemoval() {
         popupContentRef.current.toggle();
@@ -686,44 +668,24 @@ export default function ProfilePagesHeader(props) {
         }
     }
 
-    function onWindowResize() {
-        updateProfileNavTopPosition();
-        updateFixedNavPosition();
-    }
-
-    function onWindowScroll() {
-        updateFixedNavPosition();
-    }
-
     useEffect(() => {
         if (userCanDeleteProfile) {
             ProfilePageStore.on('profile_delete', onProfileDelete);
             ProfilePageStore.on('profile_delete_fail', onProfileDeleteFail);
         }
 
-        PageStore.on('resize', onWindowResize);
-        PageStore.on('changed_page_sidebar_visibility', onWindowResize);
-        PageStore.on('window_scroll', onWindowScroll);
-
-        updateProfileNavTopPosition();
-        updateFixedNavPosition();
-
         return () => {
             if (userCanDeleteProfile) {
                 ProfilePageStore.removeListener('profile_delete', onProfileDelete);
                 ProfilePageStore.removeListener('profile_delete_fail', onProfileDeleteFail);
             }
-
-            PageStore.removeListener('resize', onWindowResize);
-            PageStore.removeListener('changed_page_sidebar_visibility', onWindowResize);
-            PageStore.removeListener('window_scroll', onWindowScroll);
         };
     }, []);
 
     return (
         <div
             ref={profilePageHeaderRef}
-            className={'profile-page-header' + (fixedNav ? ' fixed-nav' : '')}
+            className={'profile-page-header'}
             {...(isSelectMediaMode() ? { 'data-action': 'select_media' } : {})}
         >
             {!props.hideChannelBanner && (

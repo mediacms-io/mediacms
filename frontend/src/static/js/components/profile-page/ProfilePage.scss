@@ -656,41 +656,6 @@
     }
   }
 
-  &.fixed-nav {
-    .profile-info-nav-wrap {
-      padding-bottom: $_authorPage-navHeight;
-    }
-
-    .profile-nav {
-      z-index: 3;
-      position: fixed;
-      top: var(--header-height);
-      left: 0;
-      right: 0;
-
-      @media screen and (min-width: 768px) {
-        .visible-sidebar & {
-          padding-left: var(--sidebar-width);
-        }
-
-        .sliding-sidebar & {
-          transition-property: padding-left;
-          transition-duration: 0.2s;
-        }
-      }
-    }
-  }
-
-  // Disable sticky navigation when in select_media mode (for LTI iframe)
-  &.fixed-nav[data-action="select_media"] {
-    .profile-nav {
-      position: relative;
-      top: auto;
-      left: auto;
-      right: auto;
-      z-index: 1;
-    }
-  }
 }
 
 .page-main {
