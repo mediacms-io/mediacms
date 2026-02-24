@@ -79,6 +79,10 @@ function EditMediaButton(props) {
         link = '/edit-media.html';
     }
 
+    if (link && inEmbeddedApp()) {
+        link += '&mode=lms_embed_mode';
+    }
+
     return (
         <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media-icon">
             <i className="material-icons">edit</i>
