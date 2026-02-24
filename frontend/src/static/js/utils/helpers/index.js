@@ -14,3 +14,4 @@ export * from './quickSort';
 export * from './requests';
 export { translateString } from './translate';
 export { replaceString } from './replacementStrings';
+export * from './embeddedApp';
