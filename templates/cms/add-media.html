@@ -121,30 +121,6 @@
 			</script>
 			<div class="media-uploader"></div>
 
-			<!-- Category Selector -->
-			<div class="category-selector-section" style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px; max-width: 600px;">
-				<h3 style="margin: 0 0 15px; font-size: 18px; font-weight: 500;">{{ "Publish in categories (optional)" | custom_translate:LANGUAGE_CODE}}</h3>
-				<div id="category-widget-container" class="category-widget" data-name="publish_to_category" style="max-width: 100%;">
-					<div class="category-content">
-						<div class="category-panel">
-							<input type="text" class="category-search" placeholder="{{ 'Search categories...' | custom_translate:LANGUAGE_CODE}}">
-							<div class="category-list scrollable" data-panel="left">
-								<div class="empty-message">{{ "Loading categories..." | custom_translate:LANGUAGE_CODE}}</div>
-							</div>
-						</div>
-						<div class="category-panel">
-							<h3>{{ "Selected Categories" | custom_translate:LANGUAGE_CODE}}</h3>
-							<div class="category-list scrollable" data-panel="right">
-								<div class="empty-message">{{ "No categories selected" | custom_translate:LANGUAGE_CODE}}</div>
-							</div>
-						</div>
-					</div>
-					<div class="hidden-inputs"></div>
-				</div>
-				<p style="margin-top: 15px; font-size: 14px; color: #666;">
-					{{ "Select the categories that the media will be published in" | custom_translate:LANGUAGE_CODE}}
-				</p>
-			</div>
 		</div>
 
 	{% else %}
