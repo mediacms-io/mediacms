@@ -11,7 +11,7 @@ import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFi
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { BulkActionsModals } from '../components/BulkActionsModals';
-import { inEmbeddedApp, inSelectMediaEmbedMode, associateMediaWithLtiCategory, translateString } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
 import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
@@ -356,9 +356,6 @@ class ProfileSharedByMePage extends Page {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
-
-                    // Associate media with the current LTI course category (fire-and-forget)
-                    associateMediaWithLtiCategory(mediaId);
 
                     // Send postMessage to parent window (Moodle TinyMCE plugin)
                     if (window.parent !== window) {

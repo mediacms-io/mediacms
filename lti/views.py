@@ -30,7 +30,8 @@ from pylti1p3.exception import LtiException
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
 
-from files.models import Media
+from files.models import Media, MediaPermission
+from rbac.models import RBACMembership
 
 from .adapters import DjangoRequest, DjangoSessionService, DjangoToolConfig
 from .handlers import (
@@ -42,7 +43,7 @@ from .handlers import (
     validate_lti_session,
 )
 from .keys import get_jwks
-from .models import LTILaunchLog, LTIPlatform, LTIToolKeys
+from .models import LTILaunchLog, LTIPlatform, LTIResourceLink, LTIToolKeys
 
 logger = logging.getLogger(__name__)
 
@@ -697,10 +698,37 @@ class EmbedMediaLTIView(View):
         can_view = False
 
         if lti_session and request.user.is_authenticated:
-            if request.user.has_member_access_to_media(media):
-                can_view = True
+            context_id = lti_session.get('context_id')
+            platform_id = lti_session.get('platform_id')
+            if context_id and platform_id:
+                try:
+                    resource_link = (
+                        LTIResourceLink.objects.filter(
+                            platform_id=platform_id,
+                            context_id=context_id,
+                        )
+                        .select_related('rbac_group')
+                        .first()
+                    )
+                    if resource_link and resource_link.rbac_group:
+                        has_course_access = RBACMembership.objects.filter(
+                            user=request.user,
+                            rbac_group=resource_link.rbac_group,
+                        ).exists()
+                        if has_course_access:
+                            MediaPermission.objects.get_or_create(
+                                user=request.user,
+                                media=media,
+                                defaults={
+                                    'owner_user': media.user,
+                                    'permission': 'viewer',
+                                },
+                            )
+                            can_view = True
+                except Exception:
+                    logger.exception('EmbedMediaLTIView: error checking course access for user=%s media=%s', request.user, friendly_token)
 
-        if media.state in ["public", "unlisted"]:
+        if not can_view and media.state in ["public", "unlisted"]:
             can_view = True
 
         if not can_view:

@@ -178,7 +178,7 @@ class MediaList(APIView):
                     rbac_categories = request.user.get_rbac_categories_as_member()
                     conditions |= Q(category__in=rbac_categories)
 
-                media = base_queryset.filter(conditions).distinct()
+                media = base_queryset.filter(conditions).exclude(user=request.user).distinct()
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)

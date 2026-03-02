@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions, PageActions } from '../utils/actions';
-import { inEmbeddedApp, inSelectMediaEmbedMode, associateMediaWithLtiCategory, translateString } from '../utils/helpers/';
+import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
@@ -212,9 +212,6 @@ export class ProfileMediaPage extends Page {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
-
-                    // Associate media with the current LTI course category (fire-and-forget)
-                    associateMediaWithLtiCategory(mediaId);
 
                     // Send postMessage to parent window (Moodle TinyMCE plugin)
                     if (window.parent !== window) {
