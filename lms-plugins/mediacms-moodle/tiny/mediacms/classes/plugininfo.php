@@ -161,16 +161,14 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
             $courseid = $COURSE->id;
         }
 
-        // Build the content item URL for LTI Deep Linking.
-        // This URL initiates the LTI Deep Linking flow which allows users
-        // to select content (like videos) from the tool provider.
+        // Build the URL for the student-accessible media picker.
+        // Uses /filter/mediacms/select_media_picker.php instead of the standard
+        // /mod/lti/contentitem.php, which requires moodle/course:manageactivities
+        // and therefore fails for students.
         $contentitemurl = '';
         if (!empty($ltitoolid) && $courseid > 0) {
-            $contentitemurl = (new moodle_url('/mod/lti/contentitem.php', [
-                'id' => $ltitoolid,
-                'course' => $courseid,
-                'title' => 'MediaCMS Library',
-                'return_types' => 1 // LTI_DEEPLINKING_RETURN_TYPE_LTI_LINK
+            $contentitemurl = (new moodle_url('/filter/mediacms/select_media_picker.php', [
+                'courseid' => $courseid,
             ]))->out(false);
         }
 
