@@ -10,10 +10,8 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/lti/lib.php');
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
-require_once($CFG->dirroot . '/course/modlib.php');
-require_once(__DIR__ . '/locallib.php');
 
-global $SITE, $DB, $PAGE, $OUTPUT, $CFG;
+global $SITE, $DB, $PAGE, $OUTPUT, $CFG, $SESSION;
 
 require_login();
 
@@ -34,18 +32,14 @@ $show_media_page = optional_param('show_media_page', '', PARAM_TEXT);
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
 
-// No default dimensions - use what's provided or nothing
-
 if (empty($mediacmsurl)) {
     die('MediaCMS URL not configured');
 }
 
-// Tool Selection Logic
 $type = false;
 if (!empty($ltitoolid)) {
     $type = $DB->get_record('lti_types', ['id' => $ltitoolid]);
 }
-
 if (!$type) {
     die('LTI tool not found or not configured.');
 }
@@ -59,22 +53,9 @@ if ($courseid && $courseid != SITEID) {
     $course = $SITE;
 }
 
-// Get or create the dummy activity (visible, non-stealth).
-try {
-    $dummy_cmid = filter_mediacms_get_dummy_activity($courseid, $type->id);
-} catch (Exception $e) {
-    if (!has_capability('moodle/course:manageactivities', $context)) {
-        die('No MediaCMS activity found. Please ask a teacher to add one first.');
-    }
-    throw $e;
-}
-
-$cm       = get_coursemodule_from_id('lti', $dummy_cmid, 0, false, MUST_EXIST);
-$instance = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
-
+// Build custom params for this video embed.
 $custom_params = ["media_friendly_token=" . $mediatoken];
 
-// Add embed parameters if provided (check !== '' instead of !empty() because '0' is a valid value)
 if ($showTitle !== '') {
     $custom_params[] = "embed_show_title=" . $showTitle;
 }
@@ -94,9 +75,6 @@ if ($show_media_page === 'true') {
     $custom_params[] = "show_media_page=true";
 }
 
-$instance->instructorcustomparameters = implode("\n", $custom_params);
-$instance->name = 'MediaCMS Video: ' . $mediatoken;
-
 // Set up page
 $page_params = [
     'token' => $mediatoken,
@@ -105,7 +83,6 @@ $page_params = [
     'height' => $height
 ];
 
-// Add embed parameters to page URL if provided (check !== '' because '0' is valid)
 if ($showTitle !== '') {
     $page_params['showTitle'] = $showTitle;
 }
@@ -130,17 +107,20 @@ $PAGE->set_context($context);
 $PAGE->set_pagelayout('embedded');
 $PAGE->set_title('MediaCMS');
 
-// Get type config
 $typeconfig = lti_get_type_type_config($type->id);
 
-// Initiate LTI Login with proper cmid (for permissions) and custom token
-$content = lti_initiate_login($course->id, $dummy_cmid, $instance, $typeconfig, null, $instance->name);
+// Build the OIDC login request params directly so we can capture the launchid.
+// This avoids a shared SESSION key, which would cause a race condition when
+// multiple videos are embedded on the same page and load simultaneously.
+$oidc_params = lti_build_login_request($course->id, 0, null, $typeconfig, null, 0, 'MediaCMS Video');
 
-// CRITICAL: Inject media_token and embed parameters as hidden fields in OIDC form
-// MediaCMS will encode them in state and inject into custom claims (fallback mechanism)
+// Key the custom params by launchid — lti_auth.php retrieves them the same way.
+$hint = json_decode($oidc_params['lti_message_hint']);
+$SESSION->{'mediacms_cp_' . $hint->launchid} = implode("\n", $custom_params);
+
+// Build the fallback hidden fields (MediaCMS encodes them in state as a secondary mechanism).
 $hidden_fields = '<input type="hidden" name="media_token" value="' . htmlspecialchars($mediatoken, ENT_QUOTES) . '" />';
 
-// Add embed parameters as hidden fields
 if ($showTitle !== '') {
     $hidden_fields .= '<input type="hidden" name="embed_show_title" value="' . htmlspecialchars($showTitle, ENT_QUOTES) . '" />';
 }
@@ -166,7 +146,22 @@ if ($height) {
     $hidden_fields .= '<input type="hidden" name="embed_height" value="' . htmlspecialchars($height, ENT_QUOTES) . '" />';
 }
 
-$content = str_replace('</form>', $hidden_fields . '</form>', $content);
+// Produce the OIDC login form (mirrors lti_initiate_login output).
+$content  = '<form action="' . htmlspecialchars($typeconfig->lti_initiatelogin, ENT_COMPAT)
+          . '" name="ltiInitiateLoginForm" id="ltiInitiateLoginForm"'
+          . ' method="post" encType="application/x-www-form-urlencoded">' . "\n";
+foreach ($oidc_params as $key => $value) {
+    $key   = htmlspecialchars($key, ENT_COMPAT);
+    $value = htmlspecialchars($value, ENT_COMPAT);
+    $content .= "  <input type=\"hidden\" name=\"{$key}\" value=\"{$value}\"/>\n";
+}
+$content .= $hidden_fields . "\n";
+$content .= "</form>\n";
+$content .= "<script type=\"text/javascript\">\n"
+          . "//<![CDATA[\n"
+          . "document.ltiInitiateLoginForm.submit();\n"
+          . "//]]>\n"
+          . "</script>\n";
 
 echo $OUTPUT->header();
 echo $content;

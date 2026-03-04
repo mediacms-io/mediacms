@@ -129,8 +129,14 @@ if ($ok) {
         // by lti_launch.php or select_media_picker.php before initiating the OIDC flow.
         require_login($course);
 
+        // launch.php keys params by launchid (safe for concurrent embeds on one page).
+        // lti_launch.php and select_media_picker.php use the fixed key (single-use pages).
         $customparams = '';
-        if (!empty($SESSION->mediacms_launch_customparams)) {
+        $cpkey = 'mediacms_cp_' . $launchid;
+        if (!empty($SESSION->$cpkey)) {
+            $customparams = $SESSION->$cpkey;
+            unset($SESSION->$cpkey);
+        } elseif (!empty($SESSION->mediacms_launch_customparams)) {
             $customparams = $SESSION->mediacms_launch_customparams;
             unset($SESSION->mediacms_launch_customparams);
         }
