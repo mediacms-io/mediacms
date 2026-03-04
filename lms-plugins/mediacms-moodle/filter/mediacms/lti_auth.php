@@ -159,7 +159,7 @@ if ($ok) {
         $lti->resourcekey                       = '';
         $lti->password                          = '';
         $lti->servicesalt                       = '';
-        $lti->resource_link_id                  = '';
+        $lti->resource_link_id                  = 'mediacms_' . $typeid;
 
         list($endpoint, $params) = lti_get_launch_data(
             $lti,
