@@ -9,28 +9,45 @@
 
 require_once(__DIR__ . '/../../config.php');
 
-global $SITE, $PAGE, $OUTPUT, $USER;
+global $SITE, $PAGE, $OUTPUT, $USER, $COURSE;
 
 require_login();
 
-$context = context_system::instance();
+$token    = optional_param('token', '', PARAM_ALPHANUMEXT);
+$courseid = optional_param('courseid', 0, PARAM_INT);
 
+$context = context_system::instance();
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/filter/mediacms/my_media.php'));
 $PAGE->set_course($SITE);
 $PAGE->set_pagelayout('mydashboard');
-$PAGE->set_title(get_string('mymedia', 'filter_mediacms'));
-$PAGE->set_heading(get_string('mymedia', 'filter_mediacms'));
+
+if ($token) {
+    $PAGE->set_url(new moodle_url('/filter/mediacms/my_media.php', ['token' => $token]));
+    $PAGE->set_title('MediaCMS');
+    $PAGE->set_heading('MediaCMS');
+
+    $launch_params = [
+        'token'           => $token,
+        'courseid'        => $courseid ?: ($COURSE->id ?? 0),
+        'show_media_page' => 'true',
+    ];
+    $src = (new moodle_url('/filter/mediacms/launch.php', $launch_params))->out(false);
+} else {
+    $PAGE->set_url(new moodle_url('/filter/mediacms/my_media.php'));
+    $PAGE->set_title(get_string('mymedia', 'filter_mediacms'));
+    $PAGE->set_heading(get_string('mymedia', 'filter_mediacms'));
+
+    $src = (new moodle_url('/filter/mediacms/lti_launch.php'))->out(false);
+}
 
 echo $OUTPUT->header();
 
-$attr = [
+echo html_writer::tag('iframe', '', [
     'id'              => 'contentframe',
-    'src'             => (new moodle_url('/filter/mediacms/lti_launch.php'))->out(false),
+    'src'             => $src,
     'allowfullscreen' => 'true',
     'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *;',
     'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
-];
-echo html_writer::tag('iframe', '', $attr);
+]);
 
 echo $OUTPUT->footer();

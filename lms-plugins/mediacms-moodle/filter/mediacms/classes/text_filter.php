@@ -185,7 +185,7 @@ class text_filter extends \core_filters\text_filter {
      * @return string  Transformed HTML (or original if token cannot be extracted)
      */
     private function transform_textlink($anchor_html) {
-        global $COURSE, $PAGE;
+        global $COURSE;
 
         // Extract href.
         if (!preg_match('/href=["\']([^"\']+)["\']/', $anchor_html, $href_matches)) {
@@ -205,36 +205,15 @@ class text_filter extends \core_filters\text_filter {
             return $anchor_html;
         }
 
-        $launch_url = new moodle_url('/filter/mediacms/launch.php', [
+        $view_url = new moodle_url('/filter/mediacms/my_media.php', [
             'token'    => $token,
             'courseid' => isset($COURSE->id) ? (int)$COURSE->id : 0,
-            'show_media_page' => 'true',
         ]);
-
-        if (!self::$textlink_js_added) {
-            self::$textlink_js_added = true;
-            $PAGE->requires->js_init_code(
-                'document.addEventListener("click",function(e){'
-                . 'var a=e.target.closest("a.mediacms-textlink-launch");if(!a)return;'
-                . 'e.preventDefault();'
-                . 'var f=document.createElement("iframe");'
-                . 'f.src=a.dataset.launchUrl;'
-                . 'f.style.cssText="width:100%;height:480px;border:none;display:block;";'
-                . 'f.allowFullscreen=true;'
-                . 'f.setAttribute("allow","autoplay *; fullscreen *; encrypted-media *;");'
-                . 'a.parentNode.replaceChild(f,a);'
-                . '});',
-                false
-            );
-        }
 
         return html_writer::tag('a', $text_matches[1], [
-            'href'            => '#',
-            'class'           => 'mediacms-textlink-launch',
-            'data-launch-url' => $launch_url->out(false),
+            'href'   => $view_url->out(false),
+            'target' => '_blank',
+            'rel'    => 'noopener noreferrer',
         ]);
     }
-
-    /** @var bool  Whether the inline-iframe JS has already been added to the page. */
-    private static $textlink_js_added = false;
 }
