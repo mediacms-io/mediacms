@@ -50,7 +50,9 @@ export const LayoutProvider = ({ children }) => {
 
     const enabledSidebar = Boolean(document.getElementById('app-sidebar') || document.querySelector('.page-sidebar'));
 
-    const [visibleSidebar, setVisibleSidebar] = useState(cache.get('visible-sidebar'));
+    const [visibleSidebar, setVisibleSidebar] = useState(
+        isMediaPage || isEmbeddedApp ? false : cache.get('visible-sidebar')
+    );
     const [visibleMobileSearch, setVisibleMobileSearch] = useState(false);
 
     const toggleMobileSearch = () => {
