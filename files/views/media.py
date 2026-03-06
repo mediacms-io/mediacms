@@ -164,7 +164,14 @@ class MediaList(APIView):
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags").distinct()
+                base_queryset = Media.objects.prefetch_related("user", "tags")
+                conditions = Q(permissions__owner_user=self.request.user)
+
+                if getattr(settings, 'USE_RBAC', False):
+                    rbac_categories = request.user.get_rbac_categories_as_contributor()
+                    conditions |= Q(category__in=rbac_categories)
+
+                media = base_queryset.filter(conditions).distinct()
         elif show_param == "shared_with_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
