@@ -169,7 +169,7 @@ class MediaList(APIView):
 
                 if getattr(settings, 'USE_RBAC', False):
                     rbac_categories = request.user.get_rbac_categories_as_contributor()
-                    conditions |= Q(category__in=rbac_categories)
+                    conditions |= Q(category__in=rbac_categories, user=self.request.user)
 
                 media = base_queryset.filter(conditions).distinct()
         elif show_param == "shared_with_me":
