@@ -499,8 +499,9 @@ class MediaBulkUserActions(APIView):
 
             users = (
                 MediaPermission.objects.filter(media__in=media, permission=ownership_type)
+                .exclude(user=request.user)
                 .values('user__name', 'user__username')
-                .annotate(media_count=Count('media', distinct=True))
+                .annotate(media_count=Count('media'))
                 .filter(media_count=media_count)
             )
 
