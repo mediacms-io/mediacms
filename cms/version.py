@@ -1,1 +1,1 @@
-VERSION = "7.ki"
+VERSION = "8.0"
