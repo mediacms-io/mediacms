@@ -45,7 +45,7 @@ export const LayoutProvider = ({ children }) => {
     const site = useContext(SiteContext);
     const cache = new BrowserCache('MediaCMS[' + site.id + '][layout]', 86400);
 
-    const isMediaPage = useMemo(() => PageStore.get('current-page') === 'media', []);
+    const isMediaPage = useMemo(() => PageStore.get('current-page') === 'media' || window.MediaCMS?.mediaId !== undefined, []);
     const isEmbeddedApp = useMemo(() => inEmbeddedApp(), []);
 
     const enabledSidebar = Boolean(document.getElementById('app-sidebar') || document.querySelector('.page-sidebar'));
