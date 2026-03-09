@@ -35,6 +35,7 @@ from ..methods import (
 )
 from ..models import (
     Category,
+    Comment,
     EncodeProfile,
     Media,
     MediaPermission,
@@ -302,6 +303,7 @@ class MediaBulkUserActions(APIView):
                     enum=[
                         "enable_comments",
                         "disable_comments",
+                        "delete_comments",
                         "delete_media",
                         "enable_download",
                         "disable_download",
@@ -385,6 +387,10 @@ class MediaBulkUserActions(APIView):
         elif action == "disable_comments":
             media.update(enable_comments=False)
             return Response({"detail": f"Comments disabled for {media.count()} media items"})
+
+        elif action == "delete_comments":
+            deleted_count, _ = Comment.objects.filter(media__in=media).delete()
+            return Response({"detail": f"{deleted_count} comments deleted"})
 
         elif action == "delete_media":
             count = media.count()
