@@ -111,6 +111,10 @@ export function useBulkActions() {
       setShowConfirmModal(true);
       setPendingAction(action);
       setConfirmMessage(translateString('You are going to disable comments to') + ` ${selectedCount} ` + translateString('media, are you sure?'));
+    } else if (action === 'delete-comments') {
+      setShowConfirmModal(true);
+      setPendingAction(action);
+      setConfirmMessage(translateString('You are going to delete all comments from') + ` ${selectedCount} ` + translateString('media, are you sure?'));
     } else if (action === 'enable-download') {
       setShowConfirmModal(true);
       setPendingAction(action);
@@ -165,6 +169,8 @@ export function useBulkActions() {
       executeEnableComments();
     } else if (action === 'disable-comments') {
       executeDisableComments();
+    } else if (action === 'delete-comments') {
+      executeDeleteComments();
     } else if (action === 'enable-download') {
       executeEnableDownload();
     } else if (action === 'disable-download') {
@@ -267,6 +273,37 @@ export function useBulkActions() {
       })
       .catch((error) => {
         showNotificationMessage(translateString('Failed to disable comments.'), 'error');
+        clearSelection();
+      });
+  };
+
+  // Execute delete comments
+  const executeDeleteComments = () => {
+    const selectedIds = Array.from(selectedMedia);
+
+    fetch('/api/v1/media/user/bulk_actions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify({
+        action: 'delete_comments',
+        media_ids: selectedIds,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to delete comments');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        showNotificationMessage(translateString('Successfully deleted comments'));
+        clearSelection();
+      })
+      .catch((error) => {
+        showNotificationMessage(translateString('Failed to delete comments.'), 'error');
         clearSelection();
       });
   };

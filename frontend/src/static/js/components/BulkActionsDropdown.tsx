@@ -9,14 +9,15 @@ interface BulkActionsDropdownProps {
 }
 
 const BULK_ACTIONS = [
-  { value: 'add-remove-coviewers', label: translateString('Add / Remove Co-Viewers'), enabled: true },
-  { value: 'add-remove-coeditors', label: translateString('Add / Remove Co-Editors'), enabled: true },
-  { value: 'add-remove-coowners', label: translateString('Add / Remove Co-Owners'), enabled: true },
+  { value: 'add-remove-coviewers', label: inEmbeddedApp() ? translateString('Share with Co-Viewers') : translateString('Add / Remove Co-Viewers'), enabled: true },
+  { value: 'add-remove-coeditors', label: inEmbeddedApp() ? translateString('Share with Co-Editors') : translateString('Add / Remove Co-Editors'), enabled: true },
+  { value: 'add-remove-coowners', label: inEmbeddedApp() ? translateString('Share with Co-Owners') : translateString('Add / Remove Co-Owners'), enabled: true },
   { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
-  { value: 'add-remove-category', label: inEmbeddedApp() ? translateString('Share with Course') : translateString('Add to / Remove from Category'), enabled: true },
+  { value: 'add-remove-category', label: inEmbeddedApp() ? translateString('Share with Course Members') : translateString('Add to / Remove from Category'), enabled: true },
   { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
   { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
   { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
+  { value: 'delete-comments', label: translateString('Delete Comments'), enabled: true },
   { value: 'enable-download', label: translateString('Enable Download'), enabled: true },
   { value: 'disable-download', label: translateString('Disable Download'), enabled: true },
   { value: 'publish-state', label: translateString('Publish State'), enabled: true },
