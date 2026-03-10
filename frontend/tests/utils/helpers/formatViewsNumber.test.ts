@@ -1,4 +1,4 @@
-import formatViewsNumber from '../../../src/static/js/utils/helpers/formatViewsNumber';
+import { formatViewsNumber } from '../../../src/static/js/utils/helpers';
 
 describe('js/utils/helpers', () => {
     describe('formatViewsNumber', () => {

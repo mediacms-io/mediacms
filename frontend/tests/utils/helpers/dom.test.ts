@@ -6,6 +6,8 @@ import {
     BrowserEvents,
 } from '../../../src/static/js/utils/helpers/dom';
 
+const domModulePath = '../../../src/static/js/utils/helpers/dom';
+
 declare global {
     interface Window {
         mozRequestAnimationFrame?: Window['requestAnimationFrame'];
@@ -15,7 +17,7 @@ declare global {
     }
 }
 
-describe('js/utils/helpers', () => {
+describe('utils/helpers', () => {
     describe('dom', () => {
         describe('supportsSvgAsImg', () => {
             test('Delegates to document.implementation.hasFeature', () => {
@@ -78,7 +80,7 @@ describe('js/utils/helpers', () => {
             test('Does not register non-function callbacks', () => {
                 const be = BrowserEvents();
 
-                be.win('not-a-fn', null);
+                be.win('not-a-fn' as unknown as Function, null as unknown as Function);
                 be.doc(undefined);
 
                 // Should still have registered the listeners on construction
@@ -152,8 +154,8 @@ describe('js/utils/helpers', () => {
             test('Ignores non-function values without throwing and still registers listeners once', () => {
                 const be = BrowserEvents();
 
-                be.doc('noop');
-                be.win(null, undefined);
+                be.doc('noop' as unknown as Function);
+                be.win(null as unknown as Function, undefined);
 
                 const docCount = (document.addEventListener as jest.Mock).mock.calls.filter(
                     (c) => c[0] === 'visibilitychange'
@@ -214,6 +216,65 @@ describe('js/utils/helpers', () => {
                 expect(hasClassname(el, 'one')).toBe(true);
                 expect(hasClassname(el, 'two')).toBe(false); // Should not match within two-three
                 expect(hasClassname(el, 'two-three')).toBe(true);
+            });
+        });
+
+        describe('Animation frame helpers', () => {
+            const requestAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'requestAnimationFrame');
+            const cancelAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'cancelAnimationFrame');
+
+            afterEach(() => {
+                if (requestAnimationFrameDescriptor) {
+                    Object.defineProperty(window, 'requestAnimationFrame', requestAnimationFrameDescriptor);
+                } else {
+                    delete (window as Partial<Window>).requestAnimationFrame;
+                }
+
+                if (cancelAnimationFrameDescriptor) {
+                    Object.defineProperty(window, 'cancelAnimationFrame', cancelAnimationFrameDescriptor);
+                } else {
+                    delete (window as Partial<Window>).cancelAnimationFrame;
+                }
+
+                jest.resetModules();
+            });
+
+            test('requestAnimationFrame export is directly callable and delegates to window API', () => {
+                const requestAnimationFrameMock = jest.fn((callback: FrameRequestCallback) => {
+                    callback(123);
+                    return 7;
+                });
+
+                Object.defineProperty(window, 'requestAnimationFrame', {
+                    configurable: true,
+                    value: requestAnimationFrameMock,
+                    writable: true,
+                });
+
+                jest.resetModules();
+                const domHelpers = require(domModulePath) as typeof import('../../../src/static/js/utils/helpers/dom');
+                const callback = jest.fn();
+                const frameId = domHelpers.requestAnimationFrame(callback);
+
+                expect(frameId).toBe(7);
+                expect(requestAnimationFrameMock).toHaveBeenCalledWith(callback);
+                expect(callback).toHaveBeenCalledWith(123);
+            });
+
+            test('cancelAnimationFrame export is directly callable and delegates to window API', () => {
+                const cancelAnimationFrameMock = jest.fn();
+
+                Object.defineProperty(window, 'cancelAnimationFrame', {
+                    configurable: true,
+                    value: cancelAnimationFrameMock,
+                    writable: true,
+                });
+
+                jest.resetModules();
+                const domHelpers = require(domModulePath) as typeof import('../../../src/static/js/utils/helpers/dom');
+
+                domHelpers.cancelAnimationFrame(42);
+                expect(cancelAnimationFrameMock).toHaveBeenCalledWith(42);
             });
         });
     });

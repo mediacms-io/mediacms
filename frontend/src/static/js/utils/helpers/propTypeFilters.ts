@@ -1,10 +1,10 @@
 import { logErrorAndReturnError } from './errors';
+import { isPositiveInteger, isPositiveIntegerOrZero } from './math';
 
+// @todo: Check this
 export const PositiveIntegerOrZero = (function () {
-    const isPositiveIntegerOrZero = (x) => x === Math.trunc(x) && x >= 0;
-
-    return function (obj, key, comp) {
-        return void 0 === obj[key] || isPositiveIntegerOrZero(obj[key])
+    return function (obj: Record<string, number>, key: string, comp: string) {
+        return obj[key] === undefined || isPositiveIntegerOrZero(obj[key])
             ? null
             : logErrorAndReturnError([
                   'Invalid prop `' +
@@ -20,11 +20,10 @@ export const PositiveIntegerOrZero = (function () {
     };
 })();
 
+// @todo: Check this
 export const PositiveInteger = (function () {
-    const isPositiveInteger = (x) => x === Math.trunc(x) && x > 0;
-
-    return function (obj, key, comp) {
-        return void 0 === obj[key] || isPositiveInteger(obj[key])
+    return function (obj: Record<string, number>, key: string, comp: string) {
+        return obj[key] === undefined || isPositiveInteger(obj[key])
             ? null
             : logErrorAndReturnError([
                   'Invalid prop `' +

@@ -5,7 +5,7 @@ jest.mock('axios');
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-describe('js/utils/helpers', () => {
+describe('utils/helpers', () => {
     describe('requests', () => {
         beforeEach(() => {
             jest.clearAllMocks();
@@ -21,8 +21,8 @@ describe('js/utils/helpers', () => {
                 getRequest(url, false, cb, undefined);
 
                 expect(mockedAxios.get).toHaveBeenCalledWith(url, {
-                    timeout: null,
-                    maxContentLength: null,
+                    timeout: undefined,
+                    maxContentLength: undefined,
                 });
             });
 
@@ -117,7 +117,7 @@ describe('js/utils/helpers', () => {
 
                 await postRequest(url, undefined as any, undefined as any, true, cb, undefined);
 
-                expect(mockedAxios.post).toHaveBeenCalledWith(url, {}, null);
+                expect(mockedAxios.post).toHaveBeenCalledWith(url, {}, undefined);
                 expect(cb).toHaveBeenCalled();
             });
 
@@ -150,7 +150,7 @@ describe('js/utils/helpers', () => {
 
                 await putRequest(url, undefined as any, undefined as any, true, undefined, undefined);
 
-                expect(mockedAxios.put).toHaveBeenCalledWith(url, {}, null);
+                expect(mockedAxios.put).toHaveBeenCalledWith(url, {}, undefined);
             });
 
             test('Invokes errorCallback on error', async () => {
