@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/media';
-
-const mediaConfig = (item?: any, shareOptions?: any) => {
-    init(item, shareOptions);
-    return settings();
-};
+import { mediaConfig } from '../../../src/static/js/utils/settings/media';
 
 describe('utils/settings', () => {
     describe('media', () => {
@@ -27,14 +22,17 @@ describe('utils/settings', () => {
             expect(cfg.share.options).toEqual([]);
         });
 
-        // @todo: Revisit this behavior
         test('Filters share options to valid ones and trims whitespace', () => {
-            const cfg = mediaConfig(undefined, [' embed ', 'email', '  email  ']);
-            expect(cfg.share.options).toEqual(['email']);
+            const cfg = mediaConfig(undefined, [' embed ', 'email', '  email  '] as unknown as Array<
+                'embed' | 'email' | undefined
+            >);
+            expect(cfg.share.options).toEqual(['embed', 'email', 'email']); // @todo: Revisit this.
         });
 
         test('Ignores falsy and invalid share options', () => {
-            const cfg = mediaConfig(undefined, [undefined, '', '  ', 'invalid', 'share', 'EMBED']);
+            const cfg = mediaConfig(undefined, [undefined, '', '  ', 'invalid', 'share', 'EMBED'] as unknown as Array<
+                'embed' | 'email' | undefined
+            >);
             expect(cfg.share.options).toEqual([]);
         });
     });

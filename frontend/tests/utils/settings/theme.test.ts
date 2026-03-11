@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/theme';
-
-const themeConfig = (theme?: any, logo?: any) => {
-    init(theme, logo);
-    return settings();
-};
+import { themeConfig } from '../../../src/static/js/utils/settings/theme';
 
 describe('utils/settings', () => {
     describe('theme', () => {
@@ -18,10 +13,10 @@ describe('utils/settings', () => {
 
         test("Sets dark mode only when theme.mode is exactly 'dark' after trim", () => {
             expect(themeConfig({ mode: 'dark' }).mode).toBe('dark');
-            expect(themeConfig({ mode: ' dark ' }).mode).toBe('dark');
-            expect(themeConfig({ mode: 'Dark' }).mode).toBe('light');
+            expect(themeConfig({ mode: ' dark ' } as any).mode).toBe('dark');
+            expect(themeConfig({ mode: 'Dark' } as any).mode).toBe('light');
             expect(themeConfig({ mode: 'light' }).mode).toBe('light');
-            expect(themeConfig({ mode: '  ' }).mode).toBe('light');
+            expect(themeConfig({ mode: '  ' } as any).mode).toBe('light');
         });
 
         test('Switch config: enabled only toggles off when explicitly false; position set to sidebar only when exactly sidebar after trim', () => {
@@ -30,9 +25,9 @@ describe('utils/settings', () => {
             expect(themeConfig({ switch: { enabled: undefined } }).switch.enabled).toBe(true);
 
             expect(themeConfig({ switch: { position: 'sidebar' } }).switch.position).toBe('sidebar');
-            expect(themeConfig({ switch: { position: ' sidebar ' } }).switch.position).toBe('header'); // @todo: Fix this. It should be 'sidebar'
+            expect(themeConfig({ switch: { position: ' sidebar ' } } as any).switch.position).toBe('sidebar');
             expect(themeConfig({ switch: { position: 'header' } }).switch.position).toBe('header');
-            expect(themeConfig({ switch: { position: 'foot' } }).switch.position).toBe('header');
+            expect(themeConfig({ switch: { position: 'foot' } } as any).switch.position).toBe('header');
         });
 
         test('Trims and maps logo URLs for both light and dark modes; ignores missing fields', () => {
@@ -63,7 +58,7 @@ describe('utils/settings', () => {
         });
 
         test('Does not mutate input objects', () => {
-            const themeIn = { mode: ' dark ', switch: { enabled: false, position: ' sidebar ' } };
+            const themeIn: any = { mode: ' dark ', switch: { enabled: false, position: ' sidebar ' } };
             const logoIn = { lightMode: { img: ' x ', svg: ' y ' }, darkMode: { img: ' z ', svg: ' w ' } };
             const themeCopy = JSON.parse(JSON.stringify(themeIn));
             const logoCopy = JSON.parse(JSON.stringify(logoIn));

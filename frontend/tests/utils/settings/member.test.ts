@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/member';
-
-const memberConfig = (user?: any, features?: any) => {
-    init(user, features);
-    return settings();
-};
+import { memberConfig } from '../../../src/static/js/utils/settings/member';
 
 describe('utils/settings', () => {
     describe('member', () => {
@@ -56,8 +51,8 @@ describe('utils/settings', () => {
                 can: {
                     changePassword: true,
                     deleteProfile: true,
-                    addComment: true,
-                    mentionComment: true,
+                    addComment: false,
+                    mentionComment: false,
                     deleteComment: true,
                     editMedia: true,
                     deleteMedia: true,
@@ -90,8 +85,8 @@ describe('utils/settings', () => {
                     changePassword: true,
                     deleteProfile: true,
                     readComment: true,
-                    addComment: true,
-                    mentionComment: true,
+                    addComment: false,
+                    mentionComment: false,
                     deleteComment: true,
                     editMedia: true,
                     deleteMedia: true,
@@ -127,6 +122,12 @@ describe('utils/settings', () => {
             expect(cfg2.can.mentionComment).toBe(true);
         });
 
+        test('Preserves comment capabilities from user.can when media.actions is missing', () => {
+            const cfg = memberConfig({ is: { anonymous: false }, can: { addComment: true, mentionComment: true } });
+            expect(cfg.can.addComment).toBe(true);
+            expect(cfg.can.mentionComment).toBe(true);
+        });
+
         test('Header login/register reflect headerBar feature flags', () => {
             expect(memberConfig(undefined, { headerBar: { hideLogin: true } }).can.login).toBe(false);
             expect(memberConfig(undefined, { headerBar: { hideRegister: true } }).can.register).toBe(false);
@@ -147,6 +148,16 @@ describe('utils/settings', () => {
             expect(cfg1.can.reportMedia).toBe(true);
             expect(cfg1.can.downloadMedia).toBe(true);
             expect(cfg1.can.saveMedia).toBe(true);
+        });
+
+        test('Applies legacy defaults when media.actions exists but fields are missing', () => {
+            const cfg = memberConfig(undefined, { media: { actions: {} } });
+            expect(cfg.can.likeMedia).toBe(true);
+            expect(cfg.can.dislikeMedia).toBe(true);
+            expect(cfg.can.reportMedia).toBe(true);
+            expect(cfg.can.downloadMedia).toBe(false);
+            expect(cfg.can.saveMedia).toBe(false);
+            expect(cfg.can.shareMedia).toBe(false);
         });
 
         test('User flags canSeeMembersPage/usersNeedsToBeApproved/readComment default handling', () => {

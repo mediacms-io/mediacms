@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/notifications';
-
-const notificationsConfig = (sett?: any) => {
-    init(sett);
-    return settings();
-};
+import { notificationsConfig } from '../../../src/static/js/utils/settings/notifications';
 
 describe('utils/settings', () => {
     describe('notifications', () => {
@@ -19,8 +14,7 @@ describe('utils/settings', () => {
             });
         });
 
-        // @todo: Revisit this behavior
-        test('Keep incoming message values ​​without processing', () => {
+        test('Trims incoming message values and applies only when non-empty', () => {
             const cfg = notificationsConfig({
                 messages: {
                     addToLiked: '  Yay  ',
@@ -29,18 +23,19 @@ describe('utils/settings', () => {
                     removeFromDisliked: '\t OK\t',
                 },
             });
-            expect(cfg.messages.addToLiked).toBe('  Yay  ');
-            expect(cfg.messages.removeFromLiked).toBe('   ');
-            expect(cfg.messages.addToDisliked).toBe('\nNope');
-            expect(cfg.messages.removeFromDisliked).toBe('\t OK\t');
+            expect(cfg.messages.addToLiked).toBe('Yay');
+            // empty after trim -> keep default
+            expect(cfg.messages.removeFromLiked).toBe('Removed from liked media');
+            expect(cfg.messages.addToDisliked).toBe('Nope');
+            expect(cfg.messages.removeFromDisliked).toBe('OK');
         });
 
-        test('Ignores undefined, keeping defaults', () => {
+        test('Ignores undefined or empty-string overrides, keeping defaults', () => {
             const cfg = notificationsConfig({
                 messages: {
                     addToLiked: undefined,
-                    removeFromLiked: undefined,
-                    addToDisliked: undefined,
+                    removeFromLiked: '',
+                    addToDisliked: '   ',
                     removeFromDisliked: undefined,
                 },
             });
@@ -59,9 +54,18 @@ describe('utils/settings', () => {
         });
 
         test('Handles extraneous keys by passing them through while keeping known defaults intact', () => {
-            const cfg = notificationsConfig({ messages: { addToLiked: 'A', notARealKey: 'x' } });
-            expect(cfg.messages.notARealKey).toBeUndefined();
+            const cfg = notificationsConfig({
+                messages: {
+                    addToLiked: 'A',
+                    // Inject an unknown key; current implementation passes unknown keys through
+                    ...{ notARealKey: 'x' },
+                },
+            });
+
             expect(cfg.messages.addToLiked).toBe('A');
+            // extraneous key currently copied over
+            expect((cfg.messages as any).notARealKey).toBe('x');
+            // sanity check known defaults remain for untouched keys
             expect(cfg.messages.removeFromLiked).toBe('Removed from liked media');
             expect(cfg.messages.addToDisliked).toBe('Added to disliked media');
             expect(cfg.messages.removeFromDisliked).toBe('Removed from disliked media');

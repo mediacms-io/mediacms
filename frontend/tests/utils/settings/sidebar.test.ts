@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/sidebar';
-
-const sidebarConfig = (sett?: any) => {
-    init(sett);
-    return settings();
-};
+import { sidebarConfig } from '../../../src/static/js/utils/settings/sidebar';
 
 describe('utils/settings', () => {
     describe('sidebar', () => {
@@ -32,14 +27,14 @@ describe('utils/settings', () => {
             // undefined
             expect(sidebarConfig({}).hideHomeLink).toBe(false);
             // null
-            expect(sidebarConfig({ hideTagsLink: null }).hideTagsLink).toBe(false);
+            expect(sidebarConfig({ hideTagsLink: null as any }).hideTagsLink).toBe(false);
             // other types
-            expect(sidebarConfig({ hideCategoriesLink: 'yes' }).hideCategoriesLink).toBe(false);
-            expect(sidebarConfig({ hideCategoriesLink: 1 }).hideCategoriesLink).toBe(false);
+            expect(sidebarConfig({ hideCategoriesLink: 'yes' as any }).hideCategoriesLink).toBe(false);
+            expect(sidebarConfig({ hideCategoriesLink: 1 as any }).hideCategoriesLink).toBe(false);
         });
 
         test('Is resilient to partial inputs and ignores extra properties', () => {
-            const cfg = sidebarConfig({ hideTagsLink: true, extra: 'prop' });
+            const cfg = sidebarConfig({ hideTagsLink: true, extra: 'prop' } as any);
             expect(cfg).toStrictEqual({ hideHomeLink: false, hideTagsLink: true, hideCategoriesLink: false });
         });
 

@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/site';
-
-const siteConfig = (sett?: any) => {
-    init(sett);
-    return settings();
-};
+import { siteConfig } from '../../../src/static/js/utils/settings/site';
 
 describe('utils/settings', () => {
     describe('site', () => {
@@ -27,6 +22,7 @@ describe('utils/settings', () => {
                 title: ' Media CMS ',
                 version: ' 2.3.4 ',
             });
+
             expect(cfg).toStrictEqual({
                 id: 'my-site',
                 url: 'https://example.com/',
@@ -42,22 +38,24 @@ describe('utils/settings', () => {
             expect(siteConfig({ useRoundedCorners: true }).useRoundedCorners).toBe(true);
             expect(siteConfig({ useRoundedCorners: false }).useRoundedCorners).toBe(false);
             // non-boolean should still evaluate to default true because only === false toggles it off
-            expect(siteConfig({ useRoundedCorners: 'no' }).useRoundedCorners).toBe(true);
-            expect(siteConfig({ useRoundedCorners: 0 }).useRoundedCorners).toBe(true);
-            expect(siteConfig({ useRoundedCorners: null }).useRoundedCorners).toBe(true);
+            expect(siteConfig({ useRoundedCorners: 'no' as any }).useRoundedCorners).toBe(true);
+            expect(siteConfig({ useRoundedCorners: 0 as any }).useRoundedCorners).toBe(true);
+            expect(siteConfig({ useRoundedCorners: null as any }).useRoundedCorners).toBe(true);
         });
 
         test('Is resilient to partial inputs and ignores extra properties', () => {
-            const cfg = siteConfig({ id: ' x ', extra: 'y' });
+            const cfg = siteConfig({ id: ' x ', extra: 'y' } as any);
             expect(cfg).toMatchObject({ id: 'x' });
-            expect(Object.keys(cfg).sort()).toEqual(['api', 'id', 'title', 'url', 'useRoundedCorners', 'version']);
+            expect(Object.keys(cfg).sort()).toStrictEqual(
+                ['api', 'id', 'title', 'url', 'useRoundedCorners', 'version'].sort()
+            );
         });
 
         test('Does not mutate input object', () => {
             const input = { id: ' my-id ', useRoundedCorners: false };
             const copy = JSON.parse(JSON.stringify(input));
             siteConfig(input);
-            expect(input).toEqual(copy);
+            expect(input).toStrictEqual(copy);
         });
     });
 });

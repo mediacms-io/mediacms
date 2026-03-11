@@ -1,46 +1,40 @@
-import { init, endpoints } from '../../../src/static/js/utils/settings/api';
+import { apiConfig } from '../../../src/static/js/utils/settings/api';
 
-const apiConfig = (url: any, ep: any) => {
-    init(url, ep);
-    return endpoints();
-};
+const sampleGlobal = {
+    site: { api: 'https://example.com/api///' },
+    // endpoints below intentionally contain leading slashes to ensure they are stripped
+    api: {
+        media: '/v1/media/',
+        playlists: '/v1/playlists',
+        members: '/v1/users',
+        liked: '/v1/user/liked',
+        history: '/v1/user/history',
+        tags: '/v1/tags',
+        categories: '/v1/categories',
+        manage_media: '/v1/manage/media',
+        manage_users: '/v1/manage/users',
+        manage_comments: '/v1/manage/comments',
+        search: '/v1/search',
+    },
+} as const;
 
 describe('utils/settings', () => {
     describe('api', () => {
-        const sampleGlobal = {
-            site: { api: 'https://example.com/api/v1///' },
-            // The endpoints below intentionally contain leading slashes to ensure they are stripped
-            api: {
-                media: '/media/',
-                members: '/users//',
-                playlists: '/playlists',
-                liked: '/user/liked',
-                history: '/user/history',
-                tags: '/tags',
-                categories: '/categories',
-                manage_media: '/manage/media',
-                manage_users: '/manage/users',
-                manage_comments: '/manage/comments',
-                search: '/search',
-            },
-        } as const;
-
-        test('Trims trailing slashes on base and ensures single slash joins', () => {
-            const cfg = apiConfig(sampleGlobal.site.api, sampleGlobal.api);
-            // @todo: Check again the cases of trailing slashes
+        test('trims trailing slashes on base and ensures single slash joins', () => {
+            const cfg = apiConfig(sampleGlobal.site.api as any, sampleGlobal.api as any);
             expect(cfg.media).toBe('https://example.com/api/v1/media/');
-            expect(cfg.users).toBe('https://example.com/api/v1/users//');
+            // base should not end with a slash and endpoint leading slash stripped
+            expect(cfg.users).toBe('https://example.com/api/v1/users');
         });
 
-        test('Adds featured/recommended query to media variants', () => {
-            const cfg = apiConfig(sampleGlobal.site.api, sampleGlobal.api);
+        test('adds featured/recommended query to media variants', () => {
+            const cfg = apiConfig(sampleGlobal.site.api as any, sampleGlobal.api as any);
             expect(cfg.featured).toBe('https://example.com/api/v1/media/?show=featured');
             expect(cfg.recommended).toBe('https://example.com/api/v1/media/?show=recommended');
         });
 
-        test('Builds nested user, archive, manage maps', () => {
-            const cfg = apiConfig(sampleGlobal.site.api, sampleGlobal.api);
-
+        test('builds nested user, archive, manage maps', () => {
+            const cfg = apiConfig(sampleGlobal.site.api as any, sampleGlobal.api as any);
             expect(cfg.user.liked).toBe('https://example.com/api/v1/user/liked');
             expect(cfg.user.history).toBe('https://example.com/api/v1/user/history');
             expect(cfg.user.playlists).toBe('https://example.com/api/v1/playlists?author=');
@@ -53,22 +47,30 @@ describe('utils/settings', () => {
             expect(cfg.manage.comments).toBe('https://example.com/api/v1/manage/comments');
         });
 
-        test('Builds search endpoints with expected query fragments', () => {
-            const cfg = apiConfig(sampleGlobal.site.api, sampleGlobal.api);
+        test('builds search endpoints with expected query fragments', () => {
+            const cfg = apiConfig(sampleGlobal.site.api as any, sampleGlobal.api as any);
             expect(cfg.search.query).toBe('https://example.com/api/v1/search?q=');
             expect(cfg.search.titles).toBe('https://example.com/api/v1/search?show=titles&q=');
             expect(cfg.search.tag).toBe('https://example.com/api/v1/search?t=');
             expect(cfg.search.category).toBe('https://example.com/api/v1/search?c=');
         });
 
-        test('Handles base url with path and endpoint with existing query', () => {
-            const cfg = apiConfig('https://example.com/base/', {
+        test('handles base url with path and endpoint with existing query', () => {
+            const base = 'https://example.com/base/';
+            const endpoints = {
                 media: 'items?x=1',
                 playlists: '/pls/',
+                members: 'users',
                 liked: 'me/liked',
+                history: 'me/history',
+                tags: 't',
                 categories: '/c',
+                manage_media: 'm/media',
+                manage_users: 'm/users',
+                manage_comments: 'm/comments',
                 search: '/s',
-            });
+            } as any;
+            const cfg = apiConfig(base as any, endpoints);
             expect(cfg.media).toBe('https://example.com/base/items?x=1');
             expect(cfg.playlists).toBe('https://example.com/base/pls/');
             expect(cfg.user.liked).toBe('https://example.com/base/me/liked');

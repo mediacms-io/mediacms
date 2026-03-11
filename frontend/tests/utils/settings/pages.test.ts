@@ -1,9 +1,4 @@
-import { init, settings } from '../../../src/static/js/utils/settings/pages';
-
-const pagesConfig = (sett?: any) => {
-    init(sett);
-    return settings();
-};
+import { pagesConfig } from '../../../src/static/js/utils/settings/pages';
 
 describe('utils/settings', () => {
     describe('pages', () => {
@@ -25,9 +20,10 @@ describe('utils/settings', () => {
                 featured: { enabled: true },
                 recommended: { enabled: false },
                 members: { enabled: undefined },
-                liked: { enabled: null },
-                history: { enabled: 0 },
+                liked: { enabled: null as any },
+                history: { enabled: 0 as any },
             });
+
             expect(cfg.latest.enabled).toBe(true);
             expect(cfg.featured.enabled).toBe(true);
             expect(cfg.recommended.enabled).toBe(false);
@@ -42,19 +38,28 @@ describe('utils/settings', () => {
                 featured: { title: '\nFeatured' },
                 recommended: {},
             });
+
             expect(cfg.latest.title).toBe('Latest');
             expect(cfg.featured.title).toBe('Featured');
             expect(cfg.recommended.title).toBe('Recommended');
         });
 
         test('Ignores unknown keys in settings', () => {
-            const cfg = pagesConfig({ unknownKey: { enabled: true, title: 'X' }, latest: { enabled: true } });
+            const cfg = pagesConfig({
+                // @ts-ignore
+                unknownKey: { enabled: true, title: 'X' },
+                latest: { enabled: true },
+            });
+
             expect(cfg.latest.enabled).toBe(true);
-            expect(cfg.unknownKey).toBeUndefined();
+            expect((cfg as any).unknownKey).toBeUndefined();
         });
 
         test('Does not mutate the input settings object', () => {
-            const input = { latest: { enabled: false, title: ' A ' }, featured: { enabled: true, title: ' B ' } };
+            const input = {
+                latest: { enabled: false, title: ' A ' },
+                featured: { enabled: true, title: ' B ' },
+            };
             const snapshot = JSON.parse(JSON.stringify(input));
             pagesConfig(input);
             expect(input).toStrictEqual(snapshot);
