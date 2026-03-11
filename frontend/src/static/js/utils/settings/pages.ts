@@ -21,8 +21,9 @@ export function pagesConfig(
 
         ret[key].enabled = settings[key]?.enabled === false ? false : true;
 
-        if (settings[key]?.title !== undefined) {
-            ret[key].title = settings[key].title.trim();
+        const title = settings[key]?.title;
+        if (typeof title === 'string') {
+            ret[key].title = title.trim();
         }
     }
 

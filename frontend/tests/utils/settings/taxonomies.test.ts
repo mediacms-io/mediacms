@@ -30,6 +30,16 @@ describe('utils/settings', () => {
             expect(res.tags).toStrictEqual({ enabled: true, title: 'My Tags' });
         });
 
+        test('Should ignore non-string title values and keep defaults', () => {
+            const res = taxonomiesConfig({
+                tags: { title: null as any },
+                categories: { title: 123 as any },
+            });
+
+            expect(res.tags).toStrictEqual({ enabled: true, title: 'Tags' });
+            expect(res.categories).toStrictEqual({ enabled: true, title: 'Categories' });
+        });
+
         test('Should ignore unknown taxonomy keys', () => {
             const input = {
                 unknownKey: { enabled: true, title: 'X' },

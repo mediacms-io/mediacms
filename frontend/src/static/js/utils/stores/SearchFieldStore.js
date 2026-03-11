@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 import { exportStore, getRequest } from '../helpers';
-import { config as mediacmsConfig } from '../settings/config.js';
+import { config as mediacmsConfig } from '../settings/config';
 
 function getUrlVars() {
   var vars = {};

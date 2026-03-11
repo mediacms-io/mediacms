@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import { exportStore } from '../helpers/';
 import { BrowserCache } from '../classes/';
 
-import { config as mediacmsConfig } from '../settings/config.js';
+import { config as mediacmsConfig } from '../settings/config';
 
 let browserCache;
 

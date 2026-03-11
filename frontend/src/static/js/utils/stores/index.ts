@@ -14,4 +14,4 @@ export {
     ProfilePageStore,
     SearchFieldStore,
     VideoViewerStore,
-}
+};

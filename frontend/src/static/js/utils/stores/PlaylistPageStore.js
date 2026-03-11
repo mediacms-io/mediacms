@@ -2,7 +2,7 @@ import React from 'react';
 import EventEmitter from 'events';
 import { publishedOnDate, exportStore, getRequest, postRequest, deleteRequest, csrfToken } from '../helpers';
 
-import { config as mediacmsConfig } from '../settings/config.js';
+import { config as mediacmsConfig } from '../settings/config';
 
 const PlaylistPageStoreData = {};
 

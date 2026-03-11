@@ -44,6 +44,18 @@ describe('utils/settings', () => {
             expect(cfg.recommended.title).toBe('Recommended');
         });
 
+        test('Ignores non-string titles and keeps defaults', () => {
+            const cfg = pagesConfig({
+                latest: { title: null as any },
+                featured: { title: 123 as any },
+                recommended: { title: true as any },
+            });
+
+            expect(cfg.latest.title).toBe('Recent uploads');
+            expect(cfg.featured.title).toBe('Featured');
+            expect(cfg.recommended.title).toBe('Recommended');
+        });
+
         test('Ignores unknown keys in settings', () => {
             const cfg = pagesConfig({
                 // @ts-ignore

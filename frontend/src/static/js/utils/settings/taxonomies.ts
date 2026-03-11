@@ -16,8 +16,9 @@ export function taxonomiesConfig(settings?: DeepPartial<GlobalMediaCMS['site']['
 
         ret[key].enabled = settings[key]?.enabled === false ? false : true; // @todo: Check this again
 
-        if (settings[key]?.title !== undefined) {
-            ret[key].title = settings[key].title.trim();
+        const title = settings[key]?.title;
+        if (typeof title === 'string') {
+            ret[key].title = title.trim();
         }
     }
 

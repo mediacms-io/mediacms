@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { exportStore, getRequest, deleteRequest, csrfToken } from '../helpers';
 
-import { config as mediacmsConfig } from '../settings/config.js';
+import { config as mediacmsConfig } from '../settings/config';
 
 class ProfilePageStore extends EventEmitter {
   constructor() {

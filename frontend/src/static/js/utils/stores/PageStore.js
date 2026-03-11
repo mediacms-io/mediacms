@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import { BrowserCache } from '../classes/';
 import { BrowserEvents, exportStore } from '../helpers';
-import { config as mediaCmsConfig } from '../settings/config.js';
+import { config as mediaCmsConfig } from '../settings/config';
 
 function uniqid() {
   let a = new Uint32Array(3);
