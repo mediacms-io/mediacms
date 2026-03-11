@@ -55,7 +55,7 @@ export const LikedMediaPage: React.FC = () => {
   const anonymousPage = isAnonymous || !PageStore.get('config-options').pages.profile.includeLikedMedia;
 
   if (!anonymousPage) {
-    addClassname(document.getElementById('page-liked'), 'profile-page-liked');
+    addClassname(document.getElementById('page-liked')!, 'profile-page-liked');
     window.MediaCMS.profileId = username;
   }
 

@@ -12,10 +12,6 @@ jest.mock('../../../src/static/js/utils/classes/', () => ({
     })),
 }));
 
-jest.mock('../../../src/static/js/utils/dispatcher.js', () => ({
-    register: jest.fn(),
-}));
-
 function getRenderers(ThemeProvider: React.FC<{ children: React.ReactNode }>, useTheme: typeof useThemeHook) {
     const data: { current: any } = { current: undefined };
 

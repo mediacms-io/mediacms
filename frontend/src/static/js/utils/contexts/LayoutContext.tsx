@@ -1,13 +1,15 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { BrowserCache } from '../classes/';
-import { PageStore } from '../stores/';
-import { addClassname, removeClassname, inEmbeddedApp } from '../helpers/';
+import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { BrowserCache } from '../classes';
+import { PageStore } from '../stores';
+import { addClassname, removeClassname, inEmbeddedApp } from '../helpers';
 import SiteContext from './SiteContext';
 
-let slidingSidebarTimeout;
+let slidingSidebarTimeout: NodeJS.Timeout | null = null;
 
-function onSidebarVisibilityChange(visibleSidebar) {
-    clearTimeout(slidingSidebarTimeout);
+function onSidebarVisibilityChange(visibleSidebar: boolean) {
+    if (slidingSidebarTimeout) {
+        clearTimeout(slidingSidebarTimeout);
+    }
 
     addClassname(document.body, 'sliding-sidebar');
 
@@ -39,18 +41,29 @@ function onSidebarVisibilityChange(visibleSidebar) {
     }, 20);
 }
 
-export const LayoutContext = createContext();
+export const LayoutContext = createContext({
+    enabledSidebar: true,
+    visibleSidebar: true,
+    setVisibleSidebar: (_: boolean) => {},
+    visibleMobileSearch: false,
+    toggleMobileSearch: () => {},
+    toggleSidebar: () => {},
+});
 
-export const LayoutProvider = ({ children }) => {
+export const LayoutProvider = ({ children }: { children: ReactNode }) => {
     const site = useContext(SiteContext);
-    const cache = new BrowserCache('MediaCMS[' + site.id + '][layout]', 86400);
+    const cache = BrowserCache('MediaCMS[' + site.id + '][layout]', 86400);
 
     const isMediaPage = useMemo(() => PageStore.get('current-page') === 'media', []);
     const isEmbeddedApp = useMemo(() => inEmbeddedApp(), []);
 
     const enabledSidebar = Boolean(document.getElementById('app-sidebar') || document.querySelector('.page-sidebar'));
 
-    const [visibleSidebar, setVisibleSidebar] = useState(cache.get('visible-sidebar'));
+    const [visibleSidebar, setVisibleSidebar] = useState<boolean>(
+        cache instanceof Error
+            ? true // @todo: Check this again
+            : cache.get('visible-sidebar')
+    );
     const [visibleMobileSearch, setVisibleMobileSearch] = useState(false);
 
     const toggleMobileSearch = () => {
@@ -71,7 +84,9 @@ export const LayoutProvider = ({ children }) => {
         }
 
         if (!isEmbeddedApp && !isMediaPage && 1023 < window.innerWidth) {
-            cache.set('visible-sidebar', visibleSidebar);
+            if (!(cache instanceof Error)) {
+                cache.set('visible-sidebar', visibleSidebar);
+            }
         }
     }, [isEmbeddedApp, isMediaPage, visibleSidebar]);
 

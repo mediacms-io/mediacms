@@ -55,7 +55,7 @@ export const HistoryPage: React.FC = () => {
   const anonymousPage = isAnonymous || !PageStore.get('config-options').pages.profile.includeHistory;
 
   if (!anonymousPage) {
-    addClassname(document.getElementById('page-history'), 'profile-page-history');
+    addClassname(document.getElementById('page-history')!, 'profile-page-history');
     window.MediaCMS.profileId = username;
   }
 

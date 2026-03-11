@@ -76,7 +76,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <MediaListRow
                       title={featured_title}
                       style={!visibleFeatured ? { display: 'none' } : undefined}
-                      viewAllLink={featured_view_all_link ? links.featured : null}
+                      viewAllLink={featured_view_all_link ? links.featured : undefined}
                     >
                       <InlineSliderItemListAsync
                         requestUrl={apiUrl.featured}
@@ -93,7 +93,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <MediaListRow
                       title={recommended_title}
                       style={!visibleRecommended ? { display: 'none' } : undefined}
-                      viewAllLink={recommended_view_all_link ? links.recommended : null}
+                      viewAllLink={recommended_view_all_link ? links.recommended : undefined}
                     >
                       <InlineSliderItemListAsync
                         requestUrl={apiUrl.recommended}
@@ -108,7 +108,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <MediaListRow
                   title={latest_title}
                   style={!visibleLatest ? { display: 'none' } : undefined}
-                  viewAllLink={latest_view_all_link ? links.latest : null}
+                  viewAllLink={latest_view_all_link ? links.latest : undefined}
                 >
                   <ItemListAsync
                     pageItems={30}

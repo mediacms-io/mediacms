@@ -18,10 +18,6 @@ jest.mock('../../../src/static/js/utils/classes/', () => ({
     })),
 }));
 
-jest.mock('../../../src/static/js/utils/dispatcher.js', () => ({
-    register: jest.fn(),
-}));
-
 jest.mock('../../../src/static/js/utils/settings/config', () => ({
     config: jest.fn(() => jest.requireActual('../../tests-constants').sampleMediaCMSConfig),
 }));
@@ -54,7 +50,7 @@ describe('utils/hooks', () => {
             });
         });
 
-        test('Returns undefined value when used without a Provider', () => {
+        test('Returns default context value when used without a Provider', () => {
             let received: any = 'init';
 
             const Comp: React.FC = () => {
@@ -64,7 +60,14 @@ describe('utils/hooks', () => {
 
             render(<Comp />);
 
-            expect(received).toBe(undefined);
+            expect(received).toStrictEqual({
+                enabledSidebar: true,
+                visibleSidebar: true,
+                visibleMobileSearch: false,
+                setVisibleSidebar: expect.any(Function),
+                toggleMobileSearch: expect.any(Function),
+                toggleSidebar: expect.any(Function),
+            });
         });
 
         test('Toggle sidebar', () => {
