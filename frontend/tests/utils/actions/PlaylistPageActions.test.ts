@@ -1,8 +1,8 @@
 import { PlaylistPageActions } from '../../../src/static/js/utils/actions';
-import dispatcher from '../../../src/static/js/utils/dispatcher';
+import { dispatcher } from '../../../src/static/js/utils/dispatcher';
 
 // Mock the dispatcher module used by PlaylistPageActions
-jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatch: jest.fn() }));
+jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatcher: { dispatch: jest.fn() } }));
 
 describe('utils/actions', () => {
     describe('PlaylistPageActions', () => {

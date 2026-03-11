@@ -1,8 +1,8 @@
 import * as MediaPageActions from '../../../src/static/js/utils/actions/MediaPageActions';
-import dispatcher from '../../../src/static/js/utils/dispatcher';
+import { dispatcher } from '../../../src/static/js/utils/dispatcher';
 
 // Mock the dispatcher module used by MediaPageActions
-jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatch: jest.fn() }));
+jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatcher: { dispatch: jest.fn() } }));
 
 describe('utils/actions', () => {
     describe('MediaPageActions', () => {
@@ -37,6 +37,12 @@ describe('utils/actions', () => {
         describe('reportMedia', () => {
             it('Should dispatch REPORT_MEDIA with empty string when description is undefined', () => {
                 MediaPageActions.reportMedia();
+                expect(dispatch).toHaveBeenCalledTimes(1);
+                expect(dispatch).toHaveBeenCalledWith({ type: 'REPORT_MEDIA', reportDescription: '' });
+            });
+
+            it('Should dispatch REPORT_MEDIA with empty string when description is null', () => {
+                MediaPageActions.reportMedia(null);
                 expect(dispatch).toHaveBeenCalledTimes(1);
                 expect(dispatch).toHaveBeenCalledWith({ type: 'REPORT_MEDIA', reportDescription: '' });
             });

@@ -1,8 +1,9 @@
 import { SearchFieldActions } from '../../../src/static/js/utils/actions';
-import dispatcher from '../../../src/static/js/utils/dispatcher';
 
 // Mock the dispatcher module used by SearchFieldActions
-jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatch: jest.fn() }));
+jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatcher: { dispatch: jest.fn() } }));
+
+import { dispatcher } from '../../../src/static/js/utils/dispatcher';
 
 describe('utils/actions', () => {
     describe('SearchFieldActions', () => {

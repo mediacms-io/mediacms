@@ -1,8 +1,8 @@
 import { ProfilePageActions } from '../../../src/static/js/utils/actions';
-import dispatcher from '../../../src/static/js/utils/dispatcher';
+import { dispatcher } from '../../../src/static/js/utils/dispatcher';
 
 // Mock the dispatcher module used by ProfilePageActions
-jest.mock('../../../src/static/js/utils/dispatcher', () => ({ dispatch: jest.fn() }));
+jest.mock('../../../src/static/js/utils/actions/../dispatcher', () => ({ dispatcher: { dispatch: jest.fn() } }));
 
 describe('utils/actions', () => {
     describe('ProfilePageActions', () => {
