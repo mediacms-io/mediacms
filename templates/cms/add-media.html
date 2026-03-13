@@ -20,17 +20,23 @@
 <link href="{% static "css/add-media.css" %}" rel="stylesheet">
 <style>
     /* LMS Embed Mode specific styling */
-    .is-lms-embed .media-uploader-wrap {
+    body.lms-embed-mode {
+        overflow-y: hidden;
+    }
+    .media-uploader-wrap.is-lms-embed {
+        max-width: 680px;
         padding: 10px 15px;
+    }
+    .media-uploader-wrap.is-lms-embed .media-uploader {
+        width: 50%;
+        margin: 0 auto;
     }
     .is-lms-embed .media-uploader-top-wrap {
         margin-bottom: 10px;
         padding: 0;
     }
     .is-lms-embed .media-uploader-top-left-wrap h1 {
-        font-size: 1.2rem;
-        margin: 0;
-        padding: 0;
+        display: none;
     }
     .is-lms-embed .media-uploader-bottom-wrap {
         margin-top: 10px;
@@ -177,11 +183,13 @@
 <script>
     document.addEventListener("DOMContentLoaded", function(event) {
 
+        // Add compact styles if in LMS embed mode
         if (sessionStorage.getItem('lms_embed_mode') === 'true') {
             var wrap = document.getElementById('media-uploader-wrap');
             if (wrap) {
                 wrap.classList.add('is-lms-embed');
             }
+            document.body.classList.add('lms-embed-mode');
         }
 
         function getCSRFToken() {
@@ -238,8 +246,23 @@
 
                         if ( response.media_url ) {
                             if ( 1 === this._currentItemLimit ) {
-                                if (sessionStorage.getItem('lms_embed_mode') === 'true') {
-                                    window.location.href = '{% url "get_user" username=request.user.username %}?mode=lms_embed_mode';
+                                if (sessionStorage.getItem('lms_embed_mode') === 'true' && window.parent !== window) {
+                                    var mediaUrl = response.media_url;
+                                    var mediaId = '';
+                                    if (mediaUrl.indexOf('m=') > -1) {
+                                        mediaId = mediaUrl.split('m=')[1].split('&')[0];
+                                    } else {
+                                        var parts = mediaUrl.split('/').filter(Boolean);
+                                        mediaId = parts[parts.length - 1];
+                                    }
+                                    var baseUrl = window.location.origin;
+                                    var embedUrl = baseUrl + '/embed?m=' + mediaId;
+
+                                    window.parent.postMessage({
+                                        type: 'videoSelected',
+                                        embedUrl: embedUrl,
+                                        videoId: mediaId
+                                    }, '*');
                                     return;
                                 }
                                 setTimeout(function(){ window.location.href = response.media_url; }, 500);
