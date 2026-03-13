@@ -1,29 +1,59 @@
 import React from 'react';
 import './BulkActionsDropdown.scss';
 import { translateString } from '../utils/helpers/';
-import { inEmbeddedApp } from '../utils/helpers/embeddedApp';
 
 interface BulkActionsDropdownProps {
   selectedCount: number;
   onActionSelect: (action: string) => void;
 }
 
-const BULK_ACTIONS = [
-  { value: 'add-remove-coviewers', label: inEmbeddedApp() ? translateString('Share with Co-Viewers') : translateString('Add / Remove Co-Viewers'), enabled: true },
-  { value: 'add-remove-coeditors', label: inEmbeddedApp() ? translateString('Share with Co-Editors') : translateString('Add / Remove Co-Editors'), enabled: true },
-  { value: 'add-remove-coowners', label: inEmbeddedApp() ? translateString('Share with Co-Owners') : translateString('Add / Remove Co-Owners'), enabled: true },
-  { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
-  { value: 'add-remove-category', label: inEmbeddedApp() ? translateString('Share with Course Members') : translateString('Add to / Remove from Category'), enabled: true },
-  { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
-  { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
-  { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
-  { value: 'delete-comments', label: translateString('Delete Comments'), enabled: true },
-  { value: 'enable-download', label: translateString('Enable Download'), enabled: true },
-  { value: 'disable-download', label: translateString('Disable Download'), enabled: true },
-  { value: 'publish-state', label: translateString('Publish State'), enabled: true },
-  { value: 'change-owner', label: translateString('Change Owner'), enabled: true },
-  { value: 'copy-media', label: translateString('Copy Media'), enabled: true },
-  { value: 'delete-media', label: translateString('Delete Media'), enabled: true },
+interface BulkAction {
+  value: string;
+  label: string;
+  enabled: boolean;
+}
+
+interface BulkActionGroup {
+  label: string;
+  actions: BulkAction[];
+}
+
+const BULK_ACTION_GROUPS: BulkActionGroup[] = [
+  {
+    label: translateString('Sharing'),
+    actions: [
+      { value: 'add-remove-coviewers', label: translateString('Share with Co-Viewers'), enabled: true },
+      { value: 'add-remove-coeditors', label: translateString('Share with Co-Editors'), enabled: true },
+      { value: 'add-remove-coowners', label: translateString('Share with Co-Owners'), enabled: true },
+      { value: 'add-remove-category', label: translateString('Share with Course Members'), enabled: true },
+    ],
+  },
+  {
+    label: translateString('Organization'),
+    actions: [
+      { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
+      { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
+    ],
+  },
+  {
+    label: translateString('Settings'),
+    actions: [
+      { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
+      { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
+      { value: 'delete-comments', label: translateString('Delete Comments'), enabled: true },
+      { value: 'enable-download', label: translateString('Enable Download'), enabled: true },
+      { value: 'disable-download', label: translateString('Disable Download'), enabled: true },
+    ],
+  },
+  {
+    label: translateString('Management'),
+    actions: [
+      { value: 'publish-state', label: translateString('Publish State'), enabled: true },
+      { value: 'change-owner', label: translateString('Change Owner'), enabled: true },
+      { value: 'copy-media', label: translateString('Copy Media'), enabled: true },
+      { value: 'delete-media', label: translateString('Delete Media'), enabled: true },
+    ],
+  },
 ];
 
 export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ selectedCount, onActionSelect }) => {
@@ -60,10 +90,14 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ select
         <option value="" disabled>
           {displayText}
         </option>
-        {BULK_ACTIONS.map((action) => (
-          <option key={action.value} value={action.value} disabled={noSelection || !action.enabled}>
-            {action.label}
-          </option>
+        {BULK_ACTION_GROUPS.map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.actions.map((action) => (
+              <option key={action.value} value={action.value} disabled={noSelection || !action.enabled}>
+                {action.label}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
     </div>
