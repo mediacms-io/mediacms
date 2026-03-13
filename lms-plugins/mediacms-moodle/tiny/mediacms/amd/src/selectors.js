@@ -143,6 +143,7 @@ export default {
             tabs: '.tiny_iframecms_tabs',
             tabUrlBtn: '.tiny_iframecms_tab_url_btn',
             tabIframeLibraryBtn: '.tiny_iframecms_tab_iframe_library_btn',
+            tabUploadMediaBtn: '.tiny_iframecms_upload_media_btn',
             paneUrl: '.tiny_iframecms_pane_url',
             paneIframeLibrary: '.tiny_iframecms_pane_iframe_library',
             // Iframe library elements

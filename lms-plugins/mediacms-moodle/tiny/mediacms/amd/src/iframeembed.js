@@ -936,6 +936,87 @@ export default class IframeEmbed {
             });
         }
 
+        // Upload media button handler
+        const uploadMediaBtn = form.querySelector(
+            Selectors.IFRAME.elements.tabUploadMediaBtn,
+        );
+        if (uploadMediaBtn) {
+            uploadMediaBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Ensure we are on the iframe library tab
+                this.switchToIframeLibraryTab(root);
+
+                // Get the upload URL, preferring LTI launch if available
+                let uploadUrl = '';
+                const ltiConfig = getLti(this.editor);
+
+                if (ltiConfig && ltiConfig.contentItemUrl) {
+                    try {
+                        const urlObj = new URL(ltiConfig.contentItemUrl);
+                        urlObj.searchParams.set('action', 'upload');
+                        uploadUrl = urlObj.toString();
+                    } catch (err) {
+                        // Ignore errors silently for Moodle coding style
+                    }
+                }
+
+                if (!uploadUrl) {
+                    // Get the MediaCMS base URL from plugin data configuration
+                    let baseUrl = '';
+                    try {
+                        const editorData = getData(this.editor);
+                        if (editorData && editorData.mediacmsBaseUrl) {
+                            baseUrl = editorData.mediacmsBaseUrl;
+                        }
+                    } catch (err) {
+                        // Ignore errors silently for Moodle coding style
+                    }
+
+                    // Fallback to iframeLibraryUrl if not set
+                    if (!baseUrl) {
+                        try {
+                            const urlObj = new URL(this.iframeLibraryUrl);
+                            baseUrl = `${urlObj.protocol}//${urlObj.host}`;
+                        } catch (err) {
+                            // Ignore errors silently for Moodle coding style
+                        }
+                    }
+
+                    // Ensure no trailing slash before appending /upload
+                    baseUrl = baseUrl.replace(/\/$/, '');
+                    uploadUrl = baseUrl ? `${baseUrl}/upload` : '';
+                }
+
+                if (uploadUrl) {
+                    const pane = form.querySelector(Selectors.IFRAME.elements.paneIframeLibrary);
+                    if (pane) {
+                        const iframeEl = pane.querySelector(Selectors.IFRAME.elements.iframeLibraryFrame);
+                        const placeholderEl = pane.querySelector(Selectors.IFRAME.elements.iframeLibraryPlaceholder);
+                        const loadingEl = pane.querySelector(Selectors.IFRAME.elements.iframeLibraryLoading);
+
+                        if (placeholderEl) {
+                            placeholderEl.classList.add('d-none');
+                        }
+                        if (loadingEl) {
+                            loadingEl.classList.remove('d-none');
+                        }
+                        if (iframeEl) {
+                            iframeEl.classList.add('d-none');
+
+                            const loadHandler = () => {
+                                this.handleIframeLibraryLoad(root);
+                                iframeEl.removeEventListener('load', loadHandler);
+                            };
+                            iframeEl.addEventListener('load', loadHandler);
+                            iframeEl.src = uploadUrl;
+                        }
+                    }
+                }
+            });
+        }
+
         // Iframe library event listeners
         this.registerIframeLibraryEventListeners(root);
 

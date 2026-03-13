@@ -31,6 +31,7 @@ global $DB, $PAGE, $OUTPUT, $SITE, $USER, $SESSION;
 require_login();
 
 $courseid  = required_param('courseid', PARAM_INT);
+$action    = optional_param('action', '', PARAM_TEXT);
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
 
 if (empty($ltitoolid)) {
@@ -68,7 +69,11 @@ $PAGE->set_title('MediaCMS Select Media');
 $typeconfig = lti_get_type_type_config($type->id);
 
 // Store redirect_path in session — lti_auth.php picks it up after the OIDC roundtrip.
-$SESSION->mediacms_launch_customparams = 'redirect_path=/lti/select-media/?mode=lms_embed_mode';
+if ($action === 'upload') {
+    $SESSION->mediacms_launch_customparams = 'redirect_path=/upload';
+} else {
+    $SESSION->mediacms_launch_customparams = 'redirect_path=/lti/select-media/?mode=lms_embed_mode';
+}
 
 $content = lti_initiate_login($course->id, 0, null, $typeconfig, null, 'MediaCMS Select Media');
 

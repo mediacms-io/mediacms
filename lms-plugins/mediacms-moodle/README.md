@@ -88,3 +88,27 @@ Configure default display options for auto-converted URLs:
 ### For Students (Display)
 
 When content is viewed, the Filter will ensure the video is loaded securely via LTI 1.3, authenticating the user with MediaCMS automatically.
+
+
+
+## Build instructions / Developing with the plugin
+
+two types of changes: php (no build), js (build with npx grunt amd)
+
+needs moodle/
+npx version, dependencies etc
+
+1. make changes here in lms-plugins/mediacms-moodle
+2. copy to moodle
+3. run `npx grunt amd` in moodle to build the JS files
+4. from moodle copy back
+sudo cp -r ~/mediacms/lms-plugins/mediacms-moodle/tiny/mediacms/ -r ~/mediacms/moodle/public/lib/editor/tiny/plugins/
+
+5. cd ~/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms/
+
+npx grunt amd
+6.
+cp files back...
+sudo cp -r /home/user/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms /home/user/mediacms/lms-plugins/mediacms-moodle/tiny/
+
+php admin/cli/purge_caches.php after
