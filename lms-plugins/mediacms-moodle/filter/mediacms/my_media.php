@@ -46,7 +46,7 @@ echo html_writer::tag('iframe', '', [
     'id'              => 'contentframe',
     'src'             => $src,
     'allowfullscreen' => 'true',
-    'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *;',
+    'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *; display-capture *;',
     'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
 ]);
 
