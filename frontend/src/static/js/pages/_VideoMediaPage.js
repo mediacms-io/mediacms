@@ -2,7 +2,6 @@ import React from 'react';
 // FIXME: 'VideoViewerStore' is used only in case of video media, but is included in every media page code.
 import { PageStore, MediaPageStore, VideoViewerStore } from '../utils/stores/';
 import { MediaPageActions } from '../utils/actions/';
-import { inEmbeddedApp } from '../utils/helpers/';
 import ViewerInfoVideo from '../components/media-page/ViewerInfoVideo';
 import ViewerError from '../components/media-page/ViewerError';
 import ViewerSidebar from '../components/media-page/ViewerSidebar';
@@ -104,7 +103,7 @@ export class _VideoMediaPage extends Page {
                         {!this.state.wideLayout || (this.state.isVideoMedia && this.state.theaterMode)
                             ? [
                                   <ViewerInfoVideo key="viewer-info" />,
-                                  !inEmbeddedApp() && this.state.pagePlaylistLoaded ? (
+                                  this.state.pagePlaylistLoaded ? (
                                       <ViewerSidebar
                                           key="viewer-sidebar"
                                           mediaId={MediaPageStore.get('media-id')}
@@ -113,7 +112,7 @@ export class _VideoMediaPage extends Page {
                                   ) : null,
                               ]
                             : [
-                                  !inEmbeddedApp() && this.state.pagePlaylistLoaded ? (
+                                  this.state.pagePlaylistLoaded ? (
                                       <ViewerSidebar
                                           key="viewer-sidebar"
                                           mediaId={MediaPageStore.get('media-id')}
