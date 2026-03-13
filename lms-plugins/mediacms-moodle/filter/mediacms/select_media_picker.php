@@ -70,7 +70,7 @@ $typeconfig = lti_get_type_type_config($type->id);
 
 // Store redirect_path in session — lti_auth.php picks it up after the OIDC roundtrip.
 if ($action === 'upload') {
-    $SESSION->mediacms_launch_customparams = 'redirect_path=/upload';
+    $SESSION->mediacms_launch_customparams = 'redirect_path=/upload?action=select_media';
 } else {
     $SESSION->mediacms_launch_customparams = 'redirect_path=/lti/select-media/?mode=lms_embed_mode';
 }

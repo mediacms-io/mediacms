@@ -183,8 +183,11 @@
 <script>
     document.addEventListener("DOMContentLoaded", function(event) {
 
+        var urlParams = new URLSearchParams(window.location.search);
+        var isLmsEmbedMode = sessionStorage.getItem('lms_embed_mode') === 'true' && urlParams.get('action') === 'select_media';
+
         // Add compact styles if in LMS embed mode
-        if (sessionStorage.getItem('lms_embed_mode') === 'true') {
+        if (isLmsEmbedMode) {
             var wrap = document.getElementById('media-uploader-wrap');
             if (wrap) {
                 wrap.classList.add('is-lms-embed');
@@ -224,7 +227,7 @@
                 maxAutoAttempts: 2,
             },
             validation: {
-                itemLimit: sessionStorage.getItem('lms_embed_mode') === 'true' ? 1 : {{UPLOAD_MAX_FILES_NUMBER}},
+                itemLimit: isLmsEmbedMode ? 1 : {{UPLOAD_MAX_FILES_NUMBER}},
                 sizeLimit: {{UPLOAD_MAX_SIZE}},
             },
             chunking: {
@@ -246,7 +249,7 @@
 
                         if ( response.media_url ) {
                             if ( 1 === this._currentItemLimit ) {
-                                if (sessionStorage.getItem('lms_embed_mode') === 'true' && window.parent !== window) {
+                                if (isLmsEmbedMode && window.parent !== window) {
                                     var mediaUrl = response.media_url;
                                     var mediaId = '';
                                     if (mediaUrl.indexOf('m=') > -1) {
