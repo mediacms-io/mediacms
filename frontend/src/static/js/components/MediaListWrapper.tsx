@@ -56,7 +56,7 @@ export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
                 {
                   link: '/record_screen',
                   icon: 'videocam',
-                  text: translateString('Record Screen'),
+                  text: translateString('Record'),
                 },
               ];
 
