@@ -123,6 +123,7 @@ class MediaPublishForm(forms.ModelForm):
 
         widgets = {
             "category": CategoryModalWidget(),
+            "state": forms.RadioSelect(),
         }
 
     def __init__(self, user, *args, **kwargs):

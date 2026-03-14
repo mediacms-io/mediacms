@@ -21,6 +21,8 @@
 
         {% block topimports %}{%endblock topimports %}
 
+        {% block extra_head %}{% endblock extra_head %}
+
         {% include "config/index.html" %}
 
         {% if not USE_ROUNDED_CORNERS %}

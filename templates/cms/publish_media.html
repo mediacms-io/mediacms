@@ -6,6 +6,33 @@
 
 {% block headermeta %}{% endblock headermeta %}
 
+{% block extra_head %}
+<script>
+  (function() {
+    var url = new URL(window.location.href);
+    if (sessionStorage.getItem('lms_embed_mode') === 'true' && url.searchParams.get('mode') !== 'lms_embed_mode') {
+      url.searchParams.set('mode', 'lms_embed_mode');
+      window.location.replace(url.toString());
+    }
+  })();
+</script>
+<style>
+  #div_id_state ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  #div_id_state ul li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+</style>
+{% endblock extra_head %}
+
 {% block innercontent %}
     <div class="user-action-form-wrap">
 			{% include "cms/media_nav.html" with active_tab="publish" %}
