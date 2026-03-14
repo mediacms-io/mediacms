@@ -228,12 +228,34 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
         <div className="permission-modal-header">
           <div>
             <h2>{translateString('Share with')} {permissionLabel}</h2>
+            {permissionType === 'viewer' && (
+              <div className="permission-modal-subtitle">
+                <span>{translateString('Give users viewer permissions to your media by adding them to the below list.')}</span>
+                <span
+                  className="info-tooltip"
+                  title={translateString("Users can view your media via: My Media > Shared with Me > particular media > ...")}
+                >
+                  i
+                </span>
+              </div>
+            )}
             {permissionType === 'editor' && (
               <div className="permission-modal-subtitle">
                 <span>{translateString('Give users editor permissions to your media by adding them to the below list.')}</span>
                 <span
                   className="info-tooltip"
                   title={translateString("Users can edit your media via: My Media > Shared with Me > particular media > Edit...")}
+                >
+                  i
+                </span>
+              </div>
+            )}
+            {permissionType === 'owner' && (
+              <div className="permission-modal-subtitle">
+                <span>{translateString('Give users owner permissions to your media, except for deleting the media, by adding them to the below list.')}</span>
+                <span
+                  className="info-tooltip"
+                  title={translateString("Users can manage your media via: My Media > Shared with Me > particular media > ...")}
                 >
                   i
                 </span>
@@ -297,8 +319,18 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
                   ?
                 </span>
               )}
+              {permissionType === 'viewer' && (
+                <span className="info-tooltip" title={translateString('Remove users from the list to remove viewer permissions')}>
+                  i
+                </span>
+              )}
               {permissionType === 'editor' && (
                 <span className="info-tooltip" title={translateString('Remove users from the list to remove editor permissions')}>
+                  i
+                </span>
+              )}
+              {permissionType === 'owner' && (
+                <span className="info-tooltip" title={translateString('Remove users from the list to remove owner permissions')}>
                   i
                 </span>
               )}
