@@ -1,34 +1,26 @@
 # MediaCMS for Moodle
 
-**Version:** 1.0.0 | **Release Date:** 2026-02-12 | **Moodle:** 4.5+
+Version: 1.0.0, tested on Moodle 5
 
-This package provides complete MediaCMS integration for Moodle, consisting of two plugins that work together with **unified settings**:
+This plugin provides complete MediaCMS integration for Moodle, consisting of two plugins that work together with unified settings:
 
 1.  **Filter Plugin (filter_mediacms):**
     *   Handles LTI 1.3 authentication and secure video launches
     *   Auto-converts MediaCMS URLs to embedded players
     *   **Provides core settings** (MediaCMS URL, LTI Tool ID) used by both plugins
-    *   **Location:** `filter/mediacms`
+    *   **Location:** Admin, Plugins, Manage filters, MediaCMS
 
 2.  **Editor Plugin (tiny_mediacms):**
     *   Adds MediaCMS button to TinyMCE editor
     *   Browse authenticated video library via LTI Deep Linking
     *   Configure embed options (dimensions, display, start time)
     *   **Reads core settings** from filter plugin
-    *   **Location:** `lib/editor/tiny/plugins/mediacms`
+    *   **Location:** Admin, Plugins, TinyMCE, MediaCMS
 
 ## Installation
 
-This package is distributed as a single repository but contains two distinct Moodle plugins that must be installed in their respective directories.
-
-### 1. Copy Files
-
-Copy the directories into your Moodle installation as follows (example assuming Moodle is at `/var/www/moodle/public`):
-
-*   Copy `filter/mediacms` to `/var/www/moodle/public/filter/mediacms`.
-*   Copy `tiny/mediacms` to `/var/www/moodle/public/lib/editor/tiny/plugins/mediacms`.
-
-### 2. Set Permissions
+Upload the plugin in Moodle's public directory and unzip
+# cd /var/www/moodle/public ; cp /root/mediacms-moodle-v1.0.0.zip . && unzip mediacms-moodle-v1.0.0.zip
 
 Ensure the web server user (typically `www-data`) has ownership of the new directories:
 
@@ -112,3 +104,7 @@ cp files back...
 sudo cp -r /home/user/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms /home/user/mediacms/lms-plugins/mediacms-moodle/tiny/
 
 php admin/cli/purge_caches.php after
+
+
+### Troubleshooting
+Admin, advanced theme settings, add `My Media|/filter/mediacms/my_media.php` in case the position is not workin

@@ -1,8 +1,7 @@
 <?php
-/**
- * @package    filter_mediacms
- * @copyright  2026 MediaCMS
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 
 defined('MOODLE_INTERNAL') || die();
+
+define('MEDIACMS_NAV_PLACEMENT_TOP', 0);
+define('MEDIACMS_NAV_PLACEMENT_PROFILE', 1);
+define('MEDIACMS_NAV_PLACEMENT_NONE', 2);

@@ -22,3 +22,9 @@ $string['mymedia'] = 'My Media';
 $string['notconfigured'] = 'MediaCMS is not fully configured. Please set the MediaCMS URL and LTI Tool in Site Administration → Plugins → Filters → MediaCMS.';
 $string['ltitoolnotfound'] = 'The configured LTI tool could not be found. Please check the MediaCMS filter settings.';
 $string['cannotcreatedummyactivity'] = 'Could not create the MediaCMS launcher activity. Please check course permissions.';
+
+$string['mymediaposition'] = 'My Media Link Position';
+$string['mymediaposition_desc'] = 'Select where the "My Media" link should appear in the Moodle interface.';
+$string['pos_topbar'] = 'Top Navigation Bar';
+$string['pos_userdrop'] = 'User Profile Dropdown';
+$string['pos_none'] = 'None (Do not display)';

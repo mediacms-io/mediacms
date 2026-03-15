@@ -1,7 +1,6 @@
 <?php
 /**
  * Hook registrations for filter_mediacms.
- * Primary navigation is handled via extend_navigation() in lib.php instead.
  *
  * @package    filter_mediacms
  * @copyright  2026 MediaCMS
@@ -10,4 +9,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$callbacks = [];
+$callbacks = [
+    [
+        'hook' => \core\hook\after_config::class,
+        'callback' => [\filter_mediacms\hooks::class, 'append_my_media_link'],
+        'priority' => 100,
+    ],
+];
