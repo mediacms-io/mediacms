@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, Subtitle
+from .models import MEDIA_STATES, Category, Media, Subtitle, Tag
 from .widgets import CategoryModalWidget
 
 
@@ -293,6 +293,10 @@ class MediaPublishForm(forms.ModelForm):
             self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
+
+        for course in media.category.filter(is_lms_course=True):
+            tag, _ = Tag.objects.get_or_create(title=course.title[:100])
+            media.tags.add(tag)
 
         return media
 
