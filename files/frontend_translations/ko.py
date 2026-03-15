@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "녹화 시작",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "미디어를 업로드하고 작업을 공유하세요. 업로드한 미디어가 여기에 표시됩니다.",
     "Stop Recording": "녹화 중지",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "제출",
     "Subtitle was added": "자막이 추가되었습니다",
     "Subtitles": "자막",

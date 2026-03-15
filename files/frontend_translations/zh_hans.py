@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "开始录制",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "开始上传媒体并分享您的作品。您上传的媒体将显示在这里。",
     "Stop Recording": "停止录制",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "",
     "Subtitle was added": "字幕已添加",
     "Subtitles": "字幕",

@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "بدء التسجيل",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "ابدأ في تحميل الوسائط ومشاركة عملك. ستظهر الوسائط التي تحملها هنا.",
     "Stop Recording": "إيقاف التسجيل",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "إرسال",
     "Subtitle was added": "تمت إضافة الترجمة",
     "Subtitles": "ترجمات",

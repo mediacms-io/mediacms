@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Opname starten",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Begin met het uploaden van media en het delen van uw werk. Media die u uploadt, verschijnt hier.",
     "Stop Recording": "Opname stoppen",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Indienen",
     "Subtitle was added": "Ondertitel is toegevoegd",
     "Subtitles": "Ondertitels",

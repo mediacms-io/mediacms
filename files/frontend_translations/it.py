@@ -206,6 +206,7 @@ translation_strings = {
     "Start Recording": "Inizia registrazione",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Inizia a caricare media e condividere il tuo lavoro. I media caricati appariranno qui.",
     "Stop Recording": "Interrompi registrazione",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Invia",
     "Subtitle was added": "I sottotitoli sono stati aggiunti",
     "Subtitles": "Sottotitoli",

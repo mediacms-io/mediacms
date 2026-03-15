@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "ریکارڈنگ شروع کریں",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "میڈیا اپ لوڈ کرنا اور اپنا کام شیئر کرنا شروع کریں۔ آپ جو میڈیا اپ لوڈ کرتے ہیں وہ یہاں ظاہر ہوگا۔",
     "Stop Recording": "ریکارڈنگ روکیں",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "جمع کرائیں",
     "Subtitle was added": "سب ٹائٹل شامل کیا گیا",
     "Subtitles": "سب ٹائٹلز",

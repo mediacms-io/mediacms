@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Έναρξη εγγραφής",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Ξεκινήστε να ανεβάζετε αρχεία και να κοινοποιείτε τη δουλειά σας. Τα αρχεία που ανεβάζετε θα εμφανίζονται εδώ.",
     "Stop Recording": "Διακοπή εγγραφής",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Υποβολή",
     "Subtitle was added": "Οι υπότιτλοι προστέθηκαν",
     "Subtitles": "Υπότιτλοι",

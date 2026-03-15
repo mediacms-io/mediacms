@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Kaydı Başlat",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Medya yüklemeye ve çalışmanızı paylaşmaya başlayın. Yüklediğiniz medya burada görünecektir.",
     "Stop Recording": "Kaydı Durdur",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Gönder",
     "Subtitle was added": "Alt yazı eklendi",
     "Subtitles": "Altyazılar",

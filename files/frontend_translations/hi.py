@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "रिकॉर्डिंग प्रारंभ करें",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "मीडिया अपलोड करना और अपना काम साझा करना शुरू करें। आपके द्वारा अपलोड किया गया मीडिया यहां दिखाई देगा।",
     "Stop Recording": "रिकॉर्डिंग रोकें",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "प्रस्तुत करें",
     "Subtitle was added": "उपशीर्षक जोड़ा गया",
     "Subtitles": "उपशीर्षक",

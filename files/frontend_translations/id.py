@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Mulai Merekam",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Mulai mengunggah media dan berbagi karya Anda. Media yang Anda unggah akan muncul di sini.",
     "Stop Recording": "Hentikan Perekaman",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Kirim",
     "Subtitle was added": "Subtitle telah ditambahkan",
     "Subtitles": "Subtitel",

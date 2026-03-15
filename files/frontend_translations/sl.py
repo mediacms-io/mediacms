@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Začni snemanje",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Začnite nalagati medije in deliti svoje delo. Mediji, ki jih naložite, bodo prikazani tukaj.",
     "Stop Recording": "Ustavi snemanje",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Pošlji",
     "Subtitle was added": "Podnapisi so bili dodani",
     "Subtitles": "Podnapisi",

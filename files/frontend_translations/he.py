@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "התחל הקלטה",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "התחל להעלות מדיה ולשתף את עבודתך. המדיה שתעלה תופיע כאן.",
     "Stop Recording": "עצור הקלטה",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "",
     "Subtitle was added": "הכתובית נוספה",
     "Subtitles": "כתוביות",

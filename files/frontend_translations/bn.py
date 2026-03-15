@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "রেকর্ডিং শুরু করুন",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "মিডিয়া আপলোড করা এবং আপনার কাজ শেয়ার করা শুরু করুন। আপনি যে মিডিয়া আপলোড করবেন তা এখানে প্রদর্শিত হবে।",
     "Stop Recording": "রেকর্ডিং বন্ধ করুন",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "",
     "Subtitle was added": "সাবটাইটেল যোগ করা হয়েছে",
     "Subtitles": "সাবটাইটেল",

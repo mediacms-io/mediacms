@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "Start optagelse",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "Begynd at uploade medier og dele dit arbejde. Medier, du uploader, vil blive vist her.",
     "Stop Recording": "Stop optagelse",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "Indsend",
     "Subtitle was added": "Undertekster tilføjet",
     "Subtitles": "Undertekster",

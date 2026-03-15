@@ -205,6 +205,7 @@ translation_strings = {
     "Start Recording": "録画開始",
     "Start uploading media and sharing your work. Media that you upload will show up here.": "メディアをアップロードして作品を共有しましょう。アップロードしたメディアはここに表示されます。",
     "Stop Recording": "録画停止",
+    "Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)": "",
     "Submit": "送信",
     "Subtitle was added": "字幕が追加されました",
     "Subtitles": "字幕",
