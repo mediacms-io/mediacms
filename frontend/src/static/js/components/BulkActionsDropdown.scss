@@ -40,6 +40,12 @@
       color: #666;
     }
 
+    optgroup {
+      color: #000;
+      font-weight: 700;
+      background-color: white;
+    }
+
     option {
       padding: 10px;
       font-weight: normal;
@@ -75,6 +81,11 @@
 
       &.no-selection {
         color: #aaa;
+      }
+
+      optgroup {
+        color: #fff;
+        background-color: #2a2a2a;
       }
 
       option {

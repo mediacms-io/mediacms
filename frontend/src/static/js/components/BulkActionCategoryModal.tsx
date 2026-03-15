@@ -193,7 +193,14 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
     <div className="category-modal-overlay">
       <div className="category-modal">
         <div className="category-modal-header">
-          <h2>{isLmsMode ? translateString('Share with Course') : translateString('Add / Remove from Categories')}</h2>
+          <div>
+            <h2>{isLmsMode ? translateString('Share with Course') : translateString('Add / Remove from Categories')}</h2>
+            {isLmsMode && (
+              <div className="category-modal-subtitle">
+                <span>{translateString('Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)')}</span>
+              </div>
+            )}
+          </div>
           <button className="category-modal-close" onClick={onCancel}>
             ×
           </button>
