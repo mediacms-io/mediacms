@@ -1,6 +1,7 @@
 import React from 'react';
 import './BulkActionsDropdown.scss';
 import { translateString } from '../utils/helpers/';
+import { inEmbeddedApp } from '../utils/helpers/embeddedApp';
 
 interface BulkActionsDropdownProps {
   selectedCount: number;
@@ -18,45 +19,46 @@ interface BulkActionGroup {
   actions: BulkAction[];
 }
 
-const BULK_ACTION_GROUPS: BulkActionGroup[] = [
-  {
-    label: translateString('Sharing'),
-    actions: [
-      { value: 'add-remove-coviewers', label: translateString('Share with Co-Viewers'), enabled: true },
-      { value: 'add-remove-coeditors', label: translateString('Share with Co-Editors'), enabled: true },
-      { value: 'add-remove-coowners', label: translateString('Share with Co-Owners'), enabled: true },
-      { value: 'add-remove-category', label: translateString('Share with Course Members'), enabled: true },
-    ],
-  },
-  {
-    label: translateString('Organization'),
-    actions: [
-      { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
-      { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
-    ],
-  },
-  {
-    label: translateString('Settings'),
-    actions: [
-      { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
-      { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
-      { value: 'delete-comments', label: translateString('Delete Comments'), enabled: true },
-      { value: 'enable-download', label: translateString('Enable Download'), enabled: true },
-      { value: 'disable-download', label: translateString('Disable Download'), enabled: true },
-    ],
-  },
-  {
-    label: translateString('Management'),
-    actions: [
-      { value: 'publish-state', label: translateString('Publish State'), enabled: true },
-      { value: 'change-owner', label: translateString('Change Owner'), enabled: true },
-      { value: 'copy-media', label: translateString('Copy Media'), enabled: true },
-      { value: 'delete-media', label: translateString('Delete Media'), enabled: true },
-    ],
-  },
-];
-
 export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ selectedCount, onActionSelect }) => {
+  const isLmsMode = inEmbeddedApp();
+
+  const BULK_ACTION_GROUPS: BulkActionGroup[] = [
+    {
+      label: translateString('Sharing'),
+      actions: [
+        { value: 'add-remove-coviewers', label: translateString('Share with Co-Viewers'), enabled: true },
+        { value: 'add-remove-coeditors', label: translateString('Share with Co-Editors'), enabled: true },
+        { value: 'add-remove-coowners', label: translateString('Share with Co-Owners'), enabled: true },
+        { value: 'add-remove-category', label: isLmsMode ? translateString('Share with Course Members') : translateString('Add / Remove from Categories'), enabled: true },
+      ],
+    },
+    {
+      label: translateString('Organization'),
+      actions: [
+        { value: 'add-remove-playlist', label: translateString('Add to / Remove from Playlist'), enabled: true },
+        { value: 'add-remove-tags', label: translateString('Add / Remove Tags'), enabled: true },
+      ],
+    },
+    {
+      label: translateString('Settings'),
+      actions: [
+        { value: 'enable-comments', label: translateString('Enable Comments'), enabled: true },
+        { value: 'disable-comments', label: translateString('Disable Comments'), enabled: true },
+        { value: 'delete-comments', label: translateString('Delete Comments'), enabled: true },
+        { value: 'enable-download', label: translateString('Enable Download'), enabled: true },
+        { value: 'disable-download', label: translateString('Disable Download'), enabled: true },
+      ],
+    },
+    {
+      label: translateString('Management'),
+      actions: [
+        { value: 'publish-state', label: translateString('Publish State'), enabled: true },
+        { value: 'change-owner', label: translateString('Change Owner'), enabled: true },
+        { value: 'copy-media', label: translateString('Copy Media'), enabled: true },
+        { value: 'delete-media', label: translateString('Delete Media'), enabled: true },
+      ],
+    },
+  ];
   const noSelection = selectedCount === 0;
 
 
