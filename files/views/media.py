@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.postgres.search import SearchQuery
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q, prefetch_related_objects
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -113,6 +113,8 @@ class MediaList(APIView):
         upload_date = params.get('upload_date', '').strip()
         duration = params.get('duration', '').strip()
         publish_state = params.get('publish_state', '').strip()
+        shared_user = params.get('shared_user', '').strip()
+        shared_group = params.get('shared_group', '').strip()
         query = params.get("q", "").strip().lower()
 
         parsed_combined = False
@@ -153,6 +155,7 @@ class MediaList(APIView):
                 gte = datetime(year, 1, 1)
 
         already_sorted = False
+        include_sharing_info = False
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
         if show_param == "recommended":
@@ -173,6 +176,7 @@ class MediaList(APIView):
                     conditions |= Q(category__in=rbac_categories, user=self.request.user)
 
                 media = base_queryset.filter(conditions).distinct()
+                include_sharing_info = True
         elif show_param == "shared_with_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
@@ -192,6 +196,8 @@ class MediaList(APIView):
             user = get_object_or_404(user_queryset, username=author_param)
             if self.request.user == user or is_mediacms_editor(self.request.user):
                 media = Media.objects.filter(user=user).prefetch_related("user", "tags")
+                if self.request.user == user:
+                    include_sharing_info = True
             else:
                 media = self._get_media_queryset(request, user)
                 already_sorted = True
@@ -242,6 +248,12 @@ class MediaList(APIView):
             elif publish_state in ['private', 'public', 'unlisted']:
                 media = media.filter(state=publish_state)
 
+        if shared_user and include_sharing_info:
+            media = media.filter(permissions__user__username=shared_user).distinct()
+
+        if shared_group and include_sharing_info:
+            media = media.filter(category__is_rbac_category=True, category__rbac_groups__name=shared_group).distinct()
+
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")
 
@@ -250,6 +262,15 @@ class MediaList(APIView):
         paginator = pagination_class()
 
         page = paginator.paginate_queryset(media, request)
+
+        prefetch_related_objects(page, 'tags')
+
+        if include_sharing_info:
+            prefetch_related_objects(
+                page,
+                Prefetch('permissions', queryset=MediaPermission.objects.select_related('user')),
+                Prefetch('category', queryset=Category.objects.filter(is_rbac_category=True).prefetch_related('rbac_groups'), to_attr='rbac_categories_prefetched'),
+            )
 
         serializer = MediaSerializer(page, many=True, context={"request": request})
 
@@ -261,6 +282,19 @@ class MediaList(APIView):
 
         response = paginator.get_paginated_response(serializer.data)
         response.data['tags'] = tags
+
+        if include_sharing_info:
+            shared_users = {}
+            shared_groups = {}
+            for media_obj in page:
+                for perm in media_obj.permissions.all():
+                    shared_users[perm.user.username] = {"username": perm.user.username, "name": perm.user.name or perm.user.username}
+                for cat in getattr(media_obj, 'rbac_categories_prefetched', []):
+                    for group in cat.rbac_groups.all():
+                        shared_groups[group.name] = {"name": group.name}
+            response.data['shared_users'] = list(shared_users.values())
+            response.data['shared_groups'] = list(shared_groups.values())
+
         return response
 
     @swagger_auto_schema(

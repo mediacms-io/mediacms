@@ -491,6 +491,39 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 </span>
                             </li>
                         ) : null}
+                        {this.props.onToggleSharingClick &&
+                        ['media', 'shared_by_me'].includes(this.props.type) ? (
+                            <li className="media-sharing-toggle">
+                                <span
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        position: 'relative',
+                                    }}
+                                    onClick={this.props.onToggleSharingClick}
+                                    title={translateString('Shared with')}
+                                >
+                                    <CircleIconButton buttonShadow={false}>
+                                        <i className="material-icons">people</i>
+                                    </CircleIconButton>
+                                    {this.props.hasActiveSharing ? (
+                                        <span
+                                            style={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                backgroundColor: 'var(--default-theme-color)',
+                                                border: '2px solid white',
+                                            }}
+                                        ></span>
+                                    ) : null}
+                                </span>
+                            </li>
+                        ) : null}
                         {this.props.onToggleTagsClick &&
                         ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
                             <li className="media-tags-toggle">
@@ -570,9 +603,11 @@ NavMenuInlineTabs.propTypes = {
     type: PropTypes.string.isRequired,
     onQueryChange: PropTypes.func,
     onToggleFiltersClick: PropTypes.func,
+    onToggleSharingClick: PropTypes.func,
     onToggleTagsClick: PropTypes.func,
     onToggleSortingClick: PropTypes.func,
     hasActiveFilters: PropTypes.bool,
+    hasActiveSharing: PropTypes.bool,
     hasActiveTags: PropTypes.bool,
     hasActiveSort: PropTypes.bool,
 };
@@ -776,9 +811,11 @@ export default function ProfilePagesHeader(props) {
                     type={props.type}
                     onQueryChange={props.onQueryChange}
                     onToggleFiltersClick={props.onToggleFiltersClick}
+                    onToggleSharingClick={userIsAuthor ? props.onToggleSharingClick : undefined}
                     onToggleTagsClick={props.onToggleTagsClick}
                     onToggleSortingClick={props.onToggleSortingClick}
                     hasActiveFilters={props.hasActiveFilters}
+                    hasActiveSharing={props.hasActiveSharing}
                     hasActiveTags={props.hasActiveTags}
                     hasActiveSort={props.hasActiveSort}
                 />
@@ -792,9 +829,11 @@ ProfilePagesHeader.propTypes = {
     type: PropTypes.string.isRequired,
     onQueryChange: PropTypes.func,
     onToggleFiltersClick: PropTypes.func,
+    onToggleSharingClick: PropTypes.func,
     onToggleTagsClick: PropTypes.func,
     onToggleSortingClick: PropTypes.func,
     hasActiveFilters: PropTypes.bool,
+    hasActiveSharing: PropTypes.bool,
     hasActiveTags: PropTypes.bool,
     hasActiveSort: PropTypes.bool,
 };
