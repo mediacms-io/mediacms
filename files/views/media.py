@@ -673,11 +673,17 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
+            tag = None
             for category in categories:
+                if category.is_lms_course:
+                    tag = Tag.objects.filter(title=category.title[:100]).first()
+
                 for m in media:
                     if m.category.filter(uid=category.uid).exists():
                         m.category.remove(category)
                         removed_count += 1
+                        if tag:
+                            m.tags.remove(tag)
 
             return Response({"detail": f"Removed {removed_count} media items from {categories.count()} categories"})
 
