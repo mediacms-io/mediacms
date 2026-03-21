@@ -1,6 +1,9 @@
 import React, { createRef } from 'react';
 import { render } from '@testing-library/react';
 
+import initItemsList from '../../../src/static/js/components/item-list/includes/itemLists/initItemsList';
+import { useItemList } from '../../../src/static/js/utils/hooks/useItemList';
+
 // Stub style imports used by the hook so Jest doesn't try to parse SCSS
 jest.mock('../../../src/static/js/components/item-list/ItemList.scss', () => ({}), { virtual: true });
 
@@ -8,9 +11,6 @@ jest.mock('../../../src/static/js/components/item-list/includes/itemLists/initIt
     __esModule: true,
     default: jest.fn((_lists: any[]) => [{ appendItems: jest.fn() }]),
 }));
-
-import initItemsList from '../../../src/static/js/components/item-list/includes/itemLists/initItemsList';
-import { useItemList } from '../../../src/static/js/utils/hooks/useItemList';
 
 function HookConsumer(props: any) {
     const listRef = createRef<HTMLDivElement>();
@@ -32,7 +32,7 @@ function HookConsumer(props: any) {
             <button data-testid="count-call" onClick={() => onItemsCount(5)} />
             <button data-testid="add-call" onClick={() => addListItems()} />
             <button data-testid="set-handler" onClick={() => setListHandler({ foo: 'bar' })} />
-            <div data-testid="has-handler">{listHandler ? 'yes' : 'no'}</div>
+            <div data-testid="has-handler">{listHandler ? 'yes' : 'no'}</div>f
         </div>
     );
 }

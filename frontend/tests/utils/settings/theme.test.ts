@@ -58,12 +58,12 @@ describe('utils/settings', () => {
         });
 
         test('Does not mutate input objects', () => {
-            const themeIn: any = { mode: ' dark ', switch: { enabled: false, position: ' sidebar ' } };
+            const themeIn = { mode: ' dark ', switch: { enabled: false, position: ' sidebar ' } };
             const logoIn = { lightMode: { img: ' x ', svg: ' y ' }, darkMode: { img: ' z ', svg: ' w ' } };
             const themeCopy = JSON.parse(JSON.stringify(themeIn));
             const logoCopy = JSON.parse(JSON.stringify(logoIn));
 
-            themeConfig(themeIn, logoIn);
+            themeConfig(themeIn as any, logoIn);
 
             expect(themeIn).toStrictEqual(themeCopy);
             expect(logoIn).toStrictEqual(logoCopy);

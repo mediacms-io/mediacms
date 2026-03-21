@@ -18,8 +18,8 @@ describe('utils/settings', () => {
         });
 
         test('Returns default when provided mediaTypes is non-array or undefined/null', () => {
-            expect(playlistsConfig({} as any).mediaTypes).toEqual(['audio', 'video']);
-            expect(playlistsConfig({ mediaTypes: undefined } as any).mediaTypes).toEqual(['audio', 'video']);
+            expect(playlistsConfig({}).mediaTypes).toEqual(['audio', 'video']);
+            expect(playlistsConfig({ mediaTypes: undefined }).mediaTypes).toEqual(['audio', 'video']);
             expect(playlistsConfig({ mediaTypes: null as any }).mediaTypes).toEqual(['audio', 'video']);
             expect(playlistsConfig({ mediaTypes: 'audio' as any }).mediaTypes).toEqual(['audio', 'video']);
             expect(playlistsConfig({ mediaTypes: 123 as any }).mediaTypes).toEqual(['audio', 'video']);

@@ -56,10 +56,10 @@ describe('utils/settings', () => {
             const def = optionsPagesConfig();
             expect(def.search.advancedFilters).toBe(false);
 
-            const falsy = optionsPagesConfig(undefined, { advancedFilters: false } as any);
+            const falsy = optionsPagesConfig(undefined, { advancedFilters: false });
             expect(falsy.search.advancedFilters).toBe(false);
 
-            const truthy = optionsPagesConfig(undefined, { advancedFilters: true } as any);
+            const truthy = optionsPagesConfig(undefined, { advancedFilters: true });
             expect(truthy.search.advancedFilters).toBe(true);
         });
 
@@ -87,7 +87,7 @@ describe('utils/settings', () => {
             const cfg1 = optionsPagesConfig(undefined, undefined, { related: { initialSize: NaN } } as any);
             expect(cfg1.media.related.initialSize).toBe(10);
 
-            const cfg2 = optionsPagesConfig(undefined, undefined, { related: { initialSize: '12' as any } } as any);
+            const cfg2 = optionsPagesConfig(undefined, undefined, { related: { initialSize: '12' } } as any);
             expect(cfg2.media.related.initialSize).toBe(10);
         });
 
@@ -112,7 +112,7 @@ describe('utils/settings', () => {
             const search = { advancedFilters: true };
             const media = { hideViews: true, related: { initialSize: 5 } };
             const profile = { includeHistory: true };
-            const validPages: any = { latest: { title: 'L' }, featured: { title: 'F' }, recommended: { title: 'R' } };
+            const validPages = { latest: { title: 'L' }, featured: { title: 'F' }, recommended: { title: 'R' } };
 
             const homeCopy = JSON.parse(JSON.stringify(home));
             const searchCopy = JSON.parse(JSON.stringify(search));
@@ -120,7 +120,7 @@ describe('utils/settings', () => {
             const profileCopy = JSON.parse(JSON.stringify(profile));
             const validPagesCopy = JSON.parse(JSON.stringify(validPages));
 
-            optionsPagesConfig(home, search, media, profile, validPages);
+            optionsPagesConfig(home, search, media, profile, validPages as any);
 
             expect(home).toStrictEqual(homeCopy);
             expect(search).toStrictEqual(searchCopy);

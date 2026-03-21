@@ -2,7 +2,6 @@ import React from 'react';
 import { act, render } from '@testing-library/react';
 
 import { useTheme as useThemeHook } from '../../../src/static/js/utils/hooks/useTheme';
-
 import { sampleMediaCMSConfig } from '../../tests-constants';
 
 jest.mock('../../../src/static/js/utils/classes/', () => ({

@@ -1,6 +1,13 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 
+import { useItemListSync } from '../../../src/static/js/utils/hooks/useItemListSync';
+
+let mockListHandler: any;
+let mockOnItemsLoad = jest.fn();
+let mockOnItemsCount = jest.fn();
+let addListItemsSpy = jest.fn();
+
 jest.mock('../../../src/static/js/utils/settings/config', () => ({
     config: jest.fn(() => jest.requireActual('../../tests-constants').sampleMediaCMSConfig),
 }));
@@ -15,11 +22,6 @@ jest.mock('../../../src/static/js/utils/classes/', () => ({
 jest.mock('../../../src/static/js/utils/helpers/', () => ({
     translateString: (s: string) => s,
 }));
-
-let mockListHandler: any;
-let mockOnItemsLoad = jest.fn();
-let mockOnItemsCount = jest.fn();
-let addListItemsSpy = jest.fn();
 
 // Mock useItemList to control items, counts, and listHandler
 jest.mock('../../../src/static/js/utils/hooks/useItemList', () => ({
@@ -40,8 +42,6 @@ jest.mock('../../../src/static/js/utils/hooks/useItemList', () => ({
         ];
     },
 }));
-
-import { useItemListSync } from '../../../src/static/js/utils/hooks/useItemListSync';
 
 function HookConsumer(props: any) {
     const tuple = useItemListSync(props);

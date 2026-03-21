@@ -1,25 +1,21 @@
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
+
+import { useItemListInlineSlider } from '../../../src/static/js/utils/hooks/useItemListInlineSlider';
+
+let mockListHandler: any;
+let mockInlineSliderInstance: any;
+let addListItemsSpy = jest.fn();
 
 jest.mock('../../../src/static/js/utils/settings/config', () => ({
     config: jest.fn(() => jest.requireActual('../../tests-constants').sampleMediaCMSConfig),
 }));
 
 jest.mock('../../../src/static/js/utils/classes/', () => ({
-    BrowserCache: jest.fn().mockImplementation(() => ({
-        get: jest.fn(),
-        set: jest.fn(),
-    })),
+    BrowserCache: jest.fn().mockImplementation(() => ({ get: jest.fn(), set: jest.fn() })),
 }));
 
-jest.mock('../../../src/static/js/utils/helpers/', () => ({
-    addClassname: jest.fn(),
-    removeClassname: jest.fn(),
-}));
-
-let mockListHandler: any;
-let mockInlineSliderInstance: any;
-let addListItemsSpy = jest.fn();
+jest.mock('../../../src/static/js/utils/helpers/', () => ({ addClassname: jest.fn(), removeClassname: jest.fn() }));
 
 jest.mock('../../../src/static/js/utils/hooks/useItemList', () => ({
     useItemList: (props: any, _ref: any) => {
@@ -65,8 +61,6 @@ jest.mock('../../../src/static/js/components/_shared', () => ({
         </button>
     ),
 }));
-
-import { useItemListInlineSlider } from '../../../src/static/js/utils/hooks/useItemListInlineSlider';
 
 function HookConsumer(props: any) {
     const tuple = useItemListInlineSlider(props);

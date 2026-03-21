@@ -78,7 +78,7 @@ export function memberConfig(
     }
 
     const mediaActions = features?.media?.actions;
-    if (mediaActions !== undefined) {
+    if (mediaActions) {
         ret.can.addComment = ret.can.addComment && mediaActions?.comment === true;
         ret.can.mentionComment = ret.can.mentionComment && mediaActions?.comment_mention === true;
 

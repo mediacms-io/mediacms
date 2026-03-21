@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+
 import { useMediaFilter } from '../../../src/static/js/utils/hooks/useMediaFilter';
 
 jest.mock('../../../src/static/js/components/_shared/popup/PopupContent', () => ({

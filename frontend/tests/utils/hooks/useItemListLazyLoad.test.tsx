@@ -1,20 +1,20 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 
+const mockRemoveListener = jest.fn();
+
+import { useItemListLazyLoad } from '../../../src/static/js/utils/hooks/useItemListLazyLoad';
+
+let mockListHandler: any;
+let addListItemsSpy = jest.fn();
+
 jest.mock('../../../src/static/js/utils/settings/config', () => ({
     config: jest.fn(() => jest.requireActual('../../tests-constants').sampleMediaCMSConfig),
 }));
 
 jest.mock('../../../src/static/js/utils/classes/', () => ({
-    BrowserCache: jest.fn().mockImplementation(() => ({
-        get: jest.fn(),
-        set: jest.fn(),
-    })),
+    BrowserCache: jest.fn().mockImplementation(() => ({ get: jest.fn(), set: jest.fn() })),
 }));
-
-let mockListHandler: any;
-let addListItemsSpy = jest.fn();
-const mockRemoveListener = jest.fn();
 
 jest.mock('../../../src/static/js/utils/hooks/useItemList', () => ({
     useItemList: (props: any, _ref: any) => {
@@ -35,13 +35,7 @@ jest.mock('../../../src/static/js/utils/hooks/useItemList', () => ({
     },
 }));
 
-jest.mock('../../../src/static/js/utils/stores/', () => ({
-    PageStore: {
-        removeListener: mockRemoveListener,
-    },
-}));
-
-import { useItemListLazyLoad } from '../../../src/static/js/utils/hooks/useItemListLazyLoad';
+jest.mock('../../../src/static/js/utils/stores/', () => ({ PageStore: { removeListener: mockRemoveListener } }));
 
 function HookConsumer(props: any) {
     const tuple = useItemListLazyLoad(props);

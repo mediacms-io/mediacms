@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
+
 import { useBulkActions } from '../../../src/static/js/utils/hooks/useBulkActions';
 
 // Mock translateString to return the input for easier assertions

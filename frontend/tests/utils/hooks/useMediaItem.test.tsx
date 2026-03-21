@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
+
 import { useMediaItem, itemClassname } from '../../../src/static/js/utils/hooks/useMediaItem';
 
 // Mock dependencies used by useMediaItem

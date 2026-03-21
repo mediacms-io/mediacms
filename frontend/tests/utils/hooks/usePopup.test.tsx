@@ -1,6 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 
+import { usePopup } from '../../../src/static/js/utils/hooks/usePopup';
+
 // Mock popup components to avoid SCSS imports breaking Jest
 jest.mock('../../../src/static/js/components/_shared/popup/Popup.jsx', () => {
     const React = require('react');
@@ -15,8 +17,6 @@ jest.mock('../../../src/static/js/components/_shared/popup/PopupContent.jsx', ()
 jest.mock('../../../src/static/js/components/_shared/popup/PopupTrigger.jsx', () => ({
     PopupTrigger: (props: any) => React.createElement('div', props, props.children),
 }));
-
-import { usePopup } from '../../../src/static/js/utils/hooks/usePopup';
 
 describe('utils/hooks', () => {
     describe('usePopup', () => {
