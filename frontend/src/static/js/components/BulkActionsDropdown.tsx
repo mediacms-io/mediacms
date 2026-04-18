@@ -6,12 +6,14 @@ import { inEmbeddedApp } from '../utils/helpers/embeddedApp';
 interface BulkActionsDropdownProps {
   selectedCount: number;
   onActionSelect: (action: string) => void;
+  hasContributorCourses?: boolean;
 }
 
 interface BulkAction {
   value: string;
   label: string;
   enabled: boolean;
+  allowsNoSelection?: boolean;
 }
 
 interface BulkActionGroup {
@@ -19,7 +21,7 @@ interface BulkActionGroup {
   actions: BulkAction[];
 }
 
-export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ selectedCount, onActionSelect }) => {
+export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ selectedCount, onActionSelect, hasContributorCourses = false }) => {
   const isLmsMode = inEmbeddedApp();
 
   const BULK_ACTION_GROUPS: BulkActionGroup[] = [
@@ -56,18 +58,24 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ select
         { value: 'change-owner', label: translateString('Change Owner'), enabled: true },
         { value: 'copy-media', label: translateString('Copy Media'), enabled: true },
         { value: 'delete-media', label: translateString('Delete Media'), enabled: true },
+        ...(isLmsMode && hasContributorCourses
+          ? [{ value: 'course-cleanup', label: translateString('Course Cleanup'), enabled: true, allowsNoSelection: true }]
+          : []),
       ],
     },
   ];
   const noSelection = selectedCount === 0;
 
 
+  const allActions = BULK_ACTION_GROUPS.flatMap((g) => g.actions);
+
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
 
     if (!value) return;
 
-    if (noSelection) {
+    const actionDef = allActions.find((a) => a.value === value);
+    if (noSelection && !actionDef?.allowsNoSelection) {
       event.target.value = '';
       return;
     }
@@ -95,7 +103,7 @@ export const BulkActionsDropdown: React.FC<BulkActionsDropdownProps> = ({ select
         {BULK_ACTION_GROUPS.map((group) => (
           <optgroup key={group.label} label={group.label}>
             {group.actions.map((action) => (
-              <option key={action.value} value={action.value} disabled={noSelection || !action.enabled}>
+              <option key={action.value} value={action.value} disabled={(!action.allowsNoSelection && noSelection) || !action.enabled}>
                 {action.label}
               </option>
             ))}

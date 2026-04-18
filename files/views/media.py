@@ -357,6 +357,7 @@ class MediaBulkUserActions(APIView):
                         "remove_from_category",
                         "add_tags",
                         "remove_tags",
+                        "course_cleanup",
                     ],
                 ),
                 'playlist_ids': openapi.Schema(
@@ -404,11 +405,14 @@ class MediaBulkUserActions(APIView):
         media_ids = request.data.get('media_ids', [])
         action = request.data.get('action')
 
-        if not media_ids:
-            return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
-
         if not action:
             return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == "course_cleanup":
+            return self._handle_course_cleanup(request, media_ids)
+
+        if not media_ids:
+            return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
@@ -726,6 +730,64 @@ class MediaBulkUserActions(APIView):
 
         else:
             return Response({"detail": f"Unknown action: {action}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _handle_course_cleanup(self, request, media_ids):
+        category_uids = request.data.get('category_uids', [])
+        remove_permissions = request.data.get('remove_permissions', False)
+        remove_tags = request.data.get('remove_tags', False)
+        apply_to_all = request.data.get('apply_to_all', False)
+
+        if not category_uids:
+            return Response({"detail": "category_uids is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        categories = Category.objects.filter(uid__in=category_uids)
+        if not categories.exists():
+            return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_categories = [cat for cat in categories if request.user.has_contributor_access_to_category(cat)]
+        if not valid_categories:
+            return Response({"detail": "No contributor access to specified categories"}, status=status.HTTP_403_FORBIDDEN)
+
+        has_media = bool(media_ids)
+        selected_media = Media.objects.filter(user=request.user, friendly_token__in=media_ids) if has_media else Media.objects.none()
+
+        for category in valid_categories:
+            # All users who are members of any group linked to this category
+            group_users = User.objects.filter(rbac_groups__in=category.rbac_groups.all()).distinct()
+
+            course_tag = Tag.objects.filter(title=category.title[:100]).first() if remove_tags else None
+
+            all_course_media = Media.objects.filter(category=category)
+
+            if has_media:
+                if remove_permissions:
+                    MediaPermission.objects.filter(media__in=selected_media, user__in=group_users).delete()
+                if remove_tags and course_tag:
+                    for m in selected_media:
+                        m.tags.remove(course_tag)
+
+                if apply_to_all:
+                    other_course_media = all_course_media.exclude(friendly_token__in=media_ids)
+                    if remove_permissions:
+                        MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).delete()
+                    if remove_tags and course_tag:
+                        for m in other_course_media:
+                            m.tags.remove(course_tag)
+                    for m in other_course_media:
+                        m.category.remove(category)
+
+                for m in selected_media:
+                    m.category.remove(category)
+            else:
+                if remove_permissions:
+                    MediaPermission.objects.filter(media__in=all_course_media, user__in=group_users).delete()
+                if remove_tags and course_tag:
+                    for m in all_course_media:
+                        m.tags.remove(course_tag)
+                for m in all_course_media:
+                    m.category.remove(category)
+
+        return Response({"detail": "Course cleanup completed successfully"})
 
 
 class MediaDetail(APIView):

@@ -463,6 +463,7 @@ class ProfileMediaPage extends Page {
                         onSelectAll={this.props.bulkActions.handleSelectAll}
                         onDeselectAll={this.props.bulkActions.handleDeselectAll}
                         showAddMediaButton={!isSelectMediaMode && isMediaAuthor}
+                        hasContributorCourses={this.props.bulkActions.hasContributorCourses}
                     >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
@@ -530,6 +531,10 @@ class ProfileMediaPage extends Page {
                     onTagModalCancel={this.props.bulkActions.handleTagModalCancel}
                     onTagModalSuccess={this.props.bulkActions.handleTagModalSuccess}
                     onTagModalError={this.props.bulkActions.handleTagModalError}
+                    showCourseCleanupModal={this.props.bulkActions.showCourseCleanupModal}
+                    onCourseCleanupModalCancel={this.props.bulkActions.handleCourseCleanupModalCancel}
+                    onCourseCleanupModalSuccess={this.props.bulkActions.handleCourseCleanupModalSuccess}
+                    onCourseCleanupModalError={this.props.bulkActions.handleCourseCleanupModalError}
                 />
             ) : null,
         ];

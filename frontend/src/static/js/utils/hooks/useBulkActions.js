@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { translateString } from '../helpers';
+import { inEmbeddedApp } from '../helpers/embeddedApp';
 
 /**
  * Custom hook for managing bulk actions on media items
@@ -22,6 +23,20 @@ export function useBulkActions() {
   const [showPublishStateModal, setShowPublishStateModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showCourseCleanupModal, setShowCourseCleanupModal] = useState(false);
+  const [hasContributorCourses, setHasContributorCourses] = useState(false);
+
+  useEffect(() => {
+    if (!inEmbeddedApp()) return;
+    fetch('/api/v1/categories/contributor?lms_courses_only=true')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        const courses = data.results || data;
+        setHasContributorCourses(Array.isArray(courses) && courses.length > 0);
+      })
+      .catch(() => {});
+  }, []);
 
   // Get CSRF token from cookies
   const getCsrfToken = () => {
@@ -94,6 +109,11 @@ export function useBulkActions() {
   // Handle bulk action button clicks
   const handleBulkAction = (action) => {
     const selectedCount = selectedMedia.size;
+
+    if (action === 'course-cleanup') {
+      setShowCourseCleanupModal(true);
+      return;
+    }
 
     if (selectedCount === 0) {
       return;
@@ -500,6 +520,22 @@ export function useBulkActions() {
     setShowTagModal(false);
   };
 
+  // Course cleanup modal handlers
+  const handleCourseCleanupModalCancel = () => {
+    setShowCourseCleanupModal(false);
+  };
+
+  const handleCourseCleanupModalSuccess = (message) => {
+    showNotificationMessage(message);
+    clearSelectionAndRefresh();
+    setShowCourseCleanupModal(false);
+  };
+
+  const handleCourseCleanupModalError = (message) => {
+    showNotificationMessage(message, 'error');
+    setShowCourseCleanupModal(false);
+  };
+
   return {
     // State
     selectedMedia,
@@ -517,6 +553,8 @@ export function useBulkActions() {
     showPublishStateModal,
     showCategoryModal,
     showTagModal,
+    showCourseCleanupModal,
+    hasContributorCourses,
 
     // Handlers
     handleMediaSelection,
@@ -544,6 +582,9 @@ export function useBulkActions() {
     handleTagModalCancel,
     handleTagModalSuccess,
     handleTagModalError,
+    handleCourseCleanupModalCancel,
+    handleCourseCleanupModalSuccess,
+    handleCourseCleanupModalError,
 
     // Utility
     getCsrfToken,

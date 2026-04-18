@@ -22,6 +22,7 @@ interface MediaListWrapperProps {
   onSelectAll?: () => void;
   onDeselectAll?: () => void;
   showAddMediaButton?: boolean;
+  hasContributorCourses?: boolean;
 }
 
 export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
@@ -38,6 +39,7 @@ export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
   onSelectAll = () => {},
   onDeselectAll = () => {},
   showAddMediaButton = false,
+  hasContributorCourses = false,
 }) => {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup() as [any, any, any];
 
@@ -63,7 +65,7 @@ export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
               return (
                 <div className="bulk-actions-container">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} />
+                    <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} hasContributorCourses={hasContributorCourses} />
                     <SelectAllCheckbox
                       totalCount={totalCount}
                       selectedCount={selectedCount}
