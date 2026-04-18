@@ -492,6 +492,7 @@ export class ProfileSharedWithMePage extends Page {
                         <ProfileMediaSorting hidden={this.state.hiddenSorting} onSortSelect={this.onSortSelect} />
                         <ProfileMediaSharing
                             hidden={this.state.hiddenSharing}
+                            mode="shared_with_me"
                             sharedUsers={this.state.sharedUsers}
                             sharedGroups={this.state.sharedGroups}
                             onSharingSelect={this.onSharingSelect}

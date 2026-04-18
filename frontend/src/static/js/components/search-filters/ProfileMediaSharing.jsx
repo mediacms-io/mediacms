@@ -59,7 +59,7 @@ export function ProfileMediaSharing(props) {
       <div ref={innerContainerRef} className="mi-filters-row-inner">
         {hasUsers ? (
           <div className="mi-filter mi-filter-full-width">
-            <div className="mi-filter-title">{translateString('USERS SHARING')}</div>
+            <div className="mi-filter-title">{translateString(props.mode === 'shared_with_me' ? 'USERS SHARING' : 'SHARED WITH USERS')}</div>
             <div className="mi-filter-options mi-filter-options-horizontal mi-sharing-filter-options">
               <FilterOptions id="shared_user" options={usersOptions} selected={selectedUser} onSelect={onUserSelect} />
             </div>
@@ -67,7 +67,7 @@ export function ProfileMediaSharing(props) {
         ) : null}
         {hasGroups ? (
           <div className="mi-filter mi-filter-full-width">
-            <div className="mi-filter-title">{translateString('SHARED WITH GROUPS')}</div>
+            <div className="mi-filter-title">{translateString(props.mode === 'shared_with_me' ? 'GROUPS SHARING' : 'SHARED WITH GROUPS')}</div>
             <div className="mi-filter-options mi-filter-options-horizontal mi-sharing-filter-options">
               <FilterOptions id="shared_group" options={groupsOptions} selected={selectedGroup} onSelect={onGroupSelect} />
             </div>
@@ -85,6 +85,7 @@ export function ProfileMediaSharing(props) {
 
 ProfileMediaSharing.propTypes = {
   hidden: PropTypes.bool,
+  mode: PropTypes.string,
   sharedUsers: PropTypes.array,
   sharedGroups: PropTypes.array,
   onSharingSelect: PropTypes.func,
@@ -94,6 +95,7 @@ ProfileMediaSharing.propTypes = {
 
 ProfileMediaSharing.defaultProps = {
   hidden: false,
+  mode: null,
   sharedUsers: [],
   sharedGroups: [],
   selectedSharingType: null,
