@@ -9,6 +9,7 @@ import ProfilePagesContent from '../components/profile-page/ProfilePagesContent'
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
+import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
 
@@ -45,11 +46,16 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
             filterArgs: '',
             availableTags: [],
             selectedTag: 'all',
             selectedSort: 'date_added_desc',
             selectedMedia: new Set(), // For select media mode
+            sharedUsers: [],
+            sharedGroups: [],
+            selectedSharingType: null,
+            selectedSharingValue: null,
         };
 
         this.authorDataLoad = this.authorDataLoad.bind(this);
@@ -59,9 +65,11 @@ export class ProfileSharedWithMePage extends Page {
         this.onToggleFiltersClick = this.onToggleFiltersClick.bind(this);
         this.onToggleTagsClick = this.onToggleTagsClick.bind(this);
         this.onToggleSortingClick = this.onToggleSortingClick.bind(this);
+        this.onToggleSharingClick = this.onToggleSharingClick.bind(this);
         this.onFiltersUpdate = this.onFiltersUpdate.bind(this);
         this.onTagSelect = this.onTagSelect.bind(this);
         this.onSortSelect = this.onSortSelect.bind(this);
+        this.onSharingSelect = this.onSharingSelect.bind(this);
         this.onResponseDataLoaded = this.onResponseDataLoaded.bind(this);
         this.handleMediaSelection = this.handleMediaSelection.bind(this);
 
@@ -175,6 +183,7 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: !this.state.hiddenFilters,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -183,6 +192,7 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: !this.state.hiddenTags,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -191,6 +201,16 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: !this.state.hiddenSorting,
+            hiddenSharing: true,
+        });
+    }
+
+    onToggleSharingClick() {
+        this.setState({
+            hiddenFilters: true,
+            hiddenTags: true,
+            hiddenSorting: true,
+            hiddenSharing: !this.state.hiddenSharing,
         });
     }
 
@@ -203,6 +223,8 @@ export class ProfileSharedWithMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: this.state.selectedSort,
                 tag: tag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
             });
         });
     }
@@ -216,6 +238,23 @@ export class ProfileSharedWithMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: sortBy,
                 tag: this.state.selectedTag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
+            });
+        });
+    }
+
+    onSharingSelect(type, value) {
+        this.setState({ selectedSharingType: type, selectedSharingValue: value }, () => {
+            this.onFiltersUpdate({
+                media_type: this.state.filterArgs.match(/media_type=([^&]+)/)?.[1],
+                upload_date: this.state.filterArgs.match(/upload_date=([^&]+)/)?.[1],
+                duration: this.state.filterArgs.match(/duration=([^&]+)/)?.[1],
+                publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
+                sort_by: this.state.selectedSort,
+                tag: this.state.selectedTag,
+                sharing_type: type,
+                sharing_value: value,
             });
         });
     }
@@ -229,6 +268,8 @@ export class ProfileSharedWithMePage extends Page {
             sort_by: null,
             ordering: null,
             t: null,
+            shared_user: null,
+            shared_group: null,
         };
 
         switch (updatedArgs.media_type) {
@@ -290,6 +331,12 @@ export class ProfileSharedWithMePage extends Page {
             args.t = updatedArgs.tag;
         }
 
+        if (updatedArgs.sharing_type === 'user' && updatedArgs.sharing_value) {
+            args.shared_user = updatedArgs.sharing_value;
+        } else if (updatedArgs.sharing_type === 'group' && updatedArgs.sharing_value) {
+            args.shared_group = updatedArgs.sharing_value;
+        }
+
         const newArgs = [];
 
         for (let arg in args) {
@@ -340,6 +387,12 @@ export class ProfileSharedWithMePage extends Page {
                 .map((tag) => tag.trim())
                 .filter((tag) => tag);
             this.setState({ availableTags: tags });
+        }
+        if (responseData && responseData.shared_users !== undefined) {
+            this.setState({
+                sharedUsers: responseData.shared_users || [],
+                sharedGroups: responseData.shared_groups || [],
+            });
         }
     }
 
@@ -411,9 +464,11 @@ export class ProfileSharedWithMePage extends Page {
                     onToggleFiltersClick={this.onToggleFiltersClick}
                     onToggleTagsClick={this.onToggleTagsClick}
                     onToggleSortingClick={this.onToggleSortingClick}
+                    onToggleSharingClick={this.onToggleSharingClick}
                     hasActiveFilters={hasActiveFilters}
                     hasActiveTags={this.state.selectedTag !== 'all'}
                     hasActiveSort={this.state.selectedSort !== 'date_added_desc'}
+                    hasActiveSharing={!!this.state.selectedSharingValue}
                     hideChannelBanner={inEmbeddedApp()}
                 />
             ) : null,
@@ -435,6 +490,14 @@ export class ProfileSharedWithMePage extends Page {
                             onTagSelect={this.onTagSelect}
                         />
                         <ProfileMediaSorting hidden={this.state.hiddenSorting} onSortSelect={this.onSortSelect} />
+                        <ProfileMediaSharing
+                            hidden={this.state.hiddenSharing}
+                            sharedUsers={this.state.sharedUsers}
+                            sharedGroups={this.state.sharedGroups}
+                            onSharingSelect={this.onSharingSelect}
+                            selectedSharingType={this.state.selectedSharingType}
+                            selectedSharingValue={this.state.selectedSharingValue}
+                        />
                         <LazyLoadItemListAsync
                             key={this.state.requestUrl}
                             requestUrl={this.state.requestUrl}

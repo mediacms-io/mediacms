@@ -59,7 +59,7 @@ export function ProfileMediaSharing(props) {
       <div ref={innerContainerRef} className="mi-filters-row-inner">
         {hasUsers ? (
           <div className="mi-filter mi-filter-full-width">
-            <div className="mi-filter-title">{translateString('SHARED WITH USERS')}</div>
+            <div className="mi-filter-title">{translateString('USERS SHARING')}</div>
             <div className="mi-filter-options mi-filter-options-horizontal mi-sharing-filter-options">
               <FilterOptions id="shared_user" options={usersOptions} selected={selectedUser} onSelect={onUserSelect} />
             </div>

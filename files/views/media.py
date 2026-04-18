@@ -191,6 +191,7 @@ class MediaList(APIView):
                     conditions |= Q(category__in=rbac_categories)
 
                 media = base_queryset.filter(conditions).exclude(user=request.user).distinct()
+                include_sharing_info = True
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
@@ -268,7 +269,7 @@ class MediaList(APIView):
         if include_sharing_info:
             prefetch_related_objects(
                 page,
-                Prefetch('permissions', queryset=MediaPermission.objects.select_related('user')),
+                Prefetch('permissions', queryset=MediaPermission.objects.select_related('user').exclude(user=request.user)),
                 Prefetch('category', queryset=Category.objects.filter(is_rbac_category=True).prefetch_related('rbac_groups'), to_attr='rbac_categories_prefetched'),
             )
 

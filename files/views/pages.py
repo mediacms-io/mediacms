@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
+from django.utils.html import mark_safe, strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
@@ -262,20 +263,42 @@ def video_chapters(request, friendly_token):
         data = request_data.get("chapters")
         if data is None:
             return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
+        if not isinstance(data, list):
+            return JsonResponse({'success': False, 'error': '"chapters" must be an array'}, status=400)
+        if len(data) > 200:
+            return JsonResponse({'success': False, 'error': 'Too many chapters (max 200)'}, status=400)
 
         chapters = []
-        for _, chapter_data in enumerate(data):
+        for chapter_data in data:
+            if not isinstance(chapter_data, dict):
+                continue
             start_time = chapter_data.get('startTime')
             end_time = chapter_data.get('endTime')
             chapter_title = chapter_data.get('chapterTitle')
-            if start_time and end_time and chapter_title:
-                chapters.append(
-                    {
-                        'startTime': start_time,
-                        'endTime': end_time,
-                        'chapterTitle': chapter_title,
-                    }
-                )
+
+            if not isinstance(start_time, (int, float)):
+                continue
+            if not isinstance(end_time, (int, float)):
+                continue
+            if not isinstance(chapter_title, str) or not chapter_title.strip():
+                continue
+
+            start_time = float(start_time)
+            end_time = float(end_time)
+            if start_time < 0 or end_time < 0 or start_time >= end_time:
+                continue
+
+            chapter_title = strip_tags(chapter_title).strip()[:500]
+            if not chapter_title:
+                continue
+
+            chapters.append(
+                {
+                    'startTime': start_time,
+                    'endTime': end_time,
+                    'chapterTitle': chapter_title,
+                }
+            )
     except Exception as e:  # noqa
         return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, chapterTitle'}, status=400)
 
@@ -449,11 +472,18 @@ def edit_chapters(request):
     if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
-    chapters = media.chapter_data
+    _html_escapes = str.maketrans({'<': r'\u003C', '>': r'\u003E', '&': r'\u0026'})
+    chapters_json = mark_safe(json.dumps(media.chapter_data).translate(_html_escapes))
     return render(
         request,
         "cms/edit_chapters.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path), "media_id": media.friendly_token, "chapters": chapters},
+        {
+            "media_object": media,
+            "add_subtitle_url": media.add_subtitle_url,
+            "media_file_path": helpers.url_from_path(media.media_file.path),
+            "media_id": media.friendly_token,
+            "chapters": chapters_json,
+        },
     )
 
 

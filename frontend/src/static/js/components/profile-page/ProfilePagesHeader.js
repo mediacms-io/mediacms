@@ -492,7 +492,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                             </li>
                         ) : null}
                         {this.props.onToggleSharingClick &&
-                        ['media', 'shared_by_me'].includes(this.props.type) ? (
+                        ['media', 'shared_by_me', 'shared_with_me'].includes(this.props.type) ? (
                             <li className="media-sharing-toggle">
                                 <span
                                     style={{
