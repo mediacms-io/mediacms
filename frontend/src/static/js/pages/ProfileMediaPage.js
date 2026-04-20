@@ -168,25 +168,28 @@ class ProfileMediaPage extends Page {
         });
 
         if (isSelected) {
-            if (window.parent !== window) {
-                const baseUrl = window.location.origin;
-                const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+            const baseUrl = window.location.origin;
+            const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
 
-                window.parent.postMessage({
-                    type: 'videoSelected',
-                    embedUrl: embedUrl,
-                    videoId: mediaId,
-                }, '*');
-            }
+            const sendPostMessage = () => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'videoSelected',
+                        embedUrl: embedUrl,
+                        videoId: mediaId,
+                    }, '*');
+                }
+            };
 
-            // Mark media as shared so LTI users in the course can access it
+            // Share first, then notify parent — postMessage can cause parent to navigate away
+            // which would cancel an in-flight fetch if called in the wrong order
             fetch(`/api/v1/media/${mediaId}/share`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': this.props.bulkActions.getCsrfToken(),
                     'Content-Type': 'application/json',
                 },
-            }).catch(() => {});
+            }).then(sendPostMessage).catch(sendPostMessage);
         }
     }
 

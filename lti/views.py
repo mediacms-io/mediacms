@@ -695,7 +695,10 @@ class EmbedMediaLTIView(View):
         media = get_object_or_404(Media, friendly_token=friendly_token)
 
         lti_session = validate_lti_session(request)
-        can_view = False
+        if media.state in ["public", "unlisted"]:
+            can_view = True
+        else:
+            can_view = False
 
         if lti_session and request.user.is_authenticated:
             context_id = lti_session.get('context_id')
@@ -717,6 +720,7 @@ class EmbedMediaLTIView(View):
                             rbac_group=resource_link.rbac_group,
                         ).exists()
                         if has_course_access:
+                            # create an entry so it shows up under shared with me
                             MediaPermission.objects.get_or_create(
                                 user=request.user,
                                 media=media,
@@ -729,20 +733,8 @@ class EmbedMediaLTIView(View):
                 except Exception:
                     logger.exception('EmbedMediaLTIView: error checking course access for user=%s media=%s', request.user, friendly_token)
 
-            if not can_view and media.state == 'private':
-                has_rbac_access = media.category.filter(
-                    is_rbac_category=True,
-                    rbac_groups__members=request.user,
-                ).exists()
-                has_direct_permission = MediaPermission.objects.filter(
-                    media=media,
-                    user=request.user,
-                ).exists()
-                if has_rbac_access or has_direct_permission:
-                    can_view = True
-
-        if not can_view and media.state in ["public", "unlisted"]:
-            can_view = True
+            if not can_view and request.user.has_member_access_to_media(media):
+                can_view = True
 
         if not can_view:
             return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
