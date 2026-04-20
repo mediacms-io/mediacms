@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './BulkActionPublishStateModal.scss';
 import { translateString } from '../utils/helpers/';
 
@@ -32,13 +32,22 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   const defaultState = availableStates[0].value;
 
   const [selectedState, setSelectedState] = useState(defaultState);
+  const [shared, setShared] = useState<boolean | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const sharedRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedState(defaultState);
+      setShared(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (sharedRef.current) {
+      sharedRef.current.indeterminate = shared === null;
+    }
+  }, [shared]);
 
   const handleSubmit = async () => {
     if (!selectedState) {
@@ -49,17 +58,22 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
     setIsProcessing(true);
 
     try {
+      const body: Record<string, unknown> = {
+        action: 'set_state',
+        media_ids: selectedMediaIds,
+        state: selectedState,
+      };
+      if (shared !== null) {
+        body.shared = shared;
+      }
+
       const response = await fetch('/api/v1/media/user/bulk_actions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({
-          action: 'set_state',
-          media_ids: selectedMediaIds,
-          state: selectedState,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -79,9 +93,12 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
 
   if (!isOpen) return null;
 
-  // Note: We don't check hasStateChanged because the modal doesn't know the actual
-  // current state of the selected media. Users should be able to set any state.
-  // If the state is already the same, the backend will handle it gracefully.
+  const sharedNote =
+    shared === null
+      ? translateString('Sharing status will not be changed.')
+      : shared
+      ? translateString('Selected media will be marked as shared.')
+      : translateString('Sharing will be removed from all selected media.');
 
   return (
     <div className="publish-state-modal-overlay">
@@ -108,6 +125,22 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="shared-selector">
+            <label className="shared-selector-label">
+              <input
+                ref={sharedRef}
+                type="checkbox"
+                checked={shared === true}
+                onChange={(e) => setShared(e.target.checked)}
+                disabled={isProcessing}
+              />
+              {translateString('Shared')}
+            </label>
+            <p className={`shared-selector-note${shared === false ? ' shared-selector-note--warn' : ''}`}>
+              {sharedNote}
+            </p>
           </div>
         </div>
 

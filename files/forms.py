@@ -305,21 +305,10 @@ class MediaPublishForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        state = cleaned_data.get("state")
         shared = cleaned_data.get("shared")
 
         if self.was_shared and not shared and not cleaned_data.get('confirm_state'):
-            if state == 'private':
-                error_parts = []
-                rbac_cat_titles = list(self.instance.category.filter(is_rbac_category=True).values_list('title', flat=True))
-                if rbac_cat_titles:
-                    error_parts.append(f"shared with users that have access to categories: {', '.join(rbac_cat_titles)}")
-                if self.instance.permissions.exists():
-                    error_parts.append("shared by me with other users (visible in 'Shared by me' page)")
-                detail = f" Currently this media is {' and '.join(error_parts)}." if error_parts else ""
-                self.add_error('confirm_state', f"I understand that this will remove all sharing.{detail}")
-            else:
-                self.add_error('confirm_state', "I understand that unchecking Shared will affect existing sharing settings.")
+            self.add_error('confirm_state', "I understand that unchecking Shared will remove all existing sharing for this media.")
 
         return cleaned_data
 
