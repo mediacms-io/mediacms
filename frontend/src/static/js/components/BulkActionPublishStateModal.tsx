@@ -25,13 +25,18 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   onError,
   csrfToken,
 }) => {
-  const [selectedState, setSelectedState] = useState('public');
+  const isLmsEmbedMode =
+    sessionStorage.getItem('lms_embed_mode') === 'true' ||
+    new URLSearchParams(window.location.search).get('mode') === 'lms_embed_mode';
+  const availableStates = isLmsEmbedMode ? PUBLISH_STATES.filter((s) => s.value !== 'public') : PUBLISH_STATES;
+  const defaultState = availableStates[0].value;
+
+  const [selectedState, setSelectedState] = useState(defaultState);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset state when modal closes
-      setSelectedState('public');
+      setSelectedState(defaultState);
     }
   }, [isOpen]);
 
@@ -97,7 +102,7 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
               onChange={(e) => setSelectedState(e.target.value)}
               disabled={isProcessing}
             >
-              {PUBLISH_STATES.map((state) => (
+              {availableStates.map((state) => (
                 <option key={state.value} value={state.value}>
                   {state.label}
                 </option>

@@ -506,7 +506,14 @@ class MediaBulkUserActions(APIView):
 
                 m.save(update_fields=["state", "listable"])
 
-            return Response({"detail": f"State updated to {state} for {media.count()} media items"})
+            if state == "private":
+                MediaPermission.objects.filter(media__in=media).delete()
+                for m in media:
+                    rbac_cats = m.category.filter(is_rbac_category=True)
+                    if rbac_cats.exists():
+                        m.category.remove(*rbac_cats)
+
+            return Response({"detail": f"State updated to {state}"})
 
         elif action == "change_owner":
             owner = request.data.get('owner')
