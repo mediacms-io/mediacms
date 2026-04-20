@@ -159,26 +159,35 @@ class ProfileMediaPage extends Page {
 
     handleMediaSelection(mediaId, isSelected) {
         // Only used in select media embed mode; normal mode is handled by bulkActions
-        this.setState((prevState) => {
+        this.setState(() => {
             const newSelectedMedia = new Set();
-
             if (isSelected) {
                 newSelectedMedia.add(mediaId);
-
-                if (window.parent !== window) {
-                    const baseUrl = window.location.origin;
-                    const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
-
-                    window.parent.postMessage({
-                        type: 'videoSelected',
-                        embedUrl: embedUrl,
-                        videoId: mediaId
-                    }, '*');
-                }
             }
-
             return { selectedMedia: newSelectedMedia };
         });
+
+        if (isSelected) {
+            if (window.parent !== window) {
+                const baseUrl = window.location.origin;
+                const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+
+                window.parent.postMessage({
+                    type: 'videoSelected',
+                    embedUrl: embedUrl,
+                    videoId: mediaId,
+                }, '*');
+            }
+
+            // Mark media as shared so LTI users in the course can access it
+            fetch(`/api/v1/media/${mediaId}/share`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.props.bulkActions.getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            }).catch(() => {});
+        }
     }
 
     onToggleFiltersClick() {

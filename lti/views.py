@@ -700,7 +700,8 @@ class EmbedMediaLTIView(View):
         if lti_session and request.user.is_authenticated:
             context_id = lti_session.get('context_id')
             platform_id = lti_session.get('platform_id')
-            if context_id and platform_id:
+
+            if media.is_shared and context_id and platform_id:
                 try:
                     resource_link = (
                         LTIResourceLink.objects.filter(
@@ -727,6 +728,18 @@ class EmbedMediaLTIView(View):
                             can_view = True
                 except Exception:
                     logger.exception('EmbedMediaLTIView: error checking course access for user=%s media=%s', request.user, friendly_token)
+
+            if not can_view and media.state == 'private':
+                has_rbac_access = media.category.filter(
+                    is_rbac_category=True,
+                    rbac_groups__members=request.user,
+                ).exists()
+                has_direct_permission = MediaPermission.objects.filter(
+                    media=media,
+                    user=request.user,
+                ).exists()
+                if has_rbac_access or has_direct_permission:
+                    can_view = True
 
         if not can_view and media.state in ["public", "unlisted"]:
             can_view = True
