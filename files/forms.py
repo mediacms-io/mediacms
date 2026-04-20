@@ -223,16 +223,59 @@ class MediaPublishForm(forms.ModelForm):
                             {% for error in form.state.errors %}<p class="invalid-feedback">{{ error }}</p>{% endfor %}
                         </div>
                         {% endif %}
+                        <div id="shared-info" style="display:none; margin-top:0.5rem; font-size:0.875rem; color:#555;">
+                            To share media with someone, go to My Media &gt; select media &gt; Bulk Actions &gt; Share with&hellip;
+                        </div>
                     </div>
-                    {% if form.confirm_state.errors %}
-                    <div class="confirm-state-section">
-                        <label for="id_confirm_state">
+                    {% if form.was_shared %}
+                    <div id="shared-deselect-warning" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#fff3cd; border:1px solid #ffc107; border-radius:4px;">
+                        <label style="display:flex; gap:0.5rem; align-items:flex-start; cursor:pointer; margin:0;">
                             <input type="checkbox" name="confirm_state" id="id_confirm_state"
-                                   {% if form.confirm_state.value %}checked{% endif %}>
-                            <span>{{ form.confirm_state.errors.0 }}</span>
+                                   {% if form.confirm_state.value %}checked{% endif %}
+                                   style="margin-top:3px; flex-shrink:0;">
+                            <span id="shared-deselect-msg-private">I understand that changing to Private will remove all sharing. Currently this media is shared by me with other users (visible in 'My Media &gt; Shared by Me' page).</span>
+                            <span id="shared-deselect-msg-other" style="display:none;">I understand that unchecking Shared will affect existing sharing settings.</span>
                         </label>
+                        {% if form.confirm_state.errors %}
+                        <div style="margin-top:0.5rem;">
+                            {% for error in form.confirm_state.errors %}<p class="invalid-feedback" style="color:#dc3545;">{{ error }}</p>{% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
+                    <script>
+                    (function() {
+                        var sharedCb = document.getElementById('id_shared');
+                        var warning = document.getElementById('shared-deselect-warning');
+                        var sharedInfo = document.getElementById('shared-info');
+                        var msgPrivate = document.getElementById('shared-deselect-msg-private');
+                        var msgOther = document.getElementById('shared-deselect-msg-other');
+                        function getSelectedState() {
+                            var radios = document.querySelectorAll('input[name="state"]');
+                            for (var i = 0; i < radios.length; i++) {
+                                if (radios[i].checked) return radios[i].value;
+                            }
+                            return '';
+                        }
+                        function updateWarning() {
+                            var isShared = sharedCb.checked;
+                            if (warning) warning.style.display = isShared ? 'none' : 'block';
+                            if (sharedInfo) sharedInfo.style.display = isShared ? 'block' : 'none';
+                            if (!isShared) {
+                                var state = getSelectedState();
+                                if (msgPrivate) msgPrivate.style.display = state === 'private' ? 'inline' : 'none';
+                                if (msgOther) msgOther.style.display = state !== 'private' ? 'inline' : 'none';
+                            }
+                        }
+                        if (sharedCb) {
+                            sharedCb.addEventListener('change', updateWarning);
+                            document.querySelectorAll('input[name="state"]').forEach(function(r) {
+                                r.addEventListener('change', updateWarning);
+                            });
+                            updateWarning();
+                        }
+                    })();
+                    </script>
                 </div>
             """
             ),
@@ -274,7 +317,7 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.permissions.exists():
                     error_parts.append("shared by me with other users (visible in 'Shared by me' page)")
                 detail = f" Currently this media is {' and '.join(error_parts)}." if error_parts else ""
-                self.add_error('confirm_state', f"I understand that changing to Private will remove all sharing.{detail}")
+                self.add_error('confirm_state', f"I understand that this will remove all sharing.{detail}")
             else:
                 self.add_error('confirm_state', "I understand that unchecking Shared will affect existing sharing settings.")
 
@@ -292,7 +335,7 @@ class MediaPublishForm(forms.ModelForm):
                     user=self.request.user,
                     defaults={'owner_user': self.request.user, 'permission': 'owner'},
                 )
-        elif state == 'private':
+        elif not shared:
             self.instance.permissions.all().delete()
             rbac_cats = self.instance.category.filter(is_rbac_category=True)
             self.instance.category.remove(*rbac_cats)
