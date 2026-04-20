@@ -965,6 +965,12 @@ class Media(models.Model):
             return chapter_data.chapter_data
         return data
 
+    @property
+    def is_shared(self):
+        if not self.pk:
+            return False
+        return self.permissions.exists() or self.category.filter(is_rbac_category=True).exists()
+
 
 class MediaPermission(models.Model):
     """Model to store user permissions for media"""
