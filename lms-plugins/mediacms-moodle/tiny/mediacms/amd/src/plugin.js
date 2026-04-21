@@ -56,21 +56,31 @@ const isMediaCMSUrl = (url) => {
  * @returns {string} The iframe HTML
  */
 const mediaCMSUrlToIframe = (url) => {
-    // Convert view URL to embed URL if needed
     let embedUrl = url;
+    let width = 560;
+    let height = 315;
     try {
         const urlObj = new URL(url);
         if (urlObj.pathname === '/view') {
             urlObj.pathname = '/embed';
-            embedUrl = urlObj.toString();
         }
+        const w = parseInt(urlObj.searchParams.get('width'));
+        const h = parseInt(urlObj.searchParams.get('height'));
+        if (w > 0) {
+            width = w;
+        }
+        if (h > 0) {
+            height = h;
+        }
+        embedUrl = urlObj.toString();
     } catch (e) {
-        // Keep original URL if parsing fails
+        // Keep defaults if parsing fails
     }
 
-    return `<iframe src="${embedUrl}" width="560" height="315" ` +
-        `style="width:100%;max-width:560px;aspect-ratio:560 / 315;display:block;margin:0 auto;border:0;" ` +
-        `frameborder="0" allowfullscreen></iframe>`;
+    const style = `width:100%;max-width:${width}px;height:auto;` +
+        `aspect-ratio:${width} / ${height};display:block;margin:0 auto;border:0;`;
+    return `<iframe src="${embedUrl}" width="${width}" height="${height}" ` +
+        `style="${style}" frameborder="0" allowfullscreen></iframe>`;
 };
 
 /**
@@ -142,17 +152,33 @@ export default new Promise(async(resolve) => {
             }
         });
 
-        // Clean up editor-only overlay elements when saving, preserving iframe HTML with its
-        // responsive styles (max-width, aspect-ratio) so dimensions survive the round-trip.
+        // Convert MediaCMS iframes back to plain embed URLs when saving.
+        // Width/height are encoded in the URL params so the filter and BeforeSetContent
+        // can reconstruct the correct responsive iframe on next load.
         editor.on('GetContent', (e) => {
             if (e.format === 'html') {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = e.content;
 
-                // Remove edit buttons added by the overlay system (editor-only UI)
                 tempDiv.querySelectorAll('.tiny-mediacms-edit-btn').forEach(btn => btn.remove());
 
-                // Unwrap overlay divs, keeping the iframe HTML intact with its responsive styles
+                tempDiv.querySelectorAll('iframe').forEach(iframe => {
+                    const src = iframe.getAttribute('src');
+                    if (isMediaCMSUrl(src)) {
+                        const wrapper = iframe.closest('.tiny-mediacms-iframe-wrapper') ||
+                                        iframe.closest('.tiny-iframe-responsive');
+                        const p = document.createElement('p');
+                        p.appendChild(document.createTextNode(src));
+                        if (wrapper) {
+                            wrapper.parentNode.insertBefore(p, wrapper);
+                            wrapper.remove();
+                        } else {
+                            iframe.parentNode.insertBefore(p, iframe);
+                            iframe.remove();
+                        }
+                    }
+                });
+
                 tempDiv.querySelectorAll('.tiny-mediacms-iframe-wrapper, .tiny-iframe-responsive').forEach(wrapper => {
                     const iframe = wrapper.querySelector('iframe');
                     if (iframe) {

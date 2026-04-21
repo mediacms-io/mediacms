@@ -180,6 +180,13 @@ export default class IframeEmbed {
             }
         }
 
+        if (options.width) {
+            url.searchParams.set('width', options.width);
+        }
+        if (options.height) {
+            url.searchParams.set('height', options.height);
+        }
+
         return url.toString();
     }
 

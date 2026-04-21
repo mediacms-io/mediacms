@@ -31,7 +31,8 @@ $show_media_page = optional_param('show_media_page', '', PARAM_TEXT);
 // Get configuration
 $mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
 $ltitoolid = get_config('filter_mediacms', 'ltitoolid');
-$share_embedded_media = (int)(bool)get_config('filter_mediacms', 'share_embedded_media');
+$share_raw = get_config('filter_mediacms', 'share_embedded_media');
+$share_embedded_media = ($share_raw === false) ? 1 : (int)(bool)$share_raw;
 
 if (empty($mediacmsurl)) {
     die('MediaCMS URL not configured');
