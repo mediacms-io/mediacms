@@ -1,8 +1,10 @@
 import uuid
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
+from rest_framework.test import APIClient
 
-from files.models import Encoding, Media
+from files.models import Encoding, Language, Media, Subtitle
 from files.tests import create_account
 
 API_V1_LOGIN_URL = '/api/v1/login'
@@ -68,3 +70,32 @@ class TestX(TestCase):
         self.assertEqual(media.media_type, 'video')
         self.assertEqual(media.encoding_status, 'success')
         self.assertEqual(media.hls_info.get('master_file'), external_url)
+
+    def test_media_update_with_subtitle_upload(self):
+        client = APIClient()
+        client.login(username=self.user.username, password=self.password)
+
+        with open('fixtures/test_image.png', 'rb') as fp:
+            client.post('/api/v1/media', {'title': 'caption target media', 'media_file': fp}, format='multipart')
+
+        media = Media.objects.get(title='caption target media')
+        language = Language.objects.create(code='en', title='English')
+
+        subtitle_content = b"1\n00:00:00,000 --> 00:00:02,000\nHello from API captions\n"
+        subtitle_file = SimpleUploadedFile('captions.srt', subtitle_content, content_type='text/plain')
+
+        response = client.put(
+            f'/api/v1/media/{media.friendly_token}',
+            {
+                'title': 'caption target media updated',
+                'subtitle_file': subtitle_file,
+                'subtitle_language': str(language.id),
+            },
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        media.refresh_from_db()
+        self.assertEqual(media.title, 'caption target media updated')
+        self.assertTrue(Subtitle.objects.filter(media=media, language=language).exists())

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import URLValidator
 from django.contrib.postgres.search import SearchQuery
+from django.db import transaction
 from django.db.models import Count, F, Prefetch, Q, prefetch_related_objects
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -45,10 +46,12 @@ from ..models import (
     Comment,
     EmbedMediaCourse,
     EncodeProfile,
+    Language,
     Media,
     MediaPermission,
     Playlist,
     PlaylistMedia,
+    Subtitle,
     Tag,
 )
 from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer
@@ -1038,6 +1041,20 @@ class MediaDetail(APIView):
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="Media title"),
             openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="Replace the original media file"),
             openapi.Parameter(
+                name="subtitle_file",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload caption file (.srt or .vtt). Requires subtitle_language.",
+            ),
+            openapi.Parameter(
+                name="subtitle_language",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Subtitle language id or code (e.g. 3 or 'en'). Required when subtitle_file is sent.",
+            ),
+            openapi.Parameter(
                 name="uploaded_poster",
                 in_=openapi.IN_FORM,
                 type=openapi.TYPE_FILE,
@@ -1047,7 +1064,7 @@ class MediaDetail(APIView):
         ],
         tags=['Media'],
         operation_summary='Update Media',
-        operation_description='Update a media. To set/update thumbnail via API, send multipart/form-data with uploaded_poster.',
+        operation_description='Update a media.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def put(self, request, friendly_token, format=None):
@@ -1059,18 +1076,71 @@ class MediaDetail(APIView):
         if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = MediaSerializer(media, data=request.data, context={"request": request})
-        if serializer.is_valid():
-            # if request.data.get('media_file'):
-            #     media_file = request.data["media_file"]
-            #     media.state = helpers.get_default_state(request.user)
-            #     media.listable = False
-            #     serializer.save(user=request.user, media_file=media_file)
-            # else:
-            #     serializer.save(user=request.user)
+        data = request.data.copy()
+        subtitle_file = data.get("subtitle_file")
+        subtitle_language_raw = data.get("subtitle_language", "")
+
+        # Caption upload is handled separately from MediaSerializer fields.
+        data.pop("subtitle_file", None)
+        data.pop("subtitle_language", None)
+
+        has_subtitle_file = bool(subtitle_file)
+        has_subtitle_language = bool(str(subtitle_language_raw).strip())
+
+        if has_subtitle_file and not has_subtitle_language:
+            return Response(
+                {"detail": "subtitle_language is required when subtitle_file is provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if has_subtitle_language and not has_subtitle_file:
+            return Response(
+                {"detail": "subtitle_file is required when subtitle_language is provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        language = None
+        if has_subtitle_file:
+            language = self._get_subtitle_language(str(subtitle_language_raw).strip())
+            if not language:
+                return Response(
+                    {"detail": "subtitle_language must be a valid language id or code"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        serializer = MediaSerializer(media, data=data, context={"request": request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
             serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            if has_subtitle_file and language:
+                subtitle = Subtitle.objects.create(
+                    media=media,
+                    user=media.user,
+                    language=language,
+                    subtitle_file=subtitle_file,
+                )
+                try:
+                    subtitle.convert_to_srt()
+                except Exception:
+                    subtitle.delete()
+                    return Response(
+                        {"detail": "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _get_subtitle_language(self, language_value):
+        if not language_value:
+            return None
+
+        if language_value.isdigit():
+            return Language.objects.filter(id=int(language_value)).first()
+
+        return Language.objects.filter(code__iexact=language_value).first()
 
     @swagger_auto_schema(
         manual_parameters=[
