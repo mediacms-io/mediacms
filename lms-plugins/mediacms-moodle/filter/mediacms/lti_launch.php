@@ -25,8 +25,10 @@ global $SITE, $DB, $CFG, $USER, $SESSION;
 
 require_login();
 
-$mediacmsurl = get_config('filter_mediacms', 'mediacmsurl');
-$ltitoolid   = get_config('filter_mediacms', 'ltitoolid');
+$mediacmsurl           = get_config('filter_mediacms', 'mediacmsurl');
+$ltitoolid             = get_config('filter_mediacms', 'ltitoolid');
+$share_raw             = get_config('filter_mediacms', 'share_embedded_media');
+$share_embedded_media  = ($share_raw === false) ? 1 : (int)(bool)$share_raw;
 
 if (empty($mediacmsurl) || empty($ltitoolid)) {
     throw new moodle_exception('notconfigured', 'filter_mediacms');
@@ -78,7 +80,7 @@ foreach ($enrolled_courses as $ec) {
 }
 
 // Store publishdata in session — lti_auth.php picks it up after the OIDC roundtrip.
-$SESSION->mediacms_launch_customparams = 'publishdata=' . $publishdata_b64;
+$SESSION->mediacms_launch_customparams = 'publishdata=' . $publishdata_b64 . "\nembed_share_media=" . $share_embedded_media;
 
 $typeconfig = lti_get_type_type_config($type->id);
 $content    = lti_initiate_login($launch_courseid, 0, null, $typeconfig, null, 'MediaCMS My Media');
