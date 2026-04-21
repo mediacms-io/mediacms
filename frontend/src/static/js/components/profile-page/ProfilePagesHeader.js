@@ -5,7 +5,7 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode } from '../../utils/helpers/';
+import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode, isShareMediaDisabled } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
@@ -373,6 +373,7 @@ class NavMenuInlineTabs extends React.PureComponent {
 
     render() {
         const isSelectMediaMode = inSelectMediaEmbedMode();
+        const shareMediaDisabled = isShareMediaDisabled();
 
         // Append action=select_media to links when in select mode
         const mediaLink = isSelectMediaMode
@@ -383,9 +384,12 @@ class NavMenuInlineTabs extends React.PureComponent {
             ? `${LinksContext._currentValue.profile.shared_by_me}${LinksContext._currentValue.profile.shared_by_me.includes('?') ? '&' : '?'}action=select_media`
             : LinksContext._currentValue.profile.shared_by_me;
 
-        const sharedWithMeLink = isSelectMediaMode
-            ? `${LinksContext._currentValue.profile.shared_with_me}${LinksContext._currentValue.profile.shared_with_me.includes('?') ? '&' : '?'}action=select_media`
+        const sharedWithMeBase = shareMediaDisabled
+            ? `${LinksContext._currentValue.profile.shared_with_me}${LinksContext._currentValue.profile.shared_with_me.includes('?') ? '&' : '?'}share_media=0`
             : LinksContext._currentValue.profile.shared_with_me;
+        const sharedWithMeLink = isSelectMediaMode
+            ? `${sharedWithMeBase}${sharedWithMeBase.includes('?') ? '&' : '?'}action=select_media`
+            : sharedWithMeBase;
 
         return (
             <nav ref="tabsNav" className="profile-nav items-list-outer list-inline list-slider">
