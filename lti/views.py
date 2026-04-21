@@ -461,7 +461,10 @@ class LaunchView(View):
             except Media.DoesNotExist:
                 pass
 
-        return reverse('lti:my_media') + '?mode=lms_embed_mode'
+        my_media_url = reverse('lti:my_media') + '?mode=lms_embed_mode'
+        if custom.get('embed_share_media') == '0':
+            my_media_url += '&share_media=0'
+        return my_media_url
 
     def handle_state_not_found(self, request, platform=None):
         """
@@ -690,6 +693,9 @@ class MyMediaLTIView(View):
             return JsonResponse({'error': 'Not authenticated via LTI'}, status=403)
 
         profile_url = f"/user/{request.user.username}?mode=lms_embed_mode"
+        share_media = request.GET.get('share_media')
+        if share_media == '0':
+            profile_url += '&share_media=0'
         return HttpResponseRedirect(profile_url)
 
 
@@ -711,9 +717,6 @@ class EmbedMediaLTIView(View):
         else:
             can_view = False
 
-        # share_media=0 means only grant view access without creating a MediaPermission record
-        share_media = request.GET.get('share_media', '1') != '0'
-
         if lti_session and request.user.is_authenticated:
             context_id = lti_session.get('context_id')
             platform_id = lti_session.get('platform_id')
@@ -734,17 +737,16 @@ class EmbedMediaLTIView(View):
                             rbac_group=resource_link.rbac_group,
                         ).exists()
                         if has_course_access:
+                            # create an entry so it shows up under shared with me
+                            MediaPermission.objects.get_or_create(
+                                user=request.user,
+                                media=media,
+                                defaults={
+                                    'owner_user': media.user,
+                                    'permission': 'viewer',
+                                },
+                            )
                             can_view = True
-                            if share_media:
-                                # create an entry so it shows up under shared with me
-                                MediaPermission.objects.get_or_create(
-                                    user=request.user,
-                                    media=media,
-                                    defaults={
-                                        'owner_user': media.user,
-                                        'permission': 'viewer',
-                                    },
-                                )
                 except Exception:
                     logger.exception('EmbedMediaLTIView: error checking course access for user=%s media=%s', request.user, friendly_token)
 

@@ -373,6 +373,7 @@ class NavMenuInlineTabs extends React.PureComponent {
 
     render() {
         const isSelectMediaMode = inSelectMediaEmbedMode();
+        const shareMediaDisabled = inEmbeddedApp() && new URLSearchParams(window.location.search).get('share_media') === '0';
 
         // Append action=select_media to links when in select mode
         const mediaLink = isSelectMediaMode
@@ -415,7 +416,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 link={sharedByMeLink}
                             />
                         ) : null}
-                        {this.userIsAuthor ? (
+                        {this.userIsAuthor && !shareMediaDisabled ? (
                             <InlineTab
                                 id="shared_with_me"
                                 isActive={'shared_with_me' === this.props.type}
