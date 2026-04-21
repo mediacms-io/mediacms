@@ -28,3 +28,6 @@ $string['mymediaposition_desc'] = 'Select where the "My Media" link should appea
 $string['pos_topbar'] = 'Top Navigation Bar';
 $string['pos_userdrop'] = 'User Profile Dropdown';
 $string['pos_none'] = 'None (Do not display)';
+
+$string['shareembeddedmedia'] = 'Share Embedded Media';
+$string['shareembeddedmedia_desc'] = 'When enabled, a student viewing embedded media is automatically granted viewer permission on that media (it appears under "Shared with me"). Disable this to allow viewing without creating a sharing record.';

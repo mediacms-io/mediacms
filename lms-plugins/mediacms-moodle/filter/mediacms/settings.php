@@ -49,4 +49,11 @@ if ($ADMIN->fulltree) {
         0,
         $ltioptions
     ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'filter_mediacms/share_embedded_media',
+        get_string('shareembeddedmedia', 'filter_mediacms'),
+        get_string('shareembeddedmedia_desc', 'filter_mediacms'),
+        1
+    ));
 }
