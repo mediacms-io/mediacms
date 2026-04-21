@@ -127,21 +127,23 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
             </select>
           </div>
 
-          <div className="shared-selector">
-            <label className="shared-selector-label">
-              <input
-                ref={sharedRef}
-                type="checkbox"
-                checked={shared === true}
-                onChange={(e) => setShared(e.target.checked)}
-                disabled={isProcessing}
-              />
-              {translateString('Shared')}
-            </label>
-            <p className={`shared-selector-note${shared === false ? ' shared-selector-note--warn' : ''}`}>
-              {sharedNote}
-            </p>
-          </div>
+          {isLmsEmbedMode && (
+            <div className="shared-selector">
+              <label className="shared-selector-label">
+                <input
+                  ref={sharedRef}
+                  type="checkbox"
+                  checked={shared === true}
+                  onChange={(e) => setShared(e.target.checked)}
+                  disabled={isProcessing}
+                />
+                {translateString('Shared')}
+              </label>
+              <p className={`shared-selector-note${shared === false ? ' shared-selector-note--warn' : ''}`}>
+                {sharedNote}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="publish-state-modal-footer">

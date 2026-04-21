@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Field, Layout, Submit
@@ -7,6 +9,8 @@ from django.conf import settings
 from .methods import get_next_state, is_mediacms_editor
 from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle, Tag
 from .widgets import CategoryModalWidget
+
+_PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
 
 
 class CustomField(Field):
@@ -133,6 +137,9 @@ class MediaPublishForm(forms.ModelForm):
         super(MediaPublishForm, self).__init__(*args, **kwargs)
 
         self.was_shared = self.instance.is_shared if self.instance.pk else False
+        is_embed_mode = self._check_embed_mode()
+        if not is_embed_mode:
+            self.fields.pop('shared')
 
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
@@ -146,8 +153,9 @@ class MediaPublishForm(forms.ModelForm):
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
 
-        self.fields["shared"].initial = self.was_shared
-        self.initial["shared"] = self.was_shared
+        if is_embed_mode:
+            self.fields["shared"].initial = self.was_shared
+            self.initial["shared"] = self.was_shared
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
@@ -166,14 +174,12 @@ class MediaPublishForm(forms.ModelForm):
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
 
         # Filter for LMS courses only when in embed mode
-        if self.request and 'category' in self.fields:
-            is_embed_mode = self._check_embed_mode()
-            if is_embed_mode:
-                current_queryset = self.fields['category'].queryset
-                self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
-                self.fields['category'].label = 'Course'
-                self.fields['category'].help_text = 'Media can be shared with one or more courses'
-                self.fields['category'].widget.is_lms_mode = True
+        if is_embed_mode and 'category' in self.fields:
+            current_queryset = self.fields['category'].queryset
+            self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
+            self.fields['category'].label = 'Course'
+            self.fields['category'].help_text = 'Media can be shared with one or more courses'
+            self.fields['category'].widget.is_lms_mode = True
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -183,102 +189,7 @@ class MediaPublishForm(forms.ModelForm):
         self.helper.form_show_errors = False
         self.helper.layout = Layout(
             CustomField('category'),
-            HTML(
-                """
-                <div class="form-group{% if form.state.errors or form.confirm_state.errors %} has-error{% endif %}">
-                    <div class="control-label-container">
-                        <label class="control-label">State</label>
-                    </div>
-                    <div class="controls">
-                        <div class="state-options">
-                            {% for val, lbl in form.fields.state.choices %}{% if val == 'private' %}
-                            <label class="state-option">
-                                <input type="radio" name="state" value="private"
-                                       {% if form.state.value == 'private' %}checked{% endif %}>
-                                Private
-                            </label>
-                            {% endif %}{% endfor %}
-                            {% for val, lbl in form.fields.state.choices %}{% if val == 'unlisted' %}
-                            <label class="state-option">
-                                <input type="radio" name="state" value="unlisted"
-                                       {% if form.state.value == 'unlisted' %}checked{% endif %}>
-                                Unlisted
-                            </label>
-                            {% endif %}{% endfor %}
-                            <label class="state-option shared-option">
-                                <input type="checkbox" name="shared" id="id_shared"
-                                       {% if form.shared.value %}checked{% endif %}>
-                                Shared
-                            </label>
-                            {% for val, lbl in form.fields.state.choices %}{% if val == 'public' %}
-                            <label class="state-option">
-                                <input type="radio" name="state" value="public"
-                                       {% if form.state.value == 'public' %}checked{% endif %}>
-                                Public
-                            </label>
-                            {% endif %}{% endfor %}
-                        </div>
-                        {% if form.state.errors %}
-                        <div class="error-container" style="margin-top:0.5rem;">
-                            {% for error in form.state.errors %}<p class="invalid-feedback">{{ error }}</p>{% endfor %}
-                        </div>
-                        {% endif %}
-                        <div id="shared-info" style="display:none; margin-top:0.5rem; font-size:0.875rem; color:#555;">
-                            To share media with someone, go to My Media &gt; select media &gt; Bulk Actions &gt; Share with&hellip;
-                        </div>
-                    </div>
-                    {% if form.was_shared %}
-                    <div id="shared-deselect-warning" style="display:none; margin-top:0.75rem; padding:0.75rem; background:#fff3cd; border:1px solid #ffc107; border-radius:4px;">
-                        <label style="display:flex; gap:0.5rem; align-items:flex-start; cursor:pointer; margin:0;">
-                            <input type="checkbox" name="confirm_state" id="id_confirm_state"
-                                   {% if form.confirm_state.value %}checked{% endif %}
-                                   style="margin-top:3px; flex-shrink:0;">
-                            <span id="shared-deselect-msg-private">I understand that changing to Private will remove all sharing. Currently this media is shared by me with other users (visible in 'My Media &gt; Shared by Me' page).</span>
-                            <span id="shared-deselect-msg-other" style="display:none;">I understand that unchecking Shared will affect existing sharing settings.</span>
-                        </label>
-                        {% if form.confirm_state.errors %}
-                        <div style="margin-top:0.5rem;">
-                            {% for error in form.confirm_state.errors %}<p class="invalid-feedback" style="color:#dc3545;">{{ error }}</p>{% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                    <script>
-                    (function() {
-                        var sharedCb = document.getElementById('id_shared');
-                        var warning = document.getElementById('shared-deselect-warning');
-                        var sharedInfo = document.getElementById('shared-info');
-                        var msgPrivate = document.getElementById('shared-deselect-msg-private');
-                        var msgOther = document.getElementById('shared-deselect-msg-other');
-                        function getSelectedState() {
-                            var radios = document.querySelectorAll('input[name="state"]');
-                            for (var i = 0; i < radios.length; i++) {
-                                if (radios[i].checked) return radios[i].value;
-                            }
-                            return '';
-                        }
-                        function updateWarning() {
-                            var isShared = sharedCb.checked;
-                            if (warning) warning.style.display = isShared ? 'none' : 'block';
-                            if (sharedInfo) sharedInfo.style.display = isShared ? 'block' : 'none';
-                            if (!isShared) {
-                                var state = getSelectedState();
-                                if (msgPrivate) msgPrivate.style.display = state === 'private' ? 'inline' : 'none';
-                                if (msgOther) msgOther.style.display = state !== 'private' ? 'inline' : 'none';
-                            }
-                        }
-                        if (sharedCb) {
-                            sharedCb.addEventListener('change', updateWarning);
-                            document.querySelectorAll('input[name="state"]').forEach(function(r) {
-                                r.addEventListener('change', updateWarning);
-                            });
-                            updateWarning();
-                        }
-                    })();
-                    </script>
-                </div>
-            """
-            ),
+            HTML(_PUBLISH_STATE_HTML),
             CustomField('featured'),
             CustomField('reported_times'),
             CustomField('is_reviewed'),
