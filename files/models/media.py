@@ -981,10 +981,18 @@ class MediaPermission(models.Model):
         ("owner", "Owner"),
     )
 
+    SOURCE_LTI_EMBED = 'lti_embed'
+    SOURCE_EXPLICIT = 'explicit'
+    SOURCE_CHOICES = (
+        (SOURCE_LTI_EMBED, 'LTI Embed'),
+        (SOURCE_EXPLICIT, 'Explicit'),
+    )
+
     owner_user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='granted_permissions')
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
     media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='permissions')
     permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    source = models.CharField(max_length=32, choices=SOURCE_CHOICES, default=SOURCE_EXPLICIT)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

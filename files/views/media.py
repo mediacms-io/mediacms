@@ -183,8 +183,11 @@ class MediaList(APIView):
             else:
                 base_queryset = Media.objects.prefetch_related("user", "tags")
 
-                # Build OR conditions similar to _get_media_queryset
-                conditions = Q(permissions__user=request.user)
+                exclude_lti_embed = request.GET.get('exclude_lti_embed') == '1'
+                if exclude_lti_embed:
+                    conditions = Q(permissions__user=request.user, permissions__source=MediaPermission.SOURCE_EXPLICIT)
+                else:
+                    conditions = Q(permissions__user=request.user)
 
                 if getattr(settings, 'USE_RBAC', False):
                     rbac_categories = request.user.get_rbac_categories_as_member()

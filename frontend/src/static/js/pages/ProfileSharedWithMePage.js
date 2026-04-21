@@ -11,7 +11,7 @@ import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFi
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
-import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isShareMediaDisabled } from '../utils/helpers';
 
 import { Page } from './_Page';
 
@@ -86,6 +86,7 @@ export class ProfileSharedWithMePage extends Page {
         let requestUrl = this.state.requestUrl;
 
         if (author) {
+            const excludeLtiEmbed = isShareMediaDisabled() ? '&exclude_lti_embed=1' : '';
             if (this.state.query) {
                 requestUrl =
                     ApiUrlContext._currentValue.media +
@@ -93,6 +94,7 @@ export class ProfileSharedWithMePage extends Page {
                     author.id +
                     '&show=shared_with_me&q=' +
                     encodeURIComponent(this.state.query) +
+                    excludeLtiEmbed +
                     this.state.filterArgs;
             } else {
                 requestUrl =
@@ -100,6 +102,7 @@ export class ProfileSharedWithMePage extends Page {
                     '?author=' +
                     author.id +
                     '&show=shared_with_me' +
+                    excludeLtiEmbed +
                     this.state.filterArgs;
             }
         }

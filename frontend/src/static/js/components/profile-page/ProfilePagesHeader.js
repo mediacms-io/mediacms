@@ -5,7 +5,7 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
-import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode, isShareMediaDisabled } from '../../utils/helpers/';
+import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode } from '../../utils/helpers/';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
@@ -373,7 +373,6 @@ class NavMenuInlineTabs extends React.PureComponent {
 
     render() {
         const isSelectMediaMode = inSelectMediaEmbedMode();
-        const shareMediaDisabled = isShareMediaDisabled();
 
         // Append action=select_media to links when in select mode
         const mediaLink = isSelectMediaMode
@@ -416,7 +415,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 link={sharedByMeLink}
                             />
                         ) : null}
-                        {this.userIsAuthor && !shareMediaDisabled ? (
+                        {this.userIsAuthor ? (
                             <InlineTab
                                 id="shared_with_me"
                                 isActive={'shared_with_me' === this.props.type}

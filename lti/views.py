@@ -744,6 +744,7 @@ class EmbedMediaLTIView(View):
                                 defaults={
                                     'owner_user': media.user,
                                     'permission': 'viewer',
+                                    'source': MediaPermission.SOURCE_LTI_EMBED,
                                 },
                             )
                             can_view = True
