@@ -48,3 +48,23 @@ class TestX(TestCase):
         # using the provided EncodeProfiles, these two files should produce 9 Encoding objects.
         # if new EncodeProfiles are added and enabled, this will break!
         self.assertEqual(Encoding.objects.filter(status='success').count(), 10, "Not all video transcodings finished well")
+
+    def test_external_m3u8_upload(self):
+        client = Client()
+        client.login(username=self.user.username, password=self.password)
+
+        external_url = "https://example.com/path/master.m3u8"
+        response = client.post(
+            '/api/v1/media',
+            {
+                'title': 'external hls media',
+                'external_m3u8_url': external_url,
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        media = Media.objects.get(title='external hls media')
+        self.assertEqual(media.external_hls_url, external_url)
+        self.assertEqual(media.media_type, 'video')
+        self.assertEqual(media.encoding_status, 'success')
+        self.assertEqual(media.hls_info.get('master_file'), external_url)

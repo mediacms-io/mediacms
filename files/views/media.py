@@ -1,6 +1,10 @@
 from datetime import datetime, timedelta
+import re
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.validators import URLValidator
 from django.contrib.postgres.search import SearchQuery
 from django.db.models import Count, F, Prefetch, Q, prefetch_related_objects
 from django.http import HttpResponse
@@ -8,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
@@ -308,25 +312,103 @@ class MediaList(APIView):
         return response
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
-            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="media_file"),
+            openapi.Parameter(
+                name="media_file",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="media_file (required if external_m3u8_url is not provided)",
+            ),
+            openapi.Parameter(
+                name="external_m3u8_url",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="External HLS .m3u8 URL (required if media_file is not provided)",
+            ),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
-        operation_description='Adds a new media, for authenticated users',
+        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
         # Add new media
 
+        external_m3u8_url = request.data.get("external_m3u8_url", "")
+        if isinstance(external_m3u8_url, str):
+            external_m3u8_url = external_m3u8_url.strip()
+            external_m3u8_url = self._normalize_external_m3u8_url(external_m3u8_url)
+
+        media_file = request.data.get("media_file")
+        if media_file and external_m3u8_url:
+            return Response(
+                {"detail": "Provide only one of media_file or external_m3u8_url"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not media_file and not external_m3u8_url:
+            return Response(
+                {"detail": "One of media_file or external_m3u8_url is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
-        if serializer.is_valid():
-            media_file = request.data["media_file"]
-            serializer.save(user=request.user, media_file=media_file)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if external_m3u8_url:
+            if not self._is_valid_external_m3u8_url(external_m3u8_url):
+                return Response(
+                    {"detail": "external_m3u8_url must be a valid http(s) URL ending with .m3u8"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            title = serializer.validated_data.get("title")
+            if not title:
+                path_name = urlparse(external_m3u8_url).path.split("/")[-1]
+                title = path_name or "external-hls"
+
+            # Keep existing model constraints while allowing URL-based media entries.
+            placeholder_name = f"external/{helpers.produce_friendly_token(12)}.txt"
+            placeholder_file = ContentFile(b"external-hls", name=placeholder_name)
+
+            serializer.save(
+                user=request.user,
+                title=title,
+                media_file=placeholder_file,
+                media_type="video",
+                encoding_status="success",
+                external_hls_url=external_m3u8_url,
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(user=request.user, media_file=media_file)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _is_valid_external_m3u8_url(self, url):
+        validator = URLValidator(schemes=["http", "https"])
+        try:
+            validator(url)
+        except Exception:
+            return False
+
+        parsed = urlparse(url)
+        return parsed.path.lower().endswith(".m3u8")
+
+    def _normalize_external_m3u8_url(self, url):
+        if not isinstance(url, str):
+            return url
+
+        match = re.match(r"^(https?)(//.+)$", url.strip(), flags=re.IGNORECASE)
+        if match:
+            return f"{match.group(1)}:{match.group(2)}"
+
+        return url.strip()
 
 
 class MediaBulkUserActions(APIView):
@@ -881,6 +963,7 @@ class MediaDetail(APIView):
         return Response(ret)
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
             openapi.Parameter(name='friendly_token', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='unique identifier', required=True),
             openapi.Parameter(name='type', type=openapi.TYPE_STRING, in_=openapi.IN_FORM, description='action to perform', enum=['encode', 'review']),
@@ -949,14 +1032,22 @@ class MediaDetail(APIView):
         )
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
-            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
-            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
-            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="media_file"),
+            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="Media description"),
+            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="Media title"),
+            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="Replace the original media file"),
+            openapi.Parameter(
+                name="uploaded_poster",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload a poster image. This also updates the thumbnail used in listings/player.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
-        operation_description='Update a Media, for Media uploader',
+        operation_description='Update a media. To set/update thumbnail via API, send multipart/form-data with uploaded_poster.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def put(self, request, friendly_token, format=None):

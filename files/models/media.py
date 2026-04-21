@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import random
+import re
 import uuid
 
 import m3u8
@@ -74,6 +75,8 @@ class Media(models.Model):
     friendly_token = models.CharField(blank=True, max_length=150, db_index=True, unique=True, help_text="Identifier for the Media")
 
     hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
+
+    external_hls_url = models.URLField(blank=True, max_length=1000, help_text="External HLS master playlist URL")
 
     is_reviewed = models.BooleanField(
         default=settings.MEDIA_IS_REVIEWED,
@@ -224,6 +227,19 @@ class Media(models.Model):
 
     def __str__(self):
         return self.title
+
+    def _normalized_external_hls_url(self):
+        """Normalize common malformed URL forms like https//... -> https://..."""
+
+        if not self.external_hls_url:
+            return ""
+
+        url = self.external_hls_url.strip()
+        match = re.match(r"^(https?)(//.+)$", url, flags=re.IGNORECASE)
+        if match:
+            return f"{match.group(1)}:{match.group(2)}"
+
+        return url
 
     def __init__(self, *args, **kwargs):
         super(Media, self).__init__(*args, **kwargs)
@@ -743,6 +759,10 @@ class Media(models.Model):
     def original_media_url(self):
         """Property used on serializers"""
 
+        external_hls_url = self._normalized_external_hls_url()
+        if external_hls_url:
+            return external_hls_url
+
         if settings.SHOW_ORIGINAL_MEDIA:
             return helpers.url_from_path(self.media_file.path)
         else:
@@ -862,6 +882,12 @@ class Media(models.Model):
 
         res = {}
         valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
+        external_hls_url = self._normalized_external_hls_url()
+        if external_hls_url:
+            # For external playlists we expose the master URL directly.
+            res["master_file"] = external_hls_url
+            return res
+
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -1029,7 +1055,8 @@ def media_save(sender, instance, created, **kwargs):
     if created:
         from ..methods import notify_users
 
-        instance.media_init()
+        if not instance.external_hls_url:
+            instance.media_init()
         notify_users(friendly_token=instance.friendly_token, action="media_added")
 
     instance.user.update_user_media()
