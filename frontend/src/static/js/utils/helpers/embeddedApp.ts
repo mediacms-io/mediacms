@@ -23,13 +23,16 @@ export function isShareMediaDisabled(): boolean {
     try {
         const params = new URL(globalThis.location.href).searchParams;
         const shareMedia = params.get('share_media');
+        const mode = params.get('mode');
 
         if (shareMedia === '0') {
             sessionStorage.setItem('lms_share_media_disabled', 'true');
             return true;
         }
 
-        if (shareMedia === '1') {
+        // Fresh LTI landing (mode=lms_embed_mode in URL) without share_media=0
+        // means sharing is enabled — clear any stale disabled flag.
+        if (shareMedia === '1' || mode === 'lms_embed_mode') {
             sessionStorage.removeItem('lms_share_media_disabled');
             return false;
         }
