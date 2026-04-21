@@ -261,11 +261,21 @@
                                     var baseUrl = window.location.origin;
                                     var embedUrl = baseUrl + '/embed?m=' + mediaId;
 
-                                    window.parent.postMessage({
-                                        type: 'videoSelected',
-                                        embedUrl: embedUrl,
-                                        videoId: mediaId
-                                    }, '*');
+                                    var sendPostMsg = function() {
+                                        window.parent.postMessage({
+                                            type: 'videoSelected',
+                                            embedUrl: embedUrl,
+                                            videoId: mediaId
+                                        }, '*');
+                                    };
+
+                                    fetch('/api/v1/media/' + mediaId + '/share', {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRFToken': getCSRFToken(),
+                                            'Content-Type': 'application/json',
+                                        },
+                                    }).then(sendPostMsg).catch(sendPostMsg);
                                     return;
                                 }
                                 setTimeout(function(){ window.location.href = response.media_url; }, 500);
