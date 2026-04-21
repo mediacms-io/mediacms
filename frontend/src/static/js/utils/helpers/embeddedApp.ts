@@ -19,6 +19,27 @@ export function inEmbeddedApp() {
     }
 }
 
+export function isShareMediaDisabled(): boolean {
+    try {
+        const params = new URL(globalThis.location.href).searchParams;
+        const shareMedia = params.get('share_media');
+
+        if (shareMedia === '0') {
+            sessionStorage.setItem('lms_share_media_disabled', 'true');
+            return true;
+        }
+
+        if (shareMedia === '1') {
+            sessionStorage.removeItem('lms_share_media_disabled');
+            return false;
+        }
+
+        return sessionStorage.getItem('lms_share_media_disabled') === 'true';
+    } catch (e) {
+        return false;
+    }
+}
+
 export function isSelectMediaMode() {
     try {
         const params = new URL(globalThis.location.href).searchParams;
