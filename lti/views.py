@@ -223,6 +223,7 @@ class LaunchView(View):
             'width': 'width',
             'height': 'height',
             'show_media_page': 'show_media_page',
+            'embed_share_media': 'share_media',
         }
 
         for key, param_name in param_mapping.items():
@@ -270,7 +271,17 @@ class LaunchView(View):
                 media_token_from_state = state_data.get('media_token')
 
                 # Extract embed parameters from state
-                for key in ['embed_show_title', 'embed_show_related', 'embed_show_user_avatar', 'embed_link_title', 'embed_start_time', 'embed_width', 'embed_height', 'show_media_page']:
+                for key in [
+                    'embed_show_title',
+                    'embed_show_related',
+                    'embed_show_user_avatar',
+                    'embed_link_title',
+                    'embed_start_time',
+                    'embed_width',
+                    'embed_height',
+                    'show_media_page',
+                    'embed_share_media',
+                ]:
                     if key in state_data:
                         embed_params_from_state[key] = state_data[key]
             except Exception:
@@ -700,6 +711,9 @@ class EmbedMediaLTIView(View):
         else:
             can_view = False
 
+        # share_media=0 means only grant view access without creating a MediaPermission record
+        share_media = request.GET.get('share_media', '1') != '0'
+
         if lti_session and request.user.is_authenticated:
             context_id = lti_session.get('context_id')
             platform_id = lti_session.get('platform_id')
@@ -720,16 +734,17 @@ class EmbedMediaLTIView(View):
                             rbac_group=resource_link.rbac_group,
                         ).exists()
                         if has_course_access:
-                            # create an entry so it shows up under shared with me
-                            MediaPermission.objects.get_or_create(
-                                user=request.user,
-                                media=media,
-                                defaults={
-                                    'owner_user': media.user,
-                                    'permission': 'viewer',
-                                },
-                            )
                             can_view = True
+                            if share_media:
+                                # create an entry so it shows up under shared with me
+                                MediaPermission.objects.get_or_create(
+                                    user=request.user,
+                                    media=media,
+                                    defaults={
+                                        'owner_user': media.user,
+                                        'permission': 'viewer',
+                                    },
+                                )
                 except Exception:
                     logger.exception('EmbedMediaLTIView: error checking course access for user=%s media=%s', request.user, friendly_token)
 
