@@ -47,7 +47,8 @@ echo html_writer::tag('iframe', '', [
     'src'             => $src,
     'allowfullscreen' => 'true',
     'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *; display-capture *;',
-    'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
+    'style'           => 'border:none;display:block;width:100%;height:100vh;',
+//    'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
 ]);
 
 echo $OUTPUT->footer();

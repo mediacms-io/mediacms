@@ -156,22 +156,23 @@ class text_filter extends \core_filters\text_filter {
 
         $launchurl = new moodle_url('/filter/mediacms/launch.php', $launch_params);
 
-        // Build iframe attributes
-        $iframe_attrs = [
-            'src' => $launchurl->out(false),
-            'frameborder' => 0,
-            'allowfullscreen' => 'allowfullscreen',
-            'class' => 'mediacms-embed',
-            'title' => 'MediaCMS Video'
-        ];
+        // Build responsive CSS
+        $max_width = ($width !== null) ? (int)$width : 640;
+        if ($width !== null && $height !== null && (int)$height > 0) {
+            $aspect_ratio_css = (int)$width . ' / ' . (int)$height;
+        } else {
+            $aspect_ratio_css = '16 / 9';
+        }
+        $style = 'width:100%;max-width:' . $max_width . 'px;aspect-ratio:' . $aspect_ratio_css
+               . ';display:block;margin:0 auto;border:0;';
 
-        // Add width/height attributes only if provided
-        if ($width !== null) {
-            $iframe_attrs['width'] = $width;
-        }
-        if ($height !== null) {
-            $iframe_attrs['height'] = $height;
-        }
+        $iframe_attrs = [
+            'src'           => $launchurl->out(false),
+            'style'         => $style,
+            'frameborder'   => '0',
+            'allowfullscreen' => 'allowfullscreen',
+            'title'         => 'MediaCMS Video',
+        ];
 
         $iframe = html_writer::tag('iframe', '', $iframe_attrs);
 

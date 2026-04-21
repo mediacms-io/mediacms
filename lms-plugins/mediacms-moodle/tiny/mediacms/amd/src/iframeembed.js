@@ -139,6 +139,12 @@ export default class IframeEmbed {
         return isNaN(parsed) ? null : parsed;
     }
 
+    computeAspectRatioCSS(values) {
+        const w = values.width || 560;
+        const h = values.height || 315;
+        return `${w} / ${h}`;
+    }
+
     buildEmbedUrl(parsed, options) {
         if (parsed.isGeneric) {
             return parsed.rawUrl;
@@ -167,13 +173,6 @@ export default class IframeEmbed {
         );
         url.searchParams.set('linkTitle', options.linkTitle ? '1' : '0');
 
-        if (options.width) {
-            url.searchParams.set('width', options.width.toString());
-        }
-        if (options.height) {
-            url.searchParams.set('height', options.height.toString());
-        }
-
         if (options.startAtEnabled && options.startAt) {
             const seconds = this.timeStringToSeconds(options.startAt);
             if (seconds !== null && seconds > 0) {
@@ -197,14 +196,8 @@ export default class IframeEmbed {
                 : fallback;
         };
 
-        let width, height;
-        if (this.isUpdating && (data.width || data.height)) {
-            width = data.width || 640;
-            height = data.height || 360;
-        } else {
-            width = 640;
-            height = 360;
-        }
+        const width = (this.isUpdating && data.width) ? data.width : 560;
+        const height = (this.isUpdating && data.height) ? data.height : 315;
 
         return {
             elementid: this.editor.getElement().id,
@@ -217,12 +210,8 @@ export default class IframeEmbed {
             textLinkOnly: data.textLinkOnly || false,
             startAtEnabled: data.startAtEnabled || false,
             startAt: data.startAt || '0:00',
-            width: width,
-            height: height,
-            is16_9: !data.aspectRatio || data.aspectRatio === '16:9',
-            is4_3: data.aspectRatio === '4:3',
-            is1_1: data.aspectRatio === '1:1',
-            isCustom: data.aspectRatio === 'custom',
+            width,
+            height,
         };
     }
 
@@ -298,21 +287,31 @@ export default class IframeEmbed {
         const src = this.selectedIframe.getAttribute('src');
         const parsed = this.parseInput(src);
 
-        let width = parsed?.width || this.selectedIframe.getAttribute('width') || null;
-        let height = parsed?.height || this.selectedIframe.getAttribute('height') || null;
+        // Parse responsive dimensions from inline style
+        const style = this.selectedIframe.getAttribute('style') || '';
+        const maxWidthMatch = style.match(/max-width:\s*(\d+(?:\.\d+)?)px/);
+        const aspectRatioMatch = style.match(/aspect-ratio:\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
 
-        width = width ? parseInt(width) : null;
-        height = height ? parseInt(height) : null;
+        const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 560;
+        let height = 315;
+
+        if (aspectRatioMatch) {
+            const rw = parseFloat(aspectRatioMatch[1]);
+            const rh = parseFloat(aspectRatioMatch[2]);
+            if (rw > 0) {
+                height = Math.round(maxWidth * rh / rw);
+            }
+        }
 
         return {
             url: src,
-            width: width,
-            height: height,
+            width: maxWidth,
+            height,
             showTitle: parsed?.showTitle ?? true,
             linkTitle: parsed?.linkTitle ?? true,
             showRelated: parsed?.showRelated ?? true,
             showUserAvatar: parsed?.showUserAvatar ?? true,
-            startAtEnabled: parsed?.startAt !== null,
+            startAtEnabled: !!(parsed?.startAt),
             startAt: parsed?.startAt || '0:00',
         };
     }
@@ -340,9 +339,6 @@ export default class IframeEmbed {
             startAt: form
                 .querySelector(Selectors.IFRAME.elements.startAt)
                 .value.trim(),
-            aspectRatio: form.querySelector(
-                Selectors.IFRAME.elements.aspectRatio,
-            ).value,
             width: this.parseWidthHeight(
                 form.querySelector(Selectors.IFRAME.elements.width).value,
             ),
@@ -382,8 +378,9 @@ export default class IframeEmbed {
 
         const context = {
             src: embedUrl,
-            width: values.width,
-            height: values.height,
+            maxWidth: values.width || 560,
+            height: values.height || 315,
+            aspectRatioCSS: this.computeAspectRatioCSS(values),
         };
 
         const { html } = await Templates.renderForPromise(
@@ -447,22 +444,20 @@ export default class IframeEmbed {
                 <div class="alert alert-info">
                     <strong>Text link preview:</strong><br>
                     <a href="${hrefUrl}" target="_blank" data-mediacms-textlink="true">${linkText}</a>
-                    <br><small class="text-muted mt-2 d-block">This link will not be auto-converted by the MediaCMS filter.</small>
                 </div>
             `;
         } else {
-            const previewWidth = Math.min(values.width, 400);
-            const scale = previewWidth / values.width;
-            const previewHeight = Math.round(values.height * scale);
+            const previewWidth = Math.min(values.width || 560, 400);
+            const previewHeight = Math.round(previewWidth * (values.height || 315) / (values.width || 560));
 
             previewContainer.innerHTML = `
                 <iframe
                     src="${embedUrl}"
                     width="${previewWidth}"
                     height="${previewHeight}"
+                    style="display:block;border:0;"
                     frameborder="0"
-                    allowfullscreen
-                    style="max-width: 100%;">
+                    allowfullscreen>
                 </iframe>
             `;
         }
@@ -475,56 +470,18 @@ export default class IframeEmbed {
         }, 500);
     }
 
-    handleAspectRatioChange(root) {
+    handleWidthChange(root) {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
-        const aspectRatio = form.querySelector(
-            Selectors.IFRAME.elements.aspectRatio,
-        ).value;
-        const dimensions = Selectors.IFRAME.aspectRatios[aspectRatio];
-
-        if (dimensions && aspectRatio !== 'custom') {
-            form.querySelector(Selectors.IFRAME.elements.width).value =
-                dimensions.width;
-            form.querySelector(Selectors.IFRAME.elements.height).value =
-                dimensions.height;
-        }
-
-        this.updatePreview(root);
-    }
-
-    handleWidthChange(root, newWidth) {
-        const form = root.querySelector(Selectors.IFRAME.elements.form);
-        const aspectRatio = form.querySelector(Selectors.IFRAME.elements.aspectRatio).value;
+        const widthInput = form.querySelector(Selectors.IFRAME.elements.width);
         const heightInput = form.querySelector(Selectors.IFRAME.elements.height);
-
-        if (aspectRatio !== 'custom' && newWidth) {
-            const width = parseInt(newWidth) || 0;
-            const arr = aspectRatio.split(':');
-            const x = parseInt(arr[0]);
-            const y = parseInt(arr[1]);
-
-            const calculatedHeight = Math.round((width * y) / x);
-            heightInput.value = calculatedHeight;
+        const newWidth = parseInt(widthInput.value);
+        if (!isNaN(newWidth) && newWidth > 0) {
+            heightInput.value = Math.round(newWidth * 9 / 16);
         }
-
         this.handleInputChange(root);
     }
 
-    handleHeightChange(root, newHeight) {
-        const form = root.querySelector(Selectors.IFRAME.elements.form);
-        const aspectRatio = form.querySelector(Selectors.IFRAME.elements.aspectRatio).value;
-        const widthInput = form.querySelector(Selectors.IFRAME.elements.width);
-
-        if (aspectRatio !== 'custom' && newHeight) {
-            const height = parseInt(newHeight) || 0;
-            const arr = aspectRatio.split(':');
-            const x = parseInt(arr[0]);
-            const y = parseInt(arr[1]);
-
-            const calculatedWidth = Math.round((height * x) / y);
-            widthInput.value = calculatedWidth;
-        }
-
+    handleHeightChange(root) {
         this.handleInputChange(root);
     }
 
@@ -573,6 +530,14 @@ export default class IframeEmbed {
                 } else {
                     this.editor.insertContent(html);
                 }
+                setTimeout(() => {
+                    const body = this.editor.getBody();
+                    body.querySelectorAll('p').forEach(p => {
+                        if (p.innerHTML.trim() === '' || p.innerHTML === '<br>') {
+                            p.remove();
+                        }
+                    });
+                }, 50);
             }
         }
     }
@@ -636,17 +601,13 @@ export default class IframeEmbed {
             () => this.handleInputChange(root, true),
         );
 
-        form.querySelector(
-            Selectors.IFRAME.elements.aspectRatio,
-        ).addEventListener('change', () => this.handleAspectRatioChange(root));
-
         form.querySelector(Selectors.IFRAME.elements.width).addEventListener(
             'input',
-            (e) => this.handleWidthChange(root, e.target.value),
+            () => this.handleWidthChange(root),
         );
         form.querySelector(Selectors.IFRAME.elements.height).addEventListener(
             'input',
-            (e) => this.handleHeightChange(root, e.target.value),
+            () => this.handleHeightChange(root),
         );
 
         $root.on(ModalEvents.save, () => this.handleDialogueSubmission(modal));
@@ -1024,15 +985,14 @@ export default class IframeEmbed {
 
         if (data.action === 'selectMedia' || data.action === 'mediaSelected') {
             const embedUrl = data.embedUrl || data.url || '';
-            const videoId = data.mediaId || data.videoId || data.id || '';
             if (embedUrl) {
-                this.selectIframeLibraryVideo(root, embedUrl, videoId);
+                this.selectIframeLibraryVideo(root, embedUrl);
             }
             return;
         }
     }
 
-    selectIframeLibraryVideo(root, embedUrl, videoId) {
+    selectIframeLibraryVideo(root, embedUrl) {
         const form = root.querySelector(Selectors.IFRAME.elements.form);
 
         const urlInput = form.querySelector(Selectors.IFRAME.elements.url);

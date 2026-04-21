@@ -134,7 +134,6 @@ export default {
             textLinkOnly: '.tiny_iframecms_textlinkonly',
             startAt: '.tiny_iframecms_startat',
             startAtEnabled: '.tiny_iframecms_startat_enabled',
-            aspectRatio: '.tiny_iframecms_aspectratio',
             width: '.tiny_iframecms_width',
             height: '.tiny_iframecms_height',
             preview: '.tiny_iframecms_preview',
@@ -152,12 +151,6 @@ export default {
                 '.tiny_iframecms_iframe_library_placeholder',
             iframeLibraryLoading: '.tiny_iframecms_iframe_library_loading',
             iframeLibraryFrame: '.tiny_iframecms_iframe_library_frame',
-        },
-        aspectRatios: {
-            '16:9': { width: 560, height: 315 },
-            '4:3': { width: 560, height: 420 },
-            '1:1': { width: 400, height: 400 },
-            custom: null,
         },
     },
 };

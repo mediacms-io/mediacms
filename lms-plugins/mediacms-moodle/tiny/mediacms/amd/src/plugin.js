@@ -68,17 +68,49 @@ const mediaCMSUrlToIframe = (url) => {
         // Keep original URL if parsing fails
     }
 
-    return `<iframe src="${embedUrl}" ` +
-        `style="width: 100%; aspect-ratio: 16 / 9; display: block; border: 0;" ` +
-        `allowfullscreen="allowfullscreen"></iframe>`;
+    return `<iframe src="${embedUrl}" width="560" height="315" ` +
+        `style="width:100%;max-width:560px;aspect-ratio:560 / 315;display:block;margin:0 auto;border:0;" ` +
+        `frameborder="0" allowfullscreen></iframe>`;
 };
 
 /**
- * Regular expression to match standalone MediaCMS URLs in content.
- * Matches URLs that are on their own line or surrounded by whitespace/tags.
- * The URL must contain /embed?m= or /view?m= pattern.
+ * Convert standalone MediaCMS URL text nodes to iframes.
+ * Uses DOM traversal so URLs inside <a> tags (text links) are never touched.
+ *
+ * @param {string} html - Raw HTML string from the editor
+ * @returns {string} HTML with standalone URLs replaced by iframe HTML
  */
-const MEDIACMS_URL_PATTERN = /(^|>|\s)(https?:\/\/[^\s<>"]+\/(?:embed|view)\?m=[^\s<>"]+)(<|\s|$)/g;
+const convertUrlsToIframes = (html) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+
+    const nodesToReplace = [];
+    const walk = (el) => {
+        for (const child of Array.from(el.childNodes)) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const url = child.textContent.trim();
+                if (isMediaCMSUrl(url)) {
+                    nodesToReplace.push({node: child, url});
+                }
+            } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() !== 'a') {
+                walk(child);
+            }
+            // Do not recurse into <a> tags — text links must be preserved as-is
+        }
+    };
+    walk(tempDiv);
+
+    nodesToReplace.forEach(({node, url}) => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = mediaCMSUrlToIframe(url);
+        const iframe = wrapper.firstChild;
+        if (iframe) {
+            node.parentNode.replaceChild(iframe, node);
+        }
+    });
+
+    return tempDiv.innerHTML;
+};
 
 // eslint-disable-next-line no-async-promise-executor
 export default new Promise(async(resolve) => {
@@ -102,69 +134,26 @@ export default new Promise(async(resolve) => {
         // Setup auto-conversion of pasted MediaCMS URLs.
         setupAutoConvert(editor);
 
-        // Convert MediaCMS URLs to iframes when content is loaded into the editor.
-        // This handles content from the database that was saved as just URLs.
+        // Convert standalone MediaCMS URL text nodes to iframes when loading content.
+        // Text links (<a data-mediacms-textlink>) are preserved because DOM traversal skips <a> tags.
         editor.on('BeforeSetContent', (e) => {
             if (e.content && typeof e.content === 'string') {
-                // Replace standalone MediaCMS URLs with iframes
-                e.content = e.content.replace(MEDIACMS_URL_PATTERN, (match, before, url, after) => {
-                    // Verify it's a valid MediaCMS URL
-                    if (isMediaCMSUrl(url)) {
-                        return before + mediaCMSUrlToIframe(url) + after;
-                    }
-                    return match;
-                });
+                e.content = convertUrlsToIframes(e.content);
             }
         });
 
-        // Convert MediaCMS iframes back to just embed URLs when saving.
-        // This stores only the URL in the database, not the full iframe HTML.
+        // Clean up editor-only overlay elements when saving, preserving iframe HTML with its
+        // responsive styles (max-width, aspect-ratio) so dimensions survive the round-trip.
         editor.on('GetContent', (e) => {
             if (e.format === 'html') {
-                // Create a temporary container to manipulate the HTML
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = e.content;
 
-                // Remove edit buttons
+                // Remove edit buttons added by the overlay system (editor-only UI)
                 tempDiv.querySelectorAll('.tiny-mediacms-edit-btn').forEach(btn => btn.remove());
 
-                // Process all iframes - convert MediaCMS iframes to just URLs
-                tempDiv.querySelectorAll('iframe').forEach(iframe => {
-                    const src = iframe.getAttribute('src');
-                    if (isMediaCMSUrl(src)) {
-                        // Check if iframe is inside a wrapper
-                        const wrapper = iframe.closest('.tiny-mediacms-iframe-wrapper') ||
-                                        iframe.closest('.tiny-iframe-responsive');
-
-                        // Create a text node with just the URL
-                        const urlText = document.createTextNode(src);
-
-                        // Wrap in a paragraph for proper formatting
-                        const p = document.createElement('p');
-                        p.appendChild(urlText);
-
-                        if (wrapper) {
-                            // Replace the entire wrapper with the URL
-                            wrapper.parentNode.insertBefore(p, wrapper);
-                            wrapper.remove();
-                        } else {
-                            // Replace just the iframe with the URL
-                            iframe.parentNode.insertBefore(p, iframe);
-                            iframe.remove();
-                        }
-                    }
-                });
-
-                // Clean up any remaining wrappers that might not have had MediaCMS iframes
-                tempDiv.querySelectorAll('.tiny-mediacms-iframe-wrapper').forEach(wrapper => {
-                    const iframe = wrapper.querySelector('iframe');
-                    if (iframe) {
-                        wrapper.parentNode.insertBefore(iframe, wrapper);
-                    }
-                    wrapper.remove();
-                });
-
-                tempDiv.querySelectorAll('.tiny-iframe-responsive').forEach(wrapper => {
+                // Unwrap overlay divs, keeping the iframe HTML intact with its responsive styles
+                tempDiv.querySelectorAll('.tiny-mediacms-iframe-wrapper, .tiny-iframe-responsive').forEach(wrapper => {
                     const iframe = wrapper.querySelector('iframe');
                     if (iframe) {
                         wrapper.parentNode.insertBefore(iframe, wrapper);
