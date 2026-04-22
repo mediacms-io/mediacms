@@ -61,6 +61,17 @@ def record_screen(request):
     return render(request, "cms/record_screen.html", context)
 
 
+@login_required
+def add_external_hls(request):
+    """Add media from external HLS URL view"""
+
+    context = {}
+    context["can_add"] = user_allowed_to_upload(request)
+    context["can_upload_exp"] = settings.CANNOT_ADD_MEDIA_MESSAGE
+
+    return render(request, "cms/add_external_hls.html", context)
+
+
 def about(request):
     """About view"""
 
