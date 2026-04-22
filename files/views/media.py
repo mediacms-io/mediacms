@@ -129,7 +129,7 @@ class MediaList(APIView):
     """Media listings views"""
 
     permission_classes = (IsAuthorizedToAdd,)
-    parser_classes = (MultiPartParser, FormParser, JSONParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -1035,7 +1035,7 @@ class MediaDetail(APIView):
     """
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
-    parser_classes = (MultiPartParser, FormParser, JSONParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):
         try:
