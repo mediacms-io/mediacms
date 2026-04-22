@@ -59,11 +59,77 @@ from ..stop_words import STOP_WORDS
 from ..tasks import save_user_action
 
 
+def _parse_optional_boolean(value, field_name):
+    if value is None or value == "":
+        return None, None
+
+    if isinstance(value, bool):
+        return value, None
+
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value), None
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        truthy = {"1", "true", "yes", "on"}
+        falsy = {"0", "false", "no", "off"}
+
+        if normalized in truthy:
+            return True, None
+        if normalized in falsy:
+            return False, None
+
+    return None, f"{field_name} must be a boolean"
+
+
+def _parse_tags_input(raw_tags):
+    if raw_tags is None:
+        return None, None
+
+    if isinstance(raw_tags, str):
+        tag_items = raw_tags.split(",")
+    elif isinstance(raw_tags, list):
+        tag_items = raw_tags
+    else:
+        return None, "tags must be a comma-separated string or an array of strings"
+
+    tags = []
+    seen = set()
+    for item in tag_items:
+        normalized_item = helpers.get_alphanumeric_only(str(item))[:99]
+        if normalized_item and normalized_item not in seen:
+            tags.append(normalized_item)
+            seen.add(normalized_item)
+
+    return tags, None
+
+
+def _apply_media_options(media, user, enable_comments=None, allow_download=None, tags=None):
+    fields_to_update = []
+
+    if enable_comments is not None:
+        media.enable_comments = enable_comments
+        fields_to_update.append("enable_comments")
+
+    if allow_download is not None:
+        media.allow_download = allow_download
+        fields_to_update.append("allow_download")
+
+    if fields_to_update:
+        media.save(update_fields=fields_to_update)
+
+    if tags is not None:
+        media.tags.clear()
+        for tag_title in tags:
+            tag, _ = Tag.objects.get_or_create(title=tag_title, defaults={"user": user})
+            media.tags.add(tag)
+
+
 class MediaList(APIView):
     """Media listings views"""
 
     permission_classes = (IsAuthorizedToAdd,)
-    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser, FileUploadParser)
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -333,6 +399,27 @@ class MediaList(APIView):
             ),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable comments for this media",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable download option for this media",
+            ),
+            openapi.Parameter(
+                name="tags",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tags (e.g. 'news,events,live')",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
@@ -342,12 +429,37 @@ class MediaList(APIView):
     def post(self, request, format=None):
         # Add new media
 
-        external_m3u8_url = request.data.get("external_m3u8_url", "")
+        raw_enable_comments = request.data.get("enable_comments", None)
+        raw_allow_download = request.data.get("allow_download", None)
+        raw_tags = request.data.get("tags", None)
+        if hasattr(request.data, "getlist"):
+            raw_tags_list = request.data.getlist("tags")
+            if len(raw_tags_list) > 1:
+                raw_tags = raw_tags_list
+
+        enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
+        if comments_error:
+            return Response({"detail": comments_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        allow_download, download_error = _parse_optional_boolean(raw_allow_download, "allow_download")
+        if download_error:
+            return Response({"detail": download_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        tags, tags_error = _parse_tags_input(raw_tags)
+        if tags_error:
+            return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer_data = {}
+        for field_name in ("title", "description", "uploaded_poster", "media_file", "external_m3u8_url"):
+            if field_name in request.data:
+                serializer_data[field_name] = request.data.get(field_name)
+
+        external_m3u8_url = serializer_data.get("external_m3u8_url", "")
         if isinstance(external_m3u8_url, str):
             external_m3u8_url = external_m3u8_url.strip()
             external_m3u8_url = self._normalize_external_m3u8_url(external_m3u8_url)
 
-        media_file = request.data.get("media_file")
+        media_file = serializer_data.get("media_file")
         if media_file and external_m3u8_url:
             return Response(
                 {"detail": "Provide only one of media_file or external_m3u8_url"},
@@ -360,7 +472,7 @@ class MediaList(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = MediaSerializer(data=request.data, context={"request": request})
+        serializer = MediaSerializer(data=serializer_data, context={"request": request})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -380,7 +492,7 @@ class MediaList(APIView):
             placeholder_name = f"external/{helpers.produce_friendly_token(12)}.txt"
             placeholder_file = ContentFile(b"external-hls", name=placeholder_name)
 
-            serializer.save(
+            media = serializer.save(
                 user=request.user,
                 title=title,
                 media_file=placeholder_file,
@@ -388,9 +500,24 @@ class MediaList(APIView):
                 encoding_status="success",
                 external_hls_url=external_m3u8_url,
             )
+
+            _apply_media_options(
+                media,
+                user=request.user,
+                enable_comments=enable_comments,
+                allow_download=allow_download,
+                tags=tags,
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        serializer.save(user=request.user, media_file=media_file)
+        media = serializer.save(user=request.user, media_file=media_file)
+        _apply_media_options(
+            media,
+            user=request.user,
+            enable_comments=enable_comments,
+            allow_download=allow_download,
+            tags=tags,
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _is_valid_external_m3u8_url(self, url):
@@ -908,7 +1035,7 @@ class MediaDetail(APIView):
     """
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
-    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser, FileUploadParser)
 
     def get_object(self, friendly_token):
         try:
@@ -1061,6 +1188,27 @@ class MediaDetail(APIView):
                 required=False,
                 description="Upload a poster image. This also updates the thumbnail used in listings/player.",
             ),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable comments for this media",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable download option for this media",
+            ),
+            openapi.Parameter(
+                name="tags",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tags (e.g. 'news,events,live')",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
@@ -1076,13 +1224,33 @@ class MediaDetail(APIView):
         if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        data = request.data.copy()
-        subtitle_file = data.get("subtitle_file")
-        subtitle_language_raw = data.get("subtitle_language", "")
+        raw_enable_comments = request.data.get("enable_comments", None)
+        raw_allow_download = request.data.get("allow_download", None)
+        raw_tags = request.data.get("tags", None)
+        if hasattr(request.data, "getlist"):
+            raw_tags_list = request.data.getlist("tags")
+            if len(raw_tags_list) > 1:
+                raw_tags = raw_tags_list
 
-        # Caption upload is handled separately from MediaSerializer fields.
-        data.pop("subtitle_file", None)
-        data.pop("subtitle_language", None)
+        enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
+        if comments_error:
+            return Response({"detail": comments_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        allow_download, download_error = _parse_optional_boolean(raw_allow_download, "allow_download")
+        if download_error:
+            return Response({"detail": download_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        tags, tags_error = _parse_tags_input(raw_tags)
+        if tags_error:
+            return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        subtitle_file = request.data.get("subtitle_file")
+        subtitle_language_raw = request.data.get("subtitle_language", "")
+
+        serializer_data = {}
+        for field_name in ("title", "description", "uploaded_poster", "media_file"):
+            if field_name in request.data:
+                serializer_data[field_name] = request.data.get(field_name)
 
         has_subtitle_file = bool(subtitle_file)
         has_subtitle_language = bool(str(subtitle_language_raw).strip())
@@ -1108,12 +1276,19 @@ class MediaDetail(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        serializer = MediaSerializer(media, data=data, context={"request": request})
+        serializer = MediaSerializer(media, data=serializer_data, context={"request": request})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             serializer.save(user=request.user)
+            _apply_media_options(
+                media,
+                user=request.user,
+                enable_comments=enable_comments,
+                allow_download=allow_download,
+                tags=tags,
+            )
 
             if has_subtitle_file and language:
                 subtitle = Subtitle.objects.create(
