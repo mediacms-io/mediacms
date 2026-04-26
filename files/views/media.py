@@ -673,17 +673,17 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching categories found or access denied"}, status=status.HTTP_400_BAD_REQUEST)
 
             added_count = 0
-            tag = None
-            for category in categories:
-                if category.is_lms_course:
-                    tag, _ = Tag.objects.get_or_create(title=category.title[:100])
-
-                for m in media:
-                    if not m.category.filter(uid=category.uid).exists():
-                        m.category.add(category)
-                        added_count += 1
-                        if tag:
-                            m.tags.add(tag)
+            # tag = None
+            # for category in categories:
+            #     if category.is_lms_course:
+            #         tag, _ = Tag.objects.get_or_create(title=category.title[:100])
+            #
+            #     for m in media:
+            #         if not m.category.filter(uid=category.uid).exists():
+            #             m.category.add(category)
+            #             added_count += 1
+            #             if tag:
+            #                m.tags.add(tag)
 
             return Response({"detail": f"Added {added_count} media items to {categories.count()} categories"})
 

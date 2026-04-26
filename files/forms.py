@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle, Tag
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -245,9 +245,9 @@ class MediaPublishForm(forms.ModelForm):
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
 
-        for course in media.category.filter(is_lms_course=True):
-            tag, _ = Tag.objects.get_or_create(title=course.title[:100])
-            media.tags.add(tag)
+        # for course in media.category.filter(is_lms_course=True):
+        #     tag, _ = Tag.objects.get_or_create(title=course.title[:100])
+        #     media.tags.add(tag)
 
         return media
 
