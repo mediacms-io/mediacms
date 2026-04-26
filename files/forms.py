@@ -138,8 +138,9 @@ class MediaPublishForm(forms.ModelForm):
 
         self.was_shared = self.instance.is_shared if self.instance.pk else False
         is_embed_mode = self._check_embed_mode()
-        if not is_embed_mode:
-            self.fields.pop('shared')
+
+        self.fields["shared"].initial = self.was_shared
+        self.initial["shared"] = self.was_shared
 
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
@@ -152,10 +153,6 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
-
-        if is_embed_mode:
-            self.fields["shared"].initial = self.was_shared
-            self.initial["shared"] = self.was_shared
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):

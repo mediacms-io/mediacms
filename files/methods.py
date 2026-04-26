@@ -238,6 +238,8 @@ def show_related_media(media, request=None, limit=100):
         return show_related_media_calculated(media, request, limit)
     elif settings.RELATED_MEDIA_STRATEGY == "author":
         return show_related_media_author(media, request, limit)
+    elif settings.RELATED_MEDIA_STRATEGY == "no_related":
+        return []
 
     return show_related_media_content(media, request, limit)
 

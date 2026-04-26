@@ -509,16 +509,9 @@ class MediaBulkUserActions(APIView):
 
                 m.save(update_fields=["state", "listable"])
 
-            shared = request.data.get('shared', None)
+            remove_sharing = request.data.get('remove_sharing', False)
 
-            if shared is True:
-                for m in media:
-                    MediaPermission.objects.get_or_create(
-                        media=m,
-                        user=request.user,
-                        defaults={'owner_user': request.user, 'permission': 'owner'},
-                    )
-            elif shared is False or (shared is None and state == 'private'):
+            if remove_sharing:
                 MediaPermission.objects.filter(media__in=media).delete()
                 for m in media:
                     rbac_cats = m.category.filter(is_rbac_category=True)
