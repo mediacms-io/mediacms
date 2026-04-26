@@ -47,8 +47,34 @@ echo html_writer::tag('iframe', '', [
     'src'             => $src,
     'allowfullscreen' => 'true',
     'allow'           => 'autoplay *; fullscreen *; encrypted-media *; camera *; microphone *; display-capture *;',
-    'style'           => 'border:none;display:block;width:100%;height:100vh;',
-//    'style'           => 'border:none;display:block;width:100%;height:calc(100vh - 120px);',
+    'style'           => 'border:none;display:block;width:100%;',
 ]);
+
+// Fill the iframe to the remaining viewport height and suppress the outer
+// page scrollbar. Uses requestAnimationFrame so it runs after Moodle theme
+// JS has finished shifting the layout, and re-fires on window load + resize.
+echo html_writer::script("
+(function () {
+  var iframe = document.getElementById('contentframe');
+
+  function resizeIframe() {
+    var top = iframe.getBoundingClientRect().top + window.scrollY;
+    var h = window.innerHeight - iframe.getBoundingClientRect().top;
+    iframe.style.height = Math.max(h, 100) + 'px';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function schedule() { requestAnimationFrame(resizeIframe); }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', schedule);
+  } else {
+    schedule();
+  }
+  window.addEventListener('load', schedule);
+  window.addEventListener('resize', schedule);
+})();
+");
 
 echo $OUTPUT->footer();
