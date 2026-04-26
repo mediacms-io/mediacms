@@ -129,7 +129,6 @@ export default {
             urlWarning: '.tiny_iframecms_url_warning',
             showTitle: '.tiny_iframecms_showtitle',
             linkTitle: '.tiny_iframecms_linktitle',
-            showRelated: '.tiny_iframecms_showrelated',
             showUserAvatar: '.tiny_iframecms_showuseravatar',
             textLinkOnly: '.tiny_iframecms_textlinkonly',
             startAt: '.tiny_iframecms_startat',

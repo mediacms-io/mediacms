@@ -121,7 +121,6 @@ $string['iframeurlinvalid'] = 'Please enter a valid MediaCMS Video URL or embed 
 $string['embedoptions'] = 'Embed Options';
 $string['showtitle'] = 'Show title';
 $string['linktitle'] = 'Link title';
-$string['showrelated'] = 'Show related';
 $string['showuseravatar'] = 'Show user avatar';
 $string['responsive'] = 'Responsive';
 $string['textlinkonly'] = 'Insert text link only';
@@ -175,8 +174,6 @@ $string['autoconvert_showtitle'] = 'Show video title';
 $string['autoconvert_showtitle_desc'] = 'Display the video title in the embedded player.';
 $string['autoconvert_linktitle'] = 'Link video title';
 $string['autoconvert_linktitle_desc'] = 'Make the video title clickable, linking to the original video page.';
-$string['autoconvert_showrelated'] = 'Show related videos';
-$string['autoconvert_showrelated_desc'] = 'Display related videos after the current video ends.';
 $string['autoconvert_showuseravatar'] = 'Show user avatar';
 $string['autoconvert_showuseravatar_desc'] = 'Display the uploader\'s avatar in the embedded player.';
 

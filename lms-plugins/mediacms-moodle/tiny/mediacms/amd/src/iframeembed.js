@@ -63,7 +63,6 @@ export default class IframeEmbed {
                     isEmbed: true,
                     showTitle: urlObj.searchParams.get('showTitle') === '1',
                     linkTitle: urlObj.searchParams.get('linkTitle') === '1',
-                    showRelated: urlObj.searchParams.get('showRelated') === '1',
                     showUserAvatar:
                         urlObj.searchParams.get('showUserAvatar') === '1',
                     width: widthParam ? parseInt(widthParam) : null,
@@ -86,7 +85,6 @@ export default class IframeEmbed {
                     isLtiLaunch: true,
                     showTitle: urlObj.searchParams.get('showTitle') === '1',
                     linkTitle: urlObj.searchParams.get('linkTitle') === '1',
-                    showRelated: urlObj.searchParams.get('showRelated') === '1',
                     showUserAvatar: urlObj.searchParams.get('showUserAvatar') === '1',
                     width: widthParam ? parseInt(widthParam) : null,
                     height: heightParam ? parseInt(heightParam) : null,
@@ -166,7 +164,6 @@ export default class IframeEmbed {
         }
 
         url.searchParams.set('showTitle', options.showTitle ? '1' : '0');
-        url.searchParams.set('showRelated', options.showRelated ? '1' : '0');
         url.searchParams.set(
             'showUserAvatar',
             options.showUserAvatar ? '1' : '0',
@@ -212,7 +209,6 @@ export default class IframeEmbed {
             url: data.url || '',
             showTitle: getDefault('showTitle'),
             linkTitle: getDefault('linkTitle'),
-            showRelated: getDefault('showRelated'),
             showUserAvatar: getDefault('showUserAvatar'),
             textLinkOnly: data.textLinkOnly || false,
             startAtEnabled: data.startAtEnabled || false,
@@ -282,7 +278,6 @@ export default class IframeEmbed {
                 height: parsed?.height || 315,
                 showTitle: parsed?.showTitle ?? true,
                 linkTitle: parsed?.linkTitle ?? true,
-                showRelated: parsed?.showRelated ?? true,
                 showUserAvatar: parsed?.showUserAvatar ?? true,
                 responsive: true,
                 textLinkOnly: true,
@@ -316,7 +311,6 @@ export default class IframeEmbed {
             height,
             showTitle: parsed?.showTitle ?? true,
             linkTitle: parsed?.linkTitle ?? true,
-            showRelated: parsed?.showRelated ?? true,
             showUserAvatar: parsed?.showUserAvatar ?? true,
             startAtEnabled: !!(parsed?.startAt),
             startAt: parsed?.startAt || '0:00',
@@ -332,9 +326,6 @@ export default class IframeEmbed {
                 .checked,
             linkTitle: form.querySelector(Selectors.IFRAME.elements.linkTitle)
                 .checked,
-            showRelated: form.querySelector(
-                Selectors.IFRAME.elements.showRelated,
-            ).checked,
             showUserAvatar: form.querySelector(
                 Selectors.IFRAME.elements.showUserAvatar,
             ).checked,
@@ -590,7 +581,6 @@ export default class IframeEmbed {
         [
             Selectors.IFRAME.elements.showTitle,
             Selectors.IFRAME.elements.linkTitle,
-            Selectors.IFRAME.elements.showRelated,
             Selectors.IFRAME.elements.showUserAvatar,
             Selectors.IFRAME.elements.startAtEnabled,
         ].forEach((selector) => {

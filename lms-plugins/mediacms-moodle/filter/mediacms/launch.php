@@ -22,7 +22,6 @@ $width = optional_param('width', 0, PARAM_INT);
 
 // Extract embed parameters
 $showTitle = optional_param('showTitle', '', PARAM_TEXT);
-$showRelated = optional_param('showRelated', '', PARAM_TEXT);
 $showUserAvatar = optional_param('showUserAvatar', '', PARAM_TEXT);
 $linkTitle = optional_param('linkTitle', '', PARAM_TEXT);
 $startTime = optional_param('t', '', PARAM_TEXT);
@@ -61,9 +60,6 @@ $custom_params = ["media_friendly_token=" . $mediatoken];
 if ($showTitle !== '') {
     $custom_params[] = "embed_show_title=" . $showTitle;
 }
-if ($showRelated !== '') {
-    $custom_params[] = "embed_show_related=" . $showRelated;
-}
 if ($showUserAvatar !== '') {
     $custom_params[] = "embed_show_user_avatar=" . $showUserAvatar;
 }
@@ -88,9 +84,6 @@ $page_params = [
 
 if ($showTitle !== '') {
     $page_params['showTitle'] = $showTitle;
-}
-if ($showRelated !== '') {
-    $page_params['showRelated'] = $showRelated;
 }
 if ($showUserAvatar !== '') {
     $page_params['showUserAvatar'] = $showUserAvatar;
@@ -126,9 +119,6 @@ $hidden_fields = '<input type="hidden" name="media_token" value="' . htmlspecial
 
 if ($showTitle !== '') {
     $hidden_fields .= '<input type="hidden" name="embed_show_title" value="' . htmlspecialchars($showTitle, ENT_QUOTES) . '" />';
-}
-if ($showRelated !== '') {
-    $hidden_fields .= '<input type="hidden" name="embed_show_related" value="' . htmlspecialchars($showRelated, ENT_QUOTES) . '" />';
 }
 if ($showUserAvatar !== '') {
     $hidden_fields .= '<input type="hidden" name="embed_show_user_avatar" value="' . htmlspecialchars($showUserAvatar, ENT_QUOTES) . '" />';

@@ -101,7 +101,6 @@ const generateEmbedHtml = (parsed, options = {}) => {
 
     // Apply default options (all enabled by default for best user experience)
     embedUrl.searchParams.set('showTitle', options.showTitle !== false ? '1' : '0');
-    embedUrl.searchParams.set('showRelated', options.showRelated !== false ? '1' : '0');
     embedUrl.searchParams.set('showUserAvatar', options.showUserAvatar !== false ? '1' : '0');
     embedUrl.searchParams.set('linkTitle', options.linkTitle !== false ? '1' : '0');
 

@@ -127,7 +127,6 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_menu
                 'autoConvertOptions' => [
                     'showTitle' => $getboolconfig('autoconvert_showtitle'),
                     'linkTitle' => $getboolconfig('autoconvert_linktitle'),
-                    'showRelated' => $getboolconfig('autoconvert_showrelated'),
                     'showUserAvatar' => $getboolconfig('autoconvert_showuseravatar'),
                 ],
             ],

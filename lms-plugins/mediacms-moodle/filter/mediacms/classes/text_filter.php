@@ -111,7 +111,7 @@ class text_filter extends \core_filters\text_filter {
             parse_str($parsed_url['query'], $query_params);
 
             // Extract embed-related parameters
-            $supported_params = ['showTitle', 'showRelated', 'showUserAvatar', 'linkTitle', 't', 'width', 'height'];
+            $supported_params = ['showTitle', 'showUserAvatar', 'linkTitle', 't', 'width', 'height'];
             foreach ($supported_params as $param) {
                 if (isset($query_params[$param])) {
                     $embed_params[$param] = $query_params[$param];

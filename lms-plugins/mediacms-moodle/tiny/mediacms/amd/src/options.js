@@ -59,7 +59,6 @@ export const register = (editor) => {
                 // Default embed options for auto-converted videos
                 showTitle: true,
                 linkTitle: true,
-                showRelated: true,
                 showUserAvatar: true,
             },
         },

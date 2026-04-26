@@ -53,14 +53,6 @@ if ($ADMIN->fulltree) {
     $settings->add($setting);
 
     $setting = new admin_setting_configcheckbox(
-        'tiny_mediacms/autoconvert_showrelated',
-        new lang_string('autoconvert_showrelated', 'tiny_mediacms'),
-        new lang_string('autoconvert_showrelated_desc', 'tiny_mediacms'),
-        1
-    );
-    $settings->add($setting);
-
-    $setting = new admin_setting_configcheckbox(
         'tiny_mediacms/autoconvert_showuseravatar',
         new lang_string('autoconvert_showuseravatar', 'tiny_mediacms'),
         new lang_string('autoconvert_showuseravatar_desc', 'tiny_mediacms'),
