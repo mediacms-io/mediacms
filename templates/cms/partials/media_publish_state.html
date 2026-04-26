@@ -33,6 +33,9 @@
             </label>
             {% endif %}{% endfor %}
         </div>
+        <div id="unlisted-hint" style="display:none; margin-top:0.75rem; font-size:0.875rem; color:#0c5460; padding:0.5rem 0.75rem; background:#d1ecf1; border:1px solid #bee5eb; border-radius:4px;">
+            To publish an external link to the media, click Publish Media below to view the media, right-click the viewing window, next copy URL or embed code, and add this to your external portal or client.
+        </div>
         {% if form.state.errors %}
         <div class="error-container" style="margin-top:0.5rem;">
             {% for error in form.state.errors %}<p class="invalid-feedback">{{ error }}</p>{% endfor %}
@@ -95,4 +98,21 @@
     })();
     </script>
     {% endif %}
+<script>
+(function () {
+    var hint = document.getElementById('unlisted-hint');
+    function updateUnlistedHint() {
+        var radios = document.querySelectorAll('input[name="state"]');
+        var selected = '';
+        for (var i = 0; i < radios.length; i++) {
+            if (radios[i].checked) { selected = radios[i].value; break; }
+        }
+        if (hint) hint.style.display = selected === 'unlisted' ? 'block' : 'none';
+    }
+    document.querySelectorAll('input[name="state"]').forEach(function (r) {
+        r.addEventListener('change', updateUnlistedHint);
+    });
+    updateUnlistedHint();
+})();
+</script>
 </div>
