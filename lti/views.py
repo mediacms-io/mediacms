@@ -682,7 +682,7 @@ class MediaNotFoundView(View):
     """Shown when a media token from an LTI launch no longer exists."""
 
     def get(self, request):
-        return render(request, 'lti/media_not_found.html', status=404)
+        return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')
@@ -763,7 +763,7 @@ class EmbedMediaLTIView(View):
                 can_view = True
 
         if not can_view:
-            return JsonResponse({'error': 'Access denied', 'message': 'You do not have permission to view this media'}, status=403)
+            return HttpResponse('You do not have permission to view this media', status=403, content_type='text/plain; charset=utf-8')
 
         # Build embed URL with parameters from the request
         embed_params = LaunchView.extract_embed_params_from_dict(request.GET)
