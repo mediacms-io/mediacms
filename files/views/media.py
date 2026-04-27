@@ -627,7 +627,13 @@ class MediaBulkUserActions(APIView):
         elif action == "category_membership":
             media_count = media.count()
 
-            results = list(Category.objects.filter(media__in=media).values('title', 'uid').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
+            # Categories where ALL selected media are members via the M2M relation
+            m2m_uids = set(Category.objects.filter(media__in=media).annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count).values_list('uid', flat=True))
+
+            # Categories where ANY selected media has an EmbedMediaCourse record
+            embed_uids = set(EmbedMediaCourse.objects.filter(media__in=media).values_list('category__uid', flat=True))
+
+            results = list(Category.objects.filter(uid__in=m2m_uids | embed_uids).values('title', 'uid'))
 
             return Response({'results': results})
 
