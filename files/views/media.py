@@ -792,7 +792,8 @@ class MediaBulkUserActions(APIView):
                     other_course_media = all_course_media.exclude(friendly_token__in=media_ids)
                     if remove_permissions:
                         MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).delete()
-                        other_embedded = embed_qs.filter(media__in=other_course_media)
+                        # exclude selected_media, not other_course_media — LTI-embedded media are not in the M2M
+                        other_embedded = embed_qs.exclude(media__in=selected_media)
                         other_embedded_media_ids = list(other_embedded.values_list('media_id', flat=True))
                         other_embedded.delete()
                         MediaPermission.objects.filter(media_id__in=other_embedded_media_ids).delete()
