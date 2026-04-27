@@ -398,6 +398,13 @@ class MediaList(APIView):
                 required=False,
                 description="External HLS .m3u8 URL (required if media_file is not provided)",
             ),
+            openapi.Parameter(
+                name="uploaded_poster",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload a poster image. This also updates the thumbnail used in listings/player.",
+            ),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
             openapi.Parameter(
