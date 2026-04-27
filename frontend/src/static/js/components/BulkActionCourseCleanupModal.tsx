@@ -29,7 +29,7 @@ export const BulkActionCourseCleanupModal: React.FC<BulkActionCourseCleanupModal
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [coursesToCleanup, setCoursesToCleanup] = useState<Course[]>([]);
   const [removePermissions, setRemovePermissions] = useState(false);
-  const [removeTags, setRemoveTags] = useState(false);
+  const [removeComments, setRemoveComments] = useState(false);
   const [applyToAll, setApplyToAll] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -41,7 +41,7 @@ export const BulkActionCourseCleanupModal: React.FC<BulkActionCourseCleanupModal
       setAvailableCourses([]);
       setCoursesToCleanup([]);
       setRemovePermissions(false);
-      setRemoveTags(false);
+      setRemoveComments(false);
       setApplyToAll(false);
     }
   }, [isOpen, selectedMediaIds.join(',')]);
@@ -98,7 +98,7 @@ export const BulkActionCourseCleanupModal: React.FC<BulkActionCourseCleanupModal
           media_ids: selectedMediaIds,
           category_uids: coursesToCleanup.map((c) => c.uid),
           remove_permissions: removePermissions,
-          remove_tags: removeTags,
+          remove_comments: removeComments,
           apply_to_all: applyToAll,
         }),
       });
@@ -198,10 +198,10 @@ export const BulkActionCourseCleanupModal: React.FC<BulkActionCourseCleanupModal
                   <label className="course-cleanup-checkbox">
                     <input
                       type="checkbox"
-                      checked={removeTags}
-                      onChange={(e) => setRemoveTags(e.target.checked)}
+                      checked={removeComments}
+                      onChange={(e) => setRemoveComments(e.target.checked)}
                     />
-                    <span>{translateString('Remove course tags')}</span>
+                    <span>{translateString('Remove Comments')}</span>
                   </label>
                   {hasMediaSelected && (
                     <label className="course-cleanup-checkbox">

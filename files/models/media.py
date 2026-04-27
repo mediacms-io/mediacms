@@ -1002,6 +1002,29 @@ class MediaPermission(models.Model):
         return f"{self.user.username} - {self.media.title} ({self.permission})"
 
 
+class EmbedMediaCourse(models.Model):
+    """
+    Records that a user shared a media item into a course during an LTI session.
+
+    This is a pure audit/tracking table used by the course cleanup bulk action to
+    identify which MediaPermission records were created via LTI embedding and should
+    be removed when the course is cleaned up.
+
+    It does NOT add the media to the category (Media.category M2M is untouched),
+    so no m2m_changed signals fire and no category counts are affected.
+    """
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='embed_courses')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='embedded_media')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('media', 'category')
+
+    def __str__(self):
+        return f"{self.media.title} in {self.category.title}"
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved

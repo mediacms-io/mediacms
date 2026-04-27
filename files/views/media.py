@@ -36,6 +36,7 @@ from ..methods import (
 from ..models import (
     Category,
     Comment,
+    EmbedMediaCourse,
     EncodeProfile,
     Media,
     MediaPermission,
@@ -743,7 +744,7 @@ class MediaBulkUserActions(APIView):
     def _handle_course_cleanup(self, request, media_ids):
         category_uids = request.data.get('category_uids', [])
         remove_permissions = request.data.get('remove_permissions', False)
-        remove_tags = request.data.get('remove_tags', False)
+        remove_comments = request.data.get('remove_comments', False)
         apply_to_all = request.data.get('apply_to_all', False)
 
         if not category_uids:
@@ -764,24 +765,33 @@ class MediaBulkUserActions(APIView):
             # All users who are members of any group linked to this category
             group_users = User.objects.filter(rbac_groups__in=category.rbac_groups.all()).distinct()
 
-            course_tag = Tag.objects.filter(title=category.title[:100]).first() if remove_tags else None
+            # Get media explicitly embedded into this course via LTI
+            embed_qs = EmbedMediaCourse.objects.filter(category=category)
+            embedded_media_ids = list(embed_qs.values_list('media_id', flat=True))
 
             all_course_media = Media.objects.filter(category=category)
 
             if has_media:
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=selected_media, user__in=group_users).delete()
-                if remove_tags and course_tag:
-                    for m in selected_media:
-                        m.tags.remove(course_tag)
+                    # Delete EmbedMediaCourse records and owner MediaPermissions for embedded media
+                    selected_embedded = embed_qs.filter(media__in=selected_media)
+                    selected_embedded_media_ids = list(selected_embedded.values_list('media_id', flat=True))
+                    selected_embedded.delete()
+                    MediaPermission.objects.filter(media_id__in=selected_embedded_media_ids).delete()
+                if remove_comments:
+                    Comment.objects.filter(media__in=selected_media).delete()
 
                 if apply_to_all:
                     other_course_media = all_course_media.exclude(friendly_token__in=media_ids)
                     if remove_permissions:
                         MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).delete()
-                    if remove_tags and course_tag:
-                        for m in other_course_media:
-                            m.tags.remove(course_tag)
+                        other_embedded = embed_qs.filter(media__in=other_course_media)
+                        other_embedded_media_ids = list(other_embedded.values_list('media_id', flat=True))
+                        other_embedded.delete()
+                        MediaPermission.objects.filter(media_id__in=other_embedded_media_ids).delete()
+                    if remove_comments:
+                        Comment.objects.filter(media__in=other_course_media).delete()
                     for m in other_course_media:
                         m.category.remove(category)
 
@@ -790,9 +800,10 @@ class MediaBulkUserActions(APIView):
             else:
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=all_course_media, user__in=group_users).delete()
-                if remove_tags and course_tag:
-                    for m in all_course_media:
-                        m.tags.remove(course_tag)
+                    MediaPermission.objects.filter(media_id__in=embedded_media_ids).delete()
+                    embed_qs.delete()
+                if remove_comments:
+                    Comment.objects.filter(media__in=all_course_media).delete()
                 for m in all_course_media:
                     m.category.remove(category)
 
@@ -1240,5 +1251,12 @@ class MediaShare(APIView):
             user=request.user,
             defaults={'owner_user': request.user, 'permission': 'owner'},
         )
+
+        lti_session = request.session.get('lti_session', {})
+        context_id = lti_session.get('context_id')
+        if context_id:
+            category = Category.objects.filter(lti_context_id=context_id, is_rbac_category=True).first()
+            if category:
+                EmbedMediaCourse.objects.get_or_create(media=media, category=category)
 
         return Response({'status': 'ok'})
