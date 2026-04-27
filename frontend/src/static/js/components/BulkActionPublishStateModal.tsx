@@ -158,7 +158,7 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
           <button
             className="publish-state-btn publish-state-btn-submit"
             onClick={handleSubmit}
-            disabled={isProcessing || (removeSharing && !acknowledged)}
+            disabled={isProcessing || !selectedState || (removeSharing && !acknowledged)}
           >
             {isProcessing ? translateString('Processing...') : translateString('Submit')}
           </button>
