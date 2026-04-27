@@ -37,6 +37,7 @@ from ..methods import (
     copy_media,
     get_user_or_session,
     is_mediacms_editor,
+    is_mediacms_manager,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -420,10 +421,17 @@ class MediaList(APIView):
                 required=False,
                 description="Comma-separated tags (e.g. 'news,events,live')",
             ),
+            openapi.Parameter(
+                name="duration",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
-        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',
+        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',,
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
@@ -453,6 +461,19 @@ class MediaList(APIView):
         for field_name in ("title", "description", "uploaded_poster", "media_file", "external_m3u8_url"):
             if field_name in request.data:
                 serializer_data[field_name] = request.data.get(field_name)
+
+        if "duration" in request.data:
+            if not is_mediacms_manager(request.user):
+                return Response({"detail": "duration can only be set by managers"}, status=status.HTTP_403_FORBIDDEN)
+            if "external_m3u8_url" not in request.data:
+                return Response({"detail": "duration can only be set for external m3u8 media"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                duration_val = int(request.data.get("duration"))
+                if duration_val < 0:
+                    raise ValueError
+                serializer_data["duration"] = duration_val
+            except (ValueError, TypeError):
+                return Response({"detail": "duration must be a non-negative integer"}, status=status.HTTP_400_BAD_REQUEST)
 
         external_m3u8_url = serializer_data.get("external_m3u8_url", "")
         if isinstance(external_m3u8_url, str):
@@ -1209,6 +1230,13 @@ class MediaDetail(APIView):
                 required=False,
                 description="Comma-separated tags (e.g. 'news,events,live')",
             ),
+            openapi.Parameter(
+                name="duration",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
@@ -1251,6 +1279,19 @@ class MediaDetail(APIView):
         for field_name in ("title", "description", "uploaded_poster", "media_file"):
             if field_name in request.data:
                 serializer_data[field_name] = request.data.get(field_name)
+
+        if "duration" in request.data:
+            if not is_mediacms_manager(request.user):
+                return Response({"detail": "duration can only be set by managers"}, status=status.HTTP_403_FORBIDDEN)
+            if not media.external_hls_url:
+                return Response({"detail": "duration can only be set for external m3u8 media"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                duration_val = int(request.data.get("duration"))
+                if duration_val < 0:
+                    raise ValueError
+                serializer_data["duration"] = duration_val
+            except (ValueError, TypeError):
+                return Response({"detail": "duration must be a non-negative integer"}, status=status.HTTP_400_BAD_REQUEST)
 
         has_subtitle_file = bool(subtitle_file)
         has_subtitle_language = bool(str(subtitle_language_raw).strip())

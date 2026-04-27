@@ -43,7 +43,6 @@ class MediaSerializer(serializers.ModelSerializer):
             "add_date",
             "media_type",
             "state",
-            "duration",
             "encoding_status",
             "views",
             "likes",
