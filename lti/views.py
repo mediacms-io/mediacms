@@ -381,6 +381,9 @@ class LaunchView(View):
 
             redirect_url = self.determine_redirect(launch_data, resource_link_obj)
 
+            if redirect_url is None:
+                return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
+
             # Use HTML meta refresh instead of HTTP redirect to ensure session cookie is sent
             # In cross-site/iframe contexts, HTTP 302 redirects may not preserve session cookies
             html_content = f"""
@@ -459,7 +462,7 @@ class LaunchView(View):
                 base_url = reverse('lti:embed_media', args=[media.friendly_token])
                 return self.build_url_with_embed_params(base_url, embed_params)
             except Media.DoesNotExist:
-                return reverse('lti:media_not_found')
+                return None
 
         my_media_url = reverse('lti:my_media') + '?mode=lms_embed_mode'
         if custom.get('embed_share_media') == '0':
@@ -675,14 +678,6 @@ class PublicKeyPEMView(View):
             f"4. Save and try Deep Linking again\n",
             content_type='text/plain',
         )
-
-
-@method_decorator(xframe_options_exempt, name='dispatch')
-class MediaNotFoundView(View):
-    """Shown when a media token from an LTI launch no longer exists."""
-
-    def get(self, request):
-        return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')
