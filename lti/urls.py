@@ -14,6 +14,7 @@ urlpatterns = [
     path('jwks/', views.JWKSView.as_view(), name='jwks'),
     path('public-key/', views.PublicKeyPEMView.as_view(), name='public_key_pem'),
     path('select-media/', deep_linking.SelectMediaView.as_view(), name='select_media'),
+    path('media-not-found/', views.MediaNotFoundView.as_view(), name='media_not_found'),
     path('my-media/', views.MyMediaLTIView.as_view(), name='my_media'),
     path('embed/<str:friendly_token>/', views.EmbedMediaLTIView.as_view(), name='embed_media'),
 ]

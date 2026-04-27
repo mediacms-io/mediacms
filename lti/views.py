@@ -459,7 +459,7 @@ class LaunchView(View):
                 base_url = reverse('lti:embed_media', args=[media.friendly_token])
                 return self.build_url_with_embed_params(base_url, embed_params)
             except Media.DoesNotExist:
-                pass
+                return reverse('lti:media_not_found')
 
         my_media_url = reverse('lti:my_media') + '?mode=lms_embed_mode'
         if custom.get('embed_share_media') == '0':
@@ -675,6 +675,14 @@ class PublicKeyPEMView(View):
             f"4. Save and try Deep Linking again\n",
             content_type='text/plain',
         )
+
+
+@method_decorator(xframe_options_exempt, name='dispatch')
+class MediaNotFoundView(View):
+    """Shown when a media token from an LTI launch no longer exists."""
+
+    def get(self, request):
+        return render(request, 'lti/media_not_found.html', status=404)
 
 
 @method_decorator(xframe_options_exempt, name='dispatch')
