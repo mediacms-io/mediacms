@@ -294,7 +294,15 @@ export default class IframeEmbed {
         const maxWidthMatch = style.match(/max-width:\s*(\d+(?:\.\d+)?)px/);
         const aspectRatioMatch = style.match(/aspect-ratio:\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
 
-        const maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : 560;
+        // Fall back to wrapper's max-width for content saved with the new template
+        // where max-width lives on the wrapper div rather than the iframe style.
+        let maxWidth = maxWidthMatch ? parseInt(maxWidthMatch[1]) : null;
+        if (!maxWidth) {
+            const wrapper = this.selectedIframe.closest('.tiny-mediacms-iframe-wrapper');
+            const wrapperStyle = wrapper ? (wrapper.getAttribute('style') || '') : '';
+            const wrapperMatch = wrapperStyle.match(/max-width:\s*(\d+(?:\.\d+)?)px/);
+            maxWidth = wrapperMatch ? parseInt(wrapperMatch[1]) : 560;
+        }
         let height = 315;
 
         if (aspectRatioMatch) {
