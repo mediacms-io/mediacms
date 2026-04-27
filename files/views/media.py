@@ -431,7 +431,7 @@ class MediaList(APIView):
         ],
         tags=['Media'],
         operation_summary='Add new Media',
-        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',,
+        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
