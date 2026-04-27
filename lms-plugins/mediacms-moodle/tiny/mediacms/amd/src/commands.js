@@ -48,6 +48,26 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
     /**
      * Process all iframes in the editor and add overlay wrappers.
      */
+    const fixWrapperWidths = () => {
+        const editorBody = editor.getBody();
+        if (!editorBody) {
+            return;
+        }
+        editorBody.querySelectorAll('.tiny-mediacms-iframe-wrapper').forEach((wrapper) => {
+            const iframe = wrapper.querySelector('iframe');
+            if (!iframe) {
+                return;
+            }
+            const iframeStyle = iframe.getAttribute('style') || '';
+            const match = iframeStyle.match(/max-width:\s*(\d+(?:\.\d+)?)px/);
+            if (match) {
+                wrapper.style.maxWidth = match[1] + 'px';
+                wrapper.style.width = '100%';
+                wrapper.style.margin = '0 auto';
+            }
+        });
+    };
+
     const processIframes = () => {
         const editorBody = editor.getBody();
         if (!editorBody) {
@@ -84,6 +104,8 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
             wrapper.appendChild(iframe);
             wrapper.appendChild(editBtn);
         });
+
+        fixWrapperWidths();
     };
 
     /**
@@ -108,14 +130,14 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 position: relative;
                 line-height: 0;
                 vertical-align: top;
-                margin-top: 40px;
+                margin-top: 50px;
             }
             .tiny-mediacms-iframe-wrapper iframe {
                 display: block;
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: -30px;
+                top: -44px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.7);
@@ -124,9 +146,9 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 border-radius: 3px;
                 cursor: pointer;
                 z-index: 10;
-                padding: 4px 12px;
+                padding: 8px 20px;
                 margin: 0;
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: bold;
                 text-decoration: none;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
