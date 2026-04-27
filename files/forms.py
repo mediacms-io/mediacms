@@ -137,6 +137,7 @@ class MediaPublishForm(forms.ModelForm):
         super(MediaPublishForm, self).__init__(*args, **kwargs)
 
         self.was_shared = self.instance.is_shared if self.instance.pk else False
+        self.had_explicit_permission = self.instance.permissions.exists() if self.instance.pk else False
         is_embed_mode = self._check_embed_mode()
 
         self.fields["shared"].initial = self.was_shared
@@ -227,11 +228,14 @@ class MediaPublishForm(forms.ModelForm):
 
         if shared:
             if self.request and self.request.user.is_authenticated:
-                MediaPermission.objects.get_or_create(
-                    media=self.instance,
-                    user=self.request.user,
-                    defaults={'owner_user': self.request.user, 'permission': 'owner'},
-                )
+                submitted_categories = self.cleaned_data.get('category', [])
+                submitted_has_rbac = any(cat.is_rbac_category for cat in submitted_categories)
+                if self.had_explicit_permission or submitted_has_rbac:
+                    MediaPermission.objects.get_or_create(
+                        media=self.instance,
+                        user=self.request.user,
+                        defaults={'owner_user': self.request.user, 'permission': 'owner'},
+                    )
         elif not shared:
             self.instance.permissions.all().delete()
             rbac_cats = self.instance.category.filter(is_rbac_category=True)
@@ -241,10 +245,6 @@ class MediaPublishForm(forms.ModelForm):
             self.instance.state = get_next_state(self.user, self.initial.get("state"), self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
-
-        # for course in media.category.filter(is_lms_course=True):
-        #     tag, _ = Tag.objects.get_or_create(title=course.title[:100])
-        #     media.tags.add(tag)
 
         return media
 
