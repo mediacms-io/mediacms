@@ -731,15 +731,6 @@ class Media(models.Model):
         return ep
 
     @property
-    def categories_info(self):
-        """Property used on serializers"""
-
-        ret = []
-        for cat in self.category.all():
-            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
-        return ret
-
-    @property
     def tags_info(self):
         """Property used on serializers"""
 
