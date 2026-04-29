@@ -75,8 +75,11 @@ class CommentDetail(APIView):
         try:
             media = Media.objects.select_related("user").get(friendly_token=friendly_token)
             self.check_object_permissions(self.request, media)
-            if media.state == "private" and self.request.user != media.user:
-                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            if media.state == "private":
+                user = self.request.user
+                has_access = user.is_authenticated and (user.has_member_access_to_media(media) or is_mediacms_editor(user))
+                if not has_access:
+                    return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
             return media
         except PermissionDenied:
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
@@ -97,7 +100,7 @@ class CommentDetail(APIView):
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
-        comments = media.comments.filter().prefetch_related("user")
+        comments = media.comments.filter().prefetch_related("user").order_by("-add_date")
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         page = paginator.paginate_queryset(comments, request)
