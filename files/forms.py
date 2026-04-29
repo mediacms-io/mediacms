@@ -27,7 +27,7 @@ class MediaMetadataForm(forms.ModelForm):
         queryset=Playlist.objects.none(),
         required=False,
         label="Add to Playlists",
-        help_text="Select one or more of your playlists to add this media.",
+        help_text="Select one or more playlists to add this media.",
     )
 
     class Meta:
@@ -72,7 +72,9 @@ class MediaMetadataForm(forms.ModelForm):
             self.fields.pop("uploaded_poster")
 
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
-        self.fields["playlist_ids"].queryset = Playlist.objects.filter(user=user).order_by("-add_date")
+
+        playlist_owner = self.instance.user if getattr(self.instance, "pk", None) else user
+        self.fields["playlist_ids"].queryset = Playlist.objects.filter(user=playlist_owner).order_by("-add_date")
 
         self.helper = FormHelper()
         self.helper.form_tag = True
