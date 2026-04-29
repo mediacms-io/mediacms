@@ -26,8 +26,8 @@ class MediaMetadataForm(forms.ModelForm):
     playlist_ids = forms.ModelMultipleChoiceField(
         queryset=Playlist.objects.none(),
         required=False,
-        label="Add to Playlists",
-        help_text="Select one or more playlists to add this media.",
+        label="Playlists",
+        help_text="Select playlists containing this media. Deselect to remove from a playlist.",
     )
 
     class Meta:
@@ -74,7 +74,10 @@ class MediaMetadataForm(forms.ModelForm):
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
 
         playlist_owner = self.instance.user if getattr(self.instance, "pk", None) else user
-        self.fields["playlist_ids"].queryset = Playlist.objects.filter(user=playlist_owner).order_by("-add_date")
+        owner_playlists = Playlist.objects.filter(user=playlist_owner).order_by("-add_date")
+        self.fields["playlist_ids"].queryset = owner_playlists
+        if getattr(self.instance, "pk", None):
+            self.fields["playlist_ids"].initial = owner_playlists.filter(playlistmedia__media=self.instance).distinct()
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -127,32 +130,50 @@ class MediaMetadataForm(forms.ModelForm):
         media = super(MediaMetadataForm, self).save(*args, **kwargs)
 
         added_count = 0
-        already_present_count = 0
+        removed_count = 0
+        unchanged_count = 0
         full_playlists = []
         selected_playlists = data.get("playlist_ids")
 
+        playlist_owner = media.user
+        owner_playlists = Playlist.objects.filter(user=playlist_owner)
+        existing_relations = PlaylistMedia.objects.filter(media=media, playlist__in=owner_playlists)
+
+        selected_playlist_ids = set()
         if selected_playlists:
-            for playlist in selected_playlists:
-                existing_relation = PlaylistMedia.objects.filter(playlist=playlist, media=media).exists()
-                if existing_relation:
-                    already_present_count += 1
-                    continue
+            selected_playlist_ids = set(selected_playlists.values_list("id", flat=True))
 
-                media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
-                if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
-                    full_playlists.append(playlist.title)
-                    continue
+        existing_playlist_ids = set(existing_relations.values_list("playlist_id", flat=True))
 
-                PlaylistMedia.objects.create(
-                    playlist=playlist,
-                    media=media,
-                    ordering=media_in_playlist + 1,
-                )
-                added_count += 1
+        to_remove_ids = existing_playlist_ids - selected_playlist_ids
+        if to_remove_ids:
+            removed_count = PlaylistMedia.objects.filter(media=media, playlist_id__in=to_remove_ids).delete()[0]
 
-        self.playlist_add_results = {
+        playlist_by_id = {playlist.id: playlist for playlist in owner_playlists if playlist.id in selected_playlist_ids}
+        to_add_ids = selected_playlist_ids - existing_playlist_ids
+        unchanged_count = len(selected_playlist_ids & existing_playlist_ids)
+
+        for playlist_id in to_add_ids:
+            playlist = playlist_by_id.get(playlist_id)
+            if not playlist:
+                continue
+
+            media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+            if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
+                full_playlists.append(playlist.title)
+                continue
+
+            PlaylistMedia.objects.create(
+                playlist=playlist,
+                media=media,
+                ordering=media_in_playlist + 1,
+            )
+            added_count += 1
+
+        self.playlist_sync_results = {
             "added": added_count,
-            "already_present": already_present_count,
+            "removed": removed_count,
+            "unchanged": unchanged_count,
             "full_playlists": full_playlists,
         }
 

@@ -363,7 +363,7 @@ def edit_media(request):
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
             media = form.save()
-            playlist_add_results = getattr(form, "playlist_add_results", {})
+            playlist_sync_results = getattr(form, "playlist_sync_results", {})
             for tag in media.tags.all():
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
@@ -378,18 +378,22 @@ def edit_media(request):
                         if tag not in media.tags.all():
                             media.tags.add(tag)
 
-            added_count = playlist_add_results.get("added", 0)
-            already_present_count = playlist_add_results.get("already_present", 0)
-            full_playlists = playlist_add_results.get("full_playlists", [])
+            added_count = playlist_sync_results.get("added", 0)
+            removed_count = playlist_sync_results.get("removed", 0)
+            unchanged_count = playlist_sync_results.get("unchanged", 0)
+            full_playlists = playlist_sync_results.get("full_playlists", [])
 
             if added_count:
                 messages.add_message(request, messages.INFO, f"Media added to {added_count} playlist(s)")
 
-            if already_present_count:
+            if removed_count:
+                messages.add_message(request, messages.INFO, f"Media removed from {removed_count} playlist(s)")
+
+            if unchanged_count:
                 messages.add_message(
                     request,
                     messages.INFO,
-                    f"Media was already present in {already_present_count} selected playlist(s)",
+                    f"Media was already present in {unchanged_count} selected playlist(s)",
                 )
 
             if full_playlists:
