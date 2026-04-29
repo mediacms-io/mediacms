@@ -105,6 +105,80 @@ def _parse_tags_input(raw_tags):
     return tags, None
 
 
+def _parse_playlist_ids_input(raw_playlist_ids):
+    if raw_playlist_ids in (None, ""):
+        return None, None
+
+    if isinstance(raw_playlist_ids, (list, tuple)):
+        playlist_items = raw_playlist_ids
+    elif isinstance(raw_playlist_ids, str):
+        stripped_value = raw_playlist_ids.strip()
+        if not stripped_value:
+            return None, None
+        playlist_items = [item.strip() for item in stripped_value.split(",")]
+    else:
+        return None, "playlist_ids must be a comma-separated string or an array of integers"
+
+    playlist_ids = []
+    seen = set()
+    for item in playlist_items:
+        if item in (None, ""):
+            continue
+
+        try:
+            playlist_id = int(str(item).strip())
+        except (TypeError, ValueError):
+            return None, "playlist_ids must contain only integers"
+
+        if playlist_id <= 0:
+            return None, "playlist_ids must contain only positive integers"
+
+        if playlist_id not in seen:
+            playlist_ids.append(playlist_id)
+            seen.add(playlist_id)
+
+    if not playlist_ids:
+        return None, None
+
+    return playlist_ids, None
+
+
+def _add_media_to_playlists(media, user, playlist_ids):
+    if not playlist_ids:
+        return None
+
+    playlists = Playlist.objects.filter(user=user, id__in=playlist_ids)
+    found_playlist_ids = set(playlists.values_list("id", flat=True))
+    missing_ids = [playlist_id for playlist_id in playlist_ids if playlist_id not in found_playlist_ids]
+
+    if missing_ids:
+        return Response(
+            {"detail": f"No matching playlists found for ids: {missing_ids}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    for playlist in playlists:
+        media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+        if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
+            return Response(
+                {
+                    "detail": (
+                        f"Playlist {playlist.id} reached max size "
+                        f"({settings.MAX_MEDIA_PER_PLAYLIST})"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        PlaylistMedia.objects.get_or_create(
+            playlist=playlist,
+            media=media,
+            defaults={"ordering": media_in_playlist + 1},
+        )
+
+    return None
+
+
 def _apply_media_options(media, user, enable_comments=None, allow_download=None, tags=None):
     fields_to_update = []
 
@@ -435,6 +509,13 @@ class MediaList(APIView):
                 required=False,
                 description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
             ),
+            openapi.Parameter(
+                name="playlist_ids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
@@ -447,10 +528,14 @@ class MediaList(APIView):
         raw_enable_comments = request.data.get("enable_comments", None)
         raw_allow_download = request.data.get("allow_download", None)
         raw_tags = request.data.get("tags", None)
+        raw_playlist_ids = request.data.get("playlist_ids", None)
         if hasattr(request.data, "getlist"):
             raw_tags_list = request.data.getlist("tags")
             if len(raw_tags_list) > 1:
                 raw_tags = raw_tags_list
+            raw_playlist_ids_list = request.data.getlist("playlist_ids")
+            if len(raw_playlist_ids_list) > 1:
+                raw_playlist_ids = raw_playlist_ids_list
 
         enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
         if comments_error:
@@ -463,6 +548,10 @@ class MediaList(APIView):
         tags, tags_error = _parse_tags_input(raw_tags)
         if tags_error:
             return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
+        if playlist_ids_error:
+            return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer_data = {}
         for field_name in ("title", "description", "uploaded_poster", "media_file", "external_m3u8_url"):
@@ -536,6 +625,12 @@ class MediaList(APIView):
                 allow_download=allow_download,
                 tags=tags,
             )
+
+            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            if add_to_playlist_error:
+                media.delete()
+                return add_to_playlist_error
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         media = serializer.save(user=request.user, media_file=media_file)
@@ -546,6 +641,12 @@ class MediaList(APIView):
             allow_download=allow_download,
             tags=tags,
         )
+
+        add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+        if add_to_playlist_error:
+            media.delete()
+            return add_to_playlist_error
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _is_valid_external_m3u8_url(self, url):
@@ -1244,6 +1345,13 @@ class MediaDetail(APIView):
                 required=False,
                 description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
             ),
+            openapi.Parameter(
+                name="playlist_ids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
@@ -1262,10 +1370,14 @@ class MediaDetail(APIView):
         raw_enable_comments = request.data.get("enable_comments", None)
         raw_allow_download = request.data.get("allow_download", None)
         raw_tags = request.data.get("tags", None)
+        raw_playlist_ids = request.data.get("playlist_ids", None)
         if hasattr(request.data, "getlist"):
             raw_tags_list = request.data.getlist("tags")
             if len(raw_tags_list) > 1:
                 raw_tags = raw_tags_list
+            raw_playlist_ids_list = request.data.getlist("playlist_ids")
+            if len(raw_playlist_ids_list) > 1:
+                raw_playlist_ids = raw_playlist_ids_list
 
         enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
         if comments_error:
@@ -1278,6 +1390,10 @@ class MediaDetail(APIView):
         tags, tags_error = _parse_tags_input(raw_tags)
         if tags_error:
             return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
+        if playlist_ids_error:
+            return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
 
         subtitle_file = request.data.get("subtitle_file")
         subtitle_language_raw = request.data.get("subtitle_language", "")
@@ -1337,6 +1453,10 @@ class MediaDetail(APIView):
                 allow_download=allow_download,
                 tags=tags,
             )
+
+            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            if add_to_playlist_error:
+                return add_to_playlist_error
 
             if has_subtitle_file and language:
                 subtitle = Subtitle.objects.create(
