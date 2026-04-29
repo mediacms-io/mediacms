@@ -809,6 +809,8 @@ class MediaBulkUserActions(APIView):
                     embed_qs.delete()
                 if remove_comments:
                     Comment.objects.filter(media__in=all_course_media).delete()
+                    if embedded_media_ids:
+                        Comment.objects.filter(media_id__in=embedded_media_ids).delete()
                 for m in all_course_media:
                     m.category.remove(category)
 
