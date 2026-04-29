@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Playlist, PlaylistMedia, Subtitle
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -23,6 +23,12 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 class MediaMetadataForm(forms.ModelForm):
     new_tags = forms.CharField(label="Tags", help_text="a comma separated list of tags.", required=False)
+    playlist_ids = forms.ModelMultipleChoiceField(
+        queryset=Playlist.objects.none(),
+        required=False,
+        label="Add to Playlists",
+        help_text="Select one or more of your playlists to add this media.",
+    )
 
     class Meta:
         model = Media
@@ -66,6 +72,7 @@ class MediaMetadataForm(forms.ModelForm):
             self.fields.pop("uploaded_poster")
 
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
+        self.fields["playlist_ids"].queryset = Playlist.objects.filter(user=user).order_by("-add_date")
 
         self.helper = FormHelper()
         self.helper.form_tag = True
@@ -77,6 +84,7 @@ class MediaMetadataForm(forms.ModelForm):
         layout_fields = [
             CustomField('title'),
             CustomField('new_tags'),
+            CustomField('playlist_ids'),
             CustomField('add_date'),
             CustomField('description'),
             CustomField('enable_comments'),
@@ -115,6 +123,37 @@ class MediaMetadataForm(forms.ModelForm):
         data = self.cleaned_data  # noqa
 
         media = super(MediaMetadataForm, self).save(*args, **kwargs)
+
+        added_count = 0
+        already_present_count = 0
+        full_playlists = []
+        selected_playlists = data.get("playlist_ids")
+
+        if selected_playlists:
+            for playlist in selected_playlists:
+                existing_relation = PlaylistMedia.objects.filter(playlist=playlist, media=media).exists()
+                if existing_relation:
+                    already_present_count += 1
+                    continue
+
+                media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+                if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
+                    full_playlists.append(playlist.title)
+                    continue
+
+                PlaylistMedia.objects.create(
+                    playlist=playlist,
+                    media=media,
+                    ordering=media_in_playlist + 1,
+                )
+                added_count += 1
+
+        self.playlist_add_results = {
+            "added": added_count,
+            "already_present": already_present_count,
+            "full_playlists": full_playlists,
+        }
+
         return media
 
 

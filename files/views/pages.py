@@ -363,6 +363,7 @@ def edit_media(request):
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
             media = form.save()
+            playlist_add_results = getattr(form, "playlist_add_results", {})
             for tag in media.tags.all():
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
@@ -376,6 +377,28 @@ def edit_media(request):
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
+
+            added_count = playlist_add_results.get("added", 0)
+            already_present_count = playlist_add_results.get("already_present", 0)
+            full_playlists = playlist_add_results.get("full_playlists", [])
+
+            if added_count:
+                messages.add_message(request, messages.INFO, f"Media added to {added_count} playlist(s)")
+
+            if already_present_count:
+                messages.add_message(
+                    request,
+                    messages.INFO,
+                    f"Media was already present in {already_present_count} selected playlist(s)",
+                )
+
+            if full_playlists:
+                messages.add_message(
+                    request,
+                    messages.WARNING,
+                    f"Could not add media to full playlist(s): {', '.join(full_playlists)}",
+                )
+
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
