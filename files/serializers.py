@@ -98,7 +98,7 @@ class MediaSerializer(serializers.ModelSerializer):
                     self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
-class CategoriesInfoMixin:
+class CategoriesInfoMixin(serializers.Serializer):
     categories_info = serializers.SerializerMethodField()
 
     def get_categories_info(self, obj):
