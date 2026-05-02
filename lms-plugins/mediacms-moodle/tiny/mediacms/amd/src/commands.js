@@ -135,15 +135,12 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
         const style = editorDoc.createElement('style');
         style.id = 'tiny-mediacms-overlay-styles';
         style.textContent = `
-            body {
-                padding-top: 28px !important;
-            }
             .tiny-mediacms-iframe-wrapper {
                 display: inline-block;
                 position: relative;
                 line-height: 0;
                 vertical-align: top;
-                margin-top: 24px;
+                margin-top: 28px;
             }
             .tiny-mediacms-iframe-wrapper iframe {
                 display: block;
