@@ -44,20 +44,12 @@ class CategoryList(APIView):
 
 
 class CategoryListContributor(APIView):
-    """List categories where user has contributor access"""
+    """List LMS courses where the user has contributor access"""
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                name='lms_courses_only',
-                type=openapi.TYPE_BOOLEAN,
-                in_=openapi.IN_QUERY,
-                description='Filter to show only LMS courses (categories with is_lms_course=True)',
-            ),
-        ],
         tags=['Categories'],
-        operation_summary='Lists Categories for Contributors',
-        operation_description='Lists all categories where the user has contributor access',
+        operation_summary='Lists LMS courses for Contributors',
+        operation_description='Lists LMS courses where the user has contributor access',
         responses={
             200: openapi.Response('response description', CategorySerializer),
         },
@@ -66,23 +58,9 @@ class CategoryListContributor(APIView):
         if not request.user.is_authenticated:
             return Response([])
 
-        categories = Category.objects.none()
+        categories = request.user.get_rbac_categories_as_contributor().filter(is_lms_course=True)
 
-        # Filter for LMS courses only if requested
-        lms_courses_only = request.GET.get('lms_courses_only', '').lower() in ['true', '1', 'yes']
-        if lms_courses_only:
-            categories = categories.filter(is_lms_course=True)
-        else:
-            categories = Category.objects.filter(is_rbac_category=False).prefetch_related("user")
-
-        # Get RBAC categories where user has contributor access
-        if getattr(settings, 'USE_RBAC', False):
-            rbac_categories = request.user.get_rbac_categories_as_contributor()
-            categories = categories.union(rbac_categories)
-
-        categories = categories.order_by("title")
-
-        serializer = CategorySerializer(categories, many=True, context={"request": request})
+        serializer = CategorySerializer(categories.order_by("title"), many=True, context={"request": request})
         return Response(serializer.data)
 
 
