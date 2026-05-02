@@ -392,7 +392,7 @@ function displayCommentsRelatedAlert() {
   }
 }
 
-const CommentsListHeader = ({ commentsLength }) => {
+const CommentsListHeader = ({ commentsLength, ordering, onToggleOrdering }) => {
   return (
     <>
       {!MemberContext._currentValue.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
@@ -409,11 +409,29 @@ const CommentsListHeader = ({ commentsLength }) => {
             : MediaPageStore.get('media-data').enable_comments
             ? translateString('No') + ' ' + commentsText.single + ' ' + translateString('yet')
             : ''}
+          {commentsLength > 0 && (
+            <button className="comments-order-toggle" onClick={onToggleOrdering}>
+              <span className="material-icons">swap_vert</span>
+              <span className="comments-order-label">
+                {ordering === 'newest' ? translateString('Newest first') : translateString('Oldest first')}
+              </span>
+            </button>
+          )}
         </h2>
       ) : null}
     </>
   );
 };
+
+function getSortedComments(comments, ordering) {
+  const sorted = [...comments];
+  sorted.sort((a, b) => {
+    const da = new Date(a.add_date);
+    const db = new Date(b.add_date);
+    return ordering === 'newest' ? db - da : da - db;
+  });
+  return sorted;
+}
 
 export default function CommentsList(props) {
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
@@ -423,6 +441,12 @@ export default function CommentsList(props) {
   );
 
   const [displayComments, setDisplayComments] = useState(false);
+
+  const [ordering, setOrdering] = useState('newest');
+
+  function toggleOrdering() {
+    setOrdering((o) => (o === 'newest' ? 'oldest' : 'newest'));
+  }
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
@@ -512,12 +536,12 @@ export default function CommentsList(props) {
   return (
     <div className="comments-list">
       <div className="comments-list-inner">
-        <CommentsListHeader commentsLength={comments.length} />
+        <CommentsListHeader commentsLength={comments.length} ordering={ordering} onToggleOrdering={toggleOrdering} />
 
         {MediaPageStore.get('media-data').enable_comments ? <CommentForm media_id={mediaId} /> : null}
 
         {displayComments
-          ? comments.map((c) => {
+          ? getSortedComments(comments, ordering).map((c) => {
               return (
                 <Comment
                   key={c.uid}

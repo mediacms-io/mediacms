@@ -887,7 +887,7 @@ class MediaPageStore extends EventEmitter {
 
   submitCommentResponse(response) {
     if (response && 201 === response.status && response.data && Object.keys(response.data)) {
-      MediaPageStoreData[this.id].comments.push(response.data);
+      MediaPageStoreData[this.id].comments.unshift(response.data);
       this.emit('comment_submit', response.data.uid);
     }
     setTimeout(
