@@ -514,6 +514,7 @@ class MediaBulkUserActions(APIView):
 
             if remove_sharing:
                 MediaPermission.objects.filter(media__in=media).delete()
+                EmbedMediaCourse.objects.filter(media__in=media).delete()
                 for m in media:
                     rbac_cats = m.category.filter(is_rbac_category=True)
                     if rbac_cats.exists():
@@ -705,6 +706,7 @@ class MediaBulkUserActions(APIView):
                         removed_count += 1
                         if tag:
                             m.tags.remove(tag)
+                    EmbedMediaCourse.objects.filter(media=m, category=category).delete()
 
             return Response({"detail": f"Removed {removed_count} media items from {categories.count()} categories"})
 
@@ -778,23 +780,23 @@ class MediaBulkUserActions(APIView):
             all_course_media = Media.objects.filter(category=category)
 
             if has_media:
+                selected_embedded = embed_qs.filter(media__in=selected_media)
+                selected_embedded_media_ids = list(selected_embedded.values_list('media_id', flat=True))
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=selected_media, user__in=group_users).exclude(user=F('media__user')).delete()
-                    selected_embedded = embed_qs.filter(media__in=selected_media)
-                    selected_embedded_media_ids = list(selected_embedded.values_list('media_id', flat=True))
-                    selected_embedded.delete()
                     MediaPermission.objects.filter(media_id__in=selected_embedded_media_ids).exclude(user=F('media__user')).delete()
+                selected_embedded.delete()
                 if remove_comments:
                     Comment.objects.filter(media__in=selected_media).delete()
 
                 if apply_to_all:
                     other_course_media = all_course_media.exclude(friendly_token__in=media_ids)
+                    other_embedded = embed_qs.exclude(media__in=selected_media)
+                    other_embedded_media_ids = list(other_embedded.values_list('media_id', flat=True))
                     if remove_permissions:
                         MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
-                        other_embedded = embed_qs.exclude(media__in=selected_media)
-                        other_embedded_media_ids = list(other_embedded.values_list('media_id', flat=True))
-                        other_embedded.delete()
                         MediaPermission.objects.filter(media_id__in=other_embedded_media_ids).exclude(user=F('media__user')).delete()
+                    other_embedded.delete()
                     if remove_comments:
                         Comment.objects.filter(media__in=other_course_media).delete()
                     for m in other_course_media:
@@ -806,7 +808,7 @@ class MediaBulkUserActions(APIView):
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=all_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
                     MediaPermission.objects.filter(media_id__in=embedded_media_ids).exclude(user=F('media__user')).delete()
-                    embed_qs.delete()
+                embed_qs.delete()
                 if remove_comments:
                     Comment.objects.filter(media__in=all_course_media).delete()
                     if embedded_media_ids:
