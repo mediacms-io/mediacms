@@ -514,7 +514,6 @@ class MediaBulkUserActions(APIView):
 
             if remove_sharing:
                 MediaPermission.objects.filter(media__in=media).delete()
-                EmbedMediaCourse.objects.filter(media__in=media).delete()
                 for m in media:
                     rbac_cats = m.category.filter(is_rbac_category=True)
                     if rbac_cats.exists():
@@ -695,18 +694,14 @@ class MediaBulkUserActions(APIView):
                 return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
-            tag = None
             for category in categories:
-                if category.is_lms_course:
-                    tag = Tag.objects.filter(title=category.title[:100]).first()
-
                 for m in media:
                     if m.category.filter(uid=category.uid).exists():
                         m.category.remove(category)
                         removed_count += 1
-                        if tag:
-                            m.tags.remove(tag)
                     EmbedMediaCourse.objects.filter(media=m, category=category).delete()
+                    if not m.category.filter(is_rbac_category=True).exists() and not m.permissions.exclude(user=m.user).exists():
+                        m.permissions.filter(user=m.user).delete()
 
             return Response({"detail": f"Removed {removed_count} media items from {categories.count()} categories"})
 
@@ -785,7 +780,6 @@ class MediaBulkUserActions(APIView):
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=selected_media, user__in=group_users).exclude(user=F('media__user')).delete()
                     MediaPermission.objects.filter(media_id__in=selected_embedded_media_ids).exclude(user=F('media__user')).delete()
-                selected_embedded.delete()
                 if remove_comments:
                     Comment.objects.filter(media__in=selected_media).delete()
 
@@ -796,7 +790,6 @@ class MediaBulkUserActions(APIView):
                     if remove_permissions:
                         MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
                         MediaPermission.objects.filter(media_id__in=other_embedded_media_ids).exclude(user=F('media__user')).delete()
-                    other_embedded.delete()
                     if remove_comments:
                         Comment.objects.filter(media__in=other_course_media).delete()
                     for m in other_course_media:
@@ -808,7 +801,6 @@ class MediaBulkUserActions(APIView):
                 if remove_permissions:
                     MediaPermission.objects.filter(media__in=all_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
                     MediaPermission.objects.filter(media_id__in=embedded_media_ids).exclude(user=F('media__user')).delete()
-                embed_qs.delete()
                 if remove_comments:
                     Comment.objects.filter(media__in=all_course_media).delete()
                     if embedded_media_ids:

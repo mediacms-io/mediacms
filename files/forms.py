@@ -238,7 +238,6 @@ class MediaPublishForm(forms.ModelForm):
                     )
         elif not shared:
             self.instance.permissions.all().delete()
-            self.instance.embed_courses.all().delete()
             rbac_cats = self.instance.category.filter(is_rbac_category=True)
             self.instance.category.remove(*rbac_cats)
 

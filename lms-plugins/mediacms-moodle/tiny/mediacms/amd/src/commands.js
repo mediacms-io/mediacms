@@ -76,8 +76,18 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
 
         const iframes = editorBody.querySelectorAll('iframe');
         iframes.forEach((iframe) => {
-            // Skip if already wrapped
+            // If already wrapped, ensure contenteditable and EDIT button are present
             if (iframe.parentElement?.classList.contains('tiny-mediacms-iframe-wrapper')) {
+                const existingWrapper = iframe.parentElement;
+                existingWrapper.setAttribute('contenteditable', 'false');
+                if (!existingWrapper.querySelector('.tiny-mediacms-edit-btn')) {
+                    const editBtn = editor.getDoc().createElement('button');
+                    editBtn.className = 'tiny-mediacms-edit-btn';
+                    editBtn.setAttribute('type', 'button');
+                    editBtn.setAttribute('title', 'Edit media embed options');
+                    editBtn.textContent = 'EDIT';
+                    existingWrapper.appendChild(editBtn);
+                }
                 return;
             }
 
@@ -130,14 +140,14 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 position: relative;
                 line-height: 0;
                 vertical-align: top;
-                margin-top: 50px;
+                margin-top: 24px;
             }
             .tiny-mediacms-iframe-wrapper iframe {
                 display: block;
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: -44px;
+                top: -20px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.7);
