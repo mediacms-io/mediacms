@@ -58,6 +58,33 @@ export function inSelectMediaEmbedMode() {
     return inEmbeddedApp() && isSelectMediaMode();
 }
 
+// When MediaCMS is embedded inside a host platform (e.g. an LMS), the host passes a
+// `parent_media_base` URL via LTI custom params so that media title links in the embed
+// player navigate the parent frame to the host's own media viewer (e.g. Moodle My Media)
+// instead of opening a bare MediaCMS URL. The VideoViewer appends `?token=<friendly_token>`
+// and uses `target="_parent"` to perform the navigation.
+export function getParentMediaBase(): string | null {
+    try {
+        const params = new URL(globalThis.location.href).searchParams;
+        const mode = params.get('mode');
+        const base = params.get('parent_media_base');
+
+        if (mode === 'standard') {
+            sessionStorage.removeItem('parent_media_base');
+            return null;
+        }
+
+        if (base) {
+            sessionStorage.setItem('parent_media_base', base);
+            return base;
+        }
+
+        return sessionStorage.getItem('parent_media_base');
+    } catch (e) {
+        return null;
+    }
+}
+
 export function getLtiContextId(): string | null {
     try {
         const params = new URL(globalThis.location.href).searchParams;

@@ -180,9 +180,9 @@ export default class VideoViewer extends React.PureComponent {
 
                 if (titleLink) {
                     titleLink.setAttribute('class', 'title-link');
-                    titleLink.setAttribute('href', this.props.data.url);
-                    titleLink.setAttribute('title', this.props.data.title);
+                    titleLink.setAttribute('href', this.props.data.url || '#');
                     titleLink.setAttribute('target', linkTarget);
+                    titleLink.setAttribute('title', this.props.data.title);
                     titleLink.innerHTML = this.props.data.title;
                 }
 
@@ -413,6 +413,7 @@ export default class VideoViewer extends React.PureComponent {
                                             previewSprite: previewSprite,
                                             subtitlesInfo: this.props.data.subtitles_info,
                                             inEmbed: this.props.inEmbed,
+                                            parentMediaBase: this.props.parentMediaBase || null,
                                             showTitle: this.props.showTitle,
                                             showRelated: this.props.showRelated,
                                             showUserAvatar: this.props.showUserAvatar,

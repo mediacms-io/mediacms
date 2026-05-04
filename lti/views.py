@@ -15,7 +15,7 @@ import json
 import logging
 import traceback
 import uuid
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import jwt
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -224,12 +224,16 @@ class LaunchView(View):
             'height': 'height',
             'show_media_page': 'show_media_page',
             'embed_share_media': 'share_media',
+            'parent_media_base': 'parent_media_base',
         }
+
+        url_encode_keys = {'parent_media_base'}
 
         for key, param_name in param_mapping.items():
             value = params_dict.get(key)
             if value:
-                param_str = f"{param_name}={value}"
+                encoded_value = quote(str(value), safe='') if key in url_encode_keys else value
+                param_str = f"{param_name}={encoded_value}"
                 if param_str not in embed_params:
                     embed_params.append(param_str)
 

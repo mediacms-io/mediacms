@@ -74,6 +74,14 @@ if ($show_media_page === 'true') {
 }
 $custom_params[] = "embed_share_media=" . $share_embedded_media;
 
+// Pass the My Media base URL so MediaCMS can navigate the parent frame back into Moodle
+// when the user clicks a media title inside the embed player (see parent_media_base in embeddedApp.ts).
+$my_media_base = (new moodle_url('/filter/mediacms/my_media.php'))->out(false);
+if ($courseid) {
+    $my_media_base .= '?courseid=' . intval($courseid);
+}
+$custom_params[] = "parent_media_base=" . $my_media_base;
+
 // Set up page
 $page_params = [
     'token' => $mediatoken,
