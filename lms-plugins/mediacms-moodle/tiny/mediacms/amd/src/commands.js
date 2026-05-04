@@ -279,13 +279,6 @@ const registerIframeCommand = (editor, iframeButtonText, iframeButtonImage) => {
         onAction: handleIframeAction,
     });
 
-    editor.ui.registry.addContextToolbar(iframeButtonName, {
-        predicate: isIframe,
-        items: iframeButtonName,
-        position: 'node',
-        scope: 'node'
-    });
-
     editor.ui.registry.addContextMenu(iframeButtonName, {
         update: isIframe,
     });

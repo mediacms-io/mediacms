@@ -19,7 +19,7 @@ from django.contrib.auth import login
 from django.utils import timezone
 
 from files.models import Category
-from rbac.models import RBACGroup, RBACMembership
+from rbac.models import RBACGroup, RBACMembership, RBACRole
 from users.models import User
 
 from .models import LTIResourceLink, LTIRoleMapping, LTIUserMapping
@@ -111,16 +111,20 @@ def _ensure_course_context(platform, context_id, title, label, resource_link_id)
     return category, rbac_group, resource_link
 
 
+_VALID_RBAC_ROLES = {r.value for r in RBACRole}
+
+
 def _ensure_membership(user, rbac_group, group_role):
     """
-    Ensure the user is a member of rbac_group with at least group_role.
-    Upgrades the role if the user already has a lower one; never downgrades.
+    Ensure the user is a member of rbac_group with group_role.
+    Updates the role if it differs from the current one, in either direction.
     """
+    if group_role not in _VALID_RBAC_ROLES:
+        return
     existing = RBACMembership.objects.filter(user=user, rbac_group=rbac_group).first()
     if existing:
-        final_role = get_higher_privilege_group(existing.role, group_role)
-        if final_role != existing.role:
-            existing.role = final_role
+        if group_role != existing.role:
+            existing.role = group_role
             existing.save(update_fields=['role'])
     else:
         try:
@@ -308,7 +312,7 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if all_mappings[role].get('global_role'):
                 global_role = get_higher_privilege_global(global_role, all_mappings[role]['global_role'])
             if all_mappings[role].get('group_role'):
-                group_role = get_higher_privilege_group(group_role, all_mappings[role]['group_role'])
+                group_role = resolve_group_role(group_role, all_mappings[role]['group_role'])
 
     user.set_role_from_mapping(global_role)
     _ensure_membership(user, rbac_group, group_role)
@@ -325,8 +329,8 @@ def get_higher_privilege_global(role1, role2):
         return role2
 
 
-def get_higher_privilege_group(role1, role2):
-    """Return the higher privilege group role."""
+def resolve_group_role(role1, role2):
+    """Return whichever of role1/role2 has higher privilege."""
     privilege_order = ['member', 'contributor', 'manager']
     try:
         return privilege_order[max(privilege_order.index(role1), privilege_order.index(role2))]
