@@ -257,6 +257,8 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
         logger.warning('provision_lti_bulk_contexts: publishdata is not a list')
         return
 
+    seen_group_ids = set()
+
     for course in courses:
         try:
             course_id = str(course.get('id', '')).strip()
@@ -277,6 +279,7 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
 
             if rbac_group:
                 _ensure_membership(user, rbac_group, group_role)
+                seen_group_ids.add(rbac_group.id)
 
         except Exception as exc:
             logger.warning(
@@ -284,6 +287,20 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
                 course.get('id'),
                 exc,
             )
+
+    # Remove memberships for groups that belong to this platform but were absent
+    # from the current publishdata — meaning the user is no longer enrolled.
+    if seen_group_ids:
+        platform_group_ids = set(LTIResourceLink.objects.filter(platform=platform, rbac_group__isnull=False).values_list('rbac_group_id', flat=True))
+        stale_ids = platform_group_ids - seen_group_ids
+        if stale_ids:
+            deleted, _ = RBACMembership.objects.filter(user=user, rbac_group_id__in=stale_ids).delete()
+            if deleted:
+                logger.info(
+                    'provision_lti_bulk_contexts: removed %d stale membership(s) for user %s',
+                    deleted,
+                    user.username,
+                )
 
 
 def apply_lti_roles(user, platform, lti_roles, rbac_group):
