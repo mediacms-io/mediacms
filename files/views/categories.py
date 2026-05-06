@@ -23,21 +23,19 @@ class CategoryList(APIView):
         },
     )
     def get(self, request, format=None):
-        base_filters = {}
+        show_lms = getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True)
+        categories = Category.objects.prefetch_related("user")
+
+        if not show_lms:
+            categories = categories.filter(is_lms_course=False)
 
         if not is_mediacms_editor(request.user):
-            base_filters = {"is_rbac_category": False}
-
-        base_queryset = Category.objects.prefetch_related("user")
-        categories = base_queryset.filter(**base_filters)
-
-        if not is_mediacms_editor(request.user):
+            categories = categories.filter(is_rbac_category=False)
             if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
                 rbac_categories = request.user.get_rbac_categories_as_member()
+                if not show_lms:
+                    rbac_categories = rbac_categories.filter(is_lms_course=False)
                 categories = categories.union(rbac_categories)
-
-        if not getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True):
-            categories = categories.filter(is_lms_course=False)
 
         categories = categories.order_by("title")
 
