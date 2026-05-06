@@ -143,6 +143,26 @@ export default class IframeEmbed {
         return `${w} / ${h}`;
     }
 
+    buildTextLinkUrl(parsed, options) {
+        let viewUrl;
+        if (parsed.isGeneric || parsed.isLtiLaunch) {
+            viewUrl = parsed.rawUrl;
+        } else {
+            viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
+        }
+
+        if (options.startAtEnabled && options.startAt) {
+            const seconds = this.timeStringToSeconds(options.startAt);
+            if (seconds !== null && seconds > 0) {
+                const url = new URL(viewUrl);
+                url.searchParams.set('t', seconds.toString());
+                viewUrl = url.toString();
+            }
+        }
+
+        return viewUrl;
+    }
+
     buildEmbedUrl(parsed, options) {
         if (parsed.isGeneric) {
             return parsed.rawUrl;
@@ -361,12 +381,7 @@ export default class IframeEmbed {
         }
 
         if (values.textLinkOnly) {
-            let viewUrl;
-            if (parsed.isGeneric || parsed.isLtiLaunch) {
-                viewUrl = parsed.rawUrl;
-            } else {
-                viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
-            }
+            const viewUrl = this.buildTextLinkUrl(parsed, values);
 
             const escapeHtml = (str) => {
                 const div = document.createElement('div');
@@ -430,12 +445,7 @@ export default class IframeEmbed {
         }
 
         if (values.textLinkOnly) {
-            let viewUrl;
-            if (parsed.isGeneric || parsed.isLtiLaunch) {
-                viewUrl = parsed.rawUrl;
-            } else {
-                viewUrl = `${parsed.baseUrl}/view?m=${parsed.videoId}`;
-            }
+            const viewUrl = this.buildTextLinkUrl(parsed, values);
 
             const escapeHtml = (str) => {
                 const div = document.createElement('div');
