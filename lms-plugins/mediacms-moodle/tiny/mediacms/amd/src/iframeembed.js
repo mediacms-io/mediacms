@@ -6,6 +6,9 @@ import IframeModal from './iframemodal';
 import Selectors from './selectors';
 import { getLti, getData } from './options';
 
+const PREFS_KEY = 'tiny_mediacms_embed_prefs';
+const PREFS_FIELDS = ['showTitle', 'linkTitle', 'showUserAvatar', 'width', 'height'];
+
 export default class IframeEmbed {
     editor = null;
     currentModal = null;
@@ -207,21 +210,39 @@ export default class IframeEmbed {
         return url.toString();
     }
 
+    savePrefs(values) {
+        try {
+            const prefs = {};
+            PREFS_FIELDS.forEach(k => { if (values[k] !== undefined) { prefs[k] = values[k]; } });
+            localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+        } catch (_) { /* localStorage unavailable */ }
+    }
+
+    loadPrefs() {
+        try {
+            return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null') || {};
+        } catch (_) { return {}; }
+    }
+
     async getTemplateContext(data = {}) {
         const editorData = getData(this.editor);
         const autoConvertOptions = editorData?.autoConvertOptions || {};
+        const savedPrefs = this.loadPrefs();
 
         const getDefault = (key, fallback = true) => {
             if (this.isUpdating && data[key] !== undefined) {
                 return data[key];
             }
+            if (savedPrefs[key] !== undefined) { return savedPrefs[key]; }
             return autoConvertOptions[key] !== undefined
                 ? autoConvertOptions[key]
                 : fallback;
         };
 
-        const width = (this.isUpdating && data.width) ? data.width : 560;
-        const height = (this.isUpdating && data.height) ? data.height : 315;
+        const width = (this.isUpdating && data.width) ? data.width
+            : (savedPrefs.width ?? 560);
+        const height = (this.isUpdating && data.height) ? data.height
+            : (savedPrefs.height ?? 315);
 
         return {
             elementid: this.editor.getElement().id,
@@ -509,6 +530,7 @@ export default class IframeEmbed {
             return;
         }
 
+        this.savePrefs(values);
         const html = await this.generateIframeHtml(values);
         if (html) {
             if (this.isUpdating && this.selectedIframe) {
