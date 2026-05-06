@@ -44,11 +44,14 @@ if (window.MediaCMS.site.devEnv) {
 
 export class MediaPage extends _VideoMediaPage {
   viewerContainerContent(mediaData) {
+    const urlTimestamp = new URLSearchParams(window.location.search).get('t');
+    const timestamp = urlTimestamp ? parseInt(urlTimestamp, 10) : null;
+
     switch (MediaPageStore.get('media-type')) {
       case 'video':
       case 'audio':
         return (
-          <SiteConsumer>{(site) => <VideoViewer data={mediaData} siteUrl={site.url} inEmbed={!1} />}</SiteConsumer>
+          <SiteConsumer>{(site) => <VideoViewer data={mediaData} siteUrl={site.url} inEmbed={!1} timestamp={timestamp} />}</SiteConsumer>
         );
       case 'image':
         return <ImageViewer />;
