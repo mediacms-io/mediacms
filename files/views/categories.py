@@ -36,6 +36,9 @@ class CategoryList(APIView):
                 rbac_categories = request.user.get_rbac_categories_as_member()
                 categories = categories.union(rbac_categories)
 
+        if not getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True):
+            categories = categories.filter(is_lms_course=False)
+
         categories = categories.order_by("title")
 
         serializer = CategorySerializer(categories, many=True, context={"request": request})

@@ -668,3 +668,8 @@ if USE_LTI:
     # SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
     # Consider using cached_db for reliability if sessions are lost between many LTI launches
     RELATED_MEDIA_STRATEGY = "no_related"
+
+    # Whether LMS course categories (is_lms_course=True) appear in the public
+    # category list. Off by default — LMS courses are internal LTI constructs
+    # and are not meaningful to regular MediaCMS users.
+    SHOW_LMS_COURSES_IN_CATEGORIES = False
