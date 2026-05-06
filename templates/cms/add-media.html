@@ -269,13 +269,7 @@
                                         }, '*');
                                     };
 
-                                    fetch('/api/v1/media/' + mediaId + '/share', {
-                                        method: 'POST',
-                                        headers: {
-                                            'X-CSRFToken': getCSRFToken(),
-                                            'Content-Type': 'application/json',
-                                        },
-                                    }).then(sendPostMsg).catch(sendPostMsg);
+                                    sendPostMsg();
                                     return;
                                 }
                                 setTimeout(function(){ window.location.href = response.media_url; }, 500);

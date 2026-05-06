@@ -171,25 +171,13 @@ class ProfileMediaPage extends Page {
             const baseUrl = window.location.origin;
             const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
 
-            const sendPostMessage = () => {
-                if (window.parent !== window) {
-                    window.parent.postMessage({
-                        type: 'videoSelected',
-                        embedUrl: embedUrl,
-                        videoId: mediaId,
-                    }, '*');
-                }
-            };
-
-            // Share first, then notify parent — postMessage can cause parent to navigate away
-            // which would cancel an in-flight fetch if called in the wrong order
-            fetch(`/api/v1/media/${mediaId}/share`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': this.props.bulkActions.getCsrfToken(),
-                    'Content-Type': 'application/json',
-                },
-            }).then(sendPostMessage).catch(sendPostMessage);
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'videoSelected',
+                    embedUrl: embedUrl,
+                    videoId: mediaId,
+                }, '*');
+            }
         }
     }
 

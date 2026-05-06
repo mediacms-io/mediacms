@@ -1233,31 +1233,3 @@ class MediaSearch(APIView):
             page = paginator.paginate_queryset(media, request)
             serializer = MediaSearchSerializer(page, many=True, context={"request": request})
             return paginator.get_paginated_response(serializer.data)
-
-
-class MediaShare(APIView):
-    """Create a self-referential MediaPermission to mark a media as shared."""
-
-    def post(self, request, friendly_token):
-        if not request.user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        media = get_object_or_404(Media, friendly_token=friendly_token)
-
-        if media.user != request.user and not is_mediacms_editor(request.user):
-            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
-
-        MediaPermission.objects.get_or_create(
-            media=media,
-            user=request.user,
-            defaults={'owner_user': request.user, 'permission': 'owner'},
-        )
-
-        lti_session = request.session.get('lti_session', {})
-        context_id = lti_session.get('context_id')
-        if context_id:
-            category = Category.objects.filter(lti_context_id=context_id, is_rbac_category=True).first()
-            if category:
-                EmbedMediaCourse.objects.get_or_create(media=media, category=category)
-
-        return Response({'status': 'ok'})
