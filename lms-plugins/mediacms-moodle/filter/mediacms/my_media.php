@@ -13,8 +13,9 @@ global $SITE, $PAGE, $OUTPUT, $USER, $COURSE;
 
 require_login();
 
-$token    = optional_param('token', '', PARAM_ALPHANUMEXT);
-$courseid = optional_param('courseid', 0, PARAM_INT);
+$token      = optional_param('token', '', PARAM_ALPHANUMEXT);
+$courseid   = optional_param('courseid', 0, PARAM_INT);
+$start_time = optional_param('t', 0, PARAM_INT);
 
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -31,6 +32,9 @@ if ($token) {
         'courseid'        => $courseid ?: ($COURSE->id ?? 0),
         'show_media_page' => 'true',
     ];
+    if ($start_time > 0) {
+        $launch_params['t'] = $start_time;
+    }
     $src = (new moodle_url('/filter/mediacms/launch.php', $launch_params))->out(false);
 } else {
     $PAGE->set_url(new moodle_url('/filter/mediacms/my_media.php'));

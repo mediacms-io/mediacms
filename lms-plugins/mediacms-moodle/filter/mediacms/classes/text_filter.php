@@ -247,12 +247,13 @@ class text_filter extends \core_filters\text_filter {
         }
         $href = html_entity_decode($href_matches[1], ENT_QUOTES | ENT_HTML5);
 
-        // Extract ?m=TOKEN.
+        // Extract ?m=TOKEN and optional ?t=seconds.
         parse_str(parse_url($href, PHP_URL_QUERY) ?? '', $query_params);
         $token = $query_params['m'] ?? null;
         if (!$token || !preg_match('/^[a-zA-Z0-9]+$/', $token)) {
             return $anchor_html;
         }
+        $start_time = isset($query_params['t']) ? (int)$query_params['t'] : null;
 
         // Extract inner link text.
         if (!preg_match('/<a[^>]*>(.*?)<\/a>/is', $anchor_html, $text_matches)) {
@@ -261,15 +262,14 @@ class text_filter extends \core_filters\text_filter {
 
         $courseid = isset($COURSE->id) ? (int)$COURSE->id : 0;
 
-        $view_url = new moodle_url('/filter/mediacms/my_media.php', [
-            'token'    => $token,
-            'courseid' => $courseid,
-        ]);
+        $view_params = ['token' => $token, 'courseid' => $courseid];
+        if ($start_time !== null && $start_time > 0) {
+            $view_params['t'] = $start_time;
+        }
 
-        $launch_url = new moodle_url('/filter/mediacms/launch.php', [
-            'token'    => $token,
-            'courseid' => $courseid,
-        ]);
+        $view_url = new moodle_url('/filter/mediacms/my_media.php', $view_params);
+
+        $launch_url = new moodle_url('/filter/mediacms/launch.php', $view_params);
 
         // Hidden iframe fires the LTI launch silently on every page load.
         // When the media owner (teacher) loads the page, EmbedMediaLTIView's
