@@ -231,8 +231,7 @@ export default class IframeEmbed {
         fetch(`${baseUrl}/api/v1/media/${parsed.videoId}/share`, {
             method: 'POST',
             credentials: 'include',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({courseid: courseId}),
+            body: new URLSearchParams({courseid: courseId}),
         }).catch(() => {});
     }
 

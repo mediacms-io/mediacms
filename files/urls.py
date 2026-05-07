@@ -69,7 +69,7 @@ urlpatterns = [
     re_path(r"^api/v1/search$", views.MediaSearch.as_view()),
     re_path(
         rf"^api/v1/media/{friendly_token}/share$",
-        views.MediaShare.as_view(),
+        views.media_share,
     ),
     re_path(
         rf"^api/v1/media/{friendly_token}/actions$",
