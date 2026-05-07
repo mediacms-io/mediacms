@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib.postgres.search import SearchQuery
 from django.db.models import Count, F, Prefetch, Q, prefetch_related_objects
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -1233,3 +1235,29 @@ class MediaSearch(APIView):
             page = paginator.paginate_queryset(media, request)
             serializer = MediaSearchSerializer(page, many=True, context={"request": request})
             return paginator.get_paginated_response(serializer.data)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MediaShare(APIView):
+    """Mark a media item as shared when the owner embeds it via the LTI plugin."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, friendly_token):
+        media = get_object_or_404(Media, friendly_token=friendly_token)
+        if media.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        MediaPermission.objects.get_or_create(
+            media=media,
+            user=request.user,
+            defaults={'owner_user': request.user, 'permission': 'owner'},
+        )
+
+        courseid = request.data.get('courseid')
+        if courseid:
+            category = Category.objects.filter(lti_context_id=str(courseid), is_rbac_category=True).first()
+            if category:
+                EmbedMediaCourse.objects.get_or_create(media=media, category=category)
+
+        return Response(status=status.HTTP_200_OK)

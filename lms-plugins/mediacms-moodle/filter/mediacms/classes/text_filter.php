@@ -269,21 +269,7 @@ class text_filter extends \core_filters\text_filter {
 
         $view_url = new moodle_url('/filter/mediacms/my_media.php', $view_params);
 
-        $launch_url = new moodle_url('/filter/mediacms/launch.php', $view_params);
-
-        // Hidden iframe fires the LTI launch silently on every page load.
-        // When the media owner (teacher) loads the page, EmbedMediaLTIView's
-        // auto-share logic runs, marking the media as shared — same as for
-        // regular embedded iframes. Visits by non-owners are harmless.
-        $hidden_iframe = html_writer::tag('iframe', '', [
-            'src'         => $launch_url->out(false),
-            'style'       => 'display:none;width:0;height:0;border:0;',
-            'title'       => '',
-            'tabindex'    => '-1',
-            'aria-hidden' => 'true',
-        ]);
-
-        return $hidden_iframe . html_writer::tag('a', $text_matches[1], [
+        return html_writer::tag('a', $text_matches[1], [
             'href'   => $view_url->out(false),
             'target' => '_blank',
             'rel'    => 'noopener noreferrer',

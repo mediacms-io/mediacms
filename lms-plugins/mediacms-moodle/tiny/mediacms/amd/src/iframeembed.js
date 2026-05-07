@@ -7,7 +7,7 @@ import Selectors from './selectors';
 import { getLti, getData } from './options';
 
 const PREFS_KEY = 'tiny_mediacms_embed_prefs';
-const PREFS_FIELDS = ['showTitle', 'linkTitle', 'showUserAvatar', 'width', 'height'];
+const PREFS_FIELDS = ['showTitle', 'linkTitle', 'showUserAvatar', 'width', 'height', 'textLinkOnly'];
 
 export default class IframeEmbed {
     editor = null;
@@ -210,6 +210,32 @@ export default class IframeEmbed {
         return url.toString();
     }
 
+    signalShare(values) {
+        const parsed = this.parseInput(values.url);
+        if (!parsed || parsed.isGeneric || !parsed.videoId) {
+            return;
+        }
+
+        const editorData = getData(this.editor);
+        const baseUrl = parsed.isLtiLaunch
+            ? (editorData?.mediacmsBaseUrl || '')
+            : parsed.baseUrl;
+
+        if (!baseUrl) {
+            return;
+        }
+
+        const ltiConfig = getLti(this.editor);
+        const courseId = ltiConfig?.courseId || 0;
+
+        fetch(`${baseUrl}/api/v1/media/${parsed.videoId}/share`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({courseid: courseId}),
+        }).catch(() => {});
+    }
+
     savePrefs(values) {
         try {
             const prefs = {};
@@ -251,7 +277,7 @@ export default class IframeEmbed {
             showTitle: getDefault('showTitle'),
             linkTitle: getDefault('linkTitle'),
             showUserAvatar: getDefault('showUserAvatar'),
-            textLinkOnly: data.textLinkOnly || false,
+            textLinkOnly: getDefault('textLinkOnly', false),
             startAtEnabled: data.startAtEnabled || false,
             startAt: data.startAt || '0:00',
             width,
@@ -531,6 +557,7 @@ export default class IframeEmbed {
         }
 
         this.savePrefs(values);
+        this.signalShare(values);
         const html = await this.generateIframeHtml(values);
         if (html) {
             if (this.isUpdating && this.selectedIframe) {

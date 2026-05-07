@@ -30,7 +30,7 @@ from pylti1p3.exception import LtiException
 from pylti1p3.message_launch import MessageLaunch
 from pylti1p3.oidc_login import OIDCLogin
 
-from files.models import Category, EmbedMediaCourse, Media, MediaPermission
+from files.models import Media, MediaPermission
 from rbac.models import RBACMembership
 
 from .adapters import DjangoRequest, DjangoSessionService, DjangoToolConfig
@@ -727,20 +727,6 @@ class EmbedMediaLTIView(View):
         if lti_session and request.user.is_authenticated:
             context_id = lti_session.get('context_id')
             platform_id = lti_session.get('platform_id')
-
-            # Auto-share: when the media owner loads their own embed via LTI,
-            # mark it as shared and link it to the course. This fires on the
-            # teacher's first page view after saving (Moodle redirects there automatically).
-            if media.user == request.user:
-                MediaPermission.objects.get_or_create(
-                    media=media,
-                    user=request.user,
-                    defaults={'owner_user': request.user, 'permission': 'owner'},
-                )
-                if context_id:
-                    category = Category.objects.filter(lti_context_id=context_id, is_rbac_category=True).first()
-                    if category:
-                        EmbedMediaCourse.objects.get_or_create(media=media, category=category)
 
             if media.is_shared and context_id and platform_id:
                 try:
