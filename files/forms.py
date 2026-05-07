@@ -230,7 +230,7 @@ class MediaPublishForm(forms.ModelForm):
             if self.request:
                 submitted_categories = self.cleaned_data.get('category', [])
                 submitted_has_rbac = any(cat.is_rbac_category for cat in submitted_categories)
-                if self.had_explicit_permission or not submitted_has_rbac:
+                if self.had_explicit_permission or (not self.was_shared and not submitted_has_rbac):
                     MediaPermission.objects.get_or_create(
                         media=self.instance,
                         user=self.request.user,
