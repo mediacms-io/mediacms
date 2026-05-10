@@ -658,18 +658,14 @@ if USERS_NEEDS_TO_BE_APPROVED:
 if USE_LTI:
     # Session timeout for LTI launches (seconds)
     LTI_SESSION_TIMEOUT = 3600  # 1 hour
-
     # Cookie settings required for iframe embedding from LMS
-    # IMPORTANT: Requires HTTPS to be enabled
+    # IMPORTANT: Requires HTTPS to be enabled!
     SESSION_COOKIE_SAMESITE = 'None'
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_SECURE = True
-    # SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-    # Consider using cached_db for reliability if sessions are lost between many LTI launches
     RELATED_MEDIA_STRATEGY = "no_related"
 
-    # Whether LMS course categories (is_lms_course=True) appear in the public
-    # category list. Off by default — LMS courses are internal LTI constructs
-    # and are not meaningful to regular MediaCMS users.
+    # Whether LMS course categories appear in the public
+    # category list.
     SHOW_LMS_COURSES_IN_CATEGORIES = False
