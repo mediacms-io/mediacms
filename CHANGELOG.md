@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.2](https://github.com/mediacms-io/mediacms/compare/v8.0.1...v8.0.2) (2026-05-11)
+
+### Bug Fixes
+
+* provide Bento4 url ([c19c520](https://github.com/mediacms-io/mediacms/commit/c19c5207e907cbd7d0c968d8cd8caaec20706277))
+
 ## [7.7.0](https://github.com/mediacms-io/mediacms/compare/v7.6.0...v7.7.0) (2026-05-11)
 
 ### Features
