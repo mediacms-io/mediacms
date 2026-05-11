@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.4](https://github.com/mediacms-io/mediacms/compare/v8.0.3...v8.0.4) (2026-05-11)
+
+### Bug Fixes
+
+* docker compose settings, provide key ([318dad0](https://github.com/mediacms-io/mediacms/commit/318dad0e5d2512d68068c019eb87f942f83318e9))
+
 ## [8.0.3](https://github.com/mediacms-io/mediacms/compare/v8.0.2...v8.0.3) (2026-05-11)
 
 ### Bug Fixes
