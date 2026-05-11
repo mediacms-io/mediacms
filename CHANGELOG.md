@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.3](https://github.com/mediacms-io/mediacms/compare/v8.0.2...v8.0.3) (2026-05-11)
+
+### Bug Fixes
+
+* secret key ([559977f](https://github.com/mediacms-io/mediacms/commit/559977f9bc74412739784926862b94a558e6fd84))
+
 ## [8.0.2](https://github.com/mediacms-io/mediacms/compare/v8.0.1...v8.0.2) (2026-05-11)
 
 ### Bug Fixes
