@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.6](https://github.com/mediacms-io/mediacms/compare/v8.0.5...v8.0.6) (2026-05-11)
+
+### Bug Fixes
+
+* better place secret key settings ([4f11add](https://github.com/mediacms-io/mediacms/commit/4f11addcfd6657e7e63eed0570b1d4d9bca75698))
+
 ## [8.0.5](https://github.com/mediacms-io/mediacms/compare/v8.0.4...v8.0.5) (2026-05-11)
 
 ### Bug Fixes
