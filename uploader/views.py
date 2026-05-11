@@ -8,10 +8,9 @@ from django.core.files import File
 from django.http import JsonResponse
 from django.views import generic
 
-from files import helpers
 from files.helpers import rm_file
 from files.methods import user_allowed_to_upload
-from files.models import Category, Media, Tag
+from files.models import Media
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
@@ -67,24 +66,6 @@ class FineUploaderView(generic.FormView):
         with open(media_file, "rb") as f:
             myfile = File(f)
             new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
-
-        publish_to_category = self.request.POST.get('publish_to_category', '') or self.request.GET.get('publish_to_category', '')
-        publish_to_category = publish_to_category.strip()
-        if publish_to_category:
-            category_uids = [uid.strip() for uid in publish_to_category.split(',') if uid.strip()]
-
-            for category_uid in category_uids:
-                category = Category.objects.filter(uid=category_uid).first()
-                if category:
-                    has_access = self.request.user.has_contributor_access_to_category(category) or category.is_rbac_category is False
-                    if has_access:
-                        new.category.add(category)
-
-                        if category.is_lms_course:
-                            # Transform the title before get_or_create to match what Tag.save() does
-                            tag_title = helpers.get_alphanumeric_and_spaces(category.title)
-                            tag, created = Tag.objects.get_or_create(title=tag_title)
-                            new.tags.add(tag)
 
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
