@@ -1,6 +1,7 @@
 import os
 
 from celery.schedules import crontab
+from django.core.management.utils import get_random_secret_key
 from django.utils.translation import gettext_lazy as _
 
 DEBUG = False
@@ -171,8 +172,10 @@ REST_FRAMEWORK = {
 }
 
 
-SECRET_KEY = "2dii4cog7k=5n37$fz)8dst)kg(s3&10)^qa*gv(kk+nv-z&cu"
-# TODO: this needs to be changed!
+# Set the SECRET_KEY env var in production. If unset, a fresh random key is
+# generated per process — safe but invalidates sessions and signed tokens on
+# every restart.
+SECRET_KEY = os.getenv("SECRET_KEY") or get_random_secret_key()
 
 TEMP_DIRECTORY = "/tmp"  # Don't use a temp directory inside BASE_DIR!!!
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
