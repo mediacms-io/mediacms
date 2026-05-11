@@ -37,24 +37,6 @@ Installation
    - As Administrator, visit Plugins, 'Manage Filters', find MediaCMS filter and enable it.
    Then place it at the top of the filter. This is important, otherwise embeds won't load.
 
-5. Enter 'My Media' on top navigation.
-   - Log in as Administrator
-   - Go to: Site Administration → Appearance → Advanced Theme settings -> Custom menu items:
-      add: My Media|/filter/mediacms/my_media.php
-   Notes: User needs to be enrolled on one course at least, otherwise visiting My Media won't show anything.
-   The plugin needs to use the ID of an existing course to the 'My Media' page and thus it is going to use it
-   and create a 'my media' page on the course, if it doesn't already exist. This is happening automatically the
-   first time a user visits the global 'my media' link, if a 'my media' page activity does not exist in the course, the
-   plugin will create it. If you don't want the 'my media' page to show up on the course, you can place it to a hidden part
-   Create a part (eg 'Hidden Links'), select the Edit options (three vertical dots) and Hide it.
-   Then place the 'My Media' activity there, select the three dots for the activity, Availability, and set "Make available but don't show on course page: Available to students if you provide a link."
-   This option won't appear if the part is not hidden, so first you want to create the part, hide it, and then edit the setting for 'my media'
-
-   To summarize, for the 'my media' global link on top, a 'my media' is also required in each course, and you can either
-   create it (as MediaCMS activity with any name) or let the first user that visits the global 'my media' have it created automatically.
-   If you don't want this activity to be visible in the course, place it under a hidden part and set it's availability as "Make available but don't show on course page", which is only possible for items inside hidden parts.
-   
-
 
 What to expect
 -------
