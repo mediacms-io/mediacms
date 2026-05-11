@@ -1,10 +1,7 @@
 import os
 
-from django.core.management.utils import get_random_secret_key
-
 FRONTEND_HOST = os.getenv('FRONTEND_HOST', 'http://localhost')
 PORTAL_NAME = os.getenv('PORTAL_NAME', 'MediaCMS')
-SECRET_KEY = os.getenv('SECRET_KEY') or get_random_secret_key()
 REDIS_LOCATION = os.getenv('REDIS_LOCATION', 'redis://redis:6379/1')
 
 DATABASES = {

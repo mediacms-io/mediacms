@@ -173,9 +173,29 @@ REST_FRAMEWORK = {
 
 
 # Set the SECRET_KEY env var in production. If unset, a fresh random key is
-# generated per process — safe but invalidates sessions and signed tokens on
-# every restart.
-SECRET_KEY = os.getenv("SECRET_KEY") or get_random_secret_key()
+# generated or read from a .secret_key file to ensure all workers share the same key.
+def get_secret_key():
+    key = os.getenv('SECRET_KEY')
+    if key:
+        return key
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    secret_path = os.path.join(base_dir, '.secret_key')
+
+    if os.path.exists(secret_path):
+        with open(secret_path) as f:
+            return f.read().strip()
+
+    key = get_random_secret_key()
+    try:
+        with open(secret_path, 'w') as f:
+            f.write(key)
+    except Exception:
+        pass
+    return key
+
+
+SECRET_KEY = get_secret_key()
 
 TEMP_DIRECTORY = "/tmp"  # Don't use a temp directory inside BASE_DIR!!!
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
