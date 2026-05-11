@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.7.0](https://github.com/mediacms-io/mediacms/compare/v7.6.0...v7.7.0) (2026-05-11)
+
+### Features
+
+* LTI support and Moodle plugin ([55ab7ff](https://github.com/mediacms-io/mediacms/commit/55ab7ff34fcd05806b845cf958f07841a7cdfc78))
+
 ## [7.6.0](https://github.com/mediacms-io/mediacms/compare/v7.5.0...v7.6.0) (2026-02-07)
 
 ### Features
