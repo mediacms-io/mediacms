@@ -1,7 +1,6 @@
 import os
 
 from celery.schedules import crontab
-from django.core.management.utils import get_random_secret_key
 from django.utils.translation import gettext_lazy as _
 
 DEBUG = False
@@ -172,30 +171,19 @@ REST_FRAMEWORK = {
 }
 
 
-# Set the SECRET_KEY env var in production. If unset, a fresh random key is
-# generated or read from a .secret_key file to ensure all workers share the same key.
-def get_secret_key():
-    key = os.getenv('SECRET_KEY')
-    if key:
-        return key
-
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    secret_path = os.path.join(base_dir, '.secret_key')
-
-    if os.path.exists(secret_path):
-        with open(secret_path) as f:
-            return f.read().strip()
-
-    key = get_random_secret_key()
-    try:
-        with open(secret_path, 'w') as f:
-            f.write(key)
-    except Exception:
-        pass
-    return key
-
-
-SECRET_KEY = get_secret_key()
+# In docker, deploy/docker/entrypoint.sh ensures the SECRET_KEY env var is
+# set (generating .secret_key once on first start if needed). Outside docker,
+# either set SECRET_KEY in the environment or create a .secret_key file at the
+# project root, e.g.:
+#   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())' > .secret_key
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    _secret_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.secret_key')
+    if os.path.exists(_secret_path):
+        with open(_secret_path) as _f:
+            SECRET_KEY = _f.read().strip()
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set. Set the SECRET_KEY env var or create a .secret_key file at the project root.")
 
 TEMP_DIRECTORY = "/tmp"  # Don't use a temp directory inside BASE_DIR!!!
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
