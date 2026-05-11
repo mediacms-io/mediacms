@@ -188,6 +188,7 @@ class MediaList(APIView):
                 base_queryset = Media.objects.prefetch_related("user", "tags")
 
                 exclude_lti_embed = request.GET.get('exclude_lti_embed') == '1'
+                # in LTI, if this is set, show only media that are shared explicitly with user
                 if exclude_lti_embed:
                     conditions = Q(permissions__user=request.user, permissions__source=MediaPermission.SOURCE_EXPLICIT)
                 else:
@@ -274,6 +275,7 @@ class MediaList(APIView):
         prefetch_related_objects(page, 'tags')
 
         if include_sharing_info:
+            # this is the data for the Shared with me/by me pages on 'my media'
             prefetch_related_objects(
                 page,
                 Prefetch('permissions', queryset=MediaPermission.objects.select_related('user').exclude(user=request.user)),
@@ -681,9 +683,6 @@ class MediaBulkUserActions(APIView):
                     if not m.category.filter(uid=category.uid).exists():
                         m.category.add(category)
                         added_count += 1
-                        # if category.is_lms_course:
-                        #     tag, _ = Tag.objects.get_or_create(title=category.title[:100])
-                        #     m.tags.add(tag)
 
             return Response({"detail": f"Added {added_count} media items to {categories.count()} categories"})
 

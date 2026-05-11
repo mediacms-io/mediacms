@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -244,6 +245,31 @@ def history(request):
     return render(request, "cms/history.html", context)
 
 
+_TIMESTAMP_RE = re.compile(r'^(?:(\d+):)?([0-5]?\d):([0-5]?\d)(?:\.(\d{1,3}))?$')
+
+
+def _timestamp_to_seconds(value):
+    """Parse 'HH:MM:SS.mmm', 'MM:SS.mmm', etc., or a numeric value, into float seconds.
+
+    Returns None if the value can't be parsed.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, str):
+        return None
+    match = _TIMESTAMP_RE.match(value.strip())
+    if not match:
+        return None
+    hours = int(match.group(1)) if match.group(1) else 0
+    minutes = int(match.group(2))
+    seconds = int(match.group(3))
+    millis_str = match.group(4) or '0'
+    millis = int(millis_str.ljust(3, '0'))
+    return hours * 3600 + minutes * 60 + seconds + millis / 1000.0
+
+
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
@@ -272,30 +298,27 @@ def video_chapters(request, friendly_token):
         for chapter_data in data:
             if not isinstance(chapter_data, dict):
                 continue
-            start_time = chapter_data.get('startTime')
-            end_time = chapter_data.get('endTime')
+            raw_start = chapter_data.get('startTime')
+            raw_end = chapter_data.get('endTime')
             chapter_title = chapter_data.get('chapterTitle')
 
-            if not isinstance(start_time, (int, float)):
+            start_seconds = _timestamp_to_seconds(raw_start)
+            end_seconds = _timestamp_to_seconds(raw_end)
+            if start_seconds is None or end_seconds is None:
                 continue
-            if not isinstance(end_time, (int, float)):
+            if start_seconds < 0 or end_seconds < 0 or start_seconds >= end_seconds:
                 continue
+
             if not isinstance(chapter_title, str) or not chapter_title.strip():
                 continue
-
-            start_time = float(start_time)
-            end_time = float(end_time)
-            if start_time < 0 or end_time < 0 or start_time >= end_time:
-                continue
-
             chapter_title = strip_tags(chapter_title).strip()[:500]
             if not chapter_title:
                 continue
 
             chapters.append(
                 {
-                    'startTime': start_time,
-                    'endTime': end_time,
+                    'startTime': raw_start if isinstance(raw_start, str) else start_seconds,
+                    'endTime': raw_end if isinstance(raw_end, str) else end_seconds,
                     'chapterTitle': chapter_title,
                 }
             )
