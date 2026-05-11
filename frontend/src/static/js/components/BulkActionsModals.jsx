@@ -7,6 +7,7 @@ import { BulkActionChangeOwnerModal } from './BulkActionChangeOwnerModal';
 import { BulkActionPublishStateModal } from './BulkActionPublishStateModal';
 import { BulkActionCategoryModal } from './BulkActionCategoryModal';
 import { BulkActionTagModal } from './BulkActionTagModal';
+import { BulkActionCourseCleanupModal } from './BulkActionCourseCleanupModal';
 
 /**
  * Renders all bulk action modals
@@ -57,6 +58,12 @@ export function BulkActionsModals({
   onTagModalCancel,
   onTagModalSuccess,
   onTagModalError,
+
+  // Course cleanup modal props
+  showCourseCleanupModal,
+  onCourseCleanupModalCancel,
+  onCourseCleanupModalSuccess,
+  onCourseCleanupModalError,
 
   // Common props
   csrfToken,
@@ -131,6 +138,15 @@ export function BulkActionsModals({
         csrfToken={csrfToken}
       />
 
+      <BulkActionCourseCleanupModal
+        isOpen={showCourseCleanupModal}
+        selectedMediaIds={selectedMediaIds}
+        onCancel={onCourseCleanupModalCancel}
+        onSuccess={onCourseCleanupModalSuccess}
+        onError={onCourseCleanupModalError}
+        csrfToken={csrfToken}
+      />
+
       {showNotification && (
         <div
           style={{
@@ -192,6 +208,11 @@ BulkActionsModals.propTypes = {
   onTagModalCancel: PropTypes.func.isRequired,
   onTagModalSuccess: PropTypes.func.isRequired,
   onTagModalError: PropTypes.func.isRequired,
+
+  showCourseCleanupModal: PropTypes.bool.isRequired,
+  onCourseCleanupModalCancel: PropTypes.func.isRequired,
+  onCourseCleanupModalSuccess: PropTypes.func.isRequired,
+  onCourseCleanupModalError: PropTypes.func.isRequired,
 
   csrfToken: PropTypes.string.isRequired,
 

@@ -8,7 +8,7 @@ import { PageStore, ProfilePageStore } from '../utils/stores/';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
 import { MediaListRow } from '../components/MediaListRow';
-import { ProfileMediaPage } from './ProfileMediaPage';
+import { ProfileMediaPageBase } from './ProfileMediaPage';
 
 class ChannelContactForm extends React.PureComponent {
   constructor(props) {
@@ -149,7 +149,7 @@ class ChannelContactForm extends React.PureComponent {
   }
 }
 
-export class ProfileAboutPage extends ProfileMediaPage {
+export class ProfileAboutPage extends ProfileMediaPageBase {
   constructor(props) {
     super(props, 'author-about');
 

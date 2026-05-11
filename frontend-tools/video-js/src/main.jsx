@@ -3,50 +3,52 @@ import { createRoot } from 'react-dom/client';
 
 import VideoJS from './VideoJS.jsx';
 
-// Mount the components when the DOM is ready
-const mountComponents = () => {
-    // Mount main video player
-    const rootContainerMainNew = document.getElementById('video-js-root-main');
-    if (rootContainerMainNew && !rootContainerMainNew.hasChildNodes()) {
-        const rootMain = createRoot(rootContainerMainNew);
-        rootMain.render(
-            <StrictMode>
-                <VideoJS videoId="video-main" />
-            </StrictMode>
-        );
-    }
+// Track root instances keyed by container id.
+// Each entry: { root, container } so we can detect if the DOM element was replaced.
+const roots = {};
 
-    // Mount embed video player
-    const rootContainerEmbedNew = document.getElementById('video-js-root-embed');
-    if (rootContainerEmbedNew && !rootContainerEmbedNew.hasChildNodes()) {
-        const rootEmbed = createRoot(rootContainerEmbedNew);
-        rootEmbed.render(
-            <StrictMode>
-                <VideoJS videoId="video-embed" />
-            </StrictMode>
-        );
+const mountComponents = () => {
+    const containers = [
+        { id: 'video-js-root-main', videoId: 'video-main' },
+        { id: 'video-js-root-embed', videoId: 'video-embed' },
+    ];
+
+    for (const { id, videoId } of containers) {
+        const container = document.getElementById(id);
+        if (!container) continue;
+
+        const existing = roots[id];
+
+        if (existing && existing.container === container) {
+            // Same DOM node — re-render with latest MEDIA_DATA.
+            existing.root.render(
+                <StrictMode>
+                    <VideoJS videoId={videoId} />
+                </StrictMode>
+            );
+        } else {
+            // First mount, or container was replaced (SPA navigation).
+            if (existing) {
+                existing.root.unmount();
+            }
+            const root = createRoot(container);
+            root.render(
+                <StrictMode>
+                    <VideoJS videoId={videoId} />
+                </StrictMode>
+            );
+            roots[id] = { root, container };
+        }
     }
 };
 
-// Expose the mounting function globally for manual triggering
+// Expose globally so VideoJSEmbed can trigger a re-mount after MEDIA_DATA is updated.
 window.triggerVideoJSMount = mountComponents;
 
-// Listen for custom events to trigger mounting
-document.addEventListener('triggerVideoJSMount', () => {
-    mountComponents();
-});
+document.addEventListener('triggerVideoJSMount', mountComponents);
 
-// Initial mount
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', mountComponents);
 } else {
     mountComponents();
 }
-
-// Also periodically check for new containers (as a fallback)
-setInterval(() => {
-    const embedContainer = document.getElementById('video-js-root-embed');
-    if (embedContainer && !embedContainer.hasChildNodes()) {
-        mountComponents();
-    }
-}, 1000);

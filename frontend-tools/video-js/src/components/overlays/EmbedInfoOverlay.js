@@ -14,6 +14,7 @@ class EmbedInfoOverlay extends Component {
         this.authorThumbnail = options.authorThumbnail || '';
         this.videoTitle = options.videoTitle || 'Video';
         this.videoUrl = options.videoUrl || '';
+        this.titleTarget = options.titleTarget || '_blank';
         this.showTitle = options.showTitle !== undefined ? options.showTitle : true;
         this.showRelated = options.showRelated !== undefined ? options.showRelated : true;
         this.showUserAvatar = options.showUserAvatar !== undefined ? options.showUserAvatar : true;
@@ -140,7 +141,7 @@ class EmbedInfoOverlay extends Component {
         if (this.videoUrl && this.linkTitle) {
             const titleLink = document.createElement('a');
             titleLink.href = this.videoUrl;
-            titleLink.target = '_blank';
+            titleLink.target = this.titleTarget;
             titleLink.rel = 'noopener noreferrer';
             titleLink.textContent = this.videoTitle;
             titleLink.title = this.videoTitle;

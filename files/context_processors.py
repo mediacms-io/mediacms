@@ -64,4 +64,10 @@ def stuff(request):
     if request.user.is_superuser:
         ret["DJANGO_ADMIN_URL"] = settings.DJANGO_ADMIN_URL
 
+    if getattr(settings, 'USE_LTI', False):
+        lti_session = request.session.get('lti_session')
+
+        if lti_session and request.user.is_authenticated:
+            ret['lti_session'] = lti_session
+
     return ret

@@ -18,13 +18,22 @@ class VideoChapterData(models.Model):
         data = []
         if self.data and isinstance(self.data, list):
             for item in self.data:
-                if item.get("startTime") and item.get("endTime") and item.get("chapterTitle"):
-                    chapter_item = {
-                        'startTime': item.get("startTime"),
-                        'endTime': item.get("endTime"),
-                        'chapterTitle': item.get("chapterTitle"),
+                if not isinstance(item, dict):
+                    continue
+                start_time = item.get("startTime")
+                end_time = item.get("endTime")
+                chapter_title = item.get("chapterTitle")
+                if start_time is None or end_time is None or not chapter_title:
+                    continue
+                if not isinstance(start_time, (int, float, str)) or not isinstance(end_time, (int, float, str)):
+                    continue
+                data.append(
+                    {
+                        'startTime': start_time,
+                        'endTime': end_time,
+                        'chapterTitle': chapter_title,
                     }
-                    data.append(chapter_item)
+                )
         return data
 
 

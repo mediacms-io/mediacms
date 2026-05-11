@@ -25,13 +25,21 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   onError,
   csrfToken,
 }) => {
-  const [selectedState, setSelectedState] = useState('public');
+  const isLmsEmbedMode =
+    sessionStorage.getItem('lms_embed_mode') === 'true' ||
+    new URLSearchParams(window.location.search).get('mode') === 'lms_embed_mode';
+  const availableStates = isLmsEmbedMode ? PUBLISH_STATES.filter((s) => s.value !== 'public') : PUBLISH_STATES;
+
+  const [selectedState, setSelectedState] = useState('');
+  const [removeSharing, setRemoveSharing] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
-      // Reset state when modal closes
-      setSelectedState('public');
+      setSelectedState('');
+      setRemoveSharing(false);
+      setAcknowledged(false);
     }
   }, [isOpen]);
 
@@ -40,21 +48,30 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
       onError(translateString('Please select a publish state'));
       return;
     }
+    if (removeSharing && !acknowledged) {
+      onError(translateString('Please acknowledge the sharing removal'));
+      return;
+    }
 
     setIsProcessing(true);
 
     try {
+      const body: Record<string, unknown> = {
+        action: 'set_state',
+        media_ids: selectedMediaIds,
+        state: selectedState,
+      };
+      if (removeSharing) {
+        body.remove_sharing = true;
+      }
+
       const response = await fetch('/api/v1/media/user/bulk_actions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({
-          action: 'set_state',
-          media_ids: selectedMediaIds,
-          state: selectedState,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -73,10 +90,6 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   };
 
   if (!isOpen) return null;
-
-  // Note: We don't check hasStateChanged because the modal doesn't know the actual
-  // current state of the selected media. Users should be able to set any state.
-  // If the state is already the same, the backend will handle it gracefully.
 
   return (
     <div className="publish-state-modal-overlay">
@@ -97,13 +110,45 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
               onChange={(e) => setSelectedState(e.target.value)}
               disabled={isProcessing}
             >
-              {PUBLISH_STATES.map((state) => (
+              <option value="" disabled>
+                {translateString('— select —')}
+              </option>
+              {availableStates.map((state) => (
                 <option key={state.value} value={state.value}>
                   {state.label}
                 </option>
               ))}
             </select>
           </div>
+
+          <div className="shared-selector">
+              <label className="shared-selector-label">
+                <input
+                  type="checkbox"
+                  checked={removeSharing}
+                  onChange={(e) => {
+                    setRemoveSharing(e.target.checked);
+                    if (!e.target.checked) setAcknowledged(false);
+                  }}
+                  disabled={isProcessing}
+                />
+                {translateString('Remove Sharing')}
+              </label>
+              <p className="shared-selector-note shared-selector-note--warn">
+                {translateString('Sharing will be removed from all selected media.')}
+              </p>
+              {removeSharing && (
+                <label className="shared-selector-label shared-selector-acknowledge">
+                  <input
+                    type="checkbox"
+                    checked={acknowledged}
+                    onChange={(e) => setAcknowledged(e.target.checked)}
+                    disabled={isProcessing}
+                  />
+                  {translateString('I understand that this will remove all existing sharing for this media.')}
+                </label>
+              )}
+            </div>
         </div>
 
         <div className="publish-state-modal-footer">
@@ -113,7 +158,7 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
           <button
             className="publish-state-btn publish-state-btn-submit"
             onClick={handleSubmit}
-            disabled={isProcessing}
+            disabled={isProcessing || !selectedState || (removeSharing && !acknowledged)}
           >
             {isProcessing ? translateString('Processing...') : translateString('Submit')}
           </button>

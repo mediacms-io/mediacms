@@ -9,9 +9,10 @@ import ProfilePagesContent from '../components/profile-page/ProfilePagesContent'
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
+import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { BulkActionsModals } from '../components/BulkActionsModals';
-import { inEmbeddedApp, translateString } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
 import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
@@ -47,10 +48,16 @@ class ProfileSharedByMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
             filterArgs: '',
             availableTags: [],
             selectedTag: 'all',
             selectedSort: 'date_added_desc',
+            selectedMedia: new Set(), // For select media mode
+            sharedUsers: [],
+            sharedGroups: [],
+            selectedSharingType: null,
+            selectedSharingValue: null,
         };
 
         this.authorDataLoad = this.authorDataLoad.bind(this);
@@ -60,10 +67,13 @@ class ProfileSharedByMePage extends Page {
         this.onToggleFiltersClick = this.onToggleFiltersClick.bind(this);
         this.onToggleTagsClick = this.onToggleTagsClick.bind(this);
         this.onToggleSortingClick = this.onToggleSortingClick.bind(this);
+        this.onToggleSharingClick = this.onToggleSharingClick.bind(this);
         this.onFiltersUpdate = this.onFiltersUpdate.bind(this);
         this.onTagSelect = this.onTagSelect.bind(this);
         this.onSortSelect = this.onSortSelect.bind(this);
+        this.onSharingSelect = this.onSharingSelect.bind(this);
         this.onResponseDataLoaded = this.onResponseDataLoaded.bind(this);
+        this.handleMediaSelection = this.handleMediaSelection.bind(this);
 
         ProfilePageStore.on('load-author-data', this.authorDataLoad);
     }
@@ -175,6 +185,7 @@ class ProfileSharedByMePage extends Page {
             hiddenFilters: !this.state.hiddenFilters,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -183,6 +194,7 @@ class ProfileSharedByMePage extends Page {
             hiddenFilters: true,
             hiddenTags: !this.state.hiddenTags,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -191,6 +203,16 @@ class ProfileSharedByMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: !this.state.hiddenSorting,
+            hiddenSharing: true,
+        });
+    }
+
+    onToggleSharingClick() {
+        this.setState({
+            hiddenFilters: true,
+            hiddenTags: true,
+            hiddenSorting: true,
+            hiddenSharing: !this.state.hiddenSharing,
         });
     }
 
@@ -203,6 +225,8 @@ class ProfileSharedByMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: this.state.selectedSort,
                 tag: tag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
             });
         });
     }
@@ -216,6 +240,23 @@ class ProfileSharedByMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: sortBy,
                 tag: this.state.selectedTag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
+            });
+        });
+    }
+
+    onSharingSelect(type, value) {
+        this.setState({ selectedSharingType: type, selectedSharingValue: value }, () => {
+            this.onFiltersUpdate({
+                media_type: this.state.filterArgs.match(/media_type=([^&]+)/)?.[1],
+                upload_date: this.state.filterArgs.match(/upload_date=([^&]+)/)?.[1],
+                duration: this.state.filterArgs.match(/duration=([^&]+)/)?.[1],
+                publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
+                sort_by: this.state.selectedSort,
+                tag: this.state.selectedTag,
+                sharing_type: type,
+                sharing_value: value,
             });
         });
     }
@@ -229,6 +270,8 @@ class ProfileSharedByMePage extends Page {
             sort_by: null,
             ordering: null,
             t: null,
+            shared_user: null,
+            shared_group: null,
         };
 
         switch (updatedArgs.media_type) {
@@ -290,6 +333,12 @@ class ProfileSharedByMePage extends Page {
             args.t = updatedArgs.tag;
         }
 
+        if (updatedArgs.sharing_type === 'user' && updatedArgs.sharing_value) {
+            args.shared_user = updatedArgs.sharing_value;
+        } else if (updatedArgs.sharing_type === 'group' && updatedArgs.sharing_value) {
+            args.shared_group = updatedArgs.sharing_value;
+        }
+
         const newArgs = [];
 
         for (let arg in args) {
@@ -341,12 +390,63 @@ class ProfileSharedByMePage extends Page {
                 .filter((tag) => tag);
             this.setState({ availableTags: tags });
         }
+        if (responseData && responseData.shared_users !== undefined) {
+            this.setState({
+                sharedUsers: responseData.shared_users || [],
+                sharedGroups: responseData.shared_groups || [],
+            });
+        }
+    }
+
+    handleMediaSelection(mediaId, isSelected) {
+        const isSelectMediaMode = inSelectMediaEmbedMode();
+
+        this.setState((prevState) => {
+            const newSelectedMedia = new Set();
+
+            // In select media mode, only allow single selection
+            if (isSelectMediaMode) {
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                    console.log('Selected media item:', mediaId);
+
+                    // Send postMessage to parent window (Moodle TinyMCE plugin)
+                    if (window.parent !== window) {
+                        // Construct the embed URL
+                        const baseUrl = window.location.origin;
+                        const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+
+                        // Send message in the format expected by the Moodle plugin
+                        window.parent.postMessage({
+                            type: 'videoSelected',
+                            embedUrl: embedUrl,
+                            videoId: mediaId
+                        }, '*');
+
+                        console.log('Sent postMessage to parent:', { embedUrl, videoId: mediaId });
+                    }
+                }
+            } else {
+                // Normal mode: should not reach here as bulk actions handle this
+                newSelectedMedia.clear();
+                prevState.selectedMedia.forEach((id) => newSelectedMedia.add(id));
+
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                } else {
+                    newSelectedMedia.delete(mediaId);
+                }
+            }
+
+            return { selectedMedia: newSelectedMedia };
+        });
     }
 
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
         const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active
         const hasActiveFilters =
@@ -366,23 +466,27 @@ class ProfileSharedByMePage extends Page {
                     onToggleFiltersClick={this.onToggleFiltersClick}
                     onToggleTagsClick={this.onToggleTagsClick}
                     onToggleSortingClick={this.onToggleSortingClick}
+                    onToggleSharingClick={this.onToggleSharingClick}
                     hasActiveFilters={hasActiveFilters}
                     hasActiveTags={this.state.selectedTag !== 'all'}
                     hasActiveSort={this.state.selectedSort !== 'date_added_desc'}
+                    hasActiveSharing={!!this.state.selectedSharingValue}
                     hideChannelBanner={inEmbeddedApp()}
                 />
             ) : null,
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
                     <MediaListWrapper
-                        title={this.state.title}
+                        title={inEmbeddedApp() ? undefined : this.state.title}
                         className="items-list-ver"
-                        showBulkActions={isMediaAuthor}
-                        selectedCount={this.props.bulkActions.selectedMedia.size}
-                        totalCount={this.props.bulkActions.availableMediaIds.length}
+                        style={inEmbeddedApp() ? { marginTop: '24px' } : undefined}
+                        showBulkActions={!isSelectMediaMode && isMediaAuthor}
+                        selectedCount={isSelectMediaMode ? this.state.selectedMedia.size : this.props.bulkActions.selectedMedia.size}
+                        totalCount={isSelectMediaMode ? 0 : this.props.bulkActions.availableMediaIds.length}
                         onBulkAction={this.props.bulkActions.handleBulkAction}
                         onSelectAll={this.props.bulkActions.handleSelectAll}
                         onDeselectAll={this.props.bulkActions.handleDeselectAll}
+                        hasContributorCourses={this.props.bulkActions.hasContributorCourses}
                     >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
@@ -395,20 +499,28 @@ class ProfileSharedByMePage extends Page {
                             onTagSelect={this.onTagSelect}
                         />
                         <ProfileMediaSorting hidden={this.state.hiddenSorting} onSortSelect={this.onSortSelect} />
+                        <ProfileMediaSharing
+                            hidden={this.state.hiddenSharing}
+                            sharedUsers={this.state.sharedUsers}
+                            sharedGroups={this.state.sharedGroups}
+                            onSharingSelect={this.onSharingSelect}
+                            selectedSharingType={this.state.selectedSharingType}
+                            selectedSharingValue={this.state.selectedSharingValue}
+                        />
                         <LazyLoadItemListAsync
-                            key={`${this.state.requestUrl}-${this.props.bulkActions.listKey}`}
+                            key={isSelectMediaMode ? this.state.requestUrl : `${this.state.requestUrl}-${this.props.bulkActions.listKey}`}
                             requestUrl={this.state.requestUrl}
                             hideAuthor={true}
                             itemsCountCallback={this.state.requestUrl ? this.getCountFunc : null}
                             hideViews={!PageStore.get('config-media-item').displayViews}
                             hideDate={!PageStore.get('config-media-item').displayPublishDate}
-                            canEdit={isMediaAuthor}
+                            canEdit={!isSelectMediaMode && isMediaAuthor}
                             onResponseDataLoaded={this.onResponseDataLoaded}
-                            showSelection={isMediaAuthor}
-                            hasAnySelection={this.props.bulkActions.selectedMedia.size > 0}
-                            selectedMedia={this.props.bulkActions.selectedMedia}
-                            onMediaSelection={this.props.bulkActions.handleMediaSelection}
-                            onItemsUpdate={this.props.bulkActions.handleItemsUpdate}
+                            showSelection={isMediaAuthor || isSelectMediaMode}
+                            hasAnySelection={isSelectMediaMode ? this.state.selectedMedia.size > 0 : this.props.bulkActions.selectedMedia.size > 0}
+                            selectedMedia={isSelectMediaMode ? this.state.selectedMedia : this.props.bulkActions.selectedMedia}
+                            onMediaSelection={isSelectMediaMode ? this.handleMediaSelection : this.props.bulkActions.handleMediaSelection}
+                            onItemsUpdate={!isSelectMediaMode ? this.props.bulkActions.handleItemsUpdate : undefined}
                         />
                         {isMediaAuthor && 0 === this.state.channelMediaCount && !this.state.query ? (
                             <EmptySharedByMe name={this.state.author.name} />
@@ -416,7 +528,7 @@ class ProfileSharedByMePage extends Page {
                     </MediaListWrapper>
                 </ProfilePagesContent>
             ) : null,
-            this.state.author && isMediaAuthor ? (
+            this.state.author && isMediaAuthor && !isSelectMediaMode ? (
                 <BulkActionsModals
                     key="BulkActionsModals"
                     {...this.props.bulkActions}
@@ -443,6 +555,10 @@ class ProfileSharedByMePage extends Page {
                     onTagModalCancel={this.props.bulkActions.handleTagModalCancel}
                     onTagModalSuccess={this.props.bulkActions.handleTagModalSuccess}
                     onTagModalError={this.props.bulkActions.handleTagModalError}
+                    showCourseCleanupModal={this.props.bulkActions.showCourseCleanupModal}
+                    onCourseCleanupModalCancel={this.props.bulkActions.handleCourseCleanupModalCancel}
+                    onCourseCleanupModalSuccess={this.props.bulkActions.handleCourseCleanupModalSuccess}
+                    onCourseCleanupModalError={this.props.bulkActions.handleCourseCleanupModalError}
                 />
             ) : null,
         ];

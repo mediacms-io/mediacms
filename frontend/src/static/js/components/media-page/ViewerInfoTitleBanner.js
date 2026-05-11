@@ -183,8 +183,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
               {MemberContext._currentValue.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
 
               {!MemberContext._currentValue.is.anonymous &&
-                MemberContext._currentValue.can.saveMedia &&
-                -1 < PlaylistsContext._currentValue.mediaTypes.indexOf(MediaPageStore.get('media-type')) ? (
+                MemberContext._currentValue.can.saveMedia ? (
                 <MediaSaveButton />
               ) : null}
 

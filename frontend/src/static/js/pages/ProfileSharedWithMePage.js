@@ -9,8 +9,9 @@ import ProfilePagesContent from '../components/profile-page/ProfilePagesContent'
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
 import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFilters';
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
+import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
-import { inEmbeddedApp, translateString } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isShareMediaDisabled } from '../utils/helpers';
 
 import { Page } from './_Page';
 
@@ -45,10 +46,16 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
             filterArgs: '',
             availableTags: [],
             selectedTag: 'all',
             selectedSort: 'date_added_desc',
+            selectedMedia: new Set(), // For select media mode
+            sharedUsers: [],
+            sharedGroups: [],
+            selectedSharingType: null,
+            selectedSharingValue: null,
         };
 
         this.authorDataLoad = this.authorDataLoad.bind(this);
@@ -58,10 +65,13 @@ export class ProfileSharedWithMePage extends Page {
         this.onToggleFiltersClick = this.onToggleFiltersClick.bind(this);
         this.onToggleTagsClick = this.onToggleTagsClick.bind(this);
         this.onToggleSortingClick = this.onToggleSortingClick.bind(this);
+        this.onToggleSharingClick = this.onToggleSharingClick.bind(this);
         this.onFiltersUpdate = this.onFiltersUpdate.bind(this);
         this.onTagSelect = this.onTagSelect.bind(this);
         this.onSortSelect = this.onSortSelect.bind(this);
+        this.onSharingSelect = this.onSharingSelect.bind(this);
         this.onResponseDataLoaded = this.onResponseDataLoaded.bind(this);
+        this.handleMediaSelection = this.handleMediaSelection.bind(this);
 
         ProfilePageStore.on('load-author-data', this.authorDataLoad);
     }
@@ -76,6 +86,7 @@ export class ProfileSharedWithMePage extends Page {
         let requestUrl = this.state.requestUrl;
 
         if (author) {
+            const excludeLtiEmbed = isShareMediaDisabled() ? '&exclude_lti_embed=1' : '';
             if (this.state.query) {
                 requestUrl =
                     ApiUrlContext._currentValue.media +
@@ -83,6 +94,7 @@ export class ProfileSharedWithMePage extends Page {
                     author.id +
                     '&show=shared_with_me&q=' +
                     encodeURIComponent(this.state.query) +
+                    excludeLtiEmbed +
                     this.state.filterArgs;
             } else {
                 requestUrl =
@@ -90,6 +102,7 @@ export class ProfileSharedWithMePage extends Page {
                     '?author=' +
                     author.id +
                     '&show=shared_with_me' +
+                    excludeLtiEmbed +
                     this.state.filterArgs;
             }
         }
@@ -173,6 +186,7 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: !this.state.hiddenFilters,
             hiddenTags: true,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -181,6 +195,7 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: !this.state.hiddenTags,
             hiddenSorting: true,
+            hiddenSharing: true,
         });
     }
 
@@ -189,6 +204,16 @@ export class ProfileSharedWithMePage extends Page {
             hiddenFilters: true,
             hiddenTags: true,
             hiddenSorting: !this.state.hiddenSorting,
+            hiddenSharing: true,
+        });
+    }
+
+    onToggleSharingClick() {
+        this.setState({
+            hiddenFilters: true,
+            hiddenTags: true,
+            hiddenSorting: true,
+            hiddenSharing: !this.state.hiddenSharing,
         });
     }
 
@@ -201,6 +226,8 @@ export class ProfileSharedWithMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: this.state.selectedSort,
                 tag: tag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
             });
         });
     }
@@ -214,6 +241,23 @@ export class ProfileSharedWithMePage extends Page {
                 publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
                 sort_by: sortBy,
                 tag: this.state.selectedTag,
+                sharing_type: this.state.selectedSharingType,
+                sharing_value: this.state.selectedSharingValue,
+            });
+        });
+    }
+
+    onSharingSelect(type, value) {
+        this.setState({ selectedSharingType: type, selectedSharingValue: value }, () => {
+            this.onFiltersUpdate({
+                media_type: this.state.filterArgs.match(/media_type=([^&]+)/)?.[1],
+                upload_date: this.state.filterArgs.match(/upload_date=([^&]+)/)?.[1],
+                duration: this.state.filterArgs.match(/duration=([^&]+)/)?.[1],
+                publish_state: this.state.filterArgs.match(/publish_state=([^&]+)/)?.[1],
+                sort_by: this.state.selectedSort,
+                tag: this.state.selectedTag,
+                sharing_type: type,
+                sharing_value: value,
             });
         });
     }
@@ -227,6 +271,8 @@ export class ProfileSharedWithMePage extends Page {
             sort_by: null,
             ordering: null,
             t: null,
+            shared_user: null,
+            shared_group: null,
         };
 
         switch (updatedArgs.media_type) {
@@ -288,6 +334,12 @@ export class ProfileSharedWithMePage extends Page {
             args.t = updatedArgs.tag;
         }
 
+        if (updatedArgs.sharing_type === 'user' && updatedArgs.sharing_value) {
+            args.shared_user = updatedArgs.sharing_value;
+        } else if (updatedArgs.sharing_type === 'group' && updatedArgs.sharing_value) {
+            args.shared_group = updatedArgs.sharing_value;
+        }
+
         const newArgs = [];
 
         for (let arg in args) {
@@ -339,12 +391,63 @@ export class ProfileSharedWithMePage extends Page {
                 .filter((tag) => tag);
             this.setState({ availableTags: tags });
         }
+        if (responseData && responseData.shared_users !== undefined) {
+            this.setState({
+                sharedUsers: responseData.shared_users || [],
+                sharedGroups: responseData.shared_groups || [],
+            });
+        }
+    }
+
+    handleMediaSelection(mediaId, isSelected) {
+        const isSelectMediaMode = inSelectMediaEmbedMode();
+
+        this.setState((prevState) => {
+            const newSelectedMedia = new Set();
+
+            // In select media mode, only allow single selection
+            if (isSelectMediaMode) {
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                    console.log('Selected media item:', mediaId);
+
+                    // Send postMessage to parent window (Moodle TinyMCE plugin)
+                    if (window.parent !== window) {
+                        // Construct the embed URL
+                        const baseUrl = window.location.origin;
+                        const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
+
+                        // Send message in the format expected by the Moodle plugin
+                        window.parent.postMessage({
+                            type: 'videoSelected',
+                            embedUrl: embedUrl,
+                            videoId: mediaId
+                        }, '*');
+
+                        console.log('Sent postMessage to parent:', { embedUrl, videoId: mediaId });
+                    }
+                }
+            } else {
+                // Normal mode: no selection UI in this page normally
+                newSelectedMedia.clear();
+                prevState.selectedMedia.forEach((id) => newSelectedMedia.add(id));
+
+                if (isSelected) {
+                    newSelectedMedia.add(mediaId);
+                } else {
+                    newSelectedMedia.delete(mediaId);
+                }
+            }
+
+            return { selectedMedia: newSelectedMedia };
+        });
     }
 
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
         const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active
         const hasActiveFilters =
@@ -364,15 +467,21 @@ export class ProfileSharedWithMePage extends Page {
                     onToggleFiltersClick={this.onToggleFiltersClick}
                     onToggleTagsClick={this.onToggleTagsClick}
                     onToggleSortingClick={this.onToggleSortingClick}
+                    onToggleSharingClick={this.onToggleSharingClick}
                     hasActiveFilters={hasActiveFilters}
                     hasActiveTags={this.state.selectedTag !== 'all'}
                     hasActiveSort={this.state.selectedSort !== 'date_added_desc'}
+                    hasActiveSharing={!!this.state.selectedSharingValue}
                     hideChannelBanner={inEmbeddedApp()}
                 />
             ) : null,
             this.state.author ? (
                 <ProfilePagesContent key="ProfilePagesContent">
-                    <MediaListWrapper title={this.state.title} className="items-list-ver">
+                    <MediaListWrapper
+                        title={inEmbeddedApp() ? undefined : this.state.title}
+                        className="items-list-ver"
+                        style={inEmbeddedApp() ? { marginTop: '24px' } : undefined}
+                    >
                         <ProfileMediaFilters
                             hidden={this.state.hiddenFilters}
                             tags={this.state.availableTags}
@@ -384,6 +493,15 @@ export class ProfileSharedWithMePage extends Page {
                             onTagSelect={this.onTagSelect}
                         />
                         <ProfileMediaSorting hidden={this.state.hiddenSorting} onSortSelect={this.onSortSelect} />
+                        <ProfileMediaSharing
+                            hidden={this.state.hiddenSharing}
+                            mode="shared_with_me"
+                            sharedUsers={this.state.sharedUsers}
+                            sharedGroups={this.state.sharedGroups}
+                            onSharingSelect={this.onSharingSelect}
+                            selectedSharingType={this.state.selectedSharingType}
+                            selectedSharingValue={this.state.selectedSharingValue}
+                        />
                         <LazyLoadItemListAsync
                             key={this.state.requestUrl}
                             requestUrl={this.state.requestUrl}
@@ -393,6 +511,10 @@ export class ProfileSharedWithMePage extends Page {
                             hideDate={!PageStore.get('config-media-item').displayPublishDate}
                             canEdit={false}
                             onResponseDataLoaded={this.onResponseDataLoaded}
+                            showSelection={isSelectMediaMode}
+                            hasAnySelection={this.state.selectedMedia.size > 0}
+                            selectedMedia={this.state.selectedMedia}
+                            onMediaSelection={this.handleMediaSelection}
                         />
                         {isMediaAuthor && 0 === this.state.channelMediaCount && !this.state.query ? (
                             <EmptySharedWithMe name={this.state.author.name} />

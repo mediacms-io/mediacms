@@ -54,7 +54,7 @@
 .category-modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px 24px;
   border-bottom: 1px solid #e0e0e0;
 
@@ -71,6 +71,19 @@
     .dark_theme & {
       color: #fff;
     }
+  }
+}
+
+.category-modal-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #777;
+
+  .dark_theme & {
+    color: #aaa;
   }
 }
 

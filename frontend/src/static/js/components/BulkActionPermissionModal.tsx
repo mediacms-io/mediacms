@@ -226,7 +226,42 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
     <div className="permission-modal-overlay">
       <div className="permission-modal">
         <div className="permission-modal-header">
-          <h2>{translateString('Manage')} {permissionLabel}</h2>
+          <div>
+            <h2>{translateString('Share with')} {permissionLabel}</h2>
+            {permissionType === 'viewer' && (
+              <div className="permission-modal-subtitle">
+                <span>{translateString('Give users viewer permissions to your media by adding them to the below list.')}</span>
+                <span
+                  className="info-tooltip"
+                  title={translateString("Users can view your media via: My Media > Shared with Me > particular media > ...")}
+                >
+                  i
+                </span>
+              </div>
+            )}
+            {permissionType === 'editor' && (
+              <div className="permission-modal-subtitle">
+                <span>{translateString('Give users editor permissions to your media by adding them to the below list.')}</span>
+                <span
+                  className="info-tooltip"
+                  title={translateString("Users can edit your media via: My Media > Shared with Me > particular media > Edit...")}
+                >
+                  i
+                </span>
+              </div>
+            )}
+            {permissionType === 'owner' && (
+              <div className="permission-modal-subtitle">
+                <span>{translateString('Give users owner permissions to your media, except for deleting the media, by adding them to the below list.')}</span>
+                <span
+                  className="info-tooltip"
+                  title={translateString("Users can manage your media via: My Media > Shared with Me > particular media > ...")}
+                >
+                  i
+                </span>
+              </div>
+            )}
+          </div>
           <button className="permission-modal-close" onClick={onCancel}>
             ×
           </button>
@@ -282,6 +317,21 @@ export const BulkActionPermissionModal: React.FC<BulkActionPermissionModalProps>
               {selectedMediaIds.length > 1 && (
                 <span className="info-tooltip" title={translateString('The intersection of users in the selected media is shown')}>
                   ?
+                </span>
+              )}
+              {permissionType === 'viewer' && (
+                <span className="info-tooltip" title={translateString('Remove users from the list to remove viewer permissions')}>
+                  i
+                </span>
+              )}
+              {permissionType === 'editor' && (
+                <span className="info-tooltip" title={translateString('Remove users from the list to remove editor permissions')}>
+                  i
+                </span>
+              )}
+              {permissionType === 'owner' && (
+                <span className="info-tooltip" title={translateString('Remove users from the list to remove owner permissions')}>
+                  i
                 </span>
               )}
             </h3>

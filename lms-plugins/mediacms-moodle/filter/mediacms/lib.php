@@ -1,0 +1,7 @@
+<?php
+
+defined('MOODLE_INTERNAL') || die();
+
+define('MEDIACMS_NAV_PLACEMENT_TOP', 0);
+define('MEDIACMS_NAV_PLACEMENT_PROFILE', 1);
+define('MEDIACMS_NAV_PLACEMENT_NONE', 2);

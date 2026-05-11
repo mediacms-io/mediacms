@@ -352,20 +352,11 @@ class Media(models.Model):
         # first get anything interesting out of the media
         # that needs to be search able
 
-        a_tags = b_tags = ""
+        a_tags = ""
         if self.id:
             a_tags = " ".join([tag.title for tag in self.tags.all()])
-            b_tags = " ".join([tag.title.replace("-", " ") for tag in self.tags.all()])
 
-        items = [
-            self.title,
-            self.user.username,
-            self.user.email,
-            self.user.name,
-            self.description,
-            a_tags,
-            b_tags,
-        ]
+        items = [self.friendly_token, self.title, self.user.username, self.user.email, self.user.name, self.description, a_tags]
 
         for subtitle in self.subtitles.all():
             items.append(subtitle.subtitle_text)
@@ -740,15 +731,6 @@ class Media(models.Model):
         return ep
 
     @property
-    def categories_info(self):
-        """Property used on serializers"""
-
-        ret = []
-        for cat in self.category.all():
-            ret.append({"title": cat.title, "url": cat.get_absolute_url()})
-        return ret
-
-    @property
     def tags_info(self):
         """Property used on serializers"""
 
@@ -974,6 +956,12 @@ class Media(models.Model):
             return chapter_data.chapter_data
         return data
 
+    @property
+    def is_shared(self):
+        if not self.pk:
+            return False
+        return self.permissions.exists() or self.category.filter(is_rbac_category=True).exists()
+
 
 class MediaPermission(models.Model):
     """Model to store user permissions for media"""
@@ -984,10 +972,18 @@ class MediaPermission(models.Model):
         ("owner", "Owner"),
     )
 
+    SOURCE_LTI_EMBED = 'lti_embed'
+    SOURCE_EXPLICIT = 'explicit'
+    SOURCE_CHOICES = (
+        (SOURCE_LTI_EMBED, 'LTI Embed'),
+        (SOURCE_EXPLICIT, 'Explicit'),
+    )
+
     owner_user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='granted_permissions')
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
     media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='permissions')
     permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    source = models.CharField(max_length=32, choices=SOURCE_CHOICES, default=SOURCE_EXPLICIT)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -995,6 +991,29 @@ class MediaPermission(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.media.title} ({self.permission})"
+
+
+class EmbedMediaCourse(models.Model):
+    """
+    Records that a user shared a media item into a course during an LTI session.
+
+    This is a pure audit/tracking table used by the course cleanup bulk action to
+    identify which MediaPermission records were created via LTI embedding and should
+    be removed when the course is cleaned up.
+
+    It does NOT add the media to the category (Media.category M2M is untouched),
+    so no m2m_changed signals fire and no category counts are affected.
+    """
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='embed_courses')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='embedded_media')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('media', 'category')
+
+    def __str__(self):
+        return f"{self.media.title} in {self.category.title}"
 
 
 @receiver(post_save, sender=Media)

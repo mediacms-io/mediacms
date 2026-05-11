@@ -98,7 +98,27 @@ class MediaSerializer(serializers.ModelSerializer):
                     self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
-class SingleMediaSerializer(serializers.ModelSerializer):
+class CategoriesInfoMixin(serializers.Serializer):
+    categories_info = serializers.SerializerMethodField()
+
+    def get_categories_info(self, obj):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        if user and user.is_authenticated:
+            accessible_rbac = set(user.get_rbac_categories_as_member().values_list("pk", flat=True))
+        else:
+            accessible_rbac = set()
+
+        ret = []
+        for cat in obj.category.all():
+            if cat.is_rbac_category and cat.pk not in accessible_rbac:
+                continue
+            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+        return ret
+
+
+class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
     is_shared = serializers.SerializerMethodField()
@@ -177,7 +197,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         )
 
 
-class MediaSearchSerializer(serializers.ModelSerializer):
+class MediaSearchSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
 
@@ -226,6 +246,7 @@ class CategorySerializer(serializers.ModelSerializer):
             "media_count",
             "user",
             "thumbnail_url",
+            "is_lms_course",
         )
 
 

@@ -223,7 +223,8 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
     const finalShowRelated = getOption(showRelated, 'showRelated', true);
     const finalShowUserAvatar = getOption(showUserAvatar, 'showUserAvatar', true);
     const finalLinkTitle = getOption(linkTitle, 'linkTitle', true);
-    const finalTimestamp = getOption(urlTimestamp, 'urlTimestamp', null);
+    // urlTimestamp: prop wins if set, otherwise fall back to window.MEDIA_DATA on both main and embed players
+    const finalTimestamp = urlTimestamp ?? mediaData?.urlTimestamp ?? null;
 
     // Utility function to detect touch devices
     const isTouchDevice = useMemo(() => {
@@ -2216,12 +2217,26 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
 
                     // BEGIN: Add Embed Info Overlay Component (for embed player only)
                     if (isEmbedPlayer) {
+                        let overlayVideoUrl = currentVideo.url;
+                        let overlayTitleTarget = '_blank';
+
+                        const parentMediaBase = mediaData?.parentMediaBase;
+                        if (parentMediaBase) {
+                            const token = new URLSearchParams(window.location.search).get('m');
+                            if (token) {
+                                const sep = parentMediaBase.includes('?') ? '&' : '?';
+                                overlayVideoUrl = `${parentMediaBase}${sep}token=${token}`;
+                                overlayTitleTarget = '_blank';
+                            }
+                        }
+
                         customComponents.current.embedInfoOverlay = new EmbedInfoOverlay(playerRef.current, {
                             authorName: currentVideo.author_name,
                             authorProfile: currentVideo.author_profile,
                             authorThumbnail: currentVideo.author_thumbnail,
                             videoTitle: currentVideo.title,
-                            videoUrl: currentVideo.url,
+                            videoUrl: overlayVideoUrl,
+                            titleTarget: overlayTitleTarget,
                             showTitle: finalShowTitle,
                             showRelated: finalShowRelated,
                             showUserAvatar: finalShowUserAvatar,
