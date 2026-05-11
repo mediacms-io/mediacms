@@ -349,14 +349,9 @@ class LaunchView(View):
             user = provision_lti_user(platform, launch_data)
 
             context_claim = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/context', {})
-            context_id = context_claim.get('id', '')
 
             # Detect My Media launches: publishdata is only sent on My Media launches.
             publish_data_raw = custom_claims.get('publishdata') or custom_claims.get('custom_publishdata')
-
-            print(f"[MediaCMS LTI] context_id={context_id!r} publish_data_raw present={bool(publish_data_raw)}")
-            if publish_data_raw:
-                print(f"[MediaCMS LTI] publishdata (raw, first 200 chars): {publish_data_raw[:200]}")
 
             if publish_data_raw:
                 # My Media launch: provision all enrolled courses from publishdata.

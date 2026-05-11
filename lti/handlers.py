@@ -133,9 +133,6 @@ def _ensure_membership(user, rbac_group, group_role):
             pass
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
-
-
 def provision_lti_user(platform, claims):
     """
     Provision MediaCMS user from LTI launch claims.
