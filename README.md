@@ -30,6 +30,7 @@ A demo is available at https://demo.mediacms.io
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
+- **Use in LMS**: LTI 1.3 support plus a Moodle plugin for embeding media in LMS
 - **Video Trimmer**: trim video, replace, save as new or create segments
 - **SAML support**: with ability to add mappings to system roles and groups
 - **Easy media searching**: enriched with live search functionality

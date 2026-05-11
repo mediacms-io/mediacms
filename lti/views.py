@@ -723,6 +723,7 @@ class EmbedMediaLTIView(View):
             context_id = lti_session.get('context_id')
             platform_id = lti_session.get('platform_id')
 
+            # MediaPermission has to be added so that the user is able to visit the media
             if media.is_shared and context_id and platform_id:
                 try:
                     resource_link = (
