@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.5](https://github.com/mediacms-io/mediacms/compare/v8.0.4...v8.0.5) (2026-05-11)
+
+### Bug Fixes
+
+* add secret key to gitignore ([b6da9c4](https://github.com/mediacms-io/mediacms/commit/b6da9c4662b3fba234b8dc69700ffa44fced7482))
+
 ## [8.0.4](https://github.com/mediacms-io/mediacms/compare/v8.0.3...v8.0.4) (2026-05-11)
 
 ### Bug Fixes
