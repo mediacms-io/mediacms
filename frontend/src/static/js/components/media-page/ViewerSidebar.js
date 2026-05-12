@@ -1,4 +1,7 @@
 import React from 'react';
+import { MediaPageStore } from '../../utils/stores/';
+import { AutoPlay } from './AutoPlay';
+import { RelatedMedia } from './RelatedMedia';
 import PlaylistView from './PlaylistView';
 
 export default class ViewerSidebar extends React.PureComponent {
@@ -9,6 +12,7 @@ export default class ViewerSidebar extends React.PureComponent {
       playlistData: props.playlistData,
       isPlaylistPage: !!props.playlistData,
       activeItem: 0,
+      mediaType: MediaPageStore.get('media-type'),
     };
 
     if (props.playlistData) {
@@ -23,6 +27,21 @@ export default class ViewerSidebar extends React.PureComponent {
       }
     }
 
+    this.onMediaLoad = this.onMediaLoad.bind(this);
+  }
+
+  componentDidMount() {
+    MediaPageStore.on('loaded_media_data', this.onMediaLoad);
+  }
+
+  componentWillUnmount() {
+    MediaPageStore.removeListener('loaded_media_data', this.onMediaLoad);
+  }
+
+  onMediaLoad() {
+    this.setState({
+      mediaType: MediaPageStore.get('media-type'),
+    });
   }
 
   render() {
@@ -30,7 +49,10 @@ export default class ViewerSidebar extends React.PureComponent {
       <div className="viewer-sidebar">
         {this.state.isPlaylistPage ? (
           <PlaylistView activeItem={this.state.activeItem} playlistData={this.props.playlistData} />
+        ) : 'video' === this.state.mediaType || 'audio' === this.state.mediaType ? (
+          <AutoPlay />
         ) : null}
+        <RelatedMedia hideFirst={!this.state.isPlaylistPage} />
       </div>
     );
   }
