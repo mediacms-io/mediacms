@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.7](https://github.com/mediacms-io/mediacms/compare/v8.0.6...v8.0.7) (2026-05-12)
+
+### Bug Fixes
+
+* bring related items back ([#1515](https://github.com/mediacms-io/mediacms/issues/1515)) ([6ee5bef](https://github.com/mediacms-io/mediacms/commit/6ee5bef6ce31cf849941f65d0817e53b8f03362f))
+
 ## [8.0.6](https://github.com/mediacms-io/mediacms/compare/v8.0.5...v8.0.6) (2026-05-11)
 
 ### Bug Fixes
