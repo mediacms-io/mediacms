@@ -369,6 +369,8 @@ class UserDetail(APIView):
 
         if action == "change_password":
             # Permission to edit user is already checked by self.get_user -> self.check_object_permissions
+            if user.is_superuser and not request.user.is_superuser:
+                raise PermissionDenied("You do not have permission to change a superuser's password.")
             password = request.data.get("password")
             if not password:
                 return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
