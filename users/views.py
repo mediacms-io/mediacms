@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -374,6 +376,10 @@ class UserDetail(APIView):
             password = request.data.get("password")
             if not password:
                 return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                validate_password(password, user=user)
+            except DjangoValidationError as exc:
+                return Response({"detail": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
             user.set_password(password)
             user.save()
 
