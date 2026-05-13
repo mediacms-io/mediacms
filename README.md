@@ -43,7 +43,7 @@ A demo is available at https://demo.mediacms.io
 - **Multiple transcoding profiles**: sane defaults for multiple dimensions (144p, 240p, 360p, 480p, 720p, 1080p) and multiple profiles (h264, h265, vp9)
 - **Adaptive video streaming**: possible through HLS protocol
 - **Subtitles/CC**: support for multilingual subtitle files
-- **Scalable transcoding**: transcoding through priorities. Experimental support for remote workers
+- **Scalable transcoding**: transcoding through priorities.
 - **Chunked file uploads**: for pausable/resumable upload of content
 - **REST API**: Documented through Swagger
 - **Translation**: Most of the CMS is translated to a number of languages
@@ -91,7 +91,6 @@ In order to support automatic transcriptions through Whisper, consider more CPUs
 
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-- [Single Server](docs/admins_docs.md#2-server-installation) page
 - [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
   A complete guide can be found on the blog post [How to self-host and share your videos in 2021](https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b).

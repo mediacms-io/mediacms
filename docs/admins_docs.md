@@ -2,7 +2,6 @@
 
 ## Table of contents
 - [1. Welcome](#1-welcome)
-- [2. Single Server Installaton](#2-single-server-installation)
 - [3. Docker Installation](#3-docker-installation)
 - [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
@@ -33,58 +32,6 @@
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
-
-## 2. Single Server Installation
-
-The core dependencies are python3, Django, celery, PostgreSQL, redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But the install.sh is only tested in Linux Ubuntu 24 and 22 versions.
-
-Installation on an Ubuntu 22/24 system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
-
-
-
-```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
-```
-
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
-
-
-### Update
-
-If you've used the above way to install MediaCMS, update with the following:
-
-```bash
-cd /home/mediacms.io/mediacms # enter mediacms directory
-source  /home/mediacms.io/bin/activate # use virtualenv
-git pull # update code
-pip install -r requirements.txt -U # run pip install to update
-python manage.py migrate # run Django migrations
-sudo systemctl restart mediacms celery_long celery_short # restart services
-```
-
-### Update from version 2 to version 3
-Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
-The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
-
-```
-# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
-# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
-# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
-# systemctl daemon-reload
-# systemctl start celery_long celery_short celery_beat
-```
-
-
-
-### Configuration
-Checkout the configuration section here.
-
-
-### Maintenance
-Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
 
 
 ## 3. Docker Installation
@@ -220,13 +167,9 @@ Several options are available on `cms/settings.py`, most of the things that are 
 
 It is advisable to override any of them by adding it to `local_settings.py` .
 
-In case of a the single server installation, add to `cms/local_settings.py` .
-
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
 Any change needs restart of MediaCMS in order to take effect.
-
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
 
 ```bash
 #systemctl restart mediacms
@@ -795,14 +738,7 @@ Instructions contributed by @alberto98fx
 On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
 In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
 
-Enter the Django shell, example if you're using the Single Server installation:
-
-```bash
-source  /home/mediacms.io/bin/activate
-python manage.py shell
-```
-
-and inside the shell
+Enter the Django shell and inside the shell
 
 ```bash
 from django.core.mail import EmailMessage

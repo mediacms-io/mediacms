@@ -6,7 +6,6 @@ from django.core.files import File
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from django.urls import reverse
 
 from .. import helpers
 from .utils import (
@@ -135,9 +134,6 @@ class Encoding(models.Model):
 
     def __str__(self):
         return f"{self.profile.name}-{self.media.title}"
-
-    def get_absolute_url(self):
-        return reverse("api_get_encoding", kwargs={"encoding_id": self.id})
 
 
 @receiver(post_save, sender=Encoding)

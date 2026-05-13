@@ -61,11 +61,6 @@ urlpatterns = [
         views.MediaDetail.as_view(),
         name="api_get_media",
     ),
-    re_path(
-        r"^api/v1/media/encoding/(?P<encoding_id>[\w]*)$",
-        views.EncodingDetail.as_view(),
-        name="api_get_encoding",
-    ),
     re_path(r"^api/v1/search$", views.MediaSearch.as_view()),
     re_path(
         rf"^api/v1/media/{friendly_token}/share$",

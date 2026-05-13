@@ -266,21 +266,6 @@ CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media up
 # mp4hls command, part of Bento4
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
 
-# highly experimental, related with remote workers
-ADMIN_TOKEN = ""
-# this is used by remote workers to push
-# encodings once they are done
-# USE_BASIC_HTTP = True
-# BASIC_HTTP_USER_PAIR = ('user', 'password')
-# specify basic auth user/password pair for use with the
-# remote workers, if nginx basic auth is setup
-# apache2-utils need be installed
-# then run
-# htpasswd -c /home/mediacms.io/mediacms/deploy/.htpasswd user
-# and set a password
-# edit /etc/nginx/sites-enabled/mediacms.io and
-# uncomment the two lines related to htpasswd
-
 
 AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "/"
