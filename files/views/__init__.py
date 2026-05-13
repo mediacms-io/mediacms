@@ -3,7 +3,7 @@
 from .auth import custom_login_view, saml_metadata  # noqa: F401
 from .categories import CategoryList, CategoryListContributor, TagList  # noqa: F401
 from .comments import CommentDetail, CommentList  # noqa: F401
-from .encoding import EncodeProfileList, EncodingDetail  # noqa: F401
+from .encoding import EncodeProfileList  # noqa: F401
 from .media import MediaActions  # noqa: F401
 from .media import MediaBulkUserActions  # noqa: F401
 from .media import MediaDetail  # noqa: F401

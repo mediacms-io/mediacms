@@ -120,9 +120,11 @@ class MediaList(APIView):
         operation_description='Delete media for MediaCMS managers and reviewers',
     )
     def delete(self, request, format=None):
+        if not is_mediacms_manager(request.user):
+            return Response({"detail": "bad permissions"}, status=status.HTTP_403_FORBIDDEN)
         tokens = request.GET.get("tokens")
         if tokens:
-            tokens = tokens.split(",")
+            tokens = [t for t in tokens.split(",") if t][:50]
             Media.objects.filter(friendly_token__in=tokens).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -177,7 +179,7 @@ class CommentList(APIView):
     def delete(self, request, format=None):
         comment_ids = request.GET.get("comment_ids")
         if comment_ids:
-            comments = comment_ids.split(",")
+            comments = [c for c in comment_ids.split(",") if c][:50]
             Comment.objects.filter(uid__in=comments).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

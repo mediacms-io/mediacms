@@ -171,8 +171,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                     continue
             encoding = Encoding(media=media, profile=profile)
             encoding.save()
-            enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
-            encode_media.delay(friendly_token, profile.id, encoding.id, enc_url, force=force)
+            encode_media.delay(friendly_token, profile.id, encoding.id, force=force)
         return False
 
     chunks = [os.path.join(cwd, ch) for ch in chunks]
@@ -202,13 +201,12 @@ def chunkize_media(self, friendly_token, profiles, force=True):
             )
 
             encoding.save()
-            enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
             if profile.resolution in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                 priority = 0
             else:
                 priority = 9
             encode_media.apply_async(
-                args=[friendly_token, profile.id, encoding.id, enc_url],
+                args=[friendly_token, profile.id, encoding.id],
                 kwargs={"force": force, "chunk": True, "chunk_file_path": chunk},
                 priority=priority,
             )
@@ -246,7 +244,6 @@ def encode_media(
     friendly_token,
     profile_id,
     encoding_id,
-    encoding_url,
     force=True,
     chunk=False,
     chunk_file_path="",

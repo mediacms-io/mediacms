@@ -559,9 +559,8 @@ class Media(models.Model):
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
                     encoding.save()
-                    enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
                     tasks.encode_media.apply_async(
-                        args=[self.friendly_token, profile.id, encoding.id, enc_url],
+                        args=[self.friendly_token, profile.id, encoding.id],
                         kwargs={"force": force},
                         priority=0,
                     )
@@ -575,13 +574,12 @@ class Media(models.Model):
                             continue
                 encoding = Encoding(media=self, profile=profile)
                 encoding.save()
-                enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
                 if profile.resolution in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                     priority = 9
                 else:
                     priority = 0
                 tasks.encode_media.apply_async(
-                    args=[self.friendly_token, profile.id, encoding.id, enc_url],
+                    args=[self.friendly_token, profile.id, encoding.id],
                     kwargs={"force": force},
                     priority=priority,
                 )
