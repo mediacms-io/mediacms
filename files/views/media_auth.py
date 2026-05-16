@@ -28,16 +28,15 @@ def _lookup_state(uid):
     """Return (state, owner_id) for a uid, or (None, None) if missing.
 
     Cached on uid alone since state/ownership do not depend on the requester.
+    Uses .values() rather than .only() because Media.__init__ touches deferred
+    file fields, which would otherwise recurse via refresh_from_db.
     """
     state_key = f"xaccel:state:{uid}"
     cached = cache.get(state_key)
     if cached is not None:
         return cached
-    try:
-        media = Media.objects.only("state", "user_id").get(uid=uid)
-        value = (media.state, media.user_id)
-    except Media.DoesNotExist:
-        value = (None, None)
+    row = Media.objects.filter(uid=uid).values("state", "user_id").first()
+    value = (row["state"], row["user_id"]) if row else (None, None)
     cache.set(state_key, value, _ttl())
     return value
 
@@ -55,9 +54,9 @@ def _decide(uid, user):
         return True
     if is_mediacms_editor(user):
         return True
-    # RBAC / MediaPermission path — needs the Media instance.
+    # RBAC / MediaPermission path needs a full Media instance.
     try:
-        media = Media.objects.only("state", "user_id").get(uid=uid)
+        media = Media.objects.get(uid=uid)
     except Media.DoesNotExist:
         return False
     return user.has_member_access_to_media(media)
