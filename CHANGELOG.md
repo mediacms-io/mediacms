@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.0](https://github.com/mediacms-io/mediacms/compare/v8.0.8...v8.1.0) (2026-05-17)
+
+### Features
+
+* introduce x-accell headers ([9302559](https://github.com/mediacms-io/mediacms/commit/9302559d4bb3e4d0adb299ed37438b04c39e1864))
+
 ## [8.0.8](https://github.com/mediacms-io/mediacms/compare/v8.0.7...v8.0.8) (2026-05-13)
 
 ### Bug Fixes
