@@ -10,11 +10,10 @@ from ..methods import is_mediacms_editor
 from ..models import Media
 
 UID_RE = re.compile(r"[0-9a-f]{32}")
-MAX_CACHE_SECONDS = 600
 
 
 def _ttl():
-    return min(getattr(settings, "X_ACCEL_AUTH_CACHE_SECONDS", 60), MAX_CACHE_SECONDS)
+    return getattr(settings, "X_ACCEL_AUTH_CACHE_SECONDS", 300)
 
 
 def _extract_uid(uri):
