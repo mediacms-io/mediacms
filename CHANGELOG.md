@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.1](https://github.com/mediacms-io/mediacms/compare/v8.1.0...v8.1.1) (2026-05-18)
+
+### Bug Fixes
+
+* x-accell headers on uploaded poster ([#1526](https://github.com/mediacms-io/mediacms/issues/1526)) ([ae63a5a](https://github.com/mediacms-io/mediacms/commit/ae63a5af647c8865b96e6e50dda1ea9d29b5bd0b))
+
 ## [8.1.0](https://github.com/mediacms-io/mediacms/compare/v8.0.8...v8.1.0) (2026-05-17)
 
 ### Features
