@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.2](https://github.com/mediacms-io/mediacms/compare/v8.1.1...v8.1.2) (2026-05-18)
+
+### Bug Fixes
+
+* remove redundant check ([#1528](https://github.com/mediacms-io/mediacms/issues/1528)) ([c7a673b](https://github.com/mediacms-io/mediacms/commit/c7a673bbbf46efc37621dc4a5109a85fc10e1317))
+
 ## [8.1.1](https://github.com/mediacms-io/mediacms/compare/v8.1.0...v8.1.1) (2026-05-18)
 
 ### Bug Fixes
