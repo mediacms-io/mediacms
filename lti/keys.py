@@ -21,10 +21,3 @@ def get_jwks():
     """
     public_key = load_public_key()
     return {'keys': [public_key]}
-
-
-def ensure_keys_exist():
-    """Ensure key pair exists in database, generate if not"""
-    from .models import LTIToolKeys
-
-    LTIToolKeys.get_or_create_keys()
