@@ -1,7 +1,9 @@
 import re
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -10,6 +12,7 @@ from ..methods import is_mediacms_editor
 from ..models import Media
 
 UID_RE = re.compile(r"[0-9a-f]{32}")
+THUMBNAILS_PREFIX = "original/thumbnails/"
 
 
 def _ttl():
@@ -21,6 +24,32 @@ def _extract_uid(uri):
         return None
     match = UID_RE.search(uri)
     return match.group(0) if match else None
+
+
+def _relpath_from_uri(uri):
+    path = unquote(uri.split("?", 1)[0])
+    media_url = settings.MEDIA_URL
+    if path.startswith(media_url):
+        return path[len(media_url) :]
+    return None
+
+
+def _lookup_uid_by_path(relpath):
+    path_key = f"xaccel:path:{relpath}"
+    cached = cache.get(path_key)
+    if cached is not None:
+        return cached or None
+
+    parts = relpath.split("/", 4)
+    if len(parts) < 5 or parts[2] != "user":
+        cache.set(path_key, "", _ttl())
+        return None
+    username = parts[3]
+
+    row = Media.objects.filter(user__username=username).filter(Q(uploaded_thumbnail=relpath) | Q(uploaded_poster=relpath)).values("uid").first()
+    uid_hex = row["uid"].hex if row else ""
+    cache.set(path_key, uid_hex, _ttl())
+    return uid_hex or None
 
 
 def _lookup_state(uid):
@@ -76,7 +105,13 @@ def media_auth(request):
     uri = request.META.get("HTTP_X_ORIGINAL_URI", "")
     uid = _extract_uid(uri)
     if not uid:
-        return HttpResponse(status=403)
+        # User-uploaded thumbnails/posters don't have the uid in the filename.
+        # Fall back to a per-path lookup, scoped to /original/thumbnails/.
+        relpath = _relpath_from_uri(uri)
+        if relpath and relpath.startswith(THUMBNAILS_PREFIX):
+            uid = _lookup_uid_by_path(relpath)
+        if not uid:
+            return HttpResponse(status=403)
 
     user = request.user
     cache_key = f"xaccel:auth:{uid}:{user.id if user.is_authenticated else 'anon'}"
