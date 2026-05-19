@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.3](https://github.com/mediacms-io/mediacms/compare/v8.1.2...v8.1.3) (2026-05-19)
+
+### Bug Fixes
+
+* django connection settings ([#1529](https://github.com/mediacms-io/mediacms/issues/1529)) ([e89c4a3](https://github.com/mediacms-io/mediacms/commit/e89c4a3c8523574b5852a434ed67e281b6290584))
+* prestart.sh loaddata re-runs on every container restart ([#1502](https://github.com/mediacms-io/mediacms/issues/1502)) ([777b06b](https://github.com/mediacms-io/mediacms/commit/777b06bbebf141e5b1cb27e17533fe65d57eb6cd))
+
 ## [8.1.2](https://github.com/mediacms-io/mediacms/compare/v8.1.1...v8.1.2) (2026-05-18)
 
 ### Bug Fixes
