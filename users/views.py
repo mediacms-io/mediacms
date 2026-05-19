@@ -1,3 +1,4 @@
+from allauth.account.adapter import get_adapter
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
@@ -276,6 +277,11 @@ class UserList(APIView):
 
         if not all([username, password, email, name]):
             return Response({"detail": "username, password, email, and name are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            username = get_adapter().clean_username(username, shallow=True)
+        except DjangoValidationError as e:
+            return Response({"detail": e.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(username=username).exists():
             return Response({"detail": "A user with that username already exists."}, status=status.HTTP_400_BAD_REQUEST)

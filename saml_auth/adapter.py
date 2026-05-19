@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialApp
@@ -22,7 +23,10 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
 
     def populate_user(self, request, sociallogin, data):
         user = sociallogin.user
-        user.username = sociallogin.account.uid
+        raw_uid = sociallogin.account.uid or ""
+        # Match the user URL pattern in users/urls.py: only [\w@._-] is reverse-able.
+        sanitized = re.sub(r"[^\w.@-]", "_", raw_uid, flags=re.ASCII)
+        user.username = sanitized[:150] if sanitized else raw_uid
         for item in ["name", "first_name", "last_name"]:
             if data.get(item):
                 setattr(user, item, data[item])
