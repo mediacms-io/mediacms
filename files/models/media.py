@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.files import File
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Func, Value
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -536,7 +536,9 @@ class Media(models.Model):
 
         from .. import tasks
 
-        tasks.produce_sprite_from_video.delay(self.friendly_token)
+        # Defer until the surrounding transaction commits so the worker can
+        # actually find the Media row. Runs immediately if not in a tx.
+        transaction.on_commit(lambda token=self.friendly_token: tasks.produce_sprite_from_video.delay(token))
         return True
 
     def encode(self, profiles=[], force=True, chunkize=True):
