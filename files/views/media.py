@@ -660,7 +660,9 @@ class MediaBulkUserActions(APIView):
 
             # Prioritize category_uids
             if category_uids:
-                categories = Category.objects.filter(uid__in=category_uids)
+                requested = Category.objects.filter(uid__in=category_uids)
+                allowed_ids = [cat.id for cat in requested if not cat.is_rbac_category or request.user.has_contributor_access_to_category(cat)]
+                categories = Category.objects.filter(id__in=allowed_ids)
             elif lti_context_id:
                 # Filter categories by lti_context_id and ensure they ARE RBAC categories
                 potential_categories = Category.objects.filter(lti_context_id=lti_context_id, is_rbac_category=True)
@@ -691,9 +693,11 @@ class MediaBulkUserActions(APIView):
             if not category_uids:
                 return Response({"detail": "category_uids is required for remove_from_category action"}, status=status.HTTP_400_BAD_REQUEST)
 
-            categories = Category.objects.filter(uid__in=category_uids)
+            requested = Category.objects.filter(uid__in=category_uids)
+            allowed_ids = [cat.id for cat in requested if not cat.is_rbac_category or request.user.has_contributor_access_to_category(cat)]
+            categories = Category.objects.filter(id__in=allowed_ids)
             if not categories:
-                return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "No matching categories found or access denied"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
             for category in categories:
