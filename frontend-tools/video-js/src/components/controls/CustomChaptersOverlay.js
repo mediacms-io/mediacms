@@ -21,6 +21,8 @@ class CustomChaptersOverlay extends Component {
         this.touchThreshold = 150; // ms for tap vs scroll detection
         this.isSmallScreen = window.innerWidth <= 480;
         this.scrollY = 0; // Track scroll position before locking
+        this.chaptersButtonEl = null; // Store button DOM element for cleanup
+        this.chaptersButtonClickHandler = null; // Store click handler for cleanup
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -348,6 +350,15 @@ class CustomChaptersOverlay extends Component {
     setupChaptersButton() {
         const chaptersButton = this.player().getChild('controlBar').getChild('chaptersButton');
         if (chaptersButton) {
+            // Remove any existing native event listeners first
+            if (this.chaptersButtonEl && this.chaptersButtonClickHandler) {
+                this.chaptersButtonEl.removeEventListener('click', this.chaptersButtonClickHandler);
+            }
+            
+            // Clear references to prevent memory leaks when switching between mobile/desktop
+            this.chaptersButtonEl = null;
+            this.chaptersButtonClickHandler = null;
+            
             chaptersButton.off('click');
             chaptersButton.off('touchstart');
 
@@ -358,7 +369,18 @@ class CustomChaptersOverlay extends Component {
                     this.toggleOverlay();
                 });
             } else {
-                chaptersButton.on('click', this.toggleOverlay);
+                // Use native DOM event listener to bypass Video.js MenuButton's built-in handler
+                const buttonEl = chaptersButton.el();
+                if (buttonEl) {
+                    this.chaptersButtonEl = buttonEl;
+                    // Create bound handler and store reference for cleanup
+                    this.chaptersButtonClickHandler = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.toggleOverlay();
+                    };
+                    buttonEl.addEventListener('click', this.chaptersButtonClickHandler);
+                }
             }
         }
     }
@@ -515,6 +537,13 @@ class CustomChaptersOverlay extends Component {
         if (this.handleResize) {
             window.removeEventListener('resize', this.handleResize);
             window.removeEventListener('orientationchange', this.handleResize);
+        }
+
+        // Clean up chapters button click listener
+        if (this.chaptersButtonEl && this.chaptersButtonClickHandler) {
+            this.chaptersButtonEl.removeEventListener('click', this.chaptersButtonClickHandler);
+            this.chaptersButtonEl = null;
+            this.chaptersButtonClickHandler = null;
         }
 
         super.dispose();
