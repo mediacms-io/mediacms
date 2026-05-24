@@ -16,7 +16,7 @@ from rest_framework.views import APIView
 
 from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
 
-from ..models import Media, Playlist, PlaylistMedia
+from ..models import Media, MediaPermission, Playlist, PlaylistMedia
 from ..serializers import MediaSerializer, PlaylistDetailSerializer, PlaylistSerializer
 
 
@@ -82,6 +82,31 @@ class PlaylistDetail(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    def _get_accessible_media_filter(self, request):
+        """
+        Build a Q object that filters media based on user permissions.
+        Returns media that is:
+        - listable (public)
+        - has direct MediaPermission for the user
+        - accessible via RBAC category membership (if USE_RBAC is enabled)
+        """
+        conditions = Q(media__listable=True)
+
+        if not request.user.is_authenticated:
+            return conditions
+
+        # Check for direct MediaPermission
+        if MediaPermission.objects.filter(user=request.user).exists():
+            conditions |= Q(media__permissions__user=request.user)
+
+        # Check for RBAC access
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_categories = request.user.get_rbac_categories_as_member()
+            if rbac_categories.exists():
+                conditions |= Q(media__category__in=rbac_categories)
+
+        return conditions
+
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
@@ -95,11 +120,13 @@ class PlaylistDetail(APIView):
 
         serializer = PlaylistDetailSerializer(playlist, context={"request": request})
 
-        # If user is the author, show all media; otherwise, show only public and unlisted media
+        # If user is the author, show all media; otherwise, filter based on permissions (RBAC, direct permissions, or listable)
         if request.user.is_authenticated and request.user == playlist.user:
             playlist_media = PlaylistMedia.objects.filter(playlist=playlist).prefetch_related("media__user").select_related("media")
         else:
-            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).filter(Q(media__state="public") | Q(media__state="unlisted")).prefetch_related("media__user").select_related("media")
+            # Apply permission filter to show media accessible via RBAC, direct permissions, or public visibility
+            accessible_filter = self._get_accessible_media_filter(request)
+            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).filter(accessible_filter).prefetch_related("media__user").select_related("media").distinct()
 
         playlist_media = [c.media for c in playlist_media]
 
