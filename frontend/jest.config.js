@@ -5,5 +5,5 @@ module.exports = {
         '^.+\\.tsx?$': 'ts-jest',
         '^.+\\.jsx?$': 'babel-jest',
     },
-    collectCoverageFrom: ['src/**'],
+    collectCoverageFrom: ['src/**', '!src/static/lib/**'],
 };
