@@ -16,7 +16,16 @@
     margin-bottom: 16px;
 
     .add-media-button {
+      position: relative;
       margin-left: auto;
+
+      .popup {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 8px;
+        z-index: 99;
+      }
 
       a {
         display: flex;

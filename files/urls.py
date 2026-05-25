@@ -61,12 +61,11 @@ urlpatterns = [
         views.MediaDetail.as_view(),
         name="api_get_media",
     ),
-    re_path(
-        r"^api/v1/media/encoding/(?P<encoding_id>[\w]*)$",
-        views.EncodingDetail.as_view(),
-        name="api_get_encoding",
-    ),
     re_path(r"^api/v1/search$", views.MediaSearch.as_view()),
+    re_path(
+        rf"^api/v1/media/{friendly_token}/share$",
+        views.media_share,
+    ),
     re_path(
         rf"^api/v1/media/{friendly_token}/actions$",
         views.MediaActions.as_view(),
@@ -80,6 +79,7 @@ urlpatterns = [
         views.trim_video,
     ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
+    re_path(r"^api/v1/categories/contributor$", views.CategoryListContributor.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
     re_path(
@@ -106,6 +106,7 @@ urlpatterns = [
     re_path(r"^api/v1/tasks$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/(?P<friendly_token>[\w|\W]*)$", views.TaskDetail.as_view()),
+    re_path(r"^api/v1/media-auth$", views.media_auth, name="media_auth"),
     re_path(r"^manage/comments$", views.manage_comments, name="manage_comments"),
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),

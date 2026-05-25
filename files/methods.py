@@ -238,6 +238,8 @@ def show_related_media(media, request=None, limit=100):
         return show_related_media_calculated(media, request, limit)
     elif settings.RELATED_MEDIA_STRATEGY == "author":
         return show_related_media_author(media, request, limit)
+    elif settings.RELATED_MEDIA_STRATEGY == "no_related":
+        return []
 
     return show_related_media_content(media, request, limit)
 
@@ -451,17 +453,21 @@ def kill_ffmpeg_process(filepath):
         filepath: Path to the file being processed by ffmpeg
 
     Returns:
-        subprocess.CompletedProcess: Result of the kill command
+        bool: True if the lookup ran, False if input was unusable
     """
-    if not filepath:
+    if not filepath or not isinstance(filepath, str):
         return False
-    cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    pid = result.stdout.decode("utf-8").strip()
-    if pid:
-        cmd = "kill -9 %s" % pid
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    return result
+    try:
+        ps = subprocess.run(["ps", "aux"], stdout=subprocess.PIPE, check=False)
+    except OSError:
+        return False
+    for line in ps.stdout.decode("utf-8", "replace").splitlines():
+        if "ffmpeg" not in line or filepath not in line or "grep" in line:
+            continue
+        parts = line.split()
+        if len(parts) > 1 and parts[1].isdigit():
+            subprocess.run(["kill", "-9", parts[1]], check=False)
+    return True
 
 
 def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):

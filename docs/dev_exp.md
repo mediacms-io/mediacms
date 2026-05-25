@@ -23,7 +23,7 @@ and will start all services required for MediaCMS, as Celery/Redis for asynchron
 For Django, the changes from the image produced by docker-compose.yaml are these:
 
 * Django runs in debug mode, with `python manage.py runserver`
-* uwsgi and nginx are not run
+* gunicorn and nginx are not run
 * Django runs in Debug mode, with Debug Toolbar
 * Static files (js/css) are loaded from static/ folder
 * corsheaders is installed and configured to allow all origins

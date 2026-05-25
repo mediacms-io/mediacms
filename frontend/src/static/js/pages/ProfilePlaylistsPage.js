@@ -6,9 +6,9 @@ import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
-import { ProfileMediaPage } from './ProfileMediaPage';
+import { ProfileMediaPageBase } from './ProfileMediaPage';
 
-export class ProfilePlaylistsPage extends ProfileMediaPage {
+export class ProfilePlaylistsPage extends ProfileMediaPageBase {
   constructor(props) {
     super(props, 'author-playlists');
 

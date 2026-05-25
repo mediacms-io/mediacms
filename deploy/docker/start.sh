@@ -11,7 +11,7 @@ else
     echo "There is no script $PRE_START_PATH"
 fi
 
-# Start Supervisor, with Nginx and uWSGI
+# Start Supervisor, with Nginx and Gunicorn
 echo "Starting server using supervisord..."
 
 exec /usr/bin/supervisord

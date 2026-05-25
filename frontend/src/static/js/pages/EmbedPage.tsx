@@ -2,6 +2,7 @@ import React, { useState, useEffect, CSSProperties } from 'react';
 import { SiteConsumer } from '../utils/contexts/';
 import { MediaPageStore } from '../utils/stores/';
 import { MediaPageActions } from '../utils/actions/';
+import { getParentMediaBase } from '../utils/helpers/';
 import VideoViewer from '../components/media-viewer/VideoViewer';
 
 const wrapperStyles = {
@@ -72,16 +73,20 @@ export const EmbedPage: React.FC = () => {
             const urlTimestamp = urlParams.get('t');
             const timestamp = urlTimestamp ? parseInt(urlTimestamp, 10) : null;
 
+            const parentMediaBase = getParentMediaBase();
+
             return (
-              <VideoViewer 
-                data={MediaPageStore.get('media-data')} 
-                siteUrl={site.url} 
-                containerStyles={containerStyles} 
+              <VideoViewer
+                data={MediaPageStore.get('media-data')}
+                siteUrl={site.url}
+                containerStyles={containerStyles}
+                inEmbed={true}
                 showTitle={showTitle}
                 showRelated={showRelated}
                 showUserAvatar={showUserAvatar}
                 linkTitle={linkTitle}
                 timestamp={timestamp}
+                parentMediaBase={parentMediaBase}
               />
             );
           }} 

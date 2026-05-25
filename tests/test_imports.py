@@ -34,7 +34,6 @@ class TestImports(TestCase):
         from files.views import CommentDetail  # noqa: F401
         from files.views import CommentList  # noqa: F401
         from files.views import EncodeProfileList  # noqa: F401
-        from files.views import EncodingDetail  # noqa: F401
         from files.views import MediaActions  # noqa: F401
         from files.views import MediaBulkUserActions  # noqa: F401
         from files.views import MediaDetail  # noqa: F401

@@ -37,3 +37,5 @@ frontend-tools/chapters-editor/client/public/videos/sample-video.mp3
 static/chapters_editor/videos/sample-video.mp3
 static/video_editor/videos/sample-video.mp3
 templates/todo-MS4.md
+.secret_key
+.secret_key.lock

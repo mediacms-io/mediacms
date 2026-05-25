@@ -35,4 +35,29 @@ find /home/mediacms.io/mediacms ! \( -path "*.git*" -o -name "package-lock.json"
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
 
+# Generate or read SECRET_KEY once, shared across all containers via the
+# host-mounted project volume. Atomic create-or-read so parallel container
+# starts (web + celery_worker + celery_beat + migrations) can't race.
+# Uses `mkdir` as the lock primitive (POSIX-atomic, no dependency on flock).
+SECRET_KEY_FILE="${SECRET_KEY_FILE:-/home/mediacms.io/mediacms/.secret_key}"
+SECRET_KEY_LOCK="${SECRET_KEY_FILE}.lock"
+
+if [ -z "${SECRET_KEY:-}" ]; then
+    if [ ! -s "$SECRET_KEY_FILE" ]; then
+        # Spin-acquire the lock. mkdir is atomic; first caller wins, others retry.
+        while ! mkdir "$SECRET_KEY_LOCK" 2>/dev/null; do
+            sleep 0.2
+        done
+        # Re-check inside the lock: another container may have just written it.
+        if [ ! -s "$SECRET_KEY_FILE" ]; then
+            python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())' > "$SECRET_KEY_FILE"
+            chown www-data:www-data "$SECRET_KEY_FILE"
+            chmod 600 "$SECRET_KEY_FILE"
+            echo "entrypoint.sh: generated new SECRET_KEY at $SECRET_KEY_FILE"
+        fi
+        rmdir "$SECRET_KEY_LOCK"
+    fi
+    export SECRET_KEY="$(cat "$SECRET_KEY_FILE")"
+fi
+
 exec "$@"

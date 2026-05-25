@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Field, Layout, Submit
@@ -5,8 +7,10 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, Subtitle
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
 from .widgets import CategoryModalWidget
+
+_PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
 
 
 class CustomField(Field):
@@ -116,6 +120,7 @@ class MediaMetadataForm(forms.ModelForm):
 
 class MediaPublishForm(forms.ModelForm):
     confirm_state = forms.BooleanField(required=False, initial=False, label="Acknowledge sharing status", help_text="")
+    shared = forms.BooleanField(required=False, initial=False, label="Shared")
 
     class Meta:
         model = Media
@@ -123,16 +128,20 @@ class MediaPublishForm(forms.ModelForm):
 
         widgets = {
             "category": CategoryModalWidget(),
+            "state": forms.RadioSelect(),
         }
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
+        self.request = kwargs.pop('request', None)
         super(MediaPublishForm, self).__init__(*args, **kwargs)
 
-        self.has_custom_permissions = self.instance.permissions.exists() if self.instance.pk else False
-        self.has_rbac_categories = self.instance.category.filter(is_rbac_category=True).exists() if self.instance.pk else False
-        self.is_shared = self.has_custom_permissions or self.has_rbac_categories
-        self.actual_state = self.instance.state if self.instance.pk else None
+        self.was_shared = self.instance.is_shared if self.instance.pk else False
+        self.had_explicit_permission = self.instance.permissions.exists() if self.instance.pk else False
+        is_embed_mode = self._check_embed_mode()
+
+        self.fields["shared"].initial = self.was_shared
+        self.initial["shared"] = self.was_shared
 
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
@@ -145,13 +154,6 @@ class MediaPublishForm(forms.ModelForm):
                 if self.instance.state and self.instance.state not in valid_states:
                     valid_states.append(self.instance.state)
                 self.fields["state"].choices = [(state, dict(MEDIA_STATES).get(state, state)) for state in valid_states]
-
-        if self.is_shared:
-            current_choices = list(self.fields["state"].choices)
-            current_choices.insert(0, ("shared", "Shared"))
-            self.fields["state"].choices = current_choices
-            self.fields["state"].initial = "shared"
-            self.initial["state"] = "shared"
 
         if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
             if is_mediacms_editor(user):
@@ -169,6 +171,14 @@ class MediaPublishForm(forms.ModelForm):
 
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
 
+        # Filter for LMS courses only when in embed mode
+        if is_embed_mode and 'category' in self.fields:
+            current_queryset = self.fields['category'].queryset
+            self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
+            self.fields['category'].label = 'Course'
+            self.fields['category'].help_text = 'Media can be shared with one or more courses'
+            self.fields['category'].widget.is_lms_mode = True
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -177,7 +187,7 @@ class MediaPublishForm(forms.ModelForm):
         self.helper.form_show_errors = False
         self.helper.layout = Layout(
             CustomField('category'),
-            CustomField('state'),
+            HTML(_PUBLISH_STATE_HTML),
             CustomField('featured'),
             CustomField('reported_times'),
             CustomField('is_reviewed'),
@@ -186,83 +196,53 @@ class MediaPublishForm(forms.ModelForm):
 
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
 
+    def _check_embed_mode(self):
+        """Check if the current request is in embed mode"""
+        if not self.request:
+            return False
+
+        # Check query parameter
+        mode = self.request.GET.get('mode', '')
+        if mode == 'lms_embed_mode':
+            return True
+
+        # Check session storage
+        if self.request.session.get('lms_embed_mode') == 'true':
+            return True
+
+        return False
+
     def clean(self):
         cleaned_data = super().clean()
-        state = cleaned_data.get("state")
-        categories = cleaned_data.get("category")
+        shared = cleaned_data.get("shared")
 
-        if self.is_shared and state != "shared":
-            self.fields['confirm_state'].widget = forms.CheckboxInput()
-            state_index = None
-            for i, layout_item in enumerate(self.helper.layout):
-                if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
-                    state_index = i
-                    break
-
-            if state_index is not None:
-                layout_items = list(self.helper.layout)
-                layout_items.insert(state_index + 1, CustomField('confirm_state'))
-                self.helper.layout = Layout(*layout_items)
-
-            if not cleaned_data.get('confirm_state'):
-                if state == 'private':
-                    error_parts = []
-                    if self.has_rbac_categories:
-                        rbac_cat_titles = self.instance.category.filter(is_rbac_category=True).values_list('title', flat=True)
-                        error_parts.append(f"shared with users that have access to categories: {', '.join(rbac_cat_titles)}")
-                    if self.has_custom_permissions:
-                        error_parts.append("shared by me with other users (visible in 'Shared by me' page)")
-
-                    error_message = f"I understand that changing to Private will remove all sharing. Currently this media is {' and '.join(error_parts)}. All this sharing will be removed."
-                    self.add_error('confirm_state', error_message)
-                else:
-                    error_message = f"I understand that changing to {state.title()} will maintain existing sharing settings."
-                    self.add_error('confirm_state', error_message)
-
-        elif state in ['private', 'unlisted']:
-            custom_permissions = self.instance.permissions.exists()
-            rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
-            if rbac_categories or custom_permissions:
-                self.fields['confirm_state'].widget = forms.CheckboxInput()
-                state_index = None
-                for i, layout_item in enumerate(self.helper.layout):
-                    if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
-                        state_index = i
-                        break
-
-                if state_index is not None:
-                    layout_items = list(self.helper.layout)
-                    layout_items.insert(state_index + 1, CustomField('confirm_state'))
-                    self.helper.layout = Layout(*layout_items)
-
-                if not cleaned_data.get('confirm_state'):
-                    if rbac_categories:
-                        error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to categories: {', '.join(rbac_categories)}"
-                        self.add_error('confirm_state', error_message)
-                    if custom_permissions:
-                        error_message = f"I understand that although media state is {state}, the media is also shared by me with other users, that I can see in the 'Shared by me' page"
-                        self.add_error('confirm_state', error_message)
-
-        # Convert "shared" state to actual underlying state for saving. we dont keep shared state in DB
-        if state == "shared":
-            cleaned_data["state"] = self.actual_state
+        if self.was_shared and not shared and not cleaned_data.get('confirm_state'):
+            self.add_error('confirm_state', "I understand that unchecking Shared will remove all existing sharing for this media.")
 
         return cleaned_data
 
     def save(self, *args, **kwargs):
         data = self.cleaned_data
         state = data.get("state")
+        shared = data.get("shared")
 
-        # If transitioning from shared to private, remove all sharing
-        if self.is_shared and state == 'private' and data.get('confirm_state'):
-            # Remove all custom permissions
+        if shared:
+            if self.request:
+                submitted_categories = self.cleaned_data.get('category', [])
+                submitted_has_rbac = any(cat.is_rbac_category for cat in submitted_categories)
+                if self.had_explicit_permission or (not self.was_shared and not submitted_has_rbac):
+                    MediaPermission.objects.get_or_create(
+                        media=self.instance,
+                        user=self.request.user,
+                        defaults={'owner_user': self.request.user, 'permission': 'owner'},
+                    )
+        elif not shared:
             self.instance.permissions.all().delete()
-            # Remove RBAC categories
             rbac_cats = self.instance.category.filter(is_rbac_category=True)
             self.instance.category.remove(*rbac_cats)
 
-        if state != self.initial["state"]:
-            self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
+        if state != self.initial.get("state"):
+            self.instance.state = get_next_state(self.user, self.initial.get("state"), self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
 

@@ -65,6 +65,7 @@ class CategoryAdminForm(forms.ModelForm):
 
     class Meta:
         model = Category
+        # LTI fields will be shown as read-only when USE_LTI is enabled
         fields = '__all__'
 
     def clean(self):
@@ -135,7 +136,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["title", "user", "add_date", "media_count"]
     list_filter = []
     ordering = ("-add_date",)
-    readonly_fields = ("user", "media_count")
+    readonly_fields = ("user", "media_count", "lti_platform", "lti_context_id")
     change_form_template = 'admin/files/category/change_form.html'
 
     def get_list_filter(self, request):
@@ -145,6 +146,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_filter.insert(0, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_filter.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_filter.append("is_lms_course")
 
         return list_filter
 
@@ -154,6 +157,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_display.insert(-1, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_display.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_display.insert(-1, "is_lms_course")
 
         return list_display
 
@@ -167,6 +172,14 @@ class CategoryAdmin(admin.ModelAdmin):
             ),
         ]
 
+        additional_fieldsets = []
+
+        if getattr(settings, 'USE_LTI', False):
+            lti_fieldset = [
+                ('LTI Integration', {'fields': ['lti_platform', 'lti_context_id'], 'classes': ['tab'], 'description': 'LTI/LMS integration settings (automatically managed by LTI provisioning)'}),
+            ]
+            additional_fieldsets.extend(lti_fieldset)
+
         if getattr(settings, 'USE_RBAC', False):
             rbac_fieldset = [
                 ('RBAC Settings', {'fields': ['is_rbac_category'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
@@ -177,9 +190,9 @@ class CategoryAdmin(admin.ModelAdmin):
                     ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
                     ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
                 ]
-            return basic_fieldset + rbac_fieldset
-        else:
-            return basic_fieldset
+            additional_fieldsets.extend(rbac_fieldset)
+
+        return basic_fieldset + additional_fieldsets
 
 
 class TagAdmin(admin.ModelAdmin):

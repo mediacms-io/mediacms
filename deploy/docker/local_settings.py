@@ -2,7 +2,6 @@ import os
 
 FRONTEND_HOST = os.getenv('FRONTEND_HOST', 'http://localhost')
 PORTAL_NAME = os.getenv('PORTAL_NAME', 'MediaCMS')
-SECRET_KEY = os.getenv('SECRET_KEY', 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2')
 REDIS_LOCATION = os.getenv('REDIS_LOCATION', 'redis://redis:6379/1')
 
 DATABASES = {
@@ -13,7 +12,15 @@ DATABASES = {
         "PORT": os.getenv('POSTGRES_PORT', '5432'),
         "USER": os.getenv('POSTGRES_USER', 'mediacms'),
         "PASSWORD": os.getenv('POSTGRES_PASSWORD', 'mediacms'),
-        "OPTIONS": {'pool': True},
+        "OPTIONS": {
+            "pool": {
+                "min_size": 2,
+                "max_size": 8,
+                "timeout": 10,
+                "max_lifetime": 30 * 60,
+                "max_idle": 10 * 60,
+            }
+        },
     }
 }
 

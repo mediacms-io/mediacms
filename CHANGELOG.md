@@ -1,5 +1,78 @@
 # Changelog
 
+## [8.1.3](https://github.com/mediacms-io/mediacms/compare/v8.1.2...v8.1.3) (2026-05-19)
+
+### Bug Fixes
+
+* django connection settings ([#1529](https://github.com/mediacms-io/mediacms/issues/1529)) ([e89c4a3](https://github.com/mediacms-io/mediacms/commit/e89c4a3c8523574b5852a434ed67e281b6290584))
+* prestart.sh loaddata re-runs on every container restart ([#1502](https://github.com/mediacms-io/mediacms/issues/1502)) ([777b06b](https://github.com/mediacms-io/mediacms/commit/777b06bbebf141e5b1cb27e17533fe65d57eb6cd))
+
+## [8.1.2](https://github.com/mediacms-io/mediacms/compare/v8.1.1...v8.1.2) (2026-05-18)
+
+### Bug Fixes
+
+* remove redundant check ([#1528](https://github.com/mediacms-io/mediacms/issues/1528)) ([c7a673b](https://github.com/mediacms-io/mediacms/commit/c7a673bbbf46efc37621dc4a5109a85fc10e1317))
+
+## [8.1.1](https://github.com/mediacms-io/mediacms/compare/v8.1.0...v8.1.1) (2026-05-18)
+
+### Bug Fixes
+
+* x-accell headers on uploaded poster ([#1526](https://github.com/mediacms-io/mediacms/issues/1526)) ([ae63a5a](https://github.com/mediacms-io/mediacms/commit/ae63a5af647c8865b96e6e50dda1ea9d29b5bd0b))
+
+## [8.1.0](https://github.com/mediacms-io/mediacms/compare/v8.0.8...v8.1.0) (2026-05-17)
+
+### Features
+
+* introduce x-accell headers ([9302559](https://github.com/mediacms-io/mediacms/commit/9302559d4bb3e4d0adb299ed37438b04c39e1864))
+
+## [8.0.8](https://github.com/mediacms-io/mediacms/compare/v8.0.7...v8.0.8) (2026-05-13)
+
+### Bug Fixes
+
+* update documentation and fix smaller issues ([#1520](https://github.com/mediacms-io/mediacms/issues/1520)) ([d6a1151](https://github.com/mediacms-io/mediacms/commit/d6a11514e54b9341ec8a306a259adce6b4199d42))
+
+## [8.0.7](https://github.com/mediacms-io/mediacms/compare/v8.0.6...v8.0.7) (2026-05-12)
+
+### Bug Fixes
+
+* bring related items back ([#1515](https://github.com/mediacms-io/mediacms/issues/1515)) ([6ee5bef](https://github.com/mediacms-io/mediacms/commit/6ee5bef6ce31cf849941f65d0817e53b8f03362f))
+
+## [8.0.6](https://github.com/mediacms-io/mediacms/compare/v8.0.5...v8.0.6) (2026-05-11)
+
+### Bug Fixes
+
+* better place secret key settings ([4f11add](https://github.com/mediacms-io/mediacms/commit/4f11addcfd6657e7e63eed0570b1d4d9bca75698))
+
+## [8.0.5](https://github.com/mediacms-io/mediacms/compare/v8.0.4...v8.0.5) (2026-05-11)
+
+### Bug Fixes
+
+* add secret key to gitignore ([b6da9c4](https://github.com/mediacms-io/mediacms/commit/b6da9c4662b3fba234b8dc69700ffa44fced7482))
+
+## [8.0.4](https://github.com/mediacms-io/mediacms/compare/v8.0.3...v8.0.4) (2026-05-11)
+
+### Bug Fixes
+
+* docker compose settings, provide key ([318dad0](https://github.com/mediacms-io/mediacms/commit/318dad0e5d2512d68068c019eb87f942f83318e9))
+
+## [8.0.3](https://github.com/mediacms-io/mediacms/compare/v8.0.2...v8.0.3) (2026-05-11)
+
+### Bug Fixes
+
+* secret key ([559977f](https://github.com/mediacms-io/mediacms/commit/559977f9bc74412739784926862b94a558e6fd84))
+
+## [8.0.2](https://github.com/mediacms-io/mediacms/compare/v8.0.1...v8.0.2) (2026-05-11)
+
+### Bug Fixes
+
+* provide Bento4 url ([c19c520](https://github.com/mediacms-io/mediacms/commit/c19c5207e907cbd7d0c968d8cd8caaec20706277))
+
+## [7.7.0](https://github.com/mediacms-io/mediacms/compare/v7.6.0...v7.7.0) (2026-05-11)
+
+### Features
+
+* LTI support and Moodle plugin ([55ab7ff](https://github.com/mediacms-io/mediacms/commit/55ab7ff34fcd05806b845cf958f07841a7cdfc78))
+
 ## [7.6.0](https://github.com/mediacms-io/mediacms/compare/v7.5.0...v7.6.0) (2026-02-07)
 
 ### Features

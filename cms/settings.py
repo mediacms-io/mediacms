@@ -171,8 +171,19 @@ REST_FRAMEWORK = {
 }
 
 
-SECRET_KEY = "2dii4cog7k=5n37$fz)8dst)kg(s3&10)^qa*gv(kk+nv-z&cu"
-# TODO: this needs to be changed!
+# In docker, deploy/docker/entrypoint.sh ensures the SECRET_KEY env var is
+# set (generating .secret_key once on first start if needed). Outside docker,
+# either set SECRET_KEY in the environment or create a .secret_key file at the
+# project root, e.g.:
+#   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())' > .secret_key
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    _secret_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.secret_key')
+    if os.path.exists(_secret_path):
+        with open(_secret_path) as _f:
+            SECRET_KEY = _f.read().strip()
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set. Set the SECRET_KEY env var or create a .secret_key file at the project root.")
 
 TEMP_DIRECTORY = "/tmp"  # Don't use a temp directory inside BASE_DIR!!!
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -190,6 +201,15 @@ MEDIA_ENCODING_DIR = "encoded/"
 THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
 SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
 HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
+
+# Protect media files via nginx auth_request
+# When True, nginx delegates authorization for /media/<protected>/... to a
+# Django endpoint that checks the Media's state and the user's access.
+USE_X_ACCEL_REDIRECT = True
+# Subdirectories of MEDIA_ROOT that should be gated. "chunks" is intentionally
+# omitted (upload state, not playback).
+X_ACCEL_PROTECTED_PATHS = ["encoded", "hls", "original"]
+X_ACCEL_AUTH_CACHE_SECONDS = 300
 
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
 FFPROBE_COMMAND = "ffprobe"  # this is the path
@@ -255,21 +275,6 @@ CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media up
 # mp4hls command, part of Bento4
 MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
 
-# highly experimental, related with remote workers
-ADMIN_TOKEN = ""
-# this is used by remote workers to push
-# encodings once they are done
-# USE_BASIC_HTTP = True
-# BASIC_HTTP_USER_PAIR = ('user', 'password')
-# specify basic auth user/password pair for use with the
-# remote workers, if nginx basic auth is setup
-# apache2-utils need be installed
-# then run
-# htpasswd -c /home/mediacms.io/mediacms/deploy/.htpasswd user
-# and set a password
-# edit /etc/nginx/sites-enabled/mediacms.io and
-# uncomment the two lines related to htpasswd
-
 
 AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "/"
@@ -300,6 +305,7 @@ INSTALLED_APPS = [
     "actions.apps.ActionsConfig",
     "rbac.apps.RbacConfig",
     "identity_providers.apps.IdentityProvidersConfig",
+    "lti.apps.LtiConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -401,7 +407,25 @@ LOGGING = {
     },
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "mediacms",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
+        "USER": "mediacms",
+        "PASSWORD": "mediacms",
+        "OPTIONS": {
+            "pool": {
+                "min_size": 2,
+                "max_size": 8,
+                "timeout": 10,
+                "max_lifetime": 30 * 60,
+                "max_idle": 10 * 60,
+            }
+        },
+    }
+}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
@@ -555,6 +579,7 @@ DJANGO_ADMIN_URL = "admin/"
 USE_SAML = False
 USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
+USE_LTI = False  # Enable LTI 1.3 integration
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 USE_ROUNDED_CORNERS = True
@@ -650,3 +675,20 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+
+# LTI 1.3 Integration Settings
+if USE_LTI:
+    # Session timeout for LTI launches (seconds)
+    LTI_SESSION_TIMEOUT = 3600  # 1 hour
+    # Cookie settings required for iframe embedding from LMS
+    # IMPORTANT: Requires HTTPS to be enabled!
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SECURE = True
+    RELATED_MEDIA_STRATEGY = "no_related"
+
+    # Whether LMS course categories appear in the public
+    # category list.
+    SHOW_LMS_COURSES_IN_CATEGORIES = False

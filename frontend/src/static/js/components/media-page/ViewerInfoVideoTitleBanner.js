@@ -95,10 +95,8 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
                                 <MediaShareButton isVideo={true} />
                             ) : null}
 
-                            {!inEmbeddedApp() &&
-                            !MemberContext._currentValue.is.anonymous &&
-                            MemberContext._currentValue.can.saveMedia &&
-                            -1 < PlaylistsContext._currentValue.mediaTypes.indexOf(MediaPageStore.get('media-type')) ? (
+                            {!MemberContext._currentValue.is.anonymous &&
+                            MemberContext._currentValue.can.saveMedia ? (
                                 <MediaSaveButton />
                             ) : null}
 

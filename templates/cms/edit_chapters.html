@@ -16,7 +16,7 @@
 		mediaId: "{{ media_object.friendly_token }}",
 		redirectURL: "{{ media_object.get_absolute_url }}",
 		redirectUserMediaURL: "{{ media_object.user.get_absolute_url }}",
-		chapters: {{ chapters|safe }},
+		chapters: {{ chapters }},
     };
 </script>
 {%endblock topimports %}
