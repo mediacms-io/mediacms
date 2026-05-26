@@ -429,15 +429,23 @@ class CustomSettingsMenu extends Component {
     }
 
     createQualitySubmenu(qualities, currentValue) {
-        this.qualitySubmenu = document.createElement('div');
-        this.qualitySubmenu.className = 'quality-submenu';
+        if (!this.qualitySubmenu) {
+            this.qualitySubmenu = document.createElement('div');
+            this.qualitySubmenu.className = 'quality-submenu';
+            this.qualitySubmenu.innerHTML = `
+                <div class="submenu-header">
+                    <span style="margin-right: 8px;">←</span>
+                    <span>Quality</span>
+                </div>
+                <div class="quality-options-body"></div>
+            `;
+            this.settingsOverlay.appendChild(this.qualitySubmenu);
+        }
 
-        const header = `
-            <div class="submenu-header">
-                <span style="margin-right: 8px;">←</span>
-                <span>Quality</span>
-            </div>
-        `;
+        const optionsBody = this.qualitySubmenu.querySelector('.quality-options-body');
+        if (!optionsBody) {
+            return;
+        }
 
         const optionsHtml = qualities
             .map(
@@ -450,8 +458,7 @@ class CustomSettingsMenu extends Component {
             )
             .join('');
 
-        this.qualitySubmenu.innerHTML = header + optionsHtml;
-        this.settingsOverlay.appendChild(this.qualitySubmenu);
+        optionsBody.innerHTML = optionsHtml;
     }
 
     createSubtitlesSubmenu() {
@@ -570,6 +577,55 @@ class CustomSettingsMenu extends Component {
         // Priority: provided options -> MEDIA_DATA JSON -> player sources -> default
         const desiredOrder = ['auto', '144p', '240p', '360p', '480p', '720p', '1080p'];
 
+        // External HLS sources may expose only master_file (no *_playlist URLs).
+        // In that case, read real renditions from VHS qualityLevels so users can force one.
+        try {
+            const md = typeof window !== 'undefined' ? window.MEDIA_DATA : null;
+            const hlsInfo = md?.data?.hls_info || {};
+            const hasMaster = !!hlsInfo.master_file;
+            const hasVariantPlaylists = Object.keys(hlsInfo).some((key) => key.endsWith('_playlist'));
+
+            if (hasMaster && !hasVariantPlaylists) {
+                const player = this.player();
+                const levels =
+                    player && typeof player.qualityLevels === 'function' ? player.qualityLevels() : null;
+
+                if (levels && levels.length) {
+                    const qualities = [
+                        {
+                            label: 'Auto',
+                            value: 'auto',
+                            src: player.currentSrc ? player.currentSrc() : hlsInfo.master_file,
+                            type: 'application/x-mpegURL',
+                            useQualityLevels: true,
+                        },
+                    ];
+
+                    const seen = new Set();
+                    for (let i = 0; i < levels.length; i++) {
+                        const level = levels[i];
+                        const height = Number(level.height || 0);
+                        if (!height || seen.has(height)) {
+                            continue;
+                        }
+                        seen.add(height);
+                        qualities.push({
+                            label: `${height}p`,
+                            value: `${height}p`,
+                            src: player.currentSrc ? player.currentSrc() : hlsInfo.master_file,
+                            type: 'application/x-mpegURL',
+                            useQualityLevels: true,
+                            targetHeight: height,
+                        });
+                    }
+
+                    return this.sortAndDecorateQualities(qualities, desiredOrder);
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
         if (Array.isArray(this.providedQualities) && this.providedQualities.length) {
             return this.sortAndDecorateQualities(this.providedQualities, desiredOrder);
         }
@@ -644,6 +700,19 @@ class CustomSettingsMenu extends Component {
         // The settings button will be positioned according to the order property in CSS
     }
 
+    refreshQualitySubmenu() {
+        const qualities = this.getAvailableQualities();
+        const currentQuality = this.userPreferences.getPreference('quality');
+        const activeQuality = qualities.find((q) => q.value === currentQuality) || qualities[0];
+
+        this.createQualitySubmenu(qualities, activeQuality?.value);
+
+        const currentQualityDisplay = this.settingsOverlay?.querySelector('.current-quality');
+        if (currentQualityDisplay && activeQuality) {
+            currentQualityDisplay.innerHTML = activeQuality.displayLabel || activeQuality.label || 'Auto';
+        }
+    }
+
     setupEventListeners() {
         // Close button functionality
         const closeButton = this.settingsOverlay.querySelector('.settings-close-btn');
@@ -684,6 +753,7 @@ class CustomSettingsMenu extends Component {
             }
 
             if (e.target.closest('[data-setting="quality"]')) {
+                this.refreshQualitySubmenu();
                 this.qualitySubmenu.style.display = 'flex';
                 this.speedSubmenu.style.display = 'none';
             }
@@ -731,6 +801,7 @@ class CustomSettingsMenu extends Component {
 
                 if (e.target.closest('[data-setting="quality"]')) {
                     e.preventDefault();
+                    this.refreshQualitySubmenu();
                     this.qualitySubmenu.style.display = 'flex';
                     this.speedSubmenu.style.display = 'none';
                 }
@@ -1157,6 +1228,30 @@ class CustomSettingsMenu extends Component {
         // Update main menu display
         const currentQualityDisplay = this.settingsOverlay.querySelector('.current-quality');
         currentQualityDisplay.innerHTML = selected?.displayLabel || selected?.label || String(value);
+
+        // For external HLS master-only sources, force quality via VHS qualityLevels
+        // rather than source URL switching.
+        if (selected?.useQualityLevels) {
+            const player = this.player();
+            const levels =
+                player && typeof player.qualityLevels === 'function' ? player.qualityLevels() : null;
+
+            if (levels && levels.length) {
+                if (String(value).toLowerCase() === 'auto') {
+                    for (let i = 0; i < levels.length; i++) {
+                        levels[i].enabled = true;
+                    }
+                } else {
+                    const target = parseInt(String(value).replace('p', ''), 10);
+                    for (let i = 0; i < levels.length; i++) {
+                        levels[i].enabled = Number(levels[i].height || 0) === target;
+                    }
+                }
+            }
+
+            this.closeMenu();
+            return;
+        }
 
         // Perform source switch if we have src defined
         if (selected?.src) {
