@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("files", "0014_alter_subtitle_options_and_more"),
+        ("files", "0018_embedmediacourse"),
     ]
 
     operations = [
