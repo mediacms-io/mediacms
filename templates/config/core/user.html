@@ -1,5 +1,5 @@
 MediaCMS.user = {
-	name: {% if request.user.is_authenticated %}"{{request.user.username}}"{% else %}null{% endif %},
+	name: {% if request.user.is_authenticated %}"{{request.user.name|default:request.user.username}}"{% else %}null{% endif %},
 	username: {% if request.user.is_authenticated %}"{{request.user.username}}"{% else %}null{% endif %},
 	thumbnail: {% if request.user.is_authenticated %}"{{request.user.thumbnail_url}}"{% else %}null{% endif %},
 	is: {

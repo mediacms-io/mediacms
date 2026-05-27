@@ -67,3 +67,31 @@ class ImportCSVsForm(forms.ModelForm):
             raise ValidationError("Invalid CSV file. Please ensure the file is properly formatted.")
         except UnicodeDecodeError:
             raise ValidationError("Invalid file encoding. Please upload a CSV file with UTF-8 encoding.")
+
+
+class OIDCSocialAppForm(forms.ModelForm):
+    server_url = forms.URLField(
+        required=True,
+        label="Server URL",
+        help_text="OpenID Connect discovery endpoint (e.g. https://provider.example.com/auth/realms/myrealm)",
+    )
+
+    class Meta:
+        model = SocialApp
+        fields = ('provider', 'provider_id', 'name', 'client_id', 'secret')
+        widgets = {
+            'secret': forms.PasswordInput(render_value=True),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['server_url'].initial = (self.instance.settings or {}).get('server_url', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        current = instance.settings or {}
+        instance.settings = {**current, 'server_url': self.cleaned_data['server_url']}
+        if commit:
+            instance.save()
+        return instance

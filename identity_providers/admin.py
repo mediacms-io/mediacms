@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 
-from identity_providers.forms import ImportCSVsForm
+from identity_providers.forms import ImportCSVsForm, OIDCSocialAppForm
 from identity_providers.models import (
     IdentityProviderCategoryMapping,
     IdentityProviderGlobalRole,
@@ -136,16 +136,33 @@ class CustomSocialAppAdmin(SocialAppAdmin):
     fields = ('provider', 'provider_id', 'name', 'client_id', 'sites', 'groups_csv', 'categories_csv')
     form = ImportCSVsForm
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.inlines = []
+    def get_fields(self, request, obj=None):
+        if obj is not None and obj.provider == "openid_connect":
+            return ['provider', 'provider_id', 'name', 'client_id', 'secret', 'server_url']
+        return super().get_fields(request, obj)
 
+    def get_form(self, request, obj=None, **kwargs):
+        if obj is not None and obj.provider == 'openid_connect':
+            kwargs['form'] = OIDCSocialAppForm
+        return super().get_form(request, obj, **kwargs)
+
+    def get_inlines(self, request, obj=None):
+        if obj is not None and obj.provider == "openid_connect":
+            if getattr(settings, 'USE_OIDC', False):
+                from oidc_auth.admin import OIDCConfigurationInline
+                return [OIDCConfigurationInline]
+            return []
+        # SAML and other providers
+        inlines = []
         if getattr(settings, 'USE_SAML', False):
-            self.inlines.append(SAMLConfigurationInline)
-        self.inlines.append(IdentityProviderGlobalRoleInline)
-        self.inlines.append(IdentityProviderGroupRoleInline)
-        self.inlines.append(RBACGroupInline)
-        self.inlines.append(IdentityProviderCategoryMappingInline)
+            inlines.append(SAMLConfigurationInline)
+        inlines += [
+            IdentityProviderGlobalRoleInline,
+            IdentityProviderGroupRoleInline,
+            RBACGroupInline,
+            IdentityProviderCategoryMappingInline,
+        ]
+        return inlines
 
     def get_protocol(self, obj):
         return obj.provider
@@ -175,6 +192,11 @@ class CustomSocialAppAdmin(SocialAppAdmin):
     get_protocol.short_description = 'Protocol'
 
     def save_model(self, request, obj, form, change):
+        if obj.provider == 'openid_connect':
+            super().save_model(request, obj, form, change)
+            from django.contrib.sites.models import Site
+            obj.sites.add(Site.objects.get_current())
+            return
         super().save_model(request, obj, form, change)
         csv_file = form.cleaned_data.get('groups_csv')
         if csv_file:
