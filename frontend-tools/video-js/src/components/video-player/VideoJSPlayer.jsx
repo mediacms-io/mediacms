@@ -745,7 +745,10 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
 
     // Get subtitle tracks from backend response or fallback based on environment
     const backendSubtitles = mediaData?.data?.subtitles_info || (isDevMode ? demoSubtitleTracks : []);
-    const hasSubtitles = backendSubtitles.length > 0;
+    const mayHaveManifestSubtitles = currentVideo.sources.some(
+        (source) => String(source?.type || '').toLowerCase() === 'application/x-mpegurl'
+    );
+    const hasSubtitles = backendSubtitles.length > 0 || mayHaveManifestSubtitles;
     const subtitleTracks = hasSubtitles
         ? backendSubtitles.map((track) => ({
               kind: 'subtitles',

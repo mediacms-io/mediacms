@@ -37,6 +37,8 @@ class CustomSettingsMenu extends Component {
         this.getAvailableQualities = this.getAvailableQualities.bind(this);
         this.createSubtitlesSubmenu = this.createSubtitlesSubmenu.bind(this);
         this.refreshSubtitlesSubmenu = this.refreshSubtitlesSubmenu.bind(this);
+        this.hasAvailableSubtitleTracks = this.hasAvailableSubtitleTracks.bind(this);
+        this.ensureSubtitlesMenuItem = this.ensureSubtitlesMenuItem.bind(this);
         this.handleSubtitleChange = this.handleSubtitleChange.bind(this);
         this.handleClickOutside = this.handleClickOutside.bind(this);
         this.detectMobile = this.detectMobile.bind(this);
@@ -324,7 +326,7 @@ class CustomSettingsMenu extends Component {
         this.settingsOverlay.innerHTML += qualitySection;
 
         // Check if subtitles are available
-        if (this.hasSubtitles) {
+        if (this.hasSubtitles || this.hasAvailableSubtitleTracks()) {
             this.settingsOverlay.innerHTML += subtitlesSection;
         }
 
@@ -480,6 +482,51 @@ class CustomSettingsMenu extends Component {
         this.refreshSubtitlesSubmenu();
     }
 
+    hasAvailableSubtitleTracks() {
+        try {
+            const tracks = this.player().textTracks();
+            for (let i = 0; i < tracks.length; i++) {
+                const kind = String(tracks[i]?.kind || '').toLowerCase();
+                if (kind === 'subtitles' || kind === 'captions') {
+                    return true;
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        return false;
+    }
+
+    ensureSubtitlesMenuItem() {
+        if (!this.settingsOverlay) return;
+
+        const hasTracks = this.hasAvailableSubtitleTracks();
+        this.hasSubtitles = this.hasSubtitles || hasTracks;
+
+        const existingItem = this.settingsOverlay.querySelector('[data-setting="subtitles"]');
+        if (!existingItem && this.hasSubtitles) {
+            const qualityItem = this.settingsOverlay.querySelector('[data-setting="quality"]');
+            if (qualityItem) {
+                qualityItem.insertAdjacentHTML(
+                    'afterend',
+                    `
+    <div class="settings-item" data-setting="subtitles">
+        <span class="settings-left">
+           <span class="vjs-icon-placeholder settings-item-svg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 4H5C3.9 4 3 4.9 3 6V18C3 19.1 3.9 20 5 20H19C20.1 20 21 19.1 21 18V6C21 4.9 20.1 4 19 4ZM11 17H5V15H11V17ZM19 13H5V11H19V13ZM19 9H5V7H19V9Z" fill="white"/></svg>
+           </span>
+        <span>Captions</span></span>
+        <span class="settings-right">
+            <span class="current-subtitles">Off</span>
+            <span class="vjs-icon-placeholder vjs-icon-navigate-next"></span>
+        </span>
+    </div>`
+                );
+            }
+        }
+    }
+
     refreshSubtitlesSubmenu() {
         if (!this.subtitlesSubmenu) return;
         const body = this.subtitlesSubmenu.querySelector('.submenu-body');
@@ -487,11 +534,13 @@ class CustomSettingsMenu extends Component {
         const player = this.player();
         const tracks = player.textTracks();
 
+        this.ensureSubtitlesMenuItem();
+
         // Determine active
         let activeLang = null;
         for (let i = 0; i < tracks.length; i++) {
             const t = tracks[i];
-            if (t.kind === 'subtitles' && t.mode === 'showing') {
+            if ((t.kind === 'subtitles' || t.kind === 'captions') && t.mode === 'showing') {
                 activeLang = t.language;
                 break;
             }
@@ -502,7 +551,7 @@ class CustomSettingsMenu extends Component {
         items.push({ label: 'Off', lang: null });
         for (let i = 0; i < tracks.length; i++) {
             const t = tracks[i];
-            if (t.kind === 'subtitles') {
+            if (t.kind === 'subtitles' || t.kind === 'captions') {
                 items.push({ label: t.label || t.language || `Track ${i}`, lang: t.language, track: t });
             }
         }
@@ -531,7 +580,7 @@ class CustomSettingsMenu extends Component {
             // Find the active subtitle track
             for (let i = 0; i < tracks.length; i++) {
                 const t = tracks[i];
-                if (t.kind === 'subtitles' && t.mode === 'showing') {
+                if ((t.kind === 'subtitles' || t.kind === 'captions') && t.mode === 'showing') {
                     currentSubtitleLabel = t.label || t.language || 'Captions';
                     break;
                 }
@@ -557,6 +606,21 @@ class CustomSettingsMenu extends Component {
             // Also refresh the subtitle submenu to show correct selection
             this.refreshSubtitlesSubmenu();
         });
+
+        try {
+            const textTracks = this.player().textTracks();
+            if (textTracks && typeof textTracks.addEventListener === 'function') {
+                this.onTextTrackListChange = () => {
+                    this.ensureSubtitlesMenuItem();
+                    this.refreshSubtitlesSubmenu();
+                };
+                textTracks.addEventListener('addtrack', this.onTextTrackListChange);
+                textTracks.addEventListener('removetrack', this.onTextTrackListChange);
+                textTracks.addEventListener('change', this.onTextTrackListChange);
+            }
+        } catch (e) {
+            // ignore text track listener errors
+        }
 
         // Set up periodic updates every 2 seconds as backup
         this.subtitleSyncInterval = setInterval(() => {
@@ -1605,6 +1669,13 @@ class CustomSettingsMenu extends Component {
         // Remove text track change listener
         if (this.player()) {
             this.player().off('texttrackchange');
+
+            const textTracks = this.player().textTracks();
+            if (textTracks && this.onTextTrackListChange && typeof textTracks.removeEventListener === 'function') {
+                textTracks.removeEventListener('addtrack', this.onTextTrackListChange);
+                textTracks.removeEventListener('removetrack', this.onTextTrackListChange);
+                textTracks.removeEventListener('change', this.onTextTrackListChange);
+            }
         }
         
         // Remove event listeners
