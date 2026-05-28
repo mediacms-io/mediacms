@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import random
-import re
 import uuid
 
 import m3u8
@@ -227,19 +226,6 @@ class Media(models.Model):
 
     def __str__(self):
         return self.title
-
-    def _normalized_external_hls_url(self):
-        """Normalize common malformed URL forms like https//... -> https://..."""
-
-        if not self.external_hls_url:
-            return ""
-
-        url = self.external_hls_url.strip()
-        match = re.match(r"^(https?)(//.+)$", url, flags=re.IGNORECASE)
-        if match:
-            return f"{match.group(1)}:{match.group(2)}"
-
-        return url
 
     def __init__(self, *args, **kwargs):
         super(Media, self).__init__(*args, **kwargs)
@@ -759,9 +745,8 @@ class Media(models.Model):
     def original_media_url(self):
         """Property used on serializers"""
 
-        external_hls_url = self._normalized_external_hls_url()
-        if external_hls_url:
-            return external_hls_url
+        if self.external_hls_url:
+            return self.external_hls_url
 
         if settings.SHOW_ORIGINAL_MEDIA:
             return helpers.url_from_path(self.media_file.path)
@@ -882,10 +867,9 @@ class Media(models.Model):
 
         res = {}
         valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
-        external_hls_url = self._normalized_external_hls_url()
-        if external_hls_url:
+        if self.external_hls_url:
             # For external playlists we expose the master URL directly.
-            res["master_file"] = external_hls_url
+            res["master_file"] = self.external_hls_url
             return res
 
         if self.hls_file:
