@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import generics, permissions, status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
@@ -331,6 +331,7 @@ class UserDetail(APIView):
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
             openapi.Parameter(name="logo", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="logo"),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
@@ -360,6 +361,7 @@ class UserDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
             openapi.Parameter(name='action', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="action to perform ('change_password' or 'approve_user' or 'disapprove_user')"),
             openapi.Parameter(name='password', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="new password (if action is 'change_password')"),
@@ -461,17 +463,21 @@ class UserToken(APIView):
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = LoginSerializer
-    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     @swagger_auto_schema(
         tags=['Users'],
         operation_summary='Login url',
         operation_description="Login url endpoint. According to what the portal provides, you may provide username and/or email, plus the password",
-        manual_parameters=[
-            openapi.Parameter(name="username", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="username"),
-            openapi.Parameter(name="email", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="email"),
-            openapi.Parameter(name="password", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True, description="password"),
-        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['password'],
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='email'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='password'),
+            },
+        ),
         responses={200: openapi.Response('user details', LoginSerializer), 404: 'Bad request'},
     )
     def post(self, request):

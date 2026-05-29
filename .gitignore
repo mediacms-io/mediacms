@@ -39,3 +39,7 @@ static/video_editor/videos/sample-video.mp3
 templates/todo-MS4.md
 .secret_key
 .secret_key.lock
+
+# Python bytecode caches
+__pycache__/
+**/__pycache__/

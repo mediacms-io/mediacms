@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Playlist, PlaylistMedia, Subtitle
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -23,6 +23,12 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 class MediaMetadataForm(forms.ModelForm):
     new_tags = forms.CharField(label="Tags", help_text="a comma separated list of tags.", required=False)
+    playlist_ids = forms.ModelMultipleChoiceField(
+        queryset=Playlist.objects.none(),
+        required=False,
+        label="Playlists",
+        help_text="Select playlists containing this media. Deselect to remove from a playlist.",
+    )
 
     class Meta:
         model = Media
@@ -67,6 +73,12 @@ class MediaMetadataForm(forms.ModelForm):
 
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
 
+        playlist_owner = self.instance.user if getattr(self.instance, "pk", None) else user
+        owner_playlists = Playlist.objects.filter(user=playlist_owner).order_by("-add_date")
+        self.fields["playlist_ids"].queryset = owner_playlists
+        if getattr(self.instance, "pk", None):
+            self.fields["playlist_ids"].initial = owner_playlists.filter(playlistmedia__media=self.instance).distinct()
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -77,6 +89,7 @@ class MediaMetadataForm(forms.ModelForm):
         layout_fields = [
             CustomField('title'),
             CustomField('new_tags'),
+            CustomField('playlist_ids'),
             CustomField('add_date'),
             CustomField('description'),
             CustomField('enable_comments'),
@@ -115,6 +128,55 @@ class MediaMetadataForm(forms.ModelForm):
         data = self.cleaned_data  # noqa
 
         media = super(MediaMetadataForm, self).save(*args, **kwargs)
+
+        added_count = 0
+        removed_count = 0
+        unchanged_count = 0
+        full_playlists = []
+        selected_playlists = data.get("playlist_ids")
+
+        playlist_owner = media.user
+        owner_playlists = Playlist.objects.filter(user=playlist_owner)
+        existing_relations = PlaylistMedia.objects.filter(media=media, playlist__in=owner_playlists)
+
+        selected_playlist_ids = set()
+        if selected_playlists:
+            selected_playlist_ids = set(selected_playlists.values_list("id", flat=True))
+
+        existing_playlist_ids = set(existing_relations.values_list("playlist_id", flat=True))
+
+        to_remove_ids = existing_playlist_ids - selected_playlist_ids
+        if to_remove_ids:
+            removed_count = PlaylistMedia.objects.filter(media=media, playlist_id__in=to_remove_ids).delete()[0]
+
+        playlist_by_id = {playlist.id: playlist for playlist in owner_playlists if playlist.id in selected_playlist_ids}
+        to_add_ids = selected_playlist_ids - existing_playlist_ids
+        unchanged_count = len(selected_playlist_ids & existing_playlist_ids)
+
+        for playlist_id in to_add_ids:
+            playlist = playlist_by_id.get(playlist_id)
+            if not playlist:
+                continue
+
+            media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+            if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
+                full_playlists.append(playlist.title)
+                continue
+
+            PlaylistMedia.objects.create(
+                playlist=playlist,
+                media=media,
+                ordering=media_in_playlist + 1,
+            )
+            added_count += 1
+
+        self.playlist_sync_results = {
+            "added": added_count,
+            "removed": removed_count,
+            "unchanged": unchanged_count,
+            "full_playlists": full_playlists,
+        }
+
         return media
 
 

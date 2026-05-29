@@ -61,6 +61,17 @@ def record_screen(request):
     return render(request, "cms/record_screen.html", context)
 
 
+@login_required
+def add_external_hls(request):
+    """Add media from external HLS URL view"""
+
+    context = {}
+    context["can_add"] = user_allowed_to_upload(request)
+    context["can_upload_exp"] = settings.CANNOT_ADD_MEDIA_MESSAGE
+
+    return render(request, "cms/add_external_hls.html", context)
+
+
 def about(request):
     """About view"""
 
@@ -352,6 +363,7 @@ def edit_media(request):
         form = MediaMetadataForm(request.user, request.POST, request.FILES, instance=media)
         if form.is_valid():
             media = form.save()
+            playlist_sync_results = getattr(form, "playlist_sync_results", {})
             for tag in media.tags.all():
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
@@ -365,6 +377,32 @@ def edit_media(request):
                             tag = Tag.objects.create(title=tag, user=request.user)
                         if tag not in media.tags.all():
                             media.tags.add(tag)
+
+            added_count = playlist_sync_results.get("added", 0)
+            removed_count = playlist_sync_results.get("removed", 0)
+            unchanged_count = playlist_sync_results.get("unchanged", 0)
+            full_playlists = playlist_sync_results.get("full_playlists", [])
+
+            if added_count:
+                messages.add_message(request, messages.INFO, f"Media added to {added_count} playlist(s)")
+
+            if removed_count:
+                messages.add_message(request, messages.INFO, f"Media removed from {removed_count} playlist(s)")
+
+            if unchanged_count:
+                messages.add_message(
+                    request,
+                    messages.INFO,
+                    f"Media was already present in {unchanged_count} selected playlist(s)",
+                )
+
+            if full_playlists:
+                messages.add_message(
+                    request,
+                    messages.WARNING,
+                    f"Could not add media to full playlist(s): {', '.join(full_playlists)}",
+                )
+
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:

@@ -1,14 +1,19 @@
 from datetime import datetime, timedelta
+import re
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.validators import URLValidator
 from django.contrib.postgres.search import SearchQuery
+from django.db import transaction
 from django.db.models import Count, F, Prefetch, Q, prefetch_related_objects
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
@@ -32,6 +37,7 @@ from ..methods import (
     copy_media,
     get_user_or_session,
     is_mediacms_editor,
+    is_mediacms_manager,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -41,15 +47,157 @@ from ..models import (
     Comment,
     EmbedMediaCourse,
     EncodeProfile,
+    Language,
     Media,
     MediaPermission,
     Playlist,
     PlaylistMedia,
+    Subtitle,
     Tag,
 )
 from ..serializers import MediaSearchSerializer, MediaSerializer, SingleMediaSerializer
 from ..stop_words import STOP_WORDS
 from ..tasks import save_user_action
+
+
+def _parse_optional_boolean(value, field_name):
+    if value is None or value == "":
+        return None, None
+
+    if isinstance(value, bool):
+        return value, None
+
+    if isinstance(value, (int, float)) and value in (0, 1):
+        return bool(value), None
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        truthy = {"1", "true", "yes", "on"}
+        falsy = {"0", "false", "no", "off"}
+
+        if normalized in truthy:
+            return True, None
+        if normalized in falsy:
+            return False, None
+
+    return None, f"{field_name} must be a boolean"
+
+
+def _parse_tags_input(raw_tags):
+    if raw_tags is None:
+        return None, None
+
+    if isinstance(raw_tags, str):
+        tag_items = raw_tags.split(",")
+    elif isinstance(raw_tags, list):
+        tag_items = raw_tags
+    else:
+        return None, "tags must be a comma-separated string or an array of strings"
+
+    tags = []
+    seen = set()
+    for item in tag_items:
+        normalized_item = helpers.get_alphanumeric_only(str(item))[:99]
+        if normalized_item and normalized_item not in seen:
+            tags.append(normalized_item)
+            seen.add(normalized_item)
+
+    return tags, None
+
+
+def _parse_playlist_ids_input(raw_playlist_ids):
+    if raw_playlist_ids in (None, ""):
+        return None, None
+
+    if isinstance(raw_playlist_ids, (list, tuple)):
+        playlist_items = raw_playlist_ids
+    elif isinstance(raw_playlist_ids, str):
+        stripped_value = raw_playlist_ids.strip()
+        if not stripped_value:
+            return None, None
+        playlist_items = [item.strip() for item in stripped_value.split(",")]
+    else:
+        return None, "playlist_ids must be a comma-separated string or an array of integers"
+
+    playlist_ids = []
+    seen = set()
+    for item in playlist_items:
+        if item in (None, ""):
+            continue
+
+        try:
+            playlist_id = int(str(item).strip())
+        except (TypeError, ValueError):
+            return None, "playlist_ids must contain only integers"
+
+        if playlist_id <= 0:
+            return None, "playlist_ids must contain only positive integers"
+
+        if playlist_id not in seen:
+            playlist_ids.append(playlist_id)
+            seen.add(playlist_id)
+
+    if not playlist_ids:
+        return None, None
+
+    return playlist_ids, None
+
+
+def _add_media_to_playlists(media, user, playlist_ids):
+    if not playlist_ids:
+        return None
+
+    playlists = Playlist.objects.filter(user=user, id__in=playlist_ids)
+    found_playlist_ids = set(playlists.values_list("id", flat=True))
+    missing_ids = [playlist_id for playlist_id in playlist_ids if playlist_id not in found_playlist_ids]
+
+    if missing_ids:
+        return Response(
+            {"detail": f"No matching playlists found for ids: {missing_ids}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    for playlist in playlists:
+        media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
+        if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
+            return Response(
+                {
+                    "detail": (
+                        f"Playlist {playlist.id} reached max size "
+                        f"({settings.MAX_MEDIA_PER_PLAYLIST})"
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        PlaylistMedia.objects.get_or_create(
+            playlist=playlist,
+            media=media,
+            defaults={"ordering": media_in_playlist + 1},
+        )
+
+    return None
+
+
+def _apply_media_options(media, user, enable_comments=None, allow_download=None, tags=None):
+    fields_to_update = []
+
+    if enable_comments is not None:
+        media.enable_comments = enable_comments
+        fields_to_update.append("enable_comments")
+
+    if allow_download is not None:
+        media.allow_download = allow_download
+        fields_to_update.append("allow_download")
+
+    if fields_to_update:
+        media.save(update_fields=fields_to_update)
+
+    if tags is not None:
+        media.tags.clear()
+        for tag_title in tags:
+            tag, _ = Tag.objects.get_or_create(title=tag_title, defaults={"user": user})
+            media.tags.add(tag)
 
 
 class MediaList(APIView):
@@ -308,25 +456,218 @@ class MediaList(APIView):
         return response
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
-            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="media_file"),
+            openapi.Parameter(
+                name="media_file",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="media_file (required if external_m3u8_url is not provided)",
+            ),
+            openapi.Parameter(
+                name="external_m3u8_url",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="External HLS .m3u8 URL (required if media_file is not provided)",
+            ),
+            openapi.Parameter(
+                name="uploaded_poster",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload a poster image. This also updates the thumbnail used in listings/player.",
+            ),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable comments for this media",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable download option for this media",
+            ),
+            openapi.Parameter(
+                name="tags",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tags (e.g. 'news,events,live')",
+            ),
+            openapi.Parameter(
+                name="duration",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
+            ),
+            openapi.Parameter(
+                name="playlist_ids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
-        operation_description='Adds a new media, for authenticated users',
+        operation_description='Adds a new media for authenticated users. Provide either media_file or external_m3u8_url.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
         # Add new media
 
-        serializer = MediaSerializer(data=request.data, context={"request": request})
-        if serializer.is_valid():
-            media_file = request.data["media_file"]
-            serializer.save(user=request.user, media_file=media_file)
+        raw_enable_comments = request.data.get("enable_comments", None)
+        raw_allow_download = request.data.get("allow_download", None)
+        raw_tags = request.data.get("tags", None)
+        raw_playlist_ids = request.data.get("playlist_ids", None)
+        if hasattr(request.data, "getlist"):
+            raw_tags_list = request.data.getlist("tags")
+            if len(raw_tags_list) > 1:
+                raw_tags = raw_tags_list
+            raw_playlist_ids_list = request.data.getlist("playlist_ids")
+            if len(raw_playlist_ids_list) > 1:
+                raw_playlist_ids = raw_playlist_ids_list
+
+        enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
+        if comments_error:
+            return Response({"detail": comments_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        allow_download, download_error = _parse_optional_boolean(raw_allow_download, "allow_download")
+        if download_error:
+            return Response({"detail": download_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        tags, tags_error = _parse_tags_input(raw_tags)
+        if tags_error:
+            return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
+        if playlist_ids_error:
+            return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer_data = {}
+        for field_name in ("title", "description", "uploaded_poster", "media_file", "external_m3u8_url"):
+            if field_name in request.data:
+                serializer_data[field_name] = request.data.get(field_name)
+
+        if "duration" in request.data:
+            if not is_mediacms_manager(request.user):
+                return Response({"detail": "duration can only be set by managers"}, status=status.HTTP_403_FORBIDDEN)
+            if "external_m3u8_url" not in request.data:
+                return Response({"detail": "duration can only be set for external m3u8 media"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                duration_val = int(request.data.get("duration"))
+                if duration_val < 0:
+                    raise ValueError
+                serializer_data["duration"] = duration_val
+            except (ValueError, TypeError):
+                return Response({"detail": "duration must be a non-negative integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        external_m3u8_url = serializer_data.get("external_m3u8_url", "")
+        if isinstance(external_m3u8_url, str):
+            external_m3u8_url = external_m3u8_url.strip()
+            external_m3u8_url = self._normalize_external_m3u8_url(external_m3u8_url)
+
+        media_file = serializer_data.get("media_file")
+        if media_file and external_m3u8_url:
+            return Response(
+                {"detail": "Provide only one of media_file or external_m3u8_url"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not media_file and not external_m3u8_url:
+            return Response(
+                {"detail": "One of media_file or external_m3u8_url is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = MediaSerializer(data=serializer_data, context={"request": request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if external_m3u8_url:
+            if not self._is_valid_external_m3u8_url(external_m3u8_url):
+                return Response(
+                    {"detail": "external_m3u8_url must be a valid http(s) URL ending with .m3u8"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            title = serializer.validated_data.get("title")
+            if not title:
+                path_name = urlparse(external_m3u8_url).path.split("/")[-1]
+                title = path_name or "external-hls"
+
+            # Keep existing model constraints while allowing URL-based media entries.
+            placeholder_name = f"external/{helpers.produce_friendly_token(12)}.txt"
+            placeholder_file = ContentFile(b"external-hls", name=placeholder_name)
+
+            media = serializer.save(
+                user=request.user,
+                title=title,
+                media_file=placeholder_file,
+                media_type="video",
+                encoding_status="success",
+                external_hls_url=external_m3u8_url,
+            )
+
+            _apply_media_options(
+                media,
+                user=request.user,
+                enable_comments=enable_comments,
+                allow_download=allow_download,
+                tags=tags,
+            )
+
+            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            if add_to_playlist_error:
+                media.delete()
+                return add_to_playlist_error
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        media = serializer.save(user=request.user, media_file=media_file)
+        _apply_media_options(
+            media,
+            user=request.user,
+            enable_comments=enable_comments,
+            allow_download=allow_download,
+            tags=tags,
+        )
+
+        add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+        if add_to_playlist_error:
+            media.delete()
+            return add_to_playlist_error
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _is_valid_external_m3u8_url(self, url):
+        validator = URLValidator(schemes=["http", "https"])
+        try:
+            validator(url)
+        except Exception:
+            return False
+
+        parsed = urlparse(url)
+        return parsed.path.lower().endswith(".m3u8")
+
+    def _normalize_external_m3u8_url(self, url):
+        if not isinstance(url, str):
+            return url
+
+        match = re.match(r"^(https?)(//.+)$", url.strip(), flags=re.IGNORECASE)
+        if match:
+            return f"{match.group(1)}:{match.group(2)}"
+
+        return url.strip()
 
 
 class MediaBulkUserActions(APIView):
@@ -881,6 +1222,7 @@ class MediaDetail(APIView):
         return Response(ret)
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
             openapi.Parameter(name='friendly_token', type=openapi.TYPE_STRING, in_=openapi.IN_PATH, description='unique identifier', required=True),
             openapi.Parameter(name='type', type=openapi.TYPE_STRING, in_=openapi.IN_FORM, description='action to perform', enum=['encode', 'review']),
@@ -949,14 +1291,71 @@ class MediaDetail(APIView):
         )
 
     @swagger_auto_schema(
+        request_body=no_body,
         manual_parameters=[
-            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
-            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
-            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="media_file"),
+            openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="Media description"),
+            openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="Media title"),
+            openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="Replace the original media file"),
+            openapi.Parameter(
+                name="subtitle_file",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload caption file (.srt or .vtt). Requires subtitle_language.",
+            ),
+            openapi.Parameter(
+                name="subtitle_language",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Subtitle language id or code (e.g. 3 or 'en'). Required when subtitle_file is sent.",
+            ),
+            openapi.Parameter(
+                name="uploaded_poster",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_FILE,
+                required=False,
+                description="Upload a poster image. This also updates the thumbnail used in listings/player.",
+            ),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable comments for this media",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Enable or disable download option for this media",
+            ),
+            openapi.Parameter(
+                name="tags",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tags (e.g. 'news,events,live')",
+            ),
+            openapi.Parameter(
+                name="duration",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="Duration in seconds. Only allowed for external m3u8 media. Managers/superusers only.",
+            ),
+            openapi.Parameter(
+                name="playlist_ids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
-        operation_description='Update a Media, for Media uploader',
+        operation_description='Update a media.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def put(self, request, friendly_token, format=None):
@@ -968,18 +1367,123 @@ class MediaDetail(APIView):
         if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = MediaSerializer(media, data=request.data, context={"request": request})
-        if serializer.is_valid():
-            # if request.data.get('media_file'):
-            #     media_file = request.data["media_file"]
-            #     media.state = helpers.get_default_state(request.user)
-            #     media.listable = False
-            #     serializer.save(user=request.user, media_file=media_file)
-            # else:
-            #     serializer.save(user=request.user)
+        raw_enable_comments = request.data.get("enable_comments", None)
+        raw_allow_download = request.data.get("allow_download", None)
+        raw_tags = request.data.get("tags", None)
+        raw_playlist_ids = request.data.get("playlist_ids", None)
+        if hasattr(request.data, "getlist"):
+            raw_tags_list = request.data.getlist("tags")
+            if len(raw_tags_list) > 1:
+                raw_tags = raw_tags_list
+            raw_playlist_ids_list = request.data.getlist("playlist_ids")
+            if len(raw_playlist_ids_list) > 1:
+                raw_playlist_ids = raw_playlist_ids_list
+
+        enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
+        if comments_error:
+            return Response({"detail": comments_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        allow_download, download_error = _parse_optional_boolean(raw_allow_download, "allow_download")
+        if download_error:
+            return Response({"detail": download_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        tags, tags_error = _parse_tags_input(raw_tags)
+        if tags_error:
+            return Response({"detail": tags_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
+        if playlist_ids_error:
+            return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        subtitle_file = request.data.get("subtitle_file")
+        subtitle_language_raw = request.data.get("subtitle_language", "")
+
+        serializer_data = {}
+        for field_name in ("title", "description", "uploaded_poster", "media_file"):
+            if field_name in request.data:
+                serializer_data[field_name] = request.data.get(field_name)
+
+        if "duration" in request.data:
+            if not is_mediacms_manager(request.user):
+                return Response({"detail": "duration can only be set by managers"}, status=status.HTTP_403_FORBIDDEN)
+            if not media.external_hls_url:
+                return Response({"detail": "duration can only be set for external m3u8 media"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                duration_val = int(request.data.get("duration"))
+                if duration_val < 0:
+                    raise ValueError
+                serializer_data["duration"] = duration_val
+            except (ValueError, TypeError):
+                return Response({"detail": "duration must be a non-negative integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        has_subtitle_file = bool(subtitle_file)
+        has_subtitle_language = bool(str(subtitle_language_raw).strip())
+
+        if has_subtitle_file and not has_subtitle_language:
+            return Response(
+                {"detail": "subtitle_language is required when subtitle_file is provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if has_subtitle_language and not has_subtitle_file:
+            return Response(
+                {"detail": "subtitle_file is required when subtitle_language is provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        language = None
+        if has_subtitle_file:
+            language = self._get_subtitle_language(str(subtitle_language_raw).strip())
+            if not language:
+                return Response(
+                    {"detail": "subtitle_language must be a valid language id or code"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        serializer = MediaSerializer(media, data=serializer_data, context={"request": request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
             serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            _apply_media_options(
+                media,
+                user=request.user,
+                enable_comments=enable_comments,
+                allow_download=allow_download,
+                tags=tags,
+            )
+
+            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            if add_to_playlist_error:
+                return add_to_playlist_error
+
+            if has_subtitle_file and language:
+                subtitle = Subtitle.objects.create(
+                    media=media,
+                    user=media.user,
+                    language=language,
+                    subtitle_file=subtitle_file,
+                )
+                try:
+                    subtitle.convert_to_srt()
+                except Exception:
+                    subtitle.delete()
+                    return Response(
+                        {"detail": "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def _get_subtitle_language(self, language_value):
+        if not language_value:
+            return None
+
+        if language_value.isdigit():
+            return Language.objects.filter(id=int(language_value)).first()
+
+        return Language.objects.filter(code__iexact=language_value).first()
 
     @swagger_auto_schema(
         manual_parameters=[
