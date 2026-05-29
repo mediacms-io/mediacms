@@ -1,4 +1,5 @@
 from allauth.socialaccount.models import SocialApp
+from allauth.account.internal.decorators import login_not_required
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -32,6 +33,7 @@ def saml_metadata(request):
     return HttpResponse(metadata_xml, content_type='application/xml')
 
 
+@login_not_required
 def custom_login_view(request):
     if not (hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS):
         return redirect(reverse('login_system'))
