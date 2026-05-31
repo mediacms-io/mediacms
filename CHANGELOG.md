@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.2.0](https://github.com/mediacms-io/mediacms/compare/v8.1.3...v8.2.0) (2026-05-31)
+
+### Features
+
+* configure SP certificate and private key via SAMLConfiguration ([#1531](https://github.com/mediacms-io/mediacms/issues/1531)) ([95644dc](https://github.com/mediacms-io/mediacms/commit/95644dc9615f428191d9fda0847c1b91a0b094a5))
+
 ## [8.1.3](https://github.com/mediacms-io/mediacms/compare/v8.1.2...v8.1.3) (2026-05-19)
 
 ### Bug Fixes
