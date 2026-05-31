@@ -154,7 +154,9 @@ sls = SLSView.as_view()
 class MetadataView(SAMLViewMixin, View):
     def dispatch(self, request, organization_slug):
         provider = self.get_provider(organization_slug)
-        config = build_saml_config(self.request, provider.app.settings, organization_slug)
+        custom_configuration = provider.app.saml_configurations.first()
+        provider_config = custom_configuration.saml_provider_settings if custom_configuration else provider.app.settings
+        config = build_saml_config(self.request, provider_config, organization_slug)
         saml_settings = OneLogin_Saml2_Settings(settings=config, sp_validation_only=True)
         metadata = saml_settings.get_sp_metadata()
         errors = saml_settings.validate_metadata(metadata)
