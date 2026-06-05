@@ -241,6 +241,8 @@ class Media(models.Model):
         self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
 
     def save(self, *args, **kwargs):
+        creating = self.pk is None
+
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -309,7 +311,7 @@ class Media(models.Model):
 
         # produce a thumbnail out of an uploaded poster
         # will run only when a poster is uploaded for the first time
-        if self.uploaded_poster and self.uploaded_poster != self.__original_uploaded_poster:
+        if self.uploaded_poster and (creating or self.uploaded_poster != self.__original_uploaded_poster):
             with open(self.uploaded_poster.path, "rb") as f:
                 # set this otherwise gets to infinite loop
                 self.__original_uploaded_poster = self.uploaded_poster

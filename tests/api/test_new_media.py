@@ -149,3 +149,25 @@ class TestX(TestCase):
         self.assertFalse(media.enable_comments)
         self.assertFalse(media.allow_download)
         self.assertSetEqual(set(media.tags.values_list('title', flat=True)), {'alpha', 'beta'})
+
+    def test_media_create_with_uploaded_poster_sets_thumbnail_url(self):
+        client = APIClient()
+        client.login(username=self.user.username, password=self.password)
+
+        with open('fixtures/test_image.png', 'rb') as media_fp, open('fixtures/test_image.png', 'rb') as poster_fp:
+            response = client.post(
+                '/api/v1/media',
+                {
+                    'title': 'media with poster on create',
+                    'media_file': media_fp,
+                    'uploaded_poster': poster_fp,
+                },
+                format='multipart',
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertIsNotNone(payload.get('thumbnail_url'))
+
+        media = Media.objects.get(title='media with poster on create')
+        self.assertTrue(bool(media.uploaded_thumbnail))
