@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.2.1](https://github.com/mediacms-io/mediacms/compare/v8.2.0...v8.2.1) (2026-06-07)
+
+### Bug Fixes
+
+* SAML provider add guard to skip empty mappings before iterating ([#1536](https://github.com/mediacms-io/mediacms/issues/1536)) ([9da6a85](https://github.com/mediacms-io/mediacms/commit/9da6a85ad86f5092edb96495eeb1cca22d5334bf))
+
 ## [8.2.0](https://github.com/mediacms-io/mediacms/compare/v8.1.3...v8.2.0) (2026-05-31)
 
 ### Features
