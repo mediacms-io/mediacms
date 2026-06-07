@@ -22,6 +22,9 @@ class CustomSAMLProvider(SAMLProvider):
         attribute_mapping = provider_config.get("attribute_mapping", self.default_attribute_mapping)
         # map configured provider attributes
         for key, provider_keys in attribute_mapping.items():
+            # skip mappings left empty/None in the SAML Configuration
+            if not provider_keys:
+                continue
             if isinstance(provider_keys, str):
                 provider_keys = [provider_keys]
             for provider_key in provider_keys:
