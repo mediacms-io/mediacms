@@ -73,7 +73,7 @@ def perform_user_actions(user, social_account, common_fields=None):
     if social_app:
         saml_configuration = social_app.saml_configurations.first()
 
-    add_user_logo(user, extra_data)
+    add_user_logo(user, extra_data, saml_configuration)
     handle_role_mapping(user, extra_data, social_app, saml_configuration)
     if saml_configuration and saml_configuration.save_saml_response_logs:
         handle_saml_logs_save(user, extra_data, social_app)
@@ -81,10 +81,13 @@ def perform_user_actions(user, social_account, common_fields=None):
     return user
 
 
-def add_user_logo(user, extra_data):
+def add_user_logo(user, extra_data, saml_configuration=None):
+    # use the attribute name configured in the SAML Configuration, falling
+    # back to "jpegPhoto" when it is left empty
+    logo_key = (saml_configuration.user_logo if saml_configuration and saml_configuration.user_logo else None) or "jpegPhoto"
     try:
-        if extra_data.get("jpegPhoto") and user.logo.name in ["userlogos/user.jpg", "", None]:
-            base64_string = extra_data.get("jpegPhoto")[0]
+        if extra_data.get(logo_key) and user.logo.name in ["userlogos/user.jpg", "", None]:
+            base64_string = extra_data.get(logo_key)[0]
             image_data = base64.b64decode(base64_string)
             image_content = ContentFile(image_data)
             user.logo.save('user.jpg', image_content, save=True)
