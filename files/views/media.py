@@ -143,17 +143,62 @@ def _parse_playlist_ids_input(raw_playlist_ids):
     return playlist_ids, None
 
 
-def _add_media_to_playlists(media, user, playlist_ids):
-    if not playlist_ids:
+def _parse_playlist_tokens_input(raw_playlist_tokens):
+    if raw_playlist_tokens in (None, ""):
+        return None, None
+
+    if isinstance(raw_playlist_tokens, (list, tuple)):
+        playlist_items = raw_playlist_tokens
+    elif isinstance(raw_playlist_tokens, str):
+        stripped_value = raw_playlist_tokens.strip()
+        if not stripped_value:
+            return None, None
+        playlist_items = [item.strip() for item in stripped_value.split(",")]
+    else:
+        return None, "playlist_friendly_tokens must be a comma-separated string or an array of strings"
+
+    playlist_tokens = []
+    seen = set()
+    for item in playlist_items:
+        token = str(item or "").strip()
+        if not token:
+            continue
+
+        if token not in seen:
+            playlist_tokens.append(token)
+            seen.add(token)
+
+    if not playlist_tokens:
+        return None, None
+
+    return playlist_tokens, None
+
+
+def _add_media_to_playlists(media, user, playlist_ids=None, playlist_tokens=None):
+    if not playlist_ids and not playlist_tokens:
         return None
 
-    playlists = Playlist.objects.filter(user=user, id__in=playlist_ids)
-    found_playlist_ids = set(playlists.values_list("id", flat=True))
-    missing_ids = [playlist_id for playlist_id in playlist_ids if playlist_id not in found_playlist_ids]
+    playlists = Playlist.objects.filter(user=user)
+    if playlist_ids and playlist_tokens:
+        playlists = playlists.filter(Q(id__in=playlist_ids) | Q(friendly_token__in=playlist_tokens)).distinct()
+    elif playlist_ids:
+        playlists = playlists.filter(id__in=playlist_ids)
+    else:
+        playlists = playlists.filter(friendly_token__in=playlist_tokens)
 
-    if missing_ids:
+    found_playlist_ids = set(playlists.values_list("id", flat=True))
+    found_playlist_tokens = set(playlists.values_list("friendly_token", flat=True))
+    missing_ids = [playlist_id for playlist_id in (playlist_ids or []) if playlist_id not in found_playlist_ids]
+    missing_tokens = [token for token in (playlist_tokens or []) if token not in found_playlist_tokens]
+
+    if missing_ids or missing_tokens:
+        details = []
+        if missing_ids:
+            details.append(f"ids: {missing_ids}")
+        if missing_tokens:
+            details.append(f"friendly_tokens: {missing_tokens}")
         return Response(
-            {"detail": f"No matching playlists found for ids: {missing_ids}"},
+            {"detail": f"No matching playlists found for {'; '.join(details)}"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -516,6 +561,13 @@ class MediaList(APIView):
                 required=False,
                 description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
             ),
+            openapi.Parameter(
+                name="playlist_friendly_tokens",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist friendly tokens to add the media to (e.g. 'my-list,summer-2026'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
@@ -529,6 +581,7 @@ class MediaList(APIView):
         raw_allow_download = request.data.get("allow_download", None)
         raw_tags = request.data.get("tags", None)
         raw_playlist_ids = request.data.get("playlist_ids", None)
+        raw_playlist_tokens = request.data.get("playlist_friendly_tokens", None)
         if hasattr(request.data, "getlist"):
             raw_tags_list = request.data.getlist("tags")
             if len(raw_tags_list) > 1:
@@ -536,6 +589,9 @@ class MediaList(APIView):
             raw_playlist_ids_list = request.data.getlist("playlist_ids")
             if len(raw_playlist_ids_list) > 1:
                 raw_playlist_ids = raw_playlist_ids_list
+            raw_playlist_tokens_list = request.data.getlist("playlist_friendly_tokens")
+            if len(raw_playlist_tokens_list) > 1:
+                raw_playlist_tokens = raw_playlist_tokens_list
 
         enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
         if comments_error:
@@ -552,6 +608,10 @@ class MediaList(APIView):
         playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
         if playlist_ids_error:
             return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_tokens, playlist_tokens_error = _parse_playlist_tokens_input(raw_playlist_tokens)
+        if playlist_tokens_error:
+            return Response({"detail": playlist_tokens_error}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer_data = {}
         for field_name in ("title", "description", "uploaded_poster", "media_file", "external_m3u8_url"):
@@ -626,7 +686,12 @@ class MediaList(APIView):
                 tags=tags,
             )
 
-            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            add_to_playlist_error = _add_media_to_playlists(
+                media,
+                request.user,
+                playlist_ids=playlist_ids,
+                playlist_tokens=playlist_tokens,
+            )
             if add_to_playlist_error:
                 media.delete()
                 return add_to_playlist_error
@@ -642,7 +707,12 @@ class MediaList(APIView):
             tags=tags,
         )
 
-        add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+        add_to_playlist_error = _add_media_to_playlists(
+            media,
+            request.user,
+            playlist_ids=playlist_ids,
+            playlist_tokens=playlist_tokens,
+        )
         if add_to_playlist_error:
             media.delete()
             return add_to_playlist_error
@@ -1352,6 +1422,13 @@ class MediaDetail(APIView):
                 required=False,
                 description="Comma-separated playlist IDs to add the media to (e.g. '12,45'). Playlists must belong to the authenticated user.",
             ),
+            openapi.Parameter(
+                name="playlist_friendly_tokens",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated playlist friendly tokens to add the media to (e.g. 'my-list,summer-2026'). Playlists must belong to the authenticated user.",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
@@ -1371,6 +1448,7 @@ class MediaDetail(APIView):
         raw_allow_download = request.data.get("allow_download", None)
         raw_tags = request.data.get("tags", None)
         raw_playlist_ids = request.data.get("playlist_ids", None)
+        raw_playlist_tokens = request.data.get("playlist_friendly_tokens", None)
         if hasattr(request.data, "getlist"):
             raw_tags_list = request.data.getlist("tags")
             if len(raw_tags_list) > 1:
@@ -1378,6 +1456,9 @@ class MediaDetail(APIView):
             raw_playlist_ids_list = request.data.getlist("playlist_ids")
             if len(raw_playlist_ids_list) > 1:
                 raw_playlist_ids = raw_playlist_ids_list
+            raw_playlist_tokens_list = request.data.getlist("playlist_friendly_tokens")
+            if len(raw_playlist_tokens_list) > 1:
+                raw_playlist_tokens = raw_playlist_tokens_list
 
         enable_comments, comments_error = _parse_optional_boolean(raw_enable_comments, "enable_comments")
         if comments_error:
@@ -1394,6 +1475,10 @@ class MediaDetail(APIView):
         playlist_ids, playlist_ids_error = _parse_playlist_ids_input(raw_playlist_ids)
         if playlist_ids_error:
             return Response({"detail": playlist_ids_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        playlist_tokens, playlist_tokens_error = _parse_playlist_tokens_input(raw_playlist_tokens)
+        if playlist_tokens_error:
+            return Response({"detail": playlist_tokens_error}, status=status.HTTP_400_BAD_REQUEST)
 
         subtitle_file = request.data.get("subtitle_file")
         subtitle_language_raw = request.data.get("subtitle_language", "")
@@ -1454,7 +1539,12 @@ class MediaDetail(APIView):
                 tags=tags,
             )
 
-            add_to_playlist_error = _add_media_to_playlists(media, request.user, playlist_ids)
+            add_to_playlist_error = _add_media_to_playlists(
+                media,
+                request.user,
+                playlist_ids=playlist_ids,
+                playlist_tokens=playlist_tokens,
+            )
             if add_to_playlist_error:
                 return add_to_playlist_error
 
