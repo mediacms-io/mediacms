@@ -12,6 +12,146 @@
 			{{ form.as_p }}
 			<button class="primaryAction" type="submit">Update Profile</button>
 		</form>
+
+		{% if is_author %}
+			<div class="danger-zone">
+				<h2>Danger Zone</h2>
+				<div class="danger-zone-content">
+					<div class="danger-zone-info">
+						<h3>Delete Account</h3>
+						<p>This will permanently remove all data, including media and playlists.</p>
+					</div>
+					<button class="btn-danger" id="delete-account-btn" type="button">Delete Account</button>
+				</div>
+			</div>
+		{% endif %}
 	</div>
 </div>
+
+<style>
+.danger-zone {
+	margin-top: 60px;
+	padding-top: 40px;
+	border-top: 2px solid #e0e0e0;
+}
+
+.danger-zone h2 {
+	color: #d32f2f;
+	font-size: 20px;
+	margin-bottom: 20px;
+	font-weight: 600;
+}
+
+.danger-zone-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20px;
+	border: 2px solid #ffcdd2;
+	border-radius: 8px;
+	background-color: #ffebee;
+	gap: 20px;
+}
+
+.dark_theme .danger-zone-content {
+	background-color: #3a1f1f;
+	border-color: #5a2d2d;
+}
+
+.danger-zone-info h3 {
+	font-size: 16px;
+	font-weight: 600;
+	margin: 0 0 8px 0;
+	color: #d32f2f;
+}
+
+.danger-zone-info p {
+	font-size: 14px;
+	margin: 0;
+	color: #666;
+	line-height: 1.5;
+}
+
+.dark_theme .danger-zone-info p {
+	color: #ccc;
+}
+
+.btn-danger {
+	padding: 10px 24px;
+	background-color: #d32f2f;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-danger:hover {
+	background-color: #b71c1c;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	transform: translateY(-1px);
+}
+
+.btn-danger:active {
+	transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+	.danger-zone-content {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.btn-danger {
+		width: 100%;
+	}
+}
+</style>
+
+<script>
+document.getElementById('delete-account-btn').addEventListener('click', function() {
+	const username = '{{ user.username }}';
+	const confirmText = 'Are you sure you want to delete your account?\n\n' +
+		'This action CANNOT be undone. This will permanently delete:\n' +
+		'• Your profile and all personal information\n' +
+		'• All your uploaded media\n' +
+		'• All your playlists\n' +
+		'• All your comments and interactions\n\n' +
+		'Type "DELETE" to confirm:';
+
+	const userInput = prompt(confirmText);
+
+	if (userInput === 'DELETE') {
+		const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+		fetch('/api/v1/users/' + username, {
+			method: 'DELETE',
+			headers: {
+				'X-CSRFToken': csrfToken,
+			},
+		})
+		.then(function(response) {
+			if (response.ok) {
+				alert('Your account has been deleted successfully. You will be redirected to the home page.');
+				window.location.href = '/';
+			} else {
+				return response.json().then(function(data) {
+					throw new Error(data.detail || 'Failed to delete account.');
+				});
+			}
+		})
+		.catch(function(error) {
+			alert('Error deleting account: ' + error.message);
+			console.error('Error deleting account:', error);
+		});
+	} else if (userInput !== null) {
+		alert('Account deletion cancelled. You must type "DELETE" exactly to confirm.');
+	}
+});
+</script>
+
 {% endblock innercontent %}

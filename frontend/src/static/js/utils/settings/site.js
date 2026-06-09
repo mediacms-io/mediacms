@@ -6,6 +6,8 @@ export function init(settings) {
     url: '',
     api: '',
     title: '',
+    useRoundedCorners: true,
+    version: '1.0.0',
   };
 
   if (void 0 !== settings) {
@@ -23,6 +25,14 @@ export function init(settings) {
 
     if ('string' === typeof settings.title) {
       SITE.title = settings.title.trim();
+    }
+
+    if ('boolean' === typeof settings.useRoundedCorners) {
+      SITE.useRoundedCorners = settings.useRoundedCorners;
+    }
+
+    if ('string' === typeof settings.version) {
+      SITE.version = settings.version.trim();
     }
   }
 }

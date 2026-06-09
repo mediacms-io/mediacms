@@ -5,22 +5,19 @@ from . import views
 urlpatterns = [
     re_path(r"^user/(?P<username>[\w@._-]*)$", views.view_user, name="get_user"),
     re_path(r"^user/(?P<username>[\w@._-]*)/$", views.view_user, name="get_user"),
+    re_path(r"^user/(?P<username>[\w@._-]*)/shared_with_me", views.shared_with_me, name="shared_with_me"),
+    re_path(r"^user/(?P<username>[\w@._-]*)/shared_by_me", views.shared_by_me, name="shared_by_me"),
     re_path(
-        r"^user/(?P<username>[\w@.]*)/media$",
-        views.view_user_media,
-        name="get_user_media",
-    ),
-    re_path(
-        r"^user/(?P<username>[\w@.]*)/playlists$",
+        r"^user/(?P<username>[\w@._-]*)/playlists$",
         views.view_user_playlists,
         name="get_user_playlists",
     ),
     re_path(
-        r"^user/(?P<username>[\w@.]*)/about$",
+        r"^user/(?P<username>[\w@._-]*)/about$",
         views.view_user_about,
         name="get_user_about",
     ),
-    re_path(r"^user/(?P<username>[\w@.]*)/edit$", views.edit_user, name="edit_user"),
+    re_path(r"^user/(?P<username>[\w@._-]*)/edit$", views.edit_user, name="edit_user"),
     re_path(r"^channel/(?P<friendly_token>[\w]*)$", views.view_channel, name="view_channel"),
     re_path(
         r"^channel/(?P<friendly_token>[\w]*)/edit$",

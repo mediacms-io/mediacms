@@ -34,12 +34,6 @@ BUF_SIZE_MULTIPLIER = 1.5
 KEYFRAME_DISTANCE = 4
 KEYFRAME_DISTANCE_MIN = 2
 
-# speed presets
-# see https://trac.ffmpeg.org/wiki/Encode/H.264
-X26x_PRESET = "medium"  # "medium"
-X265_PRESET = "medium"
-X26x_PRESET_BIG_HEIGHT = "faster"
-
 # VP9_SPEED = 1  # between 0 and 4, lower is slower
 VP9_SPEED = 2
 
@@ -55,6 +49,7 @@ VIDEO_CRFS = {
 VIDEO_BITRATES = {
     "h264": {
         25: {
+            144: 150,
             240: 300,
             360: 500,
             480: 1000,
@@ -67,6 +62,7 @@ VIDEO_BITRATES = {
     },
     "h265": {
         25: {
+            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -79,6 +75,7 @@ VIDEO_BITRATES = {
     },
     "vp9": {
         25: {
+            144: 75,
             240: 150,
             360: 275,
             480: 500,
@@ -173,7 +170,7 @@ def rm_dir(directory):
 
 def url_from_path(filename):
     # TODO: find a way to preserver http - https ...
-    return "{0}{1}".format(settings.MEDIA_URL, filename.replace(settings.MEDIA_ROOT, ""))
+    return f"{settings.MEDIA_URL}{filename.replace(settings.MEDIA_ROOT, '')}"
 
 
 def create_temp_file(suffix=None, dir=settings.TEMP_DIRECTORY):
@@ -488,7 +485,7 @@ def show_file_size(size):
     if size:
         size = size / 1000000
         size = round(size, 1)
-        size = "{0}MB".format(str(size))
+        size = f"{str(size)}MB"
     return size
 
 
@@ -596,17 +593,13 @@ def get_base_ffmpeg_command(
     cmd = base_cmd[:]
 
     # preset settings
+    preset = getattr(settings, "FFMPEG_DEFAULT_PRESET", "medium")
+
     if encoder == "libvpx-vp9":
         if pass_number == 1:
             speed = 4
         else:
             speed = VP9_SPEED
-    elif encoder in ["libx264"]:
-        preset = X26x_PRESET
-    elif encoder in ["libx265"]:
-        preset = X265_PRESET
-    if target_height >= 720:
-        preset = X26x_PRESET_BIG_HEIGHT
 
     if encoder == "libx264":
         level = "4.2" if target_height <= 1080 else "5.2"
@@ -730,7 +723,7 @@ def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_fi
         return False
 
     if media_info.get("video_height") < resolution:
-        if resolution not in [240, 360]:  # always get these two
+        if resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
             return False
 
     #    if codec == "h264_baseline":
@@ -917,7 +910,9 @@ def trim_video_method(media_file_path, timestamps_list):
         return False
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
-        output_file = os.path.join(temp_dir, "output.mp4")
+        # Detect input file extension to preserve original format
+        _, input_ext = os.path.splitext(media_file_path)
+        output_file = os.path.join(temp_dir, f"output{input_ext}")
 
         segment_files = []
         for i, item in enumerate(timestamps_list):
@@ -927,7 +922,7 @@ def trim_video_method(media_file_path, timestamps_list):
 
             # For single timestamp, we can use the output file directly
             # For multiple timestamps, we need to create segment files
-            segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{i}.mp4")
+            segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{i}{input_ext}")
 
             cmd = [settings.FFMPEG_COMMAND, "-y", "-ss", str(item['startTime']), "-i", media_file_path, "-t", str(duration), "-c", "copy", "-avoid_negative_ts", "1", segment_file]
 
@@ -970,3 +965,13 @@ def get_alphanumeric_only(string):
     """
     string = "".join([char for char in string if char.isalnum()])
     return string.lower()
+
+
+def get_alphanumeric_and_spaces(string):
+    """Returns a query that contains only alphanumeric characters and spaces
+    This include characters other than the English alphabet too
+    """
+    string = "".join([char for char in string if char.isalnum() or char.isspace()])
+    # Replace multiple spaces with single space and strip
+    string = " ".join(string.split())
+    return string

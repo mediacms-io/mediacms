@@ -25,11 +25,13 @@ urlpatterns = [
     re_path(r"^", include("files.urls")),
     re_path(r"^", include("users.urls")),
     re_path(r"^accounts/", include("allauth.urls")),
+    re_path(r"^lti/", include("lti.urls")),
     re_path(r"^api-auth/", include("rest_framework.urls")),
     path(settings.DJANGO_ADMIN_URL, admin.site.urls),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs/api/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path("tinymce/", include("tinymce.urls")),
 ]
 
 admin.site.site_header = "MediaCMS Admin"

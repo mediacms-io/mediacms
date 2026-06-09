@@ -2,10 +2,11 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.MEDIA_DATA = {
     videoUrl: "",
-    mediaId: ""
+    mediaId: "",
+    posterUrl: ""
   };
   window.lastSeekedPosition = 0;
 }
@@ -15,6 +16,7 @@ declare global {
     MEDIA_DATA: {
       videoUrl: string;
       mediaId: string;
+      posterUrl?: string;
     };
     seekToFunction?: (time: number) => void;
     lastSeekedPosition: number;
@@ -30,8 +32,8 @@ const mountComponents = () => {
   }
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mountComponents);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", mountComponents);
 } else {
   mountComponents();
 }

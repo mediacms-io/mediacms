@@ -8,6 +8,7 @@ import {
   MediaItemMetaViews,
   MediaItemMetaDate,
   MediaItemEditLink,
+  MediaItemViewLink,
 } from '../../components/list-item/includes/items';
 import { useItem } from './useItem';
 import { replaceString } from '../../utils/helpers/';
@@ -31,6 +32,10 @@ export function useMediaItem(props) {
 
   function editMediaComponent() {
     return <MediaItemEditLink link={props.editLink} />;
+  }
+
+  function viewMediaComponent() {
+    return props.showSelection ? <MediaItemViewLink link={props.publishLink || props.link} /> : null;
   }
 
   function authorComponent() {
@@ -76,5 +81,5 @@ export function useMediaItem(props) {
     );
   }
 
-  return [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents];
+  return [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents, viewMediaComponent];
 }

@@ -57,4 +57,4 @@ def translate_string(language_code, string):
     if not check_language_code(language_code):
         return string
 
-    return translation_strings[language_code].get(string, string)
+    return translation_strings[language_code].get(string) or string

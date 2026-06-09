@@ -1,0 +1,53 @@
+@import '../../css/config/index.scss';
+
+.select-all-checkbox {
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+
+  .select-all-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    transition: color 0.2s ease;
+
+    &:hover:not(.disabled) {
+      color: var(--brand-color, #007bff);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input[type='checkbox'] {
+      width: 20px;
+      height: 20px;
+      margin: 0 8px 0 0;
+      cursor: pointer;
+      accent-color: var(--brand-color, #007bff);
+
+      &:disabled {
+        cursor: not-allowed;
+      }
+    }
+
+    .checkbox-label-text {
+      line-height: 1;
+    }
+  }
+
+  .dark_theme & {
+    .select-all-label {
+      color: #fff;
+
+      &:hover:not(.disabled) {
+        color: var(--brand-color, #4da3ff);
+      }
+    }
+  }
+}

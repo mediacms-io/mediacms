@@ -341,4 +341,19 @@ body.dark_theme {
   --user-action-form-inner-input-border-color: #303030;
   --user-action-form-inner-input-text-color: rgba(255, 255, 255, 0.88);
   --user-action-form-inner-input-bg-color: #121212;
+
+  /* ################################################## */
+
+  .media-edit-nav {
+    background-color: #1a1a1a !important;
+
+    a {
+      color: #cccccc !important;
+
+      &[style*="font-weight: bold"] {
+        color: #ffffff !important;
+        border-bottom-color: #ffffff !important;
+      }
+    }
+  }
 }

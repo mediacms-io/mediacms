@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from files.methods import is_mediacms_manager
 
@@ -25,6 +26,7 @@ class UserForm(forms.ModelForm):
             "advancedUser",
             "is_manager",
             "is_editor",
+            "is_approved",
             # "allow_contact",
         )
 
@@ -44,6 +46,11 @@ class UserForm(forms.ModelForm):
             self.fields.pop("advancedUser")
             self.fields.pop("is_manager")
             self.fields.pop("is_editor")
+
+        if not settings.USERS_NEEDS_TO_BE_APPROVED or not is_mediacms_manager(user):
+            if "is_approved" in self.fields:
+                self.fields.pop("is_approved")
+
         if user.socialaccount_set.exists():
             # for Social Accounts do not allow to edit the name
             self.fields["name"].widget.attrs['readonly'] = True

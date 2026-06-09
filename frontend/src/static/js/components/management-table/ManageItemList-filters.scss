@@ -98,6 +98,12 @@
         padding-right: 0;
       }
     }
+
+    &.mi-filter-full-width {
+      width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
   }
 
   .mi-filter-title {
@@ -150,8 +156,47 @@
 
       &.active button,
       button:hover {
-        color: inherit;
+        color: var(--default-theme-color);
         opacity: 1;
+      }
+
+      &.active button {
+        font-weight: 600;
+      }
+    }
+
+    &.mi-filter-options-horizontal {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      > * {
+        display: inline-block;
+        margin-top: 0;
+        margin-right: 8px;
+
+        &:last-child {
+          margin-right: 0;
+        }
+
+        button {
+          padding: 6px 12px;
+          border-radius: 4px;
+          background-color: var(--sidebar-nav-border-color);
+          opacity: 1;
+
+          &:hover {
+            background-color: var(--default-theme-color);
+            color: white;
+            opacity: 0.9;
+          }
+        }
+
+        &.active button {
+          background-color: var(--default-theme-color);
+          color: white;
+          font-weight: 600;
+        }
       }
     }
   }

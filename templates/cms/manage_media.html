@@ -11,9 +11,14 @@
 
 {% endblock headermeta %}
 
-{% block content %}<div id="page-manage-media"></div>{% endblock %}
+{% block content %}
+<script>
+window.CATEGORIES = {{ categories|safe }};
+</script>
+<div id="page-manage-media"></div>
+{% endblock %}
 
 {% block bottomimports %}
-<script src="{% static "js/manage-media.js" %}"></script>
+    <script src="{% static "js/manage-media.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
 

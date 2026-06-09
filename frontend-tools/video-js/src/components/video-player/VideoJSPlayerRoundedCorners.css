@@ -1,0 +1,44 @@
+/* ===== VIDEO.JS ROUNDED CORNERS STYLES ===== */
+.video-js-root-main .video-js.video-js-rounded-corners,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-paused,
+.video-js-root-main .video-js.video-js-rounded-corners.vjs-ended,
+.video-js-root-main .video-js.video-js-rounded-corners.chapters-open {
+    /*  background-color: transparent !important; */
+    outline: none !important;
+    border-radius: 12px !important;
+}
+
+.video-js-root-main .video-js.video-js-rounded-corners .vjs-poster {
+    border-radius: 12px !important;
+}
+
+.video-js-root-main .video-js.video-js-rounded-corners video {
+    border-radius: 12px !important;
+}
+.video-js-root-main .video-js.video-js-rounded-corners .vjs-control-bar {
+    border-bottom-left-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+    /* Remove rounded corners on mobile screens */
+    .video-js-root-main .video-js.video-js-rounded-corners,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-has-started,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-fullscreen,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-paused,
+    .video-js-root-main .video-js.video-js-rounded-corners.vjs-ended,
+    .video-js-root-main .video-js.video-js-rounded-corners.chapters-open {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners .vjs-poster {
+        border-radius: 0 !important;
+    }
+
+    .video-js-root-main .video-js.video-js-rounded-corners video {
+        border-radius: 0 !important;
+    }
+}

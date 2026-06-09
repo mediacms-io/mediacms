@@ -1,0 +1,361 @@
+/* ===== END SCREEN OVERLAY STYLES ===== */
+
+.vjs-end-screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    background: #000000;
+    display: none;
+    z-index: 100;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.vjs-end-screen-overlay.vjs-show {
+    display: flex !important;
+}
+
+/* Related videos grid */
+.vjs-related-videos-grid {
+    display: grid;
+    gap: 12px;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    align-content: flex-start;
+    justify-items: stretch;
+    justify-content: stretch;
+    grid-auto-rows: 120px; /* Compact row height */
+    box-sizing: border-box;
+    /* Hide scrollbar while keeping scroll functionality */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbar for Chrome/Safari/Opera */
+.vjs-related-videos-grid::-webkit-scrollbar {
+    display: none;
+}
+
+/* Video item cards */
+.vjs-related-video-item {
+    position: relative;
+    background-color: #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    height: 180px;
+    min-height: 180px;
+    width: 100%;
+}
+
+.vjs-related-video-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Swiper specific styles */
+.vjs-related-videos-swiper-container {
+    position: relative;
+    padding: 20px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent container overflow */
+    box-sizing: border-box;
+}
+
+.vjs-related-videos-swiper {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 12px;
+    padding-bottom: 10px;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* Prevent scroll propagation */
+    overscroll-behavior-x: contain;
+}
+
+.vjs-related-videos-swiper::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.vjs-swiper-item {
+    min-width: calc(50% - 6px); /* 2 items visible with gap */
+    width: calc(50% - 6px);
+    max-width: 180px;
+    height: 120px; /* Compact height since text is overlaid */
+    min-height: 120px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+}
+
+.vjs-swiper-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.vjs-swiper-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.vjs-swiper-dot.active {
+    background-color: #ffffff;
+}
+
+/* Thumbnail container */
+.vjs-related-video-thumbnail-container {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.vjs-related-video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Duration badge */
+.vjs-video-duration {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    z-index: 3;
+}
+
+/* Text overlay on thumbnail */
+.vjs-video-text-overlay {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+    padding: 8px;
+    border-radius: 4px;
+    z-index: 2;
+}
+
+.vjs-overlay-title {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.vjs-overlay-meta {
+    color: #e0e0e0;
+    font-size: 11px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Video info section */
+.vjs-related-video-info {
+    padding: 10px;
+    color: white;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 50px;
+}
+
+.vjs-related-video-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin-bottom: 6px;
+    color: #ffffff;
+}
+
+.vjs-related-video-meta {
+    font-size: 11px;
+    color: #b3b3b3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+/* Swiper specific info styling */
+.vjs-swiper-item .vjs-related-video-info {
+    padding: 10px;
+    height: 110px;
+    min-height: 110px;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.vjs-swiper-item .vjs-related-video-title {
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+    -webkit-line-clamp: 3;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.vjs-swiper-item .vjs-related-video-meta {
+    font-size: 11px;
+    margin-top: 4px;
+    color: #b3b3b3 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 699px) {
+    /* Small screens use swiper - styles handled by JS */
+    .vjs-related-video-thumbnail-container {
+        height: 100px;
+    }
+
+    .vjs-related-video-title {
+        font-size: 12px;
+    }
+}
+
+/* Small devices like Galaxy A51 (401-600px) */
+@media (min-width: 401px) and (max-width: 600px) {
+    .vjs-swiper-item {
+        height: 120px !important; /* Compact height with overlay text */
+        min-height: 120px !important;
+    }
+
+    .vjs-swiper-item .vjs-overlay-title {
+        font-size: 12px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+
+    .vjs-swiper-item .vjs-overlay-meta {
+        font-size: 10px !important;
+    }
+}
+
+/* Very small devices (≤400px) */
+@media (max-width: 400px) {
+    .vjs-swiper-item {
+        height: 120px !important; /* Compact height with overlay text */
+        min-height: 120px !important;
+    }
+
+    .vjs-swiper-item .vjs-overlay-title {
+        font-size: 11px !important;
+        -webkit-line-clamp: 2 !important;
+    }
+
+    .vjs-swiper-item .vjs-overlay-meta {
+        font-size: 9px !important;
+    }
+}
+
+@media (min-width: 700px) and (max-width: 899px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .vjs-related-video-thumbnail-container {
+        height: 110px;
+    }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1200px) and (max-width: 1599px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1600px) {
+    .vjs-related-videos-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* Hide poster and video when end screen is shown */
+.vjs-ended .vjs-poster {
+    display: none !important;
+}
+
+/* Ensure video is completely hidden when end screen is active */
+.video-js.vjs-ended video {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Ensure end screen overlay covers everything with solid background but stays below menus */
+.video-js.vjs-ended .vjs-end-screen-overlay {
+    background: #000000 !important;
+    z-index: 100 !important;
+    display: flex !important;
+}

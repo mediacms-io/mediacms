@@ -146,8 +146,13 @@
     }
   }
 
-  > * {
+  > div {
+    position: relative;
     display: table-cell;
+    min-width: 98px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    vertical-align: middle;
     border-right: 1px solid #f0f0f0;
 
     .dark_theme & {
@@ -160,7 +165,7 @@
   }
 
   &:hover {
-    > * {
+    > div {
       border-color: #eaeaea;
 
       .dark_theme & {
@@ -188,17 +193,14 @@
     opacity: 0.4;
   }
 
-  > * {
-    position: relative;
-    min-width: 98px;
-    padding-top: 14px;
-    padding-bottom: 14px;
-    vertical-align: middle;
-  }
-
   .mi-title,
   .mi-name {
     .actions {
+      .seperator {
+        display: inline-block;
+        margin: 0 4px;
+        opacity: 0.65;
+      }
       position: relative;
       display: block;
       padding-top: 4px;
@@ -252,7 +254,7 @@
   }
 
   &.manage-media-item {
-    > * {
+    > div {
       width: 10%;
       text-align: center;
     }
@@ -306,8 +308,8 @@
   }
 
   &.manage-users-item {
-    > * {
-      width: math.div(1,8) * 100%;
+    > div {
+      width: math.div(1, 9) * 100%;
     }
 
     .mi-added,
@@ -315,18 +317,21 @@
     .mi-featured,
     .mi-verified,
     .mi-trusted,
+    .mi-approved,
     .mi-checkbox {
       text-align: center;
     }
 
     .mi-name,
     .mi-username {
-      min-width: 240px;
       min-width: 200px;
-      width: 50%;
       padding-left: 16px;
       padding-right: 16px;
       font-weight: 500;
+    }
+
+    .mi-name {
+      width: 100%;
     }
 
     .mi-checkbox {
@@ -344,7 +349,7 @@
   }
 
   &.manage-comments-item {
-    > * {
+    > div {
       width: 16%;
     }
 
@@ -457,7 +462,7 @@
       box-shadow: none;
     }
 
-    > * {
+    > div {
       padding-top: 20px;
       padding-bottom: 20px;
       border-right: 0;
@@ -469,7 +474,6 @@
         position: relative;
         display: inline;
         vertical-align: top;
-        background-color: yellow;
 
         .material-icons {
           width: auto;
@@ -479,7 +483,7 @@
           line-height: 1;
         }
 
-        > * {
+        > span {
           opacity: 0.25;
 
           position: absolute;
@@ -501,7 +505,7 @@
         text-decoration: underline;
 
         .mi-col-sort-icons {
-          > * {
+          > span {
             opacity: 0.35;
           }
         }
@@ -509,7 +513,7 @@
 
       &.desc {
         .mi-col-sort-icons {
-          > *:last-child {
+          > span:last-child {
             opacity: 0.8;
           }
         }
@@ -517,7 +521,7 @@
 
       &.asc {
         .mi-col-sort-icons {
-          > *:first-child {
+          > span:first-child {
             opacity: 0.8;
           }
         }
@@ -531,6 +535,66 @@
   float: left;
   width: 100%;
   clear: both;
+}
+
+.message {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  &.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  &.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+}
+
+.add-new-user-container {
+  display: inline-block;
+  margin-bottom: 12px;
+  float: right;
+
+  .popup-message-bottom {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    button {
+      font-size: 14px;
+      color: var(--popup-msg-main-text-color);
+
+      &.proceed-profile-removal {
+        color: var(--default-theme-color);
+      }
+
+      &:hover {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  }
+}
+
+.add-new-user-btn {
+  padding: 0 16px;
+  height: 36px;
+  line-height: 36px;
+  color: var(--default-theme-color);
+  border: 1px solid var(--default-theme-color);
+  background: var(--user-action-form-inner-bg-color);
+  border-radius: 2px;
+  box-shadow: 0px 1px 4px 0 rgba(17, 17, 17, 0.06);
+  cursor: pointer;
+  font-weight: 500;
+
+  &:hover {
+    background: var(--default-theme-color);
+    color: var(--user-action-form-inner-bg-color);
+  }
 }
 
 .manage-items-bulk-action {

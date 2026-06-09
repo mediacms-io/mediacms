@@ -1,13 +1,8 @@
 {% extends "root.html" %}
 {% load static %}
 
-{% block topimports %}
-<link href="{% static "css/embed.css" %}" rel="preload" as="style">
-<link href="{% static "css/embed.css" %}" rel="stylesheet">
-{%endblock topimports %}
-
 {% block content %}<div id="page-embed"></div>{% endblock content %}
 
 {% block bottomimports %}
-<script src="{% static "js/embed.js" %}"></script>
+    <script src="{% static "js/embed.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

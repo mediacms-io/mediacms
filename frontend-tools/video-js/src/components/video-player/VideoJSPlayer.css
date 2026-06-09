@@ -1,0 +1,155 @@
+button {
+    cursor: pointer;
+}
+.playlist-items a {
+    text-decoration: none !important;
+}
+
+.video-js,
+.video-js[tabindex],
+.vjs-button:focus,
+.video-js video:focus,
+.video-js video:focus-visible {
+    outline: none !important;
+}
+
+/* Show time control in all screen sizes */
+.video-js .vjs-time-control {
+    display: block !important;
+}
+.video-js .vjs-time-control.vjs-time-divider {
+    display: none !important;
+}
+
+/* Hide time tooltip, mouse display, and sprite preview for audio files */
+.video-js.vjs-audio-type .vjs-time-tooltip,
+.video-js.vjs-audio-type .vjs-mouse-display,
+.video-js.vjs-audio-type .vjs-sprite-preview-tooltip,
+.video-js.vjs-audio-type .chapter-image-sprite {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* iOS Native Text Tracks - Position captions above control bar */
+/* Using ::cue which is the only way to style native tracks on iOS */
+video::cue {
+    line: -4; /* Move captions up by 4 lines from bottom */
+}
+
+/* Mobile-specific caption font size increases */
+@media (max-width: 767px) {
+    /* iOS native text tracks */
+    video::cue {
+        font-size: 1em;
+    }
+
+    /* Video.js text tracks for non-iOS */
+    .video-js .vjs-text-track-display {
+        font-size: 1em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1em !important;
+    }
+}
+
+/* Extra small screens - even larger captions */
+@media (max-width: 480px) {
+    video::cue {
+        font-size: 1.2em;
+    }
+
+    .video-js .vjs-text-track-display {
+        font-size: 1.2em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1.2em !important;
+    }
+}
+
+/* Tablet size - moderate increase */
+@media (min-width: 768px) and (max-width: 1024px) {
+    video::cue {
+        font-size: 1em;
+    }
+
+    .video-js .vjs-text-track-display {
+        font-size: 1em !important;
+    }
+
+    .video-js .vjs-text-track-cue {
+        font-size: 1em !important;
+    }
+}
+
+/* Adjust subtitle position when controls are visible (for non-native Video.js tracks) */
+/* When controls are VISIBLE (user is active), add extra bottom margin */
+.video-js:not(.vjs-user-inactive) .vjs-text-track-display {
+    margin-bottom: 2em; /* Adjust this value to move subtitles higher when controls are visible */
+}
+
+/* When controls are HIDDEN (user is inactive), use default positioning  */
+.video-js.vjs-user-inactive .vjs-text-track-display {
+    margin-bottom: 0.5em; /* Smaller margin when controls are hidden */
+}
+
+/* Center the fullscreen button inside its wrapper */
+/* @media (hover: hover) and (pointer: fine) {
+    .vjs-fullscreen-control svg {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}
+ */
+
+/* Prevent control bar buttons from overflowing */
+.video-js .vjs-control-bar {
+    overflow: visible !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Ensure control bar stays within bounds - only allow non-essential buttons to shrink */
+.video-js .vjs-control-bar .vjs-settings-button,
+.video-js .vjs-control-bar .vjs-chapters-button,
+.video-js .vjs-control-bar .vjs-subtitles-button,
+.video-js .vjs-control-bar .vjs-captions-button,
+.video-js .vjs-control-bar .vjs-subs-caps-button,
+.video-js .vjs-control-bar .vjs-autoplay-toggle,
+.video-js .vjs-control-bar .vjs-next-video-button {
+    flex-shrink: 1 !important;
+    min-width: 0 !important;
+}
+
+/* Priority controls that should never shrink - maintain their size and spacing */
+.video-js .vjs-control-bar .vjs-play-control,
+.video-js .vjs-control-bar .vjs-volume-panel,
+.video-js .vjs-control-bar .vjs-fullscreen-control,
+.video-js .vjs-control-bar .vjs-picture-in-picture-toggle,
+.video-js .vjs-control-bar .custom-remaining-time {
+    flex-shrink: 0 !important;
+}
+
+/* Hide less important buttons on smaller screens */
+@media (max-width: 768px) {
+    .video-js .vjs-control-bar .vjs-picture-in-picture-toggle {
+        display: none !important;
+    }
+}
+
+@media (max-width: 500px) {
+    .video-js .vjs-control-bar .vjs-next-video-button {
+        display: none !important;
+    }
+}
+
+@media (max-width: 400px) {
+    /* Hide subtitles/captions button on very small screens - already available in settings */
+    .video-js .vjs-control-bar .vjs-subtitles-button,
+    .video-js .vjs-control-bar .vjs-captions-button,
+    .video-js .vjs-control-bar .vjs-subs-caps-button {
+        display: none !important;
+    }
+}

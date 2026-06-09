@@ -102,7 +102,11 @@ export function SidebarNavigationMenu() {
       });
     }
 
-    if (PageStore.get('config-enabled').pages.members && PageStore.get('config-enabled').pages.members.enabled) {
+    if (
+      PageStore.get('config-enabled').pages.members &&
+      PageStore.get('config-enabled').pages.members.enabled &&
+      userCan.canSeeMembersPage
+    ) {
       items.push({
         link: links.members,
         icon: 'people',

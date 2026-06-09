@@ -51,7 +51,7 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     search_fields = ['social_app__name', 'idp_id', 'sp_metadata_url']
 
     fieldsets = [
-        ('Provider Settings', {'fields': ['social_app', 'idp_id', 'idp_cert']}),
+        ('Provider Settings', {'fields': ['social_app', 'idp_id', 'idp_cert', 'sp_cert', 'sp_private_key']}),
         ('URLs', {'fields': ['sso_url', 'slo_url', 'sp_metadata_url']}),
         ('Group Management', {'fields': ['remove_from_groups', 'save_saml_response_logs']}),
         ('Attribute Mapping', {'fields': ['uid', 'name', 'email', 'groups', 'first_name', 'last_name', 'user_logo', 'role']}),

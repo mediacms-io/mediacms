@@ -9,9 +9,6 @@ import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/'
 import { PopupMain, UserThumbnail } from '../_shared';
 import { replaceString } from '../../utils/helpers/';
 
-import './videojs-markers.js';
-import './videojs.markers.css';
-import { enableMarkers, addMarker } from './videojs-markers_config.js';
 import { translateString } from '../../utils/helpers/';
 
 import './Comments.scss';
@@ -395,7 +392,7 @@ function displayCommentsRelatedAlert() {
   }
 }
 
-const CommentsListHeader = ({ commentsLength }) => {
+const CommentsListHeader = ({ commentsLength, ordering, onToggleOrdering }) => {
   return (
     <>
       {!MemberContext._currentValue.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
@@ -412,11 +409,29 @@ const CommentsListHeader = ({ commentsLength }) => {
             : MediaPageStore.get('media-data').enable_comments
             ? translateString('No') + ' ' + commentsText.single + ' ' + translateString('yet')
             : ''}
+          {commentsLength > 0 && (
+            <button className="comments-order-toggle" onClick={onToggleOrdering}>
+              <span className="material-icons">swap_vert</span>
+              <span className="comments-order-label">
+                {ordering === 'newest' ? translateString('Newest first') : translateString('Oldest first')}
+              </span>
+            </button>
+          )}
         </h2>
       ) : null}
     </>
   );
 };
+
+function getSortedComments(comments, ordering) {
+  const sorted = [...comments];
+  sorted.sort((a, b) => {
+    const da = new Date(a.add_date);
+    const db = new Date(b.add_date);
+    return ordering === 'newest' ? db - da : da - db;
+  });
+  return sorted;
+}
 
 export default function CommentsList(props) {
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
@@ -426,6 +441,12 @@ export default function CommentsList(props) {
   );
 
   const [displayComments, setDisplayComments] = useState(false);
+
+  const [ordering, setOrdering] = useState('newest');
+
+  function toggleOrdering() {
+    setOrdering((o) => (o === 'newest' ? 'oldest' : 'newest'));
+  }
 
   function onCommentsLoad() {
     const retrievedComments = [...MediaPageStore.get('media-comments')];
@@ -457,36 +478,8 @@ export default function CommentsList(props) {
     return text.replace(timeRegex, wrapTimestampWithAnchor);
   }
 
-  function setMentions(text) {
-    let sanitizedComment = text.split('@(_').join('<a href="/user/');
-    sanitizedComment = sanitizedComment.split('_)[_').join('">');
-    return sanitizedComment.split('_]').join('</a>');
-  }
 
-  function setTimestampAnchorsAndMarkers(text, videoPlayer) {
-    function wrapTimestampWithAnchor(match, string) {
-      let split = match.split(':'),
-        s = 0,
-        m = 1;
-      let searchParameters = new URLSearchParams(window.location.search);
 
-      while (split.length > 0) {
-        s += m * parseInt(split.pop(), 10);
-        m *= 60;
-      }
-      if (MediaCMS.features.media.actions.timestampTimebar) {
-        addMarker(videoPlayer, s, text);
-      }
-
-      searchParameters.set('t', s);
-      const wrapped =
-        '<a href="' + MediaPageStore.get('media-url').split('?')[0] + '?' + searchParameters + '">' + match + '</a>';
-      return wrapped;
-    }
-
-    const timeRegex = new RegExp('((\\d)?\\d:)?(\\d)?\\d:\\d\\d', 'g');
-    return text.replace(timeRegex, wrapTimestampWithAnchor);
-  }
 
   function onCommentSubmit(commentId) {
     onCommentsLoad();
@@ -543,12 +536,12 @@ export default function CommentsList(props) {
   return (
     <div className="comments-list">
       <div className="comments-list-inner">
-        <CommentsListHeader commentsLength={comments.length} />
+        <CommentsListHeader commentsLength={comments.length} ordering={ordering} onToggleOrdering={toggleOrdering} />
 
         {MediaPageStore.get('media-data').enable_comments ? <CommentForm media_id={mediaId} /> : null}
 
         {displayComments
-          ? comments.map((c) => {
+          ? getSortedComments(comments, ordering).map((c) => {
               return (
                 <Comment
                   key={c.uid}

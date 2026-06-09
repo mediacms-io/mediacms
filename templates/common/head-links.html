@@ -22,10 +22,15 @@
 		<link href="{% static "lib/gfonts/gfonts.css" %}" rel="stylesheet">
 		{% endif %}
 
-		<link href="{% static "css/_commons.css" %}" rel="preload" as="style">
-		<link href="{% static "css/_commons.css" %}" rel="stylesheet">
+		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="preload" as="style">
+		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="stylesheet">
 
-		<link href="{% static "css/_extra.css" %}" rel="preload" as="style">
-		<link href="{% static "css/_extra.css" %}" rel="stylesheet">
+		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="preload" as="style">
+		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="stylesheet">
 
-		<link href="{% static "js/_commons.js" %}" rel="preload" as="script">
+		{% for css_path in EXTRA_CSS_PATHS %}
+		<link href="{{ css_path }}?v={{ VERSION }}" rel="preload" as="style">
+		<link href="{{ css_path }}?v={{ VERSION }}" rel="stylesheet">
+		{% endfor %}
+
+		<link href="{% static "js/_commons.js" %}?v={{ VERSION }}" rel="preload" as="script">

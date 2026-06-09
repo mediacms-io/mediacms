@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block headtitle %}About - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+{% load custom_filters %}
+<meta property="og:title" content="About - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [{
+		"@type": "ListItem",
+		"position": 1,
+        "name": "{{PORTAL_NAME}}",
+        "item": {
+			"@type": "WebPage",
+	        "@id": "{{FRONTEND_HOST}}"
+	    }
+    },
+    {
+		"@type": "ListItem",
+		"position": 2,
+        "name": "About",
+        "item": {
+			"@type": "AboutPage",
+	        "@id": "{{FRONTEND_HOST}}/about"
+	    }
+    }]
+}
+</script>
+
+{% endblock headermeta %}
+
+{% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="custom-page-wrapper">
+
+	<h1>{{page.title}}</h1>
+
+	{{page.description|safe}}
+
+</div>
+
+{% endblock %}

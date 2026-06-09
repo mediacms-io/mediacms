@@ -2,6 +2,7 @@ import React, { useState, useEffect, CSSProperties } from 'react';
 import { SiteConsumer } from '../utils/contexts/';
 import { MediaPageStore } from '../utils/stores/';
 import { MediaPageActions } from '../utils/actions/';
+import { getParentMediaBase } from '../utils/helpers/';
 import VideoViewer from '../components/media-viewer/VideoViewer';
 
 const wrapperStyles = {
@@ -41,7 +42,7 @@ export const EmbedPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="embed-wrap" style={wrapperStyles}>
+    <div className="embed-wrap media-embed-wrap" style={wrapperStyles}>
       {failedMediaLoad && (
         <div className="player-container player-container-error" style={containerStyles}>
           <div className="player-container-inner" style={containerStyles}>
@@ -56,11 +57,39 @@ export const EmbedPage: React.FC = () => {
           </div>
         </div>
       )}
+
       {loadedVideo && (
         <SiteConsumer>
-          {(site) => (
-            <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} containerStyles={containerStyles} />
-          )}
+        {(site) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlShowTitle = urlParams.get('showTitle');
+            const showTitle = urlShowTitle !== '0';
+            const urlShowRelated = urlParams.get('showRelated');
+            const showRelated = urlShowRelated !== '0';
+            const urlShowUserAvatar = urlParams.get('showUserAvatar');
+            const showUserAvatar = urlShowUserAvatar !== '0';
+            const urlLinkTitle = urlParams.get('linkTitle');
+            const linkTitle = urlLinkTitle !== '0';
+            const urlTimestamp = urlParams.get('t');
+            const timestamp = urlTimestamp ? parseInt(urlTimestamp, 10) : null;
+
+            const parentMediaBase = getParentMediaBase();
+
+            return (
+              <VideoViewer
+                data={MediaPageStore.get('media-data')}
+                siteUrl={site.url}
+                containerStyles={containerStyles}
+                inEmbed={true}
+                showTitle={showTitle}
+                showRelated={showRelated}
+                showUserAvatar={showUserAvatar}
+                linkTitle={linkTitle}
+                timestamp={timestamp}
+                parentMediaBase={parentMediaBase}
+              />
+            );
+          }} 
         </SiteConsumer>
       )}
     </div>

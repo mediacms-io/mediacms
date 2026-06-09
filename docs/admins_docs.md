@@ -2,7 +2,6 @@
 
 ## Table of contents
 - [1. Welcome](#1-welcome)
-- [2. Server Installaton](#2-server-installation)
 - [3. Docker Installation](#3-docker-installation)
 - [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
@@ -25,63 +24,14 @@
 - [22. Role-Based Access Control](#22-role-based-access-control)
 - [23. SAML setup](#23-saml-setup)
 - [24. Identity Providers setup](#24-identity-providers-setup)
-
+- [25. Custom urls](#25-custom-urls)
+- [26. Allowed files](#26-allowed-files)
+- [27. User upload limits](#27-user-upload-limits)
+- [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
 
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
-
-## 2. Server Installation
-
-The core dependencies are Python3, Django3, Celery, PostgreSQL, Redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But we strongly suggest installing on Linux Ubuntu (tested on versions 20, 22).
-
-Installation on an Ubuntu system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
-
-Automated script - tested on Ubuntu 20, Ubuntu 22 and Debian Buster
-
-```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
-```
-
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
-
-
-### Update
-
-If you've used the above way to install MediaCMS, update with the following:
-
-```bash
-cd /home/mediacms.io/mediacms # enter mediacms directory
-source  /home/mediacms.io/bin/activate # use virtualenv
-git pull # update code
-pip install -r requirements.txt -U # run pip install to update
-python manage.py migrate # run Django migrations
-sudo systemctl restart mediacms celery_long celery_short # restart services
-```
-
-### Update from version 2 to version 3
-Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
-The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
-
-```
-# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
-# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
-# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
-# systemctl daemon-reload
-# systemctl start celery_long celery_short celery_beat
-```
-
-
-
-### Configuration
-Checkout the configuration section here.
-
-
-### Maintenance
-Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
 
 
 ## 3. Docker Installation
@@ -89,13 +39,11 @@ Database can be backed up with pg_dump and media_files on /home/mediacms.io/medi
 ## Installation
 Install a recent version of [Docker](https://docs.docker.com/get-docker/), and [Docker Compose](https://docs.docker.com/compose/install/).
 
-For Ubuntu 20/22 systems this is:
+For Ubuntu systems this is:
 
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
 ```
 
 Then run as root
@@ -111,7 +59,7 @@ If you want to explore more options (including setup of https with letsencrypt c
 Run
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 This will download all MediaCMS related Docker images and start all containers. Once it finishes, MediaCMS will be installed and available on http://localhost or http://ip
@@ -124,6 +72,12 @@ migrations_1     | Created admin user with password: gwg1clfkwf
 
 or if you have set the ADMIN_PASSWORD variable on docker-compose file you have used (example `docker-compose.yaml`), that variable will be set as the admin user's password
 
+`Note`: if you want to use the automatic transcriptions, you have to do one of the following:
+* either use the docker-compose.full.yaml, so in this case run `docker-compose -f docker-compose.yaml -f docker-compose.full.yaml up`
+* or edit the docker-compose.yaml file and set the image for the celery_worker service as mediacms/mediacms:full instead of mediacms/mediacms:latest
+
+Plus set variable `USE_WHISPER_TRANSCRIBE = True` in the settings.py file
+
 ### Update
 
 Get latest MediaCMS image and stop/start containers
@@ -131,8 +85,8 @@ Get latest MediaCMS image and stop/start containers
 ```bash
 cd /path/to/mediacms/installation
 docker pull mediacms/mediacms
-docker-compose down
-docker-compose up
+docker compose down
+docker compose up
 ```
 
 ### Update from version 2 to version 3
@@ -170,9 +124,7 @@ By default, all these services are enabled, but in order to create a scaleable d
 
 Also see the `Dockerfile` for other environment variables which you may wish to override. Application settings, eg. `FRONTEND_HOST` can also be overridden by updating the `deploy/docker/local_settings.py` file.
 
-See example deployments in the sections below. These example deployments have been tested on `docker-compose version 1.27.4` running on `Docker version 19.03.13`
-
-To run, update the configs above if necessary, build the image by running `docker-compose build`, then run `docker-compose run`
+To run, update the configs above if necessary, build the image by running `docker compose build`, then run `docker compose run`
 
 ### Simple Deployment, accessed as http://localhost
 
@@ -189,7 +141,7 @@ Edit this file and set `VIRTUAL_HOST` as my_domain.com, `LETSENCRYPT_HOST` as my
 
 Edit `deploy/docker/local_settings.py` and set https://my_domain.com as `FRONTEND_HOST`
 
-Now run docker-compose -f docker-compose-letsencrypt.yaml up, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
+Now run `docker compose -f docker-compose-letsencrypt.yaml up`, when installation finishes you will be able to access https://my_domain.com using a valid Letsencrypt certificate!
 
 ### Advanced Deployment, accessed as http://localhost:8000
 
@@ -215,13 +167,9 @@ Several options are available on `cms/settings.py`, most of the things that are 
 
 It is advisable to override any of them by adding it to `local_settings.py` .
 
-In case of a the single server installation, add to `cms/local_settings.py` .
-
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
 Any change needs restart of MediaCMS in order to take effect.
-
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
 
 ```bash
 #systemctl restart mediacms
@@ -230,12 +178,17 @@ Single server installation: edit `cms/local_settings.py`, make a change and rest
 Docker Compose installation: edit `deploy/docker/local_settings.py`, make a change and restart MediaCMS containers
 
 ```bash
-#docker-compose restart web celery_worker celery_beat
+#docker compose restart web celery_worker celery_beat
 ```
 
 ### 5.1 Change portal logo
 
-Set a new svg file for the white theme (`static/images/logo_dark.svg`) or the dark theme (`static/images/logo_light.svg`)
+Find the default svg files for the white theme on `static/images/logo_dark.svg` and for the dark theme on `static/images/logo_light.svg`
+You can specify new svg paths to override by editing the `PORTAL_LOGO_DARK_SVG` and `PORTAL_LOGO_LIGHT_SVG` variables in `settings.py`.
+
+You can also use custom pngs, by setting the variables `PORTAL_LOGO_DARK_PNG` and `PORTAL_LOGO_LIGHT_PNG` in `settings.py`. The svg files have priority over png files, so if both are set, svg files will be used.
+
+In any case, make sure the files are placed on the static/images folder.
 
 ### 5.2 Set global portal title
 
@@ -504,6 +457,68 @@ By default `CAN_COMMENT = "all"` means that all registered users can add comment
 
 - **advancedUser**, only users that are marked as advanced users can add comment. Admins or MediaCMS managers can make users advanced users by editing their profile and selecting advancedUser.
 
+### 5.26 Control whether anonymous users can list all users
+
+By default, anonymous users can view the list of all users on the platform. To restrict this to authenticated users only, set:
+
+```
+ALLOW_ANONYMOUS_USER_LISTING = False
+```
+
+When set to False, only logged-in users will be able to access the user listing API endpoint.
+
+
+### 5.27 Control who can see the members page
+
+By default `CAN_SEE_MEMBERS_PAGE = "all"` means that all registered users can see the members page. Other valid options are:
+
+- **editors**, only MediaCMS editors can view the page
+- **admins**, only MediaCMS admins can view the page
+
+
+### 5.28 Configure user search fields
+
+By default, when searching for users (e.g., in bulk actions modals or the users API), the search is performed on the user's name and username. You can configure this behavior using the `USER_SEARCH_FIELD` setting:
+
+```
+USER_SEARCH_FIELD = "name_username"  # Default - searches in name and username
+```
+
+To also include email addresses in the search and display them in the user interface:
+
+```
+USER_SEARCH_FIELD = "name_username_email"  # Searches in name, username, and email
+```
+
+When set to `"name_username_email"`:
+- The user search will also match email addresses
+- The email field will be returned in the API response
+- Frontend components will display users as "Name - Email" instead of "Name - Username"
+
+This setting is useful when you want to make it easier to find users by their email addresses, particularly in administrative interfaces like bulk action modals.
+
+
+### 5.29 Require user approval on registration
+
+By default, users do not require approval, so they can login immediately after registration (if registration is open). However, if the parameter `USERS_NEEDS_TO_BE_APPROVED` is set to `True`, they will first have to have their accounts approved by an administrator before they can successfully sign in.
+Administrators can approve users through the following ways: 1. through Django administration, 2. through the users management page, 3. through editing the profile page directly. In all cases, set 'Is approved' to True.
+
+### 5.30 Show or hide media count numbers on categories and tags pages
+
+By default, the number of media items is displayed next to each category and tag on the `/categories` and `/tags` pages. To hide these numbers:
+
+```
+INCLUDE_LISTING_NUMBERS = False
+```
+
+To show the numbers (default behavior):
+
+```
+INCLUDE_LISTING_NUMBERS = True
+```
+
+This setting affects only the visual display on the categories and tags listing pages and does not impact the functionality of filtering by categories or tags.
+
 
 ## 6. Manage pages
 to be written
@@ -723,14 +738,7 @@ Instructions contributed by @alberto98fx
 On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
 In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
 
-Enter the Django shell, example if you're using the Single Server installation:
-
-```bash
-source  /home/mediacms.io/bin/activate
-python manage.py shell
-```
-
-and inside the shell
+Enter the Django shell and inside the shell
 
 ```bash
 from django.core.mail import EmailMessage
@@ -939,6 +947,8 @@ Select the SAML Configurations tab, create a new one and set:
 3. **SSO URL**:
 4. **SLO URL**:
 5. **SP Metadata URL**: The metadata URL that the IDP will utilize. This can be https://{portal}/saml/metadata and is autogenerated by MediaCMS
+6. **SP Certificate** (optional): SP x509 certificate (PEM). Enables encrypted/signed SAML communication. If set, the SP Private Key must also be provided, and the certificate is published in the SP metadata so the IDP can encrypt assertions to MediaCMS.
+7. **SP Private Key** (optional): SP private key (PEM). Used to sign AuthnRequests/LogoutRequests and to decrypt assertions encrypted by the IDP. Required if SP Certificate is provided.
 
 - Step 3: Set other Options
 1. **Email Settings**:
@@ -948,6 +958,8 @@ Select the SAML Configurations tab, create a new one and set:
 3. **Group Role Mapping**: Maps the role returned by SAML (as set in the SAML Configuration tab) with the role in groups that user will be added
 4. **Group mapping**: This creates groups associated with this IDP. Group ids as they come from SAML, associated with MediaCMS groups
 5. **Category Mapping**: This maps a group id (from SAML response) with a category in MediaCMS
+
+A full SAML deployment with [EntraID guide and troubleshooting steps is available here.](./saml_entraid_setup.md). This guide can be used as reference for other IDPs too.
 
 ## 24. Identity Providers setup
 
@@ -967,3 +979,38 @@ USE_IDENTITY_PROVIDERS = True
 
 Visiting the admin, you will see the Identity Providers tab and you can add one.
 
+## 25. Custom urls
+To enable custom urls, set `ALLOW_CUSTOM_MEDIA_URLS = True` on settings.py or local_settings.py
+This will enable editing the URL of the media, while editing a media. If the URL is already taken you get a message you cannot update this.
+
+## 26. Allowed files
+MediaCMS performs identification attempts on new file uploads and only allows certain file types specified in the `ALLOWED_MEDIA_UPLOAD_TYPES` setting. By default, only ["video", "audio", "image", "pdf"] files are allowed.
+
+When a file is not identified as one of these allowed types, the file gets removed from the system and there's an entry indicating that this is not a supported media type.
+
+If you want to change the allowed file types, edit the `ALLOWED_MEDIA_UPLOAD_TYPES` list in your `settings.py` or `local_settings.py` file. If 'all' is specified in this list, no check is performed and all files are allowed.
+
+## 27. User upload limits
+MediaCMS allows you to set a maximum number of media files that each user can upload. This is controlled by the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` setting in `settings.py` or `local_settings.py`. By default, this is set to 100 media items per user.
+
+When a user reaches this limit, they will no longer be able to upload new media until they delete some of their existing content. This limit applies regardless of the user's role or permissions in the system.
+
+To change the maximum number of uploads allowed per user, modify the `NUMBER_OF_MEDIA_USER_CAN_UPLOAD` value in your settings file:
+
+```
+NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 5
+```
+
+## 28. Whisper Transcribe for Automatic Subtitles
+MediaCMS can integrate with OpenAI's Whisper to automatically generate subtitles for your media files. This feature is useful for making your content more accessible.
+
+### How it works
+When the whisper transcribe task is triggered for a media file, MediaCMS runs the `whisper` command-line tool to process the audio and generate a subtitle file in VTT format. The generated subtitles are then associated with the media and are available under the "automatic" language option.
+
+### Configuration
+
+Transcription functionality is available only for the Docker installation. To enable this feature, you must either use the `docker-compose.full.yaml` file, as it contains an image with the necessary requirements, or you can also set that celery_worker service is usine mediacms:full image instead of mediacms:latest. Then you also have to set the setting: `USE_WHISPER_TRANSCRIBE = True` in your local_settings.py file.
+
+By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
+
+The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.

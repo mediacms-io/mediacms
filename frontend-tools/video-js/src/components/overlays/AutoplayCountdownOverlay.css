@@ -1,0 +1,258 @@
+/* Minimal Circular Countdown Overlay */
+.vjs-autoplay-countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    padding: 20px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.autoplay-close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s ease;
+    padding: 0;
+    z-index: 10;
+}
+
+.autoplay-close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.autoplay-close-button:active {
+    transform: scale(0.95);
+}
+
+.vjs-autoplay-countdown-overlay.autoplay-countdown-show {
+    opacity: 1;
+}
+
+.autoplay-countdown-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 350px;
+    width: 100%;
+}
+
+.countdown-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.next-video-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-align: center;
+}
+
+.next-video-author {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    font-weight: 400;
+    margin: -8px 0 0 0;
+    line-height: 1.2;
+}
+
+.circular-countdown {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    margin: 10px 0;
+}
+
+.circular-countdown:hover {
+    transform: scale(1.05);
+}
+
+.countdown-circle {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.countdown-progress {
+    stroke-linecap: round;
+    stroke-dasharray: 282.74;
+    stroke-dashoffset: 282.74;
+}
+
+.play-icon {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.circular-countdown:hover .play-icon circle {
+    fill: rgba(255, 255, 255, 1);
+}
+
+.circular-countdown:hover .play-icon path {
+    fill: #000;
+}
+
+.autoplay-cancel-button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.autoplay-cancel-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* Desktop - Both buttons visible */
+@media (min-width: 768px) {
+    .autoplay-close-button {
+        display: flex !important;
+    }
+
+    .autoplay-cancel-button {
+        display: inline-block !important;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+    .autoplay-close-button {
+        display: flex !important;
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+    }
+
+    .autoplay-close-button svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .autoplay-countdown-content {
+        gap: 8px;
+        max-width: 280px;
+    }
+
+    .countdown-label {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .next-video-title {
+        font-size: 16px;
+        margin: 0 0 8px 0;
+    }
+
+    .next-video-author {
+        font-size: 13px;
+        margin: -6px 0 0 0;
+    }
+
+    .circular-countdown {
+        margin: 4px 0;
+    }
+
+    .circular-countdown svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .autoplay-cancel-button {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .autoplay-close-button {
+        display: flex !important;
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .autoplay-close-button svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .autoplay-countdown-content {
+        gap: 6px;
+        max-width: 260px;
+    }
+
+    .countdown-label {
+        font-size: 12px;
+        margin: 0;
+    }
+
+    .next-video-title {
+        font-size: 15px;
+        margin: 0 0 6px 0;
+    }
+
+    .next-video-author {
+        font-size: 12px;
+        margin: -4px 0 0 0;
+    }
+
+    .circular-countdown {
+        margin: 2px 0;
+    }
+
+    .circular-countdown svg {
+        width: 70px;
+        height: 70px;
+    }
+
+    .autoplay-cancel-button {
+        display: none;
+    }
+}

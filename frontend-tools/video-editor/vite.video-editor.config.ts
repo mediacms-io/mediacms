@@ -32,11 +32,17 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        // Ensure CSS file has a predictable name
+        // Ensure CSS file has a predictable name and keep image assets
         assetFileNames: (assetInfo) => {
           if (assetInfo.name === 'style.css') return 'video-editor.css';
-          return assetInfo.name;
+          // Keep original names for image assets
+          if (assetInfo.name && /\.(png|jpe?g|svg|gif|webp)$/i.test(assetInfo.name)) {
+            return assetInfo.name;
+          }
+          return assetInfo.name || 'asset-[hash][extname]';
         },
+        // Inline small assets, emit larger ones
+        inlineDynamicImports: true,
         // Add this to ensure the final bundle exposes React correctly
         globals: {
           'react': 'React',
@@ -47,6 +53,8 @@ export default defineConfig({
     // Output to Django's static directory
     outDir: '../../../static/video_editor',
     emptyOutDir: true,
-    external: ['react', 'react-dom']
+    external: ['react', 'react-dom'],
+    // Inline assets smaller than 100KB, emit larger ones
+    assetsInlineLimit: 102400,
   },
 });

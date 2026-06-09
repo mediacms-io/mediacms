@@ -1,8 +1,0 @@
-{
-  "minify": true,
-  "options": [],
-  "feature-detects": [
-    "css/transforms",
-    "test/storage/localstorage"
-  ]
-}

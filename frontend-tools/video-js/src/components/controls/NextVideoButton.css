@@ -1,0 +1,32 @@
+/* ===== NEXT VIDEO BUTTON STYLES ===== */
+
+.vjs-next-video-control .vjs-icon-placeholder {
+    width: 1.2em;
+    height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    display: none !important;
+}
+
+.vjs-next-video-control .vjs-icon-placeholder svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .vjs-next-video-control svg {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 399px) {
+    .vjs-next-video-control svg {
+        width: 28px;
+        height: 28px;
+    }
+}

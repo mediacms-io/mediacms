@@ -54,6 +54,10 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
         ? formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url)
         : null;
 
+    // Extract actual filename from URL for non-video downloads
+    const originalUrl = MediaPageStore.get('media-original-url');
+    this.downloadFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : this.props.title;
+
     this.updateStateValues = this.updateStateValues.bind(this);
   }
 
@@ -104,7 +108,9 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
   render() {
     const displayViews = PageStore.get('config-options').pages.media.displayViews && void 0 !== this.props.views;
 
-    const mediaState = MediaPageStore.get('media-data').state;
+    const mediaData = MediaPageStore.get('media-data');
+    const mediaState = mediaData.state;
+    const isShared = mediaData.is_shared;
 
     let stateTooltip = '';
 
@@ -117,6 +123,8 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
         break;
     }
 
+    const sharedTooltip = 'This media is shared with specific users or categories';
+
     return (
       <div className="media-title-banner">
         {displayViews && PageStore.get('config-options').pages.media.categoriesWithTitle
@@ -125,15 +133,28 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
 
         {void 0 !== this.props.title ? <h1>{this.props.title}</h1> : null}
 
-        {'public' !== mediaState ? (
+        {isShared || 'public' !== mediaState ? (
           <div className="media-labels-area">
             <div className="media-labels-area-inner">
-              <span className="media-label-state">
-                <span>{mediaState}</span>
-              </span>
-              <span className="helper-icon" data-tooltip={stateTooltip}>
-                <i className="material-icons">help_outline</i>
-              </span>
+              {isShared ? (
+                <>
+                  <span className="media-label-state">
+                    <span>shared</span>
+                  </span>
+                  <span className="helper-icon" data-tooltip={sharedTooltip}>
+                    <i className="material-icons">help_outline</i>
+                  </span>
+                </>
+              ) : 'public' !== mediaState ? (
+                <>
+                  <span className="media-label-state">
+                    <span>{mediaState}</span>
+                  </span>
+                  <span className="helper-icon" data-tooltip={stateTooltip}>
+                    <i className="material-icons">help_outline</i>
+                  </span>
+                </>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -162,8 +183,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
               {MemberContext._currentValue.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
 
               {!MemberContext._currentValue.is.anonymous &&
-                MemberContext._currentValue.can.saveMedia &&
-                -1 < PlaylistsContext._currentValue.mediaTypes.indexOf(MediaPageStore.get('media-type')) ? (
+                MemberContext._currentValue.can.saveMedia ? (
                 <MediaSaveButton />
               ) : null}
 
@@ -171,7 +191,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
                 .downloadLink ? (
                 <VideoMediaDownloadLink />
               ) : (
-                <OtherMediaDownloadLink link={this.downloadLink} title={this.props.title} />
+                <OtherMediaDownloadLink link={this.downloadLink} title={this.downloadFilename} />
               )}
 
               <MediaMoreOptionsIcon allowDownload={this.props.allowDownload} />

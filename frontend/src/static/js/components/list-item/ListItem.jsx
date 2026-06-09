@@ -78,6 +78,7 @@ export function listItemProps(props, item, index) {
   const url = {
     view: itemPageLink(props, item),
     edit: props.canEdit ? item.url.replace('view?m=', 'edit?m=') : null,
+    publish: props.canEdit ? item.url.replace('view?m=', 'publish?m=') : null,
   };
 
   if (window.MediaCMS.site.devEnv && -1 < url.view.indexOf('view?')) {
@@ -237,6 +238,12 @@ export function listItemProps(props, item, index) {
 export function ListItem(props) {
   let isMediaItem = false;
 
+  const handleCheckboxChange = (event) => {
+    if (props.onSelectionChange && props.mediaId) {
+      props.onSelectionChange(props.mediaId, event.target.checked);
+    }
+  };
+
   const args = {
     order: props.order,
     title: props.title,
@@ -246,6 +253,10 @@ export function ListItem(props) {
     singleLinkContent: props.singleLinkContent,
     hasMediaViewer: props.hasMediaViewer,
     hasMediaViewerDescr: props.hasMediaViewerDescr,
+    showSelection: props.showSelection,
+    hasAnySelection: props.hasAnySelection,
+    isSelected: props.isSelected,
+    onCheckboxChange: handleCheckboxChange,
   };
 
   switch (props.type) {
@@ -311,6 +322,7 @@ export function ListItem(props) {
 
   if (props.canEdit) {
     args.editLink = props.url.edit;
+    args.publishLink = props.url.publish;
   }
 
   if (props.taxonomyPage.current) {

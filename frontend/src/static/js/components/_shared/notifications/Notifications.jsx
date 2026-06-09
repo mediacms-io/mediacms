@@ -38,7 +38,9 @@ function NotificationItem(props) {
 
   return !isVisible ? null : (
     <div className={'notification-item' + (isHidden ? ' hidden' : '')}>
-      <div>{props.children || null}</div>
+      <div>
+        <span>{props.children || 'No message'}</span>
+      </div>
     </div>
   );
 }

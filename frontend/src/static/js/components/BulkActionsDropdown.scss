@@ -1,0 +1,204 @@
+@import '../../css/config/index.scss';
+
+@keyframes bulk-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bulk-actions-dropdown {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 16px;
+
+  .bulk-actions-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    background-color: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background-color: #e4e4e4;
+      border-color: #bbb;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--default-theme-color, #009933);
+      box-shadow: 0 0 0 3px rgba(0, 153, 51, 0.2);
+    }
+
+    &:active {
+      background-color: #dcdcdc;
+      box-shadow: none;
+    }
+
+    &.no-selection {
+      color: #777;
+    }
+
+    &.is-open {
+      background-color: #e4e4e4;
+      border-color: var(--default-theme-color, #009933);
+      box-shadow: 0 0 0 2px rgba(0, 153, 51, 0.15);
+    }
+
+    .bulk-actions-chevron {
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      opacity: 0.6;
+    }
+
+    &.is-open .bulk-actions-chevron {
+      transform: rotate(180deg);
+      opacity: 1;
+    }
+  }
+
+  .bulk-actions-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    z-index: 1000;
+    min-width: 230px;
+    max-height: 340px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.08);
+    animation: bulk-menu-in 0.15s ease;
+  }
+
+  .bulk-actions-group {
+    padding: 6px 0;
+
+    & + & {
+      border-top: 1px solid #efefef;
+    }
+  }
+
+  .bulk-actions-group-label {
+    padding: 4px 14px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    user-select: none;
+  }
+
+  .bulk-actions-item {
+    display: block;
+    width: 100%;
+    padding: 8px 14px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 400;
+    color: #222;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.1s ease, border-left-color 0.1s ease, color 0.1s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #f0f7f3;
+      border-left-color: var(--default-theme-color, #009933);
+      color: #000;
+    }
+
+    &:active:not(:disabled) {
+      background-color: #dff0e7;
+    }
+
+    &:disabled,
+    &.is-disabled {
+      color: #ccc;
+      cursor: default;
+      border-left-color: transparent;
+    }
+  }
+
+  .dark_theme & {
+    .bulk-actions-trigger {
+      color: #e0e0e0;
+      background-color: #3a3a3a;
+      border-color: #505050;
+
+      &:hover {
+        background-color: #444;
+        border-color: #666;
+      }
+
+      &:focus {
+        border-color: var(--default-theme-color, #009933);
+        box-shadow: 0 0 0 3px rgba(0, 153, 51, 0.2);
+      }
+
+      &:active {
+        background-color: #333;
+      }
+
+      &.no-selection {
+        color: #888;
+      }
+
+      &.is-open {
+        background-color: #444;
+        border-color: var(--default-theme-color, #009933);
+        box-shadow: 0 0 0 2px rgba(0, 153, 51, 0.15);
+      }
+    }
+
+    .bulk-actions-menu {
+      background: #2c2c2c;
+      border-color: #484848;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .bulk-actions-group + .bulk-actions-group {
+      border-top-color: #383838;
+    }
+
+    .bulk-actions-group-label {
+      color: #666;
+    }
+
+    .bulk-actions-item {
+      color: #ddd;
+
+      &:hover:not(:disabled) {
+        background-color: #1a3325;
+        border-left-color: var(--default-theme-color, #009933);
+        color: #fff;
+      }
+
+      &:active:not(:disabled) {
+        background-color: #163020;
+      }
+
+      &:disabled,
+      &.is-disabled {
+        color: #484848;
+      }
+    }
+  }
+}

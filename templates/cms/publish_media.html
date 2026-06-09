@@ -6,12 +6,64 @@
 
 {% block headermeta %}{% endblock headermeta %}
 
+{% block extra_head %}
+<script>
+  (function() {
+    var url = new URL(window.location.href);
+    if (sessionStorage.getItem('lms_embed_mode') === 'true' && url.searchParams.get('mode') !== 'lms_embed_mode') {
+      url.searchParams.set('mode', 'lms_embed_mode');
+      window.location.replace(url.toString());
+    }
+  })();
+</script>
+<style>
+  .state-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .state-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-weight: normal;
+    margin-bottom: 0;
+  }
+  .state-option input { cursor: pointer; }
+  .shared-option {
+    border-left: 1px solid #dee2e6;
+    padding-left: 1.5rem;
+    margin-left: 0.25rem;
+  }
+  .confirm-state-section {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+  }
+  .confirm-state-section label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: normal;
+    margin-bottom: 0;
+  }
+  .confirm-state-section input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock extra_head %}
+
 {% block innercontent %}
     <div class="user-action-form-wrap">
-			{% include "cms/media_nav.html" with active_tab="publish" %}
-			<div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
-				{% csrf_token %}
-				{% crispy form %}
-		</div>
-	</div>
+        {% include "cms/media_nav.html" with active_tab="publish" %}
+        <div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
+            {% crispy form %}
+        </div>
+    </div>
 {% endblock innercontent %}

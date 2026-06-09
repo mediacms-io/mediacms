@@ -1,0 +1,125 @@
+{
+    "url": "https://deic.mediacms.io/view?m=mNm3XcqOm",
+    "user": "giannis",
+    "title": "samplevideo10m.mp4",
+    "description": "",
+    "add_date": "2025-06-24T12:43:03.640948+01:00",
+    "edit_date": "2025-10-25T12:50:37.898321+01:00",
+    "media_type": "video",
+    "state": "private",
+    "duration": 608,
+    "thumbnail_url": "/media/original/thumbnails/user/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd_shMkDEC.samplevideo10m.mp4.jpg",
+    "poster_url": "/media/original/thumbnails/user/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd_YkFI3Fg.samplevideo10m.mp4.jpg",
+    "thumbnail_time": null,
+    "sprites_url": "/media/original/thumbnails/user/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4sprites.jpg",
+    "preview_url": "/media/encoded/1/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.tmpvldjbxzb.gif",
+    "author_name": "Giannis Christodoulou",
+    "author_profile": "/user/giannis/",
+    "author_thumbnail": "/media/userlogos/user.jpg",
+    "encodings_info": {
+        "144": {},
+        "240": {
+            "h264": {
+                "title": "h264-240",
+                "url": "/media/encoded/2/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4.mp4",
+                "progress": 100,
+                "size": "3.4MB",
+                "encoding_id": 2367,
+                "status": "success"
+            }
+        },
+        "360": {
+            "h264": {
+                "title": "h264-360",
+                "url": "/media/encoded/3/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4.mp4",
+                "progress": 100,
+                "size": "4.7MB",
+                "encoding_id": 2368,
+                "status": "success"
+            }
+        },
+        "480": {
+            "h264": {
+                "title": "h264-480",
+                "url": "/media/encoded/13/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4.mp4",
+                "progress": 100,
+                "size": "6.2MB",
+                "encoding_id": 2369,
+                "status": "success"
+            }
+        },
+        "720": {
+            "h264": {
+                "title": "h264-720",
+                "url": "/media/encoded/10/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4.mp4",
+                "progress": 100,
+                "size": "8.9MB",
+                "encoding_id": 2370,
+                "status": "success"
+            }
+        },
+        "1080": {
+            "h264": {
+                "title": "h264-1080",
+                "url": "/media/encoded/7/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4.mp4",
+                "progress": 100,
+                "size": "13.8MB",
+                "encoding_id": 2371,
+                "status": "success"
+            }
+        },
+        "1440": {},
+        "2160": {}
+    },
+    "encoding_status": "success",
+    "views": 5,
+    "likes": 1,
+    "dislikes": 0,
+    "reported_times": 0,
+    "user_featured": false,
+    "original_media_url": "/media/original/user/giannis/5bdc2acc8a254c4da09b5af92fcc7ebd.samplevideo10m.mp4",
+    "size": "43.5MB",
+    "video_height": 1080,
+    "enable_comments": true,
+    "categories_info": [],
+    "is_reviewed": true,
+    "edit_url": "/edit?m=mNm3XcqOm",
+    "tags_info": [],
+    "hls_info": {
+        "master_file": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/master.m3u8",
+        "1080_iframe": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-1/iframes.m3u8",
+        "720_iframe": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-2/iframes.m3u8",
+        "480_iframe": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-3/iframes.m3u8",
+        "360_iframe": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-4/iframes.m3u8",
+        "240_iframe": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-5/iframes.m3u8",
+        "1080_playlist": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-1/stream.m3u8",
+        "720_playlist": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-2/stream.m3u8",
+        "480_playlist": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-3/stream.m3u8",
+        "360_playlist": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-4/stream.m3u8",
+        "240_playlist": "/media/hls/5bdc2acc8a254c4da09b5af92fcc7ebd/media-5/stream.m3u8"
+    },
+    "license": null,
+    "subtitles_info": [],
+    "chapter_data": [
+        {
+            "startTime": "00:00:37.184",
+            "endTime": "00:01:45.969",
+            "chapterTitle": "test1"
+        },
+        {
+            "startTime": "00:02:23.423",
+            "endTime": "00:05:18.439",
+            "chapterTitle": "test2"
+        },
+        {
+            "startTime": "00:05:57.580",
+            "endTime": "00:08:12.337",
+            "chapterTitle": "test3"
+        }
+    ],
+    "ratings_info": [],
+    "add_subtitle_url": "/add_subtitle?m=mNm3XcqOm",
+    "allow_download": true,
+    "slideshow_items": [],
+    "related_media": []
+}

@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.db.models import Q
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -46,6 +48,7 @@ class MediaList(APIView):
 
         featured = params.get("featured", "").strip()
         is_reviewed = params.get("is_reviewed", "").strip()
+        category = params.get("category", "").strip()
 
         sort_by_options = [
             "title",
@@ -98,6 +101,9 @@ class MediaList(APIView):
         if is_reviewed != "all":
             qs = qs.filter(is_reviewed=is_reviewed)
 
+        if category:
+            qs = qs.filter(category__title__contains=category)
+
         media = qs.order_by(f"{ordering}{sort_by}")
 
         paginator = pagination_class()
@@ -114,9 +120,11 @@ class MediaList(APIView):
         operation_description='Delete media for MediaCMS managers and reviewers',
     )
     def delete(self, request, format=None):
+        if not is_mediacms_manager(request.user):
+            return Response({"detail": "bad permissions"}, status=status.HTTP_403_FORBIDDEN)
         tokens = request.GET.get("tokens")
         if tokens:
-            tokens = tokens.split(",")
+            tokens = [t for t in tokens.split(",") if t][:50]
             Media.objects.filter(friendly_token__in=tokens).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -171,7 +179,7 @@ class CommentList(APIView):
     def delete(self, request, format=None):
         comment_ids = request.GET.get("comment_ids")
         if comment_ids:
-            comments = comment_ids.split(",")
+            comments = [c for c in comment_ids.split(",") if c][:50]
             Comment.objects.filter(uid__in=comments).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -214,6 +222,13 @@ class UserList(APIView):
             qs = qs.filter(is_manager=True)
         elif role == "editor":
             qs = qs.filter(is_editor=True)
+
+        if settings.USERS_NEEDS_TO_BE_APPROVED:
+            is_approved = request.GET.get("is_approved")
+            if is_approved == "true":
+                qs = qs.filter(is_approved=True)
+            elif is_approved == "false":
+                qs = qs.filter(Q(is_approved=False) | Q(is_approved__isnull=True))
 
         users = qs.order_by(f"{ordering}{sort_by}")
 

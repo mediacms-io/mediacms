@@ -40,7 +40,7 @@ export function AutoPlay(props) {
     <div className="auto-play">
       <div className="auto-play-header">
         <div className="next-label">{translateString("Up next")}</div>
-        <div className="auto-play-option">
+      {/*   <div className="auto-play-option">
           <label className="checkbox-label right-selectbox" tabIndex={0} onKeyPress={onKeyPress}>
           {translateString("AUTOPLAY")}
             <span className="checkbox-switcher-wrap">
@@ -54,7 +54,7 @@ export function AutoPlay(props) {
               </span>
             </span>
           </label>
-        </div>
+        </div> */}
       </div>
       <ItemList
         className="items-list-hor"

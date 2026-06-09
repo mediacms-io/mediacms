@@ -1,0 +1,216 @@
+/* ===== UNIFIED BUTTON TOOLTIP SYSTEM ===== */
+/* Comprehensive tooltip styles for all VideoJS buttons */
+
+/* Base tooltip styles using ::after pseudo-element */
+.video-js .vjs-control-bar .vjs-control {
+    position: relative;
+}
+
+/* Universal tooltip styling for all buttons - only show when title is not empty */
+.video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease,
+        transform 0.2s ease;
+    z-index: 20000;
+    margin-bottom: 10px;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Show tooltip on hover and focus for desktop */
+@media (hover: hover) and (pointer: fine) {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]):hover::after,
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]):focus::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-2px);
+    }
+}
+
+/* Specific button tooltips - override content when needed */
+.video-js .vjs-play-control[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-mute-control[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-fullscreen-control[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-picture-in-picture-toggle[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-subtitles-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+.video-js .vjs-subs-caps-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-chapters-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+/* Custom button tooltips */
+.video-js .vjs-autoplay-toggle[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-next-video-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+.video-js .vjs-settings-button[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(-10px) !important;
+}
+
+.video-js .vjs-remaining-time[title]:not([title=""]):not([title=" "])::after {
+    content: attr(title);
+}
+
+/* Touch device support - show tooltips on tap */
+@media (hover: none) and (pointer: coarse) {
+    /* Hide tooltips by default on touch devices */
+    .video-js .vjs-control-bar .vjs-control::after {
+        display: none;
+    }
+
+    /* Show tooltip when touch-active class is added */
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
+        display: block;
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-2px);
+    }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 768px) and (max-width: 1024px) and (hover: none) {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 767px) {
+    .video-js .vjs-control-bar .vjs-control[title]:not([title=""]):not([title=" "]).touch-tooltip-active::after {
+        font-size: 12px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Exclude volume and time components from tooltips */
+.video-js .vjs-volume-panel::after,
+.video-js .vjs-volume-panel::before,
+.video-js .vjs-mute-control::after,
+.video-js .vjs-mute-control::before,
+.video-js .vjs-volume-control::after,
+.video-js .vjs-volume-control::before,
+.video-js .vjs-volume-bar::after,
+.video-js .vjs-volume-bar::before,
+.video-js .vjs-remaining-time::after,
+.video-js .vjs-current-time-display::after,
+.video-js .vjs-duration-display::after,
+.video-js .vjs-progress-control::after {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    content: none !important;
+}
+
+/* Specifically target volume panel and all its children to remove tooltips */
+.video-js .vjs-volume-panel[title],
+.video-js .vjs-volume-panel *[title],
+.video-js .vjs-mute-control[title],
+.video-js .vjs-volume-control[title],
+.video-js .vjs-volume-control *[title],
+.video-js .vjs-volume-bar[title] {
+    /* These selectors target elements with title attributes */
+}
+
+/* Force remove tooltips from volume components using attribute selector */
+.video-js .vjs-volume-panel,
+.video-js .vjs-mute-control,
+.video-js .vjs-volume-control {
+    /* Remove title attribute via CSS (not possible, but we can override the tooltip) */
+}
+
+.video-js .vjs-volume-panel:hover::after,
+.video-js .vjs-volume-panel:focus::after,
+.video-js .vjs-mute-control:hover::after,
+.video-js .vjs-mute-control:focus::after {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    content: none !important;
+}
+
+/* Tooltip arrow removed - no more triangles */
+.video-js .vjs-control-bar .vjs-control::before {
+    display: none !important;
+}
+
+/* Disable native VideoJS tooltips to prevent conflicts */
+.video-js .vjs-control-bar .vjs-control .vjs-control-text {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(1px, 1px, 1px, 1px) !important;
+}
+
+/* Specifically hide play/pause button text that appears inside the icon */
+.video-js .vjs-play-control .vjs-control-text,
+.video-js .vjs-play-control span.vjs-control-text {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Override VideoJS native control text tooltips completely */
+.video-js button.vjs-button:hover span.vjs-control-text {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    display: none !important;
+}
+
+/* Re-enable for screen readers only when focused */
+.video-js .vjs-control-bar .vjs-control:focus .vjs-control-text {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(1px, 1px, 1px, 1px) !important;
+}

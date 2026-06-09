@@ -10,3 +10,4 @@ export * from './useMediaItem';
 export * from './usePopup';
 export * from './useTheme';
 export * from './useUser';
+export * from './useBulkActions';

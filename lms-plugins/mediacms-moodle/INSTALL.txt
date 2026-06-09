@@ -1,0 +1,54 @@
+================================================================================
+MediaCMS Moodle Plugin Suite v1.0.0
+Installation Guide
+================================================================================
+
+Requirements
+------------
+- Moodle 4.5 or later
+- MediaCMS instance
+- MediaCMS set as External Tool
+
+
+Installation
+------------------
+
+1. Extract zip file to Moodle root public directory:
+
+   cd /var/www/moodle/public
+   unzip mediacms-moodle-v1.0.0.zip
+
+   This will place files in:
+   - filter/mediacms/
+   - lib/editor/tiny/plugins/mediacms/
+
+2. Set permissions
+   chown -R www-data:www-data filter/mediacms
+   chown -R www-data:www-data lib/editor/tiny/plugins/mediacms
+
+3. Install through Moodle
+   - Log in as Administrator
+   - Go to: Site Administration → Notifications
+   - Click "Upgrade Moodle database now"
+   - Both plugins will be installed automatically
+   - Set the MediaCMS tool under the LTI Tool
+
+4. Make sure Filter is enabled
+   - As Administrator, visit Plugins, 'Manage Filters', find MediaCMS filter and enable it.
+   Then place it at the top of the filter. This is important, otherwise embeds won't load.
+
+
+What to expect
+-------
+
+1. Create a test course
+2. Add a page or label
+3. Click MediaCMS button in TinyMCE editor
+4. Try inserting from video library or pasting a URL
+
+SUPPORT
+-------
+Issues: https://github.com/mediacms-io/mediacms/issues
+Docs: https://docs.mediacms.io
+
+================================================================================

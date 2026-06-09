@@ -1,0 +1,92 @@
+/* ===== AUTOPLAY TOGGLE BUTTON STYLES ===== */
+
+/* Font icon styles for autoplay button */
+.vjs-autoplay-toggle .vjs-icon-placeholder:before {
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+/* SVG icon styles for autoplay button - match VideoJS icon dimensions */
+.vjs-autoplay-toggle .vjs-autoplay-icon svg {
+    width: 2.5em;
+    height: 2.5em;
+    display: block;
+}
+
+/* Use play icon when autoplay is OFF (clicking will turn it ON) */
+.vjs-autoplay-toggle .vjs-icon-play:before {
+    content: "\f101"; /* VideoJS play icon */
+}
+
+/* Use pause icon when autoplay is ON (clicking will turn it OFF) */
+.vjs-autoplay-toggle .vjs-icon-pause:before {
+    content: "\f103"; /* VideoJS pause icon */
+}
+
+.video-js .vjs-autoplay-toggle {
+    position: relative;
+}
+
+/* Remove focus outline/border */
+.video-js .vjs-autoplay-toggle:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.video-js .vjs-autoplay-toggle .vjs-hover-display,
+.video-js .vjs-autoplay-toggle .vjs-tooltip,
+.video-js .vjs-autoplay-toggle .vjs-tooltip-text {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.video-js .vjs-autoplay-toggle::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.2s ease,
+        visibility 0.2s ease;
+    z-index: 1000;
+    margin-bottom: 8px;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-js .vjs-autoplay-toggle:hover::after,
+.video-js .vjs-autoplay-toggle:focus::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Touch-activated tooltip styles */
+@media (max-width: 767px) {
+    /* Exception: Allow touch-activated autoplay tooltip on mobile */
+    .video-js .vjs-autoplay-toggle.touch-active::after {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .video-js .vjs-autoplay-toggle::after {
+        font-size: 11px;
+        padding: 5px 8px;
+        margin-bottom: 6px;
+    }
+}

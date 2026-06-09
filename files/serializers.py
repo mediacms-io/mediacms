@@ -98,12 +98,39 @@ class MediaSerializer(serializers.ModelSerializer):
                     self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
-class SingleMediaSerializer(serializers.ModelSerializer):
+class CategoriesInfoMixin(serializers.Serializer):
+    categories_info = serializers.SerializerMethodField()
+
+    def get_categories_info(self, obj):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        if user and user.is_authenticated:
+            accessible_rbac = set(user.get_rbac_categories_as_member().values_list("pk", flat=True))
+        else:
+            accessible_rbac = set()
+
+        ret = []
+        for cat in obj.category.all():
+            if cat.is_rbac_category and cat.pk not in accessible_rbac:
+                continue
+            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+        return ret
+
+
+class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
+    is_shared = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_is_shared(self, obj):
+        """Check if media has custom permissions or RBAC categories"""
+        custom_permissions = obj.permissions.exists()
+        rbac_categories = obj.category.filter(is_rbac_category=True).exists()
+        return custom_permissions or rbac_categories
 
     class Meta:
         model = Media
@@ -133,6 +160,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "edit_date",
             "media_type",
             "state",
+            "is_shared",
             "duration",
             "thumbnail_url",
             "poster_url",
@@ -169,7 +197,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         )
 
 
-class MediaSearchSerializer(serializers.ModelSerializer):
+class MediaSearchSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
 
@@ -212,11 +240,13 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = (
             "title",
+            "uid",
             "description",
             "is_global",
             "media_count",
             "user",
             "thumbnail_url",
+            "is_lms_course",
         )
 
 
@@ -232,7 +262,7 @@ class PlaylistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Playlist
         read_only_fields = ("add_date", "user")
-        fields = ("add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url")
+        fields = ("id", "add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url", "friendly_token")
 
 
 class PlaylistDetailSerializer(serializers.ModelSerializer):

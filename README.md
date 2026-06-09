@@ -25,11 +25,13 @@ A demo is available at https://demo.mediacms.io
 - **Complete control over your data**: host it yourself!
 - **Modern technologies**: Django/Python/Celery, React.
 - **Support for multiple publishing workflows**: public, private, unlisted and custom
+- **Role-Based Access Control (RBAC)**: create RBAC categories and connect users to groups with view/edit access on their media
+- **Automatic transcription**: through integration with Whisper running locally
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
+- **Use in LMS**: LTI 1.3 support plus a Moodle plugin for embeding media in LMS
 - **Video Trimmer**: trim video, replace, save as new or create segments
-- **Role-Based Access Control (RBAC)**: create RBAC categories and connect users to groups with view/edit access on their media
 - **SAML support**: with ability to add mappings to system roles and groups
 - **Easy media searching**: enriched with live search functionality
 - **Playlists for audio and video content**: create playlists, add and reorder content
@@ -38,17 +40,17 @@ A demo is available at https://demo.mediacms.io
 - **Configurable actions**: allow download, add comments, add likes, dislikes, report media
 - **Configuration options**: change logos, fonts, styling, add more pages
 - **Enhanced video player**: customized video.js player with multiple resolution and playback speed options
-- **Multiple transcoding profiles**: sane defaults for multiple dimensions (240p, 360p, 480p, 720p, 1080p) and multiple profiles (h264, h265, vp9)
+- **Multiple transcoding profiles**: sane defaults for multiple dimensions (144p, 240p, 360p, 480p, 720p, 1080p) and multiple profiles (h264, h265, vp9)
 - **Adaptive video streaming**: possible through HLS protocol
 - **Subtitles/CC**: support for multilingual subtitle files
-- **Scalable transcoding**: transcoding through priorities. Experimental support for remote workers
+- **Scalable transcoding**: transcoding through priorities.
 - **Chunked file uploads**: for pausable/resumable upload of content
 - **REST API**: Documented through Swagger
 - **Translation**: Most of the CMS is translated to a number of languages
 
 ## Example cases
 
-- **Schools, education.** Administrators and editors keep what content will be published, students are not distracted with advertisements and irrelevant content, plus they have the ability to select either to stream or download content.
+- **Universities, schools, education.** Administrators and editors keep what content will be published, students are not distracted with advertisements and irrelevant content, plus they have the ability to select either to stream or download content.
 - **Organization sensitive content.** In cases where content is sensitive and cannot be uploaded to external sites.
 - **Build a great community.** MediaCMS can be customized (URLs, logos, fonts, aesthetics) so that you create a highly customized video portal for your community!
 - **Personal portal.** Organize, categorize and host your content the way you prefer.
@@ -68,7 +70,7 @@ Copyright Markos Gogoulos.
 
 ## Support and paid services
 
-We provide custom installations, development of extra functionality, migration from existing systems, integrations with legacy systems, training and support. Contact us at info@mediacms.io for more information.
+We provide custom installations, development of extra functionality, migration from existing systems, integrations with legacy systems, training and support. Checkout our [services page](https://mediacms.io/#services/) for more information.
 
 ### Commercial Hostings
 **Elestio**
@@ -83,39 +85,34 @@ For a small to medium installation, with a few hours of video uploaded daily, an
 
 In terms of disk space, think of what the needs will be. A general rule is to multiply by three the size of the expected uploaded videos (since the system keeps original versions, encoded versions plus HLS), so if you receive 1G of videos daily and maintain all of them, you should consider a 1T disk across a year (1G * 3 * 365).
 
+In order to support automatic transcriptions through Whisper, consider more CPUs.
 
 ## Installation / Maintanance
 
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-- [Single Server](docs/admins_docs.md#2-server-installation) page
 - [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
   A complete guide can be found on the blog post [How to self-host and share your videos in 2021](https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b).
-
-## Configuration
-
-Visit [Configuration](docs/admins_docs.md#5-configuration) page.
-
-
-## Information for developers
-Check out the new section on the [Developer Experience](docs/dev_exp.md) page
-
 
 ## Documentation
 
 * [Users documentation](docs/user_docs.md) page
 * [Administrators documentation](docs/admins_docs.md) page
 * [Developers documentation](docs/developers_docs.md) page
+* [Configuration](docs/admins_docs.md#5-configuration) page
+* [Transcoding](docs/transcoding.md) page
+* [Developer Experience](docs/dev_exp.md) page
+* [Media Permissions](docs/media_permissions.md) page
 
 
 ## Technology
 
-This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
+This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, Gunicorn, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
 ## Who is using it
-
+- **Multiple Universities** for hosting educational videos
 - **Cinemata** non-profit media, technology and culture organization - https://cinemata.org
 - **Critical Commons** public media archive and fair use advocacy network - https://criticalcommons.org
 - **American Association of Gynecologic Laparoscopists** - https://surgeryu.org/

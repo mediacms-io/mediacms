@@ -1,11 +1,16 @@
+from pathlib import Path
+
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Field, Layout, Submit
+from crispy_forms.layout import HTML, Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, Subtitle
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
+from .widgets import CategoryModalWidget
+
+_PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
 
 
 class CustomField(Field):
@@ -22,6 +27,7 @@ class MediaMetadataForm(forms.ModelForm):
     class Meta:
         model = Media
         fields = (
+            "friendly_token",
             "title",
             "new_tags",
             "add_date",
@@ -34,15 +40,17 @@ class MediaMetadataForm(forms.ModelForm):
         widgets = {
             "new_tags": MultipleSelect(),
             "description": forms.Textarea(attrs={'rows': 4}),
-            "add_date": forms.DateInput(attrs={'type': 'date'}),
+            "add_date": forms.DateTimeInput(attrs={'type': 'datetime-local', 'step': '1'}, format='%Y-%m-%dT%H:%M:%S'),
             "thumbnail_time": forms.NumberInput(attrs={'min': 0, 'step': 0.1}),
         }
         labels = {
+            "friendly_token": "Slug",
             "uploaded_poster": "Poster Image",
             "thumbnail_time": "Thumbnail Time (seconds)",
         }
         help_texts = {
             "title": "",
+            "friendly_token": "Media URL slug",
             "thumbnail_time": "Select the time in seconds for the video thumbnail",
             "uploaded_poster": "Maximum file size: 5MB",
         }
@@ -50,6 +58,8 @@ class MediaMetadataForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(MediaMetadataForm, self).__init__(*args, **kwargs)
+        if not getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
+            self.fields.pop("friendly_token")
         if self.instance.media_type != "video":
             self.fields.pop("thumbnail_time")
         if self.instance.media_type == "image":
@@ -63,19 +73,36 @@ class MediaMetadataForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.form_enctype = "multipart/form-data"
         self.helper.form_show_errors = False
-        self.helper.layout = Layout(
+
+        layout_fields = [
             CustomField('title'),
             CustomField('new_tags'),
             CustomField('add_date'),
             CustomField('description'),
-            CustomField('uploaded_poster'),
             CustomField('enable_comments'),
-        )
+        ]
+        if self.instance.media_type != "image":
+            layout_fields.append(CustomField('uploaded_poster'))
+
+        self.helper.layout = Layout(*layout_fields)
 
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))
+        if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
+            self.helper.layout.insert(0, CustomField('friendly_token'))
 
         self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
+
+    def clean_friendly_token(self):
+        token = self.cleaned_data.get("friendly_token", "").strip()
+
+        if token:
+            if not all(c.isalnum() or c in "-_" for c in token):
+                raise forms.ValidationError("Slug can only contain alphanumeric characters, underscores, or hyphens.")
+
+            if Media.objects.filter(friendly_token=token).exclude(pk=self.instance.pk).exists():
+                raise forms.ValidationError("This slug is already in use. Please choose a different one.")
+            return token
 
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)
@@ -93,25 +120,29 @@ class MediaMetadataForm(forms.ModelForm):
 
 class MediaPublishForm(forms.ModelForm):
     confirm_state = forms.BooleanField(required=False, initial=False, label="Acknowledge sharing status", help_text="")
+    shared = forms.BooleanField(required=False, initial=False, label="Shared")
 
     class Meta:
         model = Media
-        fields = (
-            "category",
-            "state",
-            "featured",
-            "reported_times",
-            "is_reviewed",
-            "allow_download",
-        )
+        fields = ("category", "state", "featured", "reported_times", "is_reviewed", "allow_download")
 
         widgets = {
-            "category": MultipleSelect(),
+            "category": CategoryModalWidget(),
+            "state": forms.RadioSelect(),
         }
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
+        self.request = kwargs.pop('request', None)
         super(MediaPublishForm, self).__init__(*args, **kwargs)
+
+        self.was_shared = self.instance.is_shared if self.instance.pk else False
+        self.had_explicit_permission = self.instance.permissions.exists() if self.instance.pk else False
+        is_embed_mode = self._check_embed_mode()
+
+        self.fields["shared"].initial = self.was_shared
+        self.initial["shared"] = self.was_shared
+
         if not is_mediacms_editor(user):
             for field in ["featured", "reported_times", "is_reviewed"]:
                 self.fields[field].disabled = True
@@ -140,6 +171,14 @@ class MediaPublishForm(forms.ModelForm):
 
                 self.fields['category'].queryset = Category.objects.filter(id__in=combined_category_ids).order_by('title')
 
+        # Filter for LMS courses only when in embed mode
+        if is_embed_mode and 'category' in self.fields:
+            current_queryset = self.fields['category'].queryset
+            self.fields['category'].queryset = current_queryset.filter(is_lms_course=True)
+            self.fields['category'].label = 'Course'
+            self.fields['category'].help_text = 'Media can be shared with one or more courses'
+            self.fields['category'].widget.is_lms_mode = True
+
         self.helper = FormHelper()
         self.helper.form_tag = True
         self.helper.form_class = 'post-form'
@@ -148,7 +187,7 @@ class MediaPublishForm(forms.ModelForm):
         self.helper.form_show_errors = False
         self.helper.layout = Layout(
             CustomField('category'),
-            CustomField('state'),
+            HTML(_PUBLISH_STATE_HTML),
             CustomField('featured'),
             CustomField('reported_times'),
             CustomField('is_reviewed'),
@@ -157,45 +196,118 @@ class MediaPublishForm(forms.ModelForm):
 
         self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
 
+    def _check_embed_mode(self):
+        """Check if the current request is in embed mode"""
+        if not self.request:
+            return False
+
+        # Check query parameter
+        mode = self.request.GET.get('mode', '')
+        if mode == 'lms_embed_mode':
+            return True
+
+        # Check session storage
+        if self.request.session.get('lms_embed_mode') == 'true':
+            return True
+
+        return False
+
     def clean(self):
         cleaned_data = super().clean()
-        state = cleaned_data.get("state")
-        categories = cleaned_data.get("category")
+        shared = cleaned_data.get("shared")
 
-        if getattr(settings, 'USE_RBAC', False) and 'category' in self.fields:
-            rbac_categories = categories.filter(is_rbac_category=True).values_list('title', flat=True)
-
-            if rbac_categories and state in ['private', 'unlisted']:
-                # Make the confirm_state field visible and add it to the layout
-                self.fields['confirm_state'].widget = forms.CheckboxInput()
-
-                # add it after the state field
-                state_index = None
-                for i, layout_item in enumerate(self.helper.layout):
-                    if isinstance(layout_item, CustomField) and layout_item.fields[0] == 'state':
-                        state_index = i
-                        break
-
-                if state_index:
-                    layout_items = list(self.helper.layout)
-                    layout_items.insert(state_index + 1, CustomField('confirm_state'))
-                    self.helper.layout = Layout(*layout_items)
-
-                if not cleaned_data.get('confirm_state'):
-                    error_message = f"I understand that although media state is {state}, the media is also shared with users that have access to the following categories: {', '.join(rbac_categories)}"
-                    self.add_error('confirm_state', error_message)
+        if self.was_shared and not shared and not cleaned_data.get('confirm_state'):
+            self.add_error('confirm_state', "I understand that unchecking Shared will remove all existing sharing for this media.")
 
         return cleaned_data
 
     def save(self, *args, **kwargs):
         data = self.cleaned_data
         state = data.get("state")
-        if state != self.initial["state"]:
-            self.instance.state = get_next_state(self.user, self.initial["state"], self.instance.state)
+        shared = data.get("shared")
+
+        if shared:
+            if self.request:
+                submitted_categories = self.cleaned_data.get('category', [])
+                submitted_has_rbac = any(cat.is_rbac_category for cat in submitted_categories)
+                if self.had_explicit_permission or (not self.was_shared and not submitted_has_rbac):
+                    MediaPermission.objects.get_or_create(
+                        media=self.instance,
+                        user=self.request.user,
+                        defaults={'owner_user': self.request.user, 'permission': 'owner'},
+                    )
+        elif not shared:
+            self.instance.permissions.all().delete()
+            rbac_cats = self.instance.category.filter(is_rbac_category=True)
+            self.instance.category.remove(*rbac_cats)
+
+        if state != self.initial.get("state"):
+            self.instance.state = get_next_state(self.user, self.initial.get("state"), self.instance.state)
 
         media = super(MediaPublishForm, self).save(*args, **kwargs)
 
         return media
+
+
+class WhisperSubtitlesForm(forms.ModelForm):
+    class Meta:
+        model = Media
+        fields = (
+            "allow_whisper_transcribe",
+            "allow_whisper_transcribe_and_translate",
+        )
+        labels = {
+            "allow_whisper_transcribe": "Transcription",
+            "allow_whisper_transcribe_and_translate": "English Translation",
+        }
+        help_texts = {
+            "allow_whisper_transcribe": "",
+            "allow_whisper_transcribe_and_translate": "",
+        }
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(WhisperSubtitlesForm, self).__init__(*args, **kwargs)
+
+        if self.instance.allow_whisper_transcribe:
+            self.fields['allow_whisper_transcribe'].widget.attrs['readonly'] = True
+            self.fields['allow_whisper_transcribe'].widget.attrs['disabled'] = True
+        if self.instance.allow_whisper_transcribe_and_translate:
+            self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['readonly'] = True
+            self.fields['allow_whisper_transcribe_and_translate'].widget.attrs['disabled'] = True
+
+        both_readonly = self.instance.allow_whisper_transcribe and self.instance.allow_whisper_transcribe_and_translate
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('allow_whisper_transcribe'),
+            CustomField('allow_whisper_transcribe_and_translate'),
+        )
+
+        if not both_readonly:
+            self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
+        else:
+            # Optional: Add a disabled button with explanatory text
+            self.helper.layout.append(
+                FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">Cannot submit - both options are already enabled</small>'))
+            )
+
+    def clean_allow_whisper_transcribe(self):
+        # Ensure the field value doesn't change if it was originally True
+        if self.instance and self.instance.allow_whisper_transcribe:
+            return self.instance.allow_whisper_transcribe
+        return self.cleaned_data['allow_whisper_transcribe']
+
+    def clean_allow_whisper_transcribe_and_translate(self):
+        # Ensure the field value doesn't change if it was originally True
+        if self.instance and self.instance.allow_whisper_transcribe_and_translate:
+            return self.instance.allow_whisper_transcribe_and_translate
+        return self.cleaned_data['allow_whisper_transcribe_and_translate']
 
 
 class SubtitleForm(forms.ModelForm):
@@ -203,11 +315,29 @@ class SubtitleForm(forms.ModelForm):
         model = Subtitle
         fields = ["language", "subtitle_file"]
 
+        labels = {
+            "subtitle_file": "Upload Caption File",
+        }
+        help_texts = {
+            "subtitle_file": "SubRip (.srt) and WebVTT (.vtt) are supported file formats.",
+        }
+
     def __init__(self, media_item, *args, **kwargs):
         super(SubtitleForm, self).__init__(*args, **kwargs)
         self.instance.media = media_item
-        self.fields["subtitle_file"].help_text = "SubRip (.srt) and WebVTT (.vtt) are supported file formats."
-        self.fields["subtitle_file"].label = "Subtitle or Closed Caption File"
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('subtitle_file'),
+            CustomField('language'),
+        )
+
+        self.helper.layout.append(FormActions(Submit('submit', 'Submit', css_class='primaryAction')))
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user
@@ -237,3 +367,35 @@ class ContactForm(forms.Form):
         if user.is_authenticated:
             self.fields.pop("name")
             self.fields.pop("from_email")
+
+
+class ReplaceMediaForm(forms.Form):
+    new_media_file = forms.FileField(
+        required=True,
+        label="New Media File",
+        help_text="Select a new file to replace the current media",
+    )
+
+    def __init__(self, media_instance, *args, **kwargs):
+        self.media_instance = media_instance
+        super(ReplaceMediaForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            CustomField('new_media_file'),
+        )
+
+        self.helper.layout.append(FormActions(Submit('submit', 'Replace Media', css_class='primaryAction')))
+
+    def clean_new_media_file(self):
+        file = self.cleaned_data.get("new_media_file", False)
+        if file:
+            if file.size > settings.UPLOAD_MAX_SIZE:
+                max_size_mb = settings.UPLOAD_MAX_SIZE / (1024 * 1024)
+                raise forms.ValidationError(f"File too large. Maximum size: {max_size_mb:.0f}MB")
+            return file

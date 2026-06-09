@@ -2,13 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ApiUrlConsumer } from '../utils/contexts/';
 import { PageStore } from '../utils/stores/';
+import { inEmbeddedApp } from '../utils/helpers/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
-import { ProfileMediaPage } from './ProfileMediaPage';
+import { ProfileMediaPageBase } from './ProfileMediaPage';
 
-export class ProfileHistoryPage extends ProfileMediaPage {
+export class ProfileHistoryPage extends ProfileMediaPageBase {
   constructor(props) {
     super(props, 'author-history');
 
@@ -28,7 +29,7 @@ export class ProfileHistoryPage extends ProfileMediaPage {
   pageContent() {
     return [
       this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="history" />
+        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="history" hideChannelBanner={inEmbeddedApp()} />
       ) : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">

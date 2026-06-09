@@ -3,20 +3,22 @@ MediaCMS.site = {
     title: "{{PORTAL_NAME}}",
     url: '{{FRONTEND_HOST}}',
     api: '{{FRONTEND_HOST}}/api/v1',
+    useRoundedCorners: {% if USE_ROUNDED_CORNERS %}true{% else %}false{% endif %},
+    version: '{{VERSION}}',
     theme: {
-    	mode: '{{DEFAULT_THEME}}',   
+    	mode: '{{DEFAULT_THEME}}',
 		switch: {
 			position: 'sidebar',	// Valid values: 'header', 'sidebar'.
 		},
     },
     logo:{
     	lightMode:{
-            img: "/static/images/logo_dark.png",
-            svg: "/static/images/logo_dark.svg",
+            img: "{{PORTAL_LOGO_DARK_PNG}}",
+            svg: "{{PORTAL_LOGO_DARK_SVG}}",
     	},
     	darkMode:{
-            img: "/static/images/logo_light.png",
-            svg: "/static/images/logo_light.svg",
+            img: "{{PORTAL_LOGO_LIGHT_PNG}}",
+            svg: "{{PORTAL_LOGO_LIGHT_SVG}}",
     	},
     },
     pages: {

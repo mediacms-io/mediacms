@@ -45,6 +45,7 @@ export function ManageUsersItemHeader(props) {
       {props.has_roles ? <div className="mi-role">Role</div> : null}
       {props.has_verified ? <div className="mi-verified">Verified</div> : null}
       {props.has_trusted ? <div className="mi-trusted">Trusted</div> : null}
+      {props.has_approved ? <div className="mi-approved">Approved</div> : null}
       <div className="mi-featured">Featured</div>
     </div>
   );
@@ -59,10 +60,12 @@ ManageUsersItemHeader.propTypes = {
   has_roles: PropTypes.bool,
   has_verified: PropTypes.bool,
   has_trusted: PropTypes.bool,
+  has_approved: PropTypes.bool,
 };
 
 ManageUsersItemHeader.defaultProps = {
   has_roles: false,
   has_verified: false,
   has_trusted: false,
+  has_approved: false,
 };

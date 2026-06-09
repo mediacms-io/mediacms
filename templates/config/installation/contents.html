@@ -17,7 +17,7 @@ MediaCMS.contents = {
             }
         ],
         belowNavMenu: null,
-        footer: 'Powered by <a href="//mediacms.io" title="mediacms.io" target="_blank">mediacms.io</a>',
+        footer: {% if SIDEBAR_FOOTER_TEXT %}'{{ SIDEBAR_FOOTER_TEXT|escapejs }}'{% else %}'Powered by <a href="//mediacms.io" title="mediacms.io" target="_blank">mediacms.io</a>'{% endif %},
     },
     uploader: {
         belowUploadArea: "{{PRE_UPLOAD_MEDIA_MESSAGE}}",

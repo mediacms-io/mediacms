@@ -1,0 +1,525 @@
+/* CustomSettingsMenu.css */
+
+/* Settings button styling */
+.vjs-settings-button {
+    width: 3em;
+    height: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+/* Settings button icon styling */
+.vjs-icon-cog1 {
+    font-size: 30px !important;
+    position: relative;
+    top: -8px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+}
+
+/* Settings overlay styling */
+.custom-settings-overlay {
+    border: 0;
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    width: 280px;
+    height: 350px;
+    background: rgba(28, 28, 28, 0.95);
+    color: white;
+    border-radius: 7px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: none;
+    z-index: 10000;
+    font-size: 14px;
+    overflow: auto;
+}
+
+.settings-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+}
+.settings-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease;
+    gap: 10px;
+}
+.settings-item .settings-left span {
+    display: flex;
+}
+.custom-settings-overlay .settings-left span.vjs-icon-placeholder {
+    transform: inherit !important;
+}
+.settings-item:last-child {
+    border-bottom: none;
+}
+.settings-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Speed submenu */
+.speed-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 28, 28, 0.95);
+    display: none;
+    flex-direction: column;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+}
+
+/* Quality submenu mirrors speed submenu */
+.quality-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 28, 28, 0.95);
+    display: none;
+    flex-direction: column;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+}
+
+/* Subtitles submenu styling mirrors speed/quality */
+.subtitles-submenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(28, 28, 28, 0.95);
+    display: none;
+    flex-direction: column;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+}
+.subtitle-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+.subtitle-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.subtitle-option.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Submenu header */
+.submenu-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    background: rgba(28, 28, 28, 0.95);
+    z-index: 1;
+}
+
+.submenu-header:hover {
+    background: rgba(28, 28, 28, 1);
+}
+
+/* Speed options */
+.speed-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.speed-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.speed-option.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Quality option styling */
+.quality-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.quality-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.quality-option.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Settings row left/right layout like YouTube */
+.settings-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-right {
+    display: inline-flex;
+    align-items: center;
+    text-align: right;
+}
+/* .vjs-icon-cog:before {
+    font-size: 20px !important;
+    position: relative;
+    top: -5px !important;
+} */
+
+/* HD superscript badge for 1080p */
+sup.hd-badge {
+    font-size: 10px;
+    line-height: 1;
+    margin-left: 6px;
+    background: #e53935;
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* ===== MOBILE RESPONSIVE DESIGN ===== */
+
+/* Mobile-first responsive design for tablets and large phones */
+@media (max-width: 767px) {
+    .custom-settings-overlay {
+        right: 8px !important;
+        left: auto !important;
+        width: 260px !important;
+        max-width: calc(100vw - 16px) !important;
+        height: auto !important;
+        max-height: calc(100vh - 100px) !important;
+        bottom: 45px !important;
+        border-radius: 10px !important;
+        font-size: 13px !important;
+    }
+
+    .settings-header {
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .settings-close-btn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+    }
+
+    .settings-close-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .settings-item {
+        padding: 10px 12px;
+        gap: 8px;
+        min-height: 48px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .settings-item:active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: scale(0.98);
+    }
+
+    .settings-left {
+        gap: 6px;
+        font-size: 13px;
+    }
+
+    .settings-right {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+
+    .submenu-header {
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 48px;
+    }
+
+    .submenu-header:active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: scale(0.98);
+    }
+
+    .speed-option,
+    .quality-option,
+    .subtitle-option {
+        padding: 10px 12px;
+        min-height: 44px;
+        font-size: 13px;
+    }
+
+    .speed-option:active,
+    .quality-option:active,
+    .subtitle-option:active {
+        background: rgba(255, 255, 255, 0.12) !important;
+        transform: scale(0.98);
+    }
+
+    /* Hide hover effects on touch devices */
+    .settings-item:hover,
+    .speed-option:hover,
+    .quality-option:hover,
+    .subtitle-option:hover,
+    .submenu-header:hover {
+        background: transparent;
+    }
+}
+
+/* Small phones (portrait) - Ultra compact */
+@media (max-width: 480px) {
+    .custom-settings-overlay {
+        right: 6px !important;
+        left: auto !important;
+        width: 240px !important;
+        max-width: calc(100vw - 12px) !important;
+        height: auto !important;
+        max-height: calc(100vh - 80px) !important;
+        bottom: 35px !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+    }
+
+    .settings-header {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .settings-close-btn {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .settings-close-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .settings-item {
+        padding: 8px 10px;
+        gap: 6px;
+        min-height: 44px;
+    }
+
+    .settings-left {
+        gap: 5px;
+        font-size: 12px;
+    }
+
+    .settings-right {
+        font-size: 11px;
+    }
+
+    .submenu-header {
+        padding: 8px 10px;
+        font-size: 13px;
+        min-height: 44px;
+    }
+
+    .speed-option,
+    .quality-option,
+    .subtitle-option {
+        padding: 8px 10px;
+        min-height: 40px;
+        font-size: 12px;
+    }
+
+    /* Smaller icons on mobile */
+    .settings-item-svg svg,
+    .submenu-header svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+}
+
+/* Very small screens (< 360px) - Maximum compactness */
+@media (max-width: 360px) {
+    .custom-settings-overlay {
+        right: 4px !important;
+        left: auto !important;
+        width: 220px !important;
+        max-width: calc(100vw - 8px) !important;
+        height: auto !important;
+        max-height: calc(100vh - 70px) !important;
+        bottom: 30px !important;
+        border-radius: 6px !important;
+        font-size: 11px !important;
+    }
+
+    .settings-header {
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .settings-close-btn {
+        width: 26px !important;
+        height: 26px !important;
+    }
+
+    .settings-close-btn svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+    .settings-item {
+        padding: 6px 8px;
+        gap: 4px;
+        min-height: 40px;
+    }
+
+    .settings-left {
+        gap: 4px;
+        font-size: 11px;
+    }
+
+    .settings-right {
+        font-size: 10px;
+    }
+
+    .submenu-header {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-height: 40px;
+    }
+
+    .speed-option,
+    .quality-option,
+    .subtitle-option {
+        padding: 6px 8px;
+        min-height: 36px;
+        font-size: 11px;
+    }
+
+    /* Even smaller icons for very small screens */
+    .settings-item-svg svg,
+    .submenu-header svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    sup.hd-badge {
+        font-size: 8px;
+        padding: 0px 3px;
+        margin-left: 4px;
+    }
+}
+
+/* Landscape orientation on mobile - Compact for limited height */
+@media (max-width: 767px) and (orientation: landscape) {
+    .custom-settings-overlay {
+        height: auto !important;
+        max-height: calc(100vh - 60px) !important;
+        bottom: 25px !important;
+        right: 6px !important;
+        left: auto !important;
+        width: 250px !important;
+        max-width: calc(100vw - 12px) !important;
+    }
+
+    .settings-header {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .settings-close-btn {
+        width: 28px !important;
+        height: 28px !important;
+    }
+
+    .settings-close-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    .settings-item {
+        padding: 7px 10px;
+        min-height: 38px;
+    }
+
+    .submenu-header {
+        padding: 7px 10px;
+        min-height: 38px;
+    }
+
+    .speed-option,
+    .quality-option,
+    .subtitle-option {
+        padding: 6px 10px;
+        min-height: 36px;
+        font-size: 11px;
+    }
+}
+
+/* Touch-friendly improvements for all mobile devices */
+@media (hover: none) and (pointer: coarse) {
+    .settings-item,
+    .speed-option,
+    .quality-option,
+    .subtitle-option,
+    .submenu-header {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+        transition:
+            background-color 0.2s ease,
+            transform 0.1s ease;
+    }
+
+    /* Ensure smooth scrolling on touch devices */
+    .custom-settings-overlay,
+    .speed-submenu,
+    .quality-submenu,
+    .subtitles-submenu {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        overscroll-behavior-y: contain;
+    }
+
+    /* Remove hover states on touch devices */
+    .settings-item:hover,
+    .speed-option:hover,
+    .quality-option:hover,
+    .subtitle-option:hover,
+    .submenu-header:hover {
+        background: transparent !important;
+    }
+}

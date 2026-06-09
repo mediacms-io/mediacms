@@ -1,0 +1,1063 @@
+#chapters-editor-root {
+    .timeline-header-container {
+        margin-left: 1rem;
+        margin-top: -0.5rem;
+    }
+
+    .timeline-header-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #059669;
+        margin: 0;
+    }
+
+    .timeline-container-card {
+        background-color: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .timeline-header {
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .timeline-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--foreground, #333);
+    }
+
+    .timeline-title-text {
+        font-size: 0.875rem;
+    }
+
+    .current-time {
+        font-size: 0.875rem;
+        color: var(--foreground, #333);
+    }
+
+    .time-code {
+        font-family: monospace;
+        background-color: #f3f4f6;
+        padding: 0 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    .duration-time {
+        font-size: 0.875rem;
+        color: var(--foreground, #333);
+    }
+
+    .timeline-scroll-container {
+        position: relative;
+        overflow: visible !important;
+    }
+
+    .timeline-container {
+        position: relative;
+        min-width: 100%;
+        background-color: #e2ede4;
+        height: 70px;
+        border-radius: 0.25rem;
+        overflow: visible !important;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .timeline-marker {
+        position: absolute;
+        height: 82px; /* Increased height to extend below timeline */
+        width: 2px;
+        background-color: #000;
+        transform: translateX(-50%);
+        z-index: 50;
+        pointer-events: none;
+    }
+
+    .timeline-marker-head {
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 51;
+    }
+
+    .timeline-marker-drag {
+        position: absolute;
+        bottom: -12px; /* Changed from -6px to -12px to move it further down */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        background-color: #4b5563;
+        border-radius: 50%;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+        z-index: 51;
+    }
+
+    .timeline-marker-drag.dragging {
+        cursor: grabbing;
+        background-color: #374151;
+    }
+
+    .timeline-marker-head-icon {
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 1;
+        user-select: none;
+    }
+
+    .timeline-marker-drag-icon {
+        color: white;
+        font-size: 12px;
+        line-height: 1;
+        user-select: none;
+        transform: rotate(90deg);
+        display: inline-block;
+    }
+
+    .trim-line-marker {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 20;
+    }
+
+    .trim-handle {
+        position: absolute;
+        width: 10px;
+        height: 20px;
+        background-color: black;
+        cursor: ew-resize;
+
+        &.left {
+            right: 0;
+            top: 10px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        &.right {
+            left: 0;
+            top: 10px;
+            border-radius: 0 3px 3px 0;
+        }
+    }
+
+    .timeline-thumbnail {
+        display: inline-block;
+        height: 70px;
+        border-right: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+    .split-point {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: rgba(255, 0, 0, 0.5);
+        z-index: 15;
+    }
+
+    .clip-segment {
+        position: absolute;
+        height: 70px;
+        border-radius: 4px;
+        z-index: 10;
+        border: 2px solid rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+
+        &:hover {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 0, 0, 0.4);
+            background-color: rgba(240, 240, 240, 0.8) !important;
+        }
+
+        &.selected {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7);
+            border-color: rgba(59, 130, 246, 0.9);
+        }
+
+        &.selected:hover {
+            background-color: rgba(240, 248, 255, 0.85) !important;
+        }
+    }
+
+    .clip-segment-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 0.4rem;
+        background-color: rgba(16, 185, 129, 0.6);
+        color: white;
+        opacity: 1;
+        transition: background-color 0.2s;
+        line-height: 1.3;
+    }
+
+    .clip-segment:hover .clip-segment-info {
+        background-color: rgba(16, 185, 129, 0.7);
+    }
+
+    .clip-segment.selected .clip-segment-info {
+        background-color: rgba(5, 150, 105, 0.8);
+    }
+
+    .clip-segment.selected:hover .clip-segment-info {
+        background-color: rgba(5, 150, 105, 0.75);
+    }
+
+    .clip-segment-name {
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    .clip-segment-time {
+        font-size: 10px;
+    }
+
+    .clip-segment-duration {
+        font-size: 10px;
+    }
+
+    .clip-segment-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background-color: rgba(0, 0, 0, 0.2);
+        cursor: ew-resize;
+    }
+
+    .clip-segment-handle:hover {
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .clip-segment-handle.left {
+        left: 0;
+        border-radius: 2px 0 0 2px;
+    }
+
+    .clip-segment-handle.right {
+        right: 0;
+        border-radius: 0 2px 2px 0;
+    }
+
+    /* Enhanced handles for touch devices */
+    @media (pointer: coarse) {
+        .clip-segment-handle {
+            width: 14px; /* Wider target for touch devices */
+            background-color: rgba(0, 0, 0, 0.4); /* Darker by default for better visibility */
+        }
+
+        .clip-segment-handle:after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 1px;
+        }
+
+        .clip-segment-handle.left:after {
+            box-shadow: -2px 0 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .clip-segment-handle.right:after {
+            box-shadow: 2px 0 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Active state for touch feedback */
+        .clip-segment-handle:active {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .timeline-marker {
+            height: 85px;
+        }
+
+        .timeline-marker-head {
+            width: 24px;
+            height: 24px;
+            top: -13px;
+        }
+
+        .timeline-marker-drag {
+            width: 24px;
+            height: 24px;
+            bottom: -18px;
+        }
+
+        .timeline-marker-head.dragging {
+            width: 28px;
+            height: 28px;
+            top: -15px;
+        }
+    }
+
+    .segment-tooltip,
+    .empty-space-tooltip {
+        position: absolute;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        padding: 0.5rem;
+        z-index: 1000;
+        min-width: 150px;
+        text-align: center;
+        pointer-events: auto;
+        top: -105px !important;
+        transform: translateY(-10px);
+    }
+
+    .segment-tooltip {
+        top: -165px !important;
+    }
+
+    .segment-tooltip:after,
+    .empty-space-tooltip:after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid white;
+    }
+
+    .segment-tooltip:before,
+    .empty-space-tooltip:before {
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid rgba(0, 0, 0, 0.1);
+        z-index: -1;
+    }
+
+    .tooltip-time {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .tooltip-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .tooltip-action-btn {
+        background-color: #f3f4f6;
+        border: none;
+        border-radius: 0.25rem;
+        padding: 0.375rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #4b5563;
+        min-width: 20px !important;
+    }
+
+    .tooltip-action-btn:hover {
+        background-color: #e5e7eb;
+        color: #111827;
+    }
+
+    .tooltip-action-btn.delete {
+        color: #ef4444;
+    }
+
+    .tooltip-action-btn.delete:hover {
+        background-color: #fee2e2;
+    }
+
+    .tooltip-action-btn.new-segment {
+        padding: 0.375rem 0.5rem;
+    }
+
+    .tooltip-action-btn.new-segment .tooltip-btn-text {
+        margin-left: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .tooltip-action-btn svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .timeline-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.75rem;
+    }
+
+    .time-navigation {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .time-nav-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .time-input {
+        border: 1px solid #d1d5db;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        width: 8rem;
+        font-size: 0.875rem;
+    }
+
+    .time-button-group {
+        display: flex;
+    }
+
+    .time-button {
+        background-color: #e5e7eb;
+        color: black;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border: none;
+        cursor: pointer;
+        margin-right: 0.5rem;
+    }
+
+    .time-button:hover {
+        background-color: #d1d5db;
+    }
+
+    .time-button:first-child {
+        border-top-left-radius: 0.25rem;
+        border-bottom-left-radius: 0.25rem;
+    }
+
+    .time-button:last-child {
+        border-top-right-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    .controls-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .zoom-dropdown-container {
+        position: relative;
+        z-index: 100;
+        display: none;
+    }
+
+    .zoom-button {
+        background-color: #374151;
+        color: white;
+        border: none;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .zoom-button:hover {
+        background-color: #1f2937;
+    }
+
+    .zoom-button svg {
+        margin-left: 0.25rem;
+    }
+
+    .zoom-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 0.25rem;
+        width: 9rem;
+        background-color: #374151;
+        color: white;
+        border-radius: 0.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 50;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .zoom-option {
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+    }
+
+    .zoom-option:hover {
+        background-color: #4b5563;
+    }
+
+    .zoom-option.selected {
+        background-color: #6b7280;
+        display: flex;
+        align-items: center;
+    }
+
+    .zoom-option svg {
+        margin-right: 0.25rem;
+    }
+
+    /* Save buttons container */
+    .save-buttons-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        flex-wrap: nowrap;
+    }
+
+    /* General styles for all save buttons */
+    .save-button,
+    .save-copy-button,
+    .save-segments-button {
+        color: #ffffff;
+        background: #059669;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        border: none;
+        white-space: nowrap;
+        transition: background-color 0.2s;
+        min-width: fit-content;
+    }
+
+    /* Shared hover effect */
+    .save-button:hover,
+    .save-copy-button:hover,
+    .save-segments-button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Media query for smaller screens */
+    @media (max-width: 576px) {
+        .save-buttons-row {
+            width: 100%;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .save-button,
+        .save-copy-button,
+        .save-segments-button {
+            flex: 1;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.35rem;
+        }
+    }
+
+    /* Very small screens - adjust save buttons */
+    @media (max-width: 480px) {
+        .save-button,
+        .save-copy-button,
+        .save-segments-button {
+            font-size: 0.675rem;
+            padding: 0.25rem;
+        }
+
+        /* Remove margins for controls-right buttons */
+        .controls-right {
+            margin: 0;
+        }
+
+        .controls-right button {
+            margin: 0;
+        }
+    }
+
+    /* Tooltip styles - only on desktop where hover is available */
+    @media (hover: hover) and (pointer: fine) {
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 5px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                opacity 0.2s,
+                visibility 0.2s;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                opacity 0.2s,
+                visibility 0.2s;
+            pointer-events: none;
+        }
+
+        [data-tooltip]:hover:before,
+        [data-tooltip]:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    /* Hide button tooltips on touch devices */
+    @media (pointer: coarse) {
+        [data-tooltip]:before,
+        [data-tooltip]:after {
+            display: none !important;
+            content: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    }
+
+    /* Modal success and error styling */
+    .modal-success-content,
+    .modal-error-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        text-align: center;
+        padding: 0;
+        margin: 0;
+    }
+
+    .modal-success-icon,
+    .modal-error-icon {
+        margin-bottom: 1rem;
+    }
+
+    .modal-success-icon svg {
+        color: #4caf50;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .modal-error-icon svg {
+        color: #f44336;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .success-link {
+        background-color: #4caf50;
+        color: white;
+        transition: background-color 0.3s;
+    }
+
+    .success-link:hover {
+        background-color: #388e3c;
+    }
+
+    .error-message {
+        color: #f44336;
+        font-weight: 500;
+    }
+
+    /* Modal spinner animation */
+    .modal-spinner {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #059669;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .auto-save-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Centered modal content */
+    .text-center {
+        text-align: center;
+    }
+
+    .modal-message {
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .modal-choice-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.25rem;
+        background-color: #059669;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        margin: 0 auto;
+        cursor: pointer;
+        font-weight: 500;
+        gap: 0.5rem;
+        border: none;
+        transition: background-color 0.3s;
+    }
+
+    .modal-choice-button:hover {
+        background-color:rgb(7, 119, 84);
+    }
+
+    .modal-choice-button svg {
+        flex-shrink: 0;
+    }
+
+    .centered-choice {
+        margin: 0 auto;
+        min-width: 180px;
+    }
+}
+
+/* Mobile Timeline Overlay */
+.mobile-timeline-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+.mobile-timeline-message {
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 15px 25px;
+    text-align: center;
+    max-width: 80%;
+    animation: pulse 2s infinite;
+}
+
+.mobile-timeline-message p {
+    color: white;
+    font-size: 16px;
+    margin: 0 0 15px 0;
+    font-weight: 500;
+}
+
+.mobile-play-icon {
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 25px solid white;
+    margin: 0 auto;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+}
+
+/* Segments playback mode styles - minimal functional styling */
+.segments-playback-mode .tooltip-time-btn {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.segments-playback-mode .tooltip-action-btn.play,
+.segments-playback-mode .tooltip-action-btn.pause {
+    opacity: 1;
+    cursor: pointer;
+}
+
+/* During segments playback mode, disable button interactions but keep hover working */
+.segments-playback-mode .tooltip-time-btn[disabled],
+.segments-playback-mode .tooltip-action-btn[disabled] {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+/* Ensure disabled buttons still show tooltips on hover */
+.segments-playback-mode [data-tooltip][disabled]:hover:before,
+.segments-playback-mode [data-tooltip][disabled]:hover:after {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Show segments playback message */
+.segments-playback-message {
+    display: flex;
+    align-items: center;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    animation: pulse 2s infinite;
+}
+
+.segments-playback-message svg {
+    height: 1.25rem;
+    width: 1.25rem;
+    margin-right: 0.5rem;
+    color: #3b82f6;
+}
+
+/* Chapter Editor Styles */
+.chapter-editor {
+    background-color: #f8fafc;
+    border: 2px solid #3b82f6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.chapter-editor-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.chapter-editor-title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.chapter-editor-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.chapter-editor-segment {
+    font-size: 0.75rem;
+    color: #6b7280;
+    background-color: #e5e7eb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    display: inline-block;
+}
+
+.save-chapters-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.save-chapters-button:hover {
+    background-color: #2563eb;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.save-chapters-button.has-changes {
+    background-color: #10b981;
+    animation: pulse-green-chapters 2s infinite;
+}
+
+.save-chapters-button.has-changes:hover {
+    background-color: #059669;
+}
+
+.save-chapters-button svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+@keyframes pulse-green-chapters {
+    0%,
+    100% {
+        background-color: #10b981;
+    }
+    50% {
+        background-color: #34d399;
+    }
+}
+
+.chapter-title-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    resize: vertical;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.chapter-title-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.chapter-title-input::placeholder {
+    color: #9ca3af;
+}
+
+.chapter-editor-info {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Chapter Editor Responsive styles */
+@media (max-width: 768px) {
+    .chapter-editor-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .save-chapters-button {
+        justify-content: center;
+        align-self: stretch;
+    }
+
+    .chapter-editor-segment {
+        text-align: center;
+    }
+}
+
+/* Tooltip Chapter Editor Styles */
+.tooltip-chapter-editor {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 0.375rem;
+    pointer-events: auto; /* Ensure it can receive clicks */
+}
+
+textarea.tooltip-chapter-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 2px solid #ccc;
+    border-radius: 0.25rem;
+    background-color: white;
+    color: black;
+    font-size: 0.75rem;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+    height: 55px !important;
+    max-height: 55px !important;
+    min-height: 55px !important;
+}
+
+textarea.tooltip-chapter-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+textarea.tooltip-chapter-input::placeholder {
+    color: #999;
+}

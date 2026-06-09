@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from tinymce.widgets import TinyMCE
 
 from rbac.models import RBACGroup
 
@@ -13,8 +14,11 @@ from .models import (
     Encoding,
     Language,
     Media,
+    Page,
     Subtitle,
     Tag,
+    TinyMCEMedia,
+    TranscriptionRequest,
     VideoTrimRequest,
 )
 
@@ -61,6 +65,7 @@ class CategoryAdminForm(forms.ModelForm):
 
     class Meta:
         model = Category
+        # LTI fields will be shown as read-only when USE_LTI is enabled
         fields = '__all__'
 
     def clean(self):
@@ -131,7 +136,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["title", "user", "add_date", "media_count"]
     list_filter = []
     ordering = ("-add_date",)
-    readonly_fields = ("user", "media_count")
+    readonly_fields = ("user", "media_count", "lti_platform", "lti_context_id")
     change_form_template = 'admin/files/category/change_form.html'
 
     def get_list_filter(self, request):
@@ -141,6 +146,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_filter.insert(0, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_filter.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_filter.append("is_lms_course")
 
         return list_filter
 
@@ -150,6 +157,8 @@ class CategoryAdmin(admin.ModelAdmin):
             list_display.insert(-1, "is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
             list_display.insert(-1, "identity_provider")
+        if getattr(settings, 'USE_LTI', False):
+            list_display.insert(-1, "is_lms_course")
 
         return list_display
 
@@ -163,6 +172,14 @@ class CategoryAdmin(admin.ModelAdmin):
             ),
         ]
 
+        additional_fieldsets = []
+
+        if getattr(settings, 'USE_LTI', False):
+            lti_fieldset = [
+                ('LTI Integration', {'fields': ['lti_platform', 'lti_context_id'], 'classes': ['tab'], 'description': 'LTI/LMS integration settings (automatically managed by LTI provisioning)'}),
+            ]
+            additional_fieldsets.extend(lti_fieldset)
+
         if getattr(settings, 'USE_RBAC', False):
             rbac_fieldset = [
                 ('RBAC Settings', {'fields': ['is_rbac_category'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
@@ -173,9 +190,9 @@ class CategoryAdmin(admin.ModelAdmin):
                     ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
                     ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
                 ]
-            return basic_fieldset + rbac_fieldset
-        else:
-            return basic_fieldset
+            additional_fieldsets.extend(rbac_fieldset)
+
+        return basic_fieldset + additional_fieldsets
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -197,11 +214,18 @@ class LanguageAdmin(admin.ModelAdmin):
 
 
 class SubtitleAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["id", "language", "media"]
+    list_filter = ["language"]
+    search_fields = ["media__title"]
+    readonly_fields = ("media", "user")
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["media", "status", "add_date", "video_action", "media_trim_style", "timestamps"]
+    list_filter = ["status", "video_action", "media_trim_style", "add_date"]
+    search_fields = ["media__title"]
+    readonly_fields = ("add_date",)
+    ordering = ("-add_date",)
 
 
 class EncodingAdmin(admin.ModelAdmin):
@@ -219,14 +243,51 @@ class EncodingAdmin(admin.ModelAdmin):
     has_file.short_description = "Has file"
 
 
+class TranscriptionRequestAdmin(admin.ModelAdmin):
+    list_display = ["media", "add_date", "status", "translate_to_english"]
+    list_filter = ["status", "translate_to_english", "add_date"]
+    search_fields = ["media__title"]
+    readonly_fields = ("add_date", "logs")
+    ordering = ("-add_date",)
+
+
+class PageAdminForm(forms.ModelForm):
+    description = forms.CharField(widget=TinyMCE())
+
+    def clean_description(self):
+        content = self.cleaned_data['description']
+        # Add sandbox attribute to all iframes
+        content = content.replace('<iframe ', '<iframe sandbox="allow-scripts allow-same-origin allow-presentation" ')
+        return content
+
+    class Meta:
+        model = Page
+        fields = "__all__"
+
+
+class PageAdmin(admin.ModelAdmin):
+    form = PageAdminForm
+
+
+@admin.register(TinyMCEMedia)
+class TinyMCEMediaAdmin(admin.ModelAdmin):
+    list_display = ['original_filename', 'file_type', 'uploaded_at', 'user']
+    list_filter = ['file_type', 'uploaded_at']
+    search_fields = ['original_filename']
+    readonly_fields = ['uploaded_at']
+    date_hierarchy = 'uploaded_at'
+
+
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Media, MediaAdmin)
 admin.site.register(Encoding, EncodingAdmin)
 admin.site.register(Category, CategoryAdmin)
+admin.site.register(Page, PageAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
+admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
 
 Media._meta.app_config.verbose_name = "Media"

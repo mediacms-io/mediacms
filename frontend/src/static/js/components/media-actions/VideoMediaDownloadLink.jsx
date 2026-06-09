@@ -21,12 +21,16 @@ function downloadOptionsList() {
         for (g in encodings_info[k]) {
           if (encodings_info[k].hasOwnProperty(g)) {
             if ('success' === encodings_info[k][g].status && 100 === encodings_info[k][g].progress && null !== encodings_info[k][g].url) {
+              // Use original media URL for download instead of encoded version
+              const originalUrl = media_data.original_media_url;
+              const originalFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : media_data.title;
+
               optionsList[encodings_info[k][g].title] = {
                 text: k + ' - ' + g.toUpperCase() + ' (' + encodings_info[k][g].size + ')',
-                link: formatInnerLink(encodings_info[k][g].url, SiteContext._currentValue.url),
+                link: formatInnerLink(media_data.original_media_url, SiteContext._currentValue.url),
                 linkAttr: {
                   target: '_blank',
-                  download: media_data.title + '_' + k + '_' + g.toUpperCase(),
+                  download: originalFilename,
                 },
               };
             }
@@ -36,12 +40,16 @@ function downloadOptionsList() {
     }
   }
 
+  // Extract actual filename from the original media URL
+  const originalUrl = media_data.original_media_url;
+  const originalFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : media_data.title;
+
   optionsList.original_media_url = {
     text: 'Original file (' + media_data.size + ')',
     link: formatInnerLink(media_data.original_media_url, SiteContext._currentValue.url),
     linkAttr: {
       target: '_blank',
-      download: media_data.title,
+      download: originalFilename,
     },
   };
 

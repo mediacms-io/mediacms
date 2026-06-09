@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}{% if user.name %}{{user.name}} - {% endif %}{{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="{% if user.name %}{{user.name}} - {% endif %}{{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+<meta name="twitter:card" content="summary">
+
+{% endblock headermeta %}
+
+{% block topimports %}
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/profile-media.css" %}?v={{ VERSION }}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block innercontent %}
+{% if user %}{% else %}
+No such user
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if user %}<div id="page-profile-shared-with-me"></div>{% endif %}
+{% endblock %}
+
+{% block bottomimports %}
+    <script src="{% static "js/profile-shared-with-me.js" %}?v={{ VERSION }}"></script>
+{% endblock bottomimports %}

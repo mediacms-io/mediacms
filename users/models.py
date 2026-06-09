@@ -11,7 +11,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
-from files.models import Category, Media, Tag
+from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
 
 
@@ -29,6 +29,7 @@ class User(AbstractUser):
     name = models.CharField("full name", max_length=250, db_index=True)
     date_added = models.DateTimeField("date added", default=timezone.now, db_index=True)
     is_featured = models.BooleanField("Is featured", default=False, db_index=True)
+    is_approved = models.BooleanField("Is approved", default=False, null=True, blank=True, db_index=True)
 
     title = models.CharField("Title", max_length=250, blank=True)
     advancedUser = models.BooleanField("advanced user", default=False, db_index=True)
@@ -105,7 +106,7 @@ class User(AbstractUser):
         ret = {}
         results = []
         ret["results"] = results
-        ret["user_media"] = "/api/v1/media?author={0}".format(self.username)
+        ret["user_media"] = f"/api/v1/media?author={self.username}"
         return ret
 
     def save(self, *args, **kwargs):
@@ -123,16 +124,75 @@ class User(AbstractUser):
         Get all categories related to RBAC groups the user belongs to
         """
         rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"])
-        categories = Category.objects.filter(rbac_groups__in=rbac_groups).distinct()
+        categories = Category.objects.prefetch_related("user").filter(rbac_groups__in=rbac_groups).distinct()
         return categories
 
     def has_member_access_to_category(self, category):
         rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories=category)
         return rbac_groups.exists()
 
-    def has_member_access_to_media(self, media):
-        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
+    def has_contributor_access_to_category(self, category):
+        rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"], categories=category)
         return rbac_groups.exists()
+
+    def has_member_access_to_media(self, media):
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["member", "contributor", "manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+
+        # Then check MediaShare permissions for any access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+        ).exists()
+
+        return media_permission_exists
+
+    def has_contributor_access_to_media(self, media):
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["contributor", "manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+
+        # Then check MediaShare permissions for editor or owner access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+            permission__in=["editor", "owner"],
+        ).exists()
+
+        return media_permission_exists
+
+    def has_owner_access_to_media(self, media):
+        # First check if user is the owner
+        if media.user == self:
+            return True
+
+        # Then check RBAC permissions
+        if getattr(settings, 'USE_RBAC', False):
+            rbac_groups = RBACGroup.objects.filter(memberships__user=self, memberships__role__in=["manager"], categories__in=media.category.all()).distinct()
+            if rbac_groups.exists():
+                return True
+
+        # Then check MediaShare permissions for owner access
+        media_permission_exists = MediaPermission.objects.filter(
+            user=self,
+            media=media,
+            permission="owner",
+        ).exists()
+
+        return media_permission_exists
 
     def get_rbac_categories_as_contributor(self):
         """
@@ -210,7 +270,7 @@ class Channel(models.Model):
         super(Channel, self).save(*args, **kwargs)
 
     def __str__(self):
-        return "{0} -{1}".format(self.user.username, self.title)
+        return f"{self.user.username} -{self.title}"
 
     def get_absolute_url(self, edit=False):
         if edit:
@@ -230,7 +290,7 @@ def post_user_create(sender, instance, created, **kwargs):
         new = Channel.objects.create(title="default", user=instance)
         new.save()
         if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
-            title = "[{}] - New user just registered".format(settings.PORTAL_NAME)
+            title = f"[{settings.PORTAL_NAME}] - New user just registered"
             msg = """
 User has just registered with email %s\n
 Visit user profile page at %s

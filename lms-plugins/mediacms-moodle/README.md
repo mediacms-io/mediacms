@@ -1,0 +1,110 @@
+# MediaCMS for Moodle
+
+Version: 1.0.0, tested on Moodle 5
+
+This plugin provides complete MediaCMS integration for Moodle, consisting of two plugins that work together with unified settings:
+
+1.  **Filter Plugin (filter_mediacms):**
+    *   Handles LTI 1.3 authentication and secure video launches
+    *   Auto-converts MediaCMS URLs to embedded players
+    *   **Provides core settings** (MediaCMS URL, LTI Tool ID) used by both plugins
+    *   **Location:** Admin, Plugins, Manage filters, MediaCMS
+
+2.  **Editor Plugin (tiny_mediacms):**
+    *   Adds MediaCMS button to TinyMCE editor
+    *   Browse authenticated video library via LTI Deep Linking
+    *   Configure embed options (dimensions, display, start time)
+    *   **Reads core settings** from filter plugin
+    *   **Location:** Admin, Plugins, TinyMCE, MediaCMS
+
+## Installation
+
+Upload the plugin in Moodle's public directory and unzip
+# cd /var/www/moodle/public ; cp /root/mediacms-moodle-v1.0.0.zip . && unzip mediacms-moodle-v1.0.0.zip
+
+Ensure the web server user (typically `www-data`) has ownership of the new directories:
+
+```bash
+# Example for Ubuntu/Debian systems
+chown -R www-data:www-data /var/www/moodle/public/filter/mediacms
+chown -R www-data:www-data /var/www/moodle/public/lib/editor/tiny/plugins/mediacms
+chmod -R 755 /var/www/moodle/public/filter/mediacms
+chmod -R 755 /var/www/moodle/public/lib/editor/tiny/plugins/mediacms
+```
+
+### 3. Install Plugins
+
+1.  Log in to Moodle as an Administrator.
+2.  Go to **Site administration > Notifications**.
+3.  Follow the prompts to upgrade the database and install the new plugins.
+
+## Configuration
+
+### Step 1: Core Settings (Required) - Configure Once
+
+Go to **Site administration > Plugins > Filters > MediaCMS** (Settings)
+
+*   **MediaCMS URL:** Enter your MediaCMS instance URL (e.g., `https://lti.mediacms.io`)
+*   **LTI Tool:** Select the External Tool configuration for MediaCMS
+    *   *First create an LTI 1.3 tool at: Site administration > Plugins > Activity modules > External tool > Manage tools*
+
+> **✨ Note:** These core settings are automatically used by **both** the filter and TinyMCE editor plugin.
+
+### Step 2: Enable Filter
+
+1.  Go to **Site administration > Plugins > Filters > Manage filters**
+2.  Set **MediaCMS** to "On"
+
+### Step 3: Configure Auto-convert Defaults (Optional)
+
+Go to **Site administration > Plugins > Text editors > TinyMCE editor > MediaCMS settings**
+
+Configure default display options for auto-converted URLs:
+*   Show video title
+*   Link video title
+*   Show related videos
+*   Show user avatar
+
+> **Note:** The core settings (URL, LTI Tool) are managed in the filter plugin settings.
+
+## Usage
+
+### For Teachers (Editor)
+
+1.  In any text editor (TinyMCE), click the **MediaCMS** icon (or "Insert MediaCMS Media" from the Insert menu).
+2.  You can:
+    *   **Paste a URL:** Paste a View or Embed URL.
+    *   **Video Library:** Click the "Video Library" tab to browse and select videos (requires LTI Deep Linking configuration).
+3.  The video will appear as a placeholder or iframe in the editor.
+
+### For Students (Display)
+
+When content is viewed, the Filter will ensure the video is loaded securely via LTI 1.3, authenticating the user with MediaCMS automatically.
+
+
+
+## Build instructions / Developing with the plugin
+
+two types of changes: php (no build), js (build with npx grunt amd)
+
+needs moodle/
+npx version, dependencies etc
+
+1. make changes here in lms-plugins/mediacms-moodle
+2. copy to moodle
+3. run `npx grunt amd` in moodle to build the JS files
+4. from moodle copy back
+sudo cp -r ~/mediacms/lms-plugins/mediacms-moodle/tiny/mediacms/ -r ~/mediacms/moodle/public/lib/editor/tiny/plugins/
+
+5. cd ~/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms/
+
+npx grunt amd
+6.
+cp files back...
+sudo cp -r /home/user/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms /home/user/mediacms/lms-plugins/mediacms-moodle/tiny/
+
+php admin/cli/purge_caches.php after
+
+
+### Troubleshooting
+Admin, advanced theme settings, add `My Media|/filter/mediacms/my_media.php` in case the position is not workin
