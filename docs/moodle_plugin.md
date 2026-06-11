@@ -38,7 +38,7 @@ Moodle > Site Administration > Plugins > Activity Modules > External tools > Man
 - **Name:** MediaCMS
 - **Tool URL:** MediaCMS issuer URL + `/lti/launch/` (e.g. `https://mediacms.organisation.org/lti/launch/`)
 - **LTI version:** LTI 1.3
-- **Client ID:** set a token identifier
+- **Client ID:** will be provided once the tool is saved
 - **Public key type:** Keyset URL
 - **Public keyset:** MediaCMS issuer URL + `/lti/jwks/` (e.g. `https://mediacms.organisation.org/lti/jwks/`)
 - **Initiate login URL:** MediaCMS issuer URL + `/lti/oidc/login/` (e.g. `https://mediacms.organisation.org/lti/oidc/login/`)
@@ -61,6 +61,8 @@ Save Changes.
 ### 1.3 Moodle: Installation and configuration of MediaCMS plugin in Moodle
 
 #### 1.3.1 Download plugin and install MediaCMS as an LTI tool
+
+The plugin is available in the `lms-plugins/mediacms-moodle/dist/` directory of this repository. It will also be published to the [Moodle Plugins directory](https://moodle.org/plugins) shortly.
 
 Two methods can be used:
 
@@ -102,20 +104,14 @@ With this configuration users, who have accessed embedded media, can also access
 
 Select this option, if users should not have access to embedded content under My Media > Shared with Me. Select this option, if strict access control should be handled for embedded content, and not rely on e.g. manual Course Cleanup procedures.
 
-### 1.4 MediaCMS Administration: Establish Moodle identity provider in MediaCMS
+### 1.4 MediaCMS Administration: Add Moodle as an LTI platform
 
-#### 1.4.1 Add Identity Provider
-
-In MediaCMS, go to Administration > Identity Providers > Add Identity Provider, and configure Moodle as an LTI identity provider.
-
-#### 1.4.2 Configure MediaCMS Administration > LTI 1.3 Integration
-
-LTI Platforms > Add LTI Platform > add:
+In MediaCMS, go to Administration > LTI 1.3 Integration > LTI Platforms > Add LTI Platform > add:
 
 **Basic Information**
 - **Name:** What makes sense in your context
 - **Platform ID:** Moodle platform's issuer URL (iss claim, e.g. `https://moodle.organisation.org`)
-- **Client ID:** Moodle > Site Administration > Plugins > Activity Modules > External tools > Manage Tools > MediaCMS > Edit > Client ID
+- **Client ID:** get it from Moodle > Site Administration > Plugins > Activity Modules > External tools > Manage Tools > MediaCMS > Edit > Client ID
 
 **OIDC Endpoints**
 - **Auth login URL:** Moodle issuer URL + `/filter/mediacms/lti_auth.php` (e.g. `https://moodle.organisation.org/filter/mediacms/lti_auth.php`)
@@ -126,7 +122,7 @@ LTI Platforms > Add LTI Platform > add:
 - **Key set URL:** Issuer URL + `/mod/lti/certs.php` (e.g. `https://moodle.organisation.org/mod/lti/certs.php`)
 
 **Deployment & Features**
-- **Deployment IDs:** `["2"]`
+- **Deployment IDs:** get it from Moodle > Site Administration > Plugins > Activity Modules > External tools > Manage Tools > MediaCMS > View configuration details
 - **Enable NRPS:** yes
 - **Enable deep linking:** yes
 
@@ -140,13 +136,13 @@ Done. Installation can now be tested with the role as an administrator, lecturer
 
 Lecturers: Moodle workflows covered in the MediaCMS integration
 
-**1. Upload media to your My Media repository**
+### 1. Upload media to your My Media repository
 
 Moodle > My Media > camera icon to the right (Add Media) > Upload > Drag and drop files / Browse your files
 
 Video, audio, pictures and PDF files can be uploaded and shared with the course members, but only video and audio files can be embedded in Moodle Activities / Resources.
 
-**2. Record media to your My Media repository**
+### 2. Record media to your My Media repository
 
 Make simple recordings via your browser, and add them directly to your My Media repository:
 
@@ -154,7 +150,7 @@ Moodle > My Media > camera icon to the right (Add Media) > Record > Record Scree
 
 Apple iPhone iOS only supports 10 minutes recording in 480p, whereas Android based systems have fewer restrictions.
 
-**3. Edit media**
+### 3. Edit media
 
 Moodle > My Media > particular media > Edit Media (pencil icon on top of media thumbnail) > ...
 
@@ -165,7 +161,7 @@ Moodle > My Media > particular media > Edit Media (pencil icon on top of media t
 - **3.5 Publish:** Share the media with courses, and/or make the media unlisted for publishing outside Moodle
 - **3.6 Replace:** Add new media to the media instance, but retain all metadata, captions, chapters etc.
 
-**4. Share media with other users in Moodle or MediaCMS**
+### 4. Share media with other users in Moodle or MediaCMS
 
 Moodle > My Media > select media > Bulk Actions > Share with 1. Co-Viewers OR 2. Co-Editors OR 3. Co-Owners OR 4. Course Members
 
@@ -178,7 +174,7 @@ Alternatively, use My Media > individual media > Publish > select courses, which
 
 Sharing media with Course Members will automatically list the media under that Course. A link to all listed course media can be accessed under the media's full viewing page. Users will only see course listings for courses, where they are members.
 
-**5. Embed media in Moodle course activities / resources**
+### 5. Embed media in Moodle course activities / resources
 
 Two basic workflows are supported:
 
@@ -206,23 +202,23 @@ Media will get the Publish state: Shared, when inserted in the activity / resour
 
 If administrator has activated a specific configuration (Share Embedded Media), users will be able to view the embedded shared media content under My Media > Shared with Me.
 
-**6. Link to, or embed media outside Moodle**
+### 6. Link to, or embed media outside Moodle
 
 To publish an external link to the media: My Media > click to view the media > right-click the viewing window > copy URL or embed code > add this to your external portal or client.
 
-**7. Bookmark and collect video in Playlists**
+### 7. Bookmark and collect video in Playlists
 
 Full media viewing page > Save > Save to existing Playlist, or create new Playlist for the bookmarked media.
 
 Access your Playlists under My Media > Playlists.
 
-**8. Bulk Actions**
+### 8. Bulk Actions
 
 Other actions available for all users:
 
 Handle media settings for many media items in one go: Enable, disable, delete Comment and Enable or Disable Download. Manage media, such as change Publish State (Private, Shared, Unlisted), change ownership of media, or copy or delete media.
 
-**9. Course Cleanup**
+### 9. Course Cleanup
 
 Remove existing permissions and delete comments under media in course:
 
@@ -230,19 +226,19 @@ Moodle > My Media > Bulk Actions > Course Cleanup
 
 Administrators and lecturers can make use of the Bulk Action > Course Cleanup without selecting any media, whereby the cleanup will apply to all media embedded in course activities / resources, and media Shared with Course Members / Publish to the course. If only selecting specific media, the cleanup will only apply to the selected media.
 
-**9.1** Moodle > My Media > Bulk Actions > Course Cleanup > select course > Remove present course permissions for all course members
+#### 9.1 Moodle > My Media > Bulk Actions > Course Cleanup > select course > Remove present course permissions for all course members
 
 If selecting this option, all users that have accessed the embedded course media will no longer be listed as sharing partners. Similarly, if media has been shared via Shared with Course Members / Publish to Course, these users will also be removed as sharing partners.
 
 Be aware that this action does not remove user's access to media, if users still have access to the Moodle activity / resource, and the media is still embedded in that activity / resource.
 
-**9.2** Moodle > My Media > Bulk Actions > Course Cleanup > select course > Remove Comments
+#### 9.2 Moodle > My Media > Bulk Actions > Course Cleanup > select course > Remove Comments
 
 If selecting this option, all comments added to the embedded course media, or media shared with course members, will be deleted.
 
 Course Cleanup can ideally be used after a term, where a course has ended, and a clean sheet will provide better overview. E.g. media can be reused from course to course, without comments from previous courses getting in the way.
 
-**10. Provisioning of courses and users explained**
+### 10. Provisioning of courses and users explained
 
 A course in Moodle corresponds to a category in MediaCMS, and Moodle course roles are mapped to MediaCMS category roles:
 
