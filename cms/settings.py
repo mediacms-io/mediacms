@@ -61,6 +61,7 @@ INTERNAL_IPS = "127.0.0.1"
 # settings that are related with UX/appearance
 # whether a featured item appears enlarged with player on index page
 VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE = False
+HOME_LINK_URL = "/"
 
 # Sidebar link visibility
 HIDE_HOME_LINK = False

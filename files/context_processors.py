@@ -40,6 +40,7 @@ def stuff(request):
     ret["HIDE_TAGS_LINK"] = getattr(settings, "HIDE_TAGS_LINK", False)
     ret["HIDE_CATEGORIES_LINK"] = getattr(settings, "HIDE_CATEGORIES_LINK", False)
     ret["HIDE_CONTACT_LINK"] = getattr(settings, "HIDE_CONTACT_LINK", False)
+    ret["HOME_LINK_URL"] = getattr(settings, "HOME_LINK_URL", "/")
     ret["IS_MEDIACMS_ADMIN"] = request.user.is_superuser
     ret["IS_MEDIACMS_EDITOR"] = is_mediacms_editor(request.user)
     ret["IS_MEDIACMS_MANAGER"] = is_mediacms_manager(request.user)
