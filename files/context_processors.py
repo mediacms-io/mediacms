@@ -3,7 +3,7 @@ from django.conf import settings
 from cms.version import VERSION
 
 from .frontend_translations import get_translation, get_translation_strings
-from .methods import is_mediacms_editor, is_mediacms_manager
+from .methods import is_mediacms_editor, is_mediacms_manager, user_allowed_to_upload
 
 
 def stuff(request):
@@ -23,6 +23,8 @@ def stuff(request):
     ret["CAN_LOGIN"] = settings.LOGIN_ALLOWED
     ret["CAN_REGISTER"] = settings.REGISTER_ALLOWED
     ret["CAN_UPLOAD_MEDIA"] = settings.UPLOAD_MEDIA_ALLOWED
+    # Keep UI in sync with backend upload authorization logic.
+    ret["USER_CAN_ADD_MEDIA"] = settings.UPLOAD_MEDIA_ALLOWED and user_allowed_to_upload(request)
     ret["TIMESTAMP_IN_TIMEBAR"] = settings.TIMESTAMP_IN_TIMEBAR
     ret["CAN_MENTION_IN_COMMENTS"] = settings.ALLOW_MENTION_IN_COMMENTS
     ret["CAN_LIKE_MEDIA"] = settings.CAN_LIKE_MEDIA
@@ -34,6 +36,10 @@ def stuff(request):
     ret["PRE_UPLOAD_MEDIA_MESSAGE"] = settings.PRE_UPLOAD_MEDIA_MESSAGE
     ret["SIDEBAR_FOOTER_TEXT"] = settings.SIDEBAR_FOOTER_TEXT
     ret["POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY"] = settings.POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY
+    ret["HIDE_HOME_LINK"] = getattr(settings, "HIDE_HOME_LINK", False)
+    ret["HIDE_TAGS_LINK"] = getattr(settings, "HIDE_TAGS_LINK", False)
+    ret["HIDE_CATEGORIES_LINK"] = getattr(settings, "HIDE_CATEGORIES_LINK", False)
+    ret["HIDE_CONTACT_LINK"] = getattr(settings, "HIDE_CONTACT_LINK", False)
     ret["IS_MEDIACMS_ADMIN"] = request.user.is_superuser
     ret["IS_MEDIACMS_EDITOR"] = is_mediacms_editor(request.user)
     ret["IS_MEDIACMS_MANAGER"] = is_mediacms_manager(request.user)
@@ -55,6 +61,7 @@ def stuff(request):
     ret["TRANSLATION"] = get_translation(request.LANGUAGE_CODE)
     ret["REPLACEMENTS"] = get_translation_strings(request.LANGUAGE_CODE)
     ret["USE_SAML"] = settings.USE_SAML
+    ret["USE_OIDC"] = getattr(settings, "USE_OIDC", False)
     ret["USE_RBAC"] = settings.USE_RBAC
     ret["USE_ROUNDED_CORNERS"] = settings.USE_ROUNDED_CORNERS
     ret["INCLUDE_LISTING_NUMBERS"] = settings.INCLUDE_LISTING_NUMBERS
