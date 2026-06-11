@@ -84,11 +84,11 @@ Two methods can be used:
 
 **Notes:**
 
-**Ad 1.** As of Q2 2026 browser providers increasingly implement measures to prevent cross-site tracking, which also set limitations on how users can view embedded content from a system X (e.g. MediaCMS), that has been embedded in system Y (e.g. Moodle). To avoid these limitations, it is recommended to use the same domain for the configuration of MediaCMS as is used for Moodle.
+**Note 1.** As of Q2 2026 browser providers increasingly implement measures to prevent cross-site tracking, which also set limitations on how users can view embedded content from a system X (e.g. MediaCMS), that has been embedded in system Y (e.g. Moodle). To avoid these limitations, it is recommended to use the same domain for the configuration of MediaCMS as is used for Moodle.
 
-**Ad 2.** User Navigation is the user's icon in top right corner of Moodle interface, where user profile and preferences are found.
+**Note 2.** User Navigation is the user's icon in top right corner of Moodle interface, where user profile and preferences are found.
 
-**Ad 3.** "Share Embedded Media" configuration explained:
+**Note 3.** "Share Embedded Media" configuration explained:
 
 Users are automatically assigned permissions to embedded media in Moodle Activity/Resource, if they have access to a particular Moodle Activity / Resource. Publish State of the media is set to Private and Shared, whereby media cannot be shared outside Moodle by e.g. copying a link from Moodle and using it outside Moodle. These permissions are not automatically removed, if access to the Moodle Activity/Resource is removed.
 
@@ -169,12 +169,12 @@ Moodle > My Media > particular media > Edit Media (pencil icon on top of media t
 
 Moodle > My Media > select media > Bulk Actions > Share with 1. Co-Viewers OR 2. Co-Editors OR 3. Co-Owners OR 4. Course Members
 
-- **Ad 1:** Select one or several users, with whom you want to share media, giving them viewer permissions
-- **Ad 2:** Similar, but giving users Editor permissions (they can edit the media and media's metadata)
-- **Ad 3:** Similar, but giving users Co-editor permissions (they can do everything the owner can do, except delete the media)
-- **Ad 4:** Select courses with which members you want to share media, giving them permissions according to permissions in the course (Students become Viewers, and Lecturers and similar roles become Co-Owners)
+- **Note 1:** Select one or several users, with whom you want to share media, giving them viewer permissions
+- **Note 2:** Similar, but giving users Editor permissions (they can edit the media and media's metadata)
+- **Note 3:** Similar, but giving users Co-editor permissions (they can do everything the owner can do, except delete the media)
+- **Note 4:** Select courses with which members you want to share media, giving them permissions according to permissions in the course (Students become Viewers, and Lecturers and similar roles become Co-Owners)
 
-Alternatively, use My Media > individual media > Publish > select courses, which will have the same effect as Bulk Actions > Share with Course Members (Ad 4).
+Alternatively, use My Media > individual media > Publish > select courses, which will have the same effect as Bulk Actions > Share with Course Members (Note 4).
 
 Sharing media with Course Members will automatically list the media under that Course. A link to all listed course media can be accessed under the media's full viewing page. Users will only see course listings for courses, where they are members.
 
@@ -276,6 +276,6 @@ Almost all the workflows supported for lecturers are also supported for students
 6. Bookmark and collect media in Playlists
 7. Bulk Actions
 
-**Ad 4:** Students can only embed media in Moodle activities / resources, where they have the permissions to do so via permissions set in Moodle.
+**Note 4:** Students can only embed media in Moodle activities / resources, where they have the permissions to do so via permissions set in Moodle.
 
-**Ad 7:** With regard to Bulk Actions, students do not have access to Course Cleanup.
+**Note 7:** With regard to Bulk Actions, students do not have access to Course Cleanup.
