@@ -287,7 +287,7 @@ def provision_lti_bulk_contexts(platform, user, publish_data_raw):
 
     # Remove memberships for groups that belong to this platform but were absent
     # from the current publishdata — meaning the user is no longer enrolled.
-    if seen_group_ids:
+    if seen_group_ids and platform.remove_from_groups_on_unenroll:
         platform_group_ids = set(LTIResourceLink.objects.filter(platform=platform, rbac_group__isnull=False).values_list('rbac_group_id', flat=True))
         stale_ids = platform_group_ids - seen_group_ids
         if stale_ids:
