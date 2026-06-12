@@ -97,7 +97,7 @@ def _parse_tags_input(raw_tags):
     tags = []
     seen = set()
     for item in tag_items:
-        normalized_item = helpers.get_alphanumeric_only(str(item))[:99]
+        normalized_item = helpers.get_alphanumeric_and_spaces(str(item))[:99]
         if normalized_item and normalized_item not in seen:
             tags.append(normalized_item)
             seen.add(normalized_item)
