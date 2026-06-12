@@ -1111,3 +1111,15 @@ def media_m2m(sender, instance, **kwargs):
     if instance.tags.all():
         for tag in instance.tags.all():
             tag.update_tag_media()
+
+
+@receiver(m2m_changed, sender=Media.tags.through)
+def media_tags_m2m(sender, instance, action, pk_set, **kwargs):
+    if action in ("post_add", "post_remove", "post_clear"):
+        if instance.tags.all():
+            for tag in instance.tags.all():
+                tag.update_tag_media()
+        if pk_set:
+            from .category import Tag
+            for tag in Tag.objects.filter(pk__in=pk_set):
+                tag.update_tag_media()
