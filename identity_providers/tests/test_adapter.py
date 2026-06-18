@@ -23,10 +23,6 @@ from identity_providers.adapter import (
 User = get_user_model()
 
 
-# ---------------------------------------------------------------------------
-# DB helpers
-# ---------------------------------------------------------------------------
-
 def make_social_app(provider="openid_connect", provider_id="test-oidc", name="Test App"):
     app = SocialApp.objects.create(
         provider=provider,
@@ -60,19 +56,11 @@ def make_sociallogin(user, account, data=None):
     return sl
 
 
-# ---------------------------------------------------------------------------
-# is_open_for_signup
-# ---------------------------------------------------------------------------
-
 class TestIsOpenForSignup:
     def test_always_returns_true(self):
         adapter = UnifiedSocialAccountAdapter()
         assert adapter.is_open_for_signup(MagicMock(), MagicMock()) is True
 
-
-# ---------------------------------------------------------------------------
-# populate_user — username sanitisation (shared logic with OIDC/SAML)
-# ---------------------------------------------------------------------------
 
 class TestPopulateUser:
     """
@@ -130,10 +118,6 @@ class TestPopulateUser:
         adapter.populate_user(MagicMock(), sl, data)
         assert sl.data is data
 
-
-# ---------------------------------------------------------------------------
-# _dispatch_user_actions — protocol routing
-# ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
 class TestDispatchUserActions:
@@ -228,10 +212,6 @@ class TestDispatchUserActions:
         mock_saml.assert_not_called()
 
 
-# ---------------------------------------------------------------------------
-# UnifiedSocialAccountAdapter.save_user
-# ---------------------------------------------------------------------------
-
 @pytest.mark.django_db
 class TestSaveUser:
 
@@ -267,10 +247,6 @@ class TestSaveUser:
         _, _, passed_data = mock_dispatch.call_args[0]
         assert passed_data is data
 
-
-# ---------------------------------------------------------------------------
-# unified_social_account_updated signal receiver
-# ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
 class TestUnifiedSignalReceiver:

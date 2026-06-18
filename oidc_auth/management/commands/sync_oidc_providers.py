@@ -97,9 +97,6 @@ class Command(BaseCommand):
             except Exception as exc:
                 raise CommandError(f"Failed to sync provider '{pid}': {exc}") from exc
 
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     def _sync_provider(self, entry, dry_run):
         from allauth.socialaccount.models import SocialApp
@@ -115,7 +112,7 @@ class Command(BaseCommand):
         if not server_url:
             raise CommandError(f"Provider '{pid}' is missing 'server_url'.")
 
-        # --- SocialApp ---
+        # SocialApp
         app_defaults = {
             "name": name,
             "client_id": client_id,
@@ -137,7 +134,7 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"  [{'created' if created else 'updated'}] SocialApp '{pid}'")
             )
 
-        # --- OIDCConfiguration ---
+        # OIDCConfiguration
         raw_config = entry.get("oidc_config", {})
         config_defaults = {k: v for k, v in raw_config.items() if k in _OIDC_CONFIG_FIELDS}
         config_defaults["scopes"] = entry.get("scopes", [])
@@ -160,7 +157,7 @@ class Command(BaseCommand):
                 )
             )
 
-        # --- LoginOption ---
+        # LoginOption
         login_option_title = entry.get("login_option_title", name)
         login_option_url = f"/accounts/oidc/{pid}/login/"
         if dry_run:
@@ -176,7 +173,7 @@ class Command(BaseCommand):
                 )
             )
 
-        # --- Claim handlers → OIDCScopeConfig ---
+        # Claim handlers → OIDCScopeConfig
         claim_handlers = entry.get("claim_handlers", [])
         for idx, handler in enumerate(claim_handlers):
             claim = handler.get("claim")
