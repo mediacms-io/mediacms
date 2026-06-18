@@ -1,15 +1,3 @@
-"""
-Unified social account adapter for deployments running SAML and OIDC together.
-
-Django-allauth supports a single SOCIALACCOUNT_ADAPTER; this adapter
-delegates to the correct per-protocol perform_user_actions based on
-SocialApp.provider ('saml' or 'openid_connect').
-
-Usage::
-
-    SOCIALACCOUNT_ADAPTER = "identity_providers.adapter.UnifiedSocialAccountAdapter"
-"""
-
 import logging
 import re
 

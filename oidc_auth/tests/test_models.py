@@ -1,7 +1,3 @@
-"""
-Tests for OIDCConfiguration model.
-"""
-
 import pytest
 from django.core.exceptions import ValidationError
 

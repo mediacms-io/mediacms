@@ -1,10 +1,3 @@
-"""
-OIDC parser: map [role, group] claim pairs to RBAC roles and group memberships.
-
-Pairs are joined with a separator (default ":") to form combined keys
-matched against the ``role_matcher`` parser option.
-"""
-
 import logging
 
 from rbac.models import RBACGroup, RBACMembership

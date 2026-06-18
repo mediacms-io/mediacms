@@ -1,11 +1,3 @@
-"""
-Tests for UnifiedSocialAccountAdapter and _dispatch_user_actions.
-
-All DB operations are wrapped per-test via @pytest.mark.django_db.
-The per-protocol perform_user_actions helpers are mocked throughout to keep
-these tests focused on routing logic, not on SAML / OIDC attribute sync.
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch, call
 

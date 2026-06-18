@@ -1,10 +1,3 @@
-"""
-Tests for OIDCAccountAdapter and module-level helper functions.
-
-Mocks allauth's SocialLogin / SocialAccount objects to test attribute sync,
-role mapping, and group membership logic in isolation from a live OIDC provider.
-"""
-
 import pytest
 from unittest.mock import MagicMock, patch, PropertyMock
 

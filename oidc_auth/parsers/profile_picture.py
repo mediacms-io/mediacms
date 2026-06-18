@@ -1,17 +1,6 @@
-"""
-OIDC parser: download and cache the user profile picture.
-
-Enqueues a Celery task to fetch the picture URL from the OIDC claim and
-store it as the user's logo.  The download is skipped if the user already
-has a non-default logo so that manually uploaded pictures are not overwritten.
-"""
-
 import logging
 
 logger = logging.getLogger(__name__)
-
-_DEFAULT_LOGO = "userlogos/user.jpg"
-
 
 def sync_profile_picture(user, raw_value, social_app, oidc_configuration, **parser_options):
     """
@@ -29,12 +18,8 @@ def sync_profile_picture(user, raw_value, social_app, oidc_configuration, **pars
         user.username, raw_value, user.logo.name,
     )
     if not raw_value or not isinstance(raw_value, str):
-        logger.debug("sync_profile_picture: skipping — no picture URL")
+        logger.debug("sync_profile_picture: skipping - no picture URL")
         return
-
-    # if user.logo.name and user.logo.name != _DEFAULT_LOGO:
-    #     logger.debug("sync_profile_picture: skipping — user already has a logo")
-    #     return
 
     from oidc_auth.tasks import download_user_logo  # deferred to avoid import cycle
 

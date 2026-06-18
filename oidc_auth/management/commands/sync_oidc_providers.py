@@ -1,36 +1,3 @@
-"""
-Management command: sync_oidc_providers
-
-Creates or updates SocialApp, OIDCConfiguration, OIDCScopeConfig and
-LoginOption records from the OIDC_PROVIDERS setting.  Idempotent: safe
-to run on every deploy.
-
-Example::
-
-    OIDC_PROVIDERS = [
-        {
-            "provider_id": "myprovider",
-            "name": "My Provider",
-            "client_id": os.getenv("OIDC_CLIENT_ID"),
-            "secret": os.getenv("OIDC_CLIENT_SECRET"),
-            "server_url": os.getenv("OIDC_SERVER_URL"),
-            "oidc_config": {
-                "verified_email": True,
-                "remove_from_groups": False,
-            },
-            "scopes": ["openid", "email", "profile"],
-            "claim_handlers": [
-                {
-                    "claim": "picture",
-                    "parser": "oidc_auth.parsers.profile_picture.sync_profile_picture",
-                },
-            ],
-        },
-    ]
-
-``oidc_config`` keys map 1-to-1 to OIDCConfiguration model fields.
-"""
-
 import logging
 
 from django.conf import settings

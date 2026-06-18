@@ -1,10 +1,3 @@
-"""
-Celery tasks for the oidc_auth application.
-
-Moves the profile-picture download off the login request so the browser
-is not held waiting on an external HTTP call.
-"""
-
 import logging
 
 import requests
