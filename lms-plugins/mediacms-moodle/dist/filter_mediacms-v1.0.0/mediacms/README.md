@@ -19,8 +19,37 @@ This plugin provides complete MediaCMS integration for Moodle, consisting of two
 
 ## Installation
 
-Upload the plugin in Moodle's public directory and unzip
-# cd /var/www/moodle/public ; cp /root/mediacms-moodle-v1.0.0.zip . && unzip mediacms-moodle-v1.0.0.zip
+The suite ships as **two separate ZIP packages**, one per plugin:
+
+| Order | Package | Plugin | Notes |
+|-------|---------|--------|-------|
+| 1 | `filter_mediacms-v1.0.0.zip` | `filter_mediacms` | Install **first** — provides the shared core settings |
+| 2 | `tiny_mediacms-v1.0.0.zip` | `tiny_mediacms` | Depends on `filter_mediacms`; Moodle will block install until the filter is present |
+
+`tiny_mediacms` declares a hard dependency on `filter_mediacms` in its `version.php`, so the two are always installed together — the editor plugin cannot be installed on its own.
+
+Build both packages with:
+
+```bash
+./build.sh   # produces dist/filter_mediacms-v1.0.0.zip and dist/tiny_mediacms-v1.0.0.zip
+```
+
+### Option A — Upload through Moodle (recommended)
+
+1.  Log in to Moodle as an Administrator.
+2.  Go to **Site administration > Plugins > Install plugins**.
+3.  Upload `filter_mediacms-v1.0.0.zip` and complete the install.
+4.  Upload `tiny_mediacms-v1.0.0.zip` and complete the install.
+
+### Option B — Extract manually
+
+Upload both packages to Moodle's public directory and unzip each to its plugin type folder:
+
+```bash
+cd /var/www/moodle/public
+unzip filter_mediacms-v1.0.0.zip -d filter/
+unzip tiny_mediacms-v1.0.0.zip   -d lib/editor/tiny/plugins/
+```
 
 Ensure the web server user (typically `www-data`) has ownership of the new directories:
 
@@ -32,11 +61,7 @@ chmod -R 755 /var/www/moodle/public/filter/mediacms
 chmod -R 755 /var/www/moodle/public/lib/editor/tiny/plugins/mediacms
 ```
 
-### 3. Install Plugins
-
-1.  Log in to Moodle as an Administrator.
-2.  Go to **Site administration > Notifications**.
-3.  Follow the prompts to upgrade the database and install the new plugins.
+Then log in as an Administrator, go to **Site administration > Notifications**, and follow the prompts to upgrade the database and install both plugins.
 
 ## Configuration
 
