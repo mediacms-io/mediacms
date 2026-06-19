@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # MediaCMS Moodle Plugin Suite - Build Script
-# Creates distributable ZIP package
+# Creates two distributable ZIP packages, one per plugin, as required by the
+# moodle.org plugins directory (one plugin per ZIP, root folder named after
+# the plugin).
+#
+# Packages:
+#   - filter_mediacms-v<VERSION>.zip  (install first)
+#   - tiny_mediacms-v<VERSION>.zip    (declares a dependency on filter_mediacms)
 
 set -e  # Exit on error
 
@@ -19,71 +25,73 @@ echo
 # Configuration
 VERSION="1.0.0"
 BUILD_DATE=$(date +%Y%m%d)
-PACKAGE_NAME="mediacms-moodle-v${VERSION}"
 DIST_DIR="dist"
-BUILD_DIR="${DIST_DIR}/${PACKAGE_NAME}"
 
 # Create clean dist directory
 echo -e "${YELLOW}→${NC} Cleaning dist directory..."
 rm -rf "${DIST_DIR}"
-mkdir -p "${BUILD_DIR}"
+mkdir -p "${DIST_DIR}"
 
-# Copy filter plugin
-echo -e "${YELLOW}→${NC} Copying filter plugin..."
-mkdir -p "${BUILD_DIR}/filter"
-cp -r filter/mediacms "${BUILD_DIR}/filter/"
+# Remove development files from a staged plugin directory
+clean_plugin_dir() {
+    local dir="$1"
+    find "${dir}" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+    find "${dir}" -type f -name ".DS_Store" -delete 2>/dev/null || true
+    find "${dir}" -type f -name "*.log" -delete 2>/dev/null || true
+    find "${dir}" -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
+    find "${dir}" -type f -name ".gitignore" -delete 2>/dev/null || true
+}
 
-# Copy TinyMCE plugin
-echo -e "${YELLOW}→${NC} Copying TinyMCE plugin..."
-mkdir -p "${BUILD_DIR}/lib/editor/tiny/plugins"
-cp -r tiny/mediacms "${BUILD_DIR}/lib/editor/tiny/plugins/"
+# Stage, zip and checksum a single plugin.
+# The ZIP root folder must be the plugin folder name ("mediacms"), as the
+# moodle.org plugins directory expects.
+build_plugin() {
+    local component="$1"   # e.g. filter_mediacms
+    local source_dir="$2"  # e.g. filter/mediacms
+    local package_name="${component}-v${VERSION}"
+    local stage_dir="${DIST_DIR}/${package_name}"
 
-# Copy documentation
-echo -e "${YELLOW}→${NC} Copying documentation..."
-cp README.md "${BUILD_DIR}/filter/mediacms/"
-cp INSTALL.txt "${BUILD_DIR}/filter/mediacms/"
+    echo -e "${YELLOW}→${NC} Packaging ${component}..."
+    mkdir -p "${stage_dir}"
+    cp -r "${source_dir}" "${stage_dir}/mediacms"
+    clean_plugin_dir "${stage_dir}/mediacms"
 
-# Clean up development files
-echo -e "${YELLOW}→${NC} Removing development files..."
-find "${BUILD_DIR}" -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-find "${BUILD_DIR}" -type f -name ".DS_Store" -delete 2>/dev/null || true
-find "${BUILD_DIR}" -type f -name "*.log" -delete 2>/dev/null || true
-find "${BUILD_DIR}" -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
-find "${BUILD_DIR}" -type f -name ".gitignore" -delete 2>/dev/null || true
+    (cd "${stage_dir}" && zip -r "../${package_name}.zip" mediacms -q)
+    (cd "${DIST_DIR}" && sha256sum "${package_name}.zip" > "${package_name}.zip.sha256")
+}
 
-# Remove AMD source files (keep only built versions)
-echo -e "${YELLOW}→${NC} Cleaning AMD source files..."
-find "${BUILD_DIR}/lib/editor/tiny/plugins/mediacms/amd" -type f -name "*.js" ! -name "*-lazy.js" ! -path "*/build/*" -delete 2>/dev/null || true
+# Build filter_mediacms (base plugin - install first)
+build_plugin "filter_mediacms" "filter/mediacms"
 
-# Create ZIP archive
-echo -e "${YELLOW}→${NC} Creating ZIP archive..."
-cd "${BUILD_DIR}"
-zip -r "../${PACKAGE_NAME}.zip" . -q
-cd ../..
+# Include suite documentation in the filter package
+echo -e "${YELLOW}→${NC} Copying documentation into filter_mediacms..."
+cp README.md INSTALL.txt "${DIST_DIR}/filter_mediacms-v${VERSION}/mediacms/"
+(cd "${DIST_DIR}/filter_mediacms-v${VERSION}" && zip -r "../filter_mediacms-v${VERSION}.zip" mediacms -q)
+(cd "${DIST_DIR}" && sha256sum "filter_mediacms-v${VERSION}.zip" > "filter_mediacms-v${VERSION}.zip.sha256")
 
-# Create checksum
-echo -e "${YELLOW}→${NC} Generating checksum..."
-cd "${DIST_DIR}"
-sha256sum "${PACKAGE_NAME}.zip" > "${PACKAGE_NAME}.zip.sha256"
-cd ..
+# Build tiny_mediacms (depends on filter_mediacms)
+build_plugin "tiny_mediacms" "tiny/mediacms"
+cp INSTALL.txt "${DIST_DIR}/tiny_mediacms-v${VERSION}/mediacms/"
+(cd "${DIST_DIR}/tiny_mediacms-v${VERSION}" && zip -r "../tiny_mediacms-v${VERSION}.zip" mediacms -q)
+(cd "${DIST_DIR}" && sha256sum "tiny_mediacms-v${VERSION}.zip" > "tiny_mediacms-v${VERSION}.zip.sha256")
 
 # Display results
-ZIP_SIZE=$(du -h "${DIST_DIR}/${PACKAGE_NAME}.zip" | cut -f1)
 echo
 echo -e "${GREEN}✓ Build complete!${NC}"
 echo
-echo "Package: ${DIST_DIR}/${PACKAGE_NAME}.zip"
-echo "Size: ${ZIP_SIZE}"
-echo "Checksum: ${DIST_DIR}/${PACKAGE_NAME}.zip.sha256"
+for component in filter_mediacms tiny_mediacms; do
+    package="${DIST_DIR}/${component}-v${VERSION}.zip"
+    echo "Package: ${package} ($(du -h "${package}" | cut -f1))"
+done
 echo
-echo -e "${YELLOW}Contents:${NC}"
-echo "  - filter/mediacms/ (includes docs)"
-echo "  - lib/editor/tiny/plugins/mediacms/"
+echo -e "${YELLOW}Install order:${NC}"
+echo "  1. filter_mediacms-v${VERSION}.zip"
+echo "  2. tiny_mediacms-v${VERSION}.zip (requires filter_mediacms)"
 echo
 echo -e "${GREEN}Ready for distribution!${NC}"
 echo
 
-# Show checksum
-echo -e "${YELLOW}SHA256 Checksum:${NC}"
-cat "${DIST_DIR}/${PACKAGE_NAME}.zip.sha256"
+# Show checksums
+echo -e "${YELLOW}SHA256 Checksums:${NC}"
+cat "${DIST_DIR}"/*.sha256
 echo

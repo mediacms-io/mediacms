@@ -2,10 +2,6 @@
 
 Version: 1.0.0, tested on Moodle 5
 
-> **Moodle plugins directory**
-> - Filter plugin: https://moodle.org/plugins/filter_mediacms
-> - TinyMCE editor plugin: https://moodle.org/plugins/tiny_mediacms
-
 This plugin provides complete MediaCMS integration for Moodle, consisting of two plugins that work together with unified settings:
 
 1.  **Filter Plugin (filter_mediacms):**

@@ -1,0 +1,129 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tiny_mediacms/iframe_embed_modal
+
+    Iframe embed modal template.
+
+    Example context (json):
+    {
+        "elementid": "editor1",
+        "isupdating": false
+    }
+}}
+{{< core/modal }}
+
+    {{$body}}
+        <form class="tiny_iframecms_form" id="{{elementid}}_tiny_iframecms_form">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-3 tiny_iframecms_tabs" role="tablist">
+                <!-- My Media tab (first, active by default when not editing) -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{^isupdating}}active{{/isupdating}} tiny_iframecms_tab_iframe_library_btn" id="{{elementid}}_tab_iframe_library"
+                            data-bs-toggle="tab" data-bs-target="#{{elementid}}_pane_iframe_library"
+                            type="button" role="tab" aria-controls="{{elementid}}_pane_iframe_library" aria-selected="{{^isupdating}}true{{/isupdating}}{{#isupdating}}false{{/isupdating}}">
+                        {{#str}} tabvideolibraryiframe, tiny_mediacms {{/str}}
+                    </button>
+                </li>
+                <!-- Configure tab (second, hidden initially when inserting, visible when editing) -->
+                <li class="nav-item tiny_iframecms_tab_url_item" role="presentation" {{^isupdating}}style="display: none;"{{/isupdating}}>
+                    <button class="nav-link {{#isupdating}}active{{/isupdating}} tiny_iframecms_tab_url_btn" id="{{elementid}}_tab_url"
+                            data-bs-toggle="tab" data-bs-target="#{{elementid}}_pane_url"
+                            type="button" role="tab" aria-controls="{{elementid}}_pane_url" aria-selected="{{#isupdating}}true{{/isupdating}}{{^isupdating}}false{{/isupdating}}">
+                        {{#str}} tabembedurl, tiny_mediacms {{/str}}
+                    </button>
+                </li>
+                <!-- Upload media button -->
+                <li class="nav-item ms-auto ml-auto" role="presentation">
+                    <button class="btn btn-outline-secondary btn-sm mt-1 me-2 mr-2 tiny_iframecms_upload_media_btn" type="button" title="Upload media">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M440-440H280v-80h160v-160h80v160h160v80H520v160h-80v-160ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h480q33 0 56.5 23.5T720-720v180l160-160v440L720-420v180q0 33-23.5 56.5T640-160H160Zm0-80h480v-480H160v480Zm0 0v-480 480Z"/></svg>Upload media
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Tab 1: My Media (active when not editing) -->
+                <div class="tab-pane fade {{^isupdating}}show active{{/isupdating}} tiny_iframecms_pane_iframe_library" id="{{elementid}}_pane_iframe_library" role="tabpanel" aria-labelledby="{{elementid}}_tab_iframe_library">
+                    <div class="tiny_iframecms_iframe_library_container" style="min-height: 500px;">
+                        <div class="tiny_iframecms_iframe_library_placeholder text-center py-5">
+                            <p class="text-muted">{{#str}} libraryloading, tiny_mediacms {{/str}}</p>
+                        </div>
+                        <div class="tiny_iframecms_iframe_library_loading text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only visually-hidden">{{#str}} libraryloading, tiny_mediacms {{/str}}</span>
+                            </div>
+                            <p class="mt-2 text-muted">{{#str}} libraryloading, tiny_mediacms {{/str}}</p>
+                        </div>
+                        <iframe
+                            class="tiny_iframecms_iframe_library_frame d-none"
+                            src=""
+                            style="width: 100%; height: 500px; border: 1px solid #dee2e6; border-radius: 0.25rem;"
+                            frameborder="0"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Configure (active when editing) -->
+                <div class="tab-pane fade {{#isupdating}}show active{{/isupdating}} tiny_iframecms_pane_url" id="{{elementid}}_pane_url" role="tabpanel" aria-labelledby="{{elementid}}_tab_url">
+                    <div class="container-fluid p-0">
+                        <div class="row">
+                            <!-- Left column: Options only (URL field removed) -->
+                            <div class="col-md-6">
+                                <!-- Hidden URL input (still needed for internal logic) -->
+                                <textarea
+                                    class="form-control tiny_iframecms_url d-none"
+                                    id="{{elementid}}_iframe_url"
+                                    rows="3"
+                                >{{url}}</textarea>
+                                <div class="tiny_iframecms_url_warning text-danger small mt-1 d-none"></div>
+
+                                {{> tiny_mediacms/iframe_embed_options }}
+                            </div>
+
+                            <!-- Right column: Preview -->
+                            <div class="col-md-6">
+                                <label class="form-label font-weight-bold">
+                                    {{#str}} preview, tiny_mediacms {{/str}}
+                                </label>
+                                <div class="tiny_iframecms_preview_container border rounded p-2 bg-light" style="min-height: 300px;">
+                                    <div class="tiny_iframecms_preview d-flex align-items-center justify-content-center text-muted" style="min-height: 280px;">
+                                        <span>{{#str}} iframeurlplaceholder, tiny_mediacms {{/str}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {{/body}}
+
+    {{$footer}}
+        <button type="button" class="btn btn-primary" data-action="save">
+            {{#isupdating}}
+                {{#str}} updateiframe, tiny_mediacms {{/str}}
+            {{/isupdating}}
+            {{^isupdating}}
+                {{#str}} insertiframe, tiny_mediacms {{/str}}
+            {{/isupdating}}
+        </button>
+        <button type="button" class="btn btn-secondary" data-action="cancel">{{#str}} cancel, moodle {{/str}}</button>
+    {{/footer}}
+
+{{/ core/modal }}
