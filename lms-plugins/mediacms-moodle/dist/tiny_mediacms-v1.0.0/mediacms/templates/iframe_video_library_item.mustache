@@ -1,0 +1,73 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template tiny_mediacms/iframe_video_library_item
+
+    Single video item in the library grid.
+
+    Example context (json):
+    {
+        "id": "abc123",
+        "title": "My Video",
+        "thumbnail": "https://example.com/thumb.jpg",
+        "duration": "2:30",
+        "views": "150 views",
+        "date": "2 weeks ago",
+        "embedUrl": "https://example.com/embed?m=abc123"
+    }
+}}
+<div class="col-md-4 col-sm-6 mb-3">
+    <div class="tiny_iframecms_library_item card h-100" 
+         data-video-id="{{id}}" 
+         data-embed-url="{{embedUrl}}"
+         style="cursor: pointer;">
+        <div class="position-relative">
+            <img src="{{thumbnail}}" class="card-img-top" alt="{{title}}" 
+                 style="height: 120px; object-fit: cover;"
+                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22120%22><rect fill=%22%23ddd%22 width=%22320%22 height=%22120%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2214%22>No thumbnail</text></svg>'">
+            {{#duration}}
+            <span class="position-absolute bottom-0 end-0 bg-dark text-white px-1 m-1 small rounded" 
+                  style="font-size: 0.75rem;">
+                {{duration}}
+            </span>
+            {{/duration}}
+            <!-- Select overlay button -->
+            <div class="tiny_iframecms_library_item_overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                 style="background: rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s;">
+                <button type="button" class="btn btn-primary btn-sm tiny_iframecms_library_select_btn">
+                    {{#str}} libraryselect, tiny_mediacms {{/str}}
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-2">
+            <h6 class="card-title mb-1 text-truncate" title="{{title}}" style="font-size: 0.875rem;">
+                {{title}}
+            </h6>
+            <p class="card-text text-muted mb-0" style="font-size: 0.75rem;">
+                {{#views}}{{views}} &bull; {{/views}}{{date}}
+            </p>
+        </div>
+    </div>
+</div>
+<style>
+.tiny_iframecms_library_item:hover .tiny_iframecms_library_item_overlay {
+    opacity: 1 !important;
+}
+.tiny_iframecms_library_item:hover {
+    box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.15);
+}
+</style>

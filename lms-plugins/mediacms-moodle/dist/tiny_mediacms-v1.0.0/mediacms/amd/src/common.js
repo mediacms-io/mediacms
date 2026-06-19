@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,18 +14,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Tiny MediaCMS plugin version details.
+ * Tiny Media common values.
  *
- * @package    tiny_mediacms
- * @copyright  2026 MediaCMS <https://mediacms.io>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module      tiny_mediacms/common
+ * @copyright   2022 Huong Nguyen <huongnv13@gmail.com>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2026051100; // 2026-05-11
-$plugin->requires  = 2024100700; // Requires Moodle 4.5+
-$plugin->component = 'tiny_mediacms';
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.0.0';
-$plugin->dependencies = ['filter_mediacms' => 2026051100]; // Requires filter plugin for shared settings
+export default {
+    pluginName: 'tiny_mediacms/plugin',
+    component: 'tiny_mediacms',
+    iframeButtonName: 'tiny_mediacms_iframe',
+    iframeMenuItemName: 'tiny_mediacms_iframe',
+    iframeIcon: 'tiny_mediacms_iframe',
+};
