@@ -1,5 +1,16 @@
 # Changelog
 
+## [8.3.0](https://github.com/mediacms-io/mediacms/compare/v8.2.1...v8.3.0) (2026-06-19)
+
+### Features
+
+* split moodle plugin into 2 ([d02dfcf](https://github.com/mediacms-io/mediacms/commit/d02dfcf7d60c4c26ce222b58cd2a178e12f6b78a))
+
+### Documentation
+
+* Moodle plugin doc ([#1539](https://github.com/mediacms-io/mediacms/issues/1539)) ([8a59eb6](https://github.com/mediacms-io/mediacms/commit/8a59eb6977c48c0c63d586332db4921fc67dba18))
+* Moodle Plugin Documentation ([#1537](https://github.com/mediacms-io/mediacms/issues/1537)) ([7ee720f](https://github.com/mediacms-io/mediacms/commit/7ee720fee4ac1d416bf1614b7447a987a018bb01))
+
 ## [8.2.1](https://github.com/mediacms-io/mediacms/compare/v8.2.0...v8.2.1) (2026-06-07)
 
 ### Bug Fixes
