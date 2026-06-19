@@ -2,6 +2,10 @@
 
 A TinyMCE editor plugin for Moodle that provides media embedding capabilities with MediaCMS/LTI integration.
 
+> **Moodle plugins directory**
+> - TinyMCE editor plugin (this plugin): https://moodle.org/plugins/tiny_mediacms
+> - Filter plugin (required dependency): https://moodle.org/plugins/filter_mediacms
+
 ## Build Information
 
 ### Preparation
