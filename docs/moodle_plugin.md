@@ -60,16 +60,28 @@ Save Changes.
 
 ### 1.3 Moodle: Installation and configuration of MediaCMS plugin in Moodle
 
-#### 1.3.1 Download plugin and install MediaCMS as an LTI tool
+#### 1.3.1 Download plugins and install MediaCMS as an LTI tool
 
-The plugin is available in the `lms-plugins/mediacms-moodle/dist/` directory of this repository. It will also be published to the [Moodle Plugins directory](https://moodle.org/plugins) shortly.
+The integration consists of **two plugins** that work together:
 
-Two methods can be used:
+- **`filter_mediacms`** — the text filter that provides the shared core settings (MediaCMS URL, LTI tool) and securely embeds media via LTI 1.3.
+- **`tiny_mediacms`** — the TinyMCE editor button used to insert MediaCMS media. It depends on `filter_mediacms`.
 
-- **A. Copy files from ZIP to the Moodle folder structure.** Benefit: This method can be automated.
-  - Place the zip file in `/var/www/moodle/public` and unzip (depending on your Moodle installation directory).
+Both plugins (as ZIP files) are available from the [`lms-plugins/mediacms-moodle/dist/`](https://github.com/mediacms-io/mediacms/tree/main/lms-plugins/mediacms-moodle/dist) directory of this repository.
+
+They have also been submitted to the [Moodle Plugins directory](https://moodle.org/plugins) and are pending approval. Once approved, they will be available at:
+
+- https://moodle.org/plugins/filter_mediacms
+- https://moodle.org/plugins/tiny_mediacms
+
+**Install order:** install `filter_mediacms` first, then `tiny_mediacms`. The editor plugin declares a hard dependency on the filter, so Moodle will not let you install `tiny_mediacms` until `filter_mediacms` is present.
+
+The recommended way to install each plugin is via Moodle's ZIP upload mechanism:
+
+- **A. Install plugins via** Moodle > Site Administration > Install plugins. Upload `filter_mediacms` first, complete the installation, then upload `tiny_mediacms`. Benefit: Easy manual workflow.
+- **B. Copy files from ZIP to the Moodle folder structure.** Benefit: This method can be automated.
+  - Unzip `filter_mediacms` into the `filter/` directory and `tiny_mediacms` into the `lib/editor/tiny/plugins/` directory of your Moodle installation (e.g. under `/var/www/moodle/public`).
   - Open Moodle and the installation should start automatically.
-- **B. Install plugin via** Moodle > Site Administration > Install plugins. Benefit: Easy manual workflow.
 
 #### 1.3.2 Configuration of plugin: Site Administration > ...
 
@@ -253,9 +265,9 @@ A course category in MediaCMS is created along these workflows:
 
 Users are added individually to the course category group in MediaCMS when accessing embedded media in Moodle element or My Media in Moodle, or when content is shared with course members.
 
-Automatic continuous synchronisation of courses and users has not yet been established, e.g. via NRPS. A future version may include this. Instead, ad hoc course membership and role synchronisation is happening for a specific user, when the user clicks on My Media.
+Automatic continuous synchronisation of courses and users has not yet been established, e.g. via NRPS. A future version may include this. Instead, ad hoc course membership and role synchronisation is happening for a specific user, when a member of the course clicks on My Media.
 
-As such, if the user is removed from a course, or gets a different role, this is synced to course category group in MediaCMS, when user clicks on My Media in Moodle.
+As such, if the user is removed from a course, or gets a different role, this is synced to course category group in MediaCMS, when a course member clicks on My Media in Moodle.
 
 
 ## 3. For Students
