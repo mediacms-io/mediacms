@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.3.1](https://github.com/mediacms-io/mediacms/compare/v8.3.0...v8.3.1) (2026-06-23)
+
+### Bug Fixes
+
+* update documentation regarding plugin ([#1544](https://github.com/mediacms-io/mediacms/issues/1544)) ([15e9e50](https://github.com/mediacms-io/mediacms/commit/15e9e509e5a27745b8aff575d59d93a7f33e0f57))
+
 ## [8.3.0](https://github.com/mediacms-io/mediacms/compare/v8.2.1...v8.3.0) (2026-06-19)
 
 ### Features
