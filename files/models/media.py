@@ -75,6 +75,8 @@ class Media(models.Model):
 
     hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
 
+    external_hls_url = models.URLField(blank=True, max_length=1000, help_text="External HLS master playlist URL")
+
     is_reviewed = models.BooleanField(
         default=settings.MEDIA_IS_REVIEWED,
         db_index=True,
@@ -239,6 +241,8 @@ class Media(models.Model):
         self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
 
     def save(self, *args, **kwargs):
+        creating = self.pk is None
+
         if not self.title:
             self.title = self.media_file.path.split("/")[-1]
 
@@ -307,7 +311,7 @@ class Media(models.Model):
 
         # produce a thumbnail out of an uploaded poster
         # will run only when a poster is uploaded for the first time
-        if self.uploaded_poster and self.uploaded_poster != self.__original_uploaded_poster:
+        if self.uploaded_poster and (creating or self.uploaded_poster != self.__original_uploaded_poster):
             with open(self.uploaded_poster.path, "rb") as f:
                 # set this otherwise gets to infinite loop
                 self.__original_uploaded_poster = self.uploaded_poster
@@ -743,6 +747,9 @@ class Media(models.Model):
     def original_media_url(self):
         """Property used on serializers"""
 
+        if self.external_hls_url:
+            return self.external_hls_url
+
         if settings.SHOW_ORIGINAL_MEDIA:
             return helpers.url_from_path(self.media_file.path)
         else:
@@ -862,6 +869,11 @@ class Media(models.Model):
 
         res = {}
         valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
+        if self.external_hls_url:
+            # For external playlists we expose the master URL directly.
+            res["master_file"] = self.external_hls_url
+            return res
+
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -1029,7 +1041,8 @@ def media_save(sender, instance, created, **kwargs):
     if created:
         from ..methods import notify_users
 
-        instance.media_init()
+        if not instance.external_hls_url:
+            instance.media_init()
         notify_users(friendly_token=instance.friendly_token, action="media_added")
 
     instance.user.update_user_media()
@@ -1098,3 +1111,15 @@ def media_m2m(sender, instance, **kwargs):
     if instance.tags.all():
         for tag in instance.tags.all():
             tag.update_tag_media()
+
+
+@receiver(m2m_changed, sender=Media.tags.through)
+def media_tags_m2m(sender, instance, action, pk_set, **kwargs):
+    if action in ("post_add", "post_remove", "post_clear"):
+        if instance.tags.all():
+            for tag in instance.tags.all():
+                tag.update_tag_media()
+        if pk_set:
+            from .category import Tag
+            for tag in Tag.objects.filter(pk__in=pk_set):
+                tag.update_tag_media()

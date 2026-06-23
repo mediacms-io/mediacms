@@ -9,10 +9,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from ..methods import is_mediacms_editor
-from ..models import Media
+from ..models import Media, Subtitle
 
 UID_RE = re.compile(r"[0-9a-f]{32}")
 THUMBNAILS_PREFIX = "original/thumbnails/"
+SUBTITLES_PREFIX = "original/subtitles/"
 
 
 def _ttl():
@@ -39,6 +40,12 @@ def _lookup_uid_by_path(relpath):
     cached = cache.get(path_key)
     if cached is not None:
         return cached or None
+
+    if relpath.startswith(SUBTITLES_PREFIX):
+        row = Subtitle.objects.filter(subtitle_file=relpath).values("media__uid").first()
+        uid_hex = row["media__uid"].hex if row else ""
+        cache.set(path_key, uid_hex, _ttl())
+        return uid_hex or None
 
     parts = relpath.split("/", 4)
     if len(parts) < 5 or parts[2] != "user":
@@ -104,11 +111,19 @@ def media_auth(request):
 
     uri = request.META.get("HTTP_X_ORIGINAL_URI", "")
     uid = _extract_uid(uri)
+    relpath = _relpath_from_uri(uri)
+
+    # Subtitle files may include 32-char hashes in filename that are not Media.uid.
+    # If uid-like token does not map to a media, fall back to path-based lookup.
+    if uid:
+        state, _owner_id = _lookup_state(uid)
+        if state is None and relpath and relpath.startswith(SUBTITLES_PREFIX):
+            uid = _lookup_uid_by_path(relpath)
+
     if not uid:
         # User-uploaded thumbnails/posters don't have the uid in the filename.
-        # Fall back to a per-path lookup, scoped to /original/thumbnails/.
-        relpath = _relpath_from_uri(uri)
-        if relpath and relpath.startswith(THUMBNAILS_PREFIX):
+        # Fall back to a per-path lookup for thumbnail/poster/subtitle files.
+        if relpath and (relpath.startswith(THUMBNAILS_PREFIX) or relpath.startswith(SUBTITLES_PREFIX)):
             uid = _lookup_uid_by_path(relpath)
         if not uid:
             return HttpResponse(status=403)

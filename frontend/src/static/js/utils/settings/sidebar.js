@@ -5,6 +5,7 @@ export function init(settings) {
     hideHomeLink: false,
     hideTagsLink: false,
     hideCategoriesLink: false,
+    hideContactLink: false,
   };
 
   if (void 0 !== settings) {
@@ -18,6 +19,10 @@ export function init(settings) {
 
     if ('boolean' === typeof settings.hideCategoriesLink) {
       SIDEBAR.hideCategoriesLink = settings.hideCategoriesLink;
+    }
+
+    if ('boolean' === typeof settings.hideContactLink) {
+      SIDEBAR.hideContactLink = settings.hideContactLink;
     }
   }
 }

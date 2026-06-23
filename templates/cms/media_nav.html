@@ -13,11 +13,16 @@
         </li>
         {% if media_object.media_type == 'video' or media_object.media_type == 'audio' %}
             <li style="display: inline-block;">
-                <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}{% if request.GET.mode == 'lms_embed_mode' %}&mode=lms_embed_mode{% endif %}"
-
-                   style="text-decoration: none; {% if active_tab == 'trim' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
-                    {{ "Trim" | custom_translate:LANGUAGE_CODE}}
-                </a>
+                {% if media_object.external_hls_url %}
+                    <span style="text-decoration: none; color: #bbb; cursor: not-allowed;" title="Not available for external HLS media">
+                        {{ "Trim" | custom_translate:LANGUAGE_CODE}}
+                    </span>
+                {% else %}
+                    <a href="{% url 'edit_video' %}?m={{media_object.friendly_token}}{% if request.GET.mode == 'lms_embed_mode' %}&mode=lms_embed_mode{% endif %}"
+                       style="text-decoration: none; {% if active_tab == 'trim' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}">
+                        {{ "Trim" | custom_translate:LANGUAGE_CODE}}
+                    </a>
+                {% endif %}
             </li>
             <li style="display: inline-block;">
                 <a href="{% url 'add_subtitle' %}?m={{media_object.friendly_token}}{% if request.GET.mode == 'lms_embed_mode' %}&mode=lms_embed_mode{% endif %}"
@@ -26,12 +31,18 @@
                 </a>
             </li>
             <li style="display: inline-block">
-                <a
-                    href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}{% if request.GET.mode == 'lms_embed_mode' %}&mode=lms_embed_mode{% endif %}"
-                    style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}"
-                >
-                    Chapters
-                </a>
+                {% if media_object.external_hls_url %}
+                    <span style="text-decoration: none; color: #bbb; cursor: not-allowed;" title="Not available for external HLS media">
+                        Chapters
+                    </span>
+                {% else %}
+                    <a
+                        href="{% url 'edit_chapters' %}?m={{media_object.friendly_token}}{% if request.GET.mode == 'lms_embed_mode' %}&mode=lms_embed_mode{% endif %}"
+                        style="text-decoration: none; {% if active_tab == 'chapters' %}font-weight: bold; color: #333; padding-bottom: 3px; border-bottom: 2px solid #333;{% else %}color: #666;{% endif %}"
+                    >
+                        Chapters
+                    </a>
+                {% endif %}
             </li>
             {% comment %}
                 <li style="display: inline-block;">
