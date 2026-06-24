@@ -19,6 +19,14 @@ def _ttl():
     return getattr(settings, "X_ACCEL_AUTH_CACHE_SECONDS", 300)
 
 
+def _decoded_path(uri):
+    return unquote(uri.split("?", 1)[0])
+
+
+def _has_traversal(path):
+    return any(segment == ".." for segment in path.split("/"))
+
+
 def _extract_uid(uri):
     if not uri:
         return None
@@ -27,7 +35,7 @@ def _extract_uid(uri):
 
 
 def _relpath_from_uri(uri):
-    path = unquote(uri.split("?", 1)[0])
+    path = _decoded_path(uri)
     media_url = settings.MEDIA_URL
     if path.startswith(media_url):
         return path[len(media_url) :]
@@ -103,6 +111,10 @@ def media_auth(request):
         return HttpResponse(status=204)
 
     uri = request.META.get("HTTP_X_ORIGINAL_URI", "")
+
+    if _has_traversal(_decoded_path(uri)):
+        return HttpResponse(status=403)
+
     uid = _extract_uid(uri)
     if not uid:
         # User-uploaded thumbnails/posters don't have the uid in the filename.
