@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.3.2](https://github.com/mediacms-io/mediacms/compare/v8.3.1...v8.3.2) (2026-06-24)
+
+### Bug Fixes
+
+* nginx traversal ([#1545](https://github.com/mediacms-io/mediacms/issues/1545)) ([a223f0f](https://github.com/mediacms-io/mediacms/commit/a223f0fd6015305d8f620474ef0d84ec5869ea97))
+
 ## [8.3.1](https://github.com/mediacms-io/mediacms/compare/v8.3.0...v8.3.1) (2026-06-23)
 
 ### Bug Fixes
