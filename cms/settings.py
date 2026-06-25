@@ -622,6 +622,22 @@ USER_CAN_TRANSCRIBE_VIDEO = True
 # Whisper transcribe options - https://github.com/openai/whisper
 WHISPER_MODEL = "base"
 
+# TwelveLabs (Pegasus) video understanding options - https://twelvelabs.io
+# Opt-in alternative to Whisper that, in a single pass over an uploaded video,
+# produces a transcript (saved as a .vtt subtitle), a description and tags.
+# Grab a free API key at https://twelvelabs.io and set USE_TWELVELABS_ANALYZE = True.
+USE_TWELVELABS_ANALYZE = False
+
+# API key for TwelveLabs. Read from the environment so it never lives in source.
+TWELVELABS_API_KEY = os.environ.get("TWELVELABS_API_KEY", "")
+
+# Pegasus model used for analysis. See https://docs.twelvelabs.io for options.
+TWELVELABS_MODEL = "pegasus1.5"
+
+# By default all users that can transcribe can also run TwelveLabs analysis.
+# Set to False to restrict TwelveLabs analysis to editors only.
+USER_CAN_TWELVELABS_ANALYZE = True
+
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
 

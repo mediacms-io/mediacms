@@ -209,6 +209,8 @@ class Media(models.Model):
     allow_whisper_transcribe = models.BooleanField("Transcribe auto-detected language", default=False)
     allow_whisper_transcribe_and_translate = models.BooleanField("Transcribe auto-detected language and translate to English", default=False)
 
+    allow_twelvelabs_analyze = models.BooleanField("Analyze with TwelveLabs (transcript, description, tags)", default=False)
+
     # keep track if media file has changed, on saves
     __original_media_file = None
     __original_thumbnail_time = None
@@ -237,6 +239,7 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
         self.__original_allow_whisper_transcribe = self.allow_whisper_transcribe
         self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
+        self.__original_allow_twelvelabs_analyze = self.allow_twelvelabs_analyze
 
     def save(self, *args, **kwargs):
         if not self.title:
@@ -287,9 +290,14 @@ class Media(models.Model):
             if transcription_changed and self.media_type in ["video", "audio"]:
                 self.transcribe_function()
 
+            twelvelabs_changed = self.allow_twelvelabs_analyze != self.__original_allow_twelvelabs_analyze
+            if twelvelabs_changed and self.media_type in ["video", "audio"]:
+                self.twelvelabs_analyze_function()
+
             # Update the original values for next comparison
             self.__original_allow_whisper_transcribe = self.allow_whisper_transcribe
             self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
+            self.__original_allow_twelvelabs_analyze = self.allow_twelvelabs_analyze
         else:
             # media is going to be created now
             # after media is saved, post_save signal will call media_init function
@@ -342,6 +350,26 @@ class Media(models.Model):
                     args=[self.friendly_token, True],
                     countdown=10,
                 )
+
+    def twelvelabs_analyze_function(self):
+        # Opt-in: only run when the setting is enabled and an API key is configured,
+        # so the default install behaves exactly as before.
+        if not (getattr(settings, "USE_TWELVELABS_ANALYZE", False) and getattr(settings, "TWELVELABS_API_KEY", "")):
+            return
+
+        if not self.allow_twelvelabs_analyze:
+            return
+
+        if TranscriptionRequest.objects.filter(media=self, status="pending").exists():
+            return
+
+        from .. import tasks
+
+        request = TranscriptionRequest.objects.create(media=self, translate_to_english=False)
+        tasks.twelvelabs_analyze.apply_async(
+            args=[self.friendly_token, request.id],
+            countdown=10,
+        )
 
     def update_search_vector(self):
         """
