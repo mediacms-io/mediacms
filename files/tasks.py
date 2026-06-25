@@ -525,6 +525,84 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         return False
 
 
+@task(name="twelvelabs_analyze", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def twelvelabs_analyze(friendly_token, request_id):
+    """Analyse a video with TwelveLabs Pegasus.
+
+    In a single pass this produces a transcript (saved as a .vtt subtitle), a
+    description (filled in only if the media has none) and tags. Opt-in via the
+    USE_TWELVELABS_ANALYZE setting. See https://twelvelabs.io
+    """
+    from .twelvelabs_utils import analyze_media_file, parse_analysis
+
+    if not getattr(settings, "USE_TWELVELABS_ANALYZE", False):
+        logger.info("TwelveLabs analysis is disabled")
+        return False
+
+    api_key = getattr(settings, "TWELVELABS_API_KEY", "")
+    if not api_key:
+        logger.info("TWELVELABS_API_KEY is not configured")
+        return False
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except:  # noqa
+        logger.info(f"failed to get media {friendly_token}")
+        return False
+
+    request = TranscriptionRequest.objects.filter(id=request_id, media=media, status="pending").first()
+    if not request:
+        logger.info(f"No pending TwelveLabs request {request_id} for media {friendly_token}")
+        return False
+
+    request.status = "running"
+    request.save(update_fields=["status"])
+
+    start_time = datetime.now()
+    try:
+        raw = analyze_media_file(api_key, getattr(settings, "TWELVELABS_MODEL", "pegasus1.5"), media.media_file.path)
+    except Exception as e:  # noqa
+        duration = (datetime.now() - start_time).total_seconds()
+        request.status = "fail"
+        request.logs = f"TwelveLabs analysis failed after {duration:.2f} seconds. Error: {e}"  # noqa
+        request.save(update_fields=["status", "logs"])
+        return False
+
+    duration = (datetime.now() - start_time).total_seconds()
+    description, tags, transcript = parse_analysis(raw)
+
+    if transcript:
+        language = Language.objects.filter(code="twelvelabs").first()
+        if not language:
+            language = Language.objects.create(code="twelvelabs", title="TwelveLabs Transcription")
+
+        with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
+            video_file_path = get_file_name(media.media_file.name)
+            video_file_path = '.'.join(video_file_path.split('.')[:-1])
+            subtitle_name = f"{video_file_path}.vtt"
+            output_name = f"{tmpdirname}/{subtitle_name}"
+            with open(output_name, "w") as f:
+                f.write(transcript)
+
+            subtitle = Subtitle.objects.create(media=media, user=media.user, language=language)
+            with open(output_name, "rb") as f:
+                subtitle.subtitle_file.save(subtitle_name, File(f))
+
+    # only fill in a description if the uploader did not provide one
+    if description and not media.description:
+        media.description = description
+        media.save(update_fields=["description"])
+
+    for tag_title in tags:
+        tag, _ = Tag.objects.get_or_create(title=tag_title, defaults={"user": media.user})
+        media.tags.add(tag)
+
+    request.status = "success"
+    request.logs = f"TwelveLabs analysis took {duration:.2f} seconds."  # noqa
+    request.save(update_fields=["status", "logs"])
+    return True
+
+
 @task(name="update_search_vector", queue="short_tasks")
 def update_search_vector(friendly_token):
     try:

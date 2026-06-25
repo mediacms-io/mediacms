@@ -28,6 +28,7 @@
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
 - [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [29. TwelveLabs Video Analysis](#29-twelvelabs-video-analysis)
 
 
 ## 1. Welcome
@@ -1014,3 +1015,22 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 29. TwelveLabs Video Analysis
+MediaCMS can optionally integrate with [TwelveLabs](https://twelvelabs.io) to analyze uploaded videos with the Pegasus video-understanding model. This is an opt-in alternative to Whisper that, in a single pass over a video, produces a transcript (saved as a VTT subtitle), a short description and a set of tags. You can grab a free API key at https://twelvelabs.io - there is a generous free tier.
+
+### How it works
+When the TwelveLabs analysis task is triggered for a media file, MediaCMS uploads the video to TwelveLabs, runs a Pegasus analysis and stores the results: the transcript is added as a subtitle under the "TwelveLabs Transcription" language, the tags are attached to the media, and the description is filled in only if the uploader did not already provide one.
+
+### Configuration
+
+This feature is disabled by default and is fully opt-in, so a default install behaves exactly as before. To enable it, install the `twelvelabs` Python package (it is included in `requirements-full.txt`, the same as Whisper, so the `mediacms:full` image / `docker-compose.full.yaml` already provides it), then in your `local_settings.py` set:
+
+```python
+USE_TWELVELABS_ANALYZE = True
+TWELVELABS_API_KEY = "your-api-key"  # or set the TWELVELABS_API_KEY environment variable
+```
+
+The API key is read from the `TWELVELABS_API_KEY` environment variable by default, so it never has to live in source.
+
+The analysis uses the `pegasus1.5` model by default. You can change it via the `TWELVELABS_MODEL` setting in `settings.py`.
