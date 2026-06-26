@@ -18,13 +18,12 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
           {"map_to": <role>, "groups": [<group names>]}.
           The first matching entry wins.
     """
-    if not raw_value:
-        return
-
-    raw_roles = raw_value if isinstance(raw_value, list) else [raw_value]
+    raw_roles = raw_value if isinstance(raw_value, list) else [raw_value] if raw_value else []
     role_matcher = parser_options.get("role_matcher", {})
     pairs = _parse_role_pairs(raw_roles, _SEPARATOR)
+
     if not pairs:
+        _reset_user_role(user)
         return
 
     # First matching combined role wins.
@@ -47,19 +46,7 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
         break  # first match wins
 
     if matched_mapping is None and role_matcher:
-        is_privileged = any([user.is_superuser, user.is_staff, user.advancedUser, user.is_editor, user.is_manager])
-        if is_privileged:
-            logger.debug(
-                "handle_ietf_role_mapping: no role match for user %s - resetting to base role",
-                user.username,
-            )
-            try:
-                user.set_role_from_mapping("user")
-            except Exception as exc:
-                logger.error(
-                    "handle_ietf_role_mapping: set_role_from_mapping (base) failed for user %s: %s",
-                    user.username, exc,
-                )
+        _reset_user_role(user)
 
     seen_groups = []
     if extra_group_names:
@@ -93,6 +80,20 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
         for group in user.rbac_groups.filter(identity_provider=social_app):
             if group not in seen_groups:
                 group.members.remove(user)
+
+def _reset_user_role(user):
+    """
+    Reset the user's role to the base role (e.g. "user") if they are privileged.
+    """
+    is_privileged = any([user.is_superuser, user.is_staff, user.advancedUser, user.is_editor, user.is_manager])
+    if is_privileged:
+        try:
+            user.set_role_from_mapping("user")
+        except Exception as exc:
+            logger.error(
+                "_reset_user_role: set_role_from_mapping (base) failed for user %s: %s",
+                user.username, exc,
+            )
 
 
 def _parse_role_pairs(raw_roles, separator=":"):
