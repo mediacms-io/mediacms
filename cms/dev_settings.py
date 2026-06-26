@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "allauth.socialaccount.providers.saml",
     "saml_auth.apps.SamlAuthConfig",
+    "allauth.socialaccount.providers.openid_connect",
+    "oidc_auth.apps.OidcAuthConfig",
     "corsheaders",
     "tinymce",
 ]
@@ -56,3 +58,4 @@ DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = True
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
+

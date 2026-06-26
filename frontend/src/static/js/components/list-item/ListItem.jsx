@@ -91,7 +91,9 @@ export function listItemProps(props, item, index) {
   let type, title, date, description, meta_description;
 
   title =
-    void 0 !== item.username && 'string' === typeof item.username
+      void 0 != item.name && 'string' === typeof item.name && '' !== item.name.trim()
+      ? item.name
+      :  void 0 !== item.username && 'string' === typeof item.username
       ? item.username
       : void 0 !== item.title && 'string' === typeof item.title
       ? item.title
