@@ -29,11 +29,13 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
 
     # First matching combined role wins.
     extra_group_names = []
+    matched_mapping = None
     combined_values = [p["combined"] for p in pairs]
     for combined_role in combined_values:
         mapping = role_matcher.get(combined_role)
         if mapping is None:
             continue
+        matched_mapping = mapping
         extra_group_names = mapping.get("groups") or []
         try:
             user.set_role_from_mapping(mapping["map_to"])
@@ -43,6 +45,21 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
                 user.username, exc,
             )
         break  # first match wins
+
+    if matched_mapping is None and role_matcher:
+        is_privileged = any([user.is_superuser, user.is_staff, user.advancedUser, user.is_editor, user.is_manager])
+        if is_privileged:
+            logger.debug(
+                "handle_ietf_role_mapping: no role match for user %s - resetting to base role",
+                user.username,
+            )
+            try:
+                user.set_role_from_mapping("user")
+            except Exception as exc:
+                logger.error(
+                    "handle_ietf_role_mapping: set_role_from_mapping (base) failed for user %s: %s",
+                    user.username, exc,
+                )
 
     seen_groups = []
     if extra_group_names:
@@ -54,7 +71,7 @@ def handle_ietf_role_mapping(user, raw_value, social_app, oidc_configuration, **
         if missing:
             logger.warning(
                 "handle_ietf_role_mapping: groups %s not found in DB for social_app=%s"
-                " — check that RBACGroup records exist with identity_provider set to this app",
+                " - check that RBACGroup records exist with identity_provider set to this app",
                 missing, social_app,
             )
         for rbac_group in found_groups:
