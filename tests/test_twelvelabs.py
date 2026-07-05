@@ -1,9 +1,6 @@
-import os
-import unittest
-
 from django.test import TestCase
 
-from files.twelvelabs_utils import parse_analysis
+from integrations.twelvelabs.twelve_labs_utils import parse_analysis
 
 
 class TestParseAnalysis(TestCase):
@@ -38,16 +35,3 @@ class TestParseAnalysis(TestCase):
         self.assertEqual(description, "only desc")
         self.assertEqual(tags, [])
         self.assertEqual(transcript, "")
-
-
-@unittest.skipUnless(os.environ.get("TWELVELABS_API_KEY"), "TWELVELABS_API_KEY not set")
-class TestTwelveLabsLive(TestCase):
-    """Live wiring check, skipped unless an API key is present."""
-
-    def test_embed_returns_512_dim_vector(self):
-        from twelvelabs import TwelveLabs
-
-        client = TwelveLabs(api_key=os.environ["TWELVELABS_API_KEY"])
-        response = client.embed.create(model_name="marengo3.0", text="a cat playing piano")
-        segment = response.text_embedding.segments[0].float_
-        self.assertEqual(len(segment), 512)

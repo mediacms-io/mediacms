@@ -1017,20 +1017,21 @@ By default, all users have the ability to send a request for a video to be trans
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
 
 ## 29. TwelveLabs Video Analysis
-MediaCMS can optionally integrate with [TwelveLabs](https://twelvelabs.io) to analyze uploaded videos with the Pegasus video-understanding model. This is an opt-in alternative to Whisper that, in a single pass over a video, produces a transcript (saved as a VTT subtitle), a short description and a set of tags. You can grab a free API key at https://twelvelabs.io - there is a generous free tier.
+MediaCMS ships an optional `integrations` app that lets an administrator connect third-party services. The first available integration is [TwelveLabs](https://twelvelabs.io), which analyzes uploaded videos with the Pegasus video-understanding model. In a single pass over a video it produces a transcript (saved as a VTT subtitle), a short description and a set of tags. This is disabled by default and fully opt-in, so a default install behaves exactly as before.
 
 ### How it works
-When the TwelveLabs analysis task is triggered for a media file, MediaCMS uploads the video to TwelveLabs, runs a Pegasus analysis and stores the results: the transcript is added as a subtitle under the "TwelveLabs Transcription" language, the tags are attached to the media, and the description is filled in only if the uploader did not already provide one.
+When a video is uploaded and an enabled TwelveLabs integration exists, MediaCMS uploads the video to TwelveLabs, runs a Pegasus analysis and stores the results: the transcript is added as a subtitle under the "TwelveLabs Transcription" language, the tags are attached to the media, and the description is filled in only if the uploader did not already provide one. When no enabled integration exists the analysis is skipped entirely.
 
 ### Configuration
 
-This feature is disabled by default and is fully opt-in, so a default install behaves exactly as before. To enable it, install the `twelvelabs` Python package (it is included in `requirements-full.txt`, the same as Whisper, so the `mediacms:full` image / `docker-compose.full.yaml` already provides it), then in your `local_settings.py` set:
+First install the `twelvelabs` Python package (it is included in `requirements-full.txt`, the same as Whisper, so the `mediacms:full` image / `docker-compose.full.yaml` already provides it).
 
-```python
-USE_TWELVELABS_ANALYZE = True
-TWELVELABS_API_KEY = "your-api-key"  # or set the TWELVELABS_API_KEY environment variable
-```
+Then, in the Django admin, go to **Integrations > Integrations**, add a new Integration and set:
 
-The API key is read from the `TWELVELABS_API_KEY` environment variable by default, so it never has to live in source.
+- **Service**: `TwelveLabs`
+- **Enabled**: checked
+- **Model name**: optional Pegasus model to use (defaults to `pegasus1.5` when left blank)
+- **API key**: your TwelveLabs API key
+- **Config**: optional JSON object for additional options. Recognised keys are `prompt` (override the analysis prompt) and `max_tokens` (override the response length limit).
 
-The analysis uses the `pegasus1.5` model by default. You can change it via the `TWELVELABS_MODEL` setting in `settings.py`.
+The API key is stored on the server as part of the Integration record, so restrict admin access accordingly. To turn the feature off again, uncheck **Enabled** (or delete the Integration).

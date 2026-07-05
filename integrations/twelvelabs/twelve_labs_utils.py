@@ -5,8 +5,11 @@ gives us a transcript, a description and a list of tags. This module keeps the
 SDK call and the response parsing isolated from the Celery task so the parsing
 can be unit tested without hitting the network.
 
-See https://twelvelabs.io - there is a generous free tier.
+Configuration (api_key, model_name and any extra options) comes from an enabled
+``integrations.Integration`` row with service ``twelvelabs``; nothing here reads
+Django settings, so the integration is fully self-contained.
 """
+
 import json
 
 # A strict prompt: we ask Pegasus to return only JSON so the response is easy to
@@ -21,12 +24,17 @@ ANALYZE_PROMPT = (
     "empty string if there is no speech)."
 )
 
+DEFAULT_MODEL_NAME = "pegasus1.5"
+DEFAULT_MAX_TOKENS = 2048
 
-def analyze_media_file(api_key, model_name, file_path):
+
+def analyze_media_file(api_key, model_name, file_path, prompt=None, max_tokens=None):
     """Upload ``file_path`` to TwelveLabs and run a Pegasus analysis on it.
 
-    Returns the raw text the model produced. The SDK import is local so the
-    dependency is only required when the integration is actually enabled.
+    ``prompt`` and ``max_tokens`` can be overridden from the Integration's JSON
+    config; sensible defaults are used otherwise. Returns the raw text the model
+    produced. The SDK import is local so the dependency is only required when the
+    integration is actually enabled.
     """
     from twelvelabs import TwelveLabs
     from twelvelabs.types.video_context import VideoContext_AssetId
@@ -37,10 +45,10 @@ def analyze_media_file(api_key, model_name, file_path):
         asset = client.assets.create(method="direct", file=f)
 
     response = client.analyze(
-        model_name=model_name,
+        model_name=model_name or DEFAULT_MODEL_NAME,
         video=VideoContext_AssetId(asset_id=asset.id),
-        prompt=ANALYZE_PROMPT,
-        max_tokens=2048,
+        prompt=prompt or ANALYZE_PROMPT,
+        max_tokens=max_tokens or DEFAULT_MAX_TOKENS,
     )
     return response.data
 
