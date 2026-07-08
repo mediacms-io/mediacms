@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 
 from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
 
+from ..methods import is_mediacms_editor
 from ..models import Media, Playlist, PlaylistMedia
 from ..serializers import MediaSerializer, PlaylistDetailSerializer, PlaylistSerializer
 
@@ -95,11 +96,18 @@ class PlaylistDetail(APIView):
 
         serializer = PlaylistDetailSerializer(playlist, context={"request": request})
 
-        # If user is the author, show all media; otherwise, show only public and unlisted media
-        if request.user.is_authenticated and request.user == playlist.user:
-            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).prefetch_related("media__user").select_related("media")
+        base_qs = PlaylistMedia.objects.filter(playlist=playlist)
+        if is_mediacms_editor(request.user):
+            playlist_media = base_qs
         else:
-            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).filter(Q(media__state="public") | Q(media__state="unlisted")).prefetch_related("media__user").select_related("media")
+            accessible = Q(media__state__in=["public", "unlisted"])
+            if request.user.is_authenticated:
+                accessible |= Q(media__user=request.user) | Q(media__permissions__user=request.user)
+                if getattr(settings, 'USE_RBAC', False):
+                    accessible |= Q(media__category__in=request.user.get_rbac_categories_as_member())
+            playlist_media = base_qs.filter(accessible)
+
+        playlist_media = playlist_media.prefetch_related("media__user").select_related("media").distinct()
 
         playlist_media = [c.media for c in playlist_media]
 
@@ -148,6 +156,8 @@ class PlaylistDetail(APIView):
             media = Media.objects.filter(friendly_token=media_friendly_token).first()
             if media:
                 if action == "add":
+                    if media.state == "private" and not (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)):
+                        return Response({"detail": "media is not valid"}, status=status.HTTP_400_BAD_REQUEST)
                     media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
                     if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
                         return Response(
