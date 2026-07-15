@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import re
+import shutil
 import subprocess
 from datetime import datetime
 
@@ -561,8 +562,10 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
 
             if not os.path.exists(new_p):
                 os.makedirs(new_p, exist_ok=True)
-            cmd = f"cp -r {p}/* {new_p}/"
-            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+            # Copy the contents of the HLS directory into new_p without invoking a
+            # shell (equivalent to `cp -r {p}/* {new_p}/`); avoids shell interpretation
+            # of the paths entirely.
+            shutil.copytree(p, new_p, dirs_exist_ok=True)
 
     return new_media
 

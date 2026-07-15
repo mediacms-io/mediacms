@@ -496,9 +496,13 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         subtitle_name = f"{video_file_path}.vtt"
         output_name = f"{tmpdirname}/{subtitle_name}"
 
-        cmd = f"whisper /home/mediacms.io/mediacms/media_files/{media.media_file.name} --model {settings.WHISPER_MODEL} --output_dir {tmpdirname}"
+        # Build the command as an argument list (not a shell string) so that any
+        # characters in the file path are passed as a single literal argument and
+        # never interpreted by a shell. Using media_file.path also avoids the
+        # previously hardcoded install prefix, which was wrong on non-default deployments.
+        cmd = ["whisper", media.media_file.path, "--model", settings.WHISPER_MODEL, "--output_dir", tmpdirname]
         if translate_to_english:
-            cmd += " --task translate"
+            cmd += ["--task", "translate"]
 
         logger.info(f"Whisper transcribe: ready to run command {cmd}")
 
