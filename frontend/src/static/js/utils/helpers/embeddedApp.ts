@@ -58,6 +58,53 @@ export function inSelectMediaEmbedMode() {
     return inEmbeddedApp() && isSelectMediaMode();
 }
 
+// True when the current select-media session is a standard LTI Deep Linking flow
+// (e.g. itslearning), signalled by `lti_deep_link=1` on the redirect from
+// /lti/select-media/. Sticky in sessionStorage like the other embed flags.
+export function isDeepLinkSelection(): boolean {
+    try {
+        const params = new URL(globalThis.location.href).searchParams;
+
+        if (params.get('lti_deep_link') === '1') {
+            sessionStorage.setItem('lti_deep_link', 'true');
+            return true;
+        }
+
+        if (params.get('mode') === 'standard') {
+            sessionStorage.removeItem('lti_deep_link');
+            return false;
+        }
+
+        return sessionStorage.getItem('lti_deep_link') === 'true';
+    } catch (e) {
+        return false;
+    }
+}
+
+// Complete an LTI Deep Linking selection by POSTing the chosen media's
+// friendly_token to /lti/select-media/. The server builds the signed
+// LtiDeepLinkingResponse JWT and auto-submits it to the platform's return URL,
+// navigating this window/iframe back to the LMS with the content item attached.
+export function submitDeepLinkSelection(mediaToken: string): boolean {
+    try {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/lti/select-media/';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'media_ids[]';
+        input.value = mediaToken;
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+        form.submit();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 // When MediaCMS is embedded inside a host platform (e.g. an LMS), the host passes a
 // `parent_media_base` URL via LTI custom params so that media title links in the embed
 // player navigate the parent frame to the host's own media viewer (e.g. Moodle My Media)

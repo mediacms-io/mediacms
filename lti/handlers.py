@@ -149,10 +149,37 @@ def provision_lti_user(platform, claims):
     family_name = claims.get('family_name', '')
     name = claims.get('name', f"{given_name} {family_name}").strip()
 
+    # Resolve the MediaCMS user for this identity.
+    #
+    # A mapping for THIS platform is the direct hit. Otherwise the same person may
+    # already exist from a different app/module: itslearning registers a separate
+    # client_id (hence a separate LTIPlatform row) per app, but the same user keeps
+    # the same `sub` across all apps of the same issuer. In that case reuse the
+    # existing account and just add a mapping for this platform, instead of creating
+    # a duplicate user. This also avoids a crash: the fallback username suffix is
+    # md5(sub), which is identical for every app of the same person, so the second
+    # duplicate would collide on username and raise IntegrityError.
     mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=lti_user_id).select_related('user').first()
+    user = mapping.user if mapping else None
 
-    if mapping:
-        user = mapping.user
+    if user is None:
+        sibling = (
+            LTIUserMapping.objects.filter(
+                lti_user_id=lti_user_id,
+                platform__platform_id=platform.platform_id,
+            )
+            .select_related('user')
+            .first()
+        )
+        if sibling:
+            user = sibling.user
+            LTIUserMapping.objects.get_or_create(
+                platform=platform,
+                lti_user_id=lti_user_id,
+                defaults={'user': user},
+            )
+
+    if user is not None:
         update_fields = []
 
         if email and user.email != email:
@@ -171,27 +198,35 @@ def provision_lti_user(platform, claims):
         if update_fields:
             user.save(update_fields=update_fields)
 
-    else:
-        username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
-        if User.objects.filter(username=username).exists():
-            username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
+        return user
 
-        user = User.objects.create_user(
-            username=username,
-            email=email or '',
-            first_name=given_name,
-            last_name=family_name,
-            name=name or username,
-            is_active=True,
-        )
+    # No existing user for this identity under this issuer — create one.
+    username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
+    if User.objects.filter(username=username).exists():
+        username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
+        # Guarantee uniqueness even if the suffixed username is already taken.
+        base = username
+        suffix = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base}_{suffix}"
+            suffix += 1
 
-        if email:
-            try:
-                EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
-            except Exception:
-                pass
+    user = User.objects.create_user(
+        username=username,
+        email=email or '',
+        first_name=given_name,
+        last_name=family_name,
+        name=name or username,
+        is_active=True,
+    )
 
-        LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
+    if email:
+        try:
+            EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
+        except Exception:
+            pass
+
+    LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
 
     return user
 

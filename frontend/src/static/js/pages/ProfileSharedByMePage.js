@@ -12,7 +12,7 @@ import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags'
 import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { BulkActionsModals } from '../components/BulkActionsModals';
-import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isDeepLinkSelection, submitDeepLinkSelection } from '../utils/helpers';
 import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
@@ -409,6 +409,13 @@ class ProfileSharedByMePage extends Page {
                 if (isSelected) {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
+
+                    // Standard LTI Deep Linking (e.g. itslearning): POST the selection
+                    // back to the server, which returns the signed JWT to the LMS.
+                    if (isDeepLinkSelection()) {
+                        submitDeepLinkSelection(mediaId);
+                        return { selectedMedia: newSelectedMedia };
+                    }
 
                     // Send postMessage to parent window (Moodle TinyMCE plugin)
                     if (window.parent !== window) {
