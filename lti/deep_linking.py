@@ -182,6 +182,19 @@ class SelectMediaView(View):
             kid = key_obj.private_key_jwk['kid']
             response_jwt = jwt.encode(payload, private_key, algorithm='RS256', headers={'kid': kid})
 
+            # DEBUG: dump what we send back to the LMS so a 401 can be diagnosed
+            # (verify signature/claims against the platform's expectations, and check
+            # our published JWKS kid matches this header kid).
+            import json as _json
+
+            print("=" * 80)
+            print("LTI DEEP LINKING RESPONSE - returning to:", deep_link_data.get('deep_link_return_url'))
+            print("  header:", _json.dumps(jwt.get_unverified_header(response_jwt), default=str))
+            print("  payload:", _json.dumps(payload, indent=2, default=str))
+            print("  signing kid:", kid)
+            print("  JWT:", response_jwt)
+            print("=" * 80)
+
             return response_jwt
 
         except Exception as e:
