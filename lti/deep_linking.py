@@ -26,6 +26,7 @@ from files.models import Media
 from .models import LTIPlatform, LTIToolKeys
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 @method_decorator(login_required, name='dispatch')
 class SelectMediaView(View):
     """
@@ -52,7 +53,6 @@ class SelectMediaView(View):
 
         return HttpResponseRedirect(profile_url)
 
-    @method_decorator(csrf_exempt)
     def post(self, request):
         """Return selected media as deep linking content items"""
 
