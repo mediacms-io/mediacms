@@ -93,22 +93,6 @@ class OIDCLoginView(View):
             embed_height = request.GET.get('embed_height') or request.POST.get('embed_height')
             show_media_page = request.GET.get('show_media_page') or request.POST.get('show_media_page')
 
-            # DEBUG: dump everything received from the LMS (e.g. itslearning) at OIDC login
-            print("=" * 80)
-            print("LTI OIDC LOGIN - PARAMS RECEIVED FROM LMS:")
-            print(f"  iss              = {iss!r}")
-            print(f"  client_id        = {client_id!r}")
-            print(f"  target_link_uri  = {target_link_uri!r}")
-            print(f"  login_hint       = {login_hint!r}")
-            print(f"  lti_message_hint = {lti_message_hint!r}")
-            print("  full GET  =", json.dumps(dict(request.GET), indent=2, default=str))
-            print("  full POST =", json.dumps(dict(request.POST), indent=2, default=str))
-            print("-" * 80)
-            print("LTI OIDC LOGIN - PLATFORMS CURRENTLY IN DB:")
-            for p in LTIPlatform.objects.all():
-                print(f"  id={p.id} platform_id={p.platform_id!r} client_id={p.client_id!r}")
-            print("=" * 80)
-
             if not all([target_link_uri, iss, client_id]):
                 return JsonResponse({'error': 'Missing required OIDC parameters'}, status=400)
 
@@ -314,12 +298,6 @@ class LaunchView(View):
 
             unverified = jwt.decode(id_token, options={"verify_signature": False})
 
-            # DEBUG: dump the entire decoded id_token received from the LMS (e.g. itslearning)
-            print("=" * 80)
-            print("LTI LAUNCH - RAW UNVERIFIED id_token CLAIMS:")
-            print(json.dumps(unverified, indent=2, default=str))
-            print("=" * 80)
-
             iss = unverified.get('iss')
             aud = unverified.get('aud')
             try:
@@ -342,13 +320,6 @@ class LaunchView(View):
             message_launch = CustomMessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
             launch_data = message_launch.get_launch_data()
-
-            # DEBUG: dump the full validated launch data received from the LMS (e.g. itslearning)
-            print("=" * 80)
-            print("LTI LAUNCH - VALIDATED launch_data:")
-            print(json.dumps(launch_data, indent=2, default=str))
-            print("=" * 80)
-
             claims = self.sanitize_claims(launch_data)
 
             # Extract custom claims and inject media_token and embed params from state if present
