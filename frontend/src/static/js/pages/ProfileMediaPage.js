@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions, PageActions } from '../utils/actions';
-import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers/';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isDeepLinkSelection, submitDeepLinkSelection, translateString } from '../utils/helpers/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
@@ -168,6 +168,11 @@ class ProfileMediaPage extends Page {
         });
 
         if (isSelected) {
+            if (isDeepLinkSelection()) {
+                submitDeepLinkSelection(mediaId);
+                return;
+            }
+
             const baseUrl = window.location.origin;
             const embedUrl = `${baseUrl}/embed?m=${mediaId}`;
 
