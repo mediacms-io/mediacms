@@ -45,6 +45,7 @@ urlpatterns = [
     path("rss/", IndexRSSFeed()),
     re_path("^rss/search", SearchRSSFeed()),
     re_path(r"^record_screen", views.record_screen, name="record_screen"),
+    re_path(r"^add-external-hls", views.add_external_hls, name="add_external_hls"),
     re_path(r"^search", views.search, name="search"),
     re_path(r"^scpublisher", views.upload_media, name="upload_media"),
     re_path(r"^tags", views.tags, name="tags"),

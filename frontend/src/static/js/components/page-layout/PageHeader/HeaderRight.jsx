@@ -90,6 +90,11 @@ function UploadMediaButton({ user, links }) {
       icon: 'videocam',
       text: translateString('Record'),
     },
+    {
+      link: '/add-external-hls',
+      icon: 'link',
+      text: translateString('Add external HLS'),
+    },
   ];
 
   return !user.is.anonymous && user.can.addMedia ? (

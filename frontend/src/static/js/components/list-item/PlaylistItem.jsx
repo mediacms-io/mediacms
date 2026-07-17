@@ -53,9 +53,6 @@ export function PlaylistItem(props) {
         <UnderThumbWrapper title={props.title} link={props.link}>
           {titleComponent()}
           {metaComponents()}
-          <span className="view-full-playlist">
-            VIEW FULL PLAYLIST
-          </span>
         </UnderThumbWrapper>
       </div>
     </div>

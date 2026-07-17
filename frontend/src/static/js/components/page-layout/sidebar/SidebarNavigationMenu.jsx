@@ -151,7 +151,7 @@ export function SidebarNavigationMenu() {
         }
       }
 
-      if (userCan.saveMedia) {
+      if (userCan.saveMedia && userCan.addMedia) {
         items.push({
           link: userPages.playlists,
           icon: 'playlist_play',
@@ -209,12 +209,14 @@ export function SidebarNavigationMenu() {
       className: 'nav-item-terms',
     });
 
-    items.push({
-      link: '/contact',
-      icon: 'alternate_email',
-      text: translateString("Contact"),
-      className: 'nav-item-contact',
-    });
+    if (!sidebar.hideContactLink) {
+      items.push({
+        link: '/contact',
+        icon: 'alternate_email',
+        text: translateString("Contact"),
+        className: 'nav-item-contact',
+      });
+    }
 
     items.push({
       link: '/setlanguage',

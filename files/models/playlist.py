@@ -77,8 +77,11 @@ class Playlist(models.Model):
     @property
     def thumbnail_url(self):
         pm = self.playlistmedia_set.filter(media__listable=True).first()
-        if pm and pm.media.thumbnail:
-            return helpers.url_from_path(pm.media.thumbnail.path)
+        if pm:
+            if pm.media.thumbnail_url:
+                return pm.media.thumbnail_url
+            if pm.media.poster_url:
+                return pm.media.poster_url
         return None
 
 

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load custom_filters %}
+
+{% block headtitle %}Add external HLS media - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% if request.user.is_authenticated %}
+
+    {% if can_add %}
+
+    <div class="custom-page-wrapper">
+        <h2>Add media from external HLS URL</h2>
+        <hr/>
+
+        <div style="max-width: 600px; margin: 0 auto; padding: 30px 0;">
+            <p style="margin-bottom: 20px;">
+                Enter the URL of an external HLS master playlist (<code>.m3u8</code>).
+                The media will appear in your library and be playable directly from the external source.
+            </p>
+
+            <div id="external-hls-form">
+                <div style="margin-bottom: 16px;">
+                    <label for="ext-title" style="display: block; margin-bottom: 6px; font-weight: bold;">Title *</label>
+                    <input type="text" id="ext-title" placeholder="Enter a title for this media"
+                           style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="ext-url" style="display: block; margin-bottom: 6px; font-weight: bold;">External HLS URL *</label>
+                    <input type="url" id="ext-url" placeholder="https://example.com/stream/master.m3u8"
+                           style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <small style="color: #666;">Must be a publicly accessible .m3u8 URL.</small>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="ext-description" style="display: block; margin-bottom: 6px; font-weight: bold;">Description</label>
+                    <textarea id="ext-description" rows="4" placeholder="Optional description"
+                              style="width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; resize: vertical;"></textarea>
+                </div>
+
+                <div id="ext-error" style="display: none; color: #c00; margin-bottom: 12px; padding: 8px 12px; background: #fff0f0; border-radius: 4px; border: 1px solid #fcc;"></div>
+                <div id="ext-success" style="display: none; color: #060; margin-bottom: 12px; padding: 8px 12px; background: #f0fff0; border-radius: 4px; border: 1px solid #cfc;"></div>
+
+                <button id="ext-submit" class="qq-upload-button-selector"
+                        style="padding: 10px 24px; font-size: 15px; cursor: pointer;">
+                    Add Media
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const submitBtn = document.getElementById("ext-submit");
+        const titleInput = document.getElementById("ext-title");
+        const urlInput = document.getElementById("ext-url");
+        const descInput = document.getElementById("ext-description");
+        const errorDiv = document.getElementById("ext-error");
+        const successDiv = document.getElementById("ext-success");
+
+        function showError(msg) {
+            errorDiv.textContent = msg;
+            errorDiv.style.display = "block";
+            successDiv.style.display = "none";
+        }
+
+        function showSuccess(msg) {
+            successDiv.innerHTML = msg;
+            successDiv.style.display = "block";
+            errorDiv.style.display = "none";
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        submitBtn.addEventListener("click", function () {
+            const title = titleInput.value.trim();
+            const url = urlInput.value.trim();
+            const description = descInput.value.trim();
+
+            errorDiv.style.display = "none";
+            successDiv.style.display = "none";
+
+            if (!title) {
+                showError("Please enter a title.");
+                titleInput.focus();
+                return;
+            }
+            if (!url) {
+                showError("Please enter an HLS URL.");
+                urlInput.focus();
+                return;
+            }
+            if (!/^https?:\/\/.+\.m3u8(\?.*)?$/i.test(url)) {
+                showError("The URL must point to an .m3u8 file (http or https).");
+                urlInput.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Adding…";
+
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("external_m3u8_url", url);
+            if (description) {
+                formData.append("description", description);
+            }
+
+            fetch("/api/v1/media", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+                body: formData,
+            })
+            .then(function (resp) {
+                return resp.json().then(function (data) {
+                    return { status: resp.status, data: data };
+                });
+            })
+            .then(function (result) {
+                if (result.status === 201) {
+                    const token = result.data.friendly_token;
+                    const viewUrl = "/view?m=" + token;
+                    const editUrl = "/edit?m=" + token;
+                    showSuccess(
+                        'Media added successfully! ' +
+                        '<a href="' + viewUrl + '">View</a> &nbsp;|&nbsp; ' +
+                        '<a href="' + editUrl + '">Edit metadata</a>'
+                    );
+                    titleInput.value = "";
+                    urlInput.value = "";
+                    descInput.value = "";
+                } else {
+                    const msg = (result.data && (result.data.detail || result.data.external_m3u8_url || JSON.stringify(result.data))) || "An error occurred.";
+                    showError("Error: " + msg);
+                }
+            })
+            .catch(function (err) {
+                showError("Network error: " + err.message);
+            })
+            .finally(function () {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Add Media";
+            });
+        });
+    });
+    </script>
+
+    {% else %}
+    <div class="custom-page-wrapper">
+        <h2>Add external HLS media</h2>
+        <hr/>
+        <p>{{can_upload_exp}}</p>
+    </div>
+    {% endif %}
+
+{% else %}
+<div class="custom-page-wrapper">
+    <p>You need to <a href="/accounts/login/?next=/add-external-hls">log in</a> to add media.</p>
+</div>
+{% endif %}
+
+{% endblock innercontent %}

@@ -15,6 +15,7 @@ class MediaSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
     author_profile = serializers.SerializerMethodField()
     author_thumbnail = serializers.SerializerMethodField()
+    uploaded_poster = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -42,7 +43,6 @@ class MediaSerializer(serializers.ModelSerializer):
             "add_date",
             "media_type",
             "state",
-            "duration",
             "encoding_status",
             "views",
             "likes",
@@ -59,6 +59,7 @@ class MediaSerializer(serializers.ModelSerializer):
             "user",
             "title",
             "description",
+            "uploaded_poster",
             "add_date",
             "views",
             "media_type",

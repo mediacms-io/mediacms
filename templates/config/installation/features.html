@@ -10,9 +10,10 @@ MediaCMS.features = {
 		hideRegister: {% if CAN_REGISTER %}false{% else %}true{% endif %},
 	},
 	sideBar: {
-	  hideHomeLink: false,
-	  hideTagsLink: false,
-	  hideCategoriesLink: false,
+	  hideHomeLink: {% if HIDE_HOME_LINK %}true{% else %}false{% endif %},
+	  hideTagsLink: {% if HIDE_TAGS_LINK %}true{% else %}false{% endif %},
+	  hideCategoriesLink: {% if HIDE_CATEGORIES_LINK %}true{% else %}false{% endif %},
+	  hideContactLink: {% if HIDE_CONTACT_LINK %}true{% else %}false{% endif %},
 	},
 	media:{
 		actions:{
