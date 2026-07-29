@@ -298,6 +298,14 @@ class LaunchView(View):
 
             unverified = jwt.decode(id_token, options={"verify_signature": False})
 
+            # TEMP DEBUG: diagnose Moodle "Missing Deep Linking Settings"
+            print("=" * 80)
+            print("LTI LAUNCH DEBUG - message_type:", unverified.get('https://purl.imsglobal.org/spec/lti/claim/message_type'))
+            print("  has deep_linking_settings claim?:", 'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings' in unverified)
+            print("  deep_linking_settings value:", json.dumps(unverified.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'), default=str))
+            print("  all claim keys:", [k for k in unverified.keys()])
+            print("=" * 80)
+
             iss = unverified.get('iss')
             aud = unverified.get('aud')
             try:
