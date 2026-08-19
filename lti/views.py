@@ -298,14 +298,6 @@ class LaunchView(View):
 
             unverified = jwt.decode(id_token, options={"verify_signature": False})
 
-            # TEMP DEBUG: diagnose Moodle "Missing Deep Linking Settings"
-            print("=" * 80)
-            print("LTI LAUNCH DEBUG - message_type:", unverified.get('https://purl.imsglobal.org/spec/lti/claim/message_type'))
-            print("  has deep_linking_settings claim?:", 'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings' in unverified)
-            print("  deep_linking_settings value:", json.dumps(unverified.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'), default=str))
-            print("  all claim keys:", [k for k in unverified.keys()])
-            print("=" * 80)
-
             iss = unverified.get('iss')
             aud = unverified.get('aud')
             try:
@@ -324,6 +316,29 @@ class LaunchView(View):
                 def _get_request_param(self, key):
                     """Override to properly get request parameters"""
                     return self._request.get_param(key)
+
+                def validate_message(self):
+                    """
+                    Tolerate deep-linking launches that arrive without the
+                    deep_linking_settings claim.
+
+                    Moodle can send a message_type of LtiDeepLinkingRequest while
+                    building the request through its resource-link path (so the
+                    launch carries a resource_link claim and no deep_linking_settings).
+                    pylti1p3's deep-link validator rejects that outright. We only
+                    skip that specific check; every security validation
+                    (signature, registration, deployment, nonce) still runs.
+                    """
+                    try:
+                        return super().validate_message()
+                    except LtiException:
+                        body = self._jwt.get('body', {}) if isinstance(self._jwt, dict) else {}
+                        msg_type = body.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
+                        has_dl_settings = bool(body.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'))
+                        if msg_type == 'LtiDeepLinkingRequest' and not has_dl_settings:
+                            logger.warning('LTI launch: LtiDeepLinkingRequest without deep_linking_settings; treating as a resource-link launch')
+                            return self
+                        raise
 
             message_launch = CustomMessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
@@ -377,8 +392,13 @@ class LaunchView(View):
             create_lti_session(request, user, message_launch, platform)
 
             message_type = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
+            has_dl_settings = bool(launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'))
 
-            if message_type == 'LtiDeepLinkingRequest':
+            # Only run the deep-linking flow when the platform actually supplied
+            # deep_linking_settings (which carries the deep_link_return_url we must
+            # post back to). A deep-linking message_type without settings (seen from
+            # Moodle) falls through and is handled as a normal resource-link launch.
+            if message_type == 'LtiDeepLinkingRequest' and has_dl_settings:
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Clear retry counter on successful launch
