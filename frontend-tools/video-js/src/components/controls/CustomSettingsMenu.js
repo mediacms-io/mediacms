@@ -1377,11 +1377,6 @@ class CustomSettingsMenu extends Component {
                     const player = this.player();
                     const tracks = player.textTracks();
                     const saved = String(savedLanguage || '').toLowerCase();
-                    // First disable all subtitle tracks
-                    for (let i = 0; i < tracks.length; i++) {
-                        const t = tracks[i];
-                        if (t.kind === 'subtitles') t.mode = 'disabled';
-                    }
                     // Helper for robust language matching (language or srclang; en vs en-US)
                     const matches = (t) => {
                         const tl = String(t.language || t.srclang || '').toLowerCase();
@@ -1389,24 +1384,44 @@ class CustomSettingsMenu extends Component {
                         return tl === saved || tl.startsWith(saved + '-') || saved.startsWith(tl + '-');
                     };
 
-                    let restored = false;
+                    // Resolve the target before touching any mode: taking the track we are
+                    // about to show through 'disabled' starts a second lazy load of its .vtt
+                    // while the first is still in flight, and video.js appends both sets of
+                    // cues to the same track. This runs on a timer, on three readiness events
+                    // and on up to eight retries, so it has to be idempotent.
+                    let target = null;
                     for (let i = 0; i < tracks.length; i++) {
                         const t = tracks[i];
                         if (t.kind === 'subtitles' && matches(t)) {
-                            t.mode = 'showing';
-                            restored = true;
-                            // Persist enabled flag so iOS applies on next load
-                            try {
-                                this.userPreferences.setPreference('subtitleEnabled', true, true);
-                            } catch (e) {}
-                            // Refresh UI
-                            this.refreshSubtitlesSubmenu();
-                            this.updateCurrentSubtitleDisplay();
-                            try {
-                                player.trigger('texttrackchange');
-                            } catch (e) {}
+                            target = t;
                             break;
                         }
+                    }
+
+                    // Disable every other subtitle track, never the one being shown
+                    for (let i = 0; i < tracks.length; i++) {
+                        const t = tracks[i];
+                        if (t.kind === 'subtitles' && t !== target && t.mode !== 'disabled') {
+                            t.mode = 'disabled';
+                        }
+                    }
+
+                    let restored = false;
+                    if (target) {
+                        if (target.mode !== 'showing') {
+                            target.mode = 'showing';
+                        }
+                        restored = true;
+                        // Persist enabled flag so iOS applies on next load
+                        try {
+                            this.userPreferences.setPreference('subtitleEnabled', true, true);
+                        } catch (e) {}
+                        // Refresh UI
+                        this.refreshSubtitlesSubmenu();
+                        this.updateCurrentSubtitleDisplay();
+                        try {
+                            player.trigger('texttrackchange');
+                        } catch (e) {}
                     }
 
                     if (!restored && attempt < 8) {

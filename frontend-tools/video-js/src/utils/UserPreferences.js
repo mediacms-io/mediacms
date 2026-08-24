@@ -329,6 +329,70 @@ class UserPreferences {
     }
 
     /**
+     * Drop duplicate cues if a track ever ends up loaded more than once.
+     *
+     * Belt and braces. Video.js triggers a track's lazy .vtt load on the way out of
+     * 'disabled' and guards it only with cues.length === 0, so it cannot tell that a
+     * fetch is already in flight, and every parsed cue is appended rather than
+     * replacing what is there. Nothing here should cycle a showing track any more,
+     * but any future code that does would silently double every caption line, so the
+     * cheap check stays.
+     */
+    guardAgainstDuplicateCues(player) {
+        try {
+            const textTracks = player.textTracks();
+            if (!textTracks) return;
+
+            const dedupe = (track) => {
+                const cues = track.cues;
+                if (!cues || cues.length === 0) return;
+
+                const seen = new Set();
+                const duplicates = [];
+                for (let i = 0; i < cues.length; i++) {
+                    const cue = cues[i];
+                    const key = `${cue.startTime}|${cue.endTime}|${cue.text}`;
+                    if (seen.has(key)) {
+                        duplicates.push(cue);
+                    } else {
+                        seen.add(key);
+                    }
+                }
+
+                duplicates.forEach((cue) => {
+                    try {
+                        track.removeCue(cue);
+                    } catch {
+                        // the cue was already gone
+                    }
+                });
+            };
+
+            const watch = (track) => {
+                if (!track || track.kind !== 'subtitles' || track.cueDedupeAttached) return;
+                track.cueDedupeAttached = true;
+                try {
+                    // fired by video.js once a parse flushes, so it runs after each load
+                    track.addEventListener('loadeddata', () => dedupe(track));
+                } catch {
+                    // a track that does not support listeners simply goes unwatched
+                }
+            };
+
+            for (let i = 0; i < textTracks.length; i++) {
+                watch(textTracks[i]);
+            }
+            try {
+                textTracks.addEventListener('addtrack', (event) => watch(event && event.track));
+            } catch {
+                // tracks added later simply go unwatched
+            }
+        } catch {
+            // a safety net must never break playback
+        }
+    }
+
+    /**
      * Apply saved subtitle language preference
      * @param {Object} player - Video.js player instance
      */
@@ -362,14 +426,6 @@ class UserPreferences {
                     return;
                 }
 
-                // First, disable all subtitle tracks
-                for (let i = 0; i < textTracks.length; i++) {
-                    const track = textTracks[i];
-                    if (track.kind === 'subtitles') {
-                        track.mode = 'disabled';
-                    }
-                }
-
                 // Helper to match language robustly (handles en vs en-US, srclang fallback)
                 const matchesLang = (track, target) => {
                     const tl = String(track.language || track.srclang || '').toLowerCase();
@@ -378,43 +434,62 @@ class UserPreferences {
                     return tl === sl || tl.startsWith(sl + '-') || sl.startsWith(tl + '-');
                 };
 
-                // Then enable the saved language
-                let found = false;
+                // Work out which track to show BEFORE changing any mode. Video.js loads a
+                // track's .vtt lazily on the transition out of 'disabled', guarded only by
+                // cues.length === 0, so it has no idea a fetch is already in flight. Taking
+                // the track we are about to show through 'disabled' starts a second fetch,
+                // and both append their cues to the same track: every line renders twice.
+                // This runs many times per load (immediately, on loadeddata, on canplay, on
+                // addtrack, on change, plus retries), so each run has to be a no-op once the
+                // right track is already showing.
+                let target = null;
                 for (let i = 0; i < textTracks.length; i++) {
                     const track = textTracks[i];
                     if (track.kind === 'subtitles' && matchesLang(track, savedLanguage)) {
-                        track.mode = 'showing';
-                        found = true;
-
-                        // Also update the menu UI to reflect the selection
-                        this.updateSubtitleMenuUI(player, track);
-
-                        // Update subtitle button visual state immediately
-                        this.updateSubtitleButtonVisualState(player, true);
-                        // Ensure enabled flips to true after successful restore
-                        this.setPreference('subtitleEnabled', true, true);
+                        target = track;
                         break;
                     }
                 }
 
-                // Fallback: if not found but enabled is true, enable the first available subtitles track
-                if (!found && enabled) {
+                // Fallback: nothing matched the saved language but subtitles are on, so show
+                // the first available track. Resolved here, with the match, so that it is
+                // covered by the same no-cycling rule.
+                const matchedSavedLanguage = target !== null;
+                if (!target && enabled) {
                     for (let i = 0; i < textTracks.length; i++) {
-                        const track = textTracks[i];
-                        if (track.kind === 'subtitles') {
-                            track.mode = 'showing';
-
-                            // Save back the language we actually enabled for future precise matches
-                            const langToSave = track.language || track.srclang || null;
-                            if (langToSave) this.setPreference('subtitleLanguage', langToSave, true);
-                            // Ensure enabled flips to true after successful restore
-                            this.setPreference('subtitleEnabled', true, true);
-                            this.updateSubtitleMenuUI(player, track);
-                            this.updateSubtitleButtonVisualState(player, true);
-                            found = true;
+                        if (textTracks[i].kind === 'subtitles') {
+                            target = textTracks[i];
                             break;
                         }
                     }
+                }
+
+                // Disable every other subtitle track, never the one being shown
+                for (let i = 0; i < textTracks.length; i++) {
+                    const track = textTracks[i];
+                    if (track.kind === 'subtitles' && track !== target && track.mode !== 'disabled') {
+                        track.mode = 'disabled';
+                    }
+                }
+
+                let found = false;
+                if (target) {
+                    if (target.mode !== 'showing') {
+                        target.mode = 'showing';
+                    }
+                    found = true;
+
+                    if (!matchedSavedLanguage) {
+                        // Save back the language we actually enabled for future precise matches
+                        const langToSave = target.language || target.srclang || null;
+                        if (langToSave) this.setPreference('subtitleLanguage', langToSave, true);
+                    }
+                    // Ensure enabled flips to true after successful restore
+                    this.setPreference('subtitleEnabled', true, true);
+                    // Also update the menu UI to reflect the selection
+                    this.updateSubtitleMenuUI(player, target);
+                    // Update subtitle button visual state immediately
+                    this.updateSubtitleButtonVisualState(player, true);
                 }
 
                 // Clear the restoration flag after a longer delay to ensure all events have settled

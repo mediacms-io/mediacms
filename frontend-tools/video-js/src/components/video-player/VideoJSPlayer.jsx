@@ -1688,6 +1688,9 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                         }
                     }
 
+                    // Watch the tracks for duplicate cues before anything can enable one
+                    userPreferences.current.guardAgainstDuplicateCues(playerRef.current);
+
                     // Apply saved subtitle preference immediately and on key readiness events
                     userPreferences.current.applySubtitlePreference(playerRef.current);
                     playerRef.current.one('loadeddata', () =>
