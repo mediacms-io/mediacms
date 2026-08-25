@@ -105,6 +105,7 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 * [Developer Experience](docs/dev_exp.md) page
 * [Media Permissions](docs/media_permissions.md) page
 * [Moodle Plugin](docs/moodle_plugin.md) page
+* [Kaltura migration](docs/kaltura_migration.md) page
 
 
 ## Technology

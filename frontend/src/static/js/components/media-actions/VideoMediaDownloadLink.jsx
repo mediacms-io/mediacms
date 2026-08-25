@@ -21,16 +21,18 @@ function downloadOptionsList() {
         for (g in encodings_info[k]) {
           if (encodings_info[k].hasOwnProperty(g)) {
             if ('success' === encodings_info[k][g].status && 100 === encodings_info[k][g].progress && null !== encodings_info[k][g].url) {
-              // Use original media URL for download instead of encoded version
-              const originalUrl = media_data.original_media_url;
-              const originalFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : media_data.title;
+              // each entry links to its own encoded file: the label already states
+              // that resolution and its size, so linking the original here would
+              // hand over a different file than the one offered
+              const encodedUrl = encodings_info[k][g].url;
+              const encodedFilename = encodedUrl.substring(encodedUrl.lastIndexOf('/') + 1) || media_data.title;
 
               optionsList[encodings_info[k][g].title] = {
                 text: k + ' - ' + g.toUpperCase() + ' (' + encodings_info[k][g].size + ')',
-                link: formatInnerLink(media_data.original_media_url, SiteContext._currentValue.url),
+                link: formatInnerLink(encodedUrl, SiteContext._currentValue.url),
                 linkAttr: {
                   target: '_blank',
-                  download: originalFilename,
+                  download: encodedFilename,
                 },
               };
             }

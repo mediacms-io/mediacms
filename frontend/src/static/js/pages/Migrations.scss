@@ -1,0 +1,991 @@
+// Shared by MigrationsPage, MigrationEditPage and MigrationDetailPage.
+// Imported by all three; webpack dedupes it to a single module.
+//
+// Colours come from the portal's own theme rather than being hardcoded:
+// --theme-color is what an installation configures, falling back to
+// --default-theme-color. Status colours reuse the values from
+// css/includes/form_controls/_buttons.scss so they match the rest of the site.
+
+$mig-success: #00a28b;
+$mig-warning: #e09f1f;
+$mig-danger: #de623b;
+$mig-radius: 2px;
+
+@mixin mig-card {
+  border: 1px solid var(--input-border-color);
+  border-radius: $mig-radius;
+}
+
+@mixin mig-muted {
+  color: var(--body-text-color);
+  opacity: 0.65;
+}
+
+// mirrors MediaCMS's own action buttons (see .category-btn in
+// components/BulkActionCategoryModal.scss) so these pages do not look
+// like a different application
+@mixin mig-btn {
+  margin-right: 0;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@mixin mig-btn-secondary {
+  background-color: #e0e0e0;
+  color: #333;
+
+  &:hover:not(:disabled) {
+    background-color: #d0d0d0;
+  }
+
+  .dark_theme & {
+    background-color: #444;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background-color: #555;
+    }
+  }
+}
+
+@mixin mig-btn-primary {
+  background-color: var(--theme-color, var(--default-theme-color, #009933));
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+}
+
+@mixin mig-btn-small {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.migrations-page,
+.migration-edit-page,
+.migration-detail-page {
+  padding: 16px 24px 56px;
+  max-width: 1100px;
+  color: var(--body-text-color);
+
+  @media (min-width: 710px) {
+    padding: 24px 32px 64px;
+  }
+
+  h1 {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 12px 0;
+  }
+}
+
+// ---------- shared: status pill ----------
+
+.migrations-badge {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1.7;
+  padding: 1px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  background-color: var(--body-bg-color);
+  border: 1px solid var(--input-border-color);
+  @include mig-muted;
+
+  &--running {
+    border-color: transparent;
+    background-color: var(--theme-color, var(--default-theme-color));
+    color: #fff;
+    opacity: 1;
+  }
+
+  &--paused {
+    border-color: transparent;
+    background-color: $mig-warning;
+    color: #fff;
+    opacity: 1;
+  }
+
+  &--success {
+    border-color: transparent;
+    background-color: $mig-success;
+    color: #fff;
+    opacity: 1;
+  }
+
+  &--error,
+  &--aborted {
+    border-color: transparent;
+    background-color: $mig-danger;
+    color: #fff;
+    opacity: 1;
+  }
+}
+
+// ---------- shared: progress bar ----------
+
+.migrations-bar {
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background-color: var(--input-border-color);
+}
+
+.migrations-bar-fill {
+  height: 100%;
+  background-color: var(--theme-color, var(--default-theme-color));
+  transition: width 0.4s ease;
+}
+
+.migrations-error {
+  @include mig-card;
+  padding: 8px 12px;
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: $mig-danger;
+  border-color: $mig-danger;
+}
+
+.migrations-empty {
+  @include mig-card;
+  padding: 18px 20px;
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  background-color: var(--body-bg-color);
+
+  span {
+    display: block;
+    max-width: 660px;
+    @include mig-muted;
+  }
+
+  .migrations-supported {
+    margin-top: 8px;
+    opacity: 1;
+    font-weight: 500;
+  }
+}
+
+// ---------- list page ----------
+
+.migrations-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+
+  h1 {
+    display: inline-block;
+  }
+
+  .migrations-new {
+    @include mig-btn;
+    @include mig-btn-primary;
+    margin-left: auto;
+    text-decoration: none;
+    display: inline-block;
+  }
+}
+
+.migrations-table {
+  @include mig-card;
+  overflow: auto;
+}
+
+.migrations-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr) 104px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--input-border-color);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &--head {
+    font-size: 11px;
+    font-weight: 500;
+    background-color: var(--body-bg-color);
+    @include mig-muted;
+  }
+}
+
+.migrations-name {
+  min-width: 0;
+
+  a {
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--links-color);
+  }
+}
+
+.migrations-source {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  @include mig-muted;
+}
+
+.migrations-progress {
+  font-size: 11px;
+
+  span {
+    display: block;
+    margin-top: 5px;
+    @include mig-muted;
+  }
+}
+
+.migrations-activity {
+  font-size: 12px;
+  @include mig-muted;
+}
+
+.migrations-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+// ---------- settings page ----------
+
+.migration-edit-intro {
+  margin: 4px 0 4px;
+  font-size: 13px;
+  @include mig-muted;
+}
+
+.migration-edit-section {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 24px 0 8px;
+}
+
+.migration-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 0;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.migration-edit-badge {
+  padding: 2px 9px;
+  border-radius: 11px;
+  font-size: 12px;
+  border: 1px solid var(--theme-color, var(--default-theme-color));
+  color: var(--theme-color, var(--default-theme-color));
+}
+
+// sits next to the source badge it refers to. The link back to the listing is the one
+// that claims the free space, so only it may have an auto margin
+.migration-edit-source-change {
+  font-size: 12px;
+  color: var(--links-color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.migration-edit-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 18px 0 4px;
+  border-bottom: 1px solid var(--input-border-color);
+
+  button {
+    margin: 0;
+    padding: 8px 14px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background-color: transparent;
+    color: var(--body-text-color);
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--theme-color, var(--default-theme-color));
+    }
+
+    &.is-active {
+      color: var(--theme-color, var(--default-theme-color));
+      border-bottom-color: var(--theme-color, var(--default-theme-color));
+      font-weight: 500;
+    }
+  }
+}
+
+.migration-edit-categories {
+  @include mig-card;
+  margin-top: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.migration-edit-category {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 90px;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--input-border-color);
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    margin: 1px 0 0;
+    border: 1px solid var(--input-border-color);
+    border-radius: 2px;
+    background-color: var(--input-bg-color);
+    appearance: auto;
+  }
+}
+
+.migration-edit-category-count {
+  text-align: right;
+  font-size: 12px;
+  @include mig-muted;
+}
+
+.migration-edit-roles {
+  @include mig-card;
+  margin-top: 12px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.migration-edit-role {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 200px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--input-border-color);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &--head {
+    font-size: 11px;
+    font-weight: 500;
+    background-color: var(--body-bg-color);
+    @include mig-muted;
+  }
+
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  select {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 12px;
+    color: var(--default-text-color);
+    border: 1px solid var(--input-border-color);
+    border-radius: 3px;
+    background-color: var(--input-bg-color);
+  }
+}
+
+.migration-edit-warning {
+  @include mig-card;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  border-color: $mig-danger;
+}
+
+.migration-edit-name {
+  max-width: 420px;
+}
+
+.migration-edit-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.migration-new-page {
+  padding: 0 16px 40px;
+}
+
+.migration-new-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 24px 0 4px;
+
+  h1 {
+    margin: 0;
+    font-size: 21px;
+  }
+}
+
+.migration-new-back {
+  font-size: 12px;
+  color: var(--links-color);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.migration-new-intro {
+  margin: 0 0 20px;
+  font-size: 13px;
+  @include mig-muted;
+}
+
+.migration-new-sources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.migration-new-source {
+  @include mig-card;
+  display: block;
+  padding: 18px 16px;
+  text-decoration: none;
+  color: var(--body-text-color);
+
+  &:hover {
+    border-color: var(--theme-color, var(--default-theme-color));
+  }
+
+  &.is-unavailable {
+    @include mig-muted;
+    cursor: default;
+
+    &:hover {
+      border-color: var(--input-border-color);
+    }
+  }
+}
+
+.migration-new-source-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.migration-new-badge {
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 400;
+  border: 1px solid var(--input-border-color);
+  @include mig-muted;
+}
+
+.migration-new-source-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  @include mig-muted;
+}
+
+.migration-edit-placeholder {
+  @include mig-card;
+  margin-top: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  background-color: var(--body-bg-color);
+  @include mig-muted;
+}
+
+.migration-edit-connection {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.migration-edit-page label {
+  display: block;
+  font-size: 12px;
+
+  > span {
+    @include mig-muted;
+  }
+
+  input[type='text'],
+  input[type='password'],
+  input[type='number'] {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+  }
+}
+
+.migration-edit-options {
+  @include mig-card;
+
+  > label {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 14px 10px 4px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--input-border-color);
+    cursor: pointer;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+}
+
+// appearance:none is set globally, so an unstyled checkbox renders as nothing.
+// MediaCMS's own .checkbox-label pattern hides the input at left:-999em and
+// expects a sibling .selectbox span to be the visual control; there is no plain
+// (non-switcher) example of that in the codebase and its :checked rule sets no
+// background-image, so the control is drawn explicitly here instead.
+// a field that belongs to the option above it, indented to the checkbox text
+.migration-edit-nested {
+  margin: 0 0 4px 40px;
+  max-width: 420px;
+}
+
+.migration-edit-options input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 1px 12px 0 12px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 2px;
+  background-color: var(--input-bg-color);
+  cursor: pointer;
+
+  &:checked {
+    border-color: var(--theme-color, var(--default-theme-color));
+    background-color: var(--theme-color, var(--default-theme-color));
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.4l3 3 6-6'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  &:focus {
+    box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.35);
+  }
+}
+
+.migration-edit-option-text {
+  padding-top: 1px;
+}
+
+.migration-edit-help {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.6;
+  @include mig-muted;
+}
+
+.migration-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+
+  button {
+    @include mig-btn;
+    @include mig-btn-secondary;
+
+    &:last-of-type {
+      @include mig-btn-primary;
+    }
+  }
+}
+
+.migration-edit-note {
+  margin-left: auto;
+  font-size: 12px;
+  @include mig-muted;
+}
+
+.migration-edit-check button {
+  @include mig-btn;
+  @include mig-btn-secondary;
+}
+
+.migrations-check {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 12px;
+
+  &--ok {
+    color: $mig-success;
+  }
+
+  &--error {
+    color: $mig-danger;
+  }
+}
+
+// ---------- dashboard ----------
+
+.migration-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+// the link back to the listing takes the free space, so the actions stay tight
+// together at the far right instead of spreading across the header
+.migrations-back {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--links-color);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// shared by the listing and the migration page, so one action means one icon
+// everywhere. Labels live in title and aria-label rather than on screen
+.migrations-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--input-border-color);
+  border-radius: 3px;
+  background-color: transparent;
+  color: var(--body-text-color);
+  cursor: pointer;
+  text-decoration: none;
+
+  .material-icons {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  &:hover {
+    border-color: var(--theme-color, var(--default-theme-color));
+    color: var(--theme-color, var(--default-theme-color));
+  }
+
+  // abort reads as destructive before it is hovered, not only after
+  &.is-danger {
+    color: $mig-danger;
+    border-color: $mig-danger;
+
+    &:hover {
+      color: $mig-danger;
+      border-color: $mig-danger;
+      background-color: rgba(222, 98, 59, 0.08);
+    }
+  }
+}
+
+.migration-detail-controls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.migration-detail-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 8px;
+
+  > div {
+    @include mig-card;
+    padding: 12px 14px;
+    background-color: var(--body-bg-color);
+
+    p {
+      margin: 0;
+      font-size: 12px;
+      @include mig-muted;
+    }
+
+    strong {
+      display: block;
+      margin: 4px 0 2px;
+      font-size: 20px;
+      font-weight: 500;
+
+      &.is-danger {
+        color: $mig-danger;
+      }
+    }
+
+    > span {
+      font-size: 11px;
+      @include mig-muted;
+    }
+  }
+}
+
+.migration-detail-section {
+  font-size: 13px;
+  font-weight: 500;
+  margin: 24px 0 8px;
+}
+
+.migration-detail-section-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0 8px;
+
+  .migration-detail-section {
+    margin: 0;
+  }
+
+  > span {
+    font-size: 11px;
+    @include mig-muted;
+  }
+
+  button {
+    @include mig-btn;
+    @include mig-btn-small;
+    @include mig-btn-secondary;
+    margin-left: auto;
+  }
+}
+
+.migration-detail-progress {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 136px;
+  gap: 10px 12px;
+  align-items: center;
+  font-size: 13px;
+
+  > div {
+    display: contents;
+  }
+
+  > div > span:last-child {
+    font-size: 12px;
+    @include mig-muted;
+  }
+}
+
+.migration-detail-no-total {
+  font-size: 11px;
+  font-style: italic;
+  @include mig-muted;
+}
+
+.migration-detail-log {
+  @include mig-card;
+  margin: 0;
+  padding: 12px 14px;
+  max-height: 320px;
+  overflow: auto;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: var(--body-bg-color);
+}
+
+.migration-detail-records {
+  @include mig-card;
+  overflow: auto;
+  font-size: 12px;
+}
+
+.migration-detail-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--input-border-color);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &--head {
+    font-size: 11px;
+    font-weight: 500;
+    background-color: var(--body-bg-color);
+    @include mig-muted;
+  }
+
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  a {
+    color: var(--links-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .is-success {
+    color: $mig-success;
+  }
+
+  .is-failed {
+    color: $mig-danger;
+  }
+
+  .is-skipped {
+    @include mig-muted;
+  }
+}
+
+.migration-detail-search {
+  // the row is flex, so this claims the free space and pushes itself and the
+  // filter button to the right of the heading
+  margin-left: auto;
+  width: 260px;
+  max-width: 46%;
+  padding: 5px 9px;
+  font-size: 12px;
+  color: var(--default-text-color);
+  border: 1px solid var(--input-border-color);
+  border-radius: 3px;
+  background-color: var(--input-bg-color);
+
+  &:focus {
+    outline: 0;
+    border-color: var(--theme-color, var(--default-theme-color));
+  }
+}
+
+.migration-edit-per-user {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+
+  > span {
+    display: block;
+
+    &.is-empty {
+      color: $mig-danger;
+    }
+  }
+}
+
+.migration-detail-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 12px 0 0;
+
+  > span {
+    font-size: 11px;
+    @include mig-muted;
+  }
+
+  button {
+    @include mig-btn;
+    @include mig-btn-small;
+    @include mig-btn-secondary;
+  }
+}
+
+.is-mono {
+  font-family: monospace;
+}
+
+// ---------- narrow screens ----------
+
+@media (max-width: 900px) {
+  .migration-detail-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .migration-detail-section-row {
+    flex-wrap: wrap;
+  }
+
+  .migration-detail-search {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .migration-edit-connection,
+  .migration-new-sources {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .migrations-row,
+  .migration-detail-record {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+
+    > *:nth-child(n + 4) {
+      display: none;
+    }
+  }
+
+  .migration-detail-progress {
+    grid-template-columns: 84px minmax(0, 1fr) 104px;
+  }
+}

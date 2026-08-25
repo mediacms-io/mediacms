@@ -29,12 +29,50 @@ from .utils import (
     MEDIA_ENCODING_STATUS,
     MEDIA_STATES,
     MEDIA_TYPES_SUPPORTED,
+    PREVIEW_PROFILE_NAME,
     original_media_file_path,
     original_thumbnail_file_path,
 )
 from .video_data import VideoTrimRequest
 
 logger = logging.getLogger(__name__)
+
+HLS_VALID_RESOLUTIONS = [144, 240, 360, 480, 720, 1080, 1440, 2160]
+
+
+def hls_stream_resolution(resolution):
+    """The resolution label to advertise for one HLS stream.
+
+    The number a viewer recognises is the short side: 1920x1080 and 1080x1920 are
+    both 1080. A stream this portal did not transcode itself can have a short side
+    that is not a standard value at all - an imported 480x272 or 1024x576
+    rendition - so it snaps to the nearest standard one. Otherwise the menu ends
+    up advertising a resolution the file does not have.
+    """
+    if not resolution:
+        return None
+    short_side = min(resolution[0], resolution[1])
+    return min(HLS_VALID_RESOLUTIONS, key=lambda valid: abs(valid - short_side))
+
+
+def add_hls_stream(res, bandwidths, suffix, stream_info, uri):
+    """Add one HLS stream to the info dict, keyed by its resolution label.
+
+    Two renditions can share a resolution, and the key is that resolution: keep
+    the higher bitrate one rather than letting whichever comes last silently
+    overwrite - and disappear from - the quality menu.
+    """
+    resolution = hls_stream_resolution(getattr(stream_info, "resolution", None))
+    if resolution is None:
+        return
+
+    key = f"{resolution}_{suffix}"
+    bandwidth = getattr(stream_info, "average_bandwidth", None) or getattr(stream_info, "bandwidth", None) or 0
+    if key in res and bandwidth <= bandwidths.get(key, 0):
+        return
+
+    bandwidths[key] = bandwidth
+    res[key] = helpers.url_from_path(uri)
 
 
 class Media(models.Model):
@@ -353,10 +391,24 @@ class Media(models.Model):
         # that needs to be search able
 
         a_tags = ""
+        a_categories = ""
         if self.id:
             a_tags = " ".join([tag.title for tag in self.tags.all()])
+            category_text = []
+            for category in self.category.all():
+                category_text.extend([category.title, category.description])
+            a_categories = " ".join([item for item in category_text if item])
 
-        items = [self.friendly_token, self.title, self.user.username, self.user.email, self.user.name, self.description, a_tags]
+        items = [
+            self.friendly_token,
+            self.title,
+            self.user.username,
+            self.user.email,
+            self.user.name,
+            self.description,
+            a_tags,
+            a_categories,
+        ]
 
         for subtitle in self.subtitles.all():
             items.append(subtitle.subtitle_text)
@@ -388,7 +440,9 @@ class Media(models.Model):
 
         if self.media_type == "video":
             self.set_thumbnail(force=True)
-            if settings.DO_NOT_TRANSCODE_VIDEO:
+            # _do_not_transcode is set per instance by the migration service, so a
+            # single import can skip transcoding without disabling it site wide
+            if settings.DO_NOT_TRANSCODE_VIDEO or getattr(self, "_do_not_transcode", False):
                 self.encoding_status = "success"
                 self.save()
                 self.produce_sprite_from_video()
@@ -557,7 +611,7 @@ class Media(models.Model):
         # attempt to break media file in chunks
         if self.duration > settings.CHUNKIZE_VIDEO_DURATION and chunkize:
             for profile in profiles:
-                if profile.extension == "gif":
+                if profile.name == PREVIEW_PROFILE_NAME:
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
                     encoding.save()
@@ -570,7 +624,7 @@ class Media(models.Model):
             tasks.chunkize_media.delay(self.friendly_token, profiles, force=force)
         else:
             for profile in profiles:
-                if profile.extension != "gif":
+                if profile.name != PREVIEW_PROFILE_NAME:
                     if self.video_height and self.video_height < profile.resolution:
                         if profile.resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                             continue
@@ -597,7 +651,7 @@ class Media(models.Model):
 
         # set a preview url
         if encoding:
-            if self.media_type == "video" and encoding.profile.extension == "gif":
+            if self.media_type == "video" and encoding.profile.name == PREVIEW_PROFILE_NAME:
                 if action == "delete":
                     self.preview_file_path = ""
                 else:
@@ -683,7 +737,7 @@ class Media(models.Model):
             return ret
 
         for encoding in self.encodings.select_related("profile").filter(chunk=False):
-            if encoding.profile.extension == "gif":
+            if encoding.profile.name == PREVIEW_PROFILE_NAME:
                 continue
             enc = self.get_encoding_info(encoding, full=full)
             resolution = encoding.profile.resolution
@@ -849,7 +903,7 @@ class Media(models.Model):
 
         # get preview_file out of the encodings, since some times preview_file_path
         # is empty but there is the gif encoding!
-        preview_media = self.encodings.filter(profile__extension="gif").first()
+        preview_media = self.encodings.filter(profile__name=PREVIEW_PROFILE_NAME).first()
         if preview_media and preview_media.media_file:
             return helpers.url_from_path(preview_media.media_file.path)
         return None
@@ -861,7 +915,6 @@ class Media(models.Model):
         """
 
         res = {}
-        valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -869,25 +922,15 @@ class Media(models.Model):
                 m3u8_obj = m3u8.load(hls_file)
                 if os.path.exists(hls_file):
                     res["master_file"] = helpers.url_from_path(hls_file)
+                    bandwidths = {}
                     for iframe_playlist in m3u8_obj.iframe_playlists:
                         uri = os.path.join(p, iframe_playlist.uri)
                         if os.path.exists(uri):
-                            resolution = iframe_playlist.iframe_stream_info.resolution[1]
-                            # most probably video is vertical, getting the first value to
-                            # be the resolution
-                            if resolution not in valid_resolutions:
-                                resolution = iframe_playlist.iframe_stream_info.resolution[0]
-
-                            res[f"{resolution}_iframe"] = helpers.url_from_path(uri)
+                            add_hls_stream(res, bandwidths, "iframe", iframe_playlist.iframe_stream_info, uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
                         if os.path.exists(uri):
-                            resolution = playlist.stream_info.resolution[1]
-                            # same as above
-                            if resolution not in valid_resolutions:
-                                resolution = playlist.stream_info.resolution[0]
-
-                            res[f"{resolution}_playlist"] = helpers.url_from_path(uri)
+                            add_hls_stream(res, bandwidths, "playlist", playlist.stream_info, uri)
 
         return res
 
@@ -1030,7 +1073,11 @@ def media_save(sender, instance, created, **kwargs):
         from ..methods import notify_users
 
         instance.media_init()
-        notify_users(friendly_token=instance.friendly_token, action="media_added")
+        # _skip_admin_notification is set per instance by bulk importers: a
+        # migration would otherwise email the admin list and every migrated owner
+        # once per imported media
+        if not getattr(instance, "_skip_admin_notification", False):
+            notify_users(friendly_token=instance.friendly_token, action="media_added")
 
     instance.user.update_user_media()
     if instance.category.all():
@@ -1098,3 +1145,8 @@ def media_m2m(sender, instance, **kwargs):
     if instance.tags.all():
         for tag in instance.tags.all():
             tag.update_tag_media()
+
+    # the search vector holds the category titles and descriptions, and m2m is written
+    # after post_save, so it has to be refreshed here or it stays a save behind
+    if kwargs.get("action") in ("post_add", "post_remove", "post_clear"):
+        instance.update_search_vector()
