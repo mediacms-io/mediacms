@@ -54,6 +54,10 @@ class Category(models.Model):
 
     lti_context_id = models.CharField(max_length=255, blank=True, db_index=True, help_text='LTI context ID from platform')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_is_rbac_category = self.is_rbac_category
+
     def __str__(self):
         return self.title
 
@@ -62,7 +66,8 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def get_absolute_url(self):
-        return f"{reverse('search')}?c={self.title}"
+        # link by uid: titles are not unique, so a title based link is ambiguous
+        return f"{reverse('search')}?c={self.uid}"
 
     def update_category_media(self):
         """Set media_count"""
@@ -109,7 +114,19 @@ class Category(models.Model):
         strip_text_items = ["title", "description"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
+
+        if self.__original_is_rbac_category and not self.is_rbac_category and self.listings_thumbnail:
+            # the tile on an RBAC category may have been taken from private media, which is
+            # only safe while the category is hidden from everyone outside its group. It is
+            # about to be listed to everybody, so drop it now rather than leave it showing
+            # until update_listings_thumbnails next runs, and let that task pick a public one
+            self.listings_thumbnail = None
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {"listings_thumbnail"}
+
         super(Category, self).save(*args, **kwargs)
+        self.__original_is_rbac_category = self.is_rbac_category
 
 
 class Tag(models.Model):

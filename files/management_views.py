@@ -12,7 +12,7 @@ from users.models import User
 from users.serializers import UserSerializer
 
 from .methods import is_mediacms_manager
-from .models import Comment, Media
+from .models import Category, Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
 
@@ -102,7 +102,13 @@ class MediaList(APIView):
             qs = qs.filter(is_reviewed=is_reviewed)
 
         if category:
-            qs = qs.filter(category__title__contains=category)
+            # category carries a Category uid, with a fallback for older clients
+            # that still send a title
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                qs = qs.filter(category=category_obj)
+            else:
+                qs = qs.filter(category__title=category)
 
         media = qs.order_by(f"{ordering}{sort_by}")
 

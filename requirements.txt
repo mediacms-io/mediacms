@@ -23,5 +23,8 @@ django-debug-toolbar==5.0.1
 pre-commit==4.1.0
 django-jazzmin==3.0.1
 pysubs2==1.8.0
+# YouTube migration. Pinned like everything else, but note that YouTube changes its
+# pages often and an extraction failure usually means this needs upgrading.
+yt-dlp==2026.8.19
 sentry-sdk[django]==2.23.1
 django-tinymce==4.1.0

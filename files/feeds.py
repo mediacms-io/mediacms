@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.feedgenerator import Rss201rev2Feed
 
 from . import helpers
-from .models import Media
+from .models import Category, Media
 from .stop_words import STOP_WORDS
 
 
@@ -112,7 +112,12 @@ class SearchRSSFeed(Feed):
         media = Media.objects.filter(listable=True)
 
         if category:
-            media = media.filter(category__title=category)
+            # ?c= carries a Category uid, with a fallback for legacy title links
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                media = media.filter(category=category_obj)
+            else:
+                media = media.filter(category__title=category)
         elif tag:
             media = media.filter(tags__title=tag)
         elif query:

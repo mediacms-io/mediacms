@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.3.5](https://github.com/mediacms-io/mediacms/compare/v8.3.4...v8.3.5) (2026-08-25)
+
+### Bug Fixes
+
+* subtitles errors ([#1560](https://github.com/mediacms-io/mediacms/issues/1560)) ([7d25502](https://github.com/mediacms-io/mediacms/commit/7d25502050865ed3303682e1f88f8851b6e85ab0))
+
 ## [8.3.4](https://github.com/mediacms-io/mediacms/compare/v8.3.3...v8.3.4) (2026-07-15)
 
 ### Bug Fixes

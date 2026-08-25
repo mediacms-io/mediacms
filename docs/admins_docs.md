@@ -28,6 +28,7 @@
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
 - [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [29. Migrating from another platform](#29-migrating-from-another-platform)
 
 
 ## 1. Welcome
@@ -870,6 +871,40 @@ After that, newly uploaded videos will have sprites generated with the new numbe
 
 
 
+## 21b. Hover previews: gif to mp4
+
+The small preview that plays when you hover a video used to be an animated gif and is now a
+short mp4: a handful of clips sampled across the whole video rather than the opening seconds,
+which makes it far more useful on a lecture, and a fraction of the size.
+
+Both formats are recognised, so nothing has to change. A preview is identified by its encoding
+profile being named `preview`, not by its extension, which is what lets a portal serve gifs
+for old media and mp4 for new at the same time.
+
+**On an existing installation**, migrating switches the profile over: new videos get an mp4
+preview, and every gif already produced stays on disk and keeps being served. Nothing is
+re-encoded and nothing is deleted.
+
+**On a new installation** the fixture already has the mp4 profile active and the gif one
+inactive, so only mp4 previews are ever made.
+
+To finish the job on an existing installation and be rid of the gifs:
+
+```bash
+python manage.py upgrade_previews --dry-run          # list what would change
+python manage.py upgrade_previews --token=AbCdEfGhI  # try one first
+python manage.py upgrade_previews                    # all of them, one at a time
+```
+
+It encodes the mp4 before removing the gif, so a media that fails to encode keeps the preview
+it has rather than losing both. Encoding runs in the command itself, one media at a time, on
+purpose: `--async` hands them all to the `long_tasks` queue at once, which on a large library
+is enough to bring a machine down. If you do use `--async`, the gifs are left in place and you
+run the command again, without it, to clear them once the encodes have finished.
+
+The frontend picks the player from the file extension, so a portal holding both formats needs
+`make build-frontend` for the mp4 previews to render.
+
 ## 22. Role-Based Access Control
 
 By default there are 3 statuses for any Media that lives on the system, public, unlisted, private. When RBAC support is added, a user that is part of a group has access to media that are published to one or more categories that the group is associated with. The workflow is this:
@@ -1014,3 +1049,19 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 29. Migrating from another platform
+
+MediaCMS can import a whole portal from another video platform: the media files, the people
+who own them, the categories they sit in, the captions, the play counts and whether each
+item was public. It runs as a job you start, watch, pause and resume, and every imported
+object is recorded so you can check the result afterwards or run it again to pick up what
+changed. Only superusers can reach it, at **Migrations** in the top right menu.
+
+Kaltura and YouTube are supported.
+
+Each platform needs its own credentials, its own options and its own decisions, so the
+details live per platform rather than in one generic page:
+
+* [Kaltura migration](kaltura_migration.md)
+* [YouTube migration](youtube_migration.md)
