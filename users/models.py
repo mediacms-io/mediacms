@@ -289,7 +289,9 @@ def post_user_create(sender, instance, created, **kwargs):
     if created:
         new = Channel.objects.create(title="default", user=instance)
         new.save()
-        if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
+        # _skip_admin_notification is set per instance by bulk importers, so
+        # importing hundreds of users does not send hundreds of emails
+        if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False) and not getattr(instance, "_skip_admin_notification", False):
             title = f"[{settings.PORTAL_NAME}] - New user just registered"
             msg = """
 User has just registered with email %s\n

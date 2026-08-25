@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Migration settings - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/migration-edit.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/migration-edit.css" %}?v={{ VERSION }}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+<div id="page-migration-edit"></div>
+{% endblock %}
+
+{% block bottomimports %}
+    <script src="{% static "js/migration-edit.js" %}?v={{ VERSION }}"></script>
+{% endblock bottomimports %}

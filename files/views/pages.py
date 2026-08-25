@@ -652,8 +652,10 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
-    context = {'categories': list(categories)}
+    # uid, not title: titles are not unique, so the filter needs the uid to
+    # tell two same named categories apart
+    categories = Category.objects.all().order_by('title').values('uid', 'title')
+    context = {'categories': json.dumps(list(categories))}
     return render(request, "cms/manage_media.html", context)
 
 

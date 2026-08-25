@@ -22,6 +22,7 @@ urlpatterns = [
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),
+    re_path(r"^", include("migrationservice.urls")),
     re_path(r"^", include("files.urls")),
     re_path(r"^", include("users.urls")),
     re_path(r"^accounts/", include("allauth.urls")),

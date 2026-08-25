@@ -54,6 +54,7 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+from .models.utils import PREVIEW_PROFILE_NAME
 
 logger = get_task_logger(__name__)
 
@@ -64,6 +65,98 @@ ERRORS_LIST = [
     "Invalid data found when processing input",
     "Unable to find a suitable output format for",
 ]
+
+
+# where to take the preview clips from, as a fraction of the duration. Spread across the
+# whole video: a preview cut from the opening shows the title card of every lecture
+PREVIEW_POSITIONS = (0.08, 0.23, 0.38, 0.53, 0.68, 0.83)
+PREVIEW_SEGMENT_SECONDS = 1
+PREVIEW_FPS = 12
+PREVIEW_WIDTH = 320
+
+
+def preview_positions(duration):
+    """The seconds to cut preview clips from, for a video of this duration.
+
+    A video too short to give distinct moments gets a single clip from the start, which
+    is also what keeps a video shorter than the first offset from producing nothing.
+    """
+    if not duration or duration < len(PREVIEW_POSITIONS) * PREVIEW_SEGMENT_SECONDS:
+        return [0]
+    return [round(duration * position, 2) for position in PREVIEW_POSITIONS]
+
+
+def produce_preview(media, output_path, extension="mp4"):
+    """Build the hover preview: short clips sampled across the whole video.
+
+    Returns True when output_path holds a preview. Each clip is cut and re-encoded
+    separately, then the clips are joined, because the concat demuxer needs its inputs to
+    share a format.
+    """
+    source = media.media_file.path
+    positions = preview_positions(media.duration)
+
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
+        segments = []
+        for index, start in enumerate(positions):
+            segment = os.path.join(temp_dir, f"segment-{index}.mp4")
+            command = [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-ss",
+                str(start),
+                "-t",
+                str(PREVIEW_SEGMENT_SECONDS),
+                "-i",
+                source,
+                "-hide_banner",
+                "-an",
+                "-vf",
+                f"fps={PREVIEW_FPS},scale={PREVIEW_WIDTH}:-2:flags=lanczos",
+                "-c:v",
+                "libx264",
+                "-crf",
+                "30",
+                "-pix_fmt",
+                "yuv420p",
+                segment,
+            ]
+            run_command(command)
+            if os.path.exists(segment) and os.path.getsize(segment):
+                segments.append(segment)
+
+        if not segments:
+            return False
+
+        list_file = os.path.join(temp_dir, "segments.txt")
+        with open(list_file, "w") as handle:
+            for segment in segments:
+                handle.write(f"file '{segment}'\n")
+
+        joined = os.path.join(temp_dir, f"preview.{extension}")
+        run_command(
+            [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-hide_banner",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                list_file,
+                "-c",
+                "copy",
+                "-movflags",
+                "+faststart",
+                joined,
+            ]
+        )
+        if not (os.path.exists(joined) and os.path.getsize(joined)):
+            return False
+
+        shutil.copyfile(joined, output_path)
+        return True
 
 
 def handle_pending_running_encodings(media):
@@ -313,35 +406,18 @@ def encode_media(
     encoding.retries = self.request.retries
     encoding.save()
 
-    if profile.extension == "gif":
-        tf = create_temp_file(suffix=".gif")
-        # -ss 5 start from 5 second. -t 25 until 25 sec
-        command = [
-            settings.FFMPEG_COMMAND,
-            "-y",
-            "-ss",
-            "3",
-            "-i",
-            media.media_file.path,
-            "-hide_banner",
-            "-vf",
-            "scale=344:-1:flags=lanczos,fps=1",
-            "-t",
-            "25",
-            "-f",
-            "gif",
-            tf,
-        ]
-        ret = run_command(command)
-        if os.path.exists(tf) and get_file_type(tf) == "image":
+    if profile.name == PREVIEW_PROFILE_NAME:
+        tf = create_temp_file(suffix=f".{profile.extension}")
+        produced = produce_preview(media, tf, profile.extension)
+        if produced and os.path.exists(tf) and get_file_type(tf) in ("video", "image"):
             with open(tf, "rb") as f:
                 myfile = File(f)
                 encoding.status = "success"
                 encoding.media_file.save(content=myfile, name=tf)
                 rm_file(tf)
                 return True
-        else:
-            return False
+        rm_file(tf)
+        return False
 
     if chunk:
         original_media_path = chunk_file_path
@@ -907,6 +983,7 @@ def update_listings_thumbnails():
     # Categories
     used_media = []
     saved = 0
+    cleared = 0
     qs = Category.objects.filter()
     for object in qs:
         media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state="public", is_reviewed=True).order_by("-views").first()
@@ -915,11 +992,18 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info(f"updated {saved} categories")
+        elif object.listings_thumbnail:
+            # the media this was taken from is gone or is no longer public.
+            # Keeping the path would serve a broken image on the listings
+            object.listings_thumbnail = None
+            object.save(update_fields=["listings_thumbnail"])
+            cleared += 1
+    logger.info(f"updated {saved} categories, cleared {cleared}")
 
     # Tags
     used_media = []
     saved = 0
+    cleared = 0
     qs = Tag.objects.filter()
     for object in qs:
         media = Media.objects.exclude(friendly_token__in=used_media).filter(tags=object, state="public", is_reviewed=True).order_by("-views").first()
@@ -928,7 +1012,11 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.info(f"updated {saved} tags")
+        elif object.listings_thumbnail:
+            object.listings_thumbnail = None
+            object.save(update_fields=["listings_thumbnail"])
+            cleared += 1
+    logger.info(f"updated {saved} tags, cleared {cleared}")
 
     return True
 

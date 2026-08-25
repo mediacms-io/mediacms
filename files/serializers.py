@@ -114,7 +114,7 @@ class CategoriesInfoMixin(serializers.Serializer):
         for cat in obj.category.all():
             if cat.is_rbac_category and cat.pk not in accessible_rbac:
                 continue
-            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+            ret.append({"title": cat.title, "uid": cat.uid, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
         return ret
 
 

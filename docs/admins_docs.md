@@ -28,6 +28,7 @@
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
 - [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [29. Migrating from another platform](#29-migrating-from-another-platform)
 
 
 ## 1. Welcome
@@ -1014,3 +1015,18 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 29. Migrating from another platform
+
+MediaCMS can import a whole portal from another video platform: the media files, the people
+who own them, the categories they sit in, the captions, the play counts and whether each
+item was public. It runs as a job you start, watch, pause and resume, and every imported
+object is recorded so you can check the result afterwards or run it again to pick up what
+changed. Only superusers can reach it, at **Migrations** in the top right menu.
+
+Kaltura is the only platform supported at the moment.
+
+Each platform needs its own credentials, its own options and its own decisions, so the
+details live per platform rather than in one generic page:
+
+* [Kaltura migration](kaltura_migration.md)

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Migration - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/migration-detail.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/migration-detail.css" %}?v={{ VERSION }}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+<script>
+window.MIGRATION_ID = {{ migration_id }};
+</script>
+<div id="page-migration-detail"></div>
+{% endblock %}
+
+{% block bottomimports %}
+    <script src="{% static "js/migration-detail.js" %}?v={{ VERSION }}"></script>
+{% endblock bottomimports %}

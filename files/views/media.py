@@ -1198,7 +1198,17 @@ class MediaSearch(APIView):
             media = media.filter(tags__title=tag)
 
         if category:
-            media = media.filter(category__title__contains=category)
+            # ?c= carries a Category uid. Titles are not unique, so a title
+            # based lookup cannot tell two same named categories apart.
+            # RBAC is not enforced here on purpose: basic_query above already
+            # restricts the media a user may see, so asking for a category
+            # they have no access to simply returns nothing.
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                media = media.filter(category=category_obj)
+            else:
+                # legacy ?c=<title> links (bookmarks, feeds, embeds)
+                media = media.filter(category__title=category)
 
         if media_type:
             media = media.filter(media_type=media_type)

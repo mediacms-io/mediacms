@@ -84,6 +84,10 @@ const PAGES = {
   'manage-media': { id: 'manage-media', title: 'Manage media', component: 'ManageMediaPage' },
   'manage-users': { id: 'manage-users', title: 'Manage users', component: 'ManageUsersPage' },
   'manage-comments': { id: 'manage-comments', title: 'Manage comments', component: 'ManageCommentsPage' },
+  migrations: { id: 'migrations', title: 'Migrations', component: 'MigrationsPage' },
+  'migration-new': { id: 'migration-new', title: 'New migration', component: 'MigrationNewPage' },
+  'migration-edit': { id: 'migration-edit', title: 'Migration settings', component: 'MigrationEditPage' },
+  'migration-detail': { id: 'migration-detail', title: 'Migration', component: 'MigrationDetailPage' },
   'add-media': {
     id: 'add-media',
     title: 'Add media',

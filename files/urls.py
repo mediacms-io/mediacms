@@ -80,6 +80,7 @@ urlpatterns = [
     ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/categories/contributor$", views.CategoryListContributor.as_view()),
+    re_path(r"^api/v1/categories/(?P<uid>[\w.-]{1,36})$", views.CategoryDetail.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
     re_path(

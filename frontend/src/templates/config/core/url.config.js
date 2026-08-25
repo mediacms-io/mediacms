@@ -25,6 +25,7 @@ module.exports = {
   changePassword: './change-password.html',
   /* Administration pages */
   admin: '/admin',
+  migrations: './migrations.html',
   /* Management pages */
   manageMedia: './manage-media.html',
   manageUsers: './manage-users.html',

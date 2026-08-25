@@ -57,6 +57,10 @@ CODECS = (
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
 
+# the profile whose encoding becomes Media.preview_file_path. Matched by name rather
+# than by extension, so the legacy gif profile and the mp4 one are both recognised
+PREVIEW_PROFILE_NAME = "preview"
+
 
 def generate_uid():
     return get_random_string(length=16)

@@ -62,7 +62,8 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
     def get_absolute_url(self):
-        return f"{reverse('search')}?c={self.title}"
+        # link by uid: titles are not unique, so a title based link is ambiguous
+        return f"{reverse('search')}?c={self.uid}"
 
     def update_category_media(self):
         """Set media_count"""
