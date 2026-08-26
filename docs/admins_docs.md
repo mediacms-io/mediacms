@@ -106,7 +106,10 @@ Checkout the configuration docs here.
 
 
 ### Maintenance
-Database is stored on ../postgres_data/ and media_files on media_files/
+Database is stored on `../postgres_data/` and uploaded media on `media_files/`.
+Back up both locations before upgrades, and verify a restore before removing
+the old copy. A PostgreSQL major-version change may require a database
+migration; changing only the image tag can leave the data directory unusable.
 
 
 ## 4. Docker Deployment options
