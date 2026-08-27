@@ -529,6 +529,103 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         return False
 
 
+@task(name="twelvelabs_analyze", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def twelvelabs_analyze(friendly_token):
+    """Analyse a video with an enabled TwelveLabs integration (opt-in).
+
+    Configuration is read from an enabled ``integrations.Integration`` row with
+    service ``twelvelabs`` (api_key, model_name and any extra JSON options); if
+    no such row exists this is a no-op, so a default install is unaffected. In a
+    single pass this stores a transcript (as a .vtt subtitle), a description
+    (only when the media has none) and tags. See https://twelvelabs.io
+    """
+    # Look up the integration defensively. Import lazily and guard the lookup so
+    # a disabled/absent integration (or missing app/table) never breaks the task.
+    try:
+        from integrations.models import Integration
+
+        integration = Integration.get_active(Integration.Service.TWELVELABS)
+    except Exception as e:  # noqa
+        logger.info(f"Could not resolve TwelveLabs integration; skipping analysis: {e}")
+        return False
+
+    if not integration:
+        logger.info("No enabled TwelveLabs integration; skipping analysis")
+        return False
+
+    if not integration.api_key:
+        logger.info("Enabled TwelveLabs integration has no api_key configured")
+        return False
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except:  # noqa
+        logger.info(f"failed to get media {friendly_token}")
+        return False
+
+    # Import the SDK-backed helper lazily, so the twelvelabs dependency is only
+    # required when the integration is actually enabled.
+    from integrations.twelvelabs.twelve_labs_utils import (
+        analyze_media_file,
+        parse_analysis,
+    )
+
+    config = integration.config or {}
+
+    start_time = datetime.now()
+    try:
+        raw = analyze_media_file(
+            integration.api_key,
+            integration.model_name,
+            media.media_file.path,
+            prompt=config.get("prompt"),
+            max_tokens=config.get("max_tokens"),
+        )
+    except Exception as e:  # noqa
+        duration = (datetime.now() - start_time).total_seconds()
+        logger.info(f"TwelveLabs analysis failed after {duration:.2f} seconds. Error: {e}")  # noqa
+        return False
+
+    duration = (datetime.now() - start_time).total_seconds()
+    description, tags, transcript = parse_analysis(raw)
+
+    if transcript:
+        language, _ = Language.objects.get_or_create(code="twelvelabs", defaults={"title": "TwelveLabs Transcription"})
+
+        # If a previous run produced a TwelveLabs subtitle (e.g. media file was
+        # re-uploaded), replace it instead of piling up stale transcripts.
+        Subtitle.objects.filter(media=media, language=language).delete()
+
+        with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
+            video_file_path = get_file_name(media.media_file.name)
+            video_file_path = '.'.join(video_file_path.split('.')[:-1])
+            subtitle_name = f"{video_file_path}.vtt"
+            output_name = f"{tmpdirname}/{subtitle_name}"
+            with open(output_name, "w") as f:
+                f.write(transcript)
+
+            subtitle = Subtitle.objects.create(media=media, user=media.user, language=language)
+            with open(output_name, "rb") as f:
+                subtitle.subtitle_file.save(subtitle_name, File(f))
+
+    # only fill in a description if the uploader did not provide one
+    if description and not media.description:
+        media.description = description
+        media.save(update_fields=["description"])
+
+    for tag_title in tags:
+        tag, _ = Tag.objects.get_or_create(title=tag_title, defaults={"user": media.user})
+        media.tags.add(tag)
+
+    # Make the new description/tags/transcript searchable. Adding tags via the
+    # M2M manager and a partial description save() do not always refresh the
+    # search vector, so update it explicitly.
+    media.update_search_vector()
+
+    logger.info(f"TwelveLabs analysis took {duration:.2f} seconds.")  # noqa
+    return True
+
+
 @task(name="update_search_vector", queue="short_tasks")
 def update_search_vector(friendly_token):
     try:

@@ -28,6 +28,7 @@
 - [26. Allowed files](#26-allowed-files)
 - [27. User upload limits](#27-user-upload-limits)
 - [28. Whisper Transcribe for Automatic Subtitles](#28-whisper-transcribe-for-automatic-subtitles)
+- [29. TwelveLabs Video Analysis](#29-twelvelabs-video-analysis)
 
 
 ## 1. Welcome
@@ -1014,3 +1015,23 @@ Transcription functionality is available only for the Docker installation. To en
 By default, all users have the ability to send a request for a video to be transcribed, as well as transcribed and translated to English. If you wish to change this behavior, you can edit the `settings.py` file and set `USER_CAN_TRANSCRIBE_VIDEO=False`.
 
 The transcription uses the base model of Whisper speech-to-text by default. However, you can change the model by editing the `WHISPER_MODEL` setting in `settings.py`.
+
+## 29. TwelveLabs Video Analysis
+MediaCMS ships an optional `integrations` app that lets an administrator connect third-party services. The first available integration is [TwelveLabs](https://twelvelabs.io), which analyzes uploaded videos with the Pegasus video-understanding model. In a single pass over a video it produces a transcript (saved as a VTT subtitle), a short description and a set of tags. This is disabled by default and fully opt-in, so a default install behaves exactly as before.
+
+### How it works
+When a video is uploaded and an enabled TwelveLabs integration exists, MediaCMS uploads the video to TwelveLabs, runs a Pegasus analysis and stores the results: the transcript is added as a subtitle under the "TwelveLabs Transcription" language, the tags are attached to the media, and the description is filled in only if the uploader did not already provide one. When no enabled integration exists the analysis is skipped entirely.
+
+### Configuration
+
+First install the `twelvelabs` Python package (it is included in `requirements-full.txt`, the same as Whisper, so the `mediacms:full` image / `docker-compose.full.yaml` already provides it).
+
+Then, in the Django admin, go to **Integrations > Integrations**, add a new Integration and set:
+
+- **Service**: `TwelveLabs`
+- **Enabled**: checked
+- **Model name**: optional Pegasus model to use (defaults to `pegasus1.5` when left blank)
+- **API key**: your TwelveLabs API key
+- **Config**: optional JSON object for additional options. Recognised keys are `prompt` (override the analysis prompt) and `max_tokens` (override the response length limit).
+
+The API key is stored on the server as part of the Integration record, so restrict admin access accordingly. To turn the feature off again, uncheck **Enabled** (or delete the Integration).

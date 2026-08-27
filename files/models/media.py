@@ -395,9 +395,32 @@ class Media(models.Model):
             else:
                 self.produce_sprite_from_video()
                 self.encode()
+            self.trigger_integrations()
         elif self.media_type == "image":
             self.set_thumbnail(force=True)
         return True
+
+    def trigger_integrations(self):
+        """Defensively start any enabled third-party integration for this media.
+
+        Currently this covers the optional TwelveLabs video analysis. This runs
+        synchronously in the media upload flow, so the whole body is guarded:
+        everything is imported lazily and any failure (integration absent/
+        disabled, DB unavailable, table not yet migrated) is swallowed, so a
+        disabled or absent integration never affects the default upload flow
+        (opt-in, no-op when nothing is enabled).
+        """
+        try:
+            from integrations.models import Integration
+
+            if not Integration.get_active(Integration.Service.TWELVELABS):
+                return
+
+            from .. import tasks
+
+            tasks.twelvelabs_analyze.apply_async(args=[self.friendly_token], countdown=10)
+        except Exception as e:  # noqa
+            logger.info(f"Skipping integrations for {self.friendly_token}: {e}")
 
     def set_media_type(self, save=True):
         """Sets media type on Media

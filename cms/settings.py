@@ -306,6 +306,7 @@ INSTALLED_APPS = [
     "rbac.apps.RbacConfig",
     "identity_providers.apps.IdentityProvidersConfig",
     "lti.apps.LtiConfig",
+    "integrations.apps.IntegrationsConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
