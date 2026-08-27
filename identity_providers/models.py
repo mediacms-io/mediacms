@@ -4,8 +4,8 @@ from django.db import models
 
 
 class IdentityProviderUserLog(models.Model):
-    identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='saml_logs')
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name='saml_logs')
+    identity_provider = models.ForeignKey(SocialApp, on_delete=models.CASCADE, related_name='idp_logs')
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name='idp_logs')
     created_at = models.DateTimeField(auto_now_add=True)
     logs = models.TextField(blank=True, null=True)
 
@@ -15,7 +15,7 @@ class IdentityProviderUserLog(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'SAML Log - {self.user.username} - {self.created_at}'
+        return f'IDP Log - {self.user.username} - {self.created_at}'
 
 
 class IdentityProviderGroupRole(models.Model):

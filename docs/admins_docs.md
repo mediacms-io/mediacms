@@ -961,6 +961,8 @@ Select the SAML Configurations tab, create a new one and set:
 
 A full SAML deployment with [EntraID guide and troubleshooting steps is available here.](./saml_entraid_setup.md). This guide can be used as reference for other IDPs too.
 
+A step-by-step [OIDC setup guide is available here.](./oidc_setup.md). It covers generic OIDC provider configuration, the `sync_oidc_providers` command, and troubleshooting.
+
 ## 24. Identity Providers setup
 
 A separate Django app identity_providers has been added in order to facilitate a number of configurations related to different identity providers. If this is enabled, it gives the following options:

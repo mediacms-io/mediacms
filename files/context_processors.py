@@ -55,6 +55,7 @@ def stuff(request):
     ret["TRANSLATION"] = get_translation(request.LANGUAGE_CODE)
     ret["REPLACEMENTS"] = get_translation_strings(request.LANGUAGE_CODE)
     ret["USE_SAML"] = settings.USE_SAML
+    ret["USE_OIDC"] = getattr(settings, "USE_OIDC", False)
     ret["USE_RBAC"] = settings.USE_RBAC
     ret["USE_ROUNDED_CORNERS"] = settings.USE_ROUNDED_CORNERS
     ret["INCLUDE_LISTING_NUMBERS"] = settings.INCLUDE_LISTING_NUMBERS
