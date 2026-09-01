@@ -6,8 +6,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
+from django.urls import is_valid_path
 from django.utils.html import mark_safe, strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
@@ -45,7 +46,16 @@ def get_page(request, slug):
     if page:
         context["page"] = page
     else:
-        return render(request, "404.html", context)
+        # This view is the catch-all for any single segment path, so it also
+        # matches near misses like /admin or /swagger. Because the path then
+        # resolves, CommonMiddleware never appends the trailing slash that
+        # would reach the real view, so do it here instead.
+        slashed = f"{request.path_info}/"
+        if not request.path_info.endswith("/") and is_valid_path(slashed):
+            return HttpResponsePermanentRedirect(slashed)
+        # Otherwise carry a real 404 status: returning 200 here would mask
+        # every unknown URL as a valid page.
+        return render(request, "404.html", context, status=404)
     return render(request, "cms/page.html", context)
 
 
