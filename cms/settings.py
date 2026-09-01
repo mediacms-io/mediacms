@@ -1,3 +1,4 @@
+import glob
 import os
 
 from celery.schedules import crontab
@@ -272,8 +273,13 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 
 CANNOT_ADD_MEDIA_MESSAGE = "User cannot add media, or maximum number of media uploads has been reached."
 
-# mp4hls command, part of Bento4
-MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
+# mp4hls command, part of Bento4. The SDK directory name carries the
+# architecture it was built for, so resolve it rather than hardcoding x86_64.
+# Falls back to the location the Docker image installs Bento4 to.
+MP4HLS_COMMAND = next(
+    iter(sorted(glob.glob("/home/mediacms.io/mediacms/Bento4-SDK-*/bin/mp4hls"))),
+    "/home/mediacms.io/bento4/bin/mp4hls",
+)
 
 
 AUTH_USER_MODEL = "users.User"
