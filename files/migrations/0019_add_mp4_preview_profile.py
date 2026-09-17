@@ -6,13 +6,10 @@ PREVIEW_NAME = "preview"
 def add_mp4_preview_profile(apps, schema_editor):
     """Move the hover preview from an animated gif to a short mp4.
 
-    Both profiles are kept. Every existing gif preview stays exactly where it is, still
-    attached to the profile that produced it, and still served: a preview is recognised by
-    profile name rather than by extension, so the two formats coexist and no media has to
-    be re-encoded.
-
-    Matched on name and extension rather than on a primary key, because a portal may have
-    added profiles of its own and nothing here should depend on which ids are free.
+    Both profiles are kept, so every existing gif preview stays attached to the profile
+    that produced it and is still served: a preview is recognised by profile name rather
+    than extension. Matched on name and extension rather than a primary key, since a
+    portal may have added profiles of its own.
     """
     EncodeProfile = apps.get_model("files", "EncodeProfile")
 
@@ -29,21 +26,20 @@ def add_mp4_preview_profile(apps, schema_editor):
         },
     )
 
-    # get_or_create only applies its defaults when it creates. Activating separately is
-    # what makes running this after a reverse leave a portal with a working preview,
-    # rather than with a gif profile switched off and an mp4 one that never runs
+    # get_or_create only applies its defaults when it creates, so activating separately is
+    # what makes a re-run after a reverse leave a working preview behind
     EncodeProfile.objects.filter(name=PREVIEW_NAME, extension="mp4").update(active=True)
 
-    # stop producing new gifs without touching the ones already produced. Nothing deletes
-    # encodings by profile.active, so deactivating is safe for existing media
+    # stop producing new gifs without touching the ones already produced: nothing deletes
+    # encodings by profile.active
     EncodeProfile.objects.filter(name=PREVIEW_NAME, extension="gif").update(active=False)
 
 
 def restore_gif_preview_profile(apps, schema_editor):
     """Hand the preview role back to the gif profile.
 
-    The mp4 profile is deactivated rather than deleted: by the time this runs it may own
-    encodings, and deleting it would cascade to them and to the files on disk.
+    The mp4 profile is deactivated rather than deleted: it may own encodings by now, and
+    deleting it would cascade to them and to the files on disk.
     """
     EncodeProfile = apps.get_model("files", "EncodeProfile")
 

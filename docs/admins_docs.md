@@ -538,6 +538,13 @@ to be written
 ## 11. Add/delete categories and tags
 Through the admin section - http://your_installation/admin/
 
+A category's title, description and thumbnail can also be edited from the category page
+itself, by a portal manager or, for an RBAC category, by a manager of its group.
+
+The thumbnail a category shows on the listings is the first of these it has: an image
+uploaded for it, a tile borrowed from its most viewed media, or `static/images/category_default.jpg`.
+Replace that file to change the placeholder for the whole portal.
+
 ## 12. Video transcoding
 Add / remove resolutions and profiles by modifying the database table of `Encode profiles` through https://your_installation/admin/files/encodeprofile/
 

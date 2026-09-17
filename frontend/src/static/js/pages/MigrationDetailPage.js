@@ -8,8 +8,7 @@ import { getMigration, getProgress, getRecords, controlMigration } from '../util
 const POLL_INTERVAL = 5000;
 const SEARCH_DEBOUNCE = 400;
 
-// The KMC entry page is the one place an admin can always open a Kaltura entry
-// from just the service URL and the entry id.
+// the one page an admin can always open from a service URL and an entry id
 function kalturaEntryUrl(connection, sourceId) {
   const base = ((connection || {}).service_url || '').replace(/\/+$/, '');
   if (!base || !sourceId) {
@@ -48,8 +47,7 @@ export class MigrationDetailPage extends Page {
       records: [],
       recordsCount: 0,
       recordsPage: 1,
-      // the server owns the page size; it is learned from the first full page
-      // rather than duplicated here, where it would silently drift
+      // the server owns the page size: duplicated here it would silently drift
       recordsPerPage: 0,
       recordsHasNext: false,
       recordsHasPrev: false,
@@ -87,8 +85,8 @@ export class MigrationDetailPage extends Page {
 
   poll() {
     getProgress(this.state.id)
-      // clear any earlier error: a transient blip must not leave a permanent
-      // banner on a dashboard that is now updating fine
+      // clear any earlier error: a blip must not leave a banner on a dashboard
+      // that is updating fine again
       .then((response) => this.safeSetState({ progress: response.data, error: null }))
       .catch(() => this.safeSetState({ error: translateString('Could not load progress') }));
 
@@ -113,8 +111,7 @@ export class MigrationDetailPage extends Page {
         });
       })
       .catch((error) => {
-        // the page fell off the end: a filter shrank the set, or rows were removed
-        // under us. drop back to the first page rather than showing an error
+        // the page fell off the end, so drop back to the first rather than erroring
         if (error.response && 404 === error.response.status && 1 < this.state.recordsPage) {
           this.setState({ recordsPage: 1 }, this.poll);
           return;
@@ -150,8 +147,7 @@ export class MigrationDetailPage extends Page {
   }
 
   renderControls(status) {
-    // one action per status, plus edit, as icon buttons: the labels were long enough to
-    // wrap the header onto a second line
+    // icon buttons: the labels wrapped the header onto a second line
     const actions = [];
     if ('running' === status) {
       actions.push({ action: 'pause', icon: 'pause', label: translateString('Pause') });
@@ -296,9 +292,8 @@ export class MigrationDetailPage extends Page {
                     <div className="migrations-bar-fill" style={{ width: typeCounts.percent + '%' }} />
                   </div>
                 ) : (
-                  // no up front total for this type - captions are discovered per
-                  // media as the run proceeds. An always empty bar would read as
-                  // "stalled" rather than "total unknown".
+                  // captions are discovered per media as the run proceeds, and an
+                  // always empty bar would read as stalled rather than unknown
                   <span className="migration-detail-no-total">so far</span>
                 )}
                 <span>

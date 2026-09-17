@@ -1,10 +1,12 @@
 from django.core.cache import cache
 from django.core.files import File
 from django.core.files.base import ContentFile
-from django.test import Client, TestCase
+from django.core.files.images import ImageFile
+from django.test import Client, TestCase, override_settings
 
-from files.models import Language, Media, Subtitle
+from files.models import Category, Language, Media, Subtitle
 from files.tests import create_account
+from rbac.models import RBACGroup, RBACMembership
 
 MEDIA_AUTH_URL = '/api/v1/media-auth'
 
@@ -74,10 +76,9 @@ class MediaAuthTest(TestCase):
 class MediaAuthPathBindingTest(TestCase):
     """The decision must be bound to the file nginx will actually serve.
 
-    nginx resolves the file from the request path and hands the whole request URI,
-    query string included, to this view. So anything the view reads outside that
-    path - a query parameter, a username that happens to look like a uid - must
-    not be able to influence which media is authorized.
+    nginx resolves the file from the path but hands this view the whole URI, query
+    string included, so nothing outside the path may influence which media is
+    authorized.
     """
 
     fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
@@ -210,3 +211,60 @@ class MediaAuthPathBindingTest(TestCase):
             "",
         ]:
             self.assertEqual(self._auth(uri).status_code, 403, f"allowed {uri!r}")
+
+
+class CategoryPosterAuthTest(TestCase):
+    """A category poster belongs to no media, so it is decided against its category"""
+
+    fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+
+    def setUp(self):
+        cache.clear()
+        self.password = "this_is_a_fake_password"
+        self.member = create_account(username="member", password=self.password)
+        self.stranger = create_account(username="stranger", password=self.password)
+
+        self.plain = Category.objects.create(title="Botany", thumbnail=self._poster())
+        self.restricted = Category.objects.create(title="Staff only", thumbnail=self._poster(), is_rbac_category=True)
+
+        group = RBACGroup.objects.create(uid="staff", name="Staff")
+        group.categories.add(self.restricted)
+        RBACMembership.objects.create(user=self.member, rbac_group=group, role="member")
+        cache.clear()
+
+    def _poster(self):
+        with open("fixtures/test_image.png", "rb") as fp:
+            return ImageFile(fp, name="poster.png")
+
+    def _auth(self, uri, client=None):
+        return (client or Client()).get(MEDIA_AUTH_URL, HTTP_X_ORIGINAL_URI=uri)
+
+    def _login(self, user):
+        client = Client()
+        client.login(username=user.username, password=self.password)
+        return client
+
+    def test_a_poster_is_served_to_anyone(self):
+        self.assertEqual(self._auth(f"/media/{self.plain.thumbnail.name}").status_code, 204)
+
+    def test_a_query_string_does_not_change_the_decision(self):
+        uri = f"/media/{self.plain.thumbnail.name}?v=2"
+        self.assertEqual(self._auth(uri).status_code, 204)
+
+    def test_a_poster_no_category_holds_is_denied(self):
+        self.assertEqual(self._auth("/media/original/categories/845689.made_up.jpg").status_code, 403)
+
+    def test_traversal_out_of_the_posters_directory_is_denied(self):
+        self.assertEqual(self._auth("/media/original/categories/../user/owner/secret.mp4").status_code, 403)
+
+    @override_settings(USE_RBAC=True)
+    def test_an_rbac_categorys_poster_follows_its_group(self):
+        uri = f"/media/{self.restricted.thumbnail.name}"
+        self.assertEqual(self._auth(uri).status_code, 403)
+        cache.clear()
+        self.assertEqual(self._auth(uri, self._login(self.stranger)).status_code, 403)
+        cache.clear()
+        self.assertEqual(self._auth(uri, self._login(self.member)).status_code, 204)
+
+    def test_an_rbac_categorys_poster_is_public_with_rbac_off(self):
+        self.assertEqual(self._auth(f"/media/{self.restricted.thumbnail.name}").status_code, 204)

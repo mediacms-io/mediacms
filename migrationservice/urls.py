@@ -3,9 +3,8 @@ from rest_framework.routers import SimpleRouter
 
 from . import views
 
-# SimpleRouter, not DefaultRouter: this module is included at the site root, so
-# DefaultRouter's auto generated api-root view would be mounted at "/" itself,
-# outside this app's permission class.
+# SimpleRouter, not DefaultRouter: included at the site root, DefaultRouter's
+# api-root view would be mounted at "/" outside this app's permission class
 router = SimpleRouter()
 router.register(r"api/v1/migrations", views.MigrationServiceViewSet, basename="migrations")
 

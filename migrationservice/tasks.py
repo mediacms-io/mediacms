@@ -32,8 +32,10 @@ from .models import MigrationRecord, MigrationService
 from .providers import get_provider
 from .providers.kaltura import (
     CATEGORY_PRIVATE,
+    LMS_TREE,
     MEDIA_TYPE_IMAGE,
     category_title_and_description,
+    category_tree_kind,
     category_type,
     is_ignored_category,
     match_flavors_to_profiles,
@@ -52,16 +54,15 @@ from .scheduling import (
 
 logger = logging.getLogger(__name__)
 
-# said once on entering the window rather than every time the run looks again, or a month
-# of quiet hours would push every useful line out of a capped log
+# said once on entering the window, or a month of quiet hours fills a capped log
 QUIET_LOG_MARKER = "inside the quiet hours window"
 
 
 def record(service, object_type, source_id, status, log="", target=None):
     """Write the mapping row for one source object.
 
-    update_or_create rather than create so that retrying a failed item
-    replaces its record instead of tripping the unique constraint.
+    update_or_create, so retrying a failed item replaces its record rather than
+    tripping the unique constraint.
     """
     fields = {
         "status": status,
@@ -102,15 +103,11 @@ def import_user(service, provider, source_id):
     if email:
         user = User.objects.filter(email__iexact=email).first()
     if user is None:
-        # a username match only counts as the same person when the existing
-        # account has no email of its own: otherwise it is a distinct,
-        # already-identified human who merely collides on the sanitised
-        # username, and linking would attach the migration to the wrong account
+        # a username match is the same person only when the existing account has no email of
+        # its own: otherwise it is a distinct human who merely collides on the sanitised name
         candidate = User.objects.filter(username__iexact=username).first()
         if candidate is not None and not candidate.email:
-            # and not already claimed by a different source user: two emailless
-            # Kaltura accounts can sanitise to the same username, and the second
-            # must not inherit the first one's media
+            # and unclaimed: two emailless Kaltura accounts can sanitise to the same username
             claimed = (
                 MigrationRecord.objects.filter(
                     service__source_system=service.source_system,
@@ -137,12 +134,10 @@ def import_user(service, provider, source_id):
         created = True
 
     if created:
-        # roles are applied only to accounts this migration created. A linked
-        # pre-existing account keeps whatever permissions it already had.
+        # only accounts this migration created: a linked one keeps the permissions it had
         role = mediacms_role(payload.get("roleId"), payload.get("roleName"), options.get("role_map"))
         if role:
-            # only called for a mapped role. set_role_from_mapping resets every
-            # permission when handed an unknown value
+            # only for a mapped role: set_role_from_mapping resets everything on an unknown value
             user.set_role_from_mapping(role)
 
     action = "created" if created else "linked to existing user"
@@ -154,9 +149,8 @@ def resolve_owner(service, provider, source_user_id):
     """The MediaCMS user a migrated media should belong to"""
     options = service.get_options()
 
-    # create_users and restrict_to_users only have a say when migrate_all_users is off: with
-    # it on, every owner already has an account and import_user simply finds it. Naming the
-    # users to migrate counts as asking for real owners, since they have been named
+    # create_users and restrict_to_users only have a say when migrate_all_users is off. Naming
+    # the users to migrate counts as asking for real owners, since they have been named.
     wants_real_owner = options.get("migrate_all_users", True) or options.get("create_users", False) or options.get("restrict_to_users", False)
     if wants_real_owner and source_user_id:
         try:
@@ -179,11 +173,9 @@ CATEGORY_UID_MAX = 36
 def free_category_uid(source_id):
     """A uid for a new category, as close to the Kaltura id as the column allows.
 
-    The Kaltura id is used as it stands, so the id in a MediaCMS category URL is the one an
-    administrator can paste back into Kaltura. It is only a preference though: the column is
-    unique across the whole portal, and two Kaltura installations number their categories
-    from the same pool, so a taken id falls back to a suffixed form rather than failing the
-    import.
+    The Kaltura id as it stands, so the id in a MediaCMS URL can be pasted back into
+    Kaltura. Only a preference: the column is unique portal wide and two installations
+    number from the same pool, so a taken id falls back to a suffixed form.
     """
     uid = str(source_id)[:CATEGORY_UID_MAX]
     if not Category.objects.filter(uid=uid).exists():
@@ -199,10 +191,9 @@ def free_category_uid(source_id):
 def rbac_group_uid(service, source_id, kind="category"):
     """Stable identifier for the RBAC group that mirrors one source object.
 
-    Prefixed with source_system, which already carries the partner id and the host. Two
-    Kaltura installations both number a category 42, so an unscoped uid would put one
-    tenant's members inside the other tenant's group. The kind is in there too, because a
-    category and a group are different things that may carry the same id.
+    Prefixed with source_system, which carries the partner id and host: two installations
+    both number a category 42, and an unscoped uid would mix their members. The kind is in
+    there too, since a category and a group may carry the same id.
     """
     return f"{service.source_system}:{kind}:{source_id}"[:255]
 
@@ -225,11 +216,9 @@ def unique_group_name(title, source_id, taken):
 def attach_rbac_group(service, provider, category, payload, source_id):
     """Carry a members-only source category's member list into an RBAC group.
 
-    Keyed on a uid derived from the source system, so a re-run and a second
-    migration of the same installation both land on the existing group instead
-    of building a parallel one. Members are added, never changed or removed:
-    access someone was granted inside MediaCMS is not this migration's to take
-    away on a later run.
+    Keyed on a uid from the source system, so a re-run lands on the existing group.
+    Members are added, never removed: access granted inside MediaCMS is not this
+    migration's to take away.
     """
     from rbac.models import RBACGroup, RBACMembership
 
@@ -253,9 +242,8 @@ def attach_rbac_group(service, provider, category, payload, source_id):
     added = 0
     for member in members:
         try:
-            # deliberately not through resolve_owner: a member of a private
-            # category needs an account for the membership to mean anything,
-            # whether or not the run is importing every user
+            # not resolve_owner: a member of a private category needs an account for the
+            # membership to mean anything, whatever the run is importing
             user = import_user(service, provider, member["userId"])
         except Exception as exc:  # noqa: BLE001 - one unknown member must not cost the others theirs
             service.append_log(f"category {source_id}: could not import member {member['userId']}: {exc}")
@@ -272,15 +260,12 @@ def attach_rbac_group(service, provider, category, payload, source_id):
 def import_group(service, provider, source_id):
     """Create or reuse the MediaCMS RBAC group for one Kaltura group.
 
-    A Kaltura group is a named set of people and nothing else: it carries no categories of
-    its own, so the group that arrives here grants nothing until somebody attaches it to a
-    category, or until one of the categories it is a member of is imported. It is still
-    worth having, because rebuilding a membership list by hand is exactly the tedious work
-    a migration is for.
+    A Kaltura group is a named set of people and nothing else, so it grants nothing until
+    somebody attaches it to a category. Still worth having: rebuilding a membership list
+    by hand is the tedious work a migration is for.
     """
     if not getattr(settings, "USE_RBAC", False):
-        # nowhere for a group to live. Said once per group rather than silently skipped,
-        # because somebody who switched this on is expecting groups
+        # nowhere for a group to live, and somebody who switched this on expects groups
         record(service, "group", source_id, "skipped", "RBAC is switched off on this portal, so groups have nowhere to go")
         return None
 
@@ -314,16 +299,27 @@ def import_group(service, provider, source_id):
     return group
 
 
+def attach_tags(media, titles, owner):
+    """Attach tags to media, spelling each title the way Tag itself stores it.
+
+    Tag.save() strips a title to alphanumerics and spaces, so a lookup by the raw text
+    misses the row that holds it: "vice.com" finds nothing, then the insert lands on the
+    existing "vicecom". It defeats get_or_create's own retry too.
+    """
+    for raw in titles:
+        title = helpers.get_alphanumeric_and_spaces(str(raw or ""))[:100].strip()
+        if not title:
+            continue
+        tag, _created = Tag.objects.get_or_create(title=title, defaults={"user": owner})
+        media.tags.add(tag)
+
+
 def import_youtube_video(service, provider, source_id):
     """Import one YouTube video.
 
-    Its own importer rather than the portal shaped one: there is no owner to resolve, no
-    category tree, and no catalogue of renditions. What arrives is one muxed h264 file, the
-    three fields worth keeping, and at most an English subtitle.
-
-    The record is written before the download for the same reason the other importers do it:
-    a crash then leaves a row pointing at a half built media that the retry can discard,
-    rather than an orphan nothing knows about.
+    Its own importer rather than the portal shaped one: no owner to resolve, no category
+    tree, no catalogue of renditions. The record is written before the download, as
+    elsewhere, so a crash leaves a row the retry can discard rather than an orphan.
     """
     options = service.get_options()
     payload = provider.fetch_media(source_id)
@@ -341,9 +337,8 @@ def import_youtube_video(service, provider, source_id):
     skip_transcoding = options.get("skip_transcoding", True)
     profiles = [profile for profile in EncodeProfile.objects.filter(active=True) if profile.resolution]
 
-    # one rendition per profile when skipping transcoding, because YouTube already holds an
-    # h264 stream at each of those heights and fetching one is cheaper than encoding it.
-    # Otherwise just the best, and MediaCMS makes its own ladder from it.
+    # one rendition per profile when skipping transcoding: YouTube already holds an h264
+    # stream at each height. Otherwise just the best, and MediaCMS makes its own ladder.
     wanted = sorted({profile.resolution for profile in profiles}, reverse=True) if skip_transcoding else []
 
     tmp_dir = tempfile.mkdtemp(prefix=f"youtube-{source_id}-")
@@ -365,9 +360,7 @@ def import_youtube_video(service, provider, source_id):
             media.views = payload["views"]
             media.save(update_fields=["views"])
 
-        for title in payload["tags"]:
-            tag, _created = Tag.objects.get_or_create(title=title, defaults={"user": owner})
-            media.tags.add(tag)
+        attach_tags(media, payload["tags"], owner)
 
         if skip_transcoding:
             encodings, filed = [], []
@@ -386,8 +379,7 @@ def import_youtube_video(service, provider, source_id):
                 service.append_log(f"video {source_id}: no profile at or below {best_height}p, leaving it to encode")
                 media.encode(chunkize=False)
 
-            # the hover preview comes out of encode(), which skipping transcoding never
-            # reaches, so it is asked for on its own
+            # encode() makes the hover preview, and skipping transcoding never reaches it
             ensure_preview(media)
 
         for caption in payload["captions"]:
@@ -422,11 +414,9 @@ def import_youtube_caption(service, provider, media, caption, tmp_dir):
 def import_playlist(service, provider, source_id):
     """Create or reuse the MediaCMS playlist for one Kaltura playlist.
 
-    Runs after media, so most members are already mapped. One that is not is fetched on the
-    playlist's account, along with its owner: asking for playlists is asking for whole
-    playlists, and a list with holes in it is worse than an import that reached a little
-    wider than the user options asked for. Entries Kaltura no longer holds at all cannot be
-    rescued and are logged as they are skipped.
+    Runs after media, so most members are already mapped. One that is not is fetched with
+    its owner: asking for playlists is asking for whole playlists, and a list with holes is
+    worse than reaching a little wider than the user options asked for.
     """
     payload = provider.fetch_playlist(source_id)
 
@@ -473,58 +463,63 @@ def import_playlist(service, provider, source_id):
 def import_category(service, provider, source_id):
     """Create or reuse the MediaCMS category for one source category.
 
-    Access control comes over as far as MediaCMS has somewhere to put it. A
-    members-only category becomes an RBAC category with a group holding its
-    members; everything else becomes a plain category, and it is the media state
-    that carries what the source category implied. The whole import is one
-    transaction because the mapping row is written last, and without atomicity a
-    failure part way through would leave a real Category with no record of it,
-    and the retry would build a second one.
+    A members-only category becomes an RBAC category with a group holding its members;
+    everything else becomes a plain one and the media state carries what the source
+    implied. One transaction, because the mapping row is written last: without it a
+    failure part way would leave a Category nothing knows about and the retry would
+    build a second.
     """
-    payload = provider.fetch_category(source_id)
-
-    # a skipped row is just as authoritative as a success one when it carries a
-    # target: it means another migration on this same source already made it,
-    # and a re-run must reuse it rather than build a duplicate
+    # a skipped row carrying a target means another migration on this source already made
+    # it, so a re-run reuses it rather than building a duplicate
     existing = MigrationRecord.objects.filter(service=service, object_type="category", source_id=str(source_id), status__in=("success", "skipped")).exclude(target_id=None).first()
     if existing:
         category = existing.target()
         if category is not None:
             return category
 
-    title, description = category_title_and_description(payload.get("fullName"))
+    payload = provider.fetch_category(source_id)
+    title, description = category_title_and_description(payload.get("fullName"), payload.get("courseName") or "")
     if not title:
         title = payload.get("name") or f"category-{source_id}"
         description = title
 
-    # the Kaltura id is this category's identity, so a category already carrying it is this
-    # same category and is reused rather than duplicated. A uid held by something with a
-    # different title is not this category: another portal numbering from the same pool, or
-    # one made by hand. That one keeps its uid and this import takes a free one.
+    # the Kaltura id is the category's identity, so one already carrying it is reused. A uid
+    # held by something with a different title is not this category: it keeps its uid and
+    # this import takes a free one.
     claimed = Category.objects.filter(uid=str(source_id)[:CATEGORY_UID_MAX]).first()
-    if claimed is not None and (claimed.title == title or claimed.title.startswith(title + " (")):
+    known_titles = [title, payload.get("name") or ""]
+    if claimed is not None and any(name and (claimed.title == name or claimed.title.startswith(name + " (")) for name in known_titles):
         record(service, "category", source_id, "success", f"reused existing category {claimed.title}", target=claimed)
         return claimed
 
     kind = category_type(payload)
-    # RBAC is the only place a member list can live. With it off the category is
-    # still created and its media still land private, so nothing is exposed: it
-    # is only the members that cannot be carried across.
+    # RBAC is the only place a member list can live. With it off the category is still
+    # created and its media still land private, so only the members are lost.
     use_rbac = kind == CATEGORY_PRIVATE and getattr(settings, "USE_RBAC", False)
+    is_lms_course = category_tree_kind(payload) == LMS_TREE
 
     with transaction.atomic():
-        # read inside the transaction: two categories created in the same run must
-        # collide against each other, not just against pre-existing titles
+        # inside the transaction: two categories in one run must collide against each other
         taken = set(Category.objects.values_list("title", flat=True))
         title = unique_category_title(title, payload.get("parentName") or "", taken)
 
-        category = Category.objects.create(uid=free_category_uid(source_id), title=title, description=description, is_global=True, is_rbac_category=use_rbac)
+        category = Category.objects.create(
+            uid=free_category_uid(source_id),
+            title=title,
+            description=description,
+            is_global=True,
+            is_rbac_category=use_rbac,
+            is_lms_course=is_lms_course,
+        )
 
-        record(service, "category", source_id, "success", f"created category {category.title} ({kind})", target=category)
+        log = f"created category {category.title} ({kind})"
+        if is_lms_course:
+            log = f"created LMS course {category.title} ({kind})"
+        record(service, "category", source_id, "success", log, target=category)
 
     if use_rbac:
-        # outside the transaction: the members are a long series of API calls, and
-        # holding the category row open for them would block every parallel import
+        # outside it: the members are many API calls, and holding the row open for them
+        # would block every parallel import
         try:
             attach_rbac_group(service, provider, category, payload, source_id)
         except Exception as exc:  # noqa: BLE001 - the category itself is already sound
@@ -535,8 +530,8 @@ def import_category(service, provider, source_id):
 def pick_original_flavor(flavors):
     """The flavor to use as Media.media_file.
 
-    Kaltura installations often purge the source flavor, so fall back to the
-    tallest ready flavor and let the caller log the substitution.
+    Installations often purge the source flavor, so fall back to the tallest ready one
+    and let the caller log the substitution.
     """
     flavors = flavors or []
     for flavor in flavors:
@@ -551,8 +546,8 @@ def pick_original_flavor(flavors):
 def source_extension(entry, flavor):
     """The extension to store the downloaded file under.
 
-    MediaCMS reads the file to decide media_type, so this has to be honest: a jpeg
-    stored as .mp4 would be imported as a video that cannot play.
+    MediaCMS reads the file to decide media_type: a jpeg stored as .mp4 becomes a video
+    that cannot play.
     """
     if flavor is not None:
         return (flavor.get("fileExt") or "mp4").lower()
@@ -581,9 +576,8 @@ def ensure_preview(media):
     """Produce the hover preview for a media whose transcoding was skipped.
 
     media_init only reaches the preview profile through encode(), so an import that skips
-    transcoding gets sprites and no preview. It is asked for on its own here, and with
-    chunkize off: the chunkize branch of encode() dispatches a job per profile per chunk,
-    which is how one import can bury a worker.
+    transcoding gets sprites and no preview. chunkize off, because that branch dispatches
+    a job per profile per chunk and one import can bury a worker.
     """
     if media.media_type != "video":
         return None
@@ -601,10 +595,9 @@ def ensure_preview(media):
 def create_encoding(media, profile, path):
     """Attach an already transcoded file to a media as a finished Encoding.
 
-    Saved as pending first, because the Encoding post_save receiver only reacts
-    to success and fail. The status is then flipped with a queryset update,
-    which fires no signals at all. That is what keeps create_hls from being
-    launched once per flavor.
+    Saved as pending first, since the post_save receiver only reacts to success and fail,
+    then flipped with a queryset update, which fires no signals. That is what keeps
+    create_hls from being launched once per flavor.
     """
     encoding = Encoding(media=media, profile=profile, status="pending", progress=0)
     with open(path, "rb") as handle:
@@ -634,8 +627,7 @@ def attach_flavor_encodings(service, provider, media, flavors, original, origina
     matched_ids = {flavor.get("id") for flavor, _profile in pairs}
     for flavor in transcoded:
         if flavor.get("id") not in matched_ids:
-            # usually a duplicate resolution in the source: MediaCMS has one profile
-            # per resolution, so the second copy has nowhere honest to go
+            # usually a duplicate resolution: MediaCMS has one profile per resolution
             service.append_log(f"media {media.friendly_token}: no matching profile for flavor " f"{flavor.get('id')} at {flavor.get('height')}p, skipped")
 
     encodings = []
@@ -659,9 +651,8 @@ def attach_flavor_encodings(service, provider, media, flavors, original, origina
             timings.note(f"  flavor {profile.resolution}p attach", time.monotonic() - attach_started)
 
     if not encodings:
-        # Without at least one successful mp4 or webm encoding, set_encoding_status
-        # leaves the media pending and listable stays false, which makes it
-        # invisible. Fall back to the file already downloaded as the original.
+        # without one successful mp4 or webm encoding, set_encoding_status leaves the media
+        # pending and invisible. Fall back to the file already downloaded.
         extension = os.path.splitext(original_path)[1].lstrip(".").lower()
         fallback = match_flavors_to_profiles([{"id": "original", "height": media.video_height or 0, "fileExt": extension}], profiles)
         if fallback:
@@ -672,8 +663,7 @@ def attach_flavor_encodings(service, provider, media, flavors, original, origina
 
     started = time.monotonic()
     finalise_encodings(media, encodings)
-    # the hover preview comes out of encode(), which an import that skips transcoding never
-    # reaches, so it is asked for on its own
+    # encode() makes the hover preview, and skipping transcoding never reaches it
     ensure_preview(media)
     if timings is not None:
         timings.note("  finalise (queues HLS)", time.monotonic() - started)
@@ -703,9 +693,8 @@ def import_caption(service, provider, media, caption, tmp_dir):
         return subtitle
     except Exception as exc:  # noqa: BLE001 - a bad caption must not lose the media
         if subtitle is not None and subtitle.pk:
-            # the row exists but its file never became valid WebVTT. A broken
-            # caption track attached to the media is worse than no caption, and
-            # would otherwise contradict the failed record we are about to write.
+            # the row exists but never became valid WebVTT, which is worse than no caption and
+            # would contradict the failed record we are about to write
             subtitle.delete()
         record(service, "caption", source_id, "failed", f"caption {source_id} failed: {exc}")
         service.append_log(f"media {media.friendly_token}: caption {source_id} failed: {exc}")
@@ -715,8 +704,8 @@ def import_caption(service, provider, media, caption, tmp_dir):
 def apply_entry_metadata(service, provider, media, data):
     """Second pass over a freshly created media: state, views, date, tags, categories.
 
-    A second save is required because Media.save() overwrites state with the
-    portal default on creation only.
+    A second save, because Media.save() overwrites state with the portal default on
+    creation only.
     """
     options = service.get_options()
     entry = data.get("entry") or {}
@@ -728,45 +717,34 @@ def apply_entry_metadata(service, provider, media, data):
         media.add_date = datetime.fromtimestamp(int(entry["createdAt"]), tz=dt_timezone.utc)
 
     if options.get("preserve_publish_state", True):
-        # whole categories, not just their privacy: the type one is configured as comes
-        # from three fields together. And only the categories the entry is published
-        # through, since a submission still awaiting approval is not public anywhere
+        # whole categories, since the type comes from three fields together, and only the ones
+        # the entry is published through: a submission awaiting approval is not public
         published = data.get("published_categories")
         if published is None:
             published = data.get("categories") or []
         media.state = media_state(published, entry.get("displayInSearch"), entry.get("moderationStatus"))
 
-    # a full save() writes every column from this in-memory instance, including
-    # ones the background tasks media_init fired fill in behind our back:
-    # produce_sprite_from_video finishes while we are still attaching flavors and
-    # saves media.sprites, which a full save here overwrites with the empty value
-    # this stale instance still holds. Only write the columns we set ourselves.
+    # a full save() would write every column from this stale instance, including ones the
+    # tasks media_init fired fill in behind our back: produce_sprite_from_video saves
+    # media.sprites while we are still attaching flavors. Only write what we set.
     media.save(update_fields=["views", "add_date", "state", "listable"])
 
-    for raw_tag in (entry.get("tags") or "").split(","):
-        title = helpers.get_alphanumeric_and_spaces(raw_tag).strip()[:100]
-        if not title:
-            continue
-        tag, _created = Tag.objects.get_or_create(title=title, defaults={"user": media.user})
-        media.tags.add(tag)
+    attach_tags(media, (entry.get("tags") or "").split(","), media.user)
 
     for source_category in data.get("categories") or []:
-        # an entry is attached to every category it belongs to, including ones it is not
-        # published through yet, but only real galleries and channels become MediaCMS
-        # categories: the rest is KMS housekeeping
+        # an entry is attached to every category it belongs to, but only real galleries and
+        # channels become MediaCMS categories: the rest is KMS housekeeping
         source_category_id = source_category.get("id")
         if is_ignored_category(source_category):
-            # an LTI course holds no media of its own: it is all parked in an InContext
-            # child. That child is plumbing nobody browses, so the media is rolled up to
-            # the course, which is the category a person recognises.
+            # an LTI course parks its media in an InContext child, which is plumbing nobody
+            # browses, so it is rolled up to the course a person recognises
             source_category_id = source_category.get("parentId")
             parent_path = (source_category.get("fullName") or "").rsplit(">", 1)[0]
             if not source_category_id or not provider.within_selection(parent_path):
                 continue
         elif not provider.worth_importing(source_category):
-            # outside the chosen roots, or housekeeping. The media still comes over, because
-            # what is migrated follows its owner, but it does not drag in a category tree
-            # nobody asked for
+            # outside the chosen roots, or housekeeping. The media still comes over, since it
+            # follows its owner, but it drags in no category tree nobody asked for.
             continue
         category = get_or_import_category(service, provider, str(source_category_id))
         if category:
@@ -776,8 +754,8 @@ def apply_entry_metadata(service, provider, media, data):
 class Timings:
     """Per step stopwatch for one media import.
 
-    Detail goes to the worker log; the migration log gets one summary line per
-    media, because 12,000 entries times a dozen steps would bury everything else.
+    Detail to the worker log, one summary line per media to the migration log: 12,000
+    entries times a dozen steps would bury everything else.
     """
 
     def __init__(self, source_id):
@@ -823,11 +801,9 @@ def _throughput(size_bytes, seconds):
 def import_media_entry(service, provider, source_id):
     """Import one source media entry into MediaCMS.
 
-    Not wrapped in a transaction on purpose: this downloads gigabytes, and holding
-    a database transaction open for that long is worse than the failure it would
-    prevent. Instead the mapping row is written as soon as the Media exists, so a
-    crash leaves a traceable row rather than an invisible orphan, and a retry
-    discards the half built Media before starting again.
+    No transaction on purpose: this downloads gigabytes, and holding one open that long
+    is worse than the failure it would prevent. The mapping row is written as soon as the
+    Media exists, so a retry can discard the half built one instead of orphaning it.
     """
     options = service.get_options()
 
@@ -850,9 +826,8 @@ def import_media_entry(service, provider, source_id):
         owner = resolve_owner(service, provider, entry.get("userId") or entry.get("creatorId") or "")
 
     original = pick_original_flavor(flavors)
-    # an image has no flavor assets at all, so there is nothing to pick: its file
-    # comes straight off the entry. anything else without a flavor (a live stream,
-    # an entry still transcoding) genuinely has nothing to import
+    # an image has no flavors: its file comes straight off the entry. Anything else
+    # without one (a live stream, an entry still transcoding) has nothing to import.
     is_image = entry.get("mediaType") == MEDIA_TYPE_IMAGE and bool(entry.get("downloadUrl"))
     if original is None and not is_image:
         raise ValueError(f"entry {source_id} has no downloadable flavor")
@@ -885,8 +860,8 @@ def import_media_entry(service, provider, source_id):
         with timings.step("media_init (thumbnail + sprite)"):
             media.save()
 
-        # record before the slow part, so an interrupted import is traceable and
-        # its half built Media can be cleaned up on retry instead of orphaned
+        # record before the slow part, so an interrupted import is traceable and its half
+        # built Media can be cleaned up on retry instead of orphaned
         record(service, "media", source_id, "failed", "import started", target=media)
 
         if media.media_type == "video" and options.get("skip_transcoding", True):
@@ -902,8 +877,8 @@ def import_media_entry(service, provider, source_id):
                         import_caption(service, provider, media, caption, tmp_dir)
                     step.extra = f"({len(captions)})"
 
-        # metadata last: applying the migrated state before the encodings exist
-        # would briefly mark a public media listable with nothing to play
+        # metadata last: the migrated state before the encodings exist would briefly mark a
+        # public media listable with nothing to play
         with timings.step("metadata + categories"):
             apply_entry_metadata(service, provider, media, data)
 
@@ -913,10 +888,9 @@ def import_media_entry(service, provider, source_id):
     return media
 
 
-# Users and categories are walked before media when their option is on. With it off the
-# phase is skipped and the objects are still created on demand, as the media that need
-# them arrive, so nothing is lost by skipping either one.
-# playlists last: one can only reference media the run has already brought over
+# Users and categories are walked before media when their option is on; with it off they
+# are created on demand as the media that need them arrive. Playlists last: one can only
+# reference media the run has already brought over.
 PHASES = ["users", "groups", "categories", "media", "playlists"]
 
 # the categories phase always runs: it is scoped by the chosen categories rather than
@@ -928,12 +902,11 @@ RECORD_TYPE = {"users": "user", "groups": "group", "categories": "category", "me
 IMPORTERS = {"users": import_user, "groups": import_group, "categories": import_category, "media": import_media_entry, "playlists": import_playlist}
 
 
-# a provider whose source has no notion of a phase does not walk it. Absent means the
-# whole set, which is what a source shaped like a portal needs.
+# a provider whose source has no notion of a phase does not walk it; absent means all
 PROVIDER_PHASES = {"youtube": ["media"]}
 
-# and one whose objects are shaped nothing like a portal's brings its own importer for
-# them. Kept here rather than on the provider so that providers need not import tasks.
+# and brings its own importers when its objects are shaped nothing like a portal's.
+# Kept here rather than on the provider so providers need not import tasks.
 PROVIDER_IMPORTERS = {"youtube": {"media": import_youtube_video}}
 
 
@@ -980,27 +953,22 @@ def _media_limit_reached(service):
     return handled >= int(max_items)
 
 
-# Every status transition below is a conditional queryset update rather than a
-# read-then-save on a Python object. Two admins clicking Start at the same moment,
-# or a Pause landing while the orchestrator is mid network call, would otherwise
-# both pass their guard and the second write would silently win.
+# Every status transition below is a conditional queryset update, not a read-then-save:
+# two admins clicking Start at once would otherwise both pass their guard.
 STARTABLE = ("pending", "paused", "error", "aborted")
-# a finished run can be swept again: each importer skips what it already brought
-# over, so a re-run retries the failures and picks up anything new at the source
+# a finished run can be swept again: each importer skips what it already brought over
 RERUNNABLE = ("success", "error", "aborted")
 
 
 def record_discovery_totals(service, provider, force=False):
     """Ask the source how much there is, once, when a migration first starts.
 
-    Best effort: a source that cannot answer must not stop the migration, the
-    progress bars simply show counts without a denominator. Returns False only
-    when it has ended the run itself, so the caller must not dispatch.
+    Best effort: a source that cannot answer leaves the bars without a denominator.
+    Returns False only when it has ended the run itself, so the caller must not dispatch.
     """
     totals = dict(service.totals or {})
     if totals.get("media_discovered") and not force:
-        # already known, a resume must not reset it. a re-run forces a refresh,
-        # the source may have gained entries since the first sweep
+        # a resume must not reset a known total; a re-run refreshes, the source may have grown
         return True
 
     try:
@@ -1020,9 +988,8 @@ def record_discovery_totals(service, provider, force=False):
         service.append_log(f"restricted to {len(per_user)} user(s) - {summary}")
         empty = [user_id for user_id, count in per_user.items() if not count]
         if empty and len(empty) == len(per_user):
-            # Kaltura answers an unknown user with zero rather than an error, so
-            # every id being empty means a mistyped list far more often than it
-            # means empty accounts. Finishing as a clean success would hide that.
+            # Kaltura answers an unknown user with zero rather than an error, so every id being
+            # empty means a mistyped list far more often than empty accounts
             finish_migration(service, "error", f"no media found for any listed user: {', '.join(empty)}")
             return False
         if empty:
@@ -1042,8 +1009,7 @@ def start_migration(service):
     now = timezone.now()
     claimed = MigrationService.objects.filter(pk=service.pk, status__in=STARTABLE).update(status="running", ended_at=None, last_activity=now)
     if not claimed:
-        # someone else won the race; do not dispatch a second orchestrator loop,
-        # or two chords would race on one cursor
+        # someone else won the race: a second orchestrator loop would race on one cursor
         service.refresh_from_db()
         raise ValueError(f"Migration is already '{service.status}'")
 
@@ -1060,13 +1026,12 @@ def start_migration(service):
 def restart_migration(service):
     """Walk a finished migration again, retrying whatever did not make it.
 
-    The cursor is reset so the source is swept from the beginning. Items already
-    imported are skipped by their importer's own guard for the cost of one query,
-    with no source call and no download, so this is "retry the failures and pick
-    up anything new" rather than a second full import.
+    The cursor is reset, so the source is swept from the beginning. Anything already
+    imported costs one query and no download, so this is "retry the failures and pick up
+    what is new" rather than a second full import.
     """
-    # the compare and swap is the only check: an in memory status can be stale,
-    # and a caller holding a finished object must not be refused a re-run for it
+    # the compare and swap is the only check: a caller holding a finished object must
+    # not be refused a re-run over a stale in memory status
     now = timezone.now()
     claimed = MigrationService.objects.filter(pk=service.pk, status__in=RERUNNABLE).update(status="running", cursor={}, started_at=now, ended_at=None, last_activity=now)
     if not claimed:
@@ -1105,9 +1070,8 @@ def abort_migration(service):
 def finish_migration(service, status, message=""):
     """End a run, but never overwrite a stop the user asked for.
 
-    The orchestrator can be mid network call when a pause or abort lands. Its
-    in-memory copy still says running, so an unconditional save would silently
-    discard the user's request.
+    The orchestrator can be mid network call when a pause lands, and its in-memory copy
+    still says running, so an unconditional save would discard the request.
     """
     finished = MigrationService.objects.filter(pk=service.pk, status="running").update(status=status, ended_at=timezone.now(), last_activity=timezone.now())
     service.refresh_from_db()
@@ -1122,9 +1086,8 @@ def finish_migration(service, status, message=""):
 def schedule_migration(service):
     """Arm the task that starts this migration at the time it was given, if it has one.
 
-    Called on every save, so a second save arms a second task. That is fine and is why the
-    task carries its time: whichever task fires with a time the migration no longer stores
-    stands down.
+    Called on every save, so a second save arms a second task. That is why the task
+    carries its time: one firing with a time the migration no longer stores stands down.
     """
     options = service.get_options()
     if not options.get("schedule_enabled"):
@@ -1144,9 +1107,8 @@ def run_scheduled_migration(service_id, scheduled_for):
     """Start a migration whose scheduled time has arrived.
 
     scheduled_for is the time this task was queued for. An eta task cannot be recalled, so
-    every save arms another one and the stale ones have to stand down by themselves: if the
-    migration no longer stores this exact time, or scheduling has been switched off since,
-    this task is not the one that should act.
+    a stale one stands down by itself: if the migration no longer stores this exact time,
+    this is not the task that should act.
     """
     service = MigrationService.objects.filter(pk=service_id).first()
     if service is None:
@@ -1160,8 +1122,8 @@ def run_scheduled_migration(service_id, scheduled_for):
         logger.info("scheduled start of migration %s stood down: it was rescheduled", service_id)
         return False
 
-    # switch scheduling off before starting, so the time that has now been used stops being
-    # offered by the form and a duplicate task armed by an earlier save finds nothing to do
+    # switch scheduling off before starting, so the used time stops being offered by the
+    # form and a duplicate task armed by an earlier save finds nothing to do
     stored = dict(service.options or {})
     stored["schedule_enabled"] = False
     stored["scheduled_at"] = ""
@@ -1173,8 +1135,7 @@ def run_scheduled_migration(service_id, scheduled_for):
         return False
 
     try:
-        # start_migration claims the row with its own compare and set, so two tasks racing
-        # here cannot both get a run going
+        # start_migration claims the row itself, so two tasks racing here cannot both run
         start_migration(service)
     except Exception as exc:  # noqa: BLE001 - a failed start must be visible, not raised into celery
         logger.warning("scheduled start of migration %s failed: %s", service_id, exc)
@@ -1191,9 +1152,8 @@ def run_migration(service_id):
     if service is None or service.status != "running":
         return False
 
-    # after the status check, never before it: a paused or aborted migration must fall out
-    # above rather than be handed another task. The run is not paused here, it simply does
-    # no work this cycle and looks again shortly, which is how it resumes on its own
+    # after the status check, never before: a paused migration must fall out above rather
+    # than be handed another task. The run does no work this cycle and looks again shortly.
     if in_quiet_window(service.get_options()):
         tail = (service.log or "").rstrip().rsplit("\n", 1)[-1]
         if QUIET_LOG_MARKER not in tail:
@@ -1233,9 +1193,8 @@ def run_migration(service_id):
                 finish_migration(service, "success", "max_items reached, migration finished")
                 return True
             if len(source_ids) > remaining:
-                # trim so the cap is exact rather than rounded up to the page size.
-                # the cursor will advance past the trimmed entries, which is fine:
-                # max_items is a dry run cap and ends the migration.
+                # trim so the cap is exact rather than rounded up to the page size. The cursor
+                # advances past the trimmed entries, which is fine: max_items ends the migration.
                 service.append_log(f"max_items: trimming this page to {remaining} entries")
                 source_ids = source_ids[:remaining]
 
@@ -1278,14 +1237,13 @@ def migrate_item(service_id, phase, source_id):
     if existing:
         logger.info("%s previous attempt was %s, retrying", log_prefix, existing.status)
 
-    # already imported from the same source system by another migration.
-    # checked before anything is downloaded, so a rerun costs list calls only
+    # already imported from this source system by another migration, checked before
+    # anything is downloaded so a rerun costs list calls only
     other = MigrationRecord.already_migrated(service.source_system, object_type, source_id)
     if other is not None:
         logger.info("%s already migrated by '%s', skipping", log_prefix, other.service.name)
-        # carry the other migration's target through: a skipped row with no target
-        # is invisible to the importers' own guards, which would then re-import the
-        # object and duplicate it
+        # carry the other migration's target through: a skipped row with no target is
+        # invisible to the importers' own guards, which would re-import and duplicate
         record(
             service,
             object_type,
@@ -1304,10 +1262,8 @@ def migrate_item(service_id, phase, source_id):
         return "ok"
     except Exception as exc:  # noqa: BLE001 - one bad item must not end the migration
         logger.exception("migration %s: %s %s failed", service_id, object_type, source_id)
-        # preserve any target the importer already recorded. import_media_entry
-        # writes its row before the slow part precisely so a retry can find and
-        # delete the half built object; nulling it here would orphan that object
-        # and let the retry create a duplicate beside it.
+        # preserve any target the importer recorded: it writes its row before the slow part
+        # precisely so a retry can find and delete the half built object
         previous = MigrationRecord.objects.filter(service=service, object_type=object_type, source_id=source_id).first()
         target = previous.target() if previous is not None else None
         record(service, object_type, source_id, "failed", f"{type(exc).__name__}: {exc}", target=target)
@@ -1324,12 +1280,9 @@ def advance_migration(results, service_id, next_cursor):
         return False
 
     if service.status != "running":
-        # Do NOT advance the cursor. When a pause lands mid page, the items that
-        # had not started yet returned early without importing anything. Advancing
-        # would step the resume position past them and they would never be
-        # imported at all. Leaving the cursor put replays the whole page on
-        # resume, which is cheap: every importer is idempotent and returns early
-        # for work already recorded.
+        # Do NOT advance the cursor: items that had not started returned early without
+        # importing, and advancing would step the resume position past them. Replaying the
+        # page is cheap, every importer returns early for work already recorded.
         service.append_log(f"stopped after a page, status is '{service.status}'; the page will replay on resume")
         MigrationService.objects.filter(pk=service_id).update(last_activity=timezone.now())
         return False

@@ -102,8 +102,7 @@ class MediaList(APIView):
             qs = qs.filter(is_reviewed=is_reviewed)
 
         if category:
-            # category carries a Category uid, with a fallback for older clients
-            # that still send a title
+            # category carries a Category uid, with a fallback for clients sending a title
             category_obj = Category.objects.filter(uid=category).first()
             if category_obj:
                 qs = qs.filter(category=category_obj)

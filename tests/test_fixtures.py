@@ -33,8 +33,7 @@ class TestFixtures(TestCase):
             7,
             "Problem with Encode Profile fixtures, not as active as expected",
         )
-        # the legacy gif preview is kept but switched off, and the mp4 one replaces it,
-        # so the active count is unchanged and only the total proves the change landed
+        # the gif preview is kept but switched off, so only the total proves the change landed
         previews = EncodeProfile.objects.filter(name="preview")
         self.assertEqual(sorted(previews.values_list("extension", flat=True)), ["gif", "mp4"])
         self.assertFalse(previews.get(extension="gif").active)

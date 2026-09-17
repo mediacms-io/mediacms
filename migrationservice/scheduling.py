@@ -1,10 +1,9 @@
 """Starting a migration at a time somebody picked earlier.
 
-The time lives in the migration's own options rather than in a column of its own, and the
-run is a task queued with an eta rather than something a periodic sweep notices. That task
-carries the time it was queued for as an argument, which is what makes the arrangement
-workable: an eta task cannot be recalled once it is out, so the argument is how a schedule
-that has since been moved, switched off, or already used gets recognised and ignored.
+The time lives in the migration's options and the run is a task queued with an eta, not
+something a periodic sweep notices. An eta task cannot be recalled once it is out, so it
+carries the time it was queued for: that is how a schedule since moved, switched off or
+already used is recognised and ignored.
 """
 
 from datetime import datetime
@@ -18,9 +17,8 @@ SCHEDULE_OPTIONS = ("schedule_enabled", "scheduled_at", "quiet_hours_enabled", "
 SCHEDULE_FORMAT = "%Y-%m-%dT%H:%M"
 CLOCK_FORMAT = "%H:%M"
 
-# how long the orchestrator waits before looking again while it is inside the quiet window.
-# Short on purpose: it is the only thing holding the chain together, and a worker restart
-# costs one cycle rather than the rest of the run
+# how long the orchestrator waits before looking again inside the quiet window. Short
+# on purpose: it is all that holds the chain together, so a restart costs one cycle.
 QUIET_RECHECK_SECONDS = 300
 
 
@@ -34,9 +32,8 @@ def scheduled_at_text(value):
 def parse_scheduled_at(raw):
     """The moment a stored wall clock string refers to, or None if it says nothing.
 
-    A string with no offset means the portal's own timezone, which is the only clock the
-    person picking a time and the worker acting on it can both agree about. A browser knows
-    its own timezone and nothing about the portal's, so it is not consulted.
+    A string with no offset means the portal's timezone, the only clock the person picking
+    a time and the worker acting on it can agree about.
     """
     text = str(raw or "").strip()
     if not text:
@@ -65,10 +62,9 @@ def parse_clock(raw):
 def quiet_window(options):
     """The (from, to) the migration must not run between, or None.
 
-    None whenever the window would not mean anything: switched off, either end unreadable,
-    or both ends the same. An unreadable window lets the migration run rather than stopping
-    it, because a typo that quietly halts a month long run is far worse than one that fails
-    to hold it back.
+    None whenever the window means nothing: switched off, either end unreadable, or both
+    ends the same. An unreadable one lets the run proceed, since a typo that quietly halts
+    a month long migration is worse than one that fails to hold it back.
     """
     if not options.get("quiet_hours_enabled"):
         return None
@@ -83,8 +79,8 @@ def quiet_window(options):
 def in_quiet_window(options, now=None):
     """Whether the portal clock is inside the window right now.
 
-    The window is wall clock time in the portal's own timezone, the same convention the
-    start schedule uses. A window whose end is before its start runs over midnight.
+    Wall clock in the portal's timezone, as the start schedule is. An end before its
+    start runs over midnight.
     """
     window = quiet_window(options)
     if window is None:

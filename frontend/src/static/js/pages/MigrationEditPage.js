@@ -29,8 +29,8 @@ const PLACEHOLDER_TEXT = {
   panopto: 'Panopto migration is not implemented yet.',
 };
 
-// keys that must be filled before a connection can be tested; mirrors each
-// provider's required_connection_keys on the backend
+// keys that must be filled before a connection can be tested; mirrors each provider's
+// required_connection_keys on the backend
 const REQUIRED_CONNECTION_FIELDS = {
   kaltura: ['service_url', 'partner_id', 'app_token_id', 'app_token'],
   panopto: ['service_url', 'client_id', 'client_secret'],
@@ -90,9 +90,8 @@ const OPTIONS = [
     label: 'Migrate all users',
     help: 'Every account, not just the ones that own media.',
   },
-  // With "migrate all users" off, naming the users is always on offer. Choosing it hides the
-  // other narrowing, since the two are answers to the same question. Choosing neither is a
-  // setting of its own: every media goes to the fallback owner.
+  // With "migrate all users" off, naming the users is always on offer, and choosing it hides
+  // the other narrowing. Choosing neither sends every media to the fallback owner.
   {
     key: 'restrict_to_users',
     label: 'Only migrate below listed users',
@@ -104,8 +103,7 @@ const OPTIONS = [
     label: 'Kaltura user ids, comma separated',
     isText: true,
     placeholder: 'jdoe@example.edu, 5f2c1b9ae4c7',
-    // shown alongside the option whether or not it is ticked, so the ids can be typed
-    // before committing to the choice. Only validated when the option is on.
+    // shown whether or not the option is ticked, so the ids can be typed first
     shownWhen: [{ key: 'migrate_all_users', is: false }],
   },
   {
@@ -175,8 +173,7 @@ function tabsFor(provider) {
 
 const DEFAULT_OPTIONS = {
   migrate_all_users: true,
-  // off, so that unticking "migrate all users" presents both alternatives unchosen rather
-  // than silently having already made the choice
+  // off, so unticking "migrate all users" presents both alternatives unchosen
   create_users: false,
   fallback_username: 'admin',
   schedule_enabled: false,
@@ -215,8 +212,8 @@ const YOUTUBE_DEFAULT_OPTIONS = Object.assign(
   SCHEDULE_DEFAULTS
 );
 
-// only the keys a provider knows are posted. Sending another provider's options would be
-// refused outright, since the backend rejects an option it does not recognise
+// only the keys a provider knows are posted: the backend rejects an option it does not
+// recognise
 function defaultsFor(provider) {
   return 'youtube' === provider ? YOUTUBE_DEFAULT_OPTIONS : DEFAULT_OPTIONS;
 }
@@ -229,8 +226,8 @@ function optionIsShown(option, options) {
   if (!option.shownWhen) {
     return true;
   }
-  // an array means every condition has to hold, which is how two options that are
-  // alternatives to each other hide one another once either is chosen
+  // an array means every condition has to hold, which is how two alternatives hide
+  // one another once either is chosen
   const conditions = [].concat(option.shownWhen);
   return conditions.every((condition) => !!options[condition.key] === condition.is);
 }
@@ -277,8 +274,7 @@ export class MigrationEditPage extends Page {
   }
 
   componentDidMount() {
-    // the portal's clock, not the browser's: a schedule is meaningless until the form knows
-    // which "now" it is being measured against
+    // the portal's clock, not the browser's: a schedule needs a "now" to be measured against
     getServerTime()
       .then((response) => this.safeSetState({ serverTime: response.data }))
       .catch(() => {});
@@ -294,8 +290,8 @@ export class MigrationEditPage extends Page {
             connection: data.connection || {},
             options: Object.assign({}, defaultsFor(data.provider), data.options || {}),
           }, () => {
-            // fill the picker straight away. A saved selection shown as a bare count with
-            // no list under it looks like the page has lost it.
+            // fill the picker straight away: a saved selection shown as a bare
+            // count looks like the page has lost it
             if ('kaltura' === this.state.provider) {
               this.onLoadCategoriesClick();
             }
@@ -325,8 +321,8 @@ export class MigrationEditPage extends Page {
   }
 
   payload() {
-    // post only the options this form knows about. A migration saved before an option was
-    // removed still carries it, and echoing it back is how a load turns into a failed save
+    // post only the options this form knows about: echoing back one that has since been
+    // removed is how a load turns into a failed save
     const options = {};
     Object.keys(defaultsFor(this.state.provider)).forEach((key) => {
       options[key] = this.state.options[key];
@@ -341,8 +337,7 @@ export class MigrationEditPage extends Page {
   }
 
   onLoadCategoriesClick() {
-    // drop whatever is on screen first: a reload is a fresh answer from the source, not a
-    // merge with the last one
+    // drop what is on screen first: a reload is a fresh answer, not a merge
     this.setState({ loadingCategories: true, categoriesError: null, categories: null });
 
     const stillMasked = Object.keys(this.state.connection).some(
@@ -404,12 +399,10 @@ export class MigrationEditPage extends Page {
   }
 
   mergeRoles(roles) {
-    // Keep the choice already made for a role, matching stored rows on id first and name
-    // second, the same order the importer uses. A role the portal does not have is
-    // dropped, since it can only mislead once the real list is known.
+    // Keep the choice already made, matching stored rows on id first and name second, as
+    // the importer does. A role the portal does not have is dropped.
     const stored = this.state.options.role_map || [];
-    // the shipped rows label console roles "(KMC)" while the portal reports the bare name,
-    // so the label comes off before comparing, exactly as the importer does it
+    // the shipped rows label console roles "(KMC)" and the portal reports the bare name
     const bare = (name) => String(name || '').replace(/\s*\([^()]*\)\s*$/, '').trim().toLowerCase();
     const previous = (role) =>
       stored.find((row) => row.id && String(row.id) === String(role.id)) ||
@@ -434,9 +427,8 @@ export class MigrationEditPage extends Page {
   onCheckClick() {
     this.setState({ checking: true, checkResult: null });
 
-    // On a saved migration the secret comes back masked, so the values on screen
-    // cannot authenticate. Ask the server to test its own stored credentials
-    // instead. If the operator has typed a fresh secret, test what they typed.
+    // On a saved migration the secret comes back masked, so ask the server to test its own
+    // stored credentials. A freshly typed secret is tested as typed.
     const stillMasked = Object.keys(this.state.connection).some(
       (key) => this.state.connection[key] === SECRET_MASK
     );
@@ -452,9 +444,8 @@ export class MigrationEditPage extends Page {
     request
       .then((response) => {
         this.safeSetState({ checking: false, checkResult: response.data });
-        // a working connection is exactly what the picker was waiting for, and a migration
-        // cannot be saved until something is picked, so fetch the list now rather than
-        // making the next step a second button
+        // a working connection is what the picker was waiting for, and nothing can be saved
+        // until something is picked, so fetch the list rather than asking for a second click
         if (response.data && response.data.ok && 'kaltura' === this.state.provider) {
           this.onLoadCategoriesClick();
         }
@@ -541,9 +532,8 @@ export class MigrationEditPage extends Page {
   }
 
   saveProblem() {
-    // the reason saving is blocked, or '' when it is not. The server checks all of this
-    // too and is the one that counts: this only stops someone submitting a form that would
-    // bounce straight back.
+    // the reason saving is blocked, or '' when it is not. The server checks it too and is
+    // the one that counts: this only stops a form that would bounce straight back.
     if ('kaltura' === this.state.provider && !this.selectedCategoryIds().length) {
       return translateString('Pick at least one category to migrate.');
     }
@@ -638,8 +628,8 @@ export class MigrationEditPage extends Page {
       return null;
     }
     const stats = result.stats || {};
-    // captions are absent on purpose: counting them up front means fetching every entry id
-    // and batching through them, so the run counts them as it discovers them instead
+    // captions are absent on purpose: counting them up front means fetching every entry id,
+    // so the run counts them as it discovers them
     const rows =
       'youtube' === this.state.provider
         ? [['Media', stats.entries]]
@@ -648,6 +638,7 @@ export class MigrationEditPage extends Page {
             ['Media', stats.entries],
             ['Categories', stats.categories],
             ['Channels', stats.channels],
+            ['Playlists', stats.playlists],
             ['Groups', stats.groups],
           ];
 
@@ -817,8 +808,7 @@ export class MigrationEditPage extends Page {
   pageContent() {
     const { provider, connection, options } = this.state;
     if (!provider) {
-      // an existing migration carries its source on the record, so it is only known
-      // once the record has loaded
+      // an existing migration carries its source on the record, known once it has loaded
       return <p>{translateString('Loading')}…</p>;
     }
 
@@ -982,8 +972,8 @@ export class MigrationEditPage extends Page {
 
             <div className="migration-edit-actions">
               {scheduled ? (
-                // saving is what arms the schedule, so with one set there is only one
-                // sensible action. Starting now as well would be two contradictory orders
+                // saving is what arms the schedule, so starting now as well would be two
+                // contradictory orders
                 <button onClick={this.onSaveClick} disabled={this.state.saving || '' !== saveProblem}>
                   {translateString('Save and schedule migration')}
                 </button>

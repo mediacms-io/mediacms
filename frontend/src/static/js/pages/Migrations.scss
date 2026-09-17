@@ -1,10 +1,8 @@
 // Shared by MigrationsPage, MigrationEditPage and MigrationDetailPage.
-// Imported by all three; webpack dedupes it to a single module.
 //
-// Colours come from the portal's own theme rather than being hardcoded:
-// --theme-color is what an installation configures, falling back to
-// --default-theme-color. Status colours reuse the values from
-// css/includes/form_controls/_buttons.scss so they match the rest of the site.
+// Colours come from the portal's own theme rather than being hardcoded: --theme-color is
+// what an installation configures, falling back to --default-theme-color. Status colours
+// reuse css/includes/form_controls/_buttons.scss so they match the rest of the site.
 
 $mig-success: #00a28b;
 $mig-warning: #e09f1f;
@@ -16,9 +14,8 @@ $mig-radius: 2px;
   border-radius: $mig-radius;
 }
 
-// the lists on the edit tabs. A box around a list of rows that are already separated from
-// each other reads as a table nobody asked for, so these carry no outline: the rows do the
-// grouping, and a heading above them says what they are.
+// the lists on the edit tabs. No outline: the rows do the grouping, and a box around
+// them would read as a table nobody asked for.
 @mixin mig-list {
   border: 0;
   border-radius: 0;
@@ -30,9 +27,8 @@ $mig-radius: 2px;
   opacity: 0.65;
 }
 
-// mirrors MediaCMS's own action buttons (see .category-btn in
-// components/BulkActionCategoryModal.scss) so these pages do not look
-// like a different application
+// mirrors MediaCMS's own action buttons (.category-btn in
+// components/BulkActionCategoryModal.scss)
 @mixin mig-btn {
   margin-right: 0;
   padding: 10px 20px;
@@ -319,8 +315,8 @@ $mig-radius: 2px;
   color: var(--theme-color, var(--default-theme-color));
 }
 
-// sits next to the source badge it refers to. The link back to the listing is the one
-// that claims the free space, so only it may have an auto margin
+// sits next to the source badge it refers to. Only the link back to the listing may
+// have an auto margin, since it is what claims the free space.
 .migration-edit-source-change {
   font-size: 12px;
   color: var(--links-color);
@@ -602,14 +598,8 @@ $mig-radius: 2px;
   }
 }
 
-// appearance:none is set globally, so an unstyled checkbox renders as nothing.
-// MediaCMS's own .checkbox-label pattern hides the input at left:-999em and
-// expects a sibling .selectbox span to be the visual control; there is no plain
-// (non-switcher) example of that in the codebase and its :checked rule sets no
-// background-image, so the control is drawn explicitly here instead.
-// a field that belongs to the option above it. It is a direct child of the options card, so
-// it would otherwise pick up the flex row the checkbox labels use and put the caption, the
-// input and the hint all on one line
+// a field belonging to the option above it. As a direct child of the options card it
+// would otherwise pick up the flex row and sit on one line with the caption and hint.
 .migration-edit-options > label.migration-edit-nested {
   display: block;
   padding: 12px 14px 14px 40px;
@@ -641,6 +631,8 @@ $mig-radius: 2px;
   }
 }
 
+// appearance:none is set globally, so an unstyled checkbox renders as nothing, and
+// MediaCMS's own .checkbox-label pattern has no plain non-switcher example to follow
 .migration-edit-options input[type='checkbox'] {
   flex: 0 0 auto;
   width: 16px;
@@ -730,8 +722,7 @@ $mig-radius: 2px;
   }
 }
 
-// the link back to the listing takes the free space, so the actions stay tight
-// together at the far right instead of spreading across the header
+// the link back to the listing takes the free space, so the actions stay tight right
 .migrations-back {
   margin-left: auto;
   font-size: 12px;
@@ -744,8 +735,7 @@ $mig-radius: 2px;
   }
 }
 
-// shared by the listing and the migration page, so one action means one icon
-// everywhere. Labels live in title and aria-label rather than on screen
+// shared by the listing and the migration page. Labels live in title and aria-label.
 .migrations-icon {
   display: inline-flex;
   align-items: center;
@@ -946,8 +936,7 @@ $mig-radius: 2px;
 }
 
 .migration-detail-search {
-  // the row is flex, so this claims the free space and pushes itself and the
-  // filter button to the right of the heading
+  // the row is flex, so this claims the free space and pushes the filter button right
   margin-left: auto;
   width: 260px;
   max-width: 46%;

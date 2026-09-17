@@ -1,9 +1,7 @@
 """Replace animated gif hover previews with the short mp4 ones.
 
-Migration 0019 switches new media over but deliberately leaves what is already there alone,
-so a portal upgraded from an older version keeps serving its gifs. This is the opt in for
-finishing the job: it re-encodes the preview for media that still has a gif, and removes the
-gif once the mp4 is in place.
+Migration 0019 switches new media over and leaves what is already there alone, so an
+upgraded portal keeps serving its gifs. This is the opt in for finishing the job.
 """
 
 from django.core.management.base import BaseCommand
@@ -82,8 +80,8 @@ class Command(BaseCommand):
     def _new_row(self, media, profile):
         """A row for encode_media to fill in.
 
-        encode_media exits at once on an id it cannot find, so the row has to exist before
-        the task is handed its id, in both the queued and the immediate case.
+        encode_media exits at once on an id it cannot find, so the row has to exist
+        first, queued or immediate.
         """
         Encoding.objects.filter(media=media, profile=profile).delete()
         return Encoding.objects.create(media=media, profile=profile, status="pending")
@@ -100,8 +98,8 @@ class Command(BaseCommand):
             return True
 
         row = self._new_row(media, profile)
-        # apply() rather than delay(): one at a time, so a whole library does not arrive on
-        # the long_tasks queue at once and take the machine down with it
+        # apply() rather than delay(): one at a time, so a whole library does not arrive
+        # on long_tasks at once
         encode_media.apply(args=[media.friendly_token, profile.id, row.id], kwargs={"force": True})
 
         return bool(self._existing_mp4(media, profile))
@@ -109,8 +107,8 @@ class Command(BaseCommand):
     def _drop_gif(self, encoding):
         """Remove the gif encoding, then point the media at the mp4.
 
-        Encoding's post_delete removes the file and, for a preview, clears the media's
-        preview_file_path, so only the re-pointing is left to do here.
+        Encoding's post_delete removes the file and clears preview_file_path, so only
+        the re-pointing is left.
         """
         media = encoding.media
         encoding.delete()

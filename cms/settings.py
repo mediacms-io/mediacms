@@ -583,8 +583,7 @@ USE_IDENTITY_PROVIDERS = False
 USE_LTI = False  # Enable LTI 1.3 integration
 
 # Migration Service
-# number of items handled per orchestrator page. Media files can be large,
-# so this is deliberately small
+# items per orchestrator page, small because media files can be large
 MIGRATION_PAGE_SIZE = 10
 # metadata API calls are small and must fail fast
 MIGRATION_API_TIMEOUT = 60
@@ -592,9 +591,8 @@ MIGRATION_API_TIMEOUT = 60
 MIGRATION_DOWNLOAD_TIMEOUT = 60 * 30
 MIGRATION_MAX_RETRIES = 3
 
-# Kaltura application-wide role name -> MediaCMS role understood by
-# User.set_role_from_mapping. An empty value means "plain user".
-# is_superuser/is_staff are never granted by an import.
+# Kaltura role name -> a role User.set_role_from_mapping understands. An empty value
+# means "plain user"; is_superuser/is_staff are never granted by an import.
 KALTURA_ROLE_MAP = {
     "viewerRole": "",
     "privateOnlyRole": "",

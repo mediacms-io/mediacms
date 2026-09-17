@@ -70,8 +70,7 @@ class TestImportUser(TestCase):
         self.assertEqual(User.objects.filter(email="jdoe@example.edu").count(), 1)
 
     def test_a_linked_pre_existing_account_does_not_get_a_kaltura_role(self):
-        # roles apply only to accounts this migration created: elevating someone
-        # who already had a local account is not the migration's business
+        # roles apply only to accounts this migration created
         existing = create_account(email="jdoe@example.edu")
         self.provider.users["jdoe"]["roleName"] = "partnerAdminRole"
 
@@ -82,8 +81,7 @@ class TestImportUser(TestCase):
         self.assertFalse(user.is_manager)
 
     def test_linking_to_an_existing_user_never_strips_their_privileges(self):
-        # set_role_from_mapping resets every permission flag when handed an
-        # unmapped value, so an unmapped Kaltura role must not reach it
+        # set_role_from_mapping resets every permission flag on an unmapped value
         existing = create_account(email="jdoe@example.edu")
         existing.advancedUser = True
         existing.is_editor = True
@@ -115,9 +113,8 @@ class TestImportUser(TestCase):
             self.assertFalse(user.is_staff, f"{role} granted is_staff")
 
     def test_two_emailless_source_users_do_not_share_one_account(self):
-        # "a!user" and "a#user" both sanitise to "a-user": the spec's own
-        # "a.user" / "a=user" pair does not collide because "." is a
-        # permitted username character and survives sanitisation unchanged.
+        # "a!user" and "a#user" both sanitise to "a-user", while "a.user" / "a=user" do not
+        # collide because "." is a permitted username character
         self.provider.users["a!user"] = {
             "id": "a!user",
             "email": "",
@@ -168,9 +165,8 @@ class TestResolveOwner(TestCase):
 class TestOnlyMediaOwnersAreCreated(TestCase):
     """Users are created only for the owner of an imported media.
 
-    There is exactly one path to User(): import_media_entry -> resolve_owner ->
-    import_user. Nothing enumerates the source directory, so an account that owns
-    no media is never touched.
+    One path to User(): import_media_entry -> resolve_owner -> import_user. Nothing
+    enumerates the source directory, so an account owning no media is never touched.
     """
 
     fixtures = ["fixtures/encoding_profiles.json"]

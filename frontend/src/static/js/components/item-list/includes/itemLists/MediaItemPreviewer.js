@@ -75,9 +75,8 @@ export default class MediaItemPreviewer {
       this.extensions.fallback = { elem: document.createElement('img'), type: 'jpeg' };
     }
 
-    // an extension none of the branches above knew about leaves both of these unset, and
-    // every line below dereferences them. Previews are a decoration: an unrecognised one
-    // must render nothing, not throw on the way to building the element.
+    // an unrecognised extension leaves both unset and every line below dereferences
+    // them. A preview is a decoration: it must render nothing, not throw.
     this.extensions.anim = this.extensions.anim || [];
     this.extensions.fallback = this.extensions.fallback || {};
 

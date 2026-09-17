@@ -145,9 +145,8 @@ a.item-thumb {
   transition: all 750ms;
 }
 
-// the video preview needs to stay hit testable, since it is what starts playback on
-// hover, so it fades rather than being hidden. It carries no controls, so a click on it
-// still reaches the link the thumbnail sits in.
+// fades rather than hidden: it is what starts playback on hover, so it must stay hit
+// testable, and it carries no controls so a click still reaches the thumbnail's link.
 .item-video-preview {
   position: absolute;
   top: 0;

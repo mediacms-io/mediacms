@@ -253,8 +253,7 @@ class TestKalturaPagination(TestCase):
         self.assertEqual(next_cursor, cursor)
 
     def test_a_caller_filter_cannot_overwrite_the_cursor_boundary(self):
-        # the orchestrator passes the user's static created_after on every page;
-        # it must never reset an advanced cursor
+        # the user's static created_after must never reset an advanced cursor
         cursor = {"created_at": 300, "seen_ids": ["1_c"]}
         page = {"objects": [{"id": "1_d", "createdAt": 400}]}
         with mock.patch.object(self.client, "_post", return_value=page) as post:

@@ -15,8 +15,8 @@ from ..serializers import CategorySerializer, TagSerializer
 def visible_categories(request, show_lms=None):
     """Categories the requesting user is allowed to see
 
-    Single place where category visibility is decided, so that listing a
-    category and retrieving one by uid can never disagree.
+    One place where category visibility is decided, so listing a category and retrieving
+    one by uid cannot disagree.
     """
 
     if show_lms is None:
@@ -71,8 +71,8 @@ class CategoryDetail(APIView):
         },
     )
     def get(self, request, uid, format=None):
-        # visible_categories() keeps this from becoming an oracle for the
-        # existence and title of RBAC categories the user is not a member of
+        # visible_categories() keeps this from becoming an oracle for RBAC categories the
+        # user is not a member of
         category = visible_categories(request).filter(uid=uid).first()
         if not category:
             return Response({"detail": "not found"}, status=status.HTTP_404_NOT_FOUND)

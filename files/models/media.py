@@ -43,11 +43,9 @@ HLS_VALID_RESOLUTIONS = [144, 240, 360, 480, 720, 1080, 1440, 2160]
 def hls_stream_resolution(resolution):
     """The resolution label to advertise for one HLS stream.
 
-    The number a viewer recognises is the short side: 1920x1080 and 1080x1920 are
-    both 1080. A stream this portal did not transcode itself can have a short side
-    that is not a standard value at all - an imported 480x272 or 1024x576
-    rendition - so it snaps to the nearest standard one. Otherwise the menu ends
-    up advertising a resolution the file does not have.
+    The number a viewer recognises is the short side: 1920x1080 and 1080x1920 are both
+    1080. A stream this portal did not transcode can have a non standard short side, an
+    imported 480x272, so it snaps to the nearest standard one.
     """
     if not resolution:
         return None
@@ -58,9 +56,8 @@ def hls_stream_resolution(resolution):
 def add_hls_stream(res, bandwidths, suffix, stream_info, uri):
     """Add one HLS stream to the info dict, keyed by its resolution label.
 
-    Two renditions can share a resolution, and the key is that resolution: keep
-    the higher bitrate one rather than letting whichever comes last silently
-    overwrite - and disappear from - the quality menu.
+    Two renditions can share a resolution, which is the key, so keep the higher bitrate
+    one rather than letting whichever comes last overwrite it.
     """
     resolution = hls_stream_resolution(getattr(stream_info, "resolution", None))
     if resolution is None:
@@ -440,8 +437,8 @@ class Media(models.Model):
 
         if self.media_type == "video":
             self.set_thumbnail(force=True)
-            # _do_not_transcode is set per instance by the migration service, so a
-            # single import can skip transcoding without disabling it site wide
+            # _do_not_transcode is set per instance by the migration service, so one import can
+            # skip transcoding without disabling it site wide
             if settings.DO_NOT_TRANSCODE_VIDEO or getattr(self, "_do_not_transcode", False):
                 self.encoding_status = "success"
                 self.save()
@@ -1073,9 +1070,8 @@ def media_save(sender, instance, created, **kwargs):
         from ..methods import notify_users
 
         instance.media_init()
-        # _skip_admin_notification is set per instance by bulk importers: a
-        # migration would otherwise email the admin list and every migrated owner
-        # once per imported media
+        # _skip_admin_notification is set per instance by bulk importers, or a migration would
+        # email the admin list and every migrated owner once per media
         if not getattr(instance, "_skip_admin_notification", False):
             notify_users(friendly_token=instance.friendly_token, action="media_added")
 
@@ -1146,7 +1142,7 @@ def media_m2m(sender, instance, **kwargs):
         for tag in instance.tags.all():
             tag.update_tag_media()
 
-    # the search vector holds the category titles and descriptions, and m2m is written
-    # after post_save, so it has to be refreshed here or it stays a save behind
+    # the search vector holds category titles, and m2m is written after post_save, so it
+    # has to be refreshed here or it stays a save behind
     if kwargs.get("action") in ("post_add", "post_remove", "post_clear"):
         instance.update_search_vector()

@@ -198,16 +198,16 @@ def categories(request):
 def edit_category(request, uid):
     """Edit one category's title, description and thumbnail.
 
-    Deliberately a plain Django form rather than part of the single page app: the people who
-    need it are administrators and the managers of a group, it is used rarely, and a server
-    rendered form is one place to enforce who may open it instead of two.
+    A plain Django form rather than part of the single page app: it is used rarely, by
+    administrators and group managers, and a server rendered form enforces who may open
+    it in one place instead of two.
     """
     category = Category.objects.filter(uid=uid).first()
     if not category:
         return HttpResponseRedirect("/")
 
-    # the same check the listing uses to decide whether to offer the link at all. Checked
-    # again here because a link that is merely absent is not access control
+    # the same check the listing uses to offer the link, repeated because a link that is
+    # merely absent is not access control
     if not can_edit_category(request.user, category):
         return HttpResponseRedirect(category.get_absolute_url())
 
@@ -682,8 +682,7 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    # uid, not title: titles are not unique, so the filter needs the uid to
-    # tell two same named categories apart
+    # uid, not title: titles are not unique
     categories = Category.objects.all().order_by('title').values('uid', 'title')
     context = {'categories': json.dumps(list(categories))}
     return render(request, "cms/manage_media.html", context)

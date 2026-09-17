@@ -30,8 +30,8 @@ function primaryAction(status) {
   if ('paused' === status) return { action: 'resume', icon: 'play_arrow', label: translateString('Resume') };
   if ('pending' === status) return { action: 'start', icon: 'play_arrow', label: translateString('Start') };
   if ('success' === status || 'error' === status || 'aborted' === status) {
-    // a finished run can be swept again: whatever was imported is skipped, so this
-    // retries the failures and picks up anything added at the source since
+    // a finished run can be swept again: what was imported is skipped, so this retries
+    // the failures and picks up anything new at the source
     return { action: 'rerun', icon: 'refresh', label: translateString('Run again') };
   }
   return null;

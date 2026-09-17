@@ -255,8 +255,8 @@ class CategorySerializer(serializers.ModelSerializer):
     def get_edit_url(self, obj):
         """Where this viewer may edit the category, or empty if they may not.
 
-        Answered per viewer rather than shipped as a flag, so a listing cannot offer a link
-        that leads to a redirect. The page checks again on its own account.
+        Per viewer rather than a flag, so a listing cannot offer a link that leads to a
+        redirect. The page checks again itself.
         """
         request = self.context.get("request")
         if request is None or not can_edit_category(request.user, obj):

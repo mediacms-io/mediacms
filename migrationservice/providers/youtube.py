@@ -1,15 +1,12 @@
 """Importing video from YouTube, through yt-dlp.
 
-There is no account to sign in to and no catalogue to walk: what a migration names is a list
-of things to fetch, which may be video urls or ids, a playlist, or a channel. yt-dlp resolves
-all of those through one entry point, so the source is a text field rather than a credential.
+There is no account to sign in to and no catalogue to walk: a migration names a list of
+things to fetch, and yt-dlp resolves urls, ids, playlists and channels through one call.
 
-YouTube no longer serves a file with video and audio in it. Every stream is one or the other,
-so a playable file is always a mux of two, which yt-dlp does with ffmpeg. The video half is
-asked for as h264 in mp4 even though better codecs are offered at higher resolutions, because
-h264 is what this portal's profiles and its player are built around: the merged file can then
-be attached as an encoding as it is, and nothing has to be transcoded. The cost is a ceiling,
-since above roughly 1080p YouTube offers only VP9 and AV1.
+Every stream YouTube serves is video only or audio only, so a playable file is a mux of
+two, which yt-dlp does with ffmpeg. The video half is asked for as h264 in mp4, what this
+portal's profiles and player are built around, so the merged file can be attached as an
+encoding untouched. The cost is a ceiling: above roughly 1080p only VP9 and AV1 are offered.
 """
 
 import logging
@@ -20,19 +17,26 @@ from .base import BaseProvider
 
 logger = logging.getLogger(__name__)
 
-# the only captions worth taking. YouTube offers automatic ones in 150+ languages, which
-# would attach that many subtitle rows to every video and say nothing extra.
+# the only captions worth taking: YouTube's automatic ones run to 150+ languages
 CAPTION_LANGUAGE = "en"
 
 # a bare id, as opposed to a url
 VIDEO_ID = re.compile(r"^[\w-]{11}$")
 
+# what YouTube says to a request it will not serve anonymously. It says nothing about
+# the video and everything about where the request came from, so the answer is cookies.
+BOT_CHECK_MARKERS = ("sign in to confirm", "not a bot", "confirm you", "use --cookies")
+
+
+def is_bot_check(error):
+    text = str(error or "").lower()
+    return any(marker in text for marker in BOT_CHECK_MARKERS)
+
 
 def parse_sources(raw):
     """The things to fetch, one per line or comma separated.
 
-    A bare 11 character id is expanded to a watch url so that yt-dlp does not have to guess
-    what it is; everything else is passed through as typed.
+    A bare 11 character id is expanded to a watch url; everything else is passed through.
     """
     parts = []
     for chunk in re.split(r"[\s,]+", str(raw or "")):
@@ -46,9 +50,8 @@ def parse_sources(raw):
 def short_side(stream):
     """The number a viewer recognises for a stream: its shorter dimension.
 
-    720x1280 and 1280x720 are both 720. A vertical video read by its height would be filed
-    as 1080 when it is a 720, and a ladder planned on height would skip its best stream for
-    being "too tall". hls_stream_resolution reads the short side for the same reason.
+    720x1280 and 1280x720 are both 720: read by height, a vertical video would be filed as
+    1080 and skip its best stream for being "too tall". hls_stream_resolution agrees.
     """
     width, height = stream.get("width"), stream.get("height")
     if width and height:
@@ -59,9 +62,8 @@ def short_side(stream):
 def pick_profile(resolution, profiles):
     """The encode profile a fetched file of this resolution should be filed under.
 
-    The nearest profile at or below it, never above: a file is allowed to be better than its
-    label but never worse, and hls_stream_resolution snaps the same way, so the download
-    list and the player's quality menu agree on one number.
+    The nearest profile at or below, never above: a file may be better than its label but
+    never worse, and hls_stream_resolution snaps the same way, so both agree on one number.
     """
     if not resolution:
         return None
@@ -79,8 +81,8 @@ class YouTubeProvider(BaseProvider):
     retired_connection_keys = ("channel_id", "api_key")
 
     default_options = {
-        # every imported video belongs to this existing MediaCMS user. YouTube uploader
-        # names are not accounts here and no attempt is made to turn them into any
+        # every imported video belongs to this existing user: YouTube uploader names are not
+        # accounts here
         "fallback_username": "admin",
         "import_captions": True,
         "preserve_views": False,
@@ -91,13 +93,13 @@ class YouTubeProvider(BaseProvider):
 
     @classmethod
     def source_system(cls, connection):
-        # there is one YouTube, so every migration from it shares an identity and a video
-        # already imported by one is skipped by the next
+        # one YouTube, so migrations share an identity and skip each other's videos
         return "youtube"
 
     def __init__(self, connection, options):
         super().__init__(connection, options)
         self._cookie_file = None
+        self._anonymous_blocked = False
 
     # ------------------------------------------------------------------ yt-dlp
 
@@ -116,25 +118,35 @@ class YouTubeProvider(BaseProvider):
     def _attempt(self, work):
         """Run one yt-dlp call, anonymously first and with the cookies only if that fails.
 
-        Cookies are an account's whole session and YouTube rotates them, so a jar exported
-        from an ordinary browser window is often dead within hours. Sending it on every
-        request meant one stale jar broke public video that needed no credentials at all,
-        which is the wrong way round: the credential should rescue a failure, not cause one.
-
-        Public video therefore stays anonymous, and nothing about the account is sent unless
-        something actually could not be read without it.
+        YouTube rotates cookies, so an exported jar is often dead within hours. Sending it
+        on every request let one stale jar break public video: a credential should rescue a
+        failure, not cause one. Some hosts cannot read anything anonymously, since YouTube
+        bot checks datacentre addresses, so the first such answer is remembered and a long
+        run wastes one request rather than one per video.
         """
+        if self._anonymous_blocked and self._has_cookies():
+            return work(True)
+
         try:
             return work(False)
         except Exception as anonymous_error:  # noqa: BLE001 - the retry decides what to raise
+            if is_bot_check(anonymous_error):
+                self._anonymous_blocked = True
+
             if not self._has_cookies():
+                if is_bot_check(anonymous_error):
+                    raise RuntimeError(
+                        "YouTube answered with a bot check, which it does for requests from a "
+                        "server address whether the video is public or not. This needs cookies: "
+                        f"paste a freshly exported cookies.txt into the connection. ({anonymous_error})"
+                    ) from anonymous_error
                 raise
+
             logger.info("youtube: retrying with cookies after %s", str(anonymous_error)[:160])
             try:
                 return work(True)
             except Exception as cookie_error:  # noqa: BLE001
-                # both failed, so say so: a stale jar and a genuinely unavailable video look
-                # nothing alike, and reporting only the second hides which happened
+                # say both failed: a stale jar and an unavailable video look nothing alike
                 raise RuntimeError(f"without cookies: {anonymous_error}; with cookies: {cookie_error}") from cookie_error
 
     def _has_cookies(self):
@@ -158,10 +170,8 @@ class YouTubeProvider(BaseProvider):
     def _yt_dlp():
         """yt-dlp, imported on use.
 
-        Every provider is imported when the package is, so importing this at module level
-        would make yt-dlp a hard dependency of a portal that migrates nothing, or of one
-        migrating from somewhere else. The message is worth catching properly: yt-dlp needs
-        upgrading often, because YouTube keeps changing what its pages look like.
+        Every provider is imported when the package is, so at module level this would make
+        yt-dlp a hard dependency of a portal that migrates nothing.
         """
         try:
             import yt_dlp
@@ -231,8 +241,7 @@ class YouTubeProvider(BaseProvider):
         if phase != "media":
             raise ValueError(f"Unknown migration phase: {phase}")
 
-        # the whole list is resolved once and paged in memory. A source is a handful of
-        # requests at most, and holding the order matters more than holding the memory
+        # resolved once and paged in memory: a source is a handful of requests at most
         cursor = dict(cursor or {})
         ids = cursor.get("ids")
         if ids is None:
@@ -270,8 +279,8 @@ class YouTubeProvider(BaseProvider):
     def h264_streams(self, source_id):
         """The h264 video streams on offer, best one per height, tallest first.
 
-        One per height because YouTube lists several encodes of the same size and only the
-        highest bitrate of them is worth having.
+        One per height: YouTube lists several encodes of a size, and only the highest
+        bitrate is worth having.
         """
         info = self._extract(f"https://www.youtube.com/watch?v={source_id}")
         best = {}
@@ -289,14 +298,10 @@ class YouTubeProvider(BaseProvider):
     def download_renditions(self, source_id, dest_dir, wanted_heights):
         """Fetch one mp4 per wanted height, muxed with the audio. [(path, height)].
 
-        Every stream YouTube serves is video only or audio only, so each rendition is its
-        own download joined to the same audio by ffmpeg. That is a container change rather
-        than a re-encode, so a whole ladder costs bandwidth and almost no CPU, which is the
-        point: nothing has to be transcoded.
-
-        Heights are short sides throughout, so a vertical video ladders the same way a
-        landscape one does. A wanted size with no stream at or below it is skipped rather
-        than upscaled, and two that resolve to the same stream produce one file.
+        Each rendition is its own video-only download joined to the same audio by ffmpeg,
+        a container change rather than a re-encode, so a whole ladder costs bandwidth and
+        almost no CPU. Heights are short sides throughout. A wanted size with no stream at
+        or below it is skipped rather than upscaled.
         """
         streams = self.h264_streams(source_id)
         if not streams:
@@ -308,8 +313,8 @@ class YouTubeProvider(BaseProvider):
             if match is not None:
                 chosen.setdefault(match["format_id"], match)
         if not chosen:
-            # nothing was asked for, or every request was below the smallest stream. Take
-            # the best there is, so a media never arrives with no file at all
+            # nothing asked for, or everything below the smallest stream: take the best there
+            # is, so a media never arrives with no file at all
             chosen[streams[0]["format_id"]] = streams[0]
 
         produced = []

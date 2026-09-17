@@ -67,8 +67,8 @@ ERRORS_LIST = [
 ]
 
 
-# where to take the preview clips from, as a fraction of the duration. Spread across the
-# whole video: a preview cut from the opening shows the title card of every lecture
+# where to take the preview clips from, as a fraction of the duration. Spread out, or a
+# preview cut from the opening shows the title card of every lecture.
 PREVIEW_POSITIONS = (0.08, 0.23, 0.38, 0.53, 0.68, 0.83)
 PREVIEW_SEGMENT_SECONDS = 1
 PREVIEW_FPS = 12
@@ -78,8 +78,8 @@ PREVIEW_WIDTH = 320
 def preview_positions(duration):
     """The seconds to cut preview clips from, for a video of this duration.
 
-    A video too short to give distinct moments gets a single clip from the start, which
-    is also what keeps a video shorter than the first offset from producing nothing.
+    A video too short for distinct moments gets one clip from the start, which also keeps
+    one shorter than the first offset from producing nothing.
     """
     if not duration or duration < len(PREVIEW_POSITIONS) * PREVIEW_SEGMENT_SECONDS:
         return [0]
@@ -89,9 +89,8 @@ def preview_positions(duration):
 def produce_preview(media, output_path, extension="mp4"):
     """Build the hover preview: short clips sampled across the whole video.
 
-    Returns True when output_path holds a preview. Each clip is cut and re-encoded
-    separately, then the clips are joined, because the concat demuxer needs its inputs to
-    share a format.
+    Returns True when output_path holds a preview. Clips are cut separately and then
+    joined, because the concat demuxer needs its inputs to share a format.
     """
     source = media.media_file.path
     positions = preview_positions(media.duration)
@@ -990,11 +989,10 @@ def update_listings_thumbnails():
     cleared = 0
     qs = Category.objects.filter()
     for object in qs:
-        # An RBAC category holds private media by design: that is what the group is for, and
-        # restricting the tile to public media leaves it blank for the very people who can
-        # see everything in it. Widening is safe here and only here, because such a category
-        # is never serialised to a non member (visible_categories filters it out), and the
-        # thumbnail file itself is gated by media_auth against the same group membership.
+        # An RBAC category holds private media by design, so restricting the tile to public
+        # media leaves it blank for the very people who can see everything in it. Safe here
+        # and only here: such a category is never serialised to a non member, and the
+        # thumbnail file is gated by media_auth against the same group membership.
         states = MEDIA_STATES_FOR_RBAC_TILE if object.is_rbac_category else ("public",)
         media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state__in=states, is_reviewed=True).order_by("-views").first()
         if media:
@@ -1003,8 +1001,8 @@ def update_listings_thumbnails():
             used_media.append(media.friendly_token)
             saved += 1
         elif object.listings_thumbnail:
-            # the media this was taken from is gone or is no longer public.
-            # Keeping the path would serve a broken image on the listings
+            # the media this was taken from is gone or no longer public, and keeping the path
+            # would serve a broken image on the listings
             object.listings_thumbnail = None
             object.save(update_fields=["listings_thumbnail"])
             cleared += 1

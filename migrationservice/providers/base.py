@@ -1,9 +1,8 @@
 class BaseProvider:
     """Interface every migration source implements.
 
-    Cursors are opaque JSON serialisable dicts owned by the provider. The
-    orchestrator stores whatever a provider hands back and passes it in again
-    on the next page, without interpreting it.
+    Cursors are opaque JSON serialisable dicts owned by the provider: the orchestrator
+    stores what it is handed and passes it back on the next page, uninterpreted.
     """
 
     name = ""
@@ -16,13 +15,11 @@ class BaseProvider:
     default_options = {}
 
     # options this provider used to have. A migration saved before one was removed still
-    # carries it, and the form posts back what it loaded, so these are dropped on save
-    # instead of rejected. Anything else unrecognised is still an error, which is what
-    # catches a typo in an API call.
+    # carries it, so these are dropped on save rather than rejected. Anything else
+    # unrecognised is still an error, which catches a typo in an API call.
     retired_options = ()
 
-    # connection fields this provider used to have. Dropped on save and never returned,
-    # so a credential the provider no longer uses cannot linger on an old record
+    # connection fields this provider used to have, dropped on save and never returned
     retired_connection_keys = ()
 
     def __init__(self, connection, options):

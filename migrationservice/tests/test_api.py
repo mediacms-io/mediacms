@@ -123,8 +123,7 @@ class TestCrud(ApiTestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_a_user_list_is_kept_while_the_option_is_off(self):
-        # turning the restriction off must not throw the list away, so it can be
-        # switched back on without retyping
+        # turning the restriction off must not throw the list away
         payload = {
             "name": "Test run",
             "provider": "kaltura",
@@ -228,9 +227,9 @@ class TestConnectionCheck(ApiTestCase):
     def _capture_options(self):
         """Record the options the provider was built with, rather than mocking them away.
 
-        The bug this guards against was invisible to a test that mocks
-        check_connection itself: the endpoint built the provider with no options at
-        all, so a restricted check answered with numbers for the whole portal.
+        The bug this guards was invisible to a test that mocks check_connection: the
+        endpoint built the provider with no options, so a restricted check answered
+        with numbers for the whole portal.
         """
         seen = {}
 
@@ -316,8 +315,7 @@ class TestRecordsAndProgress(ApiTestCase):
         super().setUp()
         self.login(self.admin)
         self.service = self.make_service(status="running", totals={"media_migrated": 7, "media_failed": 1})
-        # deliberately high ids: these point at nothing, and must not collide with a
-        # real object a test creates later, or a search would match them by accident
+        # deliberately high ids: these point at nothing and must not collide with a real object
         MigrationRecord.objects.create(service=self.service, object_type="media", source_id="1_a", status="success", log="ok", target_id=900001)
         MigrationRecord.objects.create(service=self.service, object_type="media", source_id="1_b", status="failed", log="boom")
         MigrationRecord.objects.create(service=self.service, object_type="user", source_id="jdoe", status="success", target_id=900002)

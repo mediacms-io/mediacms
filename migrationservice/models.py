@@ -31,9 +31,9 @@ MIGRATION_STATUS = (
     ("aborted", "Aborted"),
 )
 
-# "group" is also written to MigrationRecord.object_type and is deliberately absent here.
-# choices are not enforced by the database and nothing calls full_clean on a record, so
-# adding it would buy a nicer admin label at the cost of a migration for a cosmetic change.
+# "group" is also written to MigrationRecord.object_type and left out here on purpose:
+# choices are not enforced by the database, so adding it buys a nicer admin label at
+# the cost of a migration.
 OBJECT_TYPES = (
     ("media", "Media"),
     ("user", "User"),
@@ -155,10 +155,9 @@ class MigrationService(models.Model):
     def append_log(self, line):
         """Append one timestamped line to the phase level log.
 
-        Appended in the database, not read-modify-written in Python: several
-        workers import in parallel and each holds its own snapshot of the row, so
-        a Python level append silently erases every line another worker wrote in
-        the meantime. Right() caps the column without a second query.
+        Appended in the database, not read-modify-written in Python: parallel workers
+        each hold their own snapshot, so a Python level append erases the lines another
+        worker wrote. Right() caps the column without a second query.
         """
         stamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
         entry = f"{stamp} {line}\n"
@@ -170,10 +169,9 @@ class MigrationService(models.Model):
     def counted_totals(self):
         """Progress counts, derived from the mapping table.
 
-        Derived rather than incremented, for the same reason append_log appends in
-        the database: parallel workers lose read-modify-write counter updates, and
-        the symptom is a dashboard that under-reports for the whole run. The
-        mapping table is the source of truth and is indexed for this.
+        Derived rather than incremented, for the same reason append_log appends in the
+        database: parallel workers lose read-modify-write updates, and the symptom is a
+        dashboard that under-reports for the whole run.
         """
         totals = dict(self.totals or {})
         suffixes = {"success": "migrated", "failed": "failed", "skipped": "skipped"}
@@ -227,9 +225,8 @@ class MigrationRecord(models.Model):
     def target(self):
         """The MediaCMS object this record points at, or None if it is gone.
 
-        Resolved by lookup rather than held as a foreign key: object_type plus
-        target_id already identify it, and a per type FK does not generalise —
-        it is what left caption records with no way to detect a deleted target.
+        Resolved by lookup rather than a foreign key: object_type plus target_id already
+        identify it, and a per type FK does not generalise.
         """
         model = self.target_model()
         if model is None or self.target_id is None:

@@ -187,11 +187,9 @@ export function MediaItemVideoPreviewer(props) {
 
     const ext = imageExtension(props.url);
 
-    // A video preview is rendered and driven here. The legacy path below hands the url to
-    // MediaItemPreviewer, which builds a single <picture> for the whole page and re-appends
-    // its own extension to every url it is given, so it cannot serve a library holding both
-    // formats at once. Rendering the video directly leaves that machinery untouched for the
-    // animated images it was written for.
+    // A video preview is rendered and driven here. The legacy path hands the url to
+    // MediaItemPreviewer, which builds one <picture> for the whole page and re-appends its
+    // own extension, so it cannot serve a library holding both formats at once.
     if (-1 < VIDEO_PREVIEW_EXTENSIONS.indexOf(ext)) {
         return (
             <video

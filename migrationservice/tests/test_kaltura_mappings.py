@@ -23,6 +23,7 @@ from migrationservice.providers.kaltura import (
     category_title_and_description,
     category_tree_kind,
     category_type,
+    course_name_from_metadata,
     is_ignored_category,
     is_importable_category,
     is_instance_root,
@@ -52,8 +53,8 @@ class TestMediaState(TestCase):
         self.assertEqual(media_state([], DISPLAY_IN_SEARCH_NONE), "private")
 
     def test_the_ordinary_display_in_search_value_does_not_downgrade(self):
-        # PARTNER_ONLY is what every normal entry carries. Reading it as "hidden" turned
-        # every public entry on a portal into an unlisted one.
+        # PARTNER_ONLY is what every normal entry carries: read as "hidden" it turned every
+        # public entry on a portal into an unlisted one
         self.assertEqual(media_state([PRIVACY_ALL], DISPLAY_IN_SEARCH_PARTNER_ONLY), "public")
 
     def test_a_recycled_entry_is_downgraded(self):
@@ -64,9 +65,8 @@ class TestMediaState(TestCase):
         self.assertEqual(media_state([category]), "public")
 
     def test_a_public_category_that_only_members_may_add_to_is_still_public(self):
-        # KMS calls this "Public, Restricted": anyone including anonymous users may watch,
-        # only members may contribute. contributionPolicy is a publishing right, so it must
-        # not hide the content.
+        # KMS calls this "Public, Restricted": anyone may watch, only members contribute, and
+        # a publishing right must not hide the content
         category = {"privacy": PRIVACY_ALL, "appearInList": APPEAR_IN_LIST_PARTNER, "contributionPolicy": CONTRIBUTION_MEMBERS}
         self.assertEqual(media_state([category]), "public")
 
@@ -99,8 +99,7 @@ class TestCategoryType(TestCase):
         self.assertEqual(category_type({"privacy": PRIVACY_ALL, "appearInList": APPEAR_IN_LIST_PARTNER, "contributionPolicy": CONTRIBUTION_MEMBERS}), CATEGORY_PUBLIC)
 
     def test_shared_repository_lands_on_private(self):
-        # a Shared Repository channel is members only for viewing, so it arrives as
-        # MEMBERS_ONLY and is treated as a private channel
+        # a Shared Repository channel is members only for viewing, so it lands on private
         self.assertEqual(category_type({"privacy": PRIVACY_MEMBERS_ONLY, "appearInList": APPEAR_IN_LIST_MEMBERS_ONLY, "contributionPolicy": CONTRIBUTION_MEMBERS}), CATEGORY_PRIVATE)
 
     def test_restricted_by_listing(self):
@@ -146,8 +145,7 @@ class TestRoleMapping(TestCase):
         self.assertEqual(mediacms_role("", "Content Uploader"), "manager")
 
     def test_the_kmc_label_does_not_stop_a_portal_name_matching(self):
-        # the shipped rows read "Content Moderator (KMC)" but a portal reports the bare
-        # name, and on some portals systemName is the bare name too
+        # the shipped rows read "Content Moderator (KMC)", a portal the bare name
         self.assertEqual(mediacms_role("", "Manager"), "admin")
         self.assertEqual(mediacms_role("", "Publisher Administrator"), "admin")
         self.assertEqual(mediacms_role("", "Player Designer"), "manager")
@@ -195,10 +193,48 @@ class TestCategoryTitles(TestCase):
         title, _ = category_title_and_description("A>" + "x" * 200)
         self.assertEqual(len(title), 100)
 
+    def test_a_leaf_name_replaces_the_last_segment(self):
+        title, description = category_title_and_description("moodle_jPsFc>site>channels>14", "Intro to Databases")
+        self.assertEqual(title, "Intro to Databases")
+        self.assertEqual(description, "Intro to Databases")
+
+    def test_a_leaf_name_leaves_the_rest_of_the_path_alone(self):
+        title, description = category_title_and_description("moodle_jPsFc>site>channels>14>Week 1", "Intro to Databases")
+        self.assertEqual(title, "Intro to Databases")
+        self.assertEqual(description, "14: Intro to Databases")
+
     def test_a_real_category_named_channels_is_not_treated_as_scaffolding(self):
         title, description = category_title_and_description("Channels>Student Productions")
         self.assertEqual(title, "Student Productions")
         self.assertEqual(description, "Channels: Student Productions")
+
+
+class TestCourseNameFromMetadata(TestCase):
+    """Custom metadata as a live Moodle LTI integration writes it"""
+
+    MOODLE = (
+        '<?xml version="1.0"?>\n<metadata><Detail><Key>commentsPrivate</Key><Value/></Detail><Detail><Key>CourseName</Key><Value>Generic course with existing users added</Value></Detail></metadata>\n'
+    )
+    CHANNEL = "<metadata><AllowCommentsInChannel>true</AllowCommentsInChannel></metadata>"
+
+    def test_the_course_name_is_read_out_of_the_detail_list(self):
+        self.assertEqual(course_name_from_metadata([self.MOODLE]), "Generic course with existing users added")
+
+    def test_the_documents_a_category_carries_are_searched_in_turn(self):
+        self.assertEqual(course_name_from_metadata([self.CHANNEL, self.MOODLE]), "Generic course with existing users added")
+
+    def test_metadata_without_a_course_name_says_nothing(self):
+        self.assertEqual(course_name_from_metadata([self.CHANNEL]), "")
+
+    def test_an_empty_value_is_not_a_name(self):
+        self.assertEqual(course_name_from_metadata(["<metadata><Detail><Key>CourseName</Key><Value/></Detail></metadata>"]), "")
+
+    def test_unparseable_metadata_is_skipped_rather_than_raised(self):
+        self.assertEqual(course_name_from_metadata(["not xml at all", self.MOODLE]), "Generic course with existing users added")
+
+    def test_nothing_at_all(self):
+        self.assertEqual(course_name_from_metadata([]), "")
+        self.assertEqual(course_name_from_metadata(None), "")
 
 
 class TestUniqueCategoryTitle(TestCase):
@@ -353,10 +389,8 @@ class TestImportableCategory(TestCase):
 class TestFlavorMatchingAgainstRealKalturaData(TestCase):
     """Flavors as actually returned by a live Kaltura for a 4K entry.
 
-    The source carries two flavors at 360p. MediaCMS has one profile per
-    resolution, so without a bound on how far a flavor may be filed from its real
-    height the loser cascaded down to 144p — a 360p file offered to viewers as a
-    low bandwidth rendition.
+    The source carries two flavors at 360p, and MediaCMS has one profile per resolution,
+    so without a bound the loser cascaded down to 144p.
     """
 
     fixtures = ["fixtures/encoding_profiles.json"]
@@ -412,8 +446,8 @@ class TestTreeKind(TestCase):
         self.assertEqual(category_tree_kind({"privacyContexts": ""}), LMS_TREE)
 
     def test_a_payload_without_the_field_is_read_as_kms(self):
-        # the reading that honours the permission fields, so an unknown shape cannot
-        # publish something the source keeps restricted
+        # the reading that honours the permission fields, so an unknown shape cannot publish
+        # something the source keeps restricted
         self.assertEqual(category_tree_kind({}), KMS_TREE)
 
     def test_lms_permission_fields_are_inert(self):

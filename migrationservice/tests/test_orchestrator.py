@@ -19,8 +19,8 @@ VIDEO = "fixtures/small_video.mp4"
 
 def make_service(name="Kaltura production", **options):
     defaults = {
-        # these cases describe the on demand behaviour: owners and categories created as
-        # the media that need them arrive. TestPhases covers the two sweeping phases.
+        # owners and categories created on demand as the media that need them arrive;
+        # TestPhases covers the two sweeping phases
         "migrate_all_users": False,
         "create_users": True,
         "map_permissions": True,

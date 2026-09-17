@@ -17,10 +17,9 @@ SECRET_MASK = "••••••••"
 def clean_role_map(rows):
     """Normalise the role mapping rows the form sends.
 
-    Rows are dropped rather than rejected when they carry no target, since an operator
-    clearing a row is how a role is meant to become a plain user. A target the MediaCMS
-    side does not understand is refused, because set_role_from_mapping resets every
-    permission when handed a value it does not recognise.
+    A row with no target is dropped, since clearing one is how a role becomes a plain
+    user. An unrecognised target is refused: set_role_from_mapping resets every
+    permission when handed a value it does not know.
     """
     if not isinstance(rows, list):
         raise serializers.ValidationError({"options": "role_map must be a list of rows."})
@@ -87,17 +86,17 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
                     if stored.get(key):
                         connection[key] = stored[key]
                     else:
-                        # nothing stored to fall back on: storing the placeholder
-                        # itself would fail authentication later with a baffling error
+                        # nothing to fall back on: storing the placeholder would fail
+                        # authentication later with a baffling error
                         raise serializers.ValidationError({"connection": f"'{key}' was submitted as the placeholder; enter the real value."})
             missing = [key for key in klass.required_connection_keys if not str(connection.get(key) or "").strip()]
             if missing:
                 raise serializers.ValidationError({"connection": f"Missing required fields: {', '.join(missing)}"})
 
             if self.instance and self.instance.status == "running" and connection != self.instance.connection:
-                # the run is walking the source right now, from a cursor built against
-                # these credentials. Pointing it somewhere else mid sweep would carry that
-                # cursor to a portal it means nothing on. Options stay editable
+                # the run is walking the source from a cursor built against these
+                # credentials, and pointing it elsewhere mid sweep would carry that
+                # cursor to a portal it means nothing on. Options stay editable.
                 raise serializers.ValidationError({"connection": "This migration is running. Pause it before changing the connection."})
 
             attrs["connection"] = connection
@@ -110,9 +109,8 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
             if unknown:
                 raise serializers.ValidationError({"options": f"Unknown options: {', '.join(unknown)}"})
 
-            # a record saved before an option was removed still carries it, and the form
-            # posts back what it loaded. Drop it here so the record cleans itself up on
-            # the next save rather than failing to save at all
+            # a record saved before an option was removed still carries it, and the form posts
+            # back what it loaded, so it is dropped rather than failing the save
             for key in retired:
                 options.pop(key, None)
 
@@ -122,27 +120,25 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
             if "source_category_ids" in options:
                 category_ids = parse_comma_list(options["source_category_ids"])
                 if not category_ids:
-                    # there is no "migrate everything": a migration nobody has scoped would
-                    # sweep a whole portal by accident, and that is never what was wanted
+                    # there is no "migrate everything": an unscoped migration would sweep a
+                    # whole portal by accident
                     raise serializers.ValidationError({"options": "Pick at least one category to migrate. Test the connection first to load them."})
                 options["source_category_ids"] = ",".join(category_ids)
 
             if options.get("restrict_to_users"):
-                # the two narrowings are alternatives in the form, so the stored state says
-                # the same thing: naming the users is the choice that was made
+                # the two narrowings are alternatives in the form, so the stored state agrees
                 options["create_users"] = False
                 user_ids = parse_comma_list(options.get("source_user_ids"))
                 if not user_ids:
                     raise serializers.ValidationError({"options": "Restricting to specific users needs at least one Kaltura user id."})
                 if len(user_ids) > MAX_SOURCE_USER_IDS:
                     raise serializers.ValidationError({"options": f"Too many users listed, the maximum is {MAX_SOURCE_USER_IDS}."})
-                # store the cleaned list, so the filter sent to Kaltura is exactly
-                # what the page shows and no stray whitespace reaches the query
+                # store the cleaned list, so the filter matches what the page shows
                 options["source_user_ids"] = ",".join(user_ids)
 
             if options.get("quiet_hours_enabled"):
-                # refused rather than ignored: a window that silently does nothing would let
-                # a run hammer the portal through exactly the hours it was told to avoid
+                # refused rather than ignored: a window that silently does nothing would let a run
+                # hammer the portal through the hours it was told to avoid
                 for key in ("quiet_from", "quiet_to"):
                     if parse_clock(options.get(key)) is None:
                         raise serializers.ValidationError({"options": "Quiet hours need a start and an end, as HH:MM."})
@@ -155,8 +151,7 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError({"options": "Scheduling this migration needs a date and a time."})
                 if when < timezone.now():
                     raise serializers.ValidationError({"options": "Pick a time in the future. The portal's own clock is shown next to the field."})
-                # stored in the canonical form, so the armed task can compare the time it
-                # was queued for against the time now stored and recognise a stale schedule
+                # canonical form, so an armed task can recognise a stale schedule
                 options["scheduled_at"] = scheduled_at_text(when)
             else:
                 options["scheduled_at"] = ""
@@ -172,8 +167,8 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
         klass = get_provider_class(instance.provider)
         connection = dict(data.get("connection") or {})
         for key in getattr(klass, "retired_connection_keys", ()):
-            # a record saved before a credential was replaced still holds it. Nothing
-            # reads it, so it is not shown either, masked or otherwise
+            # a record saved before a credential was replaced still holds it, and nothing
+            # reads it, so it is not shown either
             connection.pop(key, None)
         for key in klass.secret_keys:
             if connection.get(key):
@@ -205,9 +200,8 @@ class MigrationRecordSerializer(serializers.ModelSerializer):
     def get_target_label(self, record):
         """How the imported object is named in MediaCMS.
 
-        A primary key means nothing to an operator comparing the two systems, and
-        for media it is not even what the URL uses. Each type has one natural
-        identifier: the friendly token, the username, the category title.
+        A primary key means nothing to an operator comparing the two systems, so each
+        type uses its natural identifier: friendly token, username, category title.
         """
         target = record.target()
         if target is None:

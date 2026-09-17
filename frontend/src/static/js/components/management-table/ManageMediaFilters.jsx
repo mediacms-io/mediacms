@@ -5,8 +5,7 @@ import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
 
-// Each entry is {uid, title}: the uid is what gets filtered on, since titles
-// are not unique.
+// Each entry is {uid, title}: the uid is filtered on, since titles are not unique
 const categories = window.CATEGORIES
   ? [{ id: 'all', title: 'All' }].concat(window.CATEGORIES.map((cat) => ({ id: cat.uid, title: cat.title })))
   : [{ id: 'all', title: 'All' }];

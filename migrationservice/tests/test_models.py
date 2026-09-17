@@ -132,7 +132,6 @@ class TestMigrationRecord(TestCase):
         self.assertIsNone(found)
 
     def test_a_deleted_caption_target_is_detected(self):
-        # captions had no FK, so target_exists() used to return True for them
-        # unconditionally even after the subtitle was gone
+        # captions have no FK, so target_exists() used to return True after deletion
         record = MigrationRecord.objects.create(service=self.service, object_type="caption", source_id="cap1", status="success", target_id=999999)
         self.assertFalse(record.target_exists())

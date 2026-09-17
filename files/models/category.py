@@ -1,4 +1,5 @@
 from django.db import models
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
@@ -6,6 +7,8 @@ from imagekit.processors import ResizeToFit
 
 from .. import helpers
 from .utils import category_thumb_path, generate_uid
+
+DEFAULT_CATEGORY_THUMBNAIL = "images/category_default.jpg"
 
 
 class Category(models.Model):
@@ -94,7 +97,7 @@ class Category(models.Model):
     def thumbnail_url(self):
         """Return thumbnail for category
         prioritize processed value of listings_thumbnail
-        then thumbnail
+        then thumbnail, then the portal's default
         """
 
         if self.thumbnail:
@@ -103,12 +106,13 @@ class Category(models.Model):
         if self.listings_thumbnail:
             return self.listings_thumbnail
 
-        # Optimize: Use first() directly instead of exists() + first() (saves one query)
-        media = Media.objects.filter(category=self, state="public").order_by("-views").first()
-        if media:
-            return media.thumbnail_url
+        if self.media_count:
+            # Optimize: Use first() directly instead of exists() + first() (saves one query)
+            media = Media.objects.filter(category=self, state="public").order_by("-views").first()
+            if media:
+                return media.thumbnail_url
 
-        return None
+        return static(DEFAULT_CATEGORY_THUMBNAIL)
 
     def save(self, *args, **kwargs):
         strip_text_items = ["title", "description"]
@@ -116,10 +120,9 @@ class Category(models.Model):
             setattr(self, item, strip_tags(getattr(self, item, None)))
 
         if self.__original_is_rbac_category and not self.is_rbac_category and self.listings_thumbnail:
-            # the tile on an RBAC category may have been taken from private media, which is
-            # only safe while the category is hidden from everyone outside its group. It is
-            # about to be listed to everybody, so drop it now rather than leave it showing
-            # until update_listings_thumbnails next runs, and let that task pick a public one
+            # the tile on an RBAC category may have been taken from private media, which was only
+            # safe while the category was hidden. It is about to be listed to everybody, so drop
+            # it now and let update_listings_thumbnails pick a public one.
             self.listings_thumbnail = None
             update_fields = kwargs.get("update_fields")
             if update_fields is not None:

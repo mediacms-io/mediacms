@@ -21,9 +21,8 @@ function downloadOptionsList() {
         for (g in encodings_info[k]) {
           if (encodings_info[k].hasOwnProperty(g)) {
             if ('success' === encodings_info[k][g].status && 100 === encodings_info[k][g].progress && null !== encodings_info[k][g].url) {
-              // each entry links to its own encoded file: the label already states
-              // that resolution and its size, so linking the original here would
-              // hand over a different file than the one offered
+              // each entry links to its own encoded file: the label states that resolution and
+              // size, so linking the original would hand over a different file
               const encodedUrl = encodings_info[k][g].url;
               const encodedFilename = encodedUrl.substring(encodedUrl.lastIndexOf('/') + 1) || media_data.title;
 

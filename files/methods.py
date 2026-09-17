@@ -107,10 +107,9 @@ def is_mediacms_editor(user):
 def can_edit_category(user, category):
     """Whether this user may change a category's title, description or thumbnail.
 
-    Portal managers always may. Beyond them, the only people who may are the managers of an
-    RBAC category, since that category belongs to their group rather than to the portal at
-    large. A contributor may put media into such a category but not rename the category
-    itself, which is the same split the RBAC roles draw everywhere else.
+    Portal managers always may, and beyond them only the managers of an RBAC category,
+    which belongs to their group rather than the portal at large. A contributor may put
+    media in such a category but not rename it.
     """
     if not (user and user.is_authenticated):
         return False

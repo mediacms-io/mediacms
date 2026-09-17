@@ -356,8 +356,8 @@ class EditSubtitleForm(forms.Form):
 class CategoryForm(forms.ModelForm):
     """Editing a category's presentation, and nothing else.
 
-    uid is deliberately absent: it is the category's identity, it appears in every link to
-    it, and on a migrated category it is the id the source portal knows it by.
+    uid is absent on purpose: it is the category's identity, it appears in every link to
+    it, and on a migrated category the source portal knows it by that id.
     """
 
     class Meta:

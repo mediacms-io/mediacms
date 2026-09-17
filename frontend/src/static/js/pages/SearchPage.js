@@ -23,9 +23,8 @@ export class SearchPage extends Page {
       searchQuery: SearchFieldStore.get('search-query'),
       searchCategories: SearchFieldStore.get('search-categories'),
       searchTags: SearchFieldStore.get('search-tags'),
-      // ?c= is a category uid, so the readable name has to be looked up.
-      // Until it resolves, fall back to the raw value, which is the title
-      // itself on legacy ?c=<title> links.
+      // ?c= is a category uid, so the readable name is looked up. Until it resolves, fall
+      // back to the raw value, which is the title itself on legacy ?c=<title> links.
       searchCategoryTitle: SearchFieldStore.get('search-categories'),
       // empty unless the server decided this viewer may edit this category
       categoryEditUrl: '',

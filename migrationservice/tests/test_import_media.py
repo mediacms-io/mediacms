@@ -349,8 +349,7 @@ class TestCategoryScoping(TestCase):
         self.assertFalse(Category.objects.filter(title="private").exists())
 
     def test_out_of_scope_categories_still_count_towards_the_publish_state(self):
-        # the gallery is public, so the entry is public despite also being in
-        # a members-only housekeeping category
+        # public gallery wins over the members-only housekeeping category
         media = import_media_entry(self.service, self.provider, "1_a")
         media.refresh_from_db()
         self.assertEqual(media.state, "public")

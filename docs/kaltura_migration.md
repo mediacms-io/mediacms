@@ -15,8 +15,8 @@ Only superusers can see or use it. The entry point is **Migrations** in the top 
 * Owners. An account is created for whoever owns an entry, or an existing account is reused
   when one matches.
 * Galleries and channels, as flat MediaCMS categories, each keeping its Kaltura id. Course
-  channels from an LMS integration come over the same way. See
-  [Sites and learning platforms](#sites-and-learning-platforms).
+  channels from an LMS integration come over the same way, titled by their course name rather
+  than by the LMS course id. See [Sites and learning platforms](#sites-and-learning-platforms).
 * Play counts, and whether the item is public, unlisted or private.
 * Category members and their permission level, when RBAC is turned on. See
   [Permissions](#permissions).
@@ -299,6 +299,28 @@ child named **InContext** and parks the media there, leaving the course itself e
 child is plumbing nobody browses, so no category is made for it and its media is rolled up to
 the course, which is the category a person recognises. Only in an LMS tree: a KMS gallery that
 somebody named InContext is a real category and is kept.
+
+**Course names.** An LTI integration names the course channel after the LMS course id, so the
+category is called `14` and nothing on it says otherwise: `name`, `description`, `tags` and
+`referenceId` are the id or empty. The name a person would recognise is in the custom metadata
+Kaltura keeps beside the category, under a `CourseName` key, and that is what the migrated
+category is titled. A portal with the metadata plugin switched off, or a course with no such
+key, keeps the id as its title and the import carries on.
+
+This is read per category, one extra API call, and only for LMS trees: a KMS gallery is named
+by whoever made it. A course already imported under its id keeps that title; rename it on the
+category edit page rather than importing it twice.
+
+**Courses are marked as courses.** A category migrated from an LMS tree is created with
+`is_lms_course` set, the same flag MediaCMS's own LTI integration sets on a course it creates,
+so the two kinds are told apart in the admin listing, in the LMS courses API and in the upload
+form when it runs embedded in an LMS. Nothing is wired to an LTI platform by it: the migrated
+category has no `lti_platform` and no `lti_context_id`, because the source knows the LMS course
+id and nothing about which platform configuration on this portal it belongs to.
+
+One consequence to know about: with `USE_LTI` on, `SHOW_LMS_COURSES_IN_CATEGORIES` defaults to
+False, which keeps LMS courses out of the public category listing. Migrated courses follow that
+setting like any other course. Set it True if they should appear there.
 
 ### Category identity
 

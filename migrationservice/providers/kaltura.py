@@ -3,6 +3,7 @@ import logging
 import re
 import time
 from urllib.parse import urlparse
+from xml.etree import ElementTree
 
 import requests
 from django.conf import settings
@@ -14,19 +15,15 @@ logger = logging.getLogger(__name__)
 SESSION_TYPE_USER = 0
 SESSION_TYPE_ADMIN = 2
 
-# An app token is exchanged for a session by hashing the widget session together with
-# the token, using whichever algorithm the token was created with. Kaltura will not tell
-# us which that is before we hold a session, so the usable ones are tried in turn,
-# starting with the default the API console and KMC produce. A portal can pin it with
-# app_token_hash_type in the connection and skip the search.
+# Kaltura will not say which algorithm a token was created with until we hold a session,
+# so the usable ones are tried in turn. app_token_hash_type pins it and skips the search.
 APP_TOKEN_HASH_TYPES = ("sha256", "sha1", "sha512", "md5")
 
 ENTRY_STATUS_READY = 2
 
-# Kaltura flavor asset status. Same value as ENTRY_STATUS_READY but a different enum.
+# same value as ENTRY_STATUS_READY, different enum
 FLAVOR_STATUS_READY = 2
-# KalturaMediaType. images carry no flavor assets at all: the file lives on the
-# entry itself, as downloadUrl
+# KalturaMediaType. An image carries no flavors: the file is the entry's downloadUrl
 MEDIA_TYPE_IMAGE = 2
 
 # Kaltura refuses pageIndex * pageSize beyond this
@@ -43,18 +40,15 @@ APPEAR_IN_LIST_MEMBERS_ONLY = 3
 CONTRIBUTION_ALL = 1
 CONTRIBUTION_MEMBERS = 2
 
-# What a KMS category type means, worked out from the three permission fields rather than
-# from its name. Verified against a live portal: an Open channel reads (2, 1, 1) and a
-# Private one (3, 3, 2), while a channel *named* Restricted read (1, 1, 1), which is to
-# say it was configured as Public. Names cannot be trusted, the fields can.
+# What a KMS category type means, read from the permission fields rather than the name:
+# a channel *named* Restricted read (1, 1, 1) live, which is to say Public.
 CATEGORY_PUBLIC = "public"
 CATEGORY_OPEN = "open"
 CATEGORY_RESTRICTED = "restricted"
 CATEGORY_PRIVATE = "private"
 
-# KalturaCategoryUserPermissionLevel, and what each becomes in MediaCMS RBAC. Kaltura's
-# moderator approves submissions and can add content but cannot manage the category, so it
-# maps to contributor: that keeps the ability to contribute without granting management.
+# KalturaCategoryUserPermissionLevel -> MediaCMS RBAC. Kaltura's moderator can contribute
+# but not manage the category, so it maps to contributor rather than manager.
 CATEGORY_PERMISSION_ROLES = {
     0: "manager",
     1: "contributor",
@@ -63,59 +57,46 @@ CATEGORY_PERMISSION_ROLES = {
 }
 CATEGORY_USER_ACTIVE = 1
 
-# KalturaCategoryEntryStatus: 1 PENDING, 2 ACTIVE, 3 DELETED, 4 REJECTED. An entry sitting
-# in a category is not necessarily published through it: a category with moderation on
-# holds submissions at PENDING until someone approves them, and a rejected one stays in the
-# list too. Only ACTIVE counts as published, so only ACTIVE may lend an entry the
-# category's state. Verified live: published entries on the test portal all read 2.
+# KalturaCategoryEntryStatus. An entry in a category is not necessarily published through
+# it: moderation holds submissions at PENDING and rejected ones stay listed. So only
+# ACTIVE may lend an entry the category's state.
 CATEGORY_ENTRY_ACTIVE = 2
 
-# KalturaEntryModerationStatus. APPROVED and AUTO_APPROVED are published; PENDING,
-# REJECTED and FLAGGED are not, whatever their categories say.
+# KalturaEntryModerationStatus. Anything else is unpublished, whatever its categories say
 MODERATION_APPROVED = 2
 MODERATION_AUTO_APPROVED = 6
 MODERATION_PUBLISHED = (MODERATION_APPROVED, MODERATION_AUTO_APPROVED)
 
-# KalturaPlaylistType. Only a static list is a list: a dynamic playlist is a stored query,
-# and MediaCMS has no equivalent, so snapshotting one would freeze "Most recent videos" on
-# whatever today happened to be.
+# KalturaPlaylistType. A dynamic playlist is a stored query with no MediaCMS equivalent:
+# snapshotting one would freeze "Most recent videos" on whatever today happened to be.
 PLAYLIST_TYPE_STATIC = 3
 
-# KalturaUserType. A Kaltura "user" of type GROUP is not a person: it is a named set of
-# people. Sweeping it into the users phase produces an account nobody can log into, named
-# after the group.
+# KalturaUserType. A GROUP is a named set of people, not a person: in the users phase it
+# would produce an account nobody can log into.
 USER_TYPE_USER = 0
 USER_TYPE_GROUP = 1
 
-# KalturaGroupUserStatus: 0 ACTIVE, 1 DELETED. Note this is the opposite way round to
-# KalturaCategoryUserStatus, where ACTIVE is 1.
+# KalturaGroupUserStatus, the opposite way round to KalturaCategoryUserStatus
 GROUP_USER_ACTIVE = 0
 
 # KalturaGroupUserRole: 1 MEMBER, 2 MANAGER, and what each becomes in MediaCMS RBAC
 GROUP_USER_ROLES = {1: "member", 2: "manager"}
 
-# Accounts Kaltura and KMS create for themselves. They are not people, they cannot log in,
-# and an installation that sweeps every user ends up with one MediaCMS account per piece of
-# Kaltura plumbing. Matched on the id, which is what these are consistently named by:
-# anything wrapped in double underscores is Kaltura's own convention for an internal
-# account, and the rest are fixed names KMS uses on every partner.
+# Accounts Kaltura and KMS create for themselves, matched on the id: double underscores are
+# Kaltura's convention for an internal account, the rest are fixed names KMS always uses.
 SYSTEM_USER_IDS = ("0", "guest", "kmsadminserviceuser")
 SYSTEM_USER_PREFIXES = ("kmssaasadmin", "kmsinternal")
 
-# KalturaEntryDisplayInSearchType: -2 RECYCLED, -1 SYSTEM, 0 NONE, 1 PARTNER_ONLY,
-# 2 KALTURA_NETWORK. PARTNER_ONLY is the value an ordinary entry gets, so only the three
-# at or below zero mean the entry was kept out of search. This read 1 for all 74 entries
-# on the test portal, which is what a default looks like, not a deliberate choice.
+# KalturaEntryDisplayInSearchType. PARTNER_ONLY is what an ordinary entry gets, so only the
+# values at or below zero mean the entry was deliberately kept out of search.
 DISPLAY_IN_SEARCH_RECYCLED = -2
 DISPLAY_IN_SEARCH_SYSTEM = -1
 DISPLAY_IN_SEARCH_NONE = 0
 DISPLAY_IN_SEARCH_PARTNER_ONLY = 1
 DISPLAY_IN_SEARCH_HIDDEN = (DISPLAY_IN_SEARCH_RECYCLED, DISPLAY_IN_SEARCH_SYSTEM, DISPLAY_IN_SEARCH_NONE)
 
-# Kaltura role names differ between partners and their ids are stable only within one,
-# so a mapping row carries both: the id is matched first when it is known, the name is
-# the fallback. This ships as the default contents of the migration's role map option,
-# editable per migration, rather than as a code path.
+# Role names differ between partners and ids are stable only within one, so a row carries
+# both: id first, name as the fallback. Ships as the default of an editable option.
 DEFAULT_ROLE_MAP = [
     {"id": "", "name": "Content Moderator (KMC)", "role": "editor"},
     {"id": "", "name": "Content Uploader (KMC)", "role": "manager"},
@@ -127,38 +108,35 @@ DEFAULT_ROLE_MAP = [
     {"id": "", "name": "unmoderatedAdminRole", "role": "editor"},
 ]
 
-# The shipped rows for console roles are labelled "(KMC)" so a person reading the form can
-# tell them apart from the system roles listed under them, which look nothing alike. A
-# portal reports the bare name, so the label is dropped before any comparison.
+# "(KMC)" tells console roles apart from the system roles below them in the form. A portal
+# reports the bare name, so the label is dropped before comparing.
 ROLE_NAME_QUALIFIER = re.compile(r"\s*\([^()]*\)\s*$")
 
 # what set_role_from_mapping understands. "admin" grants Django superuser and staff
 MEDIACMS_ROLES = ("", "advancedUser", "editor", "manager", "admin")
 
-# An LTI integration does not put a course's media in the course channel. It makes a child
-# of this name and parks the media there. It is plumbing, so it never becomes a category and
-# its media is rolled up to the course above it.
+# An LTI integration parks a course's media in a child of this name. It is plumbing: never
+# a category, and its media is rolled up to the course above it.
 INCONTEXT_CATEGORY_NAME = "InContext"
 
-# Which kind of tree a category hangs from. KMS sites carry permissions, an LMS integration's
-# categories do not.
+METADATA_SERVICE = "metadata_metadata"
+METADATA_OBJECT_CATEGORY = "2"
+COURSE_NAME_KEY = "CourseName"
+
+# KMS categories carry permissions, an LMS integration's do not
 KMS_TREE = "kms"
 LMS_TREE = "lms"
 
 # KMS path segments that are structure rather than a real category
 KMS_SCAFFOLDING = ("galleries", "channels")
 
-# KMS publishes media into galleries and channels. Everything else under a root
-# (private, unlisted, archive, playlists, the site container itself, nestedFilters)
-# is housekeeping and must never become a MediaCMS category.
+# KMS publishes media into galleries and channels. Everything else under a root is
+# housekeeping and must never become a MediaCMS category.
 KMS_CONTENT_PATHS = (">site>galleries>", ">site>channels>")
 KMS_HOUSEKEEPING = ("private", "unlisted", "archive", "playlists")
 
-# How far a flavor may be filed from its real height. Kaltura heights rarely match
-# MediaCMS profiles exactly (272 -> 240, 576 -> 480 are fine), but a source often
-# carries two flavors at the same height, and without a bound the loser cascades
-# down to a wildly wrong profile: a 360p file offered as 144p defeats the point of
-# having a low bandwidth rendition at all.
+# How far a flavor may be filed from its real height. 272 -> 240 is fine; without a bound
+# the loser of a tie cascades down to a wildly wrong profile, 360p offered as 144p.
 PROFILE_MIN_RATIO = 0.6
 PROFILE_MAX_RATIO = 1.4
 
@@ -167,15 +145,12 @@ USERNAME_MAX = 150
 
 USERNAME_INVALID = re.compile(r"[^\w.@-]", re.ASCII)
 
-# codes that mean the session went stale mid migration and one retry is worth it.
-# START_SESSION_ERROR is deliberately absent: get_ks() raises it directly as an
-# exception, so it never reaches the dict inspection in call() that reads this.
+# a stale session mid migration, worth one retry. START_SESSION_ERROR is absent because
+# get_ks() raises it directly, so it never reaches the dict inspection in call().
 RETRYABLE_KS_ERRORS = ("INVALID_KS", "EXPIRED_KS")
 
-# Kaltura namespaces plugin services. Caption assets belong to the "caption"
-# plugin, so the service is caption_captionasset and not captionAsset: the latter
-# answers SERVICE_DOES_NOT_EXISTS. Core services (media, flavorAsset,
-# categoryEntry, userRole) are not namespaced.
+# Plugin services are namespaced: caption_captionasset, not captionAsset, which answers
+# SERVICE_DOES_NOT_EXISTS. Core services are not.
 CAPTION_ASSET_SERVICE = "caption_captionasset"
 
 
@@ -259,9 +234,8 @@ class KalturaClient:
     def get_ks(self):
         """Current Kaltura Session, started or re-issued as needed.
 
-        Sessions come from an app token rather than the administrator secret. The token
-        can be revoked on its own and carries only the privileges it was created with,
-        so a portal never has to hand over the secret for the whole account.
+        Sessions come from an app token, not the administrator secret: it can be revoked
+        on its own and carries only the privileges it was created with.
         """
         if self.ks and (time.time() - self.ks_issued_at) < self.SESSION_TTL:
             return self.ks
@@ -282,8 +256,7 @@ class KalturaClient:
                     expiry=self.SESSION_EXPIRY,
                 )
             except KalturaAPIError as exc:
-                # a wrong algorithm is indistinguishable from a wrong token, so the
-                # remaining ones are tried before giving up
+                # a wrong algorithm looks exactly like a wrong token, so try the rest
                 last_error = exc
                 continue
 
@@ -345,10 +318,8 @@ class KalturaClient:
     def call(self, service, action, use_session=True, **params):
         """Call one Kaltura service action and return the decoded result.
 
-        Every call is logged on the way out and on the way back with its duration,
-        so a slow Kaltura shows up as a slow line rather than an unexplained gap.
-        Secrets are never logged: only the parameter names are, plus the values of
-        the handful that are safe and useful for reading the log.
+        Logged out and back with its duration, so a slow Kaltura shows up as a slow line.
+        Secrets are never logged: only parameter names, plus a few safe values.
         """
         url = self._url(service, action)
         data = self._flatten(params)
@@ -365,8 +336,7 @@ class KalturaClient:
             raise
         elapsed = time.monotonic() - started
         if self._is_error(result):
-            # a Kaltura API error arrives as HTTP 200, so it has to be recognised
-            # here or a failure would be logged as a successful call
+            # a Kaltura API error arrives as HTTP 200
             logger.warning(
                 "kaltura <- %s.%s API ERROR after %.2fs: %s %s",
                 service,
@@ -417,33 +387,26 @@ class KalturaClient:
     def list_entries_page(self, cursor, page_size, kfilter=None):
         """One page of media entries, paged by createdAt.
 
-        Kaltura rejects pageIndex * pageSize beyond 10000, so entries are walked
-        forward in creation order. The cursor holds the last createdAt reached
-        plus the ids already handled at exactly that timestamp, which is what
-        keeps entries sharing a createdAt from being skipped or repeated.
+        Kaltura rejects pageIndex * pageSize beyond 10000, so entries are walked forward
+        in creation order. The cursor holds the last createdAt plus the ids already handled
+        at exactly that timestamp, which keeps entries sharing one from being skipped.
         """
         cursor = dict(cursor or {})
         created_at = cursor.get("created_at") or 0
         seen = list(cursor.get("seen_ids") or [])
 
-        # The caller's filter goes in FIRST. The cursor derived keys are applied
-        # after it and must win: a static user option such as created_after would
-        # otherwise overwrite the resume boundary on every page, making the query
-        # restart from the same timestamp forever.
+        # the caller's filter goes in first: the cursor keys must win, or a static option
+        # like created_after would overwrite the resume boundary on every page
         entry_filter = dict(kfilter or {})
         floor = entry_filter.get("createdAtGreaterThanOrEqual") or 0
         entry_filter["orderBy"] = "+createdAt"
         entry_filter["statusEqual"] = ENTRY_STATUS_READY
         if created_at or floor:
-            # keep honouring the user's created_after floor on the first page,
-            # then let the advancing cursor take over
+            # honour the user's floor on the first page, then let the cursor take over
             entry_filter["createdAtGreaterThanOrEqual"] = max(created_at or 0, floor)
 
-        # A pathological source can have more entries sharing one createdAt than
-        # Kaltura will return in a single page. seen grows each round in that case,
-        # and pageSize grows with it, back towards the 10000 row ceiling this whole
-        # scheme exists to avoid. Fail with something an operator can act on rather
-        # than letting Kaltura refuse the request.
+        # more entries sharing one createdAt than a page can hold: pageSize then grows
+        # back towards the ceiling this scheme exists to avoid, so fail readably instead
         requested_page_size = page_size + len(seen)
         if requested_page_size > KALTURA_MAX_PAGE_SIZE:
             raise KalturaAPIError(
@@ -453,8 +416,7 @@ class KalturaClient:
                 "with the created_after or created_before options to get past this block.",
             )
 
-        # ask for enough rows that the already handled ids at the boundary
-        # cannot fill the whole page
+        # enough rows that the handled ids at the boundary cannot fill the page
         result = self.call(
             "media",
             "list",
@@ -478,11 +440,9 @@ class KalturaClient:
     def check_connection(self, entry_filter=None, user_ids=None):
         """Start a session and report the totals the dashboard needs.
 
-        entry_filter narrows the entry count the same way the migration itself
-        will be narrowed, so the dashboard denominator matches what will actually
-        be imported. user_ids additionally reports a count per user: Kaltura
-        answers an unknown user with zero rather than an error, so a mistyped id
-        is only visible as its own zero.
+        entry_filter narrows the count the way the migration will be, so the dashboard
+        denominator matches. user_ids also reports a count per user: Kaltura answers an
+        unknown user with zero rather than an error, so a typo only shows as a zero.
         """
         try:
             self.get_ks()
@@ -500,11 +460,8 @@ class KalturaClient:
             return {"ok": False, "error": f"Could not reach {self.service_url}: {exc}", "stats": {}}
 
 
-# A role Kaltura's own modules open sessions with, rather than one an administrator
-# assigns to a person. There is no flag on the object saying which is which, so this goes
-# by the shape of the system name: the module roles use SCREAMING_SNAKE constants, the
-# service roles an integration creates for itself carry no system name at all, and a
-# couple of built ins are named like people roles without being assignable.
+# A role Kaltura's own modules open sessions with, rather than one assigned to a person.
+# Nothing on the object says which, so this goes by the shape of the system name.
 SYSTEM_ROLE_NAME = re.compile(r"^[A-Z0-9_]+$")
 INTERNAL_ROLE_NAMES = ("basic user session role", "no session")
 
@@ -512,10 +469,8 @@ INTERNAL_ROLE_NAMES = ("basic user session role", "no session")
 def is_selectable_category(full_name):
     """Whether a category is one a person picks to scope a migration.
 
-    Top level only. A top level category is a whole instance: a KMS site, an LTI consumer,
-    or an ordinary portal's own root. Choosing one brings everything underneath it, so
-    offering the levels below would ask the same question again in more places, and on a
-    portal with thousands of channels the list would be unusable.
+    Top level only: a top level category is a whole instance, and choosing one brings
+    everything underneath, so offering the levels below asks the same question again.
     """
     return bool(full_name) and ">" not in full_name
 
@@ -523,8 +478,8 @@ def is_selectable_category(full_name):
 def parse_playlist_content(raw):
     """The entry ids a static playlist names, in order.
 
-    A dynamic playlist stores XML here instead, which has no commas worth splitting and no
-    ids to find, so it comes back empty and is filtered out by its type anyway.
+    A dynamic playlist stores XML here, which yields nothing to split; its type filters
+    it out anyway.
     """
     text = str(raw or "").strip()
     if not text or text == "None" or text.startswith("<"):
@@ -535,9 +490,8 @@ def parse_playlist_content(raw):
 def is_system_user(user_id):
     """Whether a Kaltura user id belongs to the platform rather than to a person.
 
-    Only consulted when sweeping every user. An account that owns media is still created
-    when that media arrives, so a service account with content of its own does not lose it:
-    it simply stops being swept up on its own account.
+    Only consulted when sweeping every user: an account that owns media is still created
+    when that media arrives.
     """
     identifier = str(user_id or "").strip().lower()
     if not identifier:
@@ -562,10 +516,8 @@ def is_internal_role(system_name):
 def parse_comma_list(raw):
     """The Kaltura user ids from a comma separated option value.
 
-    Kaltura ignores a filter field it cannot use rather than rejecting it, so an
-    empty userIdIn would widen a restricted run to the whole portal instead of
-    narrowing it. Everything downstream therefore treats an empty result as "no
-    restriction was usable" and refuses to run, rather than filtering on nothing.
+    Kaltura ignores a filter field it cannot use, so an empty userIdIn would widen a
+    restricted run to the whole portal. Downstream refuses to run on an empty result.
     """
     seen = []
     for part in str(raw or "").replace("\n", ",").split(","):
@@ -578,16 +530,9 @@ def parse_comma_list(raw):
 def category_tree_kind(category):
     """Whether a category belongs to a KMS site or to an LMS integration's tree.
 
-    Read from privacyContexts, which is Kaltura's own switch for exactly this. Privacy and
-    entitlement settings only take effect inside a privacy context: KMS stamps one on its
-    site, and the LTI integrations create their categories without one. So a category with
-    no privacy context is one whose permission fields do nothing at the source, which is
-    what "an LMS tree has no permissions" means in practice. The field is inherited, so it
-    reads the same on a course channel as on the root it hangs from.
-
-    A payload that does not carry the field at all is treated as KMS, because that is the
-    reading where the permission fields are honoured. Guessing LMS would quietly publish
-    content that the source keeps restricted.
+    Read from privacyContexts: permission fields only take effect inside a privacy context
+    and LTI integrations create their categories without one. A payload missing the field
+    is read as KMS, since guessing LMS would publish what the source keeps restricted.
     """
     if "privacyContexts" not in category:
         return KMS_TREE
@@ -597,11 +542,8 @@ def category_tree_kind(category):
 def is_instance_root(full_name, all_paths):
     """Whether a top level category is the root of a KMS site or an LMS integration.
 
-    Those roots hold nothing of their own. They are the handle you pick to scope a
-    migration, and their name is often an internal one like ltigeneric_8yrU6, so turning one
-    into a MediaCMS category just puts a box named after the integration around everything.
-    An ordinary portal's top level category is real content and looks identical from its
-    name alone, so the tell is the >site> child that only an instance root has.
+    Those roots hold nothing of their own and are often named ltigeneric_8yrU6, so making
+    one a category just boxes everything. The tell is the >site> child only a root has.
     """
     if not full_name or ">" in full_name:
         return False
@@ -611,8 +553,7 @@ def is_instance_root(full_name, all_paths):
 def is_ignored_category(category):
     """Categories that exist only as an integration's plumbing.
 
-    Only in an LMS tree: a KMS gallery that happens to carry this name is a real category
-    somebody made and named, and dropping it would lose their content.
+    Only in an LMS tree: a KMS gallery with this name is a real category somebody made.
     """
     if category_tree_kind(category) != LMS_TREE:
         return False
@@ -623,26 +564,14 @@ def is_ignored_category(category):
 def category_type(category):
     """Which KMS category type a Kaltura category is configured as.
 
-    privacy is what decides who may *view*, and so it is what decides the type here.
-    contributionPolicy decides who may *add* content, which is a publishing right rather
-    than a visibility one, so it never makes a category less visible than its privacy says.
-    KMS offers "Public, Restricted", meaning anyone including anonymous users may watch
-    while only members may contribute, and reading contributionPolicy as a visibility field
-    would hide that whole channel. appearInList can still narrow the authenticated tier,
-    where the difference between listed and members-only is a real access difference.
-
-    Shared Repository is a channel type whose viewing rule is members only, so it arrives
-    here as MEMBERS_ONLY and lands on private like any other members-only channel. Its own
-    distinguishing feature, that content may be published onward into other channels, is a
-    publishing entitlement with no MediaCMS equivalent and is not carried over.
-
-    An unrecognised privacy value is read as the most restrictive type, because guessing
-    generously is how content leaks.
+    privacy decides who may *view*, so it decides the type. contributionPolicy decides who
+    may *add*: "Public, Restricted" lets anyone watch, and reading it as visibility would
+    hide the whole channel. appearInList still narrows the authenticated tier. An
+    unrecognised privacy value is read as the most restrictive: guessing generously leaks.
     """
     if category_tree_kind(category) == LMS_TREE:
-        # outside a privacy context these three fields are inert: Kaltura serves the content
-        # to anyone whatever they say. Reading them would hide media the source shows, and
-        # would hand out RBAC groups that gate something nobody was gating.
+        # outside a privacy context these fields are inert: reading them would hide media
+        # the source shows, and gate what nobody was gating
         return CATEGORY_PUBLIC
 
     privacy = category.get("privacy")
@@ -660,11 +589,9 @@ def category_type(category):
     return CATEGORY_RESTRICTED
 
 
-# What each category type becomes. MediaCMS has three states and Kaltura's Open type,
-# "any authenticated user may view", is not one of them, so it lands on unlisted and is a
-# documented downgrade: on a portal that is not login only, unlisted is reachable by
-# anyone holding the link. Restricted goes to private instead, since its membership is
-# about publishing rather than viewing and there is nothing to gate viewing with.
+# What each category type becomes. Kaltura's Open, "any authenticated user may view", has
+# no MediaCMS equivalent, so it lands on unlisted: a documented downgrade. Restricted's
+# membership is about publishing, not viewing, so there is nothing to gate viewing with.
 CATEGORY_TYPE_STATE = {
     CATEGORY_PUBLIC: "public",
     CATEGORY_OPEN: "unlisted",
@@ -672,22 +599,18 @@ CATEGORY_TYPE_STATE = {
     CATEGORY_PRIVATE: "private",
 }
 
-# most permissive first: an entry in both a public and a private category is reachable
-# through the public one, which is how Kaltura behaves too
+# most permissive first: an entry in a public and a private category is reachable through
+# the public one, as it is in Kaltura
 STATE_PRECEDENCE = ("public", "unlisted", "private")
 
 
 def media_state(categories, display_in_search=None, moderation_status=None):
     """MediaCMS state for a Kaltura entry.
 
-    Kaltura entries carry no public or private flag of their own, so the state comes from
-    the categories the entry belongs to, and the most permissive one wins. An entry in no
-    category at all is private. An entry held out of search only ever downgrades: it turns
-    public into unlisted and never promotes anything. An entry that has not cleared moderation is
-    private regardless of where it sits, since it was not published on the source either.
-
-    Accepts category dicts. A bare privacy integer is still accepted so that a caller with
-    nothing but privacy to hand keeps working.
+    Kaltura entries carry no state of their own, so it comes from their categories and the
+    most permissive one wins; in no category at all means private. Being held out of search
+    only ever downgrades, and an entry that has not cleared moderation is private wherever
+    it sits. A bare privacy integer is still accepted alongside category dicts.
     """
     if moderation_status is not None and moderation_status not in MODERATION_PUBLISHED:
         return "private"
@@ -722,9 +645,8 @@ def normalised_role_name(name):
 def mediacms_role(role_id, role_name, role_map=None):
     """MediaCMS role for User.set_role_from_mapping, or "" for a plain user.
 
-    Matched on the Kaltura role id when the mapping row carries one, since ids are exact
-    within a partner, and on the name otherwise. Names are compared case insensitively
-    because a portal's own roles report a display name rather than a system name.
+    Matched on the role id when the mapping row carries one, and on the name otherwise,
+    case insensitively: a portal's own roles report a display name, not a system name.
     """
     rows = role_map if role_map is not None else DEFAULT_ROLE_MAP
 
@@ -746,14 +668,12 @@ def mediacms_role(role_id, role_name, role_map=None):
 def is_importable_category(full_name):
     """Whether a Kaltura category should become a MediaCMS category.
 
-    Root agnostic, so an installation hosting several KMS instances side by side
-    needs no configuration. A portal not using KMS at all has no ">site>" paths
-    and its categories are kept as they are.
+    Root agnostic, so several KMS instances side by side need no configuration. A portal
+    not using KMS has no ">site>" paths and keeps its categories as they are.
     """
     name = str(full_name or "")
     if not name:
-        # the source did not say where this category sits; dropping it would lose
-        # a real one, so keep it
+        # no path given: dropping it would lose a real category
         return True
     if any(path in name for path in KMS_CONTENT_PATHS):
         return True
@@ -765,19 +685,36 @@ def is_importable_category(full_name):
     return True
 
 
-def category_title_and_description(full_name):
+def course_name_from_metadata(xmls):
+    """The course name an LTI integration stored on a category, or ""
+
+    The metadata profile differs between portals, so the key is looked up, not the profile.
+    """
+    for xml in xmls or []:
+        try:
+            root = ElementTree.fromstring(str(xml or ""))
+        except ElementTree.ParseError:
+            continue
+        for detail in root.iter("Detail"):
+            if (detail.findtext("Key") or "").strip().lower() != COURSE_NAME_KEY.lower():
+                continue
+            value = (detail.findtext("Value") or "").strip()
+            if value:
+                return value
+    return ""
+
+
+def category_title_and_description(full_name, leaf_name=""):
     """Split a Kaltura fullName into a MediaCMS title and a readable path.
 
     "MediaSpace>site>galleries>Engineering>1. Term>Electronics"
     becomes ("Electronics", "Engineering: 1. Term: Electronics").
 
-    Everything up to and including the galleries or channels segment is KMS
-    scaffolding and is dropped, whatever the root is called.
+    leaf_name replaces the last segment.
     """
     parts = [part.strip() for part in (full_name or "").split(">") if part.strip()]
 
-    # only strip galleries/channels when they sit directly under a "site" segment,
-    # so a real top level category named "Channels" is left alone
+    # only under a "site" segment, so a real top level "Channels" is left alone
     for index in range(1, len(parts)):
         if parts[index - 1].lower() == "site" and parts[index].lower() in KMS_SCAFFOLDING:
             parts = parts[index + 1 :]
@@ -785,6 +722,9 @@ def category_title_and_description(full_name):
 
     if not parts:
         return "", ""
+
+    if leaf_name:
+        parts[-1] = leaf_name
 
     title = parts[-1][:CATEGORY_TITLE_MAX]
     description = ": ".join(parts)
@@ -794,8 +734,7 @@ def category_title_and_description(full_name):
 def _fit_with_suffix(base, suffix):
     """base + suffix, trimmed to the model's limit without losing the suffix.
 
-    Trimming the formatted string would discard the very part that makes the
-    title unique, so the base is trimmed first to leave room.
+    Trimming the formatted string would discard the part that makes the title unique.
     """
     suffix = suffix[: CATEGORY_TITLE_MAX // 2]
     room = max(1, CATEGORY_TITLE_MAX - len(suffix))
@@ -805,13 +744,9 @@ def _fit_with_suffix(base, suffix):
 def unique_category_title(title, parent_name, taken):
     """A title not already in `taken`.
 
-    Category titles act as identifiers in MediaCMS URLs, so flattening a tree
-    has to resolve collisions. The parent name is tried first because it reads
-    naturally, then a counter.
-
-    Every candidate reserves room for its own suffix. Truncating after
-    formatting would collapse long titles back onto the string that was already
-    taken, and the loop would never terminate.
+    Titles act as identifiers in MediaCMS URLs, so flattening a tree has to resolve
+    collisions: the parent name first because it reads naturally, then a counter. Every
+    candidate reserves room for its own suffix, or the loop would never terminate.
     """
     if title not in taken:
         return title
@@ -830,18 +765,13 @@ def unique_category_title(title, parent_name, taken):
 
 
 def match_flavors_to_profiles(flavors, profiles):
-    """Pair Kaltura flavors with MediaCMS encode profiles.
+    """Pair Kaltura flavors with MediaCMS encode profiles, one flavor per profile.
 
-    Each flavor takes the profile closest to its height, preferring a profile
-    at or below that height on a tie. One flavor per profile: if two flavors
-    want the same profile the closer match wins and the other is dropped.
-
-    Returns a list of (flavor, profile) tuples.
+    Each flavor takes the profile closest to its height, preferring one at or below on a
+    tie. Returns a list of (flavor, profile) tuples.
     """
-    # every viable (flavor, profile) pair is ranked, not just each flavor's
-    # single favourite. Ranking only favourites means that when two flavors want
-    # the same profile the loser is dropped outright, even with free profiles
-    # left over, silently losing a rendition.
+    # every viable (flavor, profile) pair is ranked, not just each flavor's favourite:
+    # otherwise the loser of a tie is dropped outright with free profiles left over
     usable = [profile for profile in profiles if profile.resolution and profile.active]
 
     candidates = []
@@ -854,9 +784,8 @@ def match_flavors_to_profiles(flavors, profiles):
         for profile in usable:
             if profile.extension != extension:
                 continue
-            # a profile has to actually describe this file. Without the bound, a
-            # duplicate resolution in the source ends up several tiers away from
-            # the truth, and the player offers a rendition that is not what it says.
+            # a profile has to describe the file: without the bound a duplicate
+            # resolution lands tiers away and the player lies about what it offers
             if not height or not (height * PROFILE_MIN_RATIO <= profile.resolution <= height * PROFILE_MAX_RATIO):
                 continue
             distance = abs(height - profile.resolution)
@@ -898,13 +827,10 @@ class KalturaProvider(BaseProvider):
     required_connection_keys = ("service_url", "partner_id", "app_token_id", "app_token")
     default_options = {
         "migrate_all_users": True,
-        # only consulted when migrate_all_users is off, where it is one of two alternatives
-        # alongside restrict_to_users. Off, so that turning migrate_all_users off presents
-        # both unchosen rather than having silently already picked one
+        # off, so turning migrate_all_users off presents both alternatives unchosen
         "create_users": False,
         "fallback_username": "admin",
-        # ids of the top level categories to migrate, at least one. A chosen category
-        # brings its whole subtree with it
+        # top level categories to migrate, at least one; each brings its whole subtree
         "source_category_ids": "",
         # needs USE_RBAC, and says so in the log when it is off
         "migrate_groups": False,
@@ -933,8 +859,7 @@ class KalturaProvider(BaseProvider):
     def source_system(cls, connection):
         url = (connection.get("service_url") or "").strip()
         if url and "://" not in url:
-            # urlparse puts a scheme-less URL in the path, leaving netloc empty,
-            # which would make every scheme-less installation collide
+            # urlparse leaves netloc empty for a scheme-less URL, colliding installations
             url = f"https://{url}"
         host = urlparse(url).netloc.lower().rstrip("/")
         return f"kaltura:{connection.get('partner_id') or ''}@{host}"
@@ -955,8 +880,7 @@ class KalturaProvider(BaseProvider):
     def check_connection(self):
         user_ids = self.restricted_user_ids()
         if self.options.get("restrict_to_users") and not user_ids:
-            # never answer with portal wide numbers while a restriction is switched on:
-            # an empty list produces no filter at all, which reads as "everything"
+            # an empty list would produce no filter at all, reading as "everything"
             return {"ok": False, "error": "Restricting to specific users needs at least one Kaltura user id.", "stats": {}}
 
         result = self.client.check_connection(entry_filter=self._entry_filter(), user_ids=user_ids)
@@ -967,10 +891,9 @@ class KalturaProvider(BaseProvider):
     def migration_totals(self):
         """What this migration would bring, counted the way the run will count it.
 
-        Captions are absent on purpose. caption_captionasset.list refuses a filter without an
-        entry id, so a caption count means fetching every entry id first and batching through
-        them, which is a hundred extra calls before a large run has started. They are counted
-        as the run discovers them instead.
+        Captions are the one thing absent: caption_captionasset.list refuses a filter
+        without an entry id, so counting them means fetching every entry id first. They
+        are counted as the run discovers them instead.
         """
         people = [user for user in self._all_people() if not is_system_user(user.get("id"))]
         categories = [category for category in self._all_categories() if self.worth_importing(category)]
@@ -978,9 +901,28 @@ class KalturaProvider(BaseProvider):
         return {
             "users": len(self.restricted_user_ids()) or len(people),
             "groups": self.client.count("user", {"typeIn": str(USER_TYPE_GROUP)}) if self.options.get("migrate_groups") else 0,
+            "playlists": len(self._migratable_playlists()) if self.options.get("migrate_playlists") else 0,
             "categories": len([c for c in categories if ">site>channels>" not in (c.get("fullName") or "")]),
             "channels": len([c for c in categories if ">site>channels>" in (c.get("fullName") or "")]),
         }
+
+    def _migratable_playlists(self):
+        """The playlists a run would bring. Counted from the objects, not from totalCount,
+        because most of what playlist.list returns is not migratable: a dynamic playlist is a
+        stored query and KMS keeps one per channel under an internal account.
+        """
+        found = []
+        page_index = 1
+        while True:
+            result = self.client.call("playlist", "list", filter={}, pager={"pageSize": 500, "pageIndex": page_index})
+            objects = (result.get("objects") or []) if isinstance(result, dict) else []
+            if not objects:
+                break
+            found.extend(playlist for playlist in objects if playlist.get("id") and self.playlist_is_migratable(playlist))
+            if len(objects) < 500:
+                break
+            page_index += 1
+        return found
 
     def _all_people(self):
         """Every real user on the partner, groups excluded"""
@@ -1006,9 +948,8 @@ class KalturaProvider(BaseProvider):
             kfilter["createdAtLessThanOrEqual"] = self.options["created_before"]
         if self.options.get("root_category"):
             kfilter["categoriesFullNameIn"] = self.options["root_category"]
-        # which media comes over follows the owners, not the categories. Every entry has
-        # exactly one owner, so that is the axis that actually partitions a library; a great
-        # many entries belong to no category at all and no category filter can reach them
+        # media follows the owners, not the categories: every entry has exactly one owner,
+        # and many belong to no category at all
         user_ids = self.restricted_user_ids()
         if user_ids:
             kfilter["userIdIn"] = ",".join(user_ids)
@@ -1021,8 +962,8 @@ class KalturaProvider(BaseProvider):
     def restricts_to_categories(self):
         """Every migration is limited to chosen categories. There is no "all" any more.
 
-        Kept as a method because the walk and the filter both ask the question, and because
-        a provider that one day has no such notion can answer False.
+        A method because the walk and the filter both ask, and a provider without the
+        notion can answer False.
         """
         return True
 
@@ -1038,9 +979,8 @@ class KalturaProvider(BaseProvider):
             return [str(entry["id"]) for entry in entries], next_cursor
 
         if phase == "users":
-            # typeIn keeps groups out of the people sweep. Verified against a live portal,
-            # since Kaltura answers a filter field it does not support by ignoring it: 28
-            # users unfiltered, 27 with typeIn=0, 1 with typeIn=1
+            # typeIn keeps groups out of the people sweep. Verified live, since Kaltura
+            # answers a filter field it does not support by ignoring it.
             users, next_cursor = self.client.list_page_by_index("user", cursor, page_size, {"typeIn": str(USER_TYPE_USER)})
             return [str(user["id"]) for user in users if user.get("id") and not is_system_user(user.get("id"))], next_cursor
 
@@ -1060,9 +1000,8 @@ class KalturaProvider(BaseProvider):
     def _selected_category_paths(self):
         """fullName of each chosen category, resolved once and kept for the walk.
 
-        The option stores ids, and a page of the category walk has to be filtered by
-        subtree. Kaltura's category filter has no ancestor field we have verified, so the
-        paths are compared directly rather than trusting a filter that might be ignored.
+        The option stores ids and the walk filters by subtree. Kaltura has no ancestor
+        filter field we have verified, so the paths are compared here instead.
         """
         if self._selected_paths is None:
             wanted = set(self.restricted_category_ids())
@@ -1104,10 +1043,8 @@ class KalturaProvider(BaseProvider):
     def _list_importable_categories(self, cursor, page_size):
         """One page of categories worth importing.
 
-        Housekeeping categories are filtered out, as is anything outside the chosen
-        categories, and an empty page means the phase is over, so pages are pulled until
-        something survives the filter or the source runs out. Returning an empty list
-        while more pages remain would end the phase early.
+        An empty page means the phase is over, so pages are pulled until something
+        survives the filter or the source runs out.
         """
         while True:
             categories, next_cursor = self.client.list_page_by_index("category", cursor, page_size)
@@ -1145,10 +1082,9 @@ class KalturaProvider(BaseProvider):
     def list_categories(self):
         """The top level categories a person can choose from, with what each one holds.
 
-        The count is for the whole subtree, which is what makes the choice meaningful:
-        Kaltura's own entriesCount on a root counts direct members only, and a root has
-        none. Each one carries the kind of tree it is, so the form can say whether picking
-        it brings permissions along.
+        The count is for the whole subtree: Kaltura's own entriesCount on a root counts
+        direct members only, and a root has none. Each carries its kind of tree, so the
+        form can say whether picking it brings permissions along.
         """
         chosen = []
         for category in self._all_categories():
@@ -1183,10 +1119,9 @@ class KalturaProvider(BaseProvider):
     def fetch_playlist(self, source_id):
         """One playlist, with its members in the order they are listed.
 
-        The order comes from playlistContent rather than playlist.execute, because execute
-        applies access filtering and silently returns a shorter list for reasons that have
-        nothing to do with the playlist. Entries it names may no longer exist; that is the
-        caller's problem to log, not a reason to distrust the order.
+        The order comes from playlistContent, not playlist.execute, which applies access
+        filtering and silently returns a shorter list. Entries it names may no longer
+        exist: the caller's problem to log, not a reason to distrust the order.
         """
         playlist = self.client.call("playlist", "get", id=source_id)
         return {
@@ -1261,9 +1196,8 @@ class KalturaProvider(BaseProvider):
     def fetch_category_members(self, source_id):
         """Who belongs to a category and at what level.
 
-        The owner shows up here as a manager in their own right, so no special case is
-        needed for them. Only active memberships are returned: a pending request is not
-        access yet.
+        The owner shows up as a manager in their own right, so needs no special case.
+        Only active memberships count: a pending request is not access yet.
         """
         members = []
         page_index = 1
@@ -1285,10 +1219,8 @@ class KalturaProvider(BaseProvider):
                     continue
                 user_id = str(member.get("userId") or "")
                 if user_id in self.group_ids():
-                    # Kaltura lets a group hold a category membership. Importing it as a
-                    # person would make an account named after the group that nobody can
-                    # use, so it is expanded into the people it stands for, each taking the
-                    # permission level the group was given
+                    # a group holding a category membership is expanded into its people,
+                    # each taking the permission level the group was given
                     for grouped in self.fetch_group_members(user_id):
                         members.append({"userId": grouped["userId"], "role": role})
                     continue
@@ -1301,11 +1233,9 @@ class KalturaProvider(BaseProvider):
     def list_roles(self):
         """The roles a person can hold on this partner, for the role mapping form.
 
-        A portal's roles are its own: the ids mean nothing on another partner and the
-        names are whatever an administrator typed, which is why the form reads them from
-        the portal rather than shipping a list. Kaltura's own module roles are filtered
-        out, since userRole.list returns them mixed in with the assignable ones and they
-        outnumber them several times over.
+        A portal's roles are its own, which is why the form reads them from the portal
+        rather than shipping a list. Kaltura's own module roles are filtered out:
+        userRole.list returns them mixed in, outnumbering the assignable ones.
         """
         result = self.client.call("userRole", "list", pager={"pageSize": 500, "pageIndex": 1})
         roles = []
@@ -1317,12 +1247,43 @@ class KalturaProvider(BaseProvider):
             roles.append({"id": str(role.get("id") or ""), "name": name, "systemName": system_name})
         return roles
 
+    def course_names(self, category_ids):
+        """{category id: course name} for those of these categories that have one"""
+        ids = [str(category_id) for category_id in category_ids if str(category_id or "").strip()]
+        if not ids:
+            return {}
+
+        try:
+            result = self.client.call(METADATA_SERVICE, "list", filter={"metadataObjectTypeEqual": METADATA_OBJECT_CATEGORY, "objectIdIn": ",".join(ids)})
+        except KalturaAPIError as exc:
+            logger.info("kaltura: could not read category metadata: %s", exc)
+            return {}
+
+        documents = {}
+        for row in result.get("objects") or []:
+            documents.setdefault(str(row.get("objectId")), []).append(row.get("xml") or "")
+
+        names = {}
+        for category_id, xmls in documents.items():
+            name = course_name_from_metadata(xmls)
+            if name:
+                names[category_id] = name
+        return names
+
+    def course_name(self, category):
+        """The readable name of an LMS course channel, or "" for anything else"""
+        if category_tree_kind(category) != LMS_TREE:
+            return ""
+        category_id = str(category.get("id") or "")
+        return self.course_names([category_id]).get(category_id, "")
+
     def fetch_category(self, source_id):
         category = self.client.call("category", "get", id=source_id)
         parts = [part.strip() for part in (category.get("fullName") or "").split(">") if part.strip()]
         parent_name = parts[-2] if len(parts) > 1 else ""
         return {
             "id": str(category.get("id")),
+            "courseName": self.course_name(category),
             "name": category.get("name") or "",
             "fullName": category.get("fullName") or "",
             "parentName": parent_name,
@@ -1347,17 +1308,15 @@ class KalturaProvider(BaseProvider):
                 result = self.client.call(CAPTION_ASSET_SERVICE, "list", filter={"entryIdEqual": source_id})
                 captions = result.get("objects") or []
             except KalturaAPIError as exc:
-                # the caption plugin is not enabled on every Kaltura partner.
-                # Missing captions must not fail the media itself.
+                # the caption plugin is not enabled on every partner
                 if exc.code != "SERVICE_DOES_NOT_EXISTS":
                     raise
                 logger.warning("captions unavailable on this Kaltura partner: %s", exc)
 
         categories = []
         result = self.client.call("categoryEntry", "list", filter={"entryIdEqual": source_id})
-        # every category the entry is listed in, so it still gets attached to all of them,
-        # and separately the ones it is actually published through, which are the only
-        # ones allowed to lend it their state
+        # every category it is listed in, and separately the ones it is published through,
+        # which are the only ones allowed to lend it their state
         assignments = result.get("objects") or []
         category_ids = [str(obj.get("categoryId")) for obj in assignments]
         published_ids = {str(obj.get("categoryId")) for obj in assignments if obj.get("status") == CATEGORY_ENTRY_ACTIVE}
@@ -1376,10 +1335,9 @@ class KalturaProvider(BaseProvider):
     def download(self, url, dest_path):
         """Stream a URL to dest_path and return the number of bytes written.
 
-        Retried like the API calls are: a large file download is far more likely
-        to meet a reset connection than a metadata call, and without a retry a
-        single reset loses the whole media. Each attempt restarts from scratch,
-        because Kaltura's serve endpoints do not reliably honour Range.
+        Retried like the API calls: without it one reset connection loses the whole
+        media. Each attempt restarts from scratch, since Kaltura's serve endpoints do
+        not reliably honour Range.
         """
         timeout = getattr(settings, "MIGRATION_DOWNLOAD_TIMEOUT", 60 * 30)
         attempts = getattr(settings, "MIGRATION_MAX_RETRIES", 3)
@@ -1413,8 +1371,7 @@ class KalturaProvider(BaseProvider):
     def download_entry(self, entry, dest_path):
         """Stream an entry's own file, for entries that have no flavor assets.
 
-        Kaltura builds no flavors for an image, so there is nothing for
-        flavorAsset.getUrl to resolve; the raw file is the entry's downloadUrl.
+        Kaltura builds no flavors for an image, so the file is the entry's downloadUrl.
         """
         url = entry.get("downloadUrl")
         if not url:

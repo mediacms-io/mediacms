@@ -43,8 +43,8 @@ class MigrationServiceViewSet(viewsets.ModelViewSet):
         """Validate credentials typed into the form before anything is saved"""
         provider_name = request.data.get("provider") or "kaltura"
         connection = request.data.get("connection") or {}
-        # the options are part of what is being tested: they decide what the source is
-        # asked for, so a check that ignored them would report on the whole portal
+        # the options are part of what is tested: a check ignoring them would report on the
+        # whole portal
         options = request.data.get("options") or {}
         try:
             klass = get_provider_class(provider_name)
@@ -56,9 +56,8 @@ class MigrationServiceViewSet(viewsets.ModelViewSet):
     def check_connection(self, request, pk=None):
         """Test the stored credentials, against the options currently on screen.
 
-        Used when the secret on the form is still masked. The options are taken from
-        the request when sent, so edits that have not been saved are still what gets
-        tested, and only the credentials come from the record.
+        Used when the secret on the form is still masked. Options come from the request,
+        so unsaved edits are what gets tested; only the credentials come from the record.
         """
         service = self.get_object()
         options = dict(service.get_options())
@@ -135,8 +134,7 @@ class MigrationServiceViewSet(viewsets.ModelViewSet):
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "roles": []}
 
     def perform_create(self, serializer):
-        # arming happens on save, not on Start: the whole point is that nobody has to be
-        # here when the time comes
+        # arming happens on save, not on Start: nobody has to be here when the time comes
         schedule_migration(serializer.save())
 
     def perform_update(self, serializer):
@@ -146,9 +144,8 @@ class MigrationServiceViewSet(viewsets.ModelViewSet):
     def server_time(self, request):
         """The portal's own clock, for the scheduling form.
 
-        A browser knows its own timezone and nothing about the portal's, so the form has to
-        be told what "now" means here before it can stop someone picking a time that has
-        already passed.
+        A browser knows nothing about the portal's timezone, so the form has to be told
+        what "now" means here before it can refuse a time that has passed.
         """
         now = timezone.localtime(timezone.now())
         return Response(
@@ -202,9 +199,8 @@ class MigrationServiceViewSet(viewsets.ModelViewSet):
     def record_search_filter(search):
         """Match a mapping row by anything an admin can see in the table.
 
-        The label the table shows for the MediaCMS side lives on the imported
-        object rather than on the row, so each type is matched through its own
-        subquery instead of a join this generic pointer cannot express.
+        The label the table shows lives on the imported object, not the row, so each
+        type is matched through its own subquery.
         """
         matches = Q(source_id__icontains=search) | Q(log__icontains=search)
         matches |= Q(

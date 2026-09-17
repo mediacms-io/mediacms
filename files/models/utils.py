@@ -57,8 +57,8 @@ CODECS = (
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
 
-# the profile whose encoding becomes Media.preview_file_path. Matched by name rather
-# than by extension, so the legacy gif profile and the mp4 one are both recognised
+# the profile whose encoding becomes Media.preview_file_path, matched by name so both
+# the legacy gif profile and the mp4 one are recognised
 PREVIEW_PROFILE_NAME = "preview"
 
 

@@ -365,8 +365,7 @@ class TestCategorySelection(TestCase):
 
         offered = provider.list_categories()
 
-        # not the instance root, not >site, not the galleries folder, not a subcategory,
-        # and not KMS housekeeping
+        # not the instance root, >site, the galleries folder, a subcategory or housekeeping
         self.assertEqual(
             [category["fullName"] for category in offered],
             ["MediaSpace>site>channels>Math Lectures", "MediaSpace>site>galleries>Academic Subjects"],

@@ -29,8 +29,7 @@ class TestHlsStreamResolution(TestCase):
         self.assertEqual(hls_stream_resolution((1024, 576)), 480)
 
     def test_a_non_standard_height_never_reports_the_width(self):
-        # 480x272 is a 240p file: advertising it as 480p put it above the real
-        # 360p rendition in the quality menu
+        # 480x272 is a 240p file: as 480p it outranked the real 360p rendition
         self.assertNotEqual(hls_stream_resolution((480, 272)), 480)
         self.assertNotEqual(hls_stream_resolution((1024, 576)), 1024)
 

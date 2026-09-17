@@ -49,6 +49,19 @@ class TestImportCategory(TestCase):
                 "members": [{"userId": "asmith", "permissionLevel": 3}],
             },
         }
+        self.provider.categories["855381"] = {
+            "id": "855381",
+            "courseName": "Generic course with existing users added",
+            "name": "14",
+            "fullName": "moodle_jPsFc>site>channels>14",
+            "parentName": "channels",
+            "privacy": 1,
+            "privacyContexts": "",
+            "owner": "",
+            "members": [],
+        }
+        self.provider.categories["855383"] = dict(self.provider.categories["855381"], id="855383", courseName="", name="15", fullName="moodle_jPsFc>site>channels>15")
+
         self.service.connection["kms_root_category"] = "MediaSpace"
 
     def test_creates_a_flat_category_with_the_path_as_description(self):
@@ -56,6 +69,26 @@ class TestImportCategory(TestCase):
         self.assertEqual(category.title, "Electronics")
         self.assertEqual(category.description, "Engineering: 1. Term: Electronics")
         self.assertTrue(category.is_global)
+
+    def test_an_lti_course_is_named_after_the_course_not_its_id(self):
+        category = import_category(self.service, self.provider, "855381")
+        self.assertEqual(category.title, "Generic course with existing users added")
+
+    def test_an_lti_course_is_marked_as_an_lms_course(self):
+        self.assertTrue(import_category(self.service, self.provider, "855381").is_lms_course)
+
+    def test_a_kms_gallery_is_not_an_lms_course(self):
+        self.assertFalse(import_category(self.service, self.provider, "8812").is_lms_course)
+
+    def test_a_course_with_no_name_in_the_metadata_keeps_its_id(self):
+        category = import_category(self.service, self.provider, "855383")
+        self.assertEqual(category.title, "15")
+
+    def test_a_category_imported_under_its_old_id_title_is_reused_not_duplicated(self):
+        Category.objects.create(uid="855381", title="14", is_global=True)
+        category = import_category(self.service, self.provider, "855381")
+        self.assertEqual(category.title, "14")
+        self.assertEqual(Category.objects.filter(uid="855381").count(), 1)
 
     def test_writes_a_mapping_record(self):
         category = import_category(self.service, self.provider, "8812")
@@ -93,8 +126,7 @@ class TestImportCategory(TestCase):
         self.assertEqual(RBACMembership.objects.count(), 0)
 
     def test_members_are_imported_even_when_users_are_not(self):
-        # a membership is worthless without the account it points at, so the
-        # members of a restricted category are created whatever the user options say
+        # a membership is worthless without the account it points at
         service = make_service(migrate_all_users=False, create_users=False)
         with override_settings(USE_RBAC=True):
             category = import_category(service, self.provider, "8813")
@@ -106,8 +138,7 @@ class TestImportCategory(TestCase):
             first = import_category(self.service, self.provider, "8813")
             MigrationRecord.objects.filter(service=self.service, object_type="category").delete()
             second = import_category(self.service, self.provider, "8813")
-        # the record was dropped, so the category is built again, but the group is
-        # keyed on the source id and must be the one that already exists
+        # the category is built again, but the group is keyed on the source id
         self.assertNotEqual(first.id, second.id)
         self.assertEqual(RBACGroup.objects.count(), 1)
         self.assertEqual(RBACMembership.objects.count(), 2)
