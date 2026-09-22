@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Migrations - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/migrations.css" %}?v={{ VERSION }}" rel="preload" as="style">
+<link href="{% static "css/migrations.css" %}?v={{ VERSION }}" rel="stylesheet">
+{%endblock topimports %}
+
+{% block content %}
+<div id="page-migrations"></div>
+{% endblock %}
+
+{% block bottomimports %}
+    <script src="{% static "js/migrations.js" %}?v={{ VERSION }}"></script>
+{% endblock bottomimports %}

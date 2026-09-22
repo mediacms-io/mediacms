@@ -45,6 +45,7 @@ export function init(base_url, endpoints) {
       users: endpoints.manage_users,
       comments: endpoints.manage_comments,
     },
+    migrations: endpoints.migrations,
     search: {
       query: endpoints.search + '?q=',
       titles: endpoints.search + '?show=titles&q=',

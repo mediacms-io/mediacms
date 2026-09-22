@@ -1198,7 +1198,11 @@ class MediaSearch(APIView):
             media = media.filter(tags__title=tag)
 
         if category:
-            media = media.filter(category__title__contains=category)
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                media = media.filter(category=category_obj)
+            else:
+                media = media.filter(category__title=category)
 
         if media_type:
             media = media.filter(media_type=media_type)

@@ -57,6 +57,8 @@ CODECS = (
 ENCODE_EXTENSIONS_KEYS = [extension for extension, name in ENCODE_EXTENSIONS]
 ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS]
 
+PREVIEW_PROFILE_NAME = "preview"
+
 
 def generate_uid():
     return get_random_string(length=16)

@@ -177,13 +177,43 @@ export function MediaItemDuration(props) {
     );
 }
 
+const VIDEO_PREVIEW_EXTENSIONS = ['mp4', 'webm'];
+
 export function MediaItemVideoPreviewer(props) {
     if ('' === props.url) {
         return null;
     }
 
-    const src = props.url.split('.').slice(0, -1).join('.');
     const ext = imageExtension(props.url);
+
+    if (-1 < VIDEO_PREVIEW_EXTENSIONS.indexOf(ext)) {
+        return (
+            <video
+                className="item-video-preview"
+                src={props.url}
+                muted
+                loop
+                playsInline
+                preload="none"
+                tabIndex="-1"
+                aria-hidden="true"
+                onMouseEnter={(e) => {
+                    const video = e.currentTarget;
+                    video.muted = true;
+                    const started = video.play();
+                    if (started && started.catch) {
+                        started.catch(() => {});
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.pause();
+                    e.currentTarget.currentTime = 0;
+                }}
+            />
+        );
+    }
+
+    const src = props.url.split('.').slice(0, -1).join('.');
 
     return <span className="item-img-preview" data-src={src} data-ext={ext}></span>;
 }

@@ -26,6 +26,7 @@ export function config(glbl) {
   url.init({
     home: glbl.url.home,
     admin: !glbl.user.is.anonymous && glbl.user.is.admin ? glbl.url.admin : '',
+    migrations: !glbl.user.is.anonymous && glbl.user.is.admin ? glbl.url.migrations : '',
     error404: glbl.url.error404,
     embed: glbl.site.url.replace(/\/+$/, '') + '/embed?m=',
     latest: glbl.url.latestMedia,
