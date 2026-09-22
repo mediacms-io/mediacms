@@ -17,6 +17,7 @@ from users.models import User
 
 from .. import helpers
 from ..forms import (
+    CategoryForm,
     ContactForm,
     EditSubtitleForm,
     MediaMetadataForm,
@@ -28,6 +29,7 @@ from ..forms import (
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
+    can_edit_category,
     can_transcribe_video,
     create_video_trim_request,
     get_user_or_session,
@@ -191,6 +193,34 @@ def categories(request):
 
     context = {}
     return render(request, "cms/categories.html", context)
+
+
+def edit_category(request, uid):
+    """Edit one category's title, description and thumbnail.
+
+    A plain Django form rather than part of the single page app: it is used rarely, by
+    administrators and group managers, and a server rendered form enforces who may open
+    it in one place instead of two.
+    """
+    category = Category.objects.filter(uid=uid).first()
+    if not category:
+        return HttpResponseRedirect("/")
+
+    # the same check the listing uses to offer the link, repeated because a link that is
+    # merely absent is not access control
+    if not can_edit_category(request.user, category):
+        return HttpResponseRedirect(category.get_absolute_url())
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, request.FILES, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.add_message(request, messages.INFO, "Category was updated")
+            return HttpResponseRedirect(category.get_absolute_url())
+    else:
+        form = CategoryForm(instance=category)
+
+    return render(request, "cms/edit_category.html", {"form": form, "category": category})
 
 
 def contact(request):
@@ -652,8 +682,9 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
-    context = {'categories': list(categories)}
+    # uid, not title: titles are not unique
+    categories = Category.objects.all().order_by('title').values('uid', 'title')
+    context = {'categories': json.dumps(list(categories))}
     return render(request, "cms/manage_media.html", context)
 
 

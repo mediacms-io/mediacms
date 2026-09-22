@@ -177,13 +177,48 @@ export function MediaItemDuration(props) {
     );
 }
 
+// preview formats that are video rather than an animated image
+const VIDEO_PREVIEW_EXTENSIONS = ['mp4', 'webm'];
+
 export function MediaItemVideoPreviewer(props) {
     if ('' === props.url) {
         return null;
     }
 
-    const src = props.url.split('.').slice(0, -1).join('.');
     const ext = imageExtension(props.url);
+
+    // A video preview is rendered and driven here. The legacy path hands the url to
+    // MediaItemPreviewer, which builds one <picture> for the whole page and re-appends its
+    // own extension, so it cannot serve a library holding both formats at once.
+    if (-1 < VIDEO_PREVIEW_EXTENSIONS.indexOf(ext)) {
+        return (
+            <video
+                className="item-video-preview"
+                src={props.url}
+                muted
+                loop
+                playsInline
+                preload="none"
+                tabIndex="-1"
+                aria-hidden="true"
+                onMouseEnter={(e) => {
+                    const video = e.currentTarget;
+                    video.muted = true;
+                    const started = video.play();
+                    if (started && started.catch) {
+                        // autoplay can be refused, and a refused preview is not an error
+                        started.catch(() => {});
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.pause();
+                    e.currentTarget.currentTime = 0;
+                }}
+            />
+        );
+    }
+
+    const src = props.url.split('.').slice(0, -1).join('.');
 
     return <span className="item-img-preview" data-src={src} data-ext={ext}></span>;
 }

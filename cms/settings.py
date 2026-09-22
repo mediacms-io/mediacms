@@ -306,6 +306,7 @@ INSTALLED_APPS = [
     "rbac.apps.RbacConfig",
     "identity_providers.apps.IdentityProvidersConfig",
     "lti.apps.LtiConfig",
+    "migrationservice.apps.MigrationServiceConfig",
     "debug_toolbar",
     "mptt",
     "crispy_forms",
@@ -580,6 +581,29 @@ USE_SAML = False
 USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
 USE_LTI = False  # Enable LTI 1.3 integration
+
+# Migration Service
+# items per orchestrator page, and so downloads in flight at once. Kept low: a page of
+# large originals in parallel saturates the link, and a source answers a stalled
+# connection by resetting it, which costs far more than the parallelism won
+MIGRATION_PAGE_SIZE = 3
+# metadata API calls are small and must fail fast
+MIGRATION_API_TIMEOUT = 60
+# media downloads stream large files and need a far longer ceiling
+MIGRATION_DOWNLOAD_TIMEOUT = 60 * 30
+# a retry resumes where it stopped where the source honours Range, so attempts are cheap
+MIGRATION_MAX_RETRIES = 5
+
+# Kaltura role name -> a role User.set_role_from_mapping understands. An empty value
+# means "plain user"; is_superuser/is_staff are never granted by an import.
+KALTURA_ROLE_MAP = {
+    "viewerRole": "",
+    "privateOnlyRole": "",
+    "adminRole": "advancedUser",
+    "unmoderatedAdminRole": "advancedUser",
+    "partnerAdminRole": "manager",
+}
+
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 USE_ROUNDED_CORNERS = True

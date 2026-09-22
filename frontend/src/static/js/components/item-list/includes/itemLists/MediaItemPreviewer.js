@@ -75,9 +75,14 @@ export default class MediaItemPreviewer {
       this.extensions.fallback = { elem: document.createElement('img'), type: 'jpeg' };
     }
 
+    // an unrecognised extension leaves both unset and every line below dereferences
+    // them. A preview is a decoration: it must render nothing, not throw.
+    this.extensions.anim = this.extensions.anim || [];
+    this.extensions.fallback = this.extensions.fallback || {};
+
     if (!this.extensions.fallback.elem) {
       i = 0;
-      while (i < fallback_extensions.length) {
+      while (i < fallback_ext.length) {
         if (-1 < extensions.indexOf(fallback_ext[i])) {
           this.extensions.fallback = { elem: document.createElement('img'), type: fallback_ext[i] };
           break;
@@ -125,6 +130,10 @@ export default class MediaItemPreviewer {
     /*
      * Set source (src).
      */
+
+    if (!this.element) {
+      return;
+    }
 
     if (this.extensions.anim.length) {
       i = 0;
