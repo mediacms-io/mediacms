@@ -45,11 +45,12 @@ function extractPlaylistId() {
 
 function itemPageLink(props, item) {
   if (props.inCategoriesList) {
-    return LinksContext._currentValue.search.category + item.title.replace(' ', '%20');
+    // link by uid: category titles are not unique
+    return LinksContext._currentValue.search.category + encodeURIComponent(item.uid);
   }
 
   if (props.inTagsList) {
-    return LinksContext._currentValue.search.tag + item.title.replace(' ', '%20');
+    return LinksContext._currentValue.search.tag + encodeURIComponent(item.title);
   }
 
   const playlistId = extractPlaylistId();
