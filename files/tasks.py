@@ -57,6 +57,12 @@ from .models import (
 
 logger = get_task_logger(__name__)
 
+# Sprite frames are stacked vertically in one JPEG, and a JPEG image is at most
+# 65,535 pixels high. The video player expects 160x90 frames.
+SPRITE_FRAME_WIDTH = 160
+SPRITE_FRAME_HEIGHT = 90
+SPRITE_MAX_FRAMES = 65535 // SPRITE_FRAME_HEIGHT
+
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 ERRORS_LIST = [
@@ -556,11 +562,27 @@ def produce_sprite_from_video(friendly_token):
             output_name = tmpdirname + "/sprites.jpg"
 
             fps = getattr(settings, 'SPRITE_NUM_SECS', 10)
-            ffmpeg_cmd = [settings.FFMPEG_COMMAND, "-i", media.media_file.path, "-f", "image2", "-vf", f"fps=1/{fps}, scale=160:90", tmpdir_image_files]  # noqa
+            if media.duration and media.duration > SPRITE_MAX_FRAMES * fps:
+                logger.warning(
+                    f"sprite for media {friendly_token} only covers the first {SPRITE_MAX_FRAMES * fps} of {media.duration} seconds "
+                    f"({SPRITE_MAX_FRAMES} frames of {SPRITE_FRAME_HEIGHT} px, the JPEG height limit)"
+                )
+            ffmpeg_cmd = [
+                settings.FFMPEG_COMMAND,
+                "-i",
+                media.media_file.path,
+                "-frames:v",
+                str(SPRITE_MAX_FRAMES),
+                "-f",
+                "image2",
+                "-vf",
+                f"fps=1/{fps}, scale={SPRITE_FRAME_WIDTH}:{SPRITE_FRAME_HEIGHT}",
+                tmpdir_image_files,
+            ]
             run_command(ffmpeg_cmd)
             image_files = [f for f in os.listdir(tmpdirname) if f.startswith("img") and f.endswith(".jpg")]
             image_files = sorted(image_files, key=lambda x: int(re.search(r'\d+', x).group()))
-            image_files = [os.path.join(tmpdirname, f) for f in image_files]
+            image_files = [os.path.join(tmpdirname, f) for f in image_files[:SPRITE_MAX_FRAMES]]
             cmd_convert = ["convert", *image_files, "-append", output_name]  # image files, unpacked into the list
             ret = run_command(cmd_convert)  # noqa
 
