@@ -9,6 +9,15 @@ from files.methods import (
 )
 
 
+class CanViewApiDocs(permissions.BasePermission):
+    """API docs are public unless ALLOW_ANONYMOUS_API_DOCS is False"""
+
+    def has_permission(self, request, view):
+        if getattr(settings, "ALLOW_ANONYMOUS_API_DOCS", True):
+            return True
+        return bool(request.user and request.user.is_authenticated)
+
+
 class IsAuthorizedToAdd(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:

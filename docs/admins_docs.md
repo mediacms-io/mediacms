@@ -519,6 +519,16 @@ INCLUDE_LISTING_NUMBERS = True
 
 This setting affects only the visual display on the categories and tags listing pages and does not impact the functionality of filtering by categories or tags.
 
+### 5.31 Control whether anonymous users can see the API docs
+
+By default, the API docs (`/swagger/`, `/swagger.json`, `/swagger.yaml` and `/docs/api/`) are public. To restrict them to logged-in users, set:
+
+```
+ALLOW_ANONYMOUS_API_DOCS = False
+```
+
+The Django debug toolbar routes (`/__debug__/`) are only mounted when `DEBUG = True`.
+
 
 ## 6. Manage pages
 to be written

@@ -592,6 +592,9 @@ ALLOW_MEDIA_REPLACEMENT = False
 
 ALLOW_ANONYMOUS_USER_LISTING = True
 
+# Whether anonymous users can see the API docs (swagger/, swagger.json, swagger.yaml, docs/api/)
+ALLOW_ANONYMOUS_API_DOCS = True
+
 # Who can see the members page
 # valid choices are all, editors, admins
 CAN_SEE_MEMBERS_PAGE = "all"
