@@ -465,7 +465,7 @@ By default, anonymous users can view the list of all users on the platform. To r
 ALLOW_ANONYMOUS_USER_LISTING = False
 ```
 
-When set to False, only logged-in users will be able to access the user listing API endpoint.
+When set to False, only logged-in users will be able to access the user listing API endpoint, the user detail API endpoint (`/api/v1/users/<username>`) and the user profile pages (`/user/<username>`, `/about`, `/playlists`). Anonymous visitors of a profile page are redirected to the login page.
 
 
 ### 5.27 Control who can see the members page

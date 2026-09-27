@@ -2,6 +2,7 @@ from allauth.account.adapter import get_adapter
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Q
@@ -39,7 +40,14 @@ def get_user(username):
         return None
 
 
+def anonymous_user_access_denied(request):
+    """Profiles follow the same rule as the user listing"""
+    return not settings.ALLOW_ANONYMOUS_USER_LISTING and not request.user.is_authenticated
+
+
 def view_user(request, username):
+    if anonymous_user_access_denied(request):
+        return redirect_to_login(request.get_full_path())
     context = {}
     user = get_user(username=username)
     if not user:
@@ -76,6 +84,8 @@ def shared_by_me(request, username):
 
 
 def view_user_playlists(request, username):
+    if anonymous_user_access_denied(request):
+        return redirect_to_login(request.get_full_path())
     context = {}
     user = get_user(username=username)
     if not user:
@@ -90,6 +100,8 @@ def view_user_playlists(request, username):
 
 
 def view_user_about(request, username):
+    if anonymous_user_access_denied(request):
+        return redirect_to_login(request.get_full_path())
     context = {}
     user = get_user(username=username)
     if not user:
@@ -300,6 +312,11 @@ class UserDetail(APIView):
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrManager)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get_permissions(self):
+        if not settings.ALLOW_ANONYMOUS_USER_LISTING:
+            return [permissions.IsAuthenticated(), IsUserOrManager()]
+        return super().get_permissions()
 
     def get_user(self, username):
         try:
