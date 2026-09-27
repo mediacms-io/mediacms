@@ -551,6 +551,9 @@ class Media(models.Model):
         if not profiles:
             profiles = EncodeProfile.objects.filter(active=True)
         profiles = list(profiles)
+        if not profiles:
+            # nothing to encode: do not cut the file into chunks nobody will pick up
+            return False
 
         from .. import tasks
 
