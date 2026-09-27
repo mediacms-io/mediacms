@@ -11,6 +11,7 @@ from django.shortcuts import render
 from django.utils.html import mark_safe, strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
+from cms.throttles import contact_form_allowed
 from cms.version import VERSION
 from files.methods import user_allowed_to_upload
 from users.models import User
@@ -204,6 +205,10 @@ def contact(request):
     else:
         form = ContactForm(request.user, request.POST)
         if form.is_valid():
+            if not contact_form_allowed(request):
+                form.add_error(None, "Too many messages were sent, please try again later.")
+                context["form"] = form
+                return render(request, "cms/contact.html", context, status=429)
             if request.user.is_authenticated:
                 from_email = request.user.email
                 name = request.user.name

@@ -168,7 +168,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    # messages sent through /api/v1/users/<username>/contact, per sender
+    "DEFAULT_THROTTLE_RATES": {
+        "contact_user": "10/hour",
+    },
 }
+
+# messages sent through the /contact form, per client address and for all clients
+CONTACT_FORM_RATE = "5/hour"
+CONTACT_FORM_GLOBAL_RATE = "50/hour"
 
 
 # In docker, deploy/docker/entrypoint.sh ensures the SECRET_KEY env var is

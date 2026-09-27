@@ -11,7 +11,7 @@ from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, permissions, status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import (
     FileUploadParser,
@@ -24,6 +24,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from cms.permissions import IsUserOrManager
+from cms.throttles import ContactUserThrottle
 from files.methods import is_mediacms_editor, is_mediacms_manager
 
 from .forms import ChannelForm, UserForm
@@ -164,6 +165,7 @@ def edit_channel(request, friendly_token):
     operation_description='Contact user through email, if user has set this option',
 )
 @api_view(["POST"])
+@throttle_classes([ContactUserThrottle])
 def contact_user(request, username):
     if not request.user.is_authenticated:
         return Response(
