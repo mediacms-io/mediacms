@@ -9,6 +9,7 @@ from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.utils.html import mark_safe, strip_tags
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
@@ -590,6 +591,7 @@ def edit_video(request):
     )
 
 
+@xframe_options_exempt
 def embed_media(request):
     """Embed media view"""
 

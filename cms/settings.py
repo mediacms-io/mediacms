@@ -259,7 +259,7 @@ CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
 FILE_STORAGE = "django.core.files.storage.DefaultStorage"
 
-X_FRAME_OPTIONS = "ALLOWALL"
+X_FRAME_OPTIONS = "DENY"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 CELERY_EMAIL_TASK_CONFIG = {
     "queue": "short_tasks",
@@ -687,6 +687,9 @@ if USE_LTI:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
     CSRF_COOKIE_SECURE = True
+    # LMS launches browse the portal inside the LMS iframe, so framing stays allowed
+    if "django.middleware.clickjacking.XFrameOptionsMiddleware" in MIDDLEWARE:
+        MIDDLEWARE.remove("django.middleware.clickjacking.XFrameOptionsMiddleware")
     RELATED_MEDIA_STRATEGY = "no_related"
 
     # Whether LMS course categories appear in the public
