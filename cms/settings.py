@@ -38,6 +38,8 @@ CAN_LIKE_MEDIA = True  # whether the like media appears
 CAN_DISLIKE_MEDIA = True  # whether the dislike media appears
 CAN_REPORT_MEDIA = True  # whether the report media appears
 CAN_SHARE_MEDIA = True  # whether the share media appears
+CAN_DOWNLOAD_MEDIA = True  # whether the download media option appears
+CAN_COMMENT_MEDIA = True  # whether the add comment form appears
 # how many times an item need be reported
 # to get to private state automatically
 REPORTED_TIMES_THRESHOLD = 10

@@ -267,15 +267,19 @@ Make changes (True/False) to any of the following:
 - CAN_DISLIKE_MEDIA = True  # whether the dislike media appears
 - CAN_REPORT_MEDIA = True  # whether the report media appears
 - CAN_SHARE_MEDIA = True  # whether the share media appears
+- CAN_DOWNLOAD_MEDIA = True  # whether the download media option appears
+- CAN_COMMENT_MEDIA = True  # whether the add comment form appears
 ```
 
 ### 5.9 Show or hide the download option on a media
 
-Edit `templates/config/installation/features.html` and set
+set
 
 ```
-download: false
+CAN_DOWNLOAD_MEDIA = False
 ```
+
+This hides the download option on every media. The per-media `allow_download` field still applies when the setting is True. In the same way, `CAN_COMMENT_MEDIA = False` hides the form that adds a comment; who may post comments is still controlled by `CAN_COMMENT` (section 5.25).
 
 ### 5.10 Automatically hide media upon being reported
 

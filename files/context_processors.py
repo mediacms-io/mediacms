@@ -29,6 +29,8 @@ def stuff(request):
     ret["CAN_DISLIKE_MEDIA"] = settings.CAN_DISLIKE_MEDIA
     ret["CAN_REPORT_MEDIA"] = settings.CAN_REPORT_MEDIA
     ret["CAN_SHARE_MEDIA"] = settings.CAN_SHARE_MEDIA
+    ret["CAN_DOWNLOAD_MEDIA"] = getattr(settings, "CAN_DOWNLOAD_MEDIA", True)
+    ret["CAN_COMMENT_MEDIA"] = getattr(settings, "CAN_COMMENT_MEDIA", True)
     ret["UPLOAD_MAX_SIZE"] = settings.UPLOAD_MAX_SIZE
     ret["UPLOAD_MAX_FILES_NUMBER"] = settings.UPLOAD_MAX_FILES_NUMBER
     ret["PRE_UPLOAD_MEDIA_MESSAGE"] = settings.PRE_UPLOAD_MEDIA_MESSAGE
