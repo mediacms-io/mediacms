@@ -871,7 +871,8 @@ class Media(models.Model):
                     res["master_file"] = helpers.url_from_path(hls_file)
                     for iframe_playlist in m3u8_obj.iframe_playlists:
                         uri = os.path.join(p, iframe_playlist.uri)
-                        if os.path.exists(uri):
+                        # audio-only renditions have no RESOLUTION; the master file covers them
+                        if os.path.exists(uri) and iframe_playlist.iframe_stream_info.resolution:
                             resolution = iframe_playlist.iframe_stream_info.resolution[1]
                             # most probably video is vertical, getting the first value to
                             # be the resolution
@@ -881,7 +882,7 @@ class Media(models.Model):
                             res[f"{resolution}_iframe"] = helpers.url_from_path(uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
-                        if os.path.exists(uri):
+                        if os.path.exists(uri) and playlist.stream_info.resolution:
                             resolution = playlist.stream_info.resolution[1]
                             # same as above
                             if resolution not in valid_resolutions:
