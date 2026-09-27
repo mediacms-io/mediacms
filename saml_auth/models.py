@@ -80,4 +80,7 @@ class SAMLConfiguration(models.Model):
         }
         provider_settings["email_verified"] = self.verified_email
         provider_settings["email_authentication"] = self.email_authentication
+        # security options (want_assertion_signed, authn_request_signed, strict, ...) are set
+        # on the SocialApp, as for the allauth SAML provider
+        provider_settings["advanced"] = dict((self.social_app.settings or {}).get("advanced") or {})
         return provider_settings
