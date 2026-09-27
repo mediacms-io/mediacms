@@ -129,4 +129,5 @@ else:
     urlpatterns.append(path('accounts/login', LoginView.as_view(), name='login_system'))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
-    urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))
+    # must come before the get_page catch-all, which also matches "sitemap.xml"
+    urlpatterns.insert(0, path("sitemap.xml", views.sitemap, name="sitemap"))

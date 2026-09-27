@@ -13,7 +13,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
 from files.methods import user_allowed_to_upload
-from users.models import User
 
 from .. import helpers
 from ..forms import (
@@ -700,9 +699,7 @@ def sitemap(request):
     """Sitemap"""
 
     context = {}
-    context["media"] = list(Media.objects.filter(listable=True).order_by("-add_date"))
-    context["playlists"] = list(Playlist.objects.filter().order_by("-add_date"))
-    context["users"] = list(User.objects.filter())
+    context["media"] = list(Media.objects.filter(state="public", listable=True).order_by("-add_date"))
     return render(request, "sitemap.xml", context, content_type="application/xml")
 
 
