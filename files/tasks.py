@@ -843,7 +843,10 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
     elif action == "report":
         media.reported_times += 1
 
-        if media.reported_times >= settings.REPORTED_TIMES_THRESHOLD:
+        # anonymous reports are recorded and notified, but only reports from
+        # distinct logged in users count towards the threshold
+        reporters = MediaAction.objects.filter(media=media, action="report", user__isnull=False).values("user").distinct().count()
+        if reporters >= settings.REPORTED_TIMES_THRESHOLD:
             media.state = "private"
         media.save(update_fields=["reported_times", "state"])
 

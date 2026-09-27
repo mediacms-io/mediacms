@@ -286,7 +286,7 @@ eg
 REPORTED_TIMES_THRESHOLD = 2
 ```
 
-once the limit is reached, media goes to private state and an email is sent to admins
+once the limit is reached, media goes to private state and an email is sent to admins. Only reports from distinct logged in users count towards the limit. Anonymous reports (allowed when `"report"` is in `ALLOW_ANONYMOUS_ACTIONS`) are still recorded and emailed to admins, but they never make a media private.
 
 ### 5.11 Set a custom message on the media upload page
 
