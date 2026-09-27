@@ -154,7 +154,7 @@ class Media(models.Model):
     state = models.CharField(
         max_length=20,
         choices=MEDIA_STATES,
-        default=helpers.get_portal_workflow(),
+        default=helpers.get_default_state,
         db_index=True,
         help_text="state of Media",
     )
