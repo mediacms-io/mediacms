@@ -597,7 +597,13 @@ def embed_media(request):
     if not friendly_token:
         return HttpResponseRedirect("/")
 
-    media = Media.objects.values("title").filter(friendly_token=friendly_token).first()
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+
+    if media and media.state == "private":
+        # same rule as the media detail API: owner, members with access and editors only
+        user = request.user
+        if not (user.is_authenticated and (user.has_member_access_to_media(media) or is_mediacms_editor(user))):
+            media = None
 
     if not media:
         return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
