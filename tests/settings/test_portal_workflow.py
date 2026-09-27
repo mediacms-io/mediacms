@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.files import File
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from files.helpers import get_default_state, get_portal_workflow
@@ -95,3 +96,15 @@ class TestPortalWorkflow(TestCase):
             myfile = File(f)
             media = Media.objects.create(title="Advanced Test Media", description="Test Description", user=self.advanced_user, media_file=myfile)
         self.assertEqual(media.state, 'unlisted', "Media state should be 'unlisted' for advanced user in private_verified workflow")
+
+    def test_state_default_is_callable(self):
+        """The state default follows PORTAL_WORKFLOW at save time, not at import time"""
+        self.assertTrue(callable(Media._meta.get_field("state").default), "Media.state default should be a callable")
+
+    @override_settings(PORTAL_WORKFLOW='private')
+    def test_no_migration_needed_for_another_workflow(self):
+        """Changing PORTAL_WORKFLOW must not make makemigrations propose a new migration"""
+        try:
+            call_command("makemigrations", "files", "--check", "--dry-run", verbosity=0)
+        except SystemExit:
+            self.fail("makemigrations --check detected changes in the files app")
