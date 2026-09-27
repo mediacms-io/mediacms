@@ -1,7 +1,12 @@
 #!/bin/bash
 
-RANDOM_ADMIN_PASS=`python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"`
-ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}
+# the password is printed below only when it is generated here, never when it is
+# provided through ADMIN_PASSWORD
+ADMIN_PASSWORD_GENERATED=no
+if [ -z "$ADMIN_PASSWORD" ]; then
+    ADMIN_PASSWORD=`python -c "import secrets;chars = 'abcdefghijklmnopqrstuvwxyz0123456789';print(''.join(secrets.choice(chars) for i in range(10)))"`
+    ADMIN_PASSWORD_GENERATED=yes
+fi
 
 if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
     echo "Running migrations service"
@@ -20,7 +25,11 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
             --username=$ADMIN_USER \
             --email=$ADMIN_EMAIL \
             --database=default || true
-        echo "Created admin user with password: $ADMIN_PASSWORD"
+        if [ "$ADMIN_PASSWORD_GENERATED" = "yes" ]; then
+            echo "Created admin user with password: $ADMIN_PASSWORD"
+        else
+            echo "Created admin user with the password set in ADMIN_PASSWORD"
+        fi
 
     fi
     echo "RUNNING COLLECTSTATIC"
