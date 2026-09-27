@@ -45,7 +45,7 @@ def get_page(request, slug):
     if page:
         context["page"] = page
     else:
-        return render(request, "404.html", context)
+        return render(request, "404.html", context, status=404)
     return render(request, "cms/page.html", context)
 
 
@@ -744,7 +744,7 @@ def view_media(request):
     media = Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
         context["media"] = None
-        return render(request, "cms/media.html", context)
+        return render(request, "cms/media.html", context, status=404)
 
     user_or_session = get_user_or_session(request)
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
@@ -789,4 +789,5 @@ def view_playlist(request, friendly_token):
 
     context = {}
     context["playlist"] = playlist
-    return render(request, "cms/playlist.html", context)
+    status = 200 if playlist else 404
+    return render(request, "cms/playlist.html", context, status=status)
