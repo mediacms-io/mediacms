@@ -121,6 +121,14 @@ finish_acs = FinishACSView.as_view()
 @method_decorator(login_not_required, name="dispatch")
 class SLSView(SAMLViewMixin, View):
     def dispatch(self, request, organization_slug):
+        # python3-saml checks a redirect-binding signature only when one is present,
+        # so an unsigned LogoutRequest or LogoutResponse would end the session of
+        # whoever follows a link to this view. Only signed messages are processed.
+        has_message = "SAMLRequest" in request.GET or "SAMLResponse" in request.GET
+        if has_message and not ("Signature" in request.GET and "SigAlg" in request.GET):
+            logger.error("Refused an unsigned SAML logout message")
+            return HttpResponse("Unsigned logout message", content_type="text/plain", status=400)
+
         provider = self.get_provider(organization_slug)
         auth = build_auth(self.request, provider)
         should_logout = request.user.is_authenticated
