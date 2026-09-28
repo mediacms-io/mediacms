@@ -270,11 +270,26 @@ def _timestamp_to_seconds(value):
     return hours * 3600 + minutes * 60 + seconds + millis / 1000.0
 
 
+def is_json_request(request):
+    """True for an application/json request body
+
+    video_chapters and trim_video are csrf_exempt and use the session. A cross-site
+    HTML form can only send urlencoded, multipart or text/plain bodies, and a
+    cross-origin JSON request needs a CORS preflight, so requiring JSON keeps
+    other sites from posting to them with the user's cookie.
+    """
+
+    return request.content_type == "application/json"
+
+
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
     if not request.method == "POST":
         return HttpResponseRedirect("/")
+
+    if not is_json_request(request):
+        return JsonResponse({'success': False, 'error': 'Request must be application/json'}, status=415)
 
     media = Media.objects.filter(friendly_token=friendly_token).first()
 
@@ -518,6 +533,9 @@ def trim_video(request, friendly_token):
 
     if not request.method == "POST":
         return HttpResponseRedirect("/")
+
+    if not is_json_request(request):
+        return JsonResponse({"success": False, "error": "Request must be application/json"}, status=415)
 
     media = Media.objects.filter(friendly_token=friendly_token).first()
 
