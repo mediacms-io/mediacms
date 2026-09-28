@@ -64,10 +64,10 @@ COPY requirements.txt requirements-dev.txt ./
 # Install Python dependencies using pip (within virtualenv)
 ARG DEVELOPMENT_MODE=False
 RUN pip install --no-cache-dir uv && \
-    uv pip install --no-binary lxml --no-binary xmlsec -r requirements.txt && \
+    uv pip install --no-cache --no-binary lxml --no-binary xmlsec -r requirements.txt && \
     if [ "$DEVELOPMENT_MODE" = "True" ]; then \
         echo "Installing development dependencies..." && \
-        uv pip install -r requirements-dev.txt; \
+        uv pip install --no-cache -r requirements-dev.txt; \
     fi && \
     apt-get purge -y --auto-remove \
         build-essential \
@@ -110,4 +110,4 @@ COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
     chmod go+rwx /root/.cache/
-RUN uv pip install -r requirements-full.txt
+RUN uv pip install --no-cache -r requirements-full.txt
