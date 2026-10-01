@@ -113,6 +113,14 @@ function popupBottomNavItems() {
       icon: 'admin_panel_settings',
       text: 'MediaCMS administration',
     });
+
+    if (links.migrations) {
+      items.push({
+        link: links.migrations,
+        icon: 'move_to_inbox',
+        text: translateString('Content migration'),
+      });
+    }
   }
 
   return items;

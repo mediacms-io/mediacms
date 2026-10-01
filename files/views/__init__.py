@@ -1,7 +1,12 @@
 # Import all views for backward compatibility
 
 from .auth import custom_login_view, saml_metadata  # noqa: F401
-from .categories import CategoryList, CategoryListContributor, TagList  # noqa: F401
+from .categories import (  # noqa: F401
+    CategoryDetail,
+    CategoryList,
+    CategoryListContributor,
+    TagList,
+)
 from .comments import CommentDetail, CommentList  # noqa: F401
 from .encoding import EncodeProfileList  # noqa: F401
 from .media import MediaActions  # noqa: F401
@@ -16,6 +21,7 @@ from .pages import add_subtitle  # noqa: F401
 from .pages import approval_required  # noqa: F401
 from .pages import categories  # noqa: F401
 from .pages import contact  # noqa: F401
+from .pages import edit_category  # noqa: F401
 from .pages import edit_chapters  # noqa: F401
 from .pages import edit_media  # noqa: F401
 from .pages import edit_subtitle  # noqa: F401

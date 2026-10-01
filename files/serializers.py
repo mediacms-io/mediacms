@@ -1,7 +1,8 @@
 from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
-from .methods import is_mediacms_editor
+from .methods import can_edit_category, is_mediacms_editor
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
 # TODO: put them in a more DRY way
@@ -114,7 +115,7 @@ class CategoriesInfoMixin(serializers.Serializer):
         for cat in obj.category.all():
             if cat.is_rbac_category and cat.pk not in accessible_rbac:
                 continue
-            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+            ret.append({"title": cat.title, "uid": cat.uid, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
         return ret
 
 
@@ -235,6 +236,7 @@ class EncodeProfileSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
+    edit_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -247,7 +249,19 @@ class CategorySerializer(serializers.ModelSerializer):
             "user",
             "thumbnail_url",
             "is_lms_course",
+            "edit_url",
         )
+
+    def get_edit_url(self, obj):
+        """Where this viewer may edit the category, or empty if they may not.
+
+        Per viewer rather than a flag, so a listing cannot offer a link that leads to a
+        redirect. The page checks again itself.
+        """
+        request = self.context.get("request")
+        if request is None or not can_edit_category(request.user, obj):
+            return ""
+        return reverse("edit_category", args=[obj.uid])
 
 
 class TagSerializer(serializers.ModelSerializer):

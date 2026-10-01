@@ -1,6 +1,7 @@
 import React from 'react';
 import { ApiUrlContext } from '../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../utils/stores/';
+import { getRequest } from '../utils/helpers/';
 import { FiltersToggleButton } from '../components/_shared/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync';
@@ -22,6 +23,8 @@ export class SearchPage extends Page {
       searchQuery: SearchFieldStore.get('search-query'),
       searchCategories: SearchFieldStore.get('search-categories'),
       searchTags: SearchFieldStore.get('search-tags'),
+      searchCategoryTitle: SearchFieldStore.get('search-categories'),
+      categoryEditUrl: '',
       hiddenFilters: true,
     };
 
@@ -33,6 +36,8 @@ export class SearchPage extends Page {
     this.onToggleFiltersClick = this.onToggleFiltersClick.bind(this);
     this.onFiltersUpdate = this.onFiltersUpdate.bind(this);
 
+    this.onCategoryLoad = this.onCategoryLoad.bind(this);
+
     this.didMount = false;
 
     this.updateRequestUrl();
@@ -40,6 +45,26 @@ export class SearchPage extends Page {
 
   componentDidMount() {
     this.didMount = true;
+
+    if (this.state.searchCategories) {
+      getRequest(
+        ApiUrlContext._currentValue.archive.categories + '/' + encodeURIComponent(this.state.searchCategories),
+        !1,
+        this.onCategoryLoad
+      );
+    }
+  }
+
+  onCategoryLoad(response) {
+    if (response && response.data && response.data.title) {
+      this.setState(
+        {
+          searchCategoryTitle: response.data.title,
+          categoryEditUrl: response.data.edit_url || '',
+        },
+        this.updateRequestUrl
+      );
+    }
   }
 
   onToggleFiltersClick() {
@@ -115,7 +140,12 @@ export class SearchPage extends Page {
       } else {
         if (this.state.searchCategories) {
           title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
-          title += ' ' + translateString(inEmbeddedApp() ? 'media in course' : 'media in category') + ' "' + this.state.searchCategories + '"';
+          title +=
+            ' ' +
+            translateString(inEmbeddedApp() ? 'media in course' : 'media in category') +
+            ' "' +
+            this.state.searchCategoryTitle +
+            '"';
         } else if (this.state.searchTags) {
           title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
           title += ' ' + translateString('media in tag') + ' "' + this.state.searchTags + '"';
@@ -192,6 +222,8 @@ export class SearchPage extends Page {
       <MediaListWrapper
         className="search-results-wrap items-list-hor"
         title={null === this.state.resultsTitle ? null : this.state.resultsTitle}
+        viewAllLink={this.state.categoryEditUrl || undefined}
+        viewAllText={this.state.categoryEditUrl ? translateString('EDIT CATEGORY') : undefined}
       >
         {advancedFilters ? <FiltersToggleButton onClick={this.onToggleFiltersClick} /> : null}
         {advancedFilters ? (
