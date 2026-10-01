@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.0](https://github.com/mediacms-io/mediacms/compare/v9.0.0...v9.1.0) (2026-10-01)
+
+### Features
+
+* LTI changes for ItsLearning LMS support ([#1596](https://github.com/mediacms-io/mediacms/issues/1596)) ([db74610](https://github.com/mediacms-io/mediacms/commit/db74610908c7575310159f472e1b3b7759d1cae7))
+
 ## [9.0.0](https://github.com/mediacms-io/mediacms/compare/v8.4.0...v9.0.0) (2026-10-01)
 
 ### ⚠ BREAKING CHANGES
