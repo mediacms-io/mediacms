@@ -297,6 +297,7 @@ class LaunchView(View):
                 raise ValueError("Missing id_token in launch request")
 
             unverified = jwt.decode(id_token, options={"verify_signature": False})
+
             iss = unverified.get('iss')
             aud = unverified.get('aud')
             try:
@@ -315,6 +316,18 @@ class LaunchView(View):
                 def _get_request_param(self, key):
                     """Override to properly get request parameters"""
                     return self._request.get_param(key)
+
+                def validate_message(self):
+                    try:
+                        return super().validate_message()
+                    except LtiException:
+                        body = self._jwt.get('body', {}) if isinstance(self._jwt, dict) else {}
+                        msg_type = body.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
+                        has_dl_settings = bool(body.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'))
+                        if msg_type == 'LtiDeepLinkingRequest' and not has_dl_settings:
+                            logger.warning('LTI launch: LtiDeepLinkingRequest without deep_linking_settings; treating as a resource-link launch')
+                            return self
+                        raise
 
             message_launch = CustomMessageLaunch(lti_request, tool_config, session_service=session_service, cookie_service=cookie_service)
 
@@ -368,8 +381,9 @@ class LaunchView(View):
             create_lti_session(request, user, message_launch, platform)
 
             message_type = launch_data.get('https://purl.imsglobal.org/spec/lti/claim/message_type')
+            has_dl_settings = bool(launch_data.get('https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'))
 
-            if message_type == 'LtiDeepLinkingRequest':
+            if message_type == 'LtiDeepLinkingRequest' and has_dl_settings:
                 return self.handle_deep_linking_launch(request, message_launch, platform, launch_data)
 
             # Clear retry counter on successful launch
