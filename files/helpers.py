@@ -540,8 +540,8 @@ def get_base_ffmpeg_command(
     target_width = round(target_height * 16 / 9)
     scale_filter_opts = [
         f"if(lt(iw\\,ih)\\,{target_height}\\,{target_width})",  # noqa
-        f"if(lt(iw\\,ih)\\,{target_width}\\,{target_height})",  # noqa
-        "force_original_aspect_ratio=decrease",
+        f"if(lt(ih\\,iw)\\,{target_width}\\,{target_height})",  # noqa
+        "force_original_aspect_ratio=increase",
         "force_divisible_by=2",
         "flags=lanczos",
     ]
