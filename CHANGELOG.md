@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.0.0](https://github.com/mediacms-io/mediacms/compare/v8.4.0...v9.0.0) (2026-10-01)
+
+### ⚠ BREAKING CHANGES
+
+* migrate media from Kaltura, YouTube and Panopto (#1571)
+
+### Features
+
+* migrate media from Kaltura, YouTube and Panopto ([#1571](https://github.com/mediacms-io/mediacms/issues/1571)) ([cb14ea9](https://github.com/mediacms-io/mediacms/commit/cb14ea94f79960180550cafe6f207690a75a9ff9))
+
 ## [8.4.0](https://github.com/mediacms-io/mediacms/compare/v8.3.5...v8.4.0) (2026-08-25)
 
 ### Features
