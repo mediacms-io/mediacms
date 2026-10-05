@@ -671,7 +671,7 @@ class Media(models.Model):
         """Set encoding_status for videos
         Set success if at least one mp4 or webm exists
         """
-        mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False))
+        mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME))
         webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
         if not mp4_statuses and not webm_statuses:
@@ -691,7 +691,7 @@ class Media(models.Model):
         if self.media_type not in ["video", "audio"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME).order_by("-profile__resolution").first()
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 
@@ -703,7 +703,7 @@ class Media(models.Model):
         if self.media_type not in ["video", "audio"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME).order_by("-profile__resolution").first()
         if ret:
             return ret.media_file.path
 
