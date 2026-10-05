@@ -432,7 +432,7 @@ class Media(models.Model):
             helpers.rm_file(self.media_file.path)
             if self.state == "public":
                 self.state = "unlisted"
-                self.save(update_fields=["state"])
+                self.save(update_fields=["state", "listable"])
             return False
 
         if self.media_type == "video":

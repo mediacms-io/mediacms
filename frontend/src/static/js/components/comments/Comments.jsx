@@ -347,7 +347,7 @@ Comment.defaultProps = {
   dislikes: 0,
 };
 
-function displayCommentsRelatedAlert() {
+function displayCommentsRelatedAlert(comments) {
   // TODO: Improve this and move it into Media Page code.
 
   var pageMainEl = document.querySelector('.page-main');
@@ -356,10 +356,10 @@ function displayCommentsRelatedAlert() {
   const postUploadMessage = PageStore.get('config-contents').uploader.postUploadMessage;
 
   if ('' === postUploadMessage) {
-    if (noCommentDiv && 0 === comm.length) {
+    if (noCommentDiv && 0 === comments.length) {
       noCommentDiv.parentNode.removeChild(noCommentDiv);
     }
-  } else if (0 === comm.length && 'unlisted' === MediaPageStore.get('media-data').state) {
+  } else if (0 === comments.length && 'unlisted' === MediaPageStore.get('media-data').state) {
     if (-1 < LinksContext._currentValue.profile.media.indexOf(MediaPageStore.get('media-data').author_profile)) {
       if (!noCommentDiv) {
         const missingCommentariesUnlistedMsgElem = document.createElement('div');
@@ -387,7 +387,7 @@ function displayCommentsRelatedAlert() {
         });
       }
     }
-  } else if (noCommentDiv && 0 < comm.length) {
+  } else if (noCommentDiv && 0 < comments.length) {
     noCommentDiv.parentNode.removeChild(noCommentDiv);
   }
 }
@@ -455,7 +455,7 @@ export default function CommentsList(props) {
       comment.text = setTimestampAnchors(comment.text);
     });
 
-    displayCommentsRelatedAlert();
+    displayCommentsRelatedAlert(retrievedComments);
     setComments([...retrievedComments]);
   }
 

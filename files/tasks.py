@@ -918,7 +918,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
         if media.reported_times >= settings.REPORTED_TIMES_THRESHOLD:
             media.state = "private"
-        media.save(update_fields=["reported_times", "state"])
+        media.save(update_fields=["reported_times", "state", "listable"])
 
         notify_users(
             friendly_token=media.friendly_token,

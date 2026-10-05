@@ -351,7 +351,8 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if all_mappings[role].get('group_role'):
                 group_role = resolve_group_role(group_role, all_mappings[role]['group_role'])
 
-    user.set_role_from_mapping(global_role)
+    if global_role != 'user':
+        user.set_role_from_mapping(global_role)
     _ensure_membership(user, rbac_group, group_role)
 
     return global_role, group_role

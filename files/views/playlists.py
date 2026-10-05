@@ -30,8 +30,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List playlists',
+        operation_description='Paginated listing of playlists. Pass author=<username> to get the playlists of one user.',
         responses={
             200: openapi.Response('response description', PlaylistSerializer(many=True)),
         },
@@ -53,8 +53,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Create a playlist',
+        operation_description='Create a playlist owned by the authenticated user. The friendly token is assigned by the server.',
     )
     def post(self, request, format=None):
         serializer = PlaylistSerializer(data=request.data, context={"request": request})
@@ -77,7 +77,7 @@ class PlaylistDetail(APIView):
             return playlist
         except PermissionDenied:
             return Response({"detail": "not enough permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except BaseException:
+        except Playlist.DoesNotExist:
             return Response(
                 {"detail": "Playlist does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -86,8 +86,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Get a playlist',
+        operation_description='Playlist details and its media. Only media the user is allowed to see are included.',
     )
     def get(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -120,8 +120,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Edit a playlist',
+        operation_description='Update the title and description of a playlist. Allowed for its owner and MediaCMS editors, managers and admins; the owner stays the same.',
     )
     def post(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -129,15 +129,15 @@ class PlaylistDetail(APIView):
             return playlist
         serializer = PlaylistDetailSerializer(playlist, data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Add, remove or reorder media',
+        operation_description='type is one of add, remove or ordering, with media_friendly_token set to the media. ordering also needs the new position. Private media can only be added by users who can see them.',
     )
     def put(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -168,7 +168,7 @@ class PlaylistDetail(APIView):
                         obj, created = PlaylistMedia.objects.get_or_create(
                             playlist=playlist,
                             media=media,
-                            ordering=media_in_playlist + 1,
+                            defaults={"ordering": media_in_playlist + 1},
                         )
                         obj.save()
                         return Response(
@@ -198,8 +198,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete a playlist',
+        operation_description='Delete a playlist. Allowed for its owner and MediaCMS editors, managers and admins.',
     )
     def delete(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)

@@ -15,5 +15,8 @@ build-frontend:
 	docker compose -f docker-compose-dev.yaml restart web
 
 test:
-	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest -n auto
+
+test-coverage:
+	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest -n auto --cov --cov-report=term --cov-report=html
 

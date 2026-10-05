@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 
 from actions.models import MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
+from cms.permissions import IsAuthorizedToAdd, IsMediaContributorOrEditor
 from users.models import User
 
 from .. import helpers
@@ -321,9 +321,12 @@ class MediaList(APIView):
     def post(self, request, format=None):
         # Add new media
 
+        media_file = request.data.get("media_file")
+        if not media_file:
+            return Response({"media_file": ["No file was submitted."]}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            media_file = request.data["media_file"]
             serializer.save(user=request.user, media_file=media_file)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -470,7 +473,7 @@ class MediaBulkUserActions(APIView):
                         obj, created = PlaylistMedia.objects.get_or_create(
                             playlist=playlist,
                             media=m,
-                            ordering=media_in_playlist + 1,
+                            defaults={"ordering": media_in_playlist + 1},
                         )
                         if created:
                             added_count += 1
@@ -822,16 +825,13 @@ class MediaDetail(APIView):
     Retrieve, update or delete a media instance.
     """
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsMediaContributorOrEditor)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):
         try:
             media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
 
-            # this need be explicitly called, and will call
-            # has_object_permission() after has_permission has succeeded
-            self.check_object_permissions(self.request, media)
             if media.state == "private":
                 if self.request.user.has_member_access_to_media(media) or is_mediacms_editor(self.request.user):
                     pass
@@ -840,6 +840,9 @@ class MediaDetail(APIView):
                         {"detail": "media is private"},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
+            # this need be explicitly called, and will call
+            # has_object_permission() after has_permission has succeeded
+            self.check_object_permissions(self.request, media)
             return media
         except PermissionDenied:
             return Response({"detail": "bad permissions"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -977,7 +980,7 @@ class MediaDetail(APIView):
             #     serializer.save(user=request.user, media_file=media_file)
             # else:
             #     serializer.save(user=request.user)
-            serializer.save(user=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1026,17 +1029,17 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List reports for a media',
+        operation_description='When and why a media was reported. Only for its owner and MediaCMS editors, managers and admins.',
     )
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
         media = self.get_object(friendly_token)
-        if not (request.user == media.user or is_mediacms_editor(request.user)):
-            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-
         if isinstance(media, Response):
             return media
+
+        if not (request.user == media.user or is_mediacms_editor(request.user)):
+            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         ret = {}
         reported = MediaAction.objects.filter(media=media, action="report")
@@ -1050,8 +1053,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Like, dislike, report or watch a media',
+        operation_description='type is one of like, dislike, report or watch, and extra_info carries the reason for a report. Anonymous users can only perform the actions listed in ALLOW_ANONYMOUS_ACTIONS.',
     )
     def post(self, request, friendly_token, format=None):
         # perform like/dislike/report actions
@@ -1085,8 +1088,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Reset reports for a media',
+        operation_description='With type set to report, removes every report of the media and resets its reported counter. Admins only.',
     )
     def delete(self, request, friendly_token, format=None):
         media = self.get_object(friendly_token)
@@ -1121,8 +1124,8 @@ class MediaSearch(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Search'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Search media',
+        operation_description='Full text search over media the user can see. Filter with q (text), c (category uid or title), t (tag), media_type, author and upload_date, and sort with sort_by and ordering. show=titles returns only matching titles, for autocomplete.',
     )
     def get(self, request, format=None):
         params = self.request.query_params

@@ -255,6 +255,8 @@ class UserList(APIView):
 
         tokens = request.GET.get("tokens")
         if tokens:
-            tokens = tokens.split(",")
-            User.objects.filter(username__in=tokens).delete()
+            users = User.objects.filter(username__in=tokens.split(","))
+            if not request.user.is_superuser and users.filter(is_superuser=True).exists():
+                return Response({"detail": "You do not have permission to delete a superuser."}, status=status.HTTP_403_FORBIDDEN)
+            users.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from django.utils.html import mark_safe, strip_tags
+from django.utils.html import strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
@@ -523,8 +523,7 @@ def edit_chapters(request):
     if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
-    _html_escapes = str.maketrans({'<': r'\u003C', '>': r'\u003E', '&': r'\u0026'})
-    chapters_json = mark_safe(json.dumps(media.chapter_data).translate(_html_escapes))
+    chapters_json = helpers.json_for_script(media.chapter_data)
     return render(
         request,
         "cms/edit_chapters.html",
@@ -681,7 +680,7 @@ def manage_media(request):
         return HttpResponseRedirect("/")
 
     categories = Category.objects.all().order_by('title').values('uid', 'title')
-    context = {'categories': json.dumps(list(categories))}
+    context = {'categories': helpers.json_for_script(list(categories))}
     return render(request, "cms/manage_media.html", context)
 
 
@@ -778,7 +777,8 @@ def view_media(request):
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
     context = {}
     context["media"] = friendly_token
-    context["media_object"] = media
+    can_view = media.state != "private" or (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)))
+    context["media_object"] = media if can_view else None
 
     context["CAN_DELETE_MEDIA"] = False
     context["CAN_EDIT_MEDIA"] = False
@@ -812,7 +812,7 @@ def view_playlist(request, friendly_token):
 
     try:
         playlist = Playlist.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except Playlist.DoesNotExist:
         playlist = None
 
     context = {}

@@ -14,6 +14,7 @@ from migrationservice.scheduling import (
 )
 from migrationservice.serializers import MigrationServiceSerializer
 from migrationservice.tasks import run_scheduled_migration, schedule_migration
+from migrationservice.tests.fakes import FakeProvider
 
 CONNECTION = {"service_url": "https://kaltura.example.edu", "partner_id": "342", "app_token_id": "atok", "app_token": "x"}
 
@@ -92,6 +93,9 @@ class TestArming(TestCase):
 class TestScheduledRun(TestCase):
     def setUp(self):
         create_account(username="admin")
+        patcher = mock.patch("migrationservice.tasks.get_provider", return_value=FakeProvider())
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_a_task_whose_time_still_stands_starts_the_migration(self):
         when = in_hours(-1)
@@ -142,6 +146,9 @@ class TestScheduledRerun(TestCase):
 
     def setUp(self):
         create_account(username="admin")
+        patcher = mock.patch("migrationservice.tasks.get_provider", return_value=FakeProvider())
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_a_completed_migration_is_run_again(self):
         when = in_hours(-1)

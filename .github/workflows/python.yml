@@ -21,15 +21,20 @@ jobs:
     - name: List containers
       run: docker ps
 
-    - name: Sleep for 60 seconds
-      run: sleep 60s
+    - name: Wait for the database and web container
+      run: |
+        for attempt in $(seq 1 90); do
+          if docker compose -f docker-compose-dev.yaml exec -T db pg_isready -U mediacms && docker compose -f docker-compose-dev.yaml exec -T web true; then
+            exit 0
+          fi
+          sleep 2
+        done
+        docker compose -f docker-compose-dev.yaml logs
+        exit 1
       shell: bash
 
     - name: Run Django Tests
-      run: docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
-
-      # Run with coverage, saves report on htmlcov dir
-      # run: docker-compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest --cov --cov-report=html --cov-config=.coveragerc
+      run: docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest -n auto --durations=20 --cov --cov-report=term
 
     - name: Tear down the Stack
       run:  docker compose -f docker-compose-dev.yaml down

@@ -1,6 +1,6 @@
 from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from files.models import Category
 from files.tests import create_account
@@ -191,6 +191,7 @@ def a_session(source_id="s1", folder_id="f1", **extra):
     return payload
 
 
+@override_settings(DO_NOT_TRANSCODE_VIDEO=True)
 class TestImportPanoptoSession(TestCase):
     fixtures = ["fixtures/encoding_profiles.json"]
 
