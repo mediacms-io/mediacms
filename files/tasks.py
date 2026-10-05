@@ -1078,7 +1078,7 @@ def post_trim_action(friendly_token):
         return False
 
     media.set_media_type()
-    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
     # if they are still not encoded, when the first one will be encoded, it will have the chance to
     # call post_trim_action again
     if encodings:
@@ -1086,6 +1086,10 @@ def post_trim_action(friendly_token):
             # update encoding size, in case they don't have one, due to the
             # way the copy_video took place
             update_encoding_size(encoding.id)
+
+        preview_profiles = EncodeProfile.objects.filter(name=PREVIEW_PROFILE_NAME, extension="mp4", active=True)
+        if preview_profiles:
+            media.encode(profiles=preview_profiles, chunkize=False)
 
         media.produce_thumbnails_from_video()
         produce_sprite_from_video.delay(friendly_token)
@@ -1148,7 +1152,7 @@ def video_trim_task(self, trim_request_id):
 
         deleted_encodings = handle_pending_running_encodings(target_media)
         # the following could be un-necessary, read commend in pre_trim_video_actions to see why
-        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
         for encoding in encodings:
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
             if not trim_result:
@@ -1170,7 +1174,7 @@ def video_trim_task(self, trim_request_id):
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
             deleted_encodings = handle_pending_running_encodings(target_media)  # noqa
             # the following could be un-necessary, read commend in pre_trim_video_actions to see why
-            encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+            encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
                 if not trim_result:
