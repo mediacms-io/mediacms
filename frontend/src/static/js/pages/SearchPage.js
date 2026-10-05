@@ -1,5 +1,5 @@
 import React from 'react';
-import { ApiUrlContext } from '../utils/contexts/';
+import { apiUrlConfig } from '../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../utils/stores/';
 import { getRequest } from '../utils/helpers/';
 import { FiltersToggleButton } from '../components/_shared/';
@@ -48,7 +48,7 @@ export class SearchPage extends Page {
 
     if (this.state.searchCategories) {
       getRequest(
-        ApiUrlContext._currentValue.archive.categories + '/' + encodeURIComponent(this.state.searchCategories),
+        apiUrlConfig.archive.categories + '/' + encodeURIComponent(this.state.searchCategories),
         !1,
         this.onCategoryLoad
       );
@@ -170,7 +170,7 @@ export class SearchPage extends Page {
       (this.state.searchTags ? '&t=' + this.state.searchTags : '') +
       (this.state.searchCategories ? '&c=' + this.state.searchCategories : '');
 
-    const url = ApiUrlContext._currentValue.search.query + api_url_postfix + this.state.filterArgs;
+    const url = apiUrlConfig.search.query + api_url_postfix + this.state.filterArgs;
 
     if (this.didMount) {
       this.setState({

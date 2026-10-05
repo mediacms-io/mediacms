@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatViewsNumber, inEmbeddedApp } from '../../utils/helpers/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
-import { MemberContext, PlaylistsContext } from '../../utils/contexts/';
+import { memberConfig, PlaylistsContext } from '../../utils/contexts/';
 import {
     MediaLikeIcon,
     MediaDislikeIcon,
@@ -89,18 +89,18 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
 
                     <div className="media-actions">
                         <div>
-                            {MemberContext._currentValue.can.likeMedia ? <MediaLikeIcon /> : null}
-                            {MemberContext._currentValue.can.dislikeMedia ? <MediaDislikeIcon /> : null}
-                            {!inEmbeddedApp() && MemberContext._currentValue.can.shareMedia ? (
+                            {memberConfig.can.likeMedia ? <MediaLikeIcon /> : null}
+                            {memberConfig.can.dislikeMedia ? <MediaDislikeIcon /> : null}
+                            {!inEmbeddedApp() && memberConfig.can.shareMedia ? (
                                 <MediaShareButton isVideo={true} />
                             ) : null}
 
-                            {!MemberContext._currentValue.is.anonymous &&
-                            MemberContext._currentValue.can.saveMedia ? (
+                            {!memberConfig.is.anonymous &&
+                            memberConfig.can.saveMedia ? (
                                 <MediaSaveButton />
                             ) : null}
 
-                            {!this.props.allowDownload || !MemberContext._currentValue.can.downloadMedia ? null : !this
+                            {!this.props.allowDownload || !memberConfig.can.downloadMedia ? null : !this
                                   .downloadLink ? (
                                 <VideoMediaDownloadLink />
                             ) : (

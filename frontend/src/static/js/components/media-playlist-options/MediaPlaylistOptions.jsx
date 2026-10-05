@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { putRequest, csrfToken } from '../../utils/helpers/';
 import { usePopup } from '../../utils/hooks/';
 import { PageStore } from '../../utils/stores/';
@@ -123,7 +122,3 @@ export function MediaPlaylistOptions(props) {
     </div>
   );
 }
-
-MediaPlaylistOptions.propTypes = {};
-MediaPlaylistOptions.propTypes.media_id = PropTypes.string.isRequired;
-MediaPlaylistOptions.propTypes.playlist_id = PropTypes.string.isRequired;

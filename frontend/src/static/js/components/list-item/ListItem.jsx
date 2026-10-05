@@ -1,5 +1,5 @@
 import React from 'react';
-import { LinksContext } from '../../utils/contexts/';
+import { linksConfig } from '../../utils/contexts/';
 import { PageStore } from '../../utils/stores/';
 import { MediaItemAudio as AudioItem } from './MediaItemAudio';
 import { MediaItemVideo as VideoItem } from './MediaItemVideo';
@@ -45,11 +45,11 @@ function extractPlaylistId() {
 
 function itemPageLink(props, item) {
   if (props.inCategoriesList) {
-    return LinksContext._currentValue.search.category + encodeURIComponent(item.uid);
+    return linksConfig.search.category + encodeURIComponent(item.uid);
   }
 
   if (props.inTagsList) {
-    return LinksContext._currentValue.search.tag + encodeURIComponent(item.title);
+    return linksConfig.search.tag + encodeURIComponent(item.title);
   }
 
   const playlistId = extractPlaylistId();

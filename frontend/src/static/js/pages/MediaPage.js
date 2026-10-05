@@ -1,5 +1,5 @@
 import React from 'react';
-import { SiteConsumer } from '../utils/contexts/';
+import { apiUrlConfig, SiteConsumer } from '../utils/contexts/';
 import { MediaPageStore } from '../utils/stores/';
 import AttachmentViewer from '../components/media-viewer/AttachmentViewer';
 // import AudioViewer from '../components/media-viewer/AudioViewer';
@@ -7,8 +7,6 @@ import ImageViewer from '../components/media-viewer/ImageViewer';
 import PdfViewer from '../components/media-viewer/PdfViewer';
 import VideoViewer from '../components/media-viewer/VideoViewer';
 import { _VideoMediaPage } from './_VideoMediaPage';
-import { formatInnerLink } from '../utils/helpers';
-import {SiteContext} from '../utils/contexts/';
 
 if (window.MediaCMS.site.devEnv) {
   const extractUrlParams = () => {
@@ -53,7 +51,7 @@ export class MediaPage extends _VideoMediaPage {
       case 'image':
         return <ImageViewer />;
       case 'pdf':
-        const pdf_url = formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url);
+        const pdf_url = apiUrlConfig.media + '/' + encodeURIComponent(MediaPageStore.get('media-id')) + '/pdf';
         return <PdfViewer fileUrl={pdf_url} />;
     }
 

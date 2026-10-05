@@ -1,14 +1,17 @@
+import os
 import re
 from functools import reduce
 from operator import or_
-from urllib.parse import unquote
+from urllib.parse import quote, unquote
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils.http import content_disposition_header
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_safe
 
 from ..methods import is_mediacms_editor
 from ..models import Category, Media, Subtitle
@@ -28,7 +31,8 @@ def _ttl():
 
 
 def _decoded_path(uri):
-    return unquote(uri.split("?", 1)[0])
+    # nginx merges slashes before choosing the file it serves, so the decision must too
+    return re.sub(r"/{2,}", "/", unquote(uri.split("?", 1)[0]))
 
 
 def _has_traversal(path):
@@ -206,3 +210,24 @@ def media_auth(request):
 
     allowed = _cached_decision(uid, user, lambda: _decide(uid, user))
     return HttpResponse(status=204 if allowed else 403)
+
+
+@require_safe
+def view_pdf(request, friendly_token):
+    media = get_object_or_404(Media.objects.select_related("user"), friendly_token=friendly_token, media_type="pdf")
+    if media.state == "private" and not (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user))):
+        return HttpResponse(status=403)
+    if not settings.SHOW_ORIGINAL_MEDIA or not media.media_file or not media.media_file.storage.exists(media.media_file.name):
+        raise Http404
+
+    if getattr(settings, "USE_X_ACCEL_REDIRECT", True) and not getattr(settings, "DEVELOPMENT_MODE", False):
+        response = HttpResponse(content_type="application/pdf")
+        response["X-Accel-Redirect"] = "/_protected_pdf/" + quote(media.media_file.name, safe="/")
+    else:
+        response = FileResponse(media.media_file.open("rb"), content_type="application/pdf")
+
+    filename = os.path.splitext(os.path.basename(media.media_file.name))[0] + ".pdf"
+    response["Content-Disposition"] = content_disposition_header(False, filename)
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private"
+    return response

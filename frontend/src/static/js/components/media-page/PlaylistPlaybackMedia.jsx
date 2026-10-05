@@ -1,9 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { PositiveIntegerOrZero } from '../../utils/helpers/';
 import { ItemList } from '../item-list/ItemList';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function PlaylistPlaybackMedia(props) {
+export function PlaylistPlaybackMedia(rawProps) {
+  const props = applyDefaultProps(rawProps, PlaylistPlaybackMedia.defaultPropValues);
   return (
     <ItemList
       className={'items-list-hor'}
@@ -21,11 +21,6 @@ export function PlaylistPlaybackMedia(props) {
   );
 }
 
-PlaylistPlaybackMedia.propTypes = {
-  items: PropTypes.array.isRequired,
-  playlistActiveItem: PositiveIntegerOrZero,
-};
-
-PlaylistPlaybackMedia.defaultProps = {
+PlaylistPlaybackMedia.defaultPropValues = {
   playlistActiveItem: 1,
 };

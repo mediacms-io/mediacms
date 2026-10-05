@@ -6,7 +6,7 @@ import ViewerInfoVideo from '../components/media-page/ViewerInfoVideo';
 import ViewerError from '../components/media-page/ViewerError';
 import ViewerSidebar from '../components/media-page/ViewerSidebar';
 import { Page } from './_Page';
-import _MediaPage from './_MediaPage';
+import '../components/media-page/MediaPage.scss';
 
 const wideLayoutBreakpoint = 1216;
 

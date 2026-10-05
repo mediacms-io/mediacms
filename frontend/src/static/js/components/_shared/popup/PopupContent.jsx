@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useImperativeHandle, useCallback } from 'react';
-import { findDOMNode } from 'react-dom';
 import { hasClassname } from '../../../utils/helpers/dom';
 import { default as Popup } from './Popup.jsx';
 
@@ -14,7 +13,7 @@ export function PopupContent(props) {
       return;
     }
 
-    const domElem = findDOMNode(wrapperRef.current);
+    const domElem = wrapperRef.current;
     const clickedElement = ev.target;
     
     // Check if the clicked element is outside the popup

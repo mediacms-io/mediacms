@@ -95,7 +95,6 @@ export function MediaItemViewLink(props) {
 
 export function MediaItemThumbnailLink(props) {
     const attr = {
-        key: 'item-thumb',
         href: props.link,
         title: props.title,
         tabIndex: '-1',
@@ -105,7 +104,7 @@ export function MediaItemThumbnailLink(props) {
     };
 
     return (
-        <a {...attr}>
+        <a key="item-thumb" {...attr}>
             {!props.src ? null : (
                 <div key="item-type-icon" className="item-type-icon">
                     <div></div>
@@ -117,7 +116,6 @@ export function MediaItemThumbnailLink(props) {
 
 export function UserItemThumbnailLink(props) {
     const attr = {
-        key: 'item-thumb',
         href: props.link,
         title: props.title,
         tabIndex: '-1',
@@ -126,7 +124,7 @@ export function UserItemThumbnailLink(props) {
         style: !props.src ? null : { backgroundImage: "url('" + props.src + "')" },
     };
 
-    return <a {...attr}></a>;
+    return <a key="item-thumb" {...attr}></a>;
 }
 
 export function MediaItemAuthor(props) {

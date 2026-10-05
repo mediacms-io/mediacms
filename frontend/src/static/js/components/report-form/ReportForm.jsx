@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 
 export function ReportForm(props) {
@@ -63,9 +62,3 @@ export function ReportForm(props) {
     </form>
   );
 }
-
-ReportForm.propTypes = {
-  mediaUrl: PropTypes.string.isRequired,
-  cancelReportForm: PropTypes.func,
-  submitReportForm: PropTypes.func,
-};

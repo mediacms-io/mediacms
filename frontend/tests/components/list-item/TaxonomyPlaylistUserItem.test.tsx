@@ -69,7 +69,8 @@ describe('components/list-item', () => {
             const time = container.querySelector('.playlist-date time') as HTMLElement;
             expect(time.textContent).toBe('Created 4 years ago');
             expect(time.getAttribute('datetime')).toBe(String(Date.parse('2020-01-01T00:00:00Z')));
-            expect(container.querySelector('.view-full-playlist')?.textContent).toBe('VIEW FULL PLAYLIST');
+            expect(container.querySelector('.view-full-playlist')).toBeNull();
+            expect(container.textContent).not.toContain('VIEW FULL PLAYLIST');
             unmount();
         });
 

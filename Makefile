@@ -1,4 +1,4 @@
-.PHONY: admin-shell build-frontend
+.PHONY: admin-shell build-frontend test test-coverage test-frontend test-frontend-coverage
 
 admin-shell:
 	@container_id=$$(docker compose ps -q web); \
@@ -20,3 +20,8 @@ test:
 test-coverage:
 	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest -n auto --cov --cov-report=term --cov-report=html
 
+test-frontend:
+	docker compose -f docker-compose-dev.yaml exec -T frontend npm run test -- --ci
+
+test-frontend-coverage:
+	docker compose -f docker-compose-dev.yaml exec -T frontend npm run test-coverage -- --ci --coverageReporters=text-summary --coverageReporters=html

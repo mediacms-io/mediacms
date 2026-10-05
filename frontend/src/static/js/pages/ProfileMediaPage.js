@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
+import { apiUrlConfig, LinksConsumer, memberConfig } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions, PageActions } from '../utils/actions';
 import { inEmbeddedApp, inSelectMediaEmbedMode, isDeepLinkSelection, submitDeepLinkSelection, translateString } from '../utils/helpers/';
@@ -77,14 +76,14 @@ class ProfileMediaPage extends Page {
         if (author) {
             if (this.state.query) {
                 requestUrl =
-                    ApiUrlContext._currentValue.media +
+                    apiUrlConfig.media +
                     '?author=' +
                     author.id +
                     '&q=' +
                     encodeURIComponent(this.state.query) +
                     this.state.filterArgs;
             } else {
-                requestUrl = ApiUrlContext._currentValue.media + '?author=' + author.id + this.state.filterArgs;
+                requestUrl = apiUrlConfig.media + '?author=' + author.id + this.state.filterArgs;
             }
         }
 
@@ -134,14 +133,14 @@ class ProfileMediaPage extends Page {
 
         if (newQuery) {
             requestUrl =
-                ApiUrlContext._currentValue.media +
+                apiUrlConfig.media +
                 '?author=' +
                 this.state.author.id +
                 '&q=' +
                 encodeURIComponent(newQuery) +
                 this.state.filterArgs;
         } else {
-            requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + this.state.filterArgs;
+            requestUrl = apiUrlConfig.media + '?author=' + this.state.author.id + this.state.filterArgs;
         }
 
         let title = this.state.title;
@@ -387,7 +386,7 @@ class ProfileMediaPage extends Page {
 
                 if (this.state.query) {
                     requestUrl =
-                        ApiUrlContext._currentValue.media +
+                        apiUrlConfig.media +
                         '?author=' +
                         this.state.author.id +
                         '&q=' +
@@ -395,7 +394,7 @@ class ProfileMediaPage extends Page {
                         this.state.filterArgs;
                 } else {
                     requestUrl =
-                        ApiUrlContext._currentValue.media + '?author=' + this.state.author.id + this.state.filterArgs;
+                        apiUrlConfig.media + '?author=' + this.state.author.id + this.state.filterArgs;
                 }
 
                 this.setState({
@@ -424,7 +423,7 @@ class ProfileMediaPage extends Page {
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
-        const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isMediaAuthor = authorData && authorData.username === memberConfig.username;
         const isSelectMediaMode = inSelectMediaEmbedMode();
 
         const hasActiveFilters =
@@ -545,11 +544,6 @@ class ProfileMediaPage extends Page {
         ];
     }
 }
-
-ProfileMediaPage.propTypes = {
-    title: PropTypes.string.isRequired,
-    bulkActions: PropTypes.object.isRequired,
-};
 
 ProfileMediaPage.defaultProps = {
     title: 'Uploads',

@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { ApiUrlConsumer } from '../utils/contexts/';
 import { PageStore } from '../utils/stores/';
 import { inEmbeddedApp } from '../utils/helpers/';
@@ -57,10 +56,6 @@ export class ProfileHistoryPage extends ProfileMediaPageBase {
     ];
   }
 }
-
-ProfileHistoryPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ProfileHistoryPage.defaultProps = {
   title: 'History',

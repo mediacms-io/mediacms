@@ -1,11 +1,12 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveInteger, PositiveIntegerOrZero, inSelectMediaEmbedMode } from '../../utils/helpers/';
+import { inSelectMediaEmbedMode } from '../../utils/helpers/';
 import { MediaItemThumbnailLink, itemClassname } from './includes/items/';
 import { Item } from './Item';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function MediaItem(props) {
+export function MediaItem(rawProps) {
+  const props = applyDefaultProps(rawProps, MediaItem.defaultPropValues);
   const type = props.type;
   const isSelectMediaMode = inSelectMediaEmbedMode();
 
@@ -116,24 +117,8 @@ export function MediaItem(props) {
   );
 }
 
-MediaItem.propTypes = {
-  ...Item.propTypes,
-  type: PropTypes.string.isRequired,
-  class_name: PropTypes.string,
-  views: PositiveIntegerOrZero,
-  hideViews: PropTypes.bool,
-  hideDate: PropTypes.bool,
-  hideAuthor: PropTypes.bool,
-  author_name: PropTypes.string,
-  author_link: PropTypes.string,
-  playlistOrder: PositiveInteger,
-  playlistActiveItem: PositiveIntegerOrZero,
-  inPlaylistView: PropTypes.bool,
-  hidePlaylistOrderNumber: PropTypes.bool,
-};
-
-MediaItem.defaultProps = {
-  ...Item.defaultProps,
+MediaItem.defaultPropValues = {
+  ...Item.defaultPropValues,
   class_name: '',
   views: 0,
   hideViews: false,

@@ -5,7 +5,7 @@ import { click, changeValue } from '../../_support/compD_dom';
 import { MediaPageStore, PageStore } from '../../../src/static/js/utils/stores/';
 import { MediaPageActions, PageActions } from '../../../src/static/js/utils/actions/';
 import { UserProvider } from '../../../src/static/js/utils/contexts/UserContext';
-import { LinksContext } from '../../../src/static/js/utils/contexts/LinksContext';
+import { linksConfig } from '../../../src/static/js/utils/contexts/LinksContext';
 import CommentsListComponent from '../../../src/static/js/components/comments/Comments';
 
 function CommentsList() {
@@ -214,7 +214,7 @@ describe('components/comments', () => {
 
         test('The owner of an unlisted media without comments sees the post upload message', () => {
             (PageStore as any).__set('config-contents', { uploader: { postUploadMessage: 'Share it with your class' } });
-            const ownProfile = (LinksContext as any)._currentValue.profile.media;
+            const ownProfile = linksConfig.profile.media;
             mediaStore.__set('media-data', { enable_comments: true, state: 'unlisted', author_profile: ownProfile });
             const { unmount } = renderIntoContainer(<CommentsList />);
             expect(() => loadComments([])).not.toThrow();
@@ -233,6 +233,62 @@ describe('components/comments', () => {
                 })
             ).not.toThrow();
             unmount();
+        });
+
+        describe('With comment mentions enabled', () => {
+            const actions = (window as any).MediaCMS.features.media.actions;
+
+            beforeEach(() => {
+                actions.comment_mention = true;
+            });
+
+            afterEach(() => {
+                actions.comment_mention = false;
+            });
+
+            function keyDown(el: HTMLElement, key: string) {
+                act(() => {
+                    el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+                });
+            }
+
+            test('Suggests loaded users and submits the mention markup', () => {
+                const { container, unmount } = renderIntoContainer(<CommentsList />);
+                mediaStore.__set('users', [
+                    { username: 'bob', name: 'Bob Builder' },
+                    { username: 'alice', name: 'Alice Liddell' },
+                ]);
+                act(() => {
+                    mediaStore.emit('users_load');
+                });
+                const textarea = container.querySelector('textarea.form-textarea__input') as HTMLTextAreaElement;
+                expect(container.querySelector('.form-textarea')).not.toBeNull();
+                act(() => {
+                    textarea.focus();
+                });
+                expect(container.querySelector('.form-textarea-wrap')?.className).toContain('focused');
+                changeValue(textarea, 'thanks @bo');
+                const items = Array.from(container.querySelectorAll('.form-textarea__suggestions__item'));
+                expect(items.map((li) => li.textContent)).toEqual(['Bob Builder']);
+                keyDown(textarea, 'Enter');
+                expect(textarea.value).toBe('thanks Bob Builder');
+                click(container.querySelector('.comments-form .form-buttons button') as HTMLElement);
+                expect((MediaPageActions as any).submitComment).toHaveBeenCalledWith('thanks @(_bob_)[_Bob Builder_]');
+                act(() => {
+                    mediaStore.emit('comment_submit', 'c');
+                });
+                expect(textarea.value).toBe('');
+                unmount();
+            });
+
+            test('Plain comments are submitted unchanged', () => {
+                const { container, unmount } = renderIntoContainer(<CommentsList />);
+                const textarea = container.querySelector('textarea.form-textarea__input') as HTMLTextAreaElement;
+                changeValue(textarea, '  no mentions here  ');
+                click(container.querySelector('.comments-form .form-buttons button') as HTMLElement);
+                expect((MediaPageActions as any).submitComment).toHaveBeenCalledWith('no mentions here');
+                unmount();
+            });
         });
     });
 });

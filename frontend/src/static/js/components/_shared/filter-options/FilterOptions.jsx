@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { MaterialIcon } from '../material-icon/MaterialIcon.jsx';
 
@@ -15,9 +14,3 @@ export function FilterOptions(props) {
     );
   });
 }
-
-FilterOptions.propTypes = {
-  id: PropTypes.string.isRequired,
-  selected: PropTypes.string.isRequired,
-  onSelect: PropTypes.func.isRequired,
-};

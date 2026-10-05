@@ -13,7 +13,7 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest]
-                node: [20]
+                node: [24]
         runs-on: ${{ matrix.os }}
         name: '${{ matrix.os }} - node v${{ matrix.node }}'
         permissions:

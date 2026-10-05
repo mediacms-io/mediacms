@@ -1,7 +1,7 @@
 import React from 'react';
 import Sortable from 'sortablejs';
 import { PlaylistPageActions } from '../../utils/actions';
-import { ApiUrlContext } from '../../utils/contexts';
+import { apiUrlConfig } from '../../utils/contexts';
 import { putRequest, csrfToken } from '../../utils/helpers';
 import { PlaylistPageMedia } from './PlaylistPageMedia';
 
@@ -77,7 +77,7 @@ export class PlaylistMediaList extends React.PureComponent {
                         friendly_token = getMediaArray(oldOrdering - 1).friendly_token;
 
                         putRequest(
-                            ApiUrlContext._currentValue.playlists + '/' + playlistId,
+                            apiUrlConfig.playlists + '/' + playlistId,
                             {
                                 type: 'ordering',
                                 ordering: newOrdering,

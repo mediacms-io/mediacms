@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { CircleIconButton, MaterialIcon } from '../_shared/';
 
 export function OtherMediaDownloadLink(props) {
@@ -14,8 +13,3 @@ export function OtherMediaDownloadLink(props) {
     </div>
   );
 }
-
-OtherMediaDownloadLink.propTypes = {
-  link: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-};

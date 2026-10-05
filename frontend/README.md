@@ -2,7 +2,7 @@
 
 ### **Requirements**
 
-- nodejs: version >= 14.17.0
+- nodejs: version >= 20.9.0
 
 ---
 
@@ -17,6 +17,10 @@
     npm run start
 
 Open in browser: [http://localhost:8088](http://localhost:8088)
+
+The dev server proxies every request to the Django app set in `MEDIACMS_BACKEND` (default `http://localhost`, `http://web` in docker-compose-dev via `.env`) and serves the `static/js` and `static/css` bundles from the live build, so pages, data, login and POSTs are the real ones.
+
+Each page bundle has an entry file in `src/entries/<name>.js`, built to `static/js/<name>.js` and loaded by the matching Django template. Styles used by more than one entry go to `static/css/_commons.css`; styles used by a single entry go to `static/css/<name>.css`.
 
 ---
 

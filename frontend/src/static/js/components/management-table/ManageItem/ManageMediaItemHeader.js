@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useManagementTableHeader } from '../../../utils/hooks/';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon.jsx';
 
@@ -51,11 +50,3 @@ export function ManageMediaItemHeader(props) {
     </div>
   );
 }
-
-ManageMediaItemHeader.propTypes = {
-  sort: PropTypes.string.isRequired,
-  order: PropTypes.string.isRequired,
-  selected: PropTypes.bool.isRequired,
-  onClickColumnSort: PropTypes.func,
-  onCheckAllRows: PropTypes.func,
-};

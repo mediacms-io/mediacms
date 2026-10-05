@@ -1,12 +1,12 @@
 {
     "presets": [
-        "@babel/react",
+        ["@babel/react", { "runtime": "automatic" }],
         [
             "@babel/env",
             {
                 "modules": false,
                 "useBuiltIns": "usage",
-                "corejs": 3,
+                "corejs": "3.50",
                 "targets": {
                     "browsers": ["defaults"]
                 }

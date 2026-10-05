@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext } from '../utils/contexts/';
+import { apiUrlConfig } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
 import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
@@ -20,7 +19,7 @@ export class ManageMediaPage extends Page {
     this.state = {
       resultsCount: null,
       currentPage: 1,
-      requestUrl: ApiUrlContext._currentValue.manage.media,
+      requestUrl: apiUrlConfig.manage.media,
       pageTitle: props.title,
       hiddenFilters: true,
       filterArgs: '',
@@ -43,7 +42,7 @@ export class ManageMediaPage extends Page {
     this.setState({
       currentPage: updatedPage,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         this.state.filterArgs,
         this.state.sortingArgs,
         updatedPage
@@ -76,7 +75,7 @@ export class ManageMediaPage extends Page {
     this.setState({
       filterArgs: newArgs.join('&'),
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         newArgs.join('&'),
         this.state.sortingArgs,
         this.state.currentPage
@@ -91,7 +90,7 @@ export class ManageMediaPage extends Page {
       ordering: order,
       sortingArgs: newArgs,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         this.state.filterArgs,
         newArgs,
         this.state.currentPage
@@ -104,7 +103,7 @@ export class ManageMediaPage extends Page {
       {
         resultsCount: null,
         refresh: this.state.refresh + 1,
-        requestUrl: ApiUrlContext._currentValue.manage.media,
+        requestUrl: apiUrlConfig.manage.media,
       },
       function () {
         PageActions.addNotification('The media deleted successfully.', 'mediaRemovalSucceed');
@@ -141,10 +140,6 @@ export class ManageMediaPage extends Page {
     );
   }
 }
-
-ManageMediaPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ManageMediaPage.defaultProps = {
   title: 'Manage media',

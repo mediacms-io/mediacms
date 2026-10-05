@@ -1,7 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { VideoViewerActions } from '../../../utils/actions/';
-import { SiteContext, SiteConsumer } from '../../../utils/contexts/';
+import { siteConfig, SiteConsumer } from '../../../utils/contexts/';
 import { PageStore, MediaPageStore, VideoViewerStore } from '../../../utils/stores/';
 import { addClassname, removeClassname, formatInnerLink, inEmbeddedApp } from '../../../utils/helpers/';
 import { BrowserCache, UpNextLoaderView, MediaDurationInfo } from '../../../utils/classes/';
@@ -139,7 +138,7 @@ export default class VideoViewer extends React.PureComponent {
 
         PageStore.on('switched_media_auto_play', this.onUpdateMediaAutoPlay.bind(this));
 
-        this.browserCache = new BrowserCache(SiteContext._currentValue.id, 86400); // Keep cache data "fresh" for one day.
+        this.browserCache = new BrowserCache(siteConfig.id, 86400); // Keep cache data "fresh" for one day.
 
         const _MediaDurationInfo = new MediaDurationInfo();
 
@@ -380,15 +379,13 @@ export default class VideoViewer extends React.PureComponent {
                     key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
                     className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
                     style={this.props.containerStyles}
-                    ref="playerContainer"
                 >
                     <div
                         className="player-container-inner"
-                        ref="playerContainerInner"
                         style={this.props.containerStyles}
                     >
                         {/* this.state.displayPlayer && */ null == MediaPageStore.get('media-load-error-type') ? (
-                            <div className="video-player" ref="videoJSPlayerWrapper" key="videoJSPlayerWrapper">
+                            <div className="video-player" key="videoJSPlayerWrapper">
                                 <SiteConsumer>
                                     {(site) => {
                                         return React.createElement(VideoJSEmbed, {
@@ -447,14 +444,4 @@ VideoViewer.defaultProps = {
     showUserAvatar: !0,
     linkTitle: !0,
     timestamp: null,
-    siteUrl: PropTypes.string.isRequired,
-};
-
-VideoViewer.propTypes = {
-    inEmbed: PropTypes.bool,
-    showTitle: PropTypes.bool,
-    showRelated: PropTypes.bool,
-    showUserAvatar: PropTypes.bool,
-    linkTitle: PropTypes.bool,
-    timestamp: PropTypes.number,
 };

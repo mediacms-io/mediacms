@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLayout, usePopup } from '../../../utils/hooks/';
-import { LinksContext } from '../../../utils/contexts/';
+import { linksConfig } from '../../../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../../../utils/stores/';
 import { SearchFieldActions } from '../../../utils/actions/';
 import { MaterialIcon, PopupMain } from '../../_shared';
@@ -288,7 +288,7 @@ export function SearchField(props) {
         <form
           ref={formRef}
           method="get"
-          action={LinksContext._currentValue.search.base}
+          action={linksConfig.search.base}
           autoComplete="off"
           onSubmit={onFormSubmit}
         >

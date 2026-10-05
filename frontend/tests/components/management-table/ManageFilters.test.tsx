@@ -90,13 +90,13 @@ describe('components/management-table', () => {
             (window as any).CATEGORIES = [{ uid: 'c1', title: 'Science' }];
             jest.isolateModules(() => {
                 const React_ = require('react');
-                const { renderIntoContainer: isolatedRender } = require('../../_support/render');
+                const { renderIntoContainer: isolatedRender, act: isolatedAct } = require('../../_support/render');
                 const { ManageMediaFilters: Isolated } = require('../../../src/static/js/components/management-table/ManageMediaFilters');
                 const onFiltersUpdate = jest.fn();
                 const { container, unmount } = isolatedRender(React_.createElement(Isolated, { onFiltersUpdate }));
                 const group = filterGroup(container, 'CATEGORY');
                 expect(Array.from(group.querySelectorAll('button span')).map((s) => s.textContent)).toEqual(['All', 'Science']);
-                click(findByText(group, 'button', 'Science'));
+                isolatedAct(() => (findByText(group, 'button', 'Science') as HTMLElement).click());
                 expect(onFiltersUpdate).toHaveBeenCalledWith(expect.objectContaining({ category: 'c1' }));
                 unmount();
             });
@@ -126,14 +126,15 @@ describe('components/management-table', () => {
                 const { UserProvider: IsolatedProvider } = require('../../../src/static/js/utils/contexts/UserContext');
                 const { ManageUsersFilters: IsolatedFilters } = require('../../../src/static/js/components/management-table/ManageUsersFilters');
                 const React_ = require('react');
-                const { renderIntoContainer: isolatedRender } = require('../../_support/render');
+                const { renderIntoContainer: isolatedRender, act: isolatedAct } = require('../../_support/render');
+                const isolatedClick = (el: Element | undefined) => isolatedAct(() => (el as HTMLElement).click());
                 const onFiltersUpdate = jest.fn();
                 const { container, unmount } = isolatedRender(
                     React_.createElement(IsolatedProvider, null, React_.createElement(IsolatedFilters, { onFiltersUpdate, hidden: true }))
                 );
                 expect(container.firstElementChild?.className).toBe('mi-filters-row hidden');
-                click(findByText(filterGroup(container, 'ROLE'), 'button', 'Editor'));
-                click(findByText(filterGroup(container, 'APPROVED'), 'button', 'No'));
+                isolatedClick(findByText(filterGroup(container, 'ROLE'), 'button', 'Editor'));
+                isolatedClick(findByText(filterGroup(container, 'APPROVED'), 'button', 'No'));
                 expect(onFiltersUpdate).toHaveBeenLastCalledWith({ role: 'editor', is_approved: 'false' });
                 unmount();
                 (window as any).MediaCMS = previous;

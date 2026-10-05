@@ -15,19 +15,46 @@
     // This script is necessary because the React-based PageHeader component (which handles alert dismissal)
     // is not mounted on all Django-rendered pages. This ensures the close button works globally.
     document.addEventListener('DOMContentLoaded', function() {
-        var closeButtons = document.querySelectorAll('.alert .close');
-        closeButtons.forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                var alert = this.closest('.alert');
-                if (alert) {
-                    alert.classList.add('hiding');
-                    setTimeout(function() {
-                        if (alert.parentNode) {
-                            alert.parentNode.removeChild(alert);
-                        }
-                    }, 400);
+        function dismiss(alert) {
+            if (alert.classList.contains('hiding')) {
+                return;
+            }
+            alert.classList.add('hiding');
+            setTimeout(function() {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
                 }
-            });
+            }, 400);
+        }
+
+        document.querySelectorAll('.alert').forEach(function(alert) {
+            var closeBtn = alert.querySelector('.close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    dismiss(alert);
+                });
+            }
+
+            // Errors stay until closed so they are not missed
+            if (alert.classList.contains('error')) {
+                return;
+            }
+
+            var timer;
+            function schedule() {
+                clearTimeout(timer);
+                timer = setTimeout(function() {
+                    dismiss(alert);
+                }, 5000);
+            }
+            function pause() {
+                clearTimeout(timer);
+            }
+            alert.addEventListener('mouseenter', pause);
+            alert.addEventListener('focusin', pause);
+            alert.addEventListener('mouseleave', schedule);
+            alert.addEventListener('focusout', schedule);
+            schedule();
         });
     });
 </script>

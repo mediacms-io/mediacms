@@ -2,8 +2,10 @@ import React from 'react';
 import { useItem } from '../../utils/hooks/';
 import { UserItemMemberSince, UserItemThumbnailLink } from './includes/items/';
 import { Item } from './Item';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function UserItem(props) {
+export function UserItem(rawProps) {
+  const props = applyDefaultProps(rawProps, UserItem.defaultPropValues);
   const type = 'user';
 
   const { titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props, type });
@@ -35,10 +37,6 @@ export function UserItem(props) {
   );
 }
 
-UserItem.propTypes = {
-  ...Item.propTypes,
-};
-
-UserItem.defaultProps = {
-  ...Item.defaultProps,
+UserItem.defaultPropValues = {
+  ...Item.defaultPropValues,
 };

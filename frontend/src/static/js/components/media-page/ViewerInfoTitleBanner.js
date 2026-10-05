@@ -1,8 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { formatInnerLink, formatViewsNumber } from '../../utils/helpers/';
-import { MemberContext, PlaylistsContext, SiteContext } from '../../utils/contexts/';
+import { memberConfig, PlaylistsContext, siteConfig } from '../../utils/contexts/';
 import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
 
 function Tooltip(el) {
@@ -51,7 +50,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
 
     this.downloadLink =
       'video' !== MediaPageStore.get('media-type')
-        ? formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url)
+        ? formatInnerLink(MediaPageStore.get('media-original-url'), siteConfig.url)
         : null;
 
     // Extract actual filename from URL for non-video downloads
@@ -92,7 +91,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
       cats.push(
         <span key={i}>
           <a
-            href={formatInnerLink(this.props.categories[i].url, SiteContext._currentValue.url)}
+            href={formatInnerLink(this.props.categories[i].url, siteConfig.url)}
             title={this.props.categories[i].title}
           >
             {this.props.categories[i].title}
@@ -178,16 +177,16 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
 
           <div className="media-actions">
             <div>
-              {MemberContext._currentValue.can.likeMedia ? <MediaLikeIcon /> : null}
-              {MemberContext._currentValue.can.dislikeMedia ? <MediaDislikeIcon /> : null}
-              {MemberContext._currentValue.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
+              {memberConfig.can.likeMedia ? <MediaLikeIcon /> : null}
+              {memberConfig.can.dislikeMedia ? <MediaDislikeIcon /> : null}
+              {memberConfig.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
 
-              {!MemberContext._currentValue.is.anonymous &&
-                MemberContext._currentValue.can.saveMedia ? (
+              {!memberConfig.is.anonymous &&
+                memberConfig.can.saveMedia ? (
                 <MediaSaveButton />
               ) : null}
 
-              {!this.props.allowDownload || !MemberContext._currentValue.can.downloadMedia ? null : !this
+              {!this.props.allowDownload || !memberConfig.can.downloadMedia ? null : !this
                 .downloadLink ? (
                 <VideoMediaDownloadLink />
               ) : (
@@ -202,10 +201,6 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
     );
   }
 }
-
-ViewerInfoTitleBanner.propTypes = {
-  allowDownload: PropTypes.bool.isRequired,
-};
 
 ViewerInfoTitleBanner.defaultProps = {
   allowDownload: false,

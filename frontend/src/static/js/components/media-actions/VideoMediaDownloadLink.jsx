@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { usePopup } from '../../utils/hooks/';
-import { SiteContext } from '../../utils/contexts/';
+import { siteConfig } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 import { formatInnerLink } from '../../utils/helpers/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared/';
@@ -26,7 +26,7 @@ function downloadOptionsList() {
 
               optionsList[encodings_info[k][g].title] = {
                 text: k + ' - ' + g.toUpperCase() + ' (' + encodings_info[k][g].size + ')',
-                link: formatInnerLink(encodedUrl, SiteContext._currentValue.url),
+                link: formatInnerLink(encodedUrl, siteConfig.url),
                 linkAttr: {
                   target: '_blank',
                   download: encodedFilename,
@@ -45,7 +45,7 @@ function downloadOptionsList() {
 
   optionsList.original_media_url = {
     text: 'Original file (' + media_data.size + ')',
-    link: formatInnerLink(media_data.original_media_url, SiteContext._currentValue.url),
+    link: formatInnerLink(media_data.original_media_url, siteConfig.url),
     linkAttr: {
       target: '_blank',
       download: originalFilename,

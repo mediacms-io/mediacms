@@ -8,7 +8,6 @@ export * from './csrfToken';
 export { imageExtension } from './imageExtension';
 export * from './log';
 export * from './math';
-export * from './propTypeFilters';
 export { default as publishedOnDate } from './publishedOnDate';
 export * from './quickSort';
 export * from './requests';

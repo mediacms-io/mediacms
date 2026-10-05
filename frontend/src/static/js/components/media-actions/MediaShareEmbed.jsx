@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useContext } from 'react';
-import PropTypes from 'prop-types';
 import { LinksContext, SiteConsumer } from '../../utils/contexts/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
@@ -416,7 +415,3 @@ export function MediaShareEmbed(props) {
     </div>
   );
 }
-
-MediaShareEmbed.propTypes = {
-  triggerPopupClose: PropTypes.func,
-};

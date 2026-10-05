@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SiteContext } from '../../utils/contexts/';
+import { siteConfig } from '../../utils/contexts/';
 import { useUser, usePopup } from '../../utils/hooks/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
@@ -136,7 +136,7 @@ export default function ViewerInfoContent(props) {
             PageActions.addNotification('Media removed. Redirecting...', 'mediaDelete');
             setTimeout(function () {
                 window.location.href =
-                    SiteContext._currentValue.url +
+                    siteConfig.url +
                     '/' +
                     MediaPageStore.get('media-data').author_profile.replace(/^\//g, '');
             }, 2000);
@@ -171,8 +171,8 @@ export default function ViewerInfoContent(props) {
         };
     }, []);
 
-    const authorLink = formatInnerLink(props.author.url, SiteContext._currentValue.url);
-    const authorThumb = formatInnerLink(props.author.thumb, SiteContext._currentValue.url);
+    const authorLink = formatInnerLink(props.author.url, siteConfig.url);
+    const authorThumb = formatInnerLink(props.author.thumb, siteConfig.url);
 
     function setTimestampAnchors(text) {
         function wrapTimestampWithAnchor(match, string) {
