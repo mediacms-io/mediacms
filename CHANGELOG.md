@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.2](https://github.com/mediacms-io/mediacms/compare/v9.1.1...v9.1.2) (2026-10-05)
+
+### Bug Fixes
+
+* tests infrastructure ([#1598](https://github.com/mediacms-io/mediacms/issues/1598)) ([ce49813](https://github.com/mediacms-io/mediacms/commit/ce49813cc6aa1a1ab58c015f5118558291efbae3))
+
 ## [9.1.1](https://github.com/mediacms-io/mediacms/compare/v9.1.0...v9.1.1) (2026-10-05)
 
 ### Bug Fixes
