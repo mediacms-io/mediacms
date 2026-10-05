@@ -1,11 +1,11 @@
 name: Frontend build and test
 
 on:
-    pull_request:
+    workflow_call:
     workflow_dispatch:
 
 concurrency:
-    group: ${{ github.head_ref ||  github.ref }}
+    group: frontend-${{ github.head_ref || github.ref }}
     cancel-in-progress: true
 
 jobs:
@@ -35,8 +35,8 @@ jobs:
             - name: Install dependencies
               run: npm install
 
+            - name: Test script
+              run: npm run test -- --ci
+
             - name: Build script
               run: npm run dist
-
-            - name: Test script
-              run: npm run test

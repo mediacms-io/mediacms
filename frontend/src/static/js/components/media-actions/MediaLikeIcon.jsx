@@ -16,12 +16,12 @@ export function MediaLikeIcon() {
 
   function onCompleteMediaLike() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.addToLiked, 'likedMedia');
+    PageActions.addNotification(TextsContext._currentValue.notifications.addToLiked, 'likedMedia');
   }
 
   function onCompleteMediaLikeCancel() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.removeFromLiked, 'unlikedMedia');
+    PageActions.addNotification(TextsContext._currentValue.notifications.removeFromLiked, 'unlikedMedia');
   }
 
   function onFailMediaLikeRequest() {
@@ -31,7 +31,9 @@ export function MediaLikeIcon() {
   function toggleLike(ev) {
     ev.preventDefault();
     ev.stopPropagation();
-    MediaPageActions[likedMedia ? 'unlikeMedia' : 'likeMedia']();
+    if (!likedMedia) {
+      MediaPageActions.likeMedia();
+    }
   }
 
   useEffect(() => {

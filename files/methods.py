@@ -387,6 +387,8 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
         return False
 
     user = User.objects.filter(username=user_mentioned).first()
+    if not user:
+        return False
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:

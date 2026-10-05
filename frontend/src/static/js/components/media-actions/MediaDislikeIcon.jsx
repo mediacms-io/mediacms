@@ -16,12 +16,12 @@ export function MediaDislikeIcon() {
 
   function onCompleteMediaDislike() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.messages.addToDisliked, 'mediaDislike');
+    PageActions.addNotification(TextsContext._currentValue.notifications.addToDisliked, 'mediaDislike');
   }
 
   function onCompleteMediaDislikeCancel() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.messages.removeFromDisliked, 'cancelMediaDislike');
+    PageActions.addNotification(TextsContext._currentValue.notifications.removeFromDisliked, 'cancelMediaDislike');
   }
 
   function onFailMediaDislikeRequest() {
@@ -31,7 +31,9 @@ export function MediaDislikeIcon() {
   function toggleDislike(ev) {
     ev.preventDefault();
     ev.stopPropagation();
-    MediaPageActions[dislikedMedia ? 'undislikeMedia' : 'dislikeMedia']();
+    if (!dislikedMedia) {
+      MediaPageActions.dislikeMedia();
+    }
   }
 
   useEffect(() => {

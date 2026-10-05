@@ -13,8 +13,10 @@ jobs:
   test:
     uses: ./.github/workflows/python.yml
     needs: [pre-commit]
+  frontend:
+    uses: ./.github/workflows/frontend-build-and-test.yml
   release:
     uses: ./.github/workflows/docker-build-push.yml
     secrets: inherit # pass all secrets
-    needs: [test]
+    needs: [test, frontend]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block headtitle %}{{media_object.title}} - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}{% if media_object %}{{media_object.title}} - {% endif %}{{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block headermeta %}
+{% if media_object %}
 
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
 
@@ -118,6 +119,7 @@
 
 {% else %}
 
+{% endif %}
 {% endif %}
 {% endblock headermeta %}
 

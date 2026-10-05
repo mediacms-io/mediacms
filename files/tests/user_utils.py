@@ -1,14 +1,14 @@
-from faker import Factory
+from faker import Faker
 
 from users.models import User
 
-faker = Factory.create()
+faker = Faker()
 
 
 def create_account(username=None, email=None, password=None, name=None, **kwargs):
     "Allow to create accounts by passing None or specific arguements"
-    email = email or faker.email()
-    username = username or email.split('@')[0]
+    email = email or faker.unique.email()
+    username = username or faker.unique.user_name()
     password = password or faker.password()
     name = name or faker.name()
 

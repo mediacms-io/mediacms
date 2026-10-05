@@ -1,7 +1,7 @@
-Django==5.2.6
+Django==5.2.17
 djangorestframework==3.16.1
 python3-saml==1.16.0
-django-allauth==65.4.1
+django-allauth==65.19.7
 PyLTI1p3==2.0.0
 cryptography>=41.0.0
 psycopg[binary,pool]==3.2.4

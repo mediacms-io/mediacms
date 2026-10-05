@@ -69,12 +69,18 @@ def build_provider():
 class OrchestratorTestCase(TestCase):
     fixtures = ["fixtures/encoding_profiles.json"]
 
+    skip_encodings = False
+
     def setUp(self):
         create_account(username="admin")
         self.provider = build_provider()
         self.patcher = mock.patch("migrationservice.tasks.get_provider", return_value=self.provider)
         self.patcher.start()
         self.addCleanup(self.patcher.stop)
+        if self.skip_encodings:
+            encodings = mock.patch("migrationservice.tasks.attach_flavor_encodings", return_value=[])
+            encodings.start()
+            self.addCleanup(encodings.stop)
 
 
 class TestFullRun(OrchestratorTestCase):
@@ -263,6 +269,8 @@ class TestPhases(OrchestratorTestCase):
 class TestRerun(OrchestratorTestCase):
     """A finished run can be swept again to retry what failed."""
 
+    skip_encodings = True
+
     def test_a_re_run_imports_nothing_twice(self):
         service = make_service()
         start_migration(service)
@@ -324,6 +332,8 @@ class TestRerun(OrchestratorTestCase):
 
 
 class TestIdempotency(OrchestratorTestCase):
+    skip_encodings = True
+
     def test_running_the_same_migration_twice_imports_nothing_new(self):
         service = make_service()
         start_migration(service)
