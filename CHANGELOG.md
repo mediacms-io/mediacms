@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.2.0](https://github.com/mediacms-io/mediacms/compare/v9.1.2...v9.2.0) (2026-10-07)
+
+### Features
+
+* upgrade React from 17 to 19 and modernize build ([#1599](https://github.com/mediacms-io/mediacms/issues/1599)) ([d1112c0](https://github.com/mediacms-io/mediacms/commit/d1112c06b13b0c13d836316daf0201f8b705244c))
+
 ## [9.1.2](https://github.com/mediacms-io/mediacms/compare/v9.1.1...v9.1.2) (2026-10-05)
 
 ### Bug Fixes
