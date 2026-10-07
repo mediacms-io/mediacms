@@ -530,7 +530,7 @@ def edit_chapters(request):
         {
             "media_object": media,
             "add_subtitle_url": media.add_subtitle_url,
-            "media_file_path": helpers.url_from_path(media.media_file.path),
+            "media_file_path": media.trim_video_url or helpers.url_from_path(media.media_file.path),
             "media_id": media.friendly_token,
             "chapters": chapters_json,
         },

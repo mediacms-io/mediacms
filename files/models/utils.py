@@ -59,6 +59,8 @@ ENCODE_RESOLUTIONS_KEYS = [resolution for resolution, name in ENCODE_RESOLUTIONS
 
 PREVIEW_PROFILE_NAME = "preview"
 
+EDITOR_VIDEO_RESOLUTION = 720
+
 
 def generate_uid():
     return get_random_string(length=16)
