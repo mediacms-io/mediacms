@@ -2,14 +2,14 @@ import '../../_support/setupMediaCMS';
 import React, { useContext } from 'react';
 import { renderIntoContainer } from '../../_support/render';
 import { config } from '../../../src/static/js/utils/settings/config';
-import { ApiUrlContext, ApiUrlConsumer } from '../../../src/static/js/utils/contexts/ApiUrlContext';
-import { LinksContext } from '../../../src/static/js/utils/contexts/LinksContext';
-import { MemberContext, MemberConsumer } from '../../../src/static/js/utils/contexts/MemberContext';
+import { ApiUrlContext, ApiUrlConsumer, apiUrlConfig } from '../../../src/static/js/utils/contexts/ApiUrlContext';
+import { LinksContext, linksConfig } from '../../../src/static/js/utils/contexts/LinksContext';
+import { MemberContext, MemberConsumer, memberConfig } from '../../../src/static/js/utils/contexts/MemberContext';
 import { PlaylistsContext } from '../../../src/static/js/utils/contexts/PlaylistsContext';
-import { ShareOptionsContext } from '../../../src/static/js/utils/contexts/ShareOptionsContext';
+import { ShareOptionsContext, shareOptionsConfig } from '../../../src/static/js/utils/contexts/ShareOptionsContext';
 import { SidebarContext, SidebarConsumer } from '../../../src/static/js/utils/contexts/SidebarContext';
-import SiteContextDefault, { SiteContext, SiteConsumer } from '../../../src/static/js/utils/contexts/SiteContext';
-import { TextsContext, TextsConsumer } from '../../../src/static/js/utils/contexts/TextsContext';
+import SiteContextDefault, { SiteContext, SiteConsumer, siteConfig } from '../../../src/static/js/utils/contexts/SiteContext';
+import { TextsContext, TextsConsumer, textsConfig } from '../../../src/static/js/utils/contexts/TextsContext';
 import * as contexts from '../../../src/static/js/utils/contexts';
 
 function readContext(ctx: React.Context<any>) {
@@ -106,6 +106,21 @@ describe('utils/contexts', () => {
             expect(container.querySelector('#site')?.textContent).toBe('MediaCMS Test');
             expect(container.querySelector('#texts')?.textContent).toBe('Removed from liked media');
             unmount();
+        });
+
+        test('Exported config values are the context defaults', () => {
+            expect(readContext(ApiUrlContext)).toBe(apiUrlConfig);
+            expect(readContext(LinksContext)).toBe(linksConfig);
+            expect(readContext(MemberContext)).toBe(memberConfig);
+            expect(readContext(ShareOptionsContext)).toBe(shareOptionsConfig);
+            expect(readContext(SiteContext)).toBe(siteConfig);
+            expect(readContext(TextsContext)).toBe(textsConfig);
+            expect(contexts.apiUrlConfig).toBe(apiUrlConfig);
+            expect(contexts.linksConfig).toBe(linksConfig);
+            expect(contexts.memberConfig).toBe(memberConfig);
+            expect(contexts.shareOptionsConfig).toBe(shareOptionsConfig);
+            expect(contexts.siteConfig).toBe(siteConfig);
+            expect(contexts.textsConfig).toBe(textsConfig);
         });
 
         test('Index re-exports every context', () => {

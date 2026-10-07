@@ -5,8 +5,10 @@ import { ItemsStaticListHandler } from './includes/itemLists/ItemsStaticListHand
 import { ItemList } from './ItemList';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function InlineSliderItemList(props) {
+export function InlineSliderItemList(rawProps) {
+  const props = applyDefaultProps(rawProps, InlineSliderItemList.defaultPropValues);
   const { visibleSidebar } = useLayout();
 
   const [
@@ -63,11 +65,7 @@ export function InlineSliderItemList(props) {
   );
 }
 
-InlineSliderItemList.propTypes = {
-  ...ItemList.propTypes,
-};
-
-InlineSliderItemList.defaultProps = {
-  ...ItemList.defaultProps,
+InlineSliderItemList.defaultPropValues = {
+  ...ItemList.defaultPropValues,
   pageItems: 12,
 };

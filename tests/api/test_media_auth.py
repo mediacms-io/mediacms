@@ -5,8 +5,9 @@ from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.files.images import ImageFile
 from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 
-from files.models import Category, Language, Media, Subtitle
+from files.models import Category, Language, Media, MediaPermission, Subtitle
 from files.tests import create_account
 from rbac.models import RBACGroup, RBACMembership
 
@@ -201,6 +202,11 @@ class MediaAuthPathBindingTest(TestCase):
         uri = f"/media/{self.public_media.media_file.name}"
         self.assertEqual(self._auth(uri).status_code, 204)
 
+    def test_repeated_slashes_are_merged_like_nginx_does(self):
+        for uri in [f"//media/{self.public_media.media_file.name}", f"/media//encoded/23/stranger/{self.public_media.uid.hex}.mp4"]:
+            self.assertEqual(self._auth(uri).status_code, 204, uri)
+        self.assertEqual(self._auth(f"//media/encoded/23/owner/{self.private_media.uid.hex}.mp4").status_code, 403)
+
     def test_an_unknown_uid_is_denied(self):
         self.assertEqual(self._auth(f"/media/encoded/23/owner/{'0' * 32}.mp4").status_code, 403)
 
@@ -271,3 +277,99 @@ class CategoryPosterAuthTest(TestCase):
     @override_settings(USE_RBAC=False)
     def test_an_rbac_categorys_poster_is_public_with_rbac_off(self):
         self.assertEqual(self._auth(f"/media/{self.restricted.thumbnail.name}").status_code, 204)
+
+
+@override_settings(USE_X_ACCEL_REDIRECT=False, SHOW_ORIGINAL_MEDIA=True)
+class PdfViewTest(TestCase):
+    fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+    content = b"%PDF-1.7\nexample document bytes\n%%EOF"
+
+    def setUp(self):
+        cache.clear()
+        self.owner = create_account(username="pdfowner", password="test-password")
+        self.stranger = create_account(username="pdfstranger", password="test-password")
+        with open("fixtures/test_image.png", "rb") as file:
+            self.media = Media.objects.create(title="document", user=self.owner, media_file=File(file))
+        self.media.media_file.save("document.txt", ContentFile(self.content), save=False)
+        Media.objects.filter(pk=self.media.pk).update(media_type="pdf", state="public", media_file=self.media.media_file.name)
+        self.url = reverse("view_pdf", kwargs={"friendly_token": self.media.friendly_token})
+
+    def test_pdf_mime_is_independent_of_filename(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertEqual(response["X-Content-Type-Options"], "nosniff")
+        self.assertIn(".pdf", response["Content-Disposition"])
+        self.assertTrue(response["Content-Disposition"].startswith("inline;"))
+        self.assertEqual(response["Cache-Control"], "private")
+        self.assertEqual(b"".join(response.streaming_content), self.content)
+
+    def test_html_named_upload_is_served_as_pdf(self):
+        self.media.media_file.save("payload.html", ContentFile(b"%PDF<script>alert(1)</script>"), save=False)
+        Media.objects.filter(pk=self.media.pk).update(media_file=self.media.media_file.name)
+        response = self.client.get(self.url)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertEqual(response["X-Content-Type-Options"], "nosniff")
+        self.assertNotIn(".html", response["Content-Disposition"])
+        list(response.streaming_content)
+
+    def test_private_pdf_requires_permission_even_when_acceleration_is_disabled(self):
+        Media.objects.filter(pk=self.media.pk).update(state="private")
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.client.force_login(self.stranger)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.client.force_login(self.owner)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        list(response.streaming_content)
+
+    def test_shared_private_pdf_is_accessible(self):
+        Media.objects.filter(pk=self.media.pk).update(state="private")
+        MediaPermission.objects.create(owner_user=self.owner, user=self.stranger, media=self.media, permission="viewer")
+        self.client.force_login(self.stranger)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        list(response.streaming_content)
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, DEVELOPMENT_MODE=True)
+    def test_pdf_checks_current_visibility_after_public_access_is_cached(self):
+        response = self.client.get(MEDIA_AUTH_URL, HTTP_X_ORIGINAL_URI=f"/media/{self.media.media_file.name}")
+        self.assertEqual(response.status_code, 204)
+        Media.objects.filter(pk=self.media.pk).update(state="private")
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+
+    @override_settings(USE_RBAC=True)
+    def test_rbac_member_can_view_private_pdf(self):
+        Media.objects.filter(pk=self.media.pk).update(state="private")
+        category = Category.objects.create(title="PDF staff", is_rbac_category=True)
+        self.media.category.add(category)
+        group = RBACGroup.objects.create(uid="pdf-staff", name="PDF staff")
+        group.categories.add(category)
+        RBACMembership.objects.create(user=self.stranger, rbac_group=group, role="member")
+        self.client.force_login(self.stranger)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        list(response.streaming_content)
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, DEVELOPMENT_MODE=False)
+    def test_acceleration_uses_internal_pdf_location(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["X-Accel-Redirect"].startswith("/_protected_pdf/original/"))
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    @override_settings(USE_X_ACCEL_REDIRECT=True, DEVELOPMENT_MODE=True)
+    def test_development_streams_pdf_without_nginx(self):
+        response = self.client.get(self.url)
+        self.assertNotIn("X-Accel-Redirect", response)
+        self.assertEqual(b"".join(response.streaming_content), self.content)
+
+    @override_settings(SHOW_ORIGINAL_MEDIA=False)
+    def test_original_file_setting_is_respected(self):
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_non_pdf_and_missing_file_are_not_served(self):
+        Media.objects.filter(pk=self.media.pk).update(media_type="image")
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+        Media.objects.filter(pk=self.media.pk).update(media_type="pdf", media_file="original/missing.pdf")
+        self.assertEqual(self.client.get(self.url).status_code, 404)

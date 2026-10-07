@@ -29,9 +29,6 @@ import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 // Import sample media data
 import sampleMediaData from '../../assets/sample-media-file.json';
 
-// Import fallback poster image
-import audioPosterImg from '../../assets/audio-poster.jpg';
-
 // Function to enable tooltips for all standard VideoJS buttons
 const enableStandardButtonTooltips = (player) => {
     // Wait a bit for all components to be initialized
@@ -200,13 +197,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                       useRoundedCorners: false,
                       isPlayList: false,
                       previewSprite: {
-                          url: sampleMediaData.sprites_url
-                              ? 'https://deic.mediacms.io' + sampleMediaData.sprites_url
-                              : 'https://deic.mediacms.io/media/original/thumbnails/user/admin/43cc73a8c1604425b7057ad2b50b1798.19247660hd_1920_1080_60fps.mp4sprites.jpg',
+                          url: sampleMediaData.sprites_url || '',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: 'https://deic.mediacms.io',
-                      nextLink: 'https://deic.mediacms.io/view?m=elygiagorgechania',
+                      siteUrl: window.location.origin,
+                      nextLink: null,
                   },
         []
     );
@@ -544,7 +539,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
             url: mediaData.data?.url || '',
-            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : audioPosterImg,
+            poster: mediaData.data?.poster_url
+                ? mediaData.siteUrl + mediaData.data.poster_url
+                : mediaData.data?.media_type === 'audio'
+                  ? mediaData.siteUrl + '/static/video_js/audio-poster.webp'
+                  : undefined,
             previewSprite: mediaData?.previewSprite || {},
             useRoundedCorners: mediaData?.useRoundedCorners,
             isPlayList: mediaData?.isPlayList,
@@ -817,7 +816,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
             }
             return window.location.origin;
         }
-        return mediaData.siteUrl || 'https://deic.mediacms.io';
+        return mediaData.siteUrl || window.location.origin;
     };
 
     // Helper function to get embed URL

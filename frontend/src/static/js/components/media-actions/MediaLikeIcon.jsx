@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextsContext } from '../../utils/contexts/';
+import { textsConfig } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 import { formatViewsNumber } from '../../utils/helpers/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
@@ -16,12 +16,12 @@ export function MediaLikeIcon() {
 
   function onCompleteMediaLike() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.notifications.addToLiked, 'likedMedia');
+    PageActions.addNotification(textsConfig.notifications.addToLiked, 'likedMedia');
   }
 
   function onCompleteMediaLikeCancel() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.notifications.removeFromLiked, 'unlikedMedia');
+    PageActions.addNotification(textsConfig.notifications.removeFromLiked, 'unlikedMedia');
   }
 
   function onFailMediaLikeRequest() {

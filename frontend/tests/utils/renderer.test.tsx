@@ -1,6 +1,4 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { act } from 'react-dom/test-utils';
+import React, { act } from 'react';
 
 jest.mock('../../src/static/js/components/page-layout', () => {
     const React = jest.requireActual('react');
@@ -42,7 +40,6 @@ describe('utils', () => {
                 if (!el) {
                     return;
                 }
-                (ReactDOM as any).unmountComponentAtNode(el);
                 el.remove();
             });
             document.body.className = '';
@@ -77,6 +74,36 @@ describe('utils', () => {
 
                 expect(header.querySelector('#mock-header')).not.toBeNull();
                 expect(sidebar.querySelector('#mock-sidebar')).not.toBeNull();
+            });
+
+            test('Renders only the header when there is no sidebar or page', () => {
+                const header = addContainer('app-header');
+                act(() => renderPage('missing', Page));
+                expect(header.querySelector('#mock-header')).not.toBeNull();
+                expect(document.querySelector('#mock-page')).toBeNull();
+            });
+
+            test('The page is in the DOM as soon as renderPage returns', () => {
+                (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
+                try {
+                    const content = addContainer('page-content');
+                    const header = addContainer('app-header');
+                    renderPage('page-content', Page);
+                    expect(content.querySelector('#mock-page')).not.toBeNull();
+                    expect(header.querySelector('#mock-header')).not.toBeNull();
+                } finally {
+                    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+                }
+            });
+
+            test('Rendering into the same container again reuses its root without warnings', () => {
+                const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+                const content = addContainer('page-content');
+                act(() => renderPage('page-content', Page));
+                act(() => renderPage('page-content', Page));
+                expect(content.querySelectorAll('#mock-page')).toHaveLength(1);
+                expect(errors).not.toHaveBeenCalled();
+                errors.mockRestore();
             });
 
             test('Renders only the sidebar when header is missing', () => {

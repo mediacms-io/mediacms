@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { BulkActionConfirmModal } from './BulkActionConfirmModal';
 import { BulkActionPermissionModal } from './BulkActionPermissionModal';
 import { BulkActionPlaylistModal } from './BulkActionPlaylistModal';
@@ -169,54 +168,3 @@ export function BulkActionsModals({
     </>
   );
 }
-
-BulkActionsModals.propTypes = {
-  showConfirmModal: PropTypes.bool.isRequired,
-  confirmMessage: PropTypes.string.isRequired,
-  onConfirmCancel: PropTypes.func.isRequired,
-  onConfirmProceed: PropTypes.func.isRequired,
-
-  showPermissionModal: PropTypes.bool.isRequired,
-  permissionType: PropTypes.oneOf(['viewer', 'editor', 'owner', null]),
-  selectedMediaIds: PropTypes.array.isRequired,
-  onPermissionModalCancel: PropTypes.func.isRequired,
-  onPermissionModalSuccess: PropTypes.func.isRequired,
-  onPermissionModalError: PropTypes.func.isRequired,
-
-  showPlaylistModal: PropTypes.bool.isRequired,
-  onPlaylistModalCancel: PropTypes.func.isRequired,
-  onPlaylistModalSuccess: PropTypes.func.isRequired,
-  onPlaylistModalError: PropTypes.func.isRequired,
-  username: PropTypes.string,
-
-  showChangeOwnerModal: PropTypes.bool.isRequired,
-  onChangeOwnerModalCancel: PropTypes.func.isRequired,
-  onChangeOwnerModalSuccess: PropTypes.func.isRequired,
-  onChangeOwnerModalError: PropTypes.func.isRequired,
-
-  showPublishStateModal: PropTypes.bool.isRequired,
-  onPublishStateModalCancel: PropTypes.func.isRequired,
-  onPublishStateModalSuccess: PropTypes.func.isRequired,
-  onPublishStateModalError: PropTypes.func.isRequired,
-
-  showCategoryModal: PropTypes.bool.isRequired,
-  onCategoryModalCancel: PropTypes.func.isRequired,
-  onCategoryModalSuccess: PropTypes.func.isRequired,
-  onCategoryModalError: PropTypes.func.isRequired,
-
-  showTagModal: PropTypes.bool.isRequired,
-  onTagModalCancel: PropTypes.func.isRequired,
-  onTagModalSuccess: PropTypes.func.isRequired,
-  onTagModalError: PropTypes.func.isRequired,
-
-  showCourseCleanupModal: PropTypes.bool.isRequired,
-  onCourseCleanupModalCancel: PropTypes.func.isRequired,
-  onCourseCleanupModalSuccess: PropTypes.func.isRequired,
-  onCourseCleanupModalError: PropTypes.func.isRequired,
-
-  csrfToken: PropTypes.string.isRequired,
-
-  showNotification: PropTypes.bool.isRequired,
-  notificationMessage: PropTypes.string.isRequired,
-  notificationType: PropTypes.oneOf(['success', 'error']).isRequired,
-};

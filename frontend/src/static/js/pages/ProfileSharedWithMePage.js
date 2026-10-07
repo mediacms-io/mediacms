@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
+import { apiUrlConfig, LinksConsumer, memberConfig } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions } from '../utils/actions';
 import { MediaListWrapper } from '../components/MediaListWrapper';
@@ -89,7 +88,7 @@ export class ProfileSharedWithMePage extends Page {
             const excludeLtiEmbed = isShareMediaDisabled() ? '&exclude_lti_embed=1' : '';
             if (this.state.query) {
                 requestUrl =
-                    ApiUrlContext._currentValue.media +
+                    apiUrlConfig.media +
                     '?author=' +
                     author.id +
                     '&show=shared_with_me&q=' +
@@ -98,7 +97,7 @@ export class ProfileSharedWithMePage extends Page {
                     this.state.filterArgs;
             } else {
                 requestUrl =
-                    ApiUrlContext._currentValue.media +
+                    apiUrlConfig.media +
                     '?author=' +
                     author.id +
                     '&show=shared_with_me' +
@@ -153,7 +152,7 @@ export class ProfileSharedWithMePage extends Page {
 
         if (newQuery) {
             requestUrl =
-                ApiUrlContext._currentValue.media +
+                apiUrlConfig.media +
                 '?author=' +
                 this.state.author.id +
                 '&show=shared_with_me&q=' +
@@ -161,7 +160,7 @@ export class ProfileSharedWithMePage extends Page {
                 this.state.filterArgs;
         } else {
             requestUrl =
-                ApiUrlContext._currentValue.media +
+                apiUrlConfig.media +
                 '?author=' +
                 this.state.author.id +
                 '&show=shared_with_me' +
@@ -361,7 +360,7 @@ export class ProfileSharedWithMePage extends Page {
 
                 if (this.state.query) {
                     requestUrl =
-                        ApiUrlContext._currentValue.media +
+                        apiUrlConfig.media +
                         '?author=' +
                         this.state.author.id +
                         '&show=shared_with_me&q=' +
@@ -369,7 +368,7 @@ export class ProfileSharedWithMePage extends Page {
                         this.state.filterArgs;
                 } else {
                     requestUrl =
-                        ApiUrlContext._currentValue.media +
+                        apiUrlConfig.media +
                         '?author=' +
                         this.state.author.id +
                         '&show=shared_with_me' +
@@ -451,7 +450,7 @@ export class ProfileSharedWithMePage extends Page {
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
-        const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isMediaAuthor = authorData && authorData.username === memberConfig.username;
         const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active
@@ -530,10 +529,6 @@ export class ProfileSharedWithMePage extends Page {
         ];
     }
 }
-
-ProfileSharedWithMePage.propTypes = {
-    title: PropTypes.string.isRequired,
-};
 
 ProfileSharedWithMePage.defaultProps = {
     title: 'Shared with me',

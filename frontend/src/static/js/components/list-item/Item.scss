@@ -505,23 +505,6 @@ a.item-edit-link {
     .item-meta {
     }
 
-    a.view-full-playlist {
-      position: relative;
-      float: left;
-      clear: both;
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 12.5px;
-      font-weight: 500;
-    }
-
-    a.view-full-playlist {
-      color: var(--playlist-item-main-view-full-link-text-color);
-
-      &:hover {
-        color: var(--playlist-item-main-view-full-link-hover-text-color);
-      }
-    }
   }
 }
 

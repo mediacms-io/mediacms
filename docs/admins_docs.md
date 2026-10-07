@@ -90,6 +90,14 @@ docker compose down
 docker compose up
 ```
 
+### Custom nginx configuration
+
+If you run MediaCMS behind your own nginx configuration instead of the one shipped in `deploy/docker/nginx_http_only.conf`, copy these blocks from that file when you update:
+
+- `location = /_media_auth` and `location ~ ^/media/(encoded|hls)/(.*)$`: nginx asks Django whether the user may access protected media files.
+- `location ~ ^/media/original/(.*)$`: the same check for original files. It serves only known media types inline. Any other file (html, svg, js...) is sent as a download, so an uploaded file cannot run scripts on the portal's domain.
+- `location ^~ /_protected_pdf/`: an internal location that Django hands PDF responses to. Without it, PDFs fail to display on media pages.
+
 ### Update from version 2 to version 3
 Version 3 is using Python 3.11 and PostgreSQL 15. If you are updating from an older version, that was using PostgreSQL 13, the automatic update will not work, as you will receive the following message when the PostgreSQL container starts:
 

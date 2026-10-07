@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 // Get categories from window if available
 const categories = window.CATEGORIES
@@ -43,7 +43,8 @@ const filters = {
   ],
 };
 
-export function ManageMediaFilters(props) {
+export function ManageMediaFilters(rawProps) {
+  const props = applyDefaultProps(rawProps, ManageMediaFilters.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
 
   const [state, setState] = useState('all');
@@ -175,10 +176,6 @@ export function ManageMediaFilters(props) {
   );
 }
 
-ManageMediaFilters.propTypes = {
-  hidden: PropTypes.bool,
-};
-
-ManageMediaFilters.defaultProps = {
+ManageMediaFilters.defaultPropValues = {
   hidden: false,
 };

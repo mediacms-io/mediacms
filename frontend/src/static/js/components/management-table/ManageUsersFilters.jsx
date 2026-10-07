@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { useUser } from '../../utils/hooks/';
 import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 const filters = {
   role: [
@@ -19,7 +19,8 @@ const filters = {
   ],
 };
 
-export function ManageUsersFilters(props) {
+export function ManageUsersFilters(rawProps) {
+  const props = applyDefaultProps(rawProps, ManageUsersFilters.defaultPropValues);
   const { userCan } = useUser();
   const [isHidden, setIsHidden] = useState(props.hidden);
 
@@ -87,10 +88,6 @@ export function ManageUsersFilters(props) {
   );
 }
 
-ManageUsersFilters.propTypes = {
-  hidden: PropTypes.bool,
-};
-
-ManageUsersFilters.defaultProps = {
+ManageUsersFilters.defaultPropValues = {
   hidden: false,
 };

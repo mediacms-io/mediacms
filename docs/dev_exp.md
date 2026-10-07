@@ -28,8 +28,7 @@ For Django, the changes from the image produced by docker-compose.yaml are these
 * Static files (js/css) are loaded from static/ folder
 * corsheaders is installed and configured to allow all origins
 
-For React, it will run `npm start` in the frontend folder, which will start the development server.
-Check it on http://localhost:8088/
+For React, it will run `npm start` in the frontend folder, which starts the webpack dev server on http://localhost:8088/ . It proxies every page and API request to Django, and serves the js/css bundles from the live build, so you see the real Django pages with your frontend changes.
 
 ### How to develop in Django
 Django starts at http://localhost and is reloading automatically. Making any change to the python code should refresh Django.
@@ -43,7 +42,7 @@ docker compose -f docker-compose-dev.yaml restart web
 
 
 ### How to develop in React
-React is started on http://localhost:8088/ , code is located in frontend/ , so making changes there should have instant effect on the page. Keep in mind that React is loading data from Django, and that it has to be built so that Django can serve it.
+The dev server is on http://localhost:8088/ and the code is in frontend/ , so changes are rebuilt and the page reloads. The pages, data and login are Django's, so forms and POSTs work as on the real site. Django itself only serves what is in static/, so build the frontend before committing.
 
 ### Making changes to the frontend
 
@@ -57,7 +56,9 @@ Django is using a highly intuitive hierarchical templating system (https://docs.
 
 React is called through the Django templates, eg templates/cms/media.html is loading js/media.js
 
-In order to make changes to React code, edit code on frontend/src and check it's effect on http://localhost:8088/ . Once ready, build it and copy it to the Django static folder, so that it is served by Django.
+In order to make changes to React code, edit code on frontend/src and check its effect on http://localhost:8088/ . Once ready, build it and copy it to the Django static folder, so that it is served by Django.
+
+Each page bundle has an entry file in frontend/src/entries/<name>.js, and templates/cms/<page>.html loads static/js/<name>.js together with static/js/_commons.js. Styles used by more than one page go to static/css/_commons.css; styles used by a single page go to static/css/<name>.css, which that page's template must link. The build is configured in frontend/webpack.config.js.
 
 ### Development workflow with the frontend
 1. Edit frontend/src/ files
@@ -83,7 +84,7 @@ Build the frontend:
 user@user:~/mediacms$ make build-frontend
 docker compose -f docker-compose-dev.yaml exec frontend npm run dist
 
-> mediacms-frontend@0.9.1 dist /home/mediacms.io/mediacms/frontend
-> mediacms-scripts rimraf ./dist && mediacms-scripts build --config=./config/mediacms.config.js --env=dist
+> mediacms-frontend@0.9.2 dist
+> webpack --mode=production
 ...
 ```

@@ -40,7 +40,7 @@ describe('components/list-item', () => {
 
     describe('Item', () => {
         test('Declares shared default props for item components', () => {
-            expect((Item as any).defaultProps).toStrictEqual({
+            expect((Item as any).defaultPropValues).toStrictEqual({
                 title: '',
                 link: '#',
                 singleLinkContent: false,

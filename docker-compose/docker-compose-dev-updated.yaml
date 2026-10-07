@@ -28,12 +28,11 @@ services:
       db:
         condition: service_healthy
   frontend:
-    image: node:20
+    image: node:24
     user: "root"
     volumes:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
       - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
-      - scripts_node_modules:/home/mediacms.io/mediacms/frontend/packages/scripts/node_modules
       - npm_cache:/home/node/.npm
     working_dir: /home/mediacms.io/mediacms/frontend/
     command: >
@@ -41,21 +40,11 @@ services:
       echo 'Checking dependencies...' &&
       if [ ! -f node_modules/.install-complete ]; then
         echo 'First-time setup or dependencies changed, installing...' &&
-        npm install --legacy-peer-deps --cache /home/node/.npm &&
-        cd packages/scripts &&
-        npm install --legacy-peer-deps --cache /home/node/.npm &&
-        npm run build &&
-        cd ../.. &&
+        npm install --cache /home/node/.npm &&
         touch node_modules/.install-complete &&
         echo 'Dependencies installed successfully'
       else
-        echo 'Dependencies already installed, skipping installation...' &&
-        if [ ! -d packages/scripts/dist ]; then
-          echo 'Building scripts package...' &&
-          cd packages/scripts &&
-          npm run build &&
-          cd ../..
-        fi
+        echo 'Dependencies already installed, skipping installation...'
       fi &&
       echo 'Starting development server...' &&
       npm run start
@@ -120,5 +109,4 @@ services:
 
 volumes:
   frontend_node_modules:
-  scripts_node_modules:
   npm_cache:

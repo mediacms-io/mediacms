@@ -1,27 +1,25 @@
-import React from 'react';
-import * as ReactDOM from 'react-dom';
-import { act } from 'react-dom/test-utils';
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
 
-const legacyReactDOM = ReactDOM as any;
-
-export function renderIntoContainer(element: any) {
+export function renderIntoContainer(element: React.ReactNode) {
     const container = document.createElement('div');
     document.body.appendChild(container);
+    const root = createRoot(container);
 
     act(() => {
-        legacyReactDOM.render(element, container);
+        root.render(element);
     });
 
     return {
         container,
-        rerender(next: any) {
+        rerender(next: React.ReactNode) {
             act(() => {
-                legacyReactDOM.render(next, container);
+                root.render(next);
             });
         },
         unmount() {
             act(() => {
-                legacyReactDOM.unmountComponentAtNode(container);
+                root.unmount();
             });
             container.remove();
         },

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 import { translateString } from '../../utils/helpers/';
 import '../management-table/ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function ProfileMediaTags(props) {
+export function ProfileMediaTags(rawProps) {
+  const props = applyDefaultProps(rawProps, ProfileMediaTags.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
   const [tagFilter, setFilter_tag] = useState('all');
 
@@ -56,13 +57,7 @@ export function ProfileMediaTags(props) {
   );
 }
 
-ProfileMediaTags.propTypes = {
-  hidden: PropTypes.bool,
-  tags: PropTypes.array,
-  onTagSelect: PropTypes.func.isRequired,
-};
-
-ProfileMediaTags.defaultProps = {
+ProfileMediaTags.defaultPropValues = {
   hidden: false,
   tags: [],
 };

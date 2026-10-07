@@ -1,13 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveIntegerOrZero, inSelectMediaEmbedMode } from '../../utils/helpers/';
+import { inSelectMediaEmbedMode } from '../../utils/helpers/';
 import { MediaDurationInfo } from '../../utils/classes/';
 import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOptions';
 import { MediaItemDuration, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
 import { MediaItem } from './MediaItem';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function MediaItemAudio(props) {
+export function MediaItemAudio(rawProps) {
+  const props = applyDefaultProps(rawProps, MediaItemAudio.defaultPropValues);
   const type = props.type;
   const isSelectMediaMode = inSelectMediaEmbedMode();
 
@@ -54,7 +55,6 @@ export function MediaItemAudio(props) {
     }
 
     const attr = {
-      key: 'item-thumb',
       href: props.link,
       title: props.title,
       tabIndex: '-1',
@@ -64,7 +64,7 @@ export function MediaItemAudio(props) {
     };
 
     return (
-      <a {...attr}>
+      <a key="item-thumb" {...attr}>
         {props.inPlaylistView ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
@@ -160,18 +160,8 @@ export function MediaItemAudio(props) {
   );
 }
 
-MediaItemAudio.propTypes = {
-  ...MediaItem.propTypes,
-  type: PropTypes.string.isRequired,
-  duration: PositiveIntegerOrZero,
-  hidePlaylistOptions: PropTypes.bool,
-  hasMediaViewer: PropTypes.bool,
-  hasMediaViewerDescr: PropTypes.bool,
-  playlist_id: PropTypes.string,
-};
-
-MediaItemAudio.defaultProps = {
-  ...MediaItem.defaultProps,
+MediaItemAudio.defaultPropValues = {
+  ...MediaItem.defaultPropValues,
   type: 'audio',
   duration: 0,
   hidePlaylistOptions: true,

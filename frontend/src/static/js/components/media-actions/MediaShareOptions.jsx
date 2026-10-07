@@ -1,12 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { ShareOptionsContext } from '../../utils/contexts/';
+import { shareOptionsConfig } from '../../utils/contexts/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import ItemsInlineSlider from '../item-list/includes/itemLists/ItemsInlineSlider';
 import { CircleIconButton } from '../_shared/';
 
 function shareOptionsList() {
-  const socialMedia = ShareOptionsContext._currentValue;
+  const socialMedia = shareOptionsConfig;
   const mediaUrl = MediaPageStore.get('media-url');
   const mediaTitle = MediaPageStore.get('media-data').title;
 

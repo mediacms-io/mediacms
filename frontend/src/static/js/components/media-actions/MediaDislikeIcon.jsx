@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextsContext } from '../../utils/contexts/';
+import { textsConfig } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
 import { formatViewsNumber } from '../../utils/helpers/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
@@ -16,12 +16,12 @@ export function MediaDislikeIcon() {
 
   function onCompleteMediaDislike() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.notifications.addToDisliked, 'mediaDislike');
+    PageActions.addNotification(textsConfig.notifications.addToDisliked, 'mediaDislike');
   }
 
   function onCompleteMediaDislikeCancel() {
     updateStateValues();
-    PageActions.addNotification(TextsContext._currentValue.notifications.removeFromDisliked, 'cancelMediaDislike');
+    PageActions.addNotification(textsConfig.notifications.removeFromDisliked, 'cancelMediaDislike');
   }
 
   function onFailMediaDislikeRequest() {

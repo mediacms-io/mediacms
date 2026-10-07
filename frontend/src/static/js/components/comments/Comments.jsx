@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MentionsInput, Mention } from 'react-mentions';
-import PropTypes from 'prop-types';
 import { format } from 'timeago.js';
 import { usePopup } from '../../utils/hooks/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
-import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
+import { linksConfig, memberConfig, siteConfig } from '../../utils/contexts/';
 import { PopupMain, UserThumbnail } from '../_shared';
 import { replaceString } from '../../utils/helpers/';
 
 import { translateString } from '../../utils/helpers/';
 
 import './Comments.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
+import { MentionTextarea } from './MentionTextarea';
 
 const commentsText = {
   single: translateString('comment'),
@@ -22,21 +22,22 @@ const commentsText = {
   disabledCommentsMsg: translateString('Comments are disabled'),
 };
 
-function CommentForm(props) {
+function CommentForm(rawProps) {
+  const props = applyDefaultProps(rawProps, CommentForm.defaultPropValues);
   const textareaRef = useRef(null);
 
   const [value, setValue] = useState('');
   const [madeChanges, setMadeChanges] = useState(false);
   const [textareaFocused, setTextareaFocused] = useState(false);
   const [textareaLineHeight, setTextareaLineHeight] = useState(-1);
-  const [userList, setUsersList] = useState('');
+  const [userList, setUsersList] = useState([]);
 
   const [loginUrl] = useState(
-    !MemberContext._currentValue.is.anonymous
+    !memberConfig.is.anonymous
       ? null
-      : LinksContext._currentValue.signin +
+      : linksConfig.signin +
           '?next=/' +
-          window.location.href.replace(SiteContext._currentValue.url, '').replace(/^\//g, ''),
+          window.location.href.replace(siteConfig.url, '').replace(/^\//g, ''),
   );
 
   function onFocus() {
@@ -76,7 +77,7 @@ function CommentForm(props) {
     setMadeChanges(false);
   }
 
-  function onChangeWithMention(event, newValue, newPlainTextValue, mentions) {
+  function onChangeWithMention(event, newValue) {
     textareaRef.current.style.height = '';
 
     setValue(newValue);
@@ -134,25 +135,24 @@ function CommentForm(props) {
     };
   });
 
-  return !MemberContext._currentValue.is.anonymous ? (
+  return !memberConfig.is.anonymous ? (
     <div className="comments-form">
       <div className="comments-form-inner">
         <UserThumbnail />
         <div className="form">
           <div className={'form-textarea-wrap' + (textareaFocused ? ' focused' : '')}>
             {MediaCMS.features.media.actions.comment_mention ? (
-              <MentionsInput
+              <MentionTextarea
                 inputRef={textareaRef}
                 className="form-textarea"
                 rows="1"
                 placeholder={'Add a ' + commentsText.single + '...'}
                 value={value}
+                users={userList}
                 onChange={onChangeWithMention}
                 onFocus={onFocus}
                 onBlur={onBlur}
-              >
-                <Mention data={userList} markup="@(___id___)[___display___]" />
-              </MentionsInput>
+              />
             ) : (
               <textarea
                 ref={textareaRef}
@@ -198,13 +198,7 @@ function CommentForm(props) {
   );
 }
 
-CommentForm.propTypes = {
-  comment_type: PropTypes.oneOf(['new', 'reply']),
-  media_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  reply_comment_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-};
-
-CommentForm.defaultProps = {
+CommentForm.defaultPropValues = {
   comment_type: 'new',
 };
 
@@ -228,7 +222,7 @@ function CommentActions(props) {
       {/*<div className="comment-action dislike-action"><CircleIconButton><MaterialIcon type="thumb_down" /></CircleIconButton><span className="dislikes-num">19</span></div>*/}
       {/*<div className="comment-action replay-comment"><button>REPLY</button></div>*/}
 
-      {MemberContext._currentValue.can.deleteComment ? (
+      {memberConfig.can.deleteComment ? (
         <div className="comment-action remove-comment">
           <PopupTrigger contentRef={popupContentRef}>
             <button>
@@ -259,7 +253,8 @@ function CommentActions(props) {
   );
 }
 
-function Comment(props) {
+function Comment(rawProps) {
+  const props = applyDefaultProps(rawProps, Comment.defaultPropValues);
   const commentTextRef = useRef(null);
   const commentTextInnerRef = useRef(null);
 
@@ -320,26 +315,14 @@ function Comment(props) {
               {viewMoreContent ? 'Show less' : 'Read more'}
             </button>
           ) : null}
-          {MemberContext._currentValue.can.deleteComment ? <CommentActions comment_id={props.comment_id} /> : null}
+          {memberConfig.can.deleteComment ? <CommentActions comment_id={props.comment_id} /> : null}
         </div>
       </div>
     </div>
   );
 }
 
-Comment.propTypes = {
-  comment_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  media_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  text: PropTypes.string,
-  author_name: PropTypes.string,
-  author_link: PropTypes.string,
-  author_thumb: PropTypes.string,
-  publish_date: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  likes: PropTypes.number,
-  dislikes: PropTypes.number,
-};
-
-Comment.defaultProps = {
+Comment.defaultPropValues = {
   author_name: '',
   author_link: '#',
   publish_date: 0,
@@ -360,7 +343,7 @@ function displayCommentsRelatedAlert(comments) {
       noCommentDiv.parentNode.removeChild(noCommentDiv);
     }
   } else if (0 === comments.length && 'unlisted' === MediaPageStore.get('media-data').state) {
-    if (-1 < LinksContext._currentValue.profile.media.indexOf(MediaPageStore.get('media-data').author_profile)) {
+    if (-1 < linksConfig.profile.media.indexOf(MediaPageStore.get('media-data').author_profile)) {
       if (!noCommentDiv) {
         const missingCommentariesUnlistedMsgElem = document.createElement('div');
 
@@ -395,12 +378,12 @@ function displayCommentsRelatedAlert(comments) {
 const CommentsListHeader = ({ commentsLength, ordering, onToggleOrdering }) => {
   return (
     <>
-      {!MemberContext._currentValue.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
+      {!memberConfig.can.readComment || MediaPageStore.get('media-data').enable_comments ? null : (
         <span className="disabled-comments-msg">{commentsText.disabledCommentsMsg}</span>
       )}
 
-      {MemberContext._currentValue.can.readComment &&
-      (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia) ? (
+      {memberConfig.can.readComment &&
+      (MediaPageStore.get('media-data').enable_comments || memberConfig.can.editMedia) ? (
         <h2>
           {commentsLength
             ? 1 < commentsLength
@@ -437,7 +420,7 @@ export default function CommentsList(props) {
   const [mediaId, setMediaId] = useState(MediaPageStore.get('media-id'));
 
   const [comments, setComments] = useState(
-    MemberContext._currentValue.can.readComment ? MediaPageStore.get('media-comments') : [],
+    memberConfig.can.readComment ? MediaPageStore.get('media-comments') : [],
   );
 
   const [displayComments, setDisplayComments] = useState(false);
@@ -512,8 +495,8 @@ export default function CommentsList(props) {
   useEffect(() => {
     setDisplayComments(
       comments.length &&
-        MemberContext._currentValue.can.readComment &&
-        (MediaPageStore.get('media-data').enable_comments || MemberContext._currentValue.can.editMedia),
+        memberConfig.can.readComment &&
+        (MediaPageStore.get('media-data').enable_comments || memberConfig.can.editMedia),
     );
   }, [comments]);
 
@@ -550,7 +533,7 @@ export default function CommentsList(props) {
                   text={c.text}
                   author_name={c.author_name}
                   author_link={c.author_profile}
-                  author_thumb={SiteContext._currentValue.url + '/' + c.author_thumbnail_url.replace(/^\//g, '')}
+                  author_thumb={siteConfig.url + '/' + c.author_thumbnail_url.replace(/^\//g, '')}
                   publish_date={c.add_date}
                   likes={0}
                   dislikes={0}

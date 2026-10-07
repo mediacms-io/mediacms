@@ -74,17 +74,7 @@ And then in order for the changes to be visible on the application while served 
 cp -r frontend/dist/static/* static/
 ```
 
-POST calls: cannot be performed through the dev server, you have to make through the normal application (port 80) and then see changes on the dev application on port 8088.
-Make sure the urls are set on `frontend/.env` if different than localhost
-
-
-Media page: need to upload content through the main application (nginx/port 80), and then use an id for page media.html, for example `http://localhost:8088/media.html?m=nc9rotyWP`
-
-There are some issues with CORS too to resolve, in order for some pages to function, eg the manage comments page
-
-```
-http://localhost:8088/manage-media.html manage_media
-```
+The dev server on port 8088 proxies every page and API request to Django (the backend is set with `MEDIACMS_BACKEND` in `frontend/.env`, `http://web` for docker-compose-dev), so it shows the real Django pages, for example `http://localhost:8088/view?m=nc9rotyWP` or `http://localhost:8088/manage/media`, with the js/css bundles served from the live build. Logging in, uploads and other POST requests work as on port 80.
 
 ### Backend application changes
 After I make changes to the django application (eg make a change on `files/forms.py`) in order to see the changes I have to restart the web container

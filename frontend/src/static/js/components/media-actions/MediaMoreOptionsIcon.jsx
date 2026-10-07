@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { formatInnerLink } from '../../utils/helpers/';
 import { usePopup, useUser } from '../../utils/hooks/';
-import { SiteContext } from '../../utils/contexts/';
+import { siteConfig } from '../../utils/contexts/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { MediaPageStore } from '../../utils/stores/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared/';
 import { ReportForm } from '../report-form/ReportForm';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 function downloadOptions(mediaData, allowDownload) {
-  const site = SiteContext._currentValue;
+  const site = siteConfig;
 
   const encodingsInfo = mediaData.encodings_info;
 
@@ -212,10 +212,11 @@ function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaRep
 
 const defaultContainerClassname = 'more-options active-options';
 
-export function MediaMoreOptionsIcon(props) {
+export function MediaMoreOptionsIcon(rawProps) {
+  const props = applyDefaultProps(rawProps, MediaMoreOptionsIcon.defaultPropValues);
   const { userCan } = useUser();
 
-  const site = SiteContext._currentValue;
+  const site = siteConfig;
 
   const downloadLink = formatInnerLink(MediaPageStore.get('media-original-url'), site.url);
   const mediaData = MediaPageStore.get('media-data');
@@ -341,10 +342,6 @@ export function MediaMoreOptionsIcon(props) {
   );
 }
 
-MediaMoreOptionsIcon.propTypes = {
-  allowDownload: PropTypes.bool.isRequired,
-};
-
-MediaMoreOptionsIcon.defaultProps = {
+MediaMoreOptionsIcon.defaultPropValues = {
   allowDownload: false,
 };
