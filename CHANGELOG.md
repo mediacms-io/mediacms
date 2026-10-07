@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.2.1](https://github.com/mediacms-io/mediacms/compare/v9.2.0...v9.2.1) (2026-10-07)
+
+### Bug Fixes
+
+* trimming video ([#1600](https://github.com/mediacms-io/mediacms/issues/1600)) ([a1ffd46](https://github.com/mediacms-io/mediacms/commit/a1ffd4677cfb976a1dd591227783f881e6fc2ad9))
+
 ## [9.2.0](https://github.com/mediacms-io/mediacms/compare/v9.1.2...v9.2.0) (2026-10-07)
 
 ### Features
