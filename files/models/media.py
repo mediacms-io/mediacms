@@ -25,6 +25,7 @@ from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
 from .subtitle import TranscriptionRequest
 from .utils import (
+    EDITOR_VIDEO_RESOLUTION,
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
     MEDIA_STATES,
@@ -400,7 +401,6 @@ class Media(models.Model):
             self.friendly_token,
             self.title,
             self.user.username,
-            self.user.email,
             self.user.name,
             self.description,
             a_tags,
@@ -691,7 +691,8 @@ class Media(models.Model):
         if self.media_type not in ["video", "audio"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME).order_by("-profile__resolution").first()
+        encodings = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
+        ret = encodings.filter(profile__resolution__lte=EDITOR_VIDEO_RESOLUTION).order_by("-profile__resolution").first() or encodings.order_by("profile__resolution").first()
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 

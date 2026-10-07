@@ -2,6 +2,13 @@ import EventEmitter from 'events';
 import { exportStore, getRequest } from '../helpers';
 import { config as mediacmsConfig } from '../settings/config.js';
 
+const SEARCH_MEDIA_TYPES = ['video', 'audio', 'image', 'pdf'];
+const SEARCH_UPLOAD_DATES = ['today', 'this_week', 'this_month', 'this_year'];
+
+function decodeUrlVar(value) {
+  return value ? decodeURIComponent(value).replace(/\+/g, ' ') : '';
+}
+
 function getUrlVars() {
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
@@ -22,6 +29,8 @@ class SearchFieldStore extends EventEmitter {
     const query = urlvars['q'];
     const categories = urlvars['c'];
     const tags = urlvars['t'];
+    const mediaType = decodeUrlVar(urlvars['media_type']);
+    const uploadDate = decodeUrlVar(urlvars['upload_date']);
 
     SearchFieldStoreData[
       Object.defineProperty(this, 'id', {
@@ -31,6 +40,9 @@ class SearchFieldStore extends EventEmitter {
       searchQuery: query ? decodeURIComponent(query).replace(/\+/g, ' ') : '',
       categoriesQuery: categories ? decodeURIComponent(categories).replace(/\+/g, ' ') : '',
       tagsQuery: tags ? decodeURIComponent(tags).replace(/\+/g, ' ') : '',
+      mediaType: SEARCH_MEDIA_TYPES.includes(mediaType) ? mediaType : '',
+      uploadDate: SEARCH_UPLOAD_DATES.includes(uploadDate) ? uploadDate : '',
+      author: decodeUrlVar(urlvars['author']),
       predictions: [],
     };
     this.dataResponse = this.dataResponse.bind(this);
@@ -73,6 +85,12 @@ class SearchFieldStore extends EventEmitter {
         return SearchFieldStoreData[this.id].categoriesQuery;
       case 'search-tags':
         return SearchFieldStoreData[this.id].tagsQuery;
+      case 'search-media-type':
+        return SearchFieldStoreData[this.id].mediaType;
+      case 'search-upload-date':
+        return SearchFieldStoreData[this.id].uploadDate;
+      case 'search-author':
+        return SearchFieldStoreData[this.id].author;
     }
     return null;
   }

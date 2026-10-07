@@ -218,24 +218,49 @@ const YOUTUBE_DEFAULT_OPTIONS = Object.assign(
 const PANOPTO_OPTIONS = [
   {
     key: 'migrate_all_users',
+    group: USER_CHOICE,
     label: 'Migrate all users',
     help: 'Every account on the Panopto instance gets a MediaCMS account, whether or not it owns a recording.',
   },
   {
-    key: 'create_users',
-    label: 'Only migrate users that own media',
-    help: 'Panopto has no way to list its users through the API, so owners are created as the recordings that belong to them arrive.',
+    key: 'restrict_to_users',
+    group: USER_CHOICE,
+    label: 'Only migrate below listed users',
+    help: 'Only recordings owned by these users are migrated. Panopto user ids, usernames or emails.',
+    field: { key: 'source_user_ids', placeholder: 'jdoe@example.edu, MoodleTrial-Instance\\jdoe' },
   },
   {
-    key: 'fallback_username',
-    label: 'Fallback owner',
-    isText: true,
-    help: 'Used for a recording whose owner Panopto does not name, and for every recording when the option above is off.',
+    key: 'create_users',
+    group: USER_CHOICE,
+    label: 'Only migrate users that own media',
+    help: 'Owners are created as the recordings that belong to them arrive.',
   },
   {
     key: 'import_captions',
     label: 'Import captions',
-    help: 'Captions Panopto offers for a recording are migrated as subtitles.',
+    help: 'Captions Panopto offers for a recording are migrated as subtitles, in their own language.',
+  },
+  {
+    key: 'preserve_views',
+    label: 'Preserve views',
+    help: 'Panopto keeps no play count, so the number of people who watched a recording is carried over instead.',
+  },
+  {
+    key: 'migrate_playlists',
+    label: 'Migrate playlists',
+    help: 'Playlists in the chosen folders, with the recordings of theirs this migration brings over.',
+  },
+  {
+    key: 'lti_platform_id',
+    label: 'LTI platform for LMS courses',
+    isSelect: true,
+    blankLabel: 'Not wired to LTI',
+    help: 'Course folders of an LMS integration are linked to this LTI platform, so course launches land in the migrated category. Can be set up under: MediaCMS Admin \u2192 LTI 1.3 Integration \u2192 LTI Platforms.',
+  },
+  {
+    key: 'import_personal_folders',
+    label: 'Include My Folder recordings',
+    help: "Recordings in everyone's My Folder are migrated to their owner's media, shared with the people the folder names. The Users folder itself is not offered above and its sub-folders do not become categories.",
   },
 ];
 
@@ -243,9 +268,14 @@ const PANOPTO_DEFAULT_OPTIONS = Object.assign(
   {
     source_category_ids: '',
     migrate_all_users: false,
+    restrict_to_users: false,
+    source_user_ids: '',
     create_users: true,
-    fallback_username: 'admin',
+    import_personal_folders: true,
     import_captions: true,
+    preserve_views: true,
+    migrate_playlists: true,
+    lti_platform_id: '',
   },
   SCHEDULE_DEFAULTS
 );

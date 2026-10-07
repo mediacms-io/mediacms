@@ -3,11 +3,15 @@ import uuid
 from unittest import mock
 
 from django.contrib.messages import get_messages
+from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 
+from files import helpers
 from files.models import (
     Category,
+    EncodeProfile,
+    Encoding,
     Media,
     MediaPermission,
     VideoChapterData,
@@ -110,6 +114,33 @@ class EditChaptersPageTest(EditorPageAccessMixin, TestCase):
         self.assertEqual(response.context["media_id"], self.media.friendly_token)
         self.assertIn("\\u003C/script\\u003E\\u003Cb\\u003E", str(response.context["chapters"]))
         self.assertNotContains(response, "</script><b>")
+
+
+class EditChaptersVideoSourceTest(TestCase):
+    fixtures = ["fixtures/encoding_profiles.json"]
+
+    def setUp(self):
+        self.owner = create_account()
+        self.media = create_media(self.owner, filename=SMALL_VIDEO, title="chapters video")
+        self.client.force_login(self.owner)
+
+    def add_encoding(self, profile_name):
+        encoding = Encoding(media=self.media, profile=EncodeProfile.objects.get(name=profile_name), status="success", progress=100)
+        with open(self.media.media_file.path, "rb") as fp:
+            encoding.media_file.save(f"{profile_name}.mp4", File(fp), save=False)
+        Encoding.objects.bulk_create([encoding])
+        return self.media.encodings.get(profile__name=profile_name)
+
+    def video_url(self):
+        return self.client.get("/edit_chapters", {"m": self.media.friendly_token}).context["media_file_path"]
+
+    def test_original_file_is_used_until_an_encoding_exists(self):
+        self.assertEqual(self.video_url(), helpers.url_from_path(self.media.media_file.path))
+
+    def test_editor_loads_the_720p_preview_instead_of_the_original(self):
+        preview = self.add_encoding("h264-720")
+        self.add_encoding("h264-1080")
+        self.assertEqual(self.video_url(), helpers.url_from_path(preview.media_file.path))
 
 
 @override_settings(ALLOW_MEDIA_REPLACEMENT=True)

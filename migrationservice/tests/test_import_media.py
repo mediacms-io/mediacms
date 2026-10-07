@@ -383,7 +383,16 @@ class TestCategoryScoping(TestCase):
     def test_out_of_scope_categories_still_count_towards_the_publish_state(self):
         media = import_media_entry(self.service, self.provider, "1_a")
         media.refresh_from_db()
-        self.assertEqual(media.state, "public")
+        self.assertEqual(media.state, "private")
+
+    def test_an_entry_kms_keeps_unlisted_arrives_unlisted(self):
+        self.provider.media["1_a"]["categories"] = [
+            {"id": "839871", "privacy": 1, "appearInList": 1, "contributionPolicy": 1, "privacyContexts": "MediaSpace", "fullName": "MediaSpace>unlisted"},
+        ]
+        media = import_media_entry(self.service, self.provider, "1_a")
+        media.refresh_from_db()
+        self.assertEqual(media.state, "unlisted")
+        self.assertEqual(media.category.count(), 0)
 
     def test_an_entry_only_in_housekeeping_categories_is_not_public(self):
         self.provider.media["1_a"]["categories"] = [

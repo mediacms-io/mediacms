@@ -458,7 +458,11 @@ it never makes a category less visible than its privacy says: KMS's "Public, Res
 means anyone may watch while only members may contribute, and that arrives public.
 
 An entry in more than one category takes the most permissive of them, which is how Kaltura
-behaves too. An entry in no category at all is private. Two things override all of this:
+behaves too. An entry in no category at all is private. KMS marks an entry as Unlisted by
+placing it in its `<root>>unlisted` category, which is open to everyone, so that category
+is read by what it marks rather than by its privacy: an entry in it arrives **unlisted**,
+even if it also sits in public galleries. The same holds for `<root>>private`, and the
+`archive` and `playlists` categories do not count at all. Two things override all of this:
 `displayInSearch` set to none downgrades public to unlisted, and an entry that has not
 cleared moderation is private wherever it sits, because it was not published on the source
 either. An entry still awaiting approval inside a moderated category does not inherit that
@@ -582,29 +586,39 @@ Images have no flavors in Kaltura, so their file comes from the entry itself.
 
 ### Multi-stream recordings
 
-Kaltura Capture records the screen and the camera as **two entries** joined by
-`parentEntryId`. A listing never returns the child, so without asking for it by name the
-second stream is simply lost. Each entry is asked, one `baseEntry.list` call apiece.
+Kaltura Capture records the camera and each screen as **separate entries** joined by
+`parentEntryId`. A listing never returns the children, so without asking for them by name
+the other streams are simply lost. Each entry is asked, one `baseEntry.list` call apiece.
 
-When a child is found, the two are drawn as one video: the bigger picture is the base, the
-other is inset over its bottom right corner at a quarter of the width. MediaCMS plays one
-file per media, so one picture is what it has to be.
+When children are found, the streams are drawn side by side in one video on a 16:9 canvas,
+each scaled to fit its box:
 
-**Combining always re-encodes.** There is no stream copy that merges two pictures, so the
-work has to happen somewhere, and **Skip transcoding** decides where:
+| Streams | Layout |
+| --- | --- |
+| 2 | The child large on the left, the parent small on the right. |
+| 3 | The children stacked on the left, the parent small in the middle of the right. |
+
+MediaCMS plays one file per media, so one picture is what the recording becomes. Every
+stream is **also** imported as a media of its own, titled "<recording> (stream 1)",
+"(stream 2)" and so on, with the parent's camera as stream 1. They keep the recording's
+owner, state and date but none of its categories, so a gallery shows each recording once.
+
+**Combining always re-encodes.** There is no stream copy that merges pictures, so the work
+has to happen somewhere, and **Skip transcoding** decides where:
 
 | Skip transcoding | What happens | Ladder |
 | --- | --- | --- |
-| on | Every rung of the screen's ladder is drawn and attached as an encoding. MediaCMS transcodes nothing. | whatever Kaltura had |
+| on | Every rung of the biggest screen's ladder is drawn and attached as an encoding. MediaCMS transcodes nothing. | whatever Kaltura had |
 | off | Only the originals are drawn, and MediaCMS builds its own ladder from that. | the portal's full ladder |
 
-The camera is fetched **once** whatever the setting: it is drawn a quarter of the width, so
-one modest flavor serves every rung.
+Every other stream is fetched **once** whatever the setting: one flavor wide enough for its
+box serves every rung. If the streams cannot be drawn together, the entry arrives as its own
+stream alone and the children still arrive as media of their own.
 
-Two limits worth knowing. Only two streams are combined; a third is logged and left behind,
-because three pictures in one frame is not a recording anybody wants. And the audio is taken
-from one stream only, the base's where it has any: both carry the same microphone, so mixing
-them would play everything twice.
+Two limits worth knowing. Up to three streams are combined; a fourth is logged and left out
+of the picture, though it still arrives as a media of its own. And the audio is taken from
+one stream only, the parent's where it has any: every stream carries the same microphone, so
+mixing them would play everything twice.
 
 ### Quiet hours
 

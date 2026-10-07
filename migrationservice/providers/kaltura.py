@@ -601,24 +601,43 @@ CATEGORY_TYPE_STATE = {
 
 STATE_PRECEDENCE = ("public", "unlisted", "private")
 
+HOUSEKEEPING_PRECEDENCE = ("private", "unlisted")
+
+
+def kms_housekeeping_name(full_name):
+    parts = [part.strip().lower() for part in str(full_name or "").split(">") if part.strip()]
+    if len(parts) > 1 and parts[1] in KMS_HOUSEKEEPING:
+        return parts[1]
+    return ""
+
 
 def media_state(categories, display_in_search=None, moderation_status=None):
     """MediaCMS state for a Kaltura entry.
 
     Kaltura entries carry no state of their own, so it comes from their categories and the
-    most permissive one wins; in no category at all means private. Being held out of search
-    only ever downgrades, and an entry that has not cleared moderation is private wherever
-    it sits. A bare privacy integer is still accepted alongside category dicts.
+    most permissive one wins; in no category at all means private. A KMS unlisted or
+    private housekeeping category overrides all others. Being held out of search only
+    ever downgrades, and an entry that has not cleared moderation is private wherever it
+    sits. A bare privacy integer is still accepted alongside category dicts.
     """
     if moderation_status is not None and moderation_status not in MODERATION_PUBLISHED:
         return "private"
 
     states = []
+    marks = set()
     for category in categories or []:
         if isinstance(category, dict):
+            housekeeping = kms_housekeeping_name(category.get("fullName"))
+            if housekeeping:
+                marks.add(housekeeping)
+                continue
             states.append(CATEGORY_TYPE_STATE[category_type(category)])
         elif category is not None:
             states.append(CATEGORY_TYPE_STATE[category_type({"privacy": category})])
+
+    for mark in HOUSEKEEPING_PRECEDENCE:
+        if mark in marks:
+            return mark
 
     state = "private"
     for candidate in STATE_PRECEDENCE:
@@ -676,10 +695,7 @@ def is_importable_category(full_name):
         return True
     if ">site" in name:
         return False
-    parts = [part.strip().lower() for part in name.split(">") if part.strip()]
-    if len(parts) > 1 and parts[1] in KMS_HOUSEKEEPING:
-        return False
-    return True
+    return not kms_housekeeping_name(name)
 
 
 def course_name_from_metadata(xmls):

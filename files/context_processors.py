@@ -48,6 +48,10 @@ def stuff(request):
         elif settings.CAN_SEE_MEMBERS_PAGE == "admins" and request.user.is_superuser:
             can_see_members_page = True
     ret["CAN_SEE_MEMBERS_PAGE"] = can_see_members_page
+    if request.user.is_authenticated:
+        ret["CAN_SEARCH_AUTHORS"] = can_see_members_page
+    else:
+        ret["CAN_SEARCH_AUTHORS"] = settings.CAN_SEE_MEMBERS_PAGE == "all" and settings.ALLOW_ANONYMOUS_USER_LISTING
     ret["ALLOW_RATINGS"] = settings.ALLOW_RATINGS
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE

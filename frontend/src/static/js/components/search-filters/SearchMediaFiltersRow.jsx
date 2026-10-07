@@ -193,7 +193,8 @@ const sortingOptions = [
 ];
 
 export function SearchMediaFiltersRow(props) {
-  const [selectedFilterTypeId, setSelectedFilterTypeId] = useState('all');
+  const initialFilterType = typeFilters.find((filter) => filter.id === props.mediaType) || typeFilters[0];
+  const [selectedFilterTypeId, setSelectedFilterTypeId] = useState(initialFilterType.id);
   const [selectedSortId, setSelectedSortId] = useState('date_added_desc');
 
   const [args, setArgs] = useState({
@@ -269,8 +270,8 @@ export function SearchMediaFiltersRow(props) {
       <div className="media-filters-row-inner">
         <div className="media-type-filters">
           <MediaTypesFilter
-            label={typeFilters[0].label}
-            default={typeFilters[0].id}
+            label={initialFilterType.label}
+            default={initialFilterType.id}
             options={typeFilters}
             onSelect={onSelectFilterTypeOption}
             updateTriggerButtonOnChange={true}

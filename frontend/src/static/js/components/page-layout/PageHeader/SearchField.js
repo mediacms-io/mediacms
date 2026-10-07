@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLayout, usePopup } from '../../../utils/hooks/';
+import { useLayout, usePopup, useUser } from '../../../utils/hooks/';
 import { linksConfig } from '../../../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../../../utils/stores/';
 import { SearchFieldActions } from '../../../utils/actions/';
@@ -101,6 +101,35 @@ function SearchPredictionItem(props) {
   );
 }
 
+const SEARCH_SCOPE_MEDIA = 'media';
+const SEARCH_SCOPE_AUTHORS = 'authors';
+
+const searchScopes = [
+  { id: SEARCH_SCOPE_MEDIA, title: 'Media' },
+  { id: SEARCH_SCOPE_AUTHORS, title: 'Authors' },
+];
+
+function SearchScopeFilter(props) {
+  return (
+    <div className={'search-field-filters' + (SEARCH_SCOPE_MEDIA === props.scope ? '' : ' active')}>
+      <button type="button" className="search-field-filters-button" aria-label={translateString('Search filters')} aria-haspopup="true">
+        <MaterialIcon type="filter_list" />
+      </button>
+
+      <div className="search-field-filters-popup">
+        <div className="search-field-filters-options" role="radiogroup" aria-label={translateString('Search in')}>
+          {searchScopes.map((option) => (
+            <label key={option.id}>
+              <input type="radio" checked={option.id === props.scope} onChange={() => props.onScopeChange(option.id)} />
+              <span>{translateString(option.title)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SearchField(props) {
   const searchInputRef = useRef(null);
   const formRef = useRef(null);
@@ -113,6 +142,12 @@ export function SearchField(props) {
   const [queryVal, setQueryVal] = useState(SearchFieldStore.get('search-query'));
 
   const { visibleMobileSearch } = useLayout();
+  const { userCan } = useUser();
+
+  const canSearchAuthors = !!userCan.canSearchAuthors;
+  const onMembersPage = window.location.pathname.replace(/\/+$/, '') === (linksConfig.members || '').replace(/\/+$/, '');
+  const [scope, setScope] = useState(canSearchAuthors && onMembersPage ? SEARCH_SCOPE_AUTHORS : SEARCH_SCOPE_MEDIA);
+  const isFirstScope = useRef(true);
 
   function getItemsArr(index) {
     return -1 === index ? searchInputRef.current : itemsDomRef[index];
@@ -156,7 +191,7 @@ export function SearchField(props) {
 
     setQueryVal(val);
 
-    if ('' !== val.trim()) {
+    if ('' !== val.trim() && SEARCH_SCOPE_MEDIA === scope) {
       SearchFieldActions.requestPredictions(val.trim());
     }
   }
@@ -254,6 +289,17 @@ export function SearchField(props) {
     }
   }
 
+  useEffect(() => {
+    if (isFirstScope.current) {
+      isFirstScope.current = false;
+      return;
+    }
+    setPredictionItems([]);
+    if ('' !== searchInputRef.current.value.trim()) {
+      formRef.current.submit();
+    }
+  }, [scope]);
+
   function onPopupHide() {
     setPredictionItems([]);
   }
@@ -288,7 +334,7 @@ export function SearchField(props) {
         <form
           ref={formRef}
           method="get"
-          action={linksConfig.search.base}
+          action={SEARCH_SCOPE_AUTHORS === scope ? linksConfig.members : linksConfig.search.base}
           autoComplete="off"
           onSubmit={onFormSubmit}
         >
@@ -297,7 +343,7 @@ export function SearchField(props) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={translateString("Search")}
+                placeholder={translateString(SEARCH_SCOPE_AUTHORS === scope ? 'Search authors' : 'Search')}
                 aria-label="Search"
                 name="q"
                 value={queryVal}
@@ -305,6 +351,8 @@ export function SearchField(props) {
                 onFocus={onInputFocus}
                 onBlur={onInputBlur}
               />
+
+              {canSearchAuthors ? <SearchScopeFilter scope={scope} onScopeChange={setScope} /> : null}
 
               <PopupContent contentRef={popupContentRef} hideCallback={onPopupHide}>
                 <PopupMain>

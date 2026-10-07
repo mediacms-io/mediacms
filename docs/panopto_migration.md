@@ -1,7 +1,8 @@
 # Panopto migration
 
 Brings recordings from a Panopto instance into MediaCMS: the file, the title, the
-description, the date, the folder it lived in as a category, and an account for its owner.
+description, the date, its access and sharing, its folder as a category (or as an RBAC
+category when the folder is restricted), and an account for its owner.
 Superusers only, from **Migrations** in the top right menu.
 
 ## Credentials
@@ -44,22 +45,61 @@ happily and then has nothing to hand over.
 | --- | --- | --- |
 | Folders | **required** | Loaded by Test connection. Only recordings in the chosen folders and everything beneath them are migrated. |
 | Migrate all users | off | Every account on the instance, whether or not it owns a recording. Read over SOAP, since the REST API will not list users. |
-| Only migrate users that own media | on | An owner is created as their recordings arrive. Off sends everything to the fallback owner. |
-| Fallback owner | `admin` | For a recording whose owner cannot be resolved. |
-| Import captions | on | Only when Panopto offers a caption file for the recording. |
+| Only migrate below listed users | off | Only recordings owned by the listed users, given as Panopto user ids, usernames or emails. The others are recorded as skipped. |
+| Only migrate users that own media | on | An owner is created as their recordings arrive. A recording whose owner cannot be resolved goes to `admin`. |
+| Import captions | on | Only when Panopto offers a caption file for the recording. The caption keeps its language: a Danish caption arrives as Danish. |
+| Preserve views | on | Panopto keeps no play count, so the number of people who watched the recording is carried over instead. |
+| Migrate playlists | on | Playlists in the chosen folders, holding the recordings of theirs that this migration brought over. |
+| LTI platform for LMS courses | none | Course folders of an LMS integration are wired to this platform, keyed on the LMS course id Panopto keeps on the course groups, so a course launch lands in the migrated category. Their `[assignments]` folders are not. Needs LTI and RBAC switched on. |
+| Include My Folder recordings | on | Recordings in everyone's My Folder come along whatever folders are chosen. The `Users` and `Remote Recorders` folders are never offered as folders to choose. |
 
 ## What a run does
 
-Users first when **Migrate all users** is on, then media. For each recording: the owner
-(`/sessions/{id}` names the creator, `/users/{id}` gives the username and email, matched by
-email first), then the file, then the folder as a category keyed on the Panopto folder guid,
-then the caption if there is one.
+Users first when **Migrate all users** is on, then the folders, then the recordings. For
+each recording: the owner (`/sessions/{id}` names the creator, `/users/{id}` gives the
+username, email and system role, matched by email first), then the file, then its state,
+folder and sharing, then the caption if there is one.
 
-With **Migrate all users** off, only people who own a migrated recording get an account.
+With **Migrate all users** off, only people who own a migrated recording, or who a migrated
+folder or recording names, get an account. A new account takes Panopto's system role:
+Administrator becomes a superuser, Videographer an editor, everyone else a plain user. The
+newer Panopto roles are not exposed by its API, so they cannot be carried over.
 
-**Play counts and publish state do not come across** — Panopto's API offers neither, so an
-imported recording takes the portal's default state. Titles arrive exactly as Panopto reports
-them, which for an upload is a hash and the original filename.
+### Folders
+
+* **My Folder** trees, under `Users`, do not become categories. Their recordings go to their
+  owner's media, shared with the people and groups the folder and the recording name.
+* **Remote Recorders** does not become a category either; its recordings arrive uncategorised.
+* **Every other folder** inside the chosen ones becomes a category, keyed on the Panopto folder
+  guid, whether or not it holds recordings. A public folder becomes a plain category. Any other
+  folder becomes an RBAC category with a group of the people and groups it names, an LMS course
+  when the names include LMS groups such as `Course::Creator`. This needs RBAC switched on
+  (`USE_RBAC`); without it, the folder arrives as a plain category and the log says so.
+
+### Access
+
+Panopto's access settings are read from its SOAP AccessManagement service, where "Your
+Organisation" and "Public" are built in groups:
+
+| Panopto | Recording | Folder |
+| --- | --- | --- |
+| Public | public | plain category |
+| Your Organisation | private | RBAC category, its owner decides who else |
+| Restricted, people named | private, shared with them (My Folder) | RBAC category with them as members |
+| Restricted, owner only | private | RBAC category with the owner |
+
+Panopto's API does not say whether something is unlisted: "Your Organisation (Unlisted)" reads
+as Your Organisation and "Public (Unlisted)" as Restricted, owner only, so both arrive private.
+
+| Panopto role | Shared recording | RBAC category |
+| --- | --- | --- |
+| Viewer | co-viewer | member |
+| Creator, Content Organizer, Caption Requester | co-editor | contributor |
+| Publisher, Analytics Manager | co-owner | manager |
+| Viewer with Link | nothing | nothing |
+
+Somebody named twice keeps the highest role. A recording's owner is always a contributor of
+its folder's group.
 
 ## Listing users
 
@@ -98,9 +138,12 @@ skip-transcoding option: MediaCMS encodes its own ladder from that file.
 | | |
 | --- | --- |
 | Users | the REST API creates users but will not list them, so the users phase goes over SOAP. |
-| Captions | no endpoint. Only a `CaptionDownloadUrl` on the recording, usually null. |
-| Views | nothing at all, so play counts cannot be migrated. |
-| Folder permissions | `/folders/{id}/permissions` reads them, but the migration does not import them, so nothing becomes an RBAC group. |
+| Captions | no endpoint. Only a `CaptionDownloadUrl` on the recording, usually null; its `language` parameter gives the language. |
+| Views | no play count, only the list of people who watched, which is what is carried over. |
+| Dates | the REST API leaves `StartTime` empty, so the date comes from the SOAP SessionManagement service. |
+| Tags | `/sessions/{id}/tags`. |
+| Unlisted | not exposed by any API version, so unlisted folders and recordings arrive private. |
+| Roles | only Administrator and Videographer are exposed as system roles. |
 | Counts | no REST listing returns a total; the SOAP user list does. |
 
 **Discovery is search-led.** `searchQuery` cannot be empty and matches word *prefixes*, so

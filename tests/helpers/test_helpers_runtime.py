@@ -73,6 +73,22 @@ class ContextProcessorTests(TestCase):
         self.assertTrue(self.context_for(self.superuser)["CAN_SEE_MEMBERS_PAGE"])
         self.assertFalse(self.context_for(self.editor)["CAN_SEE_MEMBERS_PAGE"])
 
+    @override_settings(CAN_SEE_MEMBERS_PAGE="all", ALLOW_ANONYMOUS_USER_LISTING=True)
+    def test_authors_are_searchable_by_anyone_when_users_are_listed_openly(self):
+        self.assertTrue(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
+    @override_settings(CAN_SEE_MEMBERS_PAGE="all", ALLOW_ANONYMOUS_USER_LISTING=False)
+    def test_anonymous_users_cannot_search_authors_when_listing_needs_a_login(self):
+        self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
+    @override_settings(CAN_SEE_MEMBERS_PAGE="editors", ALLOW_ANONYMOUS_USER_LISTING=True)
+    def test_authors_search_follows_the_members_page_rule(self):
+        self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertFalse(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.editor)["CAN_SEARCH_AUTHORS"])
+
     def test_translations_follow_the_request_language(self):
         ctx = self.context_for(AnonymousUser(), language="fr")
         self.assertEqual(ctx["TRANSLATION"], translation_strings["fr"])

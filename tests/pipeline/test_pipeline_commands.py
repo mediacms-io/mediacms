@@ -6,13 +6,14 @@ import types
 from io import StringIO
 from unittest import mock
 
+from django.contrib.postgres.search import SearchQuery
 from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from files.frontend_translations.en import replacement_strings, translation_strings
 from files.management.commands import upgrade_previews
-from files.models import EncodeProfile, Encoding
+from files.models import EncodeProfile, Encoding, Media
 from files.tests import create_account, create_media
 from files.tests.media_utils import SMALL_VIDEO
 
@@ -156,3 +157,16 @@ class ProcessTranslationsTest(TestCase):
         self.assertEqual(result[self.english_key], "already translated")
         self.assertEqual(list(result), sorted(result))
         self.assertEqual(set(namespace["replacement_strings"]), set(replacement_strings))
+
+
+class UpdateSearchVectorsTest(TestCase):
+    def test_every_media_is_reindexed(self):
+        media = create_media(create_account(), title="Quartzite lecture")
+        Media.objects.filter(pk=media.pk).update(search=None)
+        query = SearchQuery("quartzite", config="simple")
+        self.assertFalse(Media.objects.filter(search=query).exists())
+
+        out, _err = run("update_search_vectors")
+
+        self.assertIn("Rebuilt the search index of 1 media", out)
+        self.assertTrue(Media.objects.filter(pk=media.pk, search=query).exists())

@@ -439,6 +439,9 @@ class MediaEncodingInfoTests(TestCase):
         cls.user = make_user("info_user")
         cls.mp4 = EncodeProfile.objects.get(name="h264-240", active=True)
         cls.mp4_high = EncodeProfile.objects.get(name="h264-480", active=True)
+        cls.mp4_720 = EncodeProfile.objects.get(name="h264-720")
+        cls.mp4_1080 = EncodeProfile.objects.get(name="h264-1080")
+        cls.mp4_1440 = EncodeProfile.objects.get(name="h264-1440")
         cls.preview = EncodeProfile.objects.get(name="preview", active=True)
 
     def setUp(self):
@@ -485,7 +488,7 @@ class MediaEncodingInfoTests(TestCase):
         self.assertEqual(info["commands"], "ffmpeg")
         self.assertNotIn("logs", self.media.get_encoding_info(encoding))
 
-    def test_trim_url_prefers_the_highest_resolution_mp4_encoding(self):
+    def test_trim_url_prefers_the_highest_mp4_encoding_up_to_720p(self):
         self.assertEqual(self.media.trim_video_url, helpers.url_from_path(self.media.media_file.path))
         self.assertIsNone(self.media.trim_video_path)
 
@@ -494,6 +497,26 @@ class MediaEncodingInfoTests(TestCase):
 
         self.assertEqual(self.media.trim_video_url, helpers.url_from_path(high.media_file.path))
         self.assertEqual(self.media.trim_video_path, high.media_file.path)
+
+    def test_trim_url_caps_the_editor_preview_at_720p_while_trimming_uses_the_highest(self):
+        self.add_encoding(self.mp4_high)
+        preview = self.add_encoding(self.mp4_720)
+        highest = self.add_encoding(self.mp4_1080)
+
+        self.assertEqual(self.media.trim_video_url, helpers.url_from_path(preview.media_file.path))
+        self.assertEqual(self.media.trim_video_path, highest.media_file.path)
+
+    def test_trim_url_falls_back_to_the_lowest_encoding_above_720p(self):
+        lowest = self.add_encoding(self.mp4_1080)
+        self.add_encoding(self.mp4_1440)
+
+        self.assertEqual(self.media.trim_video_url, helpers.url_from_path(lowest.media_file.path))
+
+    def test_trim_url_ignores_unfinished_encodings(self):
+        self.add_encoding(self.mp4_720, status="running")
+        done = self.add_encoding(self.mp4_1080)
+
+        self.assertEqual(self.media.trim_video_url, helpers.url_from_path(done.media_file.path))
 
     def test_images_cannot_be_trimmed(self):
         image = create_media(self.user, title="trim image")

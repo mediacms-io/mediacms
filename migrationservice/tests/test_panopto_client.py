@@ -18,6 +18,8 @@ from migrationservice.providers.panopto import (
     PanoptoAPIError,
     PanoptoClient,
     PanoptoProvider,
+    caption_language,
+    tag_titles,
 )
 
 SERVICE = "https://yourorg.cloud.panopto.eu"
@@ -291,6 +293,38 @@ class TestSoap(NoSleepTestCase):
         client.session.post.side_effect = requests.ConnectionError("refused")
         with self.assertRaisesMessage(PanoptoAPIError, "Could not reach"):
             client.soap("ListUsers", "")
+        self.assertEqual(client.session.post.call_count, panopto.RATE_LIMIT_ATTEMPTS)
+
+    def test_a_timeout_is_retried_before_it_counts(self):
+        client = make_client()
+        client.session.post.side_effect = [requests.Timeout("slow"), answer(content=SOAP_ANSWER, text=SOAP_ANSWER.decode())]
+        self.assertTrue(client.soap("ListUsers", "").tag.endswith("Envelope"))
+        self.assertEqual(client.session.post.call_count, 2)
+
+    def test_a_server_error_without_a_fault_is_retried(self):
+        client = make_client()
+        client.session.post.side_effect = [answer(status=502, text="", reason="Bad Gateway"), answer(content=SOAP_ANSWER, text=SOAP_ANSWER.decode())]
+        self.assertTrue(client.soap("ListUsers", "").tag.endswith("Envelope"))
+
+    def test_a_rate_limit_is_waited_out(self):
+        client = make_client()
+        client.session.post.side_effect = [answer(status=429, headers={"Retry-After": "2"}), answer(content=SOAP_ANSWER, text=SOAP_ANSWER.decode())]
+        client.soap("ListUsers", "")
+        self.sleep.assert_called_with(2)
+
+    def test_a_fault_is_a_real_answer_and_not_retried(self):
+        client = make_client()
+        client.session.post.return_value = answer(status=500, text="<faultstring>Invalid credentials</faultstring>")
+        with self.assertRaises(PanoptoAPIError):
+            client.soap("ListUsers", "")
+        self.assertEqual(client.session.post.call_count, 1)
+
+    def test_the_access_service_is_reached_with_its_own_contract(self):
+        client = make_client()
+        client.session.post.return_value = answer(content=SOAP_ANSWER, text=SOAP_ANSWER.decode())
+        client.soap("GetFolderAccessDetails", "", panopto.ACCESS_SOAP_PATH, panopto.ACCESS_SOAP_CONTRACT)
+        self.assertEqual(client.session.post.call_args.args[0], f"{SERVICE}{panopto.ACCESS_SOAP_PATH}")
+        self.assertEqual(client.session.post.call_args.kwargs["headers"]["SOAPAction"], '"http://tempuri.org/IAccessManagement/GetFolderAccessDetails"')
 
 
 def legacy_with(*responses, cookie=True):
@@ -423,9 +457,10 @@ SEARCHED_SESSIONS = [
 
 
 class FakePanoptoClient:
-    def __init__(self, calls=None, listings=None):
+    def __init__(self, calls=None, listings=None, soaps=None):
         self.calls = dict(calls or {})
         self.listings = dict(listings or {})
+        self.soaps = dict(soaps or {})
         self.asked = []
         self.timeout = 5
         self.reachable = (True, "1024")
@@ -444,6 +479,12 @@ class FakePanoptoClient:
         if isinstance(rows, Exception):
             raise rows
         yield from rows
+
+    def soap(self, operation, body, *args):
+        self.asked.append((operation, body))
+        if operation not in self.soaps:
+            raise PanoptoAPIError(f"{operation} not answered")
+        return ElementTree.fromstring(self.soaps[operation])
 
     def token(self):
         return "tok"
@@ -602,6 +643,13 @@ class TestDiscoverAndCheck(SimpleTestCase):
             ],
         )
 
+    def test_the_picker_hides_the_users_and_remote_recorders_folders(self):
+        provider = make_provider()
+        roots = [{"Id": "u1", "Name": "Users"}, {"Id": "rr", "Name": "Remote Recorders"}, {"Id": "d1", "Name": "Department A"}]
+        with mock.patch.object(provider, "discover", return_value=(roots, {root["Id"]: root for root in roots}, {})):
+            listed = provider.list_categories()
+        self.assertEqual([folder["id"] for folder in listed], ["d1"])
+
 
 class TestFetch(SimpleTestCase):
     def test_a_folder_as_a_category(self):
@@ -635,8 +683,12 @@ class TestFetch(SimpleTestCase):
                 "description": "the fourth",
                 "duration": 61.5,
                 "created_at": "2026-08-03T15:03:18Z",
+                "tags": [],
+                "views": 0,
                 "owner": {"id": "u1", "username": "jdoe"},
                 "folder": {"id": "g1", "name": "Week 1", "fullName": "Biology>Week 1", "parentId": "c1", "parentName": "Biology"},
+                "folder_kind": "folder",
+                "access": {"public": False, "organisation": False, "lms": False, "lms_course_ids": [], "principals": []},
                 "download_url": "https://dl.example/s1.mp4",
                 "captions": [{"language": "en", "url": "https://dl.example/s1.srt"}],
             },
@@ -661,12 +713,12 @@ class TestFetch(SimpleTestCase):
     def test_a_user(self):
         client = tree_client()
         client.calls["/users/u1"] = {"Id": "u1", "Username": "jdoe", "Email": " jdoe@example.edu ", "FirstName": " Jane ", "LastName": ""}
-        self.assertEqual(make_provider(client).fetch_user("u1"), {"id": "u1", "username": "jdoe", "email": "jdoe@example.edu", "fullName": "Jane"})
+        self.assertEqual(make_provider(client).fetch_user("u1"), {"id": "u1", "username": "jdoe", "email": "jdoe@example.edu", "fullName": "Jane", "role": ""})
 
     def test_a_user_panopto_says_nothing_about(self):
         client = tree_client()
         client.calls["/users/u2"] = None
-        self.assertEqual(make_provider(client).fetch_user("u2"), {"id": "u2", "username": "", "email": "", "fullName": ""})
+        self.assertEqual(make_provider(client).fetch_user("u2"), {"id": "u2", "username": "", "email": "", "fullName": "", "role": ""})
 
 
 class TestListUsers(SimpleTestCase):
@@ -772,3 +824,144 @@ class TestDownload(NoSleepTestCase):
         self.provider._client._legacy = self.legacy(requests.ConnectionError("reset by peer"))
         with self.assertRaisesMessage(PanoptoAPIError, "Could not fetch https://dl.example/s1.mp4: reset by peer"):
             self.provider.download("https://dl.example/s1.mp4", self.dest)
+
+
+FOLDER_ACCESS_XML = (
+    "<Envelope><Body><GetFolderAccessDetailsResponse><GetFolderAccessDetailsResult>"
+    "<FolderId>f</FolderId><GroupsWithViewerAccess>{groups}</GroupsWithViewerAccess><IsPublic>{public}</IsPublic>"
+    "</GetFolderAccessDetailsResult></GetFolderAccessDetailsResponse></Body></Envelope>"
+)
+
+
+class TestAccess(SimpleTestCase):
+    def access_of(self, groups, permissions, public="false"):
+        client = tree_client()
+        client.soaps["GetFolderAccessDetails"] = FOLDER_ACCESS_XML.format(groups="".join(f"<guid>{group}</guid>" for group in groups), public=public)
+        client.calls["/groups/sys-org"] = {"Id": "sys-org", "Name": "All authenticated users", "GroupType": 1}
+        client.calls["/groups/sys-public"] = {"Id": "sys-public", "Name": "Public on the Internet, no sign-in required", "GroupType": 1}
+        client.calls["/groups/g-dept"] = {"Id": "g-dept", "Name": "Department A", "GroupType": 3}
+        client.calls["/groups/g-course"] = {"Id": "g-course", "Name": "Biology::Creator", "GroupType": 2, "MembershipProviderName": "MoodleTrial-Instance", "ExternalId": "14"}
+        client.calls["/folders/f/permissions"] = {"Results": permissions}
+        return make_provider(client).folder_access("f")
+
+    def test_the_organisation_group_is_read_as_your_organisation_and_roles_come_from_rest(self):
+        permissions = [{"Principal": {"Id": "g-dept", "Type": "Group"}, "Role": {"Name": "Content Organizer"}}]
+        self.assertEqual(
+            self.access_of(["sys-org", "g-dept"], permissions),
+            {"public": False, "organisation": True, "lms": False, "lms_course_ids": [], "principals": [{"type": "Group", "id": "g-dept", "role": "Content Organizer"}]},
+        )
+
+    def test_the_public_group_or_flag_makes_a_folder_public(self):
+        self.assertTrue(self.access_of(["sys-public"], [])["public"])
+        self.assertTrue(self.access_of([], [], public="true")["public"])
+
+    def test_an_lms_group_marks_a_course(self):
+        permissions = [{"Principal": {"Id": "g-course", "Type": "Group"}, "Role": {"Name": "Creator"}}]
+        access = self.access_of([], permissions)
+        self.assertTrue(access["lms"])
+        self.assertEqual(access["lms_course_ids"], ["14"])
+
+    def test_without_rest_permissions_the_soap_lists_give_the_roles(self):
+        access = self.access_of(["g-dept"], [])
+        self.assertEqual(access["principals"], [{"type": "Group", "id": "g-dept", "role": "Viewer"}])
+
+    def test_an_access_panopto_will_not_answer_is_restricted(self):
+        self.assertEqual(make_provider().folder_access("nowhere"), {"public": False, "organisation": False, "lms": False, "lms_course_ids": [], "principals": []})
+
+
+class TestFolderKinds(SimpleTestCase):
+    def provider(self, **options):
+        client = tree_client()
+        client.calls["/folders/users"] = {"Id": "users", "Name": "Users"}
+        client.calls["/folders/mine"] = {"Id": "mine", "Name": "jdoe@example.edu", "ParentFolder": {"Id": "users", "Name": "Users"}}
+        client.calls["/folders/rr"] = {"Id": "rr", "Name": "Remote Recorders"}
+        return make_provider(client, **options)
+
+    def test_my_folder_trees_and_system_trees_are_told_apart(self):
+        provider = self.provider()
+        self.assertEqual(provider.folder_kind("mine"), "personal")
+        self.assertEqual(provider.folder_kind("rr"), "system")
+        self.assertEqual(provider.folder_kind("g1"), "folder")
+
+    def test_my_folder_recordings_come_along_whatever_the_selection_unless_switched_off(self):
+        self.assertTrue(self.provider().wanted("mine", ["r1"]))
+        self.assertFalse(self.provider(import_personal_folders=False).wanted("mine", ["r1"]))
+        self.assertFalse(self.provider().wanted("c2", ["r1"]))
+
+    def test_the_categories_phase_lists_the_selected_folders_once(self):
+        provider = self.provider(source_category_ids="r1")
+        self.assertEqual(provider.list_page("categories", {}, 50), (["c1", "g1", "r1"], {"done": True}))
+        self.assertEqual(provider.list_page("categories", {"done": True}, 50), ([], {"done": True}))
+
+
+SESSIONS_BY_ID_XML = (
+    "<Envelope><Body><GetSessionsByIdResponse><GetSessionsByIdResult><Session>"
+    "<Id>s1</Id><Name>Lecture</Name><StartTime>2026-09-26T18:28:31.445Z</StartTime>"
+    "</Session></GetSessionsByIdResult></GetSessionsByIdResponse></Body></Envelope>"
+)
+
+
+class TestRecordingDetails(SimpleTestCase):
+    def test_the_caption_language_is_read_off_its_url(self):
+        self.assertEqual(caption_language("https://x/GenerateSRT.ashx?id=1&language=Danish"), "da")
+        self.assertEqual(caption_language("https://x/GenerateSRT.ashx?language=English_USA"), "en")
+        self.assertEqual(caption_language("https://x/GenerateSRT.ashx?language=Klingon"), "en")
+        self.assertEqual(caption_language(""), "en")
+
+    def test_tags_in_either_shape(self):
+        self.assertEqual(tag_titles(["biology", {"Name": "week 1"}, {"Content": "lab"}, "", {}, None]), ["biology", "week 1", "lab"])
+        self.assertEqual(tag_titles(None), [])
+
+    def test_the_start_time_comes_from_soap_when_rest_has_none(self):
+        client = tree_client()
+        client.soaps["GetSessionsById"] = SESSIONS_BY_ID_XML
+        client.calls["/sessions/s1"] = {"Id": "s1", "Folder": "g1", "StartTime": None}
+        self.assertEqual(make_provider(client).fetch_media("s1")["created_at"], "2026-09-26T18:28:31.445Z")
+
+    def test_the_rest_start_time_is_kept_when_there_is_one(self):
+        client = tree_client()
+        client.calls["/sessions/s1"] = {"Id": "s1", "Folder": "g1", "StartTime": "2026-08-03T15:03:18Z"}
+        self.assertEqual(make_provider(client).fetch_media("s1")["created_at"], "2026-08-03T15:03:18Z")
+        self.assertNotIn(("GetSessionsById", mock.ANY), client.asked)
+
+    def test_tags_and_viewers_of_a_recording(self):
+        client = tree_client()
+        client.calls["/sessions/s1"] = {"Id": "s1", "Folder": "g1"}
+        client.calls["/sessions/s1/tags"] = [{"Name": "biology"}]
+        client.calls["/sessions/s1/viewers"] = lambda pageNumber: {"Results": [{"User": {"Id": "a"}}, {"User": {"Id": "b"}}, {"User": {"Id": "a"}}]}
+        media = make_provider(client).fetch_media("s1")
+        self.assertEqual((media["tags"], media["views"]), (["biology"], 2))
+        self.assertEqual(sum(1 for asked in client.asked if asked == "/sessions/s1/viewers"), 2)
+
+    def test_viewers_are_paged_until_nobody_new_shows_up(self):
+        pages = [[{"User": {"Id": "a"}}], [{"User": {"Id": "b"}}], []]
+        client = tree_client()
+        client.calls["/sessions/s1/viewers"] = lambda pageNumber: {"Results": pages[pageNumber]}
+        self.assertEqual(make_provider(client).session_viewers("s1"), 2)
+
+
+class TestPlaylists(SimpleTestCase):
+    def test_playlists_in_the_chosen_folders(self):
+        client = tree_client(**{"/playlists/search": [{"Id": "p1", "Folder": {"Id": "g1"}}, {"Id": "p2", "Folder": {"Id": "c2"}}, {"Id": "p3"}]})
+        provider = make_provider(client, source_category_ids="r1")
+        self.assertEqual(provider.list_page("playlists", {}, 50), (["p1"], {"done": True}))
+        self.assertEqual(provider.list_page("playlists", {"done": True}, 50), ([], {"done": True}))
+
+    def test_a_playlist_with_its_recordings_in_order(self):
+        client = tree_client(**{"/playlists/p1/sessions": [{"Id": "s2"}, {"Id": "s1"}, {"Name": "no id"}]})
+        client.calls["/playlists/p1"] = {"Id": "p1", "Name": "Featured", "Description": None}
+        self.assertEqual(
+            make_provider(client).fetch_playlist("p1"),
+            {"id": "p1", "name": "Featured", "description": "", "owner": {"id": "", "username": ""}, "entry_ids": ["s2", "s1"]},
+        )
+
+
+class TestLmsCourseFolders(SimpleTestCase):
+    def test_a_course_is_the_top_lms_folder_and_its_assignments_folder_is_not(self):
+        provider = make_provider()
+        lms = {"public": False, "organisation": False, "lms": True, "lms_course_ids": ["14"], "principals": []}
+        plain = dict(lms, lms=False, lms_course_ids=[])
+        provider._folder_access = {"r1": plain, "c1": lms, "g1": lms}
+        self.assertTrue(provider.is_lms_course_folder("c1"))
+        self.assertFalse(provider.is_lms_course_folder("g1"))
+        self.assertFalse(provider.is_lms_course_folder("r1"))

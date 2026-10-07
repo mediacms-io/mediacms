@@ -208,6 +208,9 @@ class PanoptoUsers(PanoptoProvider):
     def fetch_user(self, source_id):
         return self.users[source_id]
 
+    def folder_access(self, folder_id):
+        return {"public": True, "organisation": False, "lms": False, "principals": []}
+
 
 def make_panopto_service(name="Panopto", **options):
     defaults = {"create_users": True, "fallback_username": "admin", "source_category_ids": "root"}

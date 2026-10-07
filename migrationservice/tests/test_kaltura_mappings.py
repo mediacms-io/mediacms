@@ -79,6 +79,39 @@ class TestMediaState(TestCase):
         self.assertEqual(media_state([category], None, MODERATION_APPROVED), "public")
         self.assertEqual(media_state([category], None, MODERATION_AUTO_APPROVED), "public")
 
+    def test_an_entry_kms_keeps_unlisted_is_unlisted_although_that_category_is_open(self):
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "appearInList": APPEAR_IN_LIST_PARTNER, "contributionPolicy": CONTRIBUTION_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([unlisted]), "unlisted")
+
+    def test_an_lms_unlisted_category_is_unlisted(self):
+        self.assertEqual(media_state([{"fullName": "moodle_jPsFc>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": ""}]), "unlisted")
+
+    def test_kms_private_is_private_whatever_its_own_privacy(self):
+        self.assertEqual(media_state([{"fullName": "MediaSpace>private", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}]), "private")
+
+    def test_archive_and_playlists_do_not_count(self):
+        for name in ["MediaSpace>archive", "MediaSpace>playlists"]:
+            self.assertEqual(media_state([{"fullName": name, "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}]), "private", name)
+
+    def test_kms_unlisted_decides_over_the_galleries_the_entry_is_also_in(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Education", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery, unlisted]), "unlisted")
+
+    def test_kms_private_decides_over_kms_unlisted_and_galleries(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Education", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        private = {"fullName": "MediaSpace>private", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery, unlisted, private]), "private")
+
+    def test_unmoderated_media_marked_unlisted_is_still_private(self):
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([unlisted], None, 1), "private")
+
+    def test_a_gallery_named_like_housekeeping_is_a_real_gallery(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery]), "public")
+
 
 class TestCategoryType(TestCase):
     """A KMS category type is not a field. It is the three permission fields read
