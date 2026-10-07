@@ -803,3 +803,109 @@ button[disabled][data-tooltip]::after {
     justify-content: center;
   }
 }
+
+body.dark_theme #video-editor-trim-root {
+    color: var(--body-text-color);
+
+    .editing-tools-container,
+    .timeline-container-card,
+    .clip-segments-container,
+    .modal-container {
+        background-color: var(--sidebar-bg-color);
+    }
+
+    .button-group button,
+    .timeline-title,
+    .current-time,
+    .duration-time,
+    .clip-segments-title,
+    .segment-title,
+    .segment-time,
+    .tooltip-time,
+    .tooltip-btn-text,
+    .modal-title,
+    .modal-content {
+        color: var(--body-text-color);
+    }
+
+    .divider {
+        border-right-color: var(--input-border-color);
+    }
+
+    .modal-header,
+    .modal-actions {
+        border-color: var(--input-border-color);
+    }
+
+    .time-code,
+    .segment-duration,
+    .timeline-controls {
+        background-color: rgba(255, 255, 255, 0.06);
+        color: var(--body-text-color);
+    }
+
+    .timeline-container,
+    .timeline-scroll-container {
+        background-color: #2a2a2a;
+    }
+
+    .segment-item {
+        border-color: var(--input-border-color);
+    }
+
+    .empty-message,
+    .redirect-message {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .time-input {
+        background-color: var(--input-bg-color);
+        color: var(--input-color);
+        border-color: var(--input-border-color);
+    }
+
+    .time-button,
+    .tooltip-action-btn,
+    .modal-button-secondary {
+        background-color: rgba(255, 255, 255, 0.08);
+        color: var(--body-text-color);
+    }
+
+    .time-button:hover,
+    .tooltip-action-btn:hover,
+    .modal-button-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.16);
+        color: var(--body-text-color);
+    }
+
+    .tooltip-action-btn.disabled,
+    .tooltip-action-btn.disabled:hover {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+
+    .tooltip-action-btn img {
+        filter: brightness(0) invert(1);
+    }
+
+    .segment-tooltip,
+    .empty-space-tooltip,
+    .two-row-tooltip {
+        background-color: #2a2a2a;
+        color: var(--body-text-color);
+    }
+
+    .segment-tooltip:after,
+    .empty-space-tooltip:after {
+        border-top-color: #2a2a2a;
+    }
+
+    .tooltip-time-btn,
+    .tooltip-time-display {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: var(--body-text-color) !important;
+    }
+
+    .tooltip-time-btn:hover {
+        background-color: rgba(255, 255, 255, 0.16) !important;
+    }
+}

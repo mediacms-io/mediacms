@@ -978,7 +978,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                     controls: true,
 
                     // Player dimensions - removed for responsive design
-                    // Autoplay behavior: Try unmuted first, fallback to muted if needed
+                    // Autoplay behavior: try with sound, and stay paused if the browser refuses
                     // For embed players, disable autoplay to show poster
                     autoplay: isEmbedPlayer ? false : true, // Try unmuted autoplay first (true/false, play, muted, any)
 
@@ -1644,16 +1644,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                     try {
                                         await playerRef.current.play();
                                     } catch (error) {
-                                        console.error('ℹ️ Browser prevented play:', error.message);
-                                        // Try muted playback as fallback
-                                        if (!playerRef.current.muted()) {
-                                            try {
-                                                playerRef.current.muted(true);
-                                                await playerRef.current.play();
-                                            } catch (mutedError) {
-                                                console.error('ℹ️ Even muted play was blocked:', mutedError.message);
-                                            }
-                                        }
+                                        playerRef.current.pause();
                                     }
                                 }
                             }, 100);

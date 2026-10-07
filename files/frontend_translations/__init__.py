@@ -28,8 +28,8 @@ for translation_file in files:
 
     module_name = f"files.frontend_translations.{language_code_file}"
     tr_module = importlib.import_module(module_name)
-    translation_strings[language_code] = tr_module.translation_strings
-    replacement_strings[language_code] = tr_module.replacement_strings
+    translation_strings[language_code] = {key: value for key, value in tr_module.translation_strings.items() if value}
+    replacement_strings[language_code] = {key: value for key, value in tr_module.replacement_strings.items() if value}
 
 
 def get_translation(language_code):

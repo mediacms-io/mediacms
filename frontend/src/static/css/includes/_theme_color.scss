@@ -289,12 +289,7 @@ dialog {
   }
 }
 
-.media-author-actions {
-  > a,
-  > button {
-    @include background_color_gradient();
-  }
-
+.media-delete-confirm {
   .popup-message-bottom {
     button {
       &.proceed-comment-removal {

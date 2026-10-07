@@ -112,7 +112,7 @@ class Media(models.Model):
     hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
 
     is_reviewed = models.BooleanField(
-        default=settings.MEDIA_IS_REVIEWED,
+        default=helpers.get_media_is_reviewed,
         db_index=True,
         help_text="Whether media is reviewed, so it can appear on public listings",
     )
@@ -190,7 +190,7 @@ class Media(models.Model):
     state = models.CharField(
         max_length=20,
         choices=MEDIA_STATES,
-        default=helpers.get_portal_workflow(),
+        default=helpers.get_portal_workflow,
         db_index=True,
         help_text="state of Media",
     )
@@ -401,7 +401,6 @@ class Media(models.Model):
             self.friendly_token,
             self.title,
             self.user.username,
-            self.user.email,
             self.user.name,
             self.description,
             a_tags,

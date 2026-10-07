@@ -202,6 +202,52 @@
   }
 }
 
+.mi-filters-actions {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .mi-filters-toggle {
+    position: static;
+  }
+
+  @media (max-width: 599px) {
+    position: static;
+    justify-content: flex-end;
+    margin: -12px 16px 0;
+  }
+}
+
+.mi-edit-link {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  margin: 2px 0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.007px;
+  text-decoration: none;
+  color: var(--header-circle-button-color);
+  opacity: 0.85;
+
+  .dark_theme & {
+    opacity: 0.5;
+  }
+
+  &:hover {
+    color: inherit;
+    opacity: 1;
+  }
+
+  .material-icons {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+}
+
 .mi-filters-toggle {
   position: absolute;
   top: 12px;

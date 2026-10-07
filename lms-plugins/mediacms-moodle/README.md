@@ -1,6 +1,6 @@
 # MediaCMS for Moodle
 
-Version: 1.0.0, tested on Moodle 5
+Version: 1.0.2, tested on Moodle 5
 
 > **Moodle plugins directory**
 > - Filter plugin: https://moodle.org/plugins/filter_mediacms
@@ -27,23 +27,23 @@ The suite ships as **two separate ZIP packages**, one per plugin:
 
 | Order | Package | Plugin | Notes |
 |-------|---------|--------|-------|
-| 1 | `filter_mediacms-v1.0.0.zip` | `filter_mediacms` | Install **first** — provides the shared core settings |
-| 2 | `tiny_mediacms-v1.0.0.zip` | `tiny_mediacms` | Depends on `filter_mediacms`; Moodle will block install until the filter is present |
+| 1 | `filter_mediacms-v1.0.2.zip` | `filter_mediacms` | Install **first** — provides the shared core settings |
+| 2 | `tiny_mediacms-v1.0.2.zip` | `tiny_mediacms` | Depends on `filter_mediacms`; Moodle will block install until the filter is present |
 
 `tiny_mediacms` declares a hard dependency on `filter_mediacms` in its `version.php`, so the two are always installed together — the editor plugin cannot be installed on its own.
 
 Build both packages with:
 
 ```bash
-./build.sh   # produces dist/filter_mediacms-v1.0.0.zip and dist/tiny_mediacms-v1.0.0.zip
+./build.sh   # produces dist/filter_mediacms-v1.0.2.zip and dist/tiny_mediacms-v1.0.2.zip
 ```
 
 ### Option A — Upload through Moodle (recommended)
 
 1.  Log in to Moodle as an Administrator.
 2.  Go to **Site administration > Plugins > Install plugins**.
-3.  Upload `filter_mediacms-v1.0.0.zip` and complete the install.
-4.  Upload `tiny_mediacms-v1.0.0.zip` and complete the install.
+3.  Upload `filter_mediacms-v1.0.2.zip` and complete the install.
+4.  Upload `tiny_mediacms-v1.0.2.zip` and complete the install.
 
 ### Option B — Extract manually
 
@@ -51,8 +51,8 @@ Upload both packages to Moodle's public directory and unzip each to its plugin t
 
 ```bash
 cd /var/www/moodle/public
-unzip filter_mediacms-v1.0.0.zip -d filter/
-unzip tiny_mediacms-v1.0.0.zip   -d lib/editor/tiny/plugins/
+unzip filter_mediacms-v1.0.2.zip -d filter/
+unzip tiny_mediacms-v1.0.2.zip   -d lib/editor/tiny/plugins/
 ```
 
 Ensure the web server user (typically `www-data`) has ownership of the new directories:
@@ -114,26 +114,18 @@ When content is viewed, the Filter will ensure the video is loaded securely via 
 
 ## Build instructions / Developing with the plugin
 
-two types of changes: php (no build), js (build with npx grunt amd)
+There are two kinds of change:
 
-needs moodle/
-npx version, dependencies etc
+*   **PHP, templates and language strings:** no build step.
+*   **JavaScript in `tiny/mediacms/amd/src/`:** build it with Moodle's own toolchain, as described in `tiny/mediacms/README.md`, and copy `amd/build` back here.
 
-1. make changes here in lms-plugins/mediacms-moodle
-2. copy to moodle
-3. run `npx grunt amd` in moodle to build the JS files
-4. from moodle copy back
-sudo cp -r ~/mediacms/lms-plugins/mediacms-moodle/tiny/mediacms/ -r ~/mediacms/moodle/public/lib/editor/tiny/plugins/
+To release a new version:
 
-5. cd ~/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms/
-
-npx grunt amd
-6.
-cp files back...
-sudo cp -r /home/user/mediacms/moodle/public/lib/editor/tiny/plugins/mediacms /home/user/mediacms/lms-plugins/mediacms-moodle/tiny/
-
-php admin/cli/purge_caches.php after
-
+1.  Make the changes here in `lms-plugins/mediacms-moodle`.
+2.  If JavaScript changed, build it as above.
+3.  Bump the version: `$plugin->version` (`YYYYMMDDXX`) and `$plugin->release` in `filter/mediacms/version.php` and `tiny/mediacms/version.php`, `VERSION` in `build.sh`, `version` in `package.json`, and the version shown in this README and in `INSTALL.txt`.
+4.  Run `./build.sh`. It writes `dist/filter_mediacms-v<VERSION>.zip` and `dist/tiny_mediacms-v<VERSION>.zip` with their checksums, replaces the unpacked folders in `dist/`, and keeps the ZIPs of earlier releases.
+5.  Install the ZIPs on Moodle, then purge the caches with `php admin/cli/purge_caches.php`.
 
 ### Troubleshooting
 Admin, advanced theme settings, add `My Media|/filter/mediacms/my_media.php` in case the position is not workin

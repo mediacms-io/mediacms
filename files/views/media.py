@@ -327,7 +327,8 @@ class MediaList(APIView):
 
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save(user=request.user, media_file=media_file)
+            media = serializer.save(user=request.user, media_file=media_file)
+            MediaAction.objects.create(user=request.user, media=media, action="watch")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

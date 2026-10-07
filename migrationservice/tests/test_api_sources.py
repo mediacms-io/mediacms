@@ -14,6 +14,7 @@ from migrationservice.providers.youtube import YouTubeProvider
 from migrationservice.serializers import (
     MigrationRecordSerializer,
     MigrationServiceSerializer,
+    clean_folder_role_map,
     clean_role_map,
 )
 
@@ -204,6 +205,25 @@ class TestValidation(AdminApiTestCase):
         valid, serializer = self.validate(options={"source_category_ids": "1", "schedule_enabled": True, "scheduled_at": "not a date"})
         self.assertFalse(valid)
         self.assertIn("needs a date and a time", str(serializer.errors))
+
+
+class TestCleanFolderRoleMap(TestCase):
+    def test_rows_are_trimmed_and_nameless_ones_dropped(self):
+        rows = [{"name": " Caption Requester ", "share": "editor", "rbac": "contributor"}, {"name": "Viewer with Link", "share": None, "rbac": ""}, {"share": "owner"}]
+        self.assertEqual(
+            clean_folder_role_map(rows),
+            [{"name": "Caption Requester", "share": "editor", "rbac": "contributor"}, {"name": "Viewer with Link", "share": "", "rbac": ""}],
+        )
+
+    def test_unknown_targets_are_refused(self):
+        with self.assertRaisesMessage(serializers.ValidationError, "unknown sharing role: admin"):
+            clean_folder_role_map([{"name": "Viewer", "share": "admin"}])
+        with self.assertRaisesMessage(serializers.ValidationError, "unknown category role: owner"):
+            clean_folder_role_map([{"name": "Viewer", "rbac": "owner"}])
+
+    def test_a_folder_role_map_that_is_not_a_list(self):
+        with self.assertRaises(serializers.ValidationError):
+            clean_folder_role_map({"name": "Viewer"})
 
 
 class TestCleanRoleMap(TestCase):

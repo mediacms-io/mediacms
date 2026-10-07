@@ -409,6 +409,10 @@ $mig-radius: 2px;
   padding: 0;
 }
 
+.migration-edit-roles--folders .migration-edit-role {
+  grid-template-columns: minmax(0, 1fr) 160px 160px;
+}
+
 .migration-edit-role {
   display: grid;
   grid-template-columns: 110px minmax(0, 1fr) 200px;

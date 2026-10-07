@@ -140,14 +140,14 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 position: relative;
                 line-height: 0;
                 vertical-align: top;
-                margin-top: 28px;
+                padding-top: 40px;
             }
             .tiny-mediacms-iframe-wrapper iframe {
                 display: block;
             }
             .tiny-mediacms-edit-btn {
                 position: absolute;
-                top: -20px;
+                top: 4px;
                 left: 50%;
                 transform: translateX(-50%);
                 background: rgba(0, 0, 0, 0.7);
@@ -160,6 +160,7 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
                 margin: 0;
                 font-size: 14px;
                 font-weight: bold;
+                line-height: 1.2;
                 text-decoration: none;
                 box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 transition: background 0.15s, box-shadow 0.15s;
@@ -179,6 +180,8 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
      *
      * @param {Event} e - The click event
      */
+    let lastOpened = 0;
+
     const handleOverlayClick = (e) => {
         const target = e.target;
 
@@ -191,6 +194,10 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
         e.preventDefault();
         e.stopPropagation();
 
+        if (Date.now() - lastOpened < 500) {
+            return;
+        }
+
         // Find the associated wrapper and iframe
         const wrapper = editBtn.closest('.tiny-mediacms-iframe-wrapper');
         if (!wrapper) {
@@ -201,6 +208,8 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
         if (!iframe) {
             return;
         }
+
+        lastOpened = Date.now();
 
         // Select the wrapper so TinyMCE knows which element is selected
         editor.selection.select(wrapper);
@@ -217,6 +226,8 @@ const setupIframeOverlays = (editor, handleIframeAction) => {
         // Handle clicks on the overlay
         editor.getBody().addEventListener('click', handleOverlayClick);
     });
+
+    editor.on('tap', handleOverlayClick);
 
     // Re-process when content changes
     editor.on('SetContent', () => {

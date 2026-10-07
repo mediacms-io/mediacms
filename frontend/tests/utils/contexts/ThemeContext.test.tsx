@@ -12,8 +12,7 @@ function renderTheme() {
 }
 
 function readCachedMode() {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw).value : null;
+    return localStorage.getItem(CACHE_KEY);
 }
 
 function isolatedThemeValue(overrides: Record<string, any>) {
@@ -79,7 +78,7 @@ describe('utils/contexts', () => {
         });
 
         test('Restores a valid cached mode', () => {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ value: 'dark', expire: Date.now() + 60000 }));
+            localStorage.setItem(CACHE_KEY, 'dark');
             let value: any;
             const view = renderWithProvider((v) => (value = v));
             expect(value.currentThemeMode).toBe('dark');
@@ -88,10 +87,25 @@ describe('utils/contexts', () => {
         });
 
         test('Ignores an invalid cached mode', () => {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ value: 'sepia', expire: Date.now() + 60000 }));
+            localStorage.setItem(CACHE_KEY, 'sepia');
             let value: any;
             const view = renderWithProvider((v) => (value = v));
             expect(value.currentThemeMode).toBe('light');
+            view.unmount();
+        });
+
+        test('Falls back to the configured mode when storage is unavailable', () => {
+            jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+                throw new Error('blocked');
+            });
+            jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+                throw new Error('blocked');
+            });
+            let value: any;
+            const view = renderWithProvider((v) => (value = v));
+            expect(value.currentThemeMode).toBe('light');
+            act(() => value.changeThemeMode());
+            expect(document.body.classList.contains('dark_theme')).toBe(true);
             view.unmount();
         });
 

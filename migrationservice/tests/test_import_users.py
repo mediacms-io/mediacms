@@ -1,11 +1,19 @@
+import threading
 from unittest import mock
 
-from django.test import TestCase
+from django.db import connection, transaction
+from django.test import TestCase, TransactionTestCase
 
 from files.tests import create_account
 from migrationservice.models import MigrationRecord, MigrationService
 from migrationservice.providers import get_provider_class
-from migrationservice.tasks import import_media_entry, import_user, resolve_owner
+from migrationservice.tasks import (
+    claim_key,
+    claiming,
+    import_media_entry,
+    import_user,
+    resolve_owner,
+)
 from migrationservice.tests.fakes import FakeProvider
 from users.models import User
 
@@ -132,6 +140,80 @@ class TestImportUser(TestCase):
         first = import_user(self.service, self.provider, "a!user")
         second = import_user(self.service, self.provider, "a#user")
         self.assertNotEqual(first.id, second.id)
+
+    def test_two_source_users_sharing_an_email_get_two_accounts(self):
+        self.provider.users["69501"] = {"id": "69501", "email": "JDoe@example.edu", "fullName": "J Doe (LMS)", "screenName": "", "roleName": ""}
+        first = import_user(self.service, self.provider, "jdoe")
+        second = import_user(self.service, self.provider, "69501")
+
+        self.assertNotEqual(first.id, second.id)
+        self.assertEqual(first.email, "jdoe@example.edu")
+        self.assertEqual(second.email, "69501@email-conflict.invalid")
+        self.assertEqual(second.username, "69501")
+        self.service.refresh_from_db()
+        self.assertIn("user 69501: JDoe@example.edu already belongs to jdoe, created 69501 as 69501@email-conflict.invalid", self.service.log)
+
+    def test_a_split_account_is_reused_on_the_next_import(self):
+        self.provider.users["69501"] = {"id": "69501", "email": "jdoe@example.edu", "fullName": "", "screenName": "", "roleName": ""}
+        import_user(self.service, self.provider, "jdoe")
+        second = import_user(self.service, self.provider, "69501")
+        again = import_user(self.service, self.provider, "69501")
+        self.assertEqual(again.id, second.id)
+        self.assertEqual(User.objects.filter(email__endswith="@email-conflict.invalid").count(), 1)
+
+    def test_the_role_of_a_split_account_is_its_own(self):
+        self.provider.users["jdoe"]["roleName"] = "viewerRole"
+        self.provider.users["admin-jdoe"] = {"id": "admin-jdoe", "email": "jdoe@example.edu", "fullName": "", "screenName": "", "roleName": "adminRole"}
+        import_user(self.service, self.provider, "jdoe")
+        admin = import_user(self.service, self.provider, "admin-jdoe")
+        admin.refresh_from_db()
+        self.assertTrue(admin.advancedUser)
+
+    def test_conflict_addresses_stay_unique(self):
+        create_account(username="taken", email="69501@email-conflict.invalid")
+        self.provider.users["69501"] = {"id": "69501", "email": "jdoe@example.edu", "fullName": "", "screenName": "", "roleName": ""}
+        import_user(self.service, self.provider, "jdoe")
+        self.assertEqual(import_user(self.service, self.provider, "69501").email, "69501-2@email-conflict.invalid")
+
+    def test_a_pre_existing_account_is_linked_once_and_the_next_sharer_is_split(self):
+        existing = create_account(email="jdoe@example.edu")
+        self.provider.users["69501"] = {"id": "69501", "email": "jdoe@example.edu", "fullName": "", "screenName": "", "roleName": ""}
+        self.assertEqual(import_user(self.service, self.provider, "jdoe").id, existing.id)
+        self.assertNotEqual(import_user(self.service, self.provider, "69501").id, existing.id)
+
+
+def lock_is_free(email):
+    with transaction.atomic(), connection.cursor() as cursor:
+        cursor.execute("SELECT pg_try_advisory_xact_lock(%s)", [claim_key(email)])
+        return cursor.fetchone()[0]
+
+
+class TestClaiming(TransactionTestCase):
+    def test_an_email_is_claimed_by_one_import_at_a_time(self):
+        held, release = threading.Event(), threading.Event()
+
+        def first_import():
+            with claiming("JDoe@example.edu"):
+                held.set()
+                release.wait(5)
+            connection.close()
+
+        worker = threading.Thread(target=first_import)
+        worker.start()
+        try:
+            self.assertTrue(held.wait(5))
+            self.assertFalse(lock_is_free("jdoe@example.edu"))
+            self.assertTrue(lock_is_free("someone.else@example.edu"))
+        finally:
+            release.set()
+            worker.join(5)
+        self.assertTrue(lock_is_free("jdoe@example.edu"))
+
+    def test_a_failed_import_releases_the_email(self):
+        with self.assertRaises(ValueError):
+            with claiming("jdoe@example.edu"):
+                raise ValueError("boom")
+        self.assertTrue(lock_is_free("jdoe@example.edu"))
 
 
 class TestResolveOwner(TestCase):

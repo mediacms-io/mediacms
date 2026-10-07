@@ -103,6 +103,10 @@ def get_portal_workflow():
     return settings.PORTAL_WORKFLOW
 
 
+def get_media_is_reviewed():
+    return settings.MEDIA_IS_REVIEWED
+
+
 def get_default_state(user=None):
     # possible states given the portal workflow setting
     state = "private"

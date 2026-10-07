@@ -45,8 +45,9 @@ class TestMediaState(TestCase):
     def test_any_public_category_is_public(self):
         self.assertEqual(media_state([PRIVACY_MEMBERS_ONLY, PRIVACY_ALL]), "public")
 
-    def test_only_restricted_categories_is_unlisted(self):
-        self.assertEqual(media_state([PRIVACY_AUTHENTICATED, PRIVACY_MEMBERS_ONLY]), "unlisted")
+    def test_requires_authentication_and_restricted_categories_are_private(self):
+        self.assertEqual(media_state([PRIVACY_AUTHENTICATED, PRIVACY_MEMBERS_ONLY]), "private")
+        self.assertEqual(media_state([PRIVACY_AUTHENTICATED]), "private")
 
     def test_display_in_search_none_downgrades_public_to_unlisted(self):
         self.assertEqual(media_state([PRIVACY_ALL], DISPLAY_IN_SEARCH_NONE), "unlisted")
@@ -78,6 +79,44 @@ class TestMediaState(TestCase):
         category = {"privacy": PRIVACY_ALL, "appearInList": APPEAR_IN_LIST_PARTNER, "contributionPolicy": CONTRIBUTION_ALL}
         self.assertEqual(media_state([category], None, MODERATION_APPROVED), "public")
         self.assertEqual(media_state([category], None, MODERATION_AUTO_APPROVED), "public")
+
+    def test_an_entry_kms_keeps_unlisted_is_unlisted_although_that_category_is_open(self):
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "appearInList": APPEAR_IN_LIST_PARTNER, "contributionPolicy": CONTRIBUTION_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([unlisted]), "unlisted")
+
+    def test_an_lms_unlisted_category_is_unlisted(self):
+        self.assertEqual(media_state([{"fullName": "moodle_jPsFc>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": ""}]), "unlisted")
+
+    def test_kms_private_is_private_whatever_its_own_privacy(self):
+        self.assertEqual(media_state([{"fullName": "MediaSpace>private", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}]), "private")
+
+    def test_archive_and_playlists_do_not_count(self):
+        for name in ["MediaSpace>archive", "MediaSpace>playlists"]:
+            self.assertEqual(media_state([{"fullName": name, "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}]), "private", name)
+
+    def test_an_entry_unlisted_and_published_to_a_public_gallery_is_public(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Education", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery, unlisted]), "public")
+
+    def test_an_entry_unlisted_and_published_only_to_a_private_channel_is_unlisted(self):
+        channel = {"fullName": "MediaSpace>site>channels>Staff", "privacy": PRIVACY_MEMBERS_ONLY, "privacyContexts": "MediaSpace"}
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([channel, unlisted]), "unlisted")
+
+    def test_kms_private_decides_over_kms_unlisted_and_galleries(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Education", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        private = {"fullName": "MediaSpace>private", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery, unlisted, private]), "private")
+
+    def test_unmoderated_media_marked_unlisted_is_still_private(self):
+        unlisted = {"fullName": "MediaSpace>unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([unlisted], None, 1), "private")
+
+    def test_a_gallery_named_like_housekeeping_is_a_real_gallery(self):
+        gallery = {"fullName": "MediaSpace>site>galleries>Unlisted", "privacy": PRIVACY_ALL, "privacyContexts": "MediaSpace"}
+        self.assertEqual(media_state([gallery]), "public")
 
 
 class TestCategoryType(TestCase):
@@ -496,9 +535,16 @@ class TestTreeKind(TestCase):
     def test_a_payload_without_the_field_is_read_as_kms(self):
         self.assertEqual(category_tree_kind({}), KMS_TREE)
 
-    def test_lms_permission_fields_are_inert(self):
-        category = {"privacyContexts": "", "privacy": PRIVACY_MEMBERS_ONLY, "contributionPolicy": CONTRIBUTION_MEMBERS}
-        self.assertEqual(category_type(category), CATEGORY_PUBLIC)
+    def test_an_lms_category_is_private_whatever_its_permission_fields(self):
+        for privacy in (PRIVACY_ALL, PRIVACY_MEMBERS_ONLY):
+            category = {"privacyContexts": "", "privacy": privacy, "contributionPolicy": CONTRIBUTION_MEMBERS}
+            self.assertEqual(category_type(category), CATEGORY_PRIVATE)
+
+    def test_an_entry_only_in_lms_courses_is_private_and_a_public_gallery_still_wins(self):
+        course = {"privacyContexts": "", "privacy": PRIVACY_ALL, "fullName": "moodle_x>site>channels>15"}
+        gallery = {"privacyContexts": "MediaSpace", "privacy": PRIVACY_ALL, "fullName": "MediaSpace>site>galleries>Education"}
+        self.assertEqual(media_state([course]), "private")
+        self.assertEqual(media_state([course, gallery]), "public")
 
     def test_the_same_fields_inside_a_context_are_honoured(self):
         category = {"privacyContexts": "MediaSpace", "privacy": PRIVACY_MEMBERS_ONLY, "contributionPolicy": CONTRIBUTION_MEMBERS}

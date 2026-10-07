@@ -50,17 +50,39 @@ describe('components/media-actions', () => {
             (PageStore as any).__reset();
         });
 
-        test('Renders nothing when download is not allowed', () => {
+        test('Without downloads the menu still offers status info, report and delete', () => {
             const { container, unmount } = render(false);
-            expect(container.innerHTML).toBe('');
+            click(container.querySelector('.more-options button'));
+            expect(menuTexts(container)).toEqual(['Status info', 'Report', 'Delete']);
             unmount();
         });
 
-        test('Shows download, status info and report entries for an editor on a video', () => {
+        test('Shows download, status info, report and delete entries for an owner on a video', () => {
             const { container, unmount } = render();
             expect(container.querySelector('.more-options')?.className).toBe('more-options active-options');
             click(container.querySelector('.more-options button'));
-            expect(menuTexts(container)).toEqual(['Download', 'Status info', 'Report']);
+            expect(menuTexts(container)).toEqual(['Download', 'Status info', 'Report', 'Delete']);
+            unmount();
+        });
+
+        test('Delete asks for confirmation before removing the media', () => {
+            const { container, unmount } = render();
+            click(container.querySelector('.more-options button'));
+            click(container.querySelector('[data-page-id="mediaDelete"]'));
+            expect(container.querySelector('.media-delete-confirm .popup-message-main')?.textContent).toBe("You're willing to remove media permanently?");
+            expect((MediaPageActions as any).removeMedia).not.toHaveBeenCalled();
+            click(container.querySelector('.media-delete-confirm .proceed-comment-removal'));
+            expect((MediaPageActions as any).removeMedia).toHaveBeenCalledTimes(1);
+            unmount();
+        });
+
+        test('Cancelling the delete confirmation removes nothing', () => {
+            const { container, unmount } = render();
+            click(container.querySelector('.more-options button'));
+            click(container.querySelector('[data-page-id="mediaDelete"]'));
+            click(container.querySelector('.media-delete-confirm .cancel-comment-removal'));
+            expect((MediaPageActions as any).removeMedia).not.toHaveBeenCalled();
+            expect(container.querySelector('.media-delete-confirm')).toBeNull();
             unmount();
         });
 
@@ -90,7 +112,7 @@ describe('components/media-actions', () => {
             mediaStore.__set('media-data', videoData({ media_type: 'pdf' }));
             const { container, unmount } = render();
             click(container.querySelector('.more-options button'));
-            expect(menuTexts(container)).toEqual(['Download', 'Report']);
+            expect(menuTexts(container)).toEqual(['Download', 'Report', 'Delete']);
             const link = container.querySelector('.main-options a') as HTMLAnchorElement;
             expect(link.getAttribute('download')).toBe('Clip');
             expect(link.getAttribute('href')).toContain('/media/original/clip.mp4');
@@ -116,7 +138,7 @@ describe('components/media-actions', () => {
             expect((PageActions as any).addNotification).toHaveBeenCalledWith('Media Reported', 'reportedMedia');
             expect(mediaStore.listenerCount('reported_media')).toBe(0);
             click(container.querySelector('.more-options button'));
-            expect(menuTexts(container)).toEqual(['Download', 'Status info', 'Reported']);
+            expect(menuTexts(container)).toEqual(['Download', 'Status info', 'Reported', 'Delete']);
             unmount();
             jest.useRealTimers();
         });

@@ -7,6 +7,7 @@ from lti.models import LTIPlatform
 from .models import MigrationRecord, MigrationService
 from .providers import get_provider_class
 from .providers.kaltura import MEDIACMS_ROLES, parse_comma_list
+from .providers.panopto import RBAC_ROLE_RANK, SHARE_ROLE_RANK
 from .scheduling import (
     SCHEDULE_OPTIONS,
     parse_clock,
@@ -61,6 +62,28 @@ def clean_role_map(rows):
 
 
 MAX_SOURCE_USER_IDS = 50
+
+
+def clean_folder_role_map(rows):
+    """Normalise the Panopto folder role rows the form sends, refusing unknown targets"""
+    if not isinstance(rows, list):
+        raise serializers.ValidationError({"options": "folder_role_map must be a list of rows."})
+
+    cleaned = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise serializers.ValidationError({"options": "each folder_role_map row must be an object."})
+        name = str(row.get("name") or "").strip()
+        share = str(row.get("share") or "").strip()
+        rbac = str(row.get("rbac") or "").strip()
+        if share and share not in SHARE_ROLE_RANK:
+            raise serializers.ValidationError({"options": f"unknown sharing role: {share}"})
+        if rbac and rbac not in RBAC_ROLE_RANK:
+            raise serializers.ValidationError({"options": f"unknown category role: {rbac}"})
+        if name:
+            cleaned.append({"name": name, "share": share, "rbac": rbac})
+
+    return cleaned
 
 
 class MigrationServiceSerializer(serializers.ModelSerializer):
@@ -128,6 +151,9 @@ class MigrationServiceSerializer(serializers.ModelSerializer):
 
             if "role_map" in options:
                 options["role_map"] = clean_role_map(options["role_map"])
+
+            if "folder_role_map" in options:
+                options["folder_role_map"] = clean_folder_role_map(options["folder_role_map"])
 
             if "source_category_ids" in options:
                 category_ids = parse_comma_list(options["source_category_ids"])

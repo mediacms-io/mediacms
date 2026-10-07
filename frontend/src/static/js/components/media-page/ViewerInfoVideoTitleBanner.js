@@ -5,6 +5,7 @@ import { memberConfig, PlaylistsContext } from '../../utils/contexts/';
 import {
     MediaLikeIcon,
     MediaDislikeIcon,
+    MediaEditButton,
     OtherMediaDownloadLink,
     VideoMediaDownloadLink,
     MediaSaveButton,
@@ -70,10 +71,12 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
                 ) : null}
 
                 <div
+                    ref={this.viewsActionsRef}
                     className={
                         'media-views-actions' +
                         (this.state.likedMedia ? ' liked-media' : '') +
-                        (this.state.dislikedMedia ? ' disliked-media' : '')
+                        (this.state.dislikedMedia ? ' disliked-media' : '') +
+                        (this.state.actionsLayout ? ' ' + this.state.actionsLayout + '-actions' : '')
                     }
                 >
                     {!displayViews && PageStore.get('config-options').pages.media.categoriesWithTitle
@@ -91,6 +94,7 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
                         <div>
                             {memberConfig.can.likeMedia ? <MediaLikeIcon /> : null}
                             {memberConfig.can.dislikeMedia ? <MediaDislikeIcon /> : null}
+                            <MediaEditButton />
                             {!inEmbeddedApp() && memberConfig.can.shareMedia ? (
                                 <MediaShareButton isVideo={true} />
                             ) : null}

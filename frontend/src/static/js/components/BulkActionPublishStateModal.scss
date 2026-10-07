@@ -52,6 +52,7 @@
 }
 
 .publish-state-modal-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -105,7 +106,8 @@
 .publish-state-modal-content {
   padding: 24px;
   flex: 1;
-  overflow: visible;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -210,6 +212,7 @@
 }
 
 .publish-state-modal-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -275,5 +278,19 @@
       background-color: var(--default-theme-color, #009933);
       opacity: 0.9;
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .publish-state-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
+  }
+}
+
+@media (max-height: 500px) {
+  .publish-state-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
   }
 }

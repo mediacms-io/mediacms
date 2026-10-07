@@ -10,7 +10,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, override_setti
 from cms.version import VERSION
 from files.backends import FFmpegBackend, VideoEncodingError
 from files.context_processors import stuff
-from files.frontend_translations import translation_strings
+from files.frontend_translations import el, translation_strings
 from files.permissions import IsMediacmsEditor
 from files.templatetags.custom_filters import custom_translate
 from files.tests import create_account, fixture_path
@@ -73,9 +73,34 @@ class ContextProcessorTests(TestCase):
         self.assertTrue(self.context_for(self.superuser)["CAN_SEE_MEMBERS_PAGE"])
         self.assertFalse(self.context_for(self.editor)["CAN_SEE_MEMBERS_PAGE"])
 
+    @override_settings(CAN_SEE_MEMBERS_PAGE="all", ALLOW_ANONYMOUS_USER_LISTING=True)
+    def test_authors_are_searchable_by_anyone_when_users_are_listed_openly(self):
+        self.assertTrue(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
+    @override_settings(CAN_SEE_MEMBERS_PAGE="all", ALLOW_ANONYMOUS_USER_LISTING=False)
+    def test_anonymous_users_cannot_search_authors_when_listing_needs_a_login(self):
+        self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
+    @override_settings(CAN_SEE_MEMBERS_PAGE="editors", ALLOW_ANONYMOUS_USER_LISTING=True)
+    def test_authors_search_follows_the_members_page_rule(self):
+        self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertFalse(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.editor)["CAN_SEARCH_AUTHORS"])
+
     def test_translations_follow_the_request_language(self):
         ctx = self.context_for(AnonymousUser(), language="fr")
         self.assertEqual(ctx["TRANSLATION"], translation_strings["fr"])
+
+    def test_untranslated_strings_are_left_out_so_the_page_shows_english(self):
+        untranslated = [key for key, value in el.translation_strings.items() if not value]
+        translated = {key: value for key, value in el.translation_strings.items() if value}
+        self.assertTrue(untranslated)
+        page = self.context_for(AnonymousUser(), language="el")["TRANSLATION"]
+        self.assertEqual(page, translated)
+        for strings in translation_strings.values():
+            self.assertTrue(all(strings.values()))
 
     @override_settings(USE_LTI=True)
     def test_lti_session_is_exposed_only_to_logged_in_users(self):
@@ -108,6 +133,12 @@ class CustomTranslateFilterTests(SimpleTestCase):
         self.assertEqual(custom_translate("No such string here", "fr"), "No such string here")
         self.assertEqual(custom_translate("Upload", "en"), "Upload")
         self.assertEqual(custom_translate("Upload", "xx"), "Upload")
+
+    def test_an_untranslated_string_falls_back_to_english(self):
+        untranslated = next(key for key, value in el.translation_strings.items() if not value)
+        translated = next(key for key, value in el.translation_strings.items() if value)
+        self.assertEqual(custom_translate(untranslated, "el"), untranslated)
+        self.assertEqual(custom_translate(translated, "el"), el.translation_strings[translated])
 
     def test_filter_is_usable_from_templates(self):
         rendered = Template("{% load custom_filters %}{{ 'Upload'|custom_translate:'fr' }}").render(Context())
