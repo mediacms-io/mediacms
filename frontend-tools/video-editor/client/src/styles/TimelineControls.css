@@ -1,7 +1,36 @@
 #video-editor-trim-root {
     .timeline-header-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         margin-left: 1rem;
         margin-top: -0.5rem;
+    }
+
+    .preview-quality-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.25rem;
+        min-width: 0;
+        height: 1.25rem;
+        padding: 0;
+        border: 1px solid #2563eb;
+        border-radius: 9999px;
+        background-color: white;
+        color: #2563eb;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1;
+        cursor: help;
+    }
+
+    .preview-quality-hint[data-tooltip]::before {
+        width: 18rem;
+        white-space: normal;
+        text-align: left;
+        font-weight: normal;
+        line-height: 1.4;
     }
 
     .timeline-header-title {

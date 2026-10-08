@@ -4914,25 +4914,22 @@ const TimelineControls = ({
                     <Modal
                         isOpen={showSuccessModal}
                         onClose={() => setShowSuccessModal(false)}
-                        title="Video Edited Successfully"
+                        title="Saved"
                     >
                         <div className="modal-success-content">
-                            {/* <p className="modal-message text-center">
-                {successMessage || "Processing completed successfully!"}
-              </p> */}
-
                             <p className="modal-message text-center redirect-message">
                                 {saveType === 'segments'
-                                    ? 'You will be redirected to your '
-                                    : 'You will be redirected to your '}
+                                    ? 'Your new videos are being created'
+                                    : saveType === 'copy'
+                                      ? 'Your copy is being created'
+                                      : 'Your video is being updated'}{' '}
+                                in the background. This takes from a few seconds to a few minutes.
+                                <br />
+                                Going to your{' '}
                                 <a href={redirectUrl} className="media-page-link" style={mediaPageLinkStyles}>
                                     media page
-                                </a>
-                                {' in '}
-                                <span className="countdown">10</span> seconds.{' '}
-                                {saveType === 'segments'
-                                    ? 'The new video(s) will soon be there.'
-                                    : 'Changes to the video might take a few minutes to be applied.'}
+                                </a>{' '}
+                                in <span className="countdown">10</span>s.
                             </p>
                         </div>
                     </Modal>

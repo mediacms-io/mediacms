@@ -4023,19 +4023,15 @@ const TimelineControls = ({
                         onClose={() => {
                             setShowSuccessModal(false);
                         }}
-                        title="Video Edited Successfully"
+                        title="Chapters saved"
                     >
                         <div className="modal-success-content">
-                            {/* <p className="modal-message text-center">
-                {successMessage || "Processing completed successfully!"}
-              </p> */}
-
                             <p className="modal-message text-center redirect-message">
-                                <span style={{ fontWeight: 'bold' }}>Your chapters have been saved successfully!</span><br />
+                                They are already live on the{' '}
                                 <a href={redirectUrl} className="media-page-link" style={mediaPageLinkStyles}>
-                                    Click here to navigate to the media page
+                                    media page
                                 </a>
-                                {' '}or close this window to continue editing the chapters.
+                                . Close this window to keep editing.
                             </p>
                         </div>
                     </Modal>

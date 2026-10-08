@@ -153,6 +153,14 @@ const App = () => {
                 {/* Timeline Header */}
                 <div className="timeline-header-container">
                     <h2 className="timeline-header-title">Add Chapters</h2>
+                    <button
+                        type="button"
+                        className="preview-quality-hint"
+                        data-tooltip="This preview usually plays at a lower resolution than your video, so seeking and adding chapters stay fast. Your video keeps its full quality."
+                        aria-label="This preview usually plays at a lower resolution than your video, so seeking and adding chapters stay fast. Your video keeps its full quality."
+                    >
+                        ?
+                    </button>
                 </div>
 
                 {/* Timeline Controls */}

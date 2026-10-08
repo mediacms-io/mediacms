@@ -312,6 +312,14 @@ const App = () => {
                  {/* Timeline Header */}
                  <div className="timeline-header-container">
                      <h2 className="timeline-header-title">Trim or Split</h2>
+                     <button
+                         type="button"
+                         className="preview-quality-hint"
+                         data-tooltip="This preview usually plays at a lower resolution than your video, so seeking and editing stay fast. Trims are applied to the full-quality video."
+                         aria-label="This preview usually plays at a lower resolution than your video, so seeking and editing stay fast. Trims are applied to the full-quality video."
+                     >
+                         ?
+                     </button>
                  </div>
 
         {/* Timeline Controls */}
