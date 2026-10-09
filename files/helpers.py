@@ -402,7 +402,7 @@ def media_file_info(input_file):
         "has_audio": has_audio,
         "color_range": video_info.get("color_range"),
         "color_space": video_info.get("color_space"),
-        "color_transfer": video_info.get("color_space"),
+        "color_transfer": video_info.get("color_transfer"),
         "color_primaries": video_info.get("color_primaries"),
         "interlaced": interlaced,
         "display_aspect_ratio": video_info.get("display_aspect_ratio"),
