@@ -316,6 +316,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "allauth.socialaccount.providers.saml",
     "saml_auth.apps.SamlAuthConfig",
+    "allauth.socialaccount.providers.openid_connect",
+    "oidc_auth.apps.OidcAuthConfig",
     "tinymce",
 ]
 
@@ -580,6 +582,14 @@ DJANGO_ADMIN_URL = "admin/"
 USE_SAML = False
 USE_RBAC = False
 USE_IDENTITY_PROVIDERS = False
+USE_OIDC = False
+
+# Unified adapter supports deployments with multiple identity protocols
+# (SAML + OIDC simultaneously).  Single-protocol deployments can override
+# this in local_settings.py with the specific adapter:
+#   SAML only:  SOCIALACCOUNT_ADAPTER = 'saml_auth.adapter.SAMLAccountAdapter'
+#   OIDC only:  SOCIALACCOUNT_ADAPTER = 'oidc_auth.adapter.OIDCAccountAdapter'
+SOCIALACCOUNT_ADAPTER = "identity_providers.adapter.UnifiedSocialAccountAdapter"
 USE_LTI = False  # Enable LTI 1.3 integration
 
 MIGRATION_PAGE_SIZE = 3
