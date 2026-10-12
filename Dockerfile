@@ -2,26 +2,56 @@ FROM python:3.13.5-slim-bookworm AS build-image
 
 # Install system dependencies needed for downloading and extracting
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends wget xz-utils unzip && \
+    apt-get install -y --no-install-recommends wget xz-utils && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get purge --auto-remove && \
     apt-get clean
 
-RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+# ffmpeg publishes a separate static build per architecture. TARGETARCH is set
+# automatically by buildx; fall back to dpkg for the legacy builder, which does not.
+ARG TARGETARCH
+RUN set -eux; \
+    ARCH="${TARGETARCH:-$(dpkg --print-architecture)}"; \
+    case "$ARCH" in \
+        amd64) FFARCH=amd64 ;; \
+        arm64) FFARCH=arm64 ;; \
+        *) echo "unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac; \
+    wget -q "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-${FFARCH}-static.tar.xz"; \
+    mkdir -p ffmpeg-tmp; \
+    tar -xf "ffmpeg-release-${FFARCH}-static.tar.xz" --strip-components 1 -C ffmpeg-tmp; \
+    cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin; \
+    rm -rf ffmpeg-tmp "ffmpeg-release-${FFARCH}-static.tar.xz"
 
-RUN mkdir -p ffmpeg-tmp && \
-    tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C ffmpeg-tmp && \
-    cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin && \
-    rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
-# Install Bento4 in the specified location
-RUN mkdir -p /home/mediacms.io/bento4 && \
-    wget -q --tries=5 --waitretry=10 --timeout=30 https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip && \
-    unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip -d /home/mediacms.io/bento4 && \
-    mv /home/mediacms.io/bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/* /home/mediacms.io/bento4/ && \
-    rm -rf /home/mediacms.io/bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux && \
-    rm -rf /home/mediacms.io/bento4/docs && \
-    rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
+############ BENTO4 BUILD ############
+# Bento4 publishes prebuilt Linux binaries for x86_64 only, so build from source
+# for the target architecture. SdkPackager.py assembles the SDK layout that
+# cms/settings.py MP4HLS_COMMAND expects, including bin/mp4hls and utils/.
+FROM python:3.13.5-slim-bookworm AS bento4-build
+
+ARG BENTO4_VERSION=v1.6.0-637
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends git cmake make gcc g++ ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    ARCH=$(uname -m); \
+    if [ "$ARCH" = "aarch64" ]; then ARCH="arm"; fi; \
+    git clone --depth 1 https://github.com/axiomatic-systems/Bento4 -b ${BENTO4_VERSION} /tmp/bento4; \
+    rm -rf /tmp/bento4/cmakebuild; \
+    mkdir -p /tmp/bento4/cmakebuild/${ARCH}; \
+    cd /tmp/bento4/cmakebuild/${ARCH}; \
+    cmake -DCMAKE_BUILD_TYPE=Release ../..; \
+    make -j"$(nproc)"; \
+    cd /tmp/bento4; \
+    python3 Scripts/SdkPackager.py ${ARCH} . cmake; \
+    mkdir -p /home/mediacms.io/bento4; \
+    mv /tmp/bento4/SDK/Bento4-SDK-*/* /home/mediacms.io/bento4/; \
+    rm -rf /home/mediacms.io/bento4/docs; \
+    test -x /home/mediacms.io/bento4/bin/mp4hls; \
+    test -x /home/mediacms.io/bento4/bin/mp4fragment
 
 ############ BASE RUNTIME IMAGE ############
 FROM python:3.13.5-slim-bookworm AS base
@@ -80,7 +110,7 @@ RUN pip install --no-cache-dir uv && \
 COPY --from=build-image /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=build-image /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 COPY --from=build-image /usr/local/bin/qt-faststart /usr/local/bin/qt-faststart
-COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
+COPY --from=bento4-build /home/mediacms.io/bento4 /home/mediacms.io/bento4
 
 # Copy application files
 COPY . /home/mediacms.io/mediacms
