@@ -133,12 +133,19 @@ Every migration is different, so read these before starting rather than after.
 Accounts are created lazily, as the media that belong to them arrive, and an existing account
 is reused rather than duplicated:
 
-1. **By email**, case insensitively. This is the normal link, and what lets a re-run attach
-   new media to accounts an earlier run created.
-2. **By username**, but only when the existing account has no email of its own. Otherwise it
+1. **By its own earlier record.** A Kaltura user an earlier run already migrated keeps that
+   account.
+2. **By email**, case insensitively, unless another Kaltura user already holds that account.
+   Kaltura lets several accounts share an email (a native account and the one an LMS
+   created, typically), and merging them would pool their media and drop the second one's
+   role. So the second one gets an account of its own, under its own username, with a
+   unique address on the reserved `email-conflict.invalid` domain, and the run log names
+   the conflict. Searching users for `email-conflict.invalid` after the run lists every
+   account whose email an administrator still has to decide.
+3. **By username**, but only when the existing account has no email of its own. Otherwise it
    is a different, already identified person who happens to collide on the sanitised username,
    and linking would hand them someone else's media.
-3. **Otherwise a new account**, with an unusable password, a numeric suffix if the username is
+4. **Otherwise a new account**, with an unusable password, a numeric suffix if the username is
    taken, and no notification email to anyone.
 
 The three user options are one question with three answers — sweep the whole directory, name
@@ -290,14 +297,15 @@ as on the root it hangs from.
 | --- | --- | --- |
 | `privacyContexts` | set, e.g. `MediaSpace` | empty |
 | Category permissions | honoured, see [Permissions](#permissions) | none to honour |
-| Media state | from the category type | public |
+| Media state | from the category type | private, reached through the course |
 
 The consequence worth understanding: **the permission fields on an LMS category do nothing at
-the source.** Kaltura serves that content to anyone regardless of what `privacy` says, because
-there is no privacy context for it to enforce. So the migration reads those categories as
-public rather than importing a restriction that was never in force, which would hide media the
-source was showing and hand out RBAC groups gating something nobody gated. A payload with no
-`privacyContexts` field at all is read as KMS, the cautious direction.
+the source**, because there is no privacy context for Kaltura to enforce them in. What gates LMS
+content is the course itself: it is shown to the people enrolled in it. So the migration reads
+LMS categories as private and imports no permissions from them; an entry only in LMS courses
+arrives private, and the course's RBAC group (see below) is how its people reach it. MediaCMS
+shows such an entry as **Shared**. An entry that is also in a public KMS gallery stays public.
+A payload with no `privacyContexts` field at all is read as KMS.
 
 An LMS integration also does not put a course's media in the course channel. It creates a
 child named **InContext** and parks the media there, leaving the course itself empty. That
@@ -448,7 +456,7 @@ answered by `privacy` alone.
 | --- | --- | --- | --- |
 | No Restriction | No Restriction | plain | public |
 | No Restriction | Private | RBAC category with a group | public |
-| Requires Authentication | No Restriction | RBAC category with a group | unlisted |
+| Requires Authentication | No Restriction | RBAC category with a group | private, visible to the group |
 | Requires Authentication | Private | RBAC category with a group | private |
 | Private | either | RBAC category with a group | private, visible to the group |
 | Shared Repository | either | RBAC category with a group | private, visible to the group |
@@ -460,8 +468,10 @@ means anyone may watch while only members may contribute, and that arrives publi
 An entry in more than one category takes the most permissive of them, which is how Kaltura
 behaves too. An entry in no category at all is private. KMS marks an entry as Unlisted by
 placing it in its `<root>>unlisted` category, which is open to everyone, so that category
-is read by what it marks rather than by its privacy: an entry in it arrives **unlisted**,
-even if it also sits in public galleries. The same holds for `<root>>private`, and the
+is read by what it marks rather than by its privacy: it counts as an unlisted category. An
+entry in it arrives **unlisted**, unless it is also published to a public gallery or channel,
+in which case it is **public**, as it is to anyone browsing that gallery on Kaltura.
+`<root>>private` is read the same way but overrides everything: an entry in it is private. The
 `archive` and `playlists` categories do not count at all. Two things override all of this:
 `displayInSearch` set to none downgrades public to unlisted, and an entry that has not
 cleared moderation is private wherever it sits, because it was not published on the source
@@ -470,12 +480,10 @@ category's state.
 
 Two things about this mapping are worth knowing before you run it.
 
-**Open becomes unlisted, which is a downgrade in one direction and not in the other.** Open
-in Kaltura means any logged in user may watch. MediaCMS has no such state: it has public,
-unlisted and private. Unlisted is the closest fit, and on a portal where
-`GLOBAL_LOGIN_REQUIRED` is off it is reachable by anyone holding the link. If that matters
-for your content, turn **Maintain publish state of media** off and set the states yourself, or set
-`GLOBAL_LOGIN_REQUIRED = True`.
+**Open becomes private and shared with the channel's group.** Open in Kaltura means any logged
+in user may watch. MediaCMS has no such state, so the entry arrives private in an RBAC
+category, and the people Kaltura named on the channel see it through its group. MediaCMS
+shows such an entry as **Shared**. Widening it to everyone is then the owner's decision.
 
 **Requires Authentication becomes a group holding the people Kaltura named**, the owner
 among them, rather than a plain category. MediaCMS has no "any logged in user may view"
@@ -490,7 +498,7 @@ then adds the members Kaltura reports:
 | Kaltura permission level | MediaCMS role |
 | --- | --- |
 | Manager | manager |
-| Moderator | contributor |
+| Moderator | manager |
 | Contributor | contributor |
 | Member | member |
 

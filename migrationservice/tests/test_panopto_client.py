@@ -19,6 +19,7 @@ from migrationservice.providers.panopto import (
     PanoptoClient,
     PanoptoProvider,
     caption_language,
+    recording_state,
     tag_titles,
 )
 
@@ -689,6 +690,7 @@ class TestFetch(SimpleTestCase):
                 "folder": {"id": "g1", "name": "Week 1", "fullName": "Biology>Week 1", "parentId": "c1", "parentName": "Biology"},
                 "folder_kind": "folder",
                 "access": {"public": False, "organisation": False, "lms": False, "lms_course_ids": [], "principals": []},
+                "access_level": "",
                 "download_url": "https://dl.example/s1.mp4",
                 "captions": [{"language": "en", "url": "https://dl.example/s1.srt"}],
             },
@@ -713,12 +715,19 @@ class TestFetch(SimpleTestCase):
     def test_a_user(self):
         client = tree_client()
         client.calls["/users/u1"] = {"Id": "u1", "Username": "jdoe", "Email": " jdoe@example.edu ", "FirstName": " Jane ", "LastName": ""}
-        self.assertEqual(make_provider(client).fetch_user("u1"), {"id": "u1", "username": "jdoe", "email": "jdoe@example.edu", "fullName": "Jane", "role": ""})
+        self.assertEqual(make_provider(client).fetch_user("u1"), {"id": "u1", "username": "jdoe", "email": "jdoe@example.edu", "fullName": "Jane", "roleName": ""})
+
+    def test_a_user_system_role_is_named_whether_rest_gives_a_number_or_a_name(self):
+        client = tree_client()
+        client.calls["/users/u1"] = {"Id": "u1", "SystemRole": 2}
+        client.calls["/users/u3"] = {"Id": "u3", "SystemRole": "Videographer"}
+        provider = make_provider(client)
+        self.assertEqual((provider.fetch_user("u1")["roleName"], provider.fetch_user("u3")["roleName"]), ("Admin", "Videographer"))
 
     def test_a_user_panopto_says_nothing_about(self):
         client = tree_client()
         client.calls["/users/u2"] = None
-        self.assertEqual(make_provider(client).fetch_user("u2"), {"id": "u2", "username": "", "email": "", "fullName": "", "role": ""})
+        self.assertEqual(make_provider(client).fetch_user("u2"), {"id": "u2", "username": "", "email": "", "fullName": "", "roleName": ""})
 
 
 class TestListUsers(SimpleTestCase):
@@ -739,7 +748,7 @@ class TestListUsers(SimpleTestCase):
     def test_the_users_phase_stops_on_an_empty_page(self):
         provider = make_provider()
         with mock.patch.object(provider, "list_users", return_value=([], 10)):
-            self.assertEqual(provider.list_page("users", {"page": 4}, 2), ([], {"page": 4}))
+            self.assertEqual(provider.list_page("users", {"page": 4}, 2), ([], {"page": 5, "done": True}))
 
 
 class TestMediaSweep(SimpleTestCase):
@@ -901,6 +910,16 @@ SESSIONS_BY_ID_XML = (
 )
 
 
+SUMMARY_USAGE_XML = (
+    '<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"><Body>'
+    '<GetSessionSummaryUsageResponse xmlns="http://tempuri.org/"><GetSessionSummaryUsageResult xmlns:a="http://schemas.datacontract.org/2004/07/Panopto.Server.Services.PublicAPI.V40">'
+    "<a:SummaryUsageResponseItem><a:MinutesViewed>1.9</a:MinutesViewed><a:Time>2026-09-20T00:00:00Z</a:Time><a:UniqueUsers>1</a:UniqueUsers><a:Views>2</a:Views></a:SummaryUsageResponseItem>"
+    "<a:SummaryUsageResponseItem><a:MinutesViewed>0</a:MinutesViewed><a:Time>2026-09-21T00:00:00Z</a:Time><a:UniqueUsers>0</a:UniqueUsers><a:Views>0</a:Views></a:SummaryUsageResponseItem>"
+    "<a:SummaryUsageResponseItem><a:MinutesViewed>3.1</a:MinutesViewed><a:Time>2026-09-22T00:00:00Z</a:Time><a:UniqueUsers>1</a:UniqueUsers><a:Views>5</a:Views></a:SummaryUsageResponseItem>"
+    "</GetSessionSummaryUsageResult></GetSessionSummaryUsageResponse></Body></Envelope>"
+)
+
+
 class TestRecordingDetails(SimpleTestCase):
     def test_the_caption_language_is_read_off_its_url(self):
         self.assertEqual(caption_language("https://x/GenerateSRT.ashx?id=1&language=Danish"), "da")
@@ -933,11 +952,44 @@ class TestRecordingDetails(SimpleTestCase):
         self.assertEqual((media["tags"], media["views"]), (["biology"], 2))
         self.assertEqual(sum(1 for asked in client.asked if asked == "/sessions/s1/viewers"), 2)
 
+    def test_views_are_every_play_panopto_ever_counted(self):
+        client = tree_client()
+        client.soaps["GetSessionSummaryUsage"] = SUMMARY_USAGE_XML
+        client.calls["/sessions/s1"] = {"Id": "s1", "Folder": "g1", "StartTime": "2026-09-26T15:03:18Z"}
+        client.calls["/sessions/s1/viewers"] = lambda pageNumber: {"Results": [{"User": {"Id": "a"}}]}
+        self.assertEqual(make_provider(client).fetch_media("s1")["views"], 7)
+        body = next(asked[1] for asked in client.asked if asked[0] == "GetSessionSummaryUsage")
+        self.assertIn("<beginRange>2000-01-01T00:00:00Z</beginRange>", body)
+        self.assertIn("<granularity>Daily</granularity>", body)
+        self.assertNotIn("/sessions/s1/viewers", client.asked)
+
     def test_viewers_are_paged_until_nobody_new_shows_up(self):
         pages = [[{"User": {"Id": "a"}}], [{"User": {"Id": "b"}}], []]
         client = tree_client()
         client.calls["/sessions/s1/viewers"] = lambda pageNumber: {"Results": pages[pageNumber]}
         self.assertEqual(make_provider(client).session_viewers("s1"), 2)
+
+
+class TestAccessLevel(SimpleTestCase):
+    def test_the_access_level_comes_from_rest(self):
+        client = tree_client()
+        client.calls["/sessions/s1"] = {"Id": "s1", "Folder": "g1"}
+        client.calls["/sessions/s1/settings/access"] = {"IsInherited": False, "Level": "OrganizationUnlisted"}
+        self.assertEqual(make_provider(client).fetch_media("s1")["access_level"], "OrganizationUnlisted")
+
+    def test_an_unreadable_access_level_is_empty(self):
+        self.assertEqual(make_provider(tree_client()).session_access_level("s1"), "")
+
+    def test_unlisted_levels_become_unlisted_and_the_rest_follow_the_level(self):
+        self.assertEqual(recording_state("OrganizationUnlisted", False), "unlisted")
+        self.assertEqual(recording_state("PublicUnlisted", True), "unlisted")
+        self.assertEqual(recording_state("Public", False), "public")
+        self.assertEqual(recording_state("Organization", True), "private")
+        self.assertEqual(recording_state("Restricted", False), "private")
+
+    def test_without_a_level_the_public_flag_decides(self):
+        self.assertEqual(recording_state("", True), "public")
+        self.assertEqual(recording_state("", False), "private")
 
 
 class TestPlaylists(SimpleTestCase):

@@ -3,9 +3,10 @@
 Panopto authenticates an API client against a user, not against itself: the client is
 created as a "User-Based Server Application" and exchanges a service account's password
 for a token, which is why the connection asks for both. Everything the migration reads
-goes through /Panopto/api/v1 with that token, except the user list, group members and
-access levels: the REST API offers none of them, so those go to the older SOAP services,
-which authenticate with the same account's password rather than a token.
+goes through /Panopto/api/v1 with that token, except the user list, group members,
+access levels and play counts: the REST API offers none of them, so those go to the
+older SOAP services, which authenticate with the same account's password rather than a
+token.
 
 The media file is the exception. The REST API describes a session but will not hand over
 its video, so the file comes from the same podcast URL the viewer's download button uses,
@@ -17,6 +18,7 @@ import hashlib
 import logging
 import re
 import time
+from datetime import timedelta
 from urllib.parse import parse_qs, urlparse
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
@@ -25,6 +27,7 @@ import requests
 from django.conf import settings
 from django.conf.locale import LANG_INFO
 from django.core.cache import cache
+from django.utils import timezone
 
 from .base import BaseProvider
 
@@ -42,6 +45,9 @@ ACCESS_SOAP_PATH = "/Panopto/PublicAPI/4.0/AccessManagement.svc"
 ACCESS_SOAP_CONTRACT = "http://tempuri.org/IAccessManagement"
 SESSION_SOAP_PATH = "/Panopto/PublicAPI/4.6/SessionManagement.svc"
 SESSION_SOAP_CONTRACT = "http://tempuri.org/ISessionManagement"
+USAGE_SOAP_PATH = "/Panopto/PublicAPI/4.0/UsageReporting.svc"
+USAGE_SOAP_CONTRACT = "http://tempuri.org/IUsageReporting"
+USAGE_SINCE = "2000-01-01"
 ARRAYS_NAMESPACE = "http://schemas.microsoft.com/2003/10/Serialization/Arrays"
 SOAP_TYPES = "http://schemas.datacontract.org/2004/07/Panopto.Server.Services.PublicAPI.V40"
 PODCAST_PATH = "/Panopto/Podcast/Download/{session_id}.mp4"
@@ -55,7 +61,29 @@ PERSONAL_ROOT_FOLDER = "users"
 GROUP_TYPE_SYSTEM = 1
 GROUP_TYPE_EXTERNAL = 2
 
-SYSTEM_ROLES = {2: "admin", 1: "editor"}
+UNLISTED_LEVELS = ("OrganizationUnlisted", "PublicUnlisted")
+
+SYSTEM_ROLE_NAMES = {0: "None", 1: "Videographer", 2: "Admin"}
+
+DEFAULT_ROLE_MAP = [
+    {"id": "", "name": "Admin", "role": "admin"},
+    {"id": "", "name": "Videographer", "role": "editor"},
+    {"id": "", "name": "None", "role": ""},
+]
+
+RBAC_ROLE_RANK = ("member", "contributor", "manager")
+SHARE_ROLE_RANK = ("viewer", "editor", "owner")
+
+DEFAULT_FOLDER_ROLE_MAP = [
+    {"name": "Viewer with Link", "share": "", "rbac": ""},
+    {"name": "Viewer", "share": "viewer", "rbac": "member"},
+    {"name": "Creator", "share": "editor", "rbac": "contributor"},
+    {"name": "Content Organizer", "share": "editor", "rbac": "contributor"},
+    {"name": "Caption Requester", "share": "editor", "rbac": "contributor"},
+    {"name": "Publisher", "share": "owner", "rbac": "manager"},
+    {"name": "Analytics Manager", "share": "owner", "rbac": "manager"},
+    {"name": "DropboxViewer", "share": "", "rbac": ""},
+]
 
 ACCESS_LISTS = {
     "UsersWithViewerAccess": ("User", "Viewer"),
@@ -134,6 +162,28 @@ def tag_titles(rows):
         if str(title).strip():
             titles.append(str(title).strip())
     return titles
+
+
+def system_role_name(value):
+    """Panopto's name for a system role, which REST reports as a number and SOAP as a name"""
+    try:
+        return SYSTEM_ROLE_NAMES.get(int(value), "")
+    except (TypeError, ValueError):
+        return str(value or "")
+
+
+def recording_state(level, public):
+    """MediaCMS state for a recording: its Panopto access level when known, its public flag otherwise"""
+    if level in UNLISTED_LEVELS:
+        return "unlisted"
+    if level:
+        return "public" if level == "Public" else "private"
+    return "public" if public else "private"
+
+
+def role_key(name):
+    """A folder role name ready to compare: "Viewer with Link" and ViewerWithLink are one role"""
+    return re.sub(r"[^a-z0-9]", "", str(name or "").lower())
 
 
 def access_details(element):
@@ -437,6 +487,8 @@ class PanoptoProvider(BaseProvider):
         "migrate_playlists": True,
         "lti_platform_id": "",
         "max_items": None,
+        "role_map": DEFAULT_ROLE_MAP,
+        "folder_role_map": DEFAULT_FOLDER_ROLE_MAP,
     }
 
     def __init__(self, connection, options):
@@ -642,6 +694,14 @@ class PanoptoProvider(BaseProvider):
             return self.describe_access(False, [])
         return self.describe_access(*access_details(result))
 
+    def session_access_level(self, session_id):
+        """Restricted, Organization, Public or their Unlisted variants: only REST tells unlisted apart"""
+        try:
+            return str((self.client.call(f"/sessions/{session_id}/settings/access") or {}).get("Level") or "")
+        except PanoptoAPIError as exc:
+            logger.info("panopto: access level of session %s unreadable: %s", session_id, exc)
+            return ""
+
     def session_start_time(self, session_id):
         body = f'<sessionIds xmlns:a="{ARRAYS_NAMESPACE}"><a:guid>{escape(session_id)}</a:guid></sessionIds>'
         try:
@@ -657,6 +717,16 @@ class PanoptoProvider(BaseProvider):
         except PanoptoAPIError as exc:
             logger.info("panopto: tags of session %s unreadable: %s", session_id, exc)
             return []
+
+    def session_views(self, session_id):
+        end = (timezone.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        body = f"<sessionId>{escape(session_id)}</sessionId><beginRange>{USAGE_SINCE}T00:00:00Z</beginRange>" f"<endRange>{end}T00:00:00Z</endRange><granularity>Daily</granularity>"
+        try:
+            answered = self.client.soap("GetSessionSummaryUsage", body, USAGE_SOAP_PATH, USAGE_SOAP_CONTRACT)
+        except PanoptoAPIError as exc:
+            logger.info("panopto: views of session %s unreadable, counting viewers instead: %s", session_id, exc)
+            return self.session_viewers(session_id)
+        return sum(int(node.text or 0) for node in answered.iter() if local_name(node) == "Views")
 
     def session_viewers(self, session_id):
         viewers = set()
@@ -810,10 +880,12 @@ class PanoptoProvider(BaseProvider):
         ends a phase and a filtered out page is not the end of anything.
         """
         if phase == "users":
+            if (cursor or {}).get("done"):
+                return [], dict(cursor)
             page = int((cursor or {}).get("page") or 0)
             ids, total = self.list_users(page, page_size)
             if not ids or (page + 1) * page_size >= total:
-                return ids, {"page": page}
+                return ids, {"page": page + 1, "done": True}
             return ids, {"page": page + 1}
 
         if phase == "categories":
@@ -887,7 +959,7 @@ class PanoptoProvider(BaseProvider):
             "duration": session.get("Duration") or 0,
             "created_at": session.get("StartTime") or self.session_start_time(session_id),
             "tags": self.session_tags(session_id),
-            "views": self.session_viewers(session_id),
+            "views": self.session_views(session_id),
             "owner": {"id": str(creator.get("Id") or ""), "username": creator.get("Username") or ""},
             "folder": {
                 "id": str(folder.get("Id") or folder_id),
@@ -898,6 +970,7 @@ class PanoptoProvider(BaseProvider):
             },
             "folder_kind": self.folder_kind(folder_id) if folder_id else "folder",
             "access": self.session_access(session_id),
+            "access_level": self.session_access_level(session_id),
             "download_url": urls.get("DownloadUrl") or self.client.podcast_url(source_id),
             "captions": captions,
         }
@@ -928,7 +1001,7 @@ class PanoptoProvider(BaseProvider):
             "username": user.get("Username") or "",
             "email": (user.get("Email") or "").strip(),
             "fullName": " ".join(part for part in (first, last) if part),
-            "role": SYSTEM_ROLES.get(user.get("SystemRole"), ""),
+            "roleName": system_role_name(user.get("SystemRole")),
         }
 
     def download(self, url, dest_path):

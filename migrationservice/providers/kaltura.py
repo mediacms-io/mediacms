@@ -44,7 +44,7 @@ CATEGORY_PRIVATE = "private"
 
 CATEGORY_PERMISSION_ROLES = {
     0: "manager",
-    1: "contributor",
+    1: "manager",
     2: "contributor",
     3: "member",
 }
@@ -552,9 +552,9 @@ def category_type(category):
     unrecognised privacy value is read as the most restrictive: guessing generously leaks.
     """
     if category_tree_kind(category) == LMS_TREE:
-        # outside a privacy context these fields are inert; reading them would gate what
-        # nobody was gating
-        return CATEGORY_PUBLIC
+        # its privacy fields are inert outside a privacy context; the course itself is
+        # what gates it, so it is private and reached through the course's group
+        return CATEGORY_PRIVATE
 
     privacy = category.get("privacy")
     appear_in_list = category.get("appearInList")
@@ -594,14 +594,12 @@ def needs_rbac_group(category):
 
 CATEGORY_TYPE_STATE = {
     CATEGORY_PUBLIC: "public",
-    CATEGORY_OPEN: "unlisted",
+    CATEGORY_OPEN: "private",
     CATEGORY_RESTRICTED: "private",
     CATEGORY_PRIVATE: "private",
 }
 
 STATE_PRECEDENCE = ("public", "unlisted", "private")
-
-HOUSEKEEPING_PRECEDENCE = ("private", "unlisted")
 
 
 def kms_housekeeping_name(full_name):
@@ -615,8 +613,10 @@ def media_state(categories, display_in_search=None, moderation_status=None):
     """MediaCMS state for a Kaltura entry.
 
     Kaltura entries carry no state of their own, so it comes from their categories and the
-    most permissive one wins; in no category at all means private. A KMS unlisted or
-    private housekeeping category overrides all others. Being held out of search only
+    most permissive one wins; in no category at all means private. KMS's private
+    housekeeping category overrides all others, while its unlisted one counts as an
+    unlisted category, so an entry also published to a public gallery stays public. Being
+    held out of search only
     ever downgrades, and an entry that has not cleared moderation is private wherever it
     sits. A bare privacy integer is still accepted alongside category dicts.
     """
@@ -635,9 +635,10 @@ def media_state(categories, display_in_search=None, moderation_status=None):
         elif category is not None:
             states.append(CATEGORY_TYPE_STATE[category_type({"privacy": category})])
 
-    for mark in HOUSEKEEPING_PRECEDENCE:
-        if mark in marks:
-            return mark
+    if "private" in marks:
+        return "private"
+    if "unlisted" in marks:
+        states.append("unlisted")
 
     state = "private"
     for candidate in STATE_PRECEDENCE:
@@ -1012,16 +1013,13 @@ class KalturaProvider(BaseProvider):
 
         if phase == "users":
             # Kaltura ignores a filter field it does not support, so this was verified live
-            users, next_cursor = self.client.list_page_by_index("user", cursor, page_size, {"typeIn": str(USER_TYPE_USER)})
-            return [str(user["id"]) for user in users if user.get("id") and not is_system_user(user.get("id"))], next_cursor
+            return self._list_kept("user", cursor, page_size, {"typeIn": str(USER_TYPE_USER)}, lambda user: not is_system_user(user.get("id")))
 
         if phase == "playlists":
-            playlists, next_cursor = self.client.list_page_by_index("playlist", cursor, page_size)
-            return [str(p["id"]) for p in playlists if p.get("id") and self.playlist_is_migratable(p)], next_cursor
+            return self._list_kept("playlist", cursor, page_size, None, self.playlist_is_migratable)
 
         if phase == "groups":
-            groups, next_cursor = self.client.list_page_by_index("user", cursor, page_size, {"typeIn": str(USER_TYPE_GROUP)})
-            return [str(group["id"]) for group in groups if group.get("id")], next_cursor
+            return self._list_kept("user", cursor, page_size, {"typeIn": str(USER_TYPE_GROUP)}, lambda group: True)
 
         if phase == "categories":
             return self._list_importable_categories(cursor, page_size)
@@ -1070,6 +1068,16 @@ class KalturaProvider(BaseProvider):
         if ">" not in full_name and is_instance_root(full_name, self._all_category_paths()):
             return False
         return is_importable_category(full_name) and self._within_selection(full_name)
+
+    def _list_kept(self, service, cursor, page_size, kfilter, keep):
+        while True:
+            objects, next_cursor = self.client.list_page_by_index(service, cursor, page_size, kfilter)
+            if not objects:
+                return [], cursor
+            kept = [str(item["id"]) for item in objects if item.get("id") and keep(item)]
+            if kept:
+                return kept, next_cursor
+            cursor = next_cursor
 
     def _list_importable_categories(self, cursor, page_size):
         """One page of categories worth importing.

@@ -48,28 +48,39 @@ happily and then has nothing to hand over.
 | Only migrate below listed users | off | Only recordings owned by the listed users, given as Panopto user ids, usernames or emails. The others are recorded as skipped. |
 | Only migrate users that own media | on | An owner is created as their recordings arrive. A recording whose owner cannot be resolved goes to `admin`. |
 | Import captions | on | Only when Panopto offers a caption file for the recording. The caption keeps its language: a Danish caption arrives as Danish. |
-| Preserve views | on | Panopto keeps no play count, so the number of people who watched the recording is carried over instead. |
-| Migrate playlists | on | Playlists in the chosen folders, holding the recordings of theirs that this migration brought over. |
+| Preserve views | on | The play count is the sum of the Views Panopto reports for the recording (SOAP UsageReporting GetSessionSummaryUsage, daily totals since 2000). If that cannot be read, the number of people who watched it is carried over instead. Panopto counts the migration's own download as a view, so each run adds one there; the count is read before the download, so it is not carried over. |
+| Migrate playlists | on | Playlists in the chosen folders, holding their recordings that any migration of this Panopto brought over. Panopto does not expose who made a playlist, so it goes to whoever owns most of its recordings, or to the fallback owner if none was migrated; the log says which. A playlist waiting on a failed recording is recorded as failed, and a re-run adds the recording to it. |
 | LTI platform for LMS courses | none | Course folders of an LMS integration are wired to this platform, keyed on the LMS course id Panopto keeps on the course groups, so a course launch lands in the migrated category. Their `[assignments]` folders are not. Needs LTI and RBAC switched on. |
 | Include My Folder recordings | on | Recordings in everyone's My Folder come along whatever folders are chosen. The `Users` and `Remote Recorders` folders are never offered as folders to choose. |
 
 ## What a run does
 
-Users first when **Migrate all users** is on, then the folders, then the recordings. For
-each recording: the owner (`/sessions/{id}` names the creator, `/users/{id}` gives the
-username, email and system role, matched by email first), then the file, then its state,
-folder and sharing, then the caption if there is one.
+Users first when **Migrate all users** is on, then the folders, then the recordings, then
+the playlists. For each recording: the owner, then the file, then its state, folder and
+sharing, then the caption if there is one.
+
+The owner is the creator `/sessions/{id}` names, and `/users/{id}` gives their username,
+email and system role. Accounts are matched the way Kaltura's are (see *How users are
+matched* in the Kaltura docs): an earlier record first, then the email, then the username.
+Panopto lets several accounts share an email, typically a native one and the one an LMS
+created, such as `jdoe` and `MoodleTrial-Instance\jdoe`. They stay two accounts: the second
+gets its own username and a unique address on the reserved `email-conflict.invalid` domain,
+the run log names the conflict, and searching users for that domain afterwards lists every
+account whose email an administrator still has to set.
 
 With **Migrate all users** off, only people who own a migrated recording, or who a migrated
-folder or recording names, get an account. A new account takes Panopto's system role:
-Administrator becomes a superuser, Videographer an editor, everyone else a plain user. The
-newer Panopto roles are not exposed by its API, so they cannot be carried over.
+folder or recording names, get an account. A new account takes Panopto's system role,
+mapped on the **Global role mapping** tab: by default Admin becomes a superuser, Videographer
+an editor and None a plain user. These three are all Panopto's API exposes (REST `SystemRole`,
+SOAP `SetSystemRole`); global roles such as Caption Requester exist only in Panopto's admin
+pages, so they cannot be carried over.
 
 ### Folders
 
 * **My Folder** trees, under `Users`, do not become categories. Their recordings go to their
   owner's media, shared with the people and groups the folder and the recording name.
-* **Remote Recorders** does not become a category either; its recordings arrive uncategorised.
+* **Remote Recorders** does not become a category either, and cannot be chosen, so its
+  recordings are not migrated.
 * **Every other folder** inside the chosen ones becomes a category, keyed on the Panopto folder
   guid, whether or not it holds recordings. A public folder becomes a plain category. Any other
   folder becomes an RBAC category with a group of the people and groups it names, an LMS course
@@ -78,25 +89,36 @@ newer Panopto roles are not exposed by its API, so they cannot be carried over.
 
 ### Access
 
-Panopto's access settings are read from its SOAP AccessManagement service, where "Your
-Organisation" and "Public" are built in groups:
+A recording's state comes from REST `/sessions/{id}/settings/access`, whose level already
+accounts for what the folder passes down, and the only place the unlisted variants can be
+told apart. Who is named, and with which role, comes from the SOAP AccessManagement service,
+where "Your Organisation" and "Public" are built in groups. If the level cannot be read, the
+SOAP reading decides between public and private.
 
 | Panopto | Recording | Folder |
 | --- | --- | --- |
 | Public | public | plain category |
+| Public (Unlisted) | unlisted | RBAC category, its owner decides who else |
+| Your Organisation (Unlisted) | unlisted | RBAC category, its owner decides who else |
 | Your Organisation | private | RBAC category, its owner decides who else |
-| Restricted, people named | private, shared with them (My Folder) | RBAC category with them as members |
+| Restricted, people named | private, shared with them | RBAC category with them as members |
 | Restricted, owner only | private | RBAC category with the owner |
 
-Panopto's API does not say whether something is unlisted: "Your Organisation (Unlisted)" reads
-as Your Organisation and "Public (Unlisted)" as Restricted, owner only, so both arrive private.
+People named on a recording are shared on it as co-viewer, co-editor or co-owner, in any
+folder: MediaCMS has category roles only for a whole category, so adding them to the
+folder's group would open every recording in it to them. In My Folder the people the folder
+names are shared on each recording the same way, since there is no category to hold them.
+
+The folder roles are mapped on the **Folder role mapping** tab, by name, ignoring case and
+spaces, so `Viewer with Link` and `ViewerWithLink` are one role. A role not listed grants
+nothing. The defaults:
 
 | Panopto role | Shared recording | RBAC category |
 | --- | --- | --- |
 | Viewer | co-viewer | member |
 | Creator, Content Organizer, Caption Requester | co-editor | contributor |
 | Publisher, Analytics Manager | co-owner | manager |
-| Viewer with Link | nothing | nothing |
+| Viewer with Link, DropboxViewer | nothing | nothing |
 
 Somebody named twice keeps the highest role. A recording's owner is always a contributor of
 its folder's group.
@@ -139,11 +161,11 @@ skip-transcoding option: MediaCMS encodes its own ladder from that file.
 | --- | --- |
 | Users | the REST API creates users but will not list them, so the users phase goes over SOAP. |
 | Captions | no endpoint. Only a `CaptionDownloadUrl` on the recording, usually null; its `language` parameter gives the language. |
-| Views | no play count, only the list of people who watched, which is what is carried over. |
+| Views | no REST play count; SOAP UsageReporting GetSessionSummaryUsage has it, with the list of people who watched as the fallback. |
 | Dates | the REST API leaves `StartTime` empty, so the date comes from the SOAP SessionManagement service. |
 | Tags | `/sessions/{id}/tags`. |
-| Unlisted | not exposed by any API version, so unlisted folders and recordings arrive private. |
-| Roles | only Administrator and Videographer are exposed as system roles. |
+| Unlisted | only REST `/sessions/{id}/settings/access` and `/folders/{id}/settings/access` tell it apart; SOAP access details do not. |
+| Roles | only the system roles Admin, Videographer and None are exposed; global roles are not. |
 | Counts | no REST listing returns a total; the SOAP user list does. |
 
 **Discovery is search-led.** `searchQuery` cannot be empty and matches word *prefixes*, so

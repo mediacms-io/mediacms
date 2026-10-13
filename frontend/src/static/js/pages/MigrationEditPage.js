@@ -168,10 +168,42 @@ const MEDIACMS_ROLES = [
   { value: 'admin', label: 'Super user and staff' },
 ];
 
+const PANOPTO_ROLE_MAP = [
+  { id: '', name: 'Admin', role: 'admin' },
+  { id: '', name: 'Videographer', role: 'editor' },
+  { id: '', name: 'None', role: '' },
+];
+
+const PANOPTO_FOLDER_ROLE_MAP = [
+  { name: 'Viewer with Link', share: '', rbac: '' },
+  { name: 'Viewer', share: 'viewer', rbac: 'member' },
+  { name: 'Creator', share: 'editor', rbac: 'contributor' },
+  { name: 'Content Organizer', share: 'editor', rbac: 'contributor' },
+  { name: 'Caption Requester', share: 'editor', rbac: 'contributor' },
+  { name: 'Publisher', share: 'owner', rbac: 'manager' },
+  { name: 'Analytics Manager', share: 'owner', rbac: 'manager' },
+  { name: 'DropboxViewer', share: '', rbac: '' },
+];
+
+const SHARE_ROLES = [
+  { value: '', label: 'None' },
+  { value: 'viewer', label: 'Co-viewer' },
+  { value: 'editor', label: 'Co-editor' },
+  { value: 'owner', label: 'Co-owner' },
+];
+
+const RBAC_ROLES = [
+  { value: '', label: 'None' },
+  { value: 'member', label: 'Member' },
+  { value: 'contributor', label: 'Contributor' },
+  { value: 'manager', label: 'Manager' },
+];
+
 const TABS = [
   { id: 'connection', label: 'Connection' },
   { id: 'options', label: 'Import options' },
-  { id: 'roles', label: 'Global role mapping', providers: ['kaltura'] },
+  { id: 'roles', label: 'Global role mapping', providers: ['kaltura', 'panopto'] },
+  { id: 'folder_roles', label: 'Folder role mapping', providers: ['panopto'] },
   { id: 'schedule', label: 'Migration scheduling' },
 ];
 
@@ -276,6 +308,8 @@ const PANOPTO_DEFAULT_OPTIONS = Object.assign(
     preserve_views: true,
     migrate_playlists: true,
     lti_platform_id: '',
+    role_map: PANOPTO_ROLE_MAP,
+    folder_role_map: PANOPTO_FOLDER_ROLE_MAP,
   },
   SCHEDULE_DEFAULTS
 );
@@ -517,6 +551,13 @@ export class MigrationEditPage extends Page {
     });
 
     return Object.assign({}, this.state.options, { role_map });
+  }
+
+  setFolderRoleFor(index, target, value) {
+    const folder_role_map = (this.state.options.folder_role_map || []).map((row, position) =>
+      position === index ? Object.assign({}, row, { [target]: value }) : row
+    );
+    this.setOptionValue('folder_role_map', folder_role_map);
   }
 
   setRoleFor(index, value) {
@@ -902,7 +943,94 @@ export class MigrationEditPage extends Page {
     );
   }
 
+  renderPanoptoRoleMap() {
+    const rows = this.state.options.role_map || [];
+
+    return (
+      <>
+        <p className="migration-edit-help">
+          {translateString('Map Panopto\u2019s system roles with MediaCMS\u2019s global roles.')}
+          <br />
+          {translateString(
+            'Panopto exposes only these three to its API: global roles such as Caption Requester are not readable, so they cannot be mapped.'
+          )}
+        </p>
+
+        <div className="migration-edit-roles">
+          <div className="migration-edit-role migration-edit-role--head">
+            <span>{translateString('Source role')}</span>
+            <span></span>
+            <span>{translateString('MediaCMS role')}</span>
+          </div>
+          {rows.map((row, index) => (
+            <div className="migration-edit-role" key={(row.name || '') + '-' + index}>
+              <span>{row.name}</span>
+              <span></span>
+              <select value={row.role || ''} onChange={(e) => this.setRoleFor(index, e.target.value)}>
+                {MEDIACMS_ROLES.map((choice) => (
+                  <option key={choice.value} value={choice.value}>
+                    {translateString(choice.label)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        <p className="migration-edit-help">
+          {translateString(
+            'Only applied to accounts created by this migration. Existing accounts retain their roles as they are.'
+          )}
+        </p>
+      </>
+    );
+  }
+
+  renderFolderRoleMap() {
+    const rows = this.state.options.folder_role_map || [];
+    const choose = (index, target, choices, value) => (
+      <select value={value || ''} onChange={(e) => this.setFolderRoleFor(index, target, e.target.value)}>
+        {choices.map((choice) => (
+          <option key={choice.value} value={choice.value}>
+            {translateString(choice.label)}
+          </option>
+        ))}
+      </select>
+    );
+
+    return (
+      <>
+        <p className="migration-edit-help">
+          {translateString('Map the roles people hold on Panopto folders and recordings.')}
+          <br />
+          {translateString(
+            'In My Folder they become sharing of the media, in any other folder membership of the category.'
+          )}
+        </p>
+
+        <div className="migration-edit-roles migration-edit-roles--folders">
+          <div className="migration-edit-role migration-edit-role--head">
+            <span>{translateString('Source role')}</span>
+            <span>{translateString('My Folder sharing')}</span>
+            <span>{translateString('Category membership')}</span>
+          </div>
+          {rows.map((row, index) => (
+            <div className="migration-edit-role" key={(row.name || '') + '-' + index}>
+              <span>{row.name}</span>
+              {choose(index, 'share', SHARE_ROLES, row.share)}
+              {choose(index, 'rbac', RBAC_ROLES, row.rbac)}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
   renderRoleMap() {
+    if ('panopto' === this.state.provider) {
+      return this.renderPanoptoRoleMap();
+    }
+
     const rows = this.state.options.role_map || [];
 
     return (
@@ -1160,6 +1288,8 @@ export class MigrationEditPage extends Page {
 
 
             <div hidden={'roles' !== this.state.activeTab}>{this.renderRoleMap()}</div>
+
+            <div hidden={'folder_roles' !== this.state.activeTab}>{this.renderFolderRoleMap()}</div>
 
             <div hidden={'schedule' !== this.state.activeTab}>{this.renderSchedule()}</div>
 

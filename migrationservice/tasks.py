@@ -1,8 +1,12 @@
+import hashlib
 import logging
 import os
+import re
 import shutil
 import tempfile
 import time
+from collections import Counter
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
@@ -11,7 +15,7 @@ from celery import shared_task as task
 from django.conf import settings
 from django.conf.locale import LANG_INFO
 from django.core.files import File
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -59,6 +63,13 @@ from .providers.kaltura import (
     sanitize_username,
     unique_category_title,
 )
+from .providers.panopto import (
+    DEFAULT_FOLDER_ROLE_MAP,
+    RBAC_ROLE_RANK,
+    SHARE_ROLE_RANK,
+    recording_state,
+    role_key,
+)
 from .providers.youtube import pick_profile
 from .scheduling import (
     QUIET_RECHECK_SECONDS,
@@ -105,6 +116,87 @@ def unique_username(candidate):
         index += 1
 
 
+CONFLICT_EMAIL_DOMAIN = "email-conflict.invalid"
+
+
+def claimed_by_another(service, user, source_id):
+    return (
+        MigrationRecord.objects.filter(
+            service__source_system=service.source_system,
+            object_type="user",
+            target_id=user.pk,
+            status="success",
+        )
+        .exclude(source_id=str(source_id))
+        .exists()
+    )
+
+
+def conflict_email(username):
+    """A unique address on a reserved domain, for an account whose real email is taken"""
+    local = re.sub(r"[^a-z0-9._-]+", "-", username.lower()).strip("-.") or "user"
+    candidate = f"{local}@{CONFLICT_EMAIL_DOMAIN}"
+    index = 2
+    while User.objects.filter(email__iexact=candidate).exists():
+        candidate = f"{local}-{index}@{CONFLICT_EMAIL_DOMAIN}"
+        index += 1
+    return candidate
+
+
+def claim_key(email):
+    return int.from_bytes(hashlib.blake2b(email.lower().encode("utf-8"), digest_size=8).digest(), "big", signed=True)
+
+
+@contextmanager
+def claiming(email):
+    """Serialise the imports of source users sharing an email until one has claimed it.
+
+    Parallel workers would otherwise both find the account unclaimed, since the claim is
+    the record written at the end. The lock is a transaction scoped advisory lock, so it
+    is released by the commit, or by a rollback if the import fails.
+    """
+    with transaction.atomic():
+        if email:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_xact_lock(%s)", [claim_key(email)])
+        yield
+
+
+def link_or_create_user(service, source_id, username, email, name):
+    """The MediaCMS account for one source user, and whether it was created.
+
+    A source user already migrated keeps its account. Otherwise an email links to the
+    account holding it, unless another source user of the same system got there first:
+    sources let several accounts share an email, so the later one gets an account of its
+    own with an address on a reserved domain, for an administrator to correct. A username
+    only links to an account with no email of its own.
+    """
+    migrated = MigrationRecord.already_migrated(service.source_system, "user", str(source_id))
+    if migrated is not None:
+        return migrated.target(), False
+
+    user = None
+    taken_by = None
+    if email:
+        user = User.objects.filter(email__iexact=email).first()
+        if user is not None and claimed_by_another(service, user, source_id):
+            user, taken_by = None, user
+    if user is None:
+        candidate = User.objects.filter(username__iexact=username).first()
+        if candidate is not None and not candidate.email and not claimed_by_another(service, candidate, source_id):
+            user = candidate
+    if user is not None:
+        return user, False
+
+    user = User(username=unique_username(username), email=conflict_email(username) if taken_by else email, name=name)
+    user.set_unusable_password()
+    user._skip_admin_notification = True
+    user.save()
+    if taken_by:
+        service.append_log(f"user {source_id}: {email} already belongs to {taken_by.username}, created {user.username} as {user.email}")
+    return user, True
+
+
 def import_user(service, provider, source_id):
     """Create or link the MediaCMS user for one source user, and record it"""
     options = service.get_options()
@@ -112,48 +204,17 @@ def import_user(service, provider, source_id):
 
     email = (payload.get("email") or "").strip()
     username = sanitize_username(payload.get("id") or source_id)
+    with claiming(email):
+        user, created = link_or_create_user(service, source_id, username, email, payload.get("fullName") or payload.get("screenName") or username)
 
-    user = None
-    if email:
-        user = User.objects.filter(email__iexact=email).first()
-    if user is None:
-        # an account with an email of its own is a different person who merely collides
-        # on the sanitised name
-        candidate = User.objects.filter(username__iexact=username).first()
-        if candidate is not None and not candidate.email:
-            claimed = (
-                MigrationRecord.objects.filter(
-                    service__source_system=service.source_system,
-                    object_type="user",
-                    target_id=candidate.pk,
-                    status="success",
-                )
-                .exclude(source_id=str(source_id))
-                .exists()
-            )
-            if not claimed:
-                user = candidate
+        if created:
+            role = mediacms_role(payload.get("roleId"), payload.get("roleName"), options.get("role_map"))
+            if role:
+                # only for a mapped role: set_role_from_mapping resets everything on an unknown value
+                user.set_role_from_mapping(role)
 
-    created = False
-    if user is None:
-        user = User(
-            username=unique_username(username),
-            email=email,
-            name=payload.get("fullName") or payload.get("screenName") or username,
-        )
-        user.set_unusable_password()
-        user._skip_admin_notification = True
-        user.save()
-        created = True
-
-    if created:
-        role = mediacms_role(payload.get("roleId"), payload.get("roleName"), options.get("role_map"))
-        if role:
-            # only for a mapped role: set_role_from_mapping resets everything on an unknown value
-            user.set_role_from_mapping(role)
-
-    action = "created" if created else "linked to existing user"
-    record(service, "user", source_id, "success", f"{action} {user.username}", target=user)
+        action = "created" if created else "linked to existing user"
+        record(service, "user", source_id, "success", f"{action} {user.username}", target=user)
     return user
 
 
@@ -408,46 +469,18 @@ def import_youtube_video(service, provider, source_id):
 
 
 def import_panopto_user(service, provider, source_id):
-    """Create or link the MediaCMS account for one Panopto user.
-
-    The matching rules are the ones the other sources use, for the same reasons: an email
-    is a person, and a username is only a person when the account it lands on has no email
-    of its own. Roles are absent because Panopto exposes none through this API.
-    """
+    """Create or link the MediaCMS account for one Panopto user, matched the way the other
+    sources are, with its system role on creation."""
     payload = provider.fetch_user(source_id)
     email = (payload.get("email") or "").strip()
     username = sanitize_username(payload.get("username") or payload.get("id") or source_id)
+    with claiming(email):
+        user, created = link_or_create_user(service, source_id, username, email, payload.get("fullName") or username)
+        role = mediacms_role("", payload.get("roleName"), service.get_options().get("role_map") or [])
+        if created and role:
+            user.set_role_from_mapping(role)
 
-    user = None
-    if email:
-        user = User.objects.filter(email__iexact=email).first()
-    if user is None:
-        candidate = User.objects.filter(username__iexact=username).first()
-        if candidate is not None and not candidate.email:
-            claimed = (
-                MigrationRecord.objects.filter(
-                    service__source_system=service.source_system,
-                    object_type="user",
-                    target_id=candidate.pk,
-                    status="success",
-                )
-                .exclude(source_id=str(source_id))
-                .exists()
-            )
-            if not claimed:
-                user = candidate
-
-    created = False
-    if user is None:
-        user = User(username=unique_username(username), email=email, name=payload.get("fullName") or username)
-        user.set_unusable_password()
-        user._skip_admin_notification = True
-        user.save()
-        created = True
-        if payload.get("role"):
-            user.set_role_from_mapping(payload["role"])
-
-    record(service, "user", source_id, "success", f"{'created' if created else 'linked to existing user'} {user.username}", target=user)
+        record(service, "user", source_id, "success", f"{'created' if created else 'linked to existing user'} {user.username}", target=user)
     return user
 
 
@@ -497,32 +530,16 @@ def unique_panopto_title(title, parent_name, taken):
         index += 1
 
 
-PANOPTO_RBAC_ROLES = {
-    "viewer": "member",
-    "creator": "contributor",
-    "content organizer": "contributor",
-    "caption requester": "contributor",
-    "publisher": "manager",
-    "analytics manager": "manager",
-}
-
-PANOPTO_SHARE_ROLES = {
-    "viewer": "viewer",
-    "creator": "editor",
-    "content organizer": "editor",
-    "caption requester": "editor",
-    "publisher": "owner",
-    "analytics manager": "owner",
-}
-
-RBAC_ROLE_RANK = ("member", "contributor", "manager")
-SHARE_ROLE_RANK = ("viewer", "editor", "owner")
+def panopto_folder_roles(service, target, rank):
+    """Panopto folder role to MediaCMS role, for sharing ("share") or a category ("rbac")"""
+    rows = service.get_options().get("folder_role_map") or DEFAULT_FOLDER_ROLE_MAP
+    return {role_key(row.get("name")): row.get(target) for row in rows if row.get(target) in rank}
 
 
 def panopto_people(service, provider, principals, role_map, rank):
     people = {}
     for principal in principals:
-        role = role_map.get((principal.get("role") or "").strip().lower())
+        role = role_map.get(role_key(principal.get("role")))
         if not role:
             continue
         if principal.get("type") == "User":
@@ -567,7 +584,7 @@ def attach_panopto_group(service, provider, category, folder, access):
         )
     group.categories.add(category)
 
-    people = panopto_people(service, provider, access.get("principals") or [], PANOPTO_RBAC_ROLES, RBAC_ROLE_RANK)
+    people = panopto_people(service, provider, access.get("principals") or [], panopto_folder_roles(service, "rbac", RBAC_ROLE_RANK), RBAC_ROLE_RANK)
     for user, role in people.items():
         grant_rbac_role(group, user, role)
     service.append_log(f"folder {folder_id}: {len(people)} members in group {group.name}")
@@ -682,7 +699,7 @@ def import_panopto_session(service, provider, source_id):
         access = payload.get("access") or {}
         folder_access = provider.folder_access(str(folder["id"])) if folder.get("id") else {}
 
-        media.state = "public" if access.get("public") or folder_access.get("public") else "private"
+        media.state = recording_state(payload.get("access_level"), access.get("public") or folder_access.get("public"))
         media.save(update_fields=["state", "listable"])
 
         if folder_kind == "folder":
@@ -695,7 +712,7 @@ def import_panopto_session(service, provider, source_id):
         principals = list(access.get("principals") or [])
         if folder_kind == "personal":
             principals += folder_access.get("principals") or []
-        for user, permission in panopto_people(service, provider, principals, PANOPTO_SHARE_ROLES, SHARE_ROLE_RANK).items():
+        for user, permission in panopto_people(service, provider, principals, panopto_folder_roles(service, "share", SHARE_ROLE_RANK), SHARE_ROLE_RANK).items():
             if user != media.user:
                 MediaPermission.objects.update_or_create(owner_user=media.user, user=user, media=media, defaults={"permission": permission})
 
@@ -709,32 +726,53 @@ def import_panopto_session(service, provider, source_id):
 
 
 def import_panopto_playlist(service, provider, source_id):
+    """Create, or complete, the MediaCMS playlist for one Panopto playlist.
+
+    Panopto does not say who made a playlist, so without an owner it goes to whoever owns
+    most of its recordings, and to the fallback owner only when none was migrated. A
+    recording counts when any migration of this Panopto brought it over. A playlist whose
+    recordings failed is recorded as failed, so a re-run adds them once they arrive.
+    """
     payload = provider.fetch_playlist(source_id)
 
-    existing = MigrationRecord.objects.filter(service=service, object_type="playlist", source_id=str(source_id), status__in=("success", "skipped")).exclude(target_id=None).first()
-    if existing and existing.target() is not None:
-        return existing.target()
+    existing = MigrationRecord.objects.filter(service=service, object_type="playlist", source_id=str(source_id)).exclude(target_id=None).first()
+    playlist = existing.target() if existing else None
 
-    playlist = Playlist.objects.create(
-        title=(payload.get("name") or f"playlist-{source_id}")[:100],
-        description=payload.get("description") or "",
-        user=resolve_panopto_owner(service, provider, payload.get("owner") or {}),
-    )
-
-    added, missing = 0, []
+    found, missing, failed = [], [], []
     for position, session_id in enumerate(payload.get("entry_ids") or [], start=1):
-        row = MigrationRecord.objects.filter(service=service, object_type="media", source_id=session_id, status="success").exclude(target_id=None).first()
-        media = row.target() if row else None
-        if media is None:
+        row = MigrationRecord.objects.filter(service=service, object_type="media", source_id=session_id).first()
+        media = row.target() if row and row.status in ("success", "skipped") else None
+        if media is not None:
+            found.append((position, media))
+        elif row is not None and row.status == "failed":
+            failed.append(session_id)
+        else:
             missing.append(session_id)
-            continue
-        PlaylistMedia.objects.get_or_create(playlist=playlist, media=media, defaults={"ordering": position})
-        added += 1
 
-    log = f"created playlist {playlist.title} with {added} media"
+    if playlist is None:
+        if (payload.get("owner") or {}).get("id"):
+            owner, picked = resolve_panopto_owner(service, provider, payload["owner"]), "its Panopto owner"
+        elif found:
+            owner, picked = Counter(media.user for _position, media in found).most_common(1)[0][0], "the owner of most of its recordings"
+        else:
+            owner, picked = fallback_owner(service), "the fallback owner"
+        playlist = Playlist.objects.create(
+            title=(payload.get("name") or f"playlist-{source_id}")[:100],
+            description=payload.get("description") or "",
+            user=owner,
+        )
+        log = f"created playlist {playlist.title} for {owner.username}, {picked}"
+    else:
+        log = f"completed playlist {playlist.title}"
+
+    for position, media in found:
+        PlaylistMedia.objects.get_or_create(playlist=playlist, media=media, defaults={"ordering": position})
+    log += f", with {len(found)} media"
     if missing:
         log += f", {len(missing)} not migrated: {', '.join(missing[:5])}"
-    record(service, "playlist", source_id, "success", log, target=playlist)
+    if failed:
+        log += f", {len(failed)} failed, run the migration again to add them: {', '.join(failed[:5])}"
+    record(service, "playlist", source_id, "failed" if failed else "success", log, target=playlist)
     return playlist
 
 

@@ -89,6 +89,21 @@ class TestPeopleAndGroups(SimpleTestCase):
         self.assertEqual(provider.list_page("users", {}, 50), (["jdoe"], {"page": 2}))
         self.assertEqual(provider._client.list_page_by_index.call_args.args[3], {"typeIn": str(USER_TYPE_USER)})
 
+    def test_a_page_of_only_system_accounts_is_not_the_end_of_the_users_phase(self):
+        provider = make_provider()
+        provider._client.list_page_by_index.side_effect = [([{"id": "__ADMIN__"}, {"id": "kmssaasadmin1"}], {"page": 2}), ([{"id": "jdoe"}], {"page": 3})]
+        self.assertEqual(provider.list_page("users", {"page": 1}, 2), (["jdoe"], {"page": 3}))
+
+    def test_a_page_of_only_dynamic_playlists_is_not_the_end_of_the_playlists_phase(self):
+        provider = make_provider()
+        provider._client.list_page_by_index.side_effect = [([static_playlist("dyn", content="<x/>")], {"page": 2}), ([static_playlist("p1")], {"page": 3})]
+        self.assertEqual(provider.list_page("playlists", {"page": 1}, 1), (["p1"], {"page": 3}))
+
+    def test_running_out_of_users_ends_the_phase_where_it_stood(self):
+        provider = make_provider()
+        provider._client.list_page_by_index.side_effect = [([{"id": "__ADMIN__"}], {"page": 2}), ([], {"page": 2})]
+        self.assertEqual(provider.list_page("users", {"page": 1}, 1), ([], {"page": 2}))
+
     def test_the_groups_phase(self):
         provider = make_provider()
         provider._client.list_page_by_index.return_value = ([{"id": "Staff"}, {}], {"page": 2})

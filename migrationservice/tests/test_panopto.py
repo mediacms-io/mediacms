@@ -65,24 +65,28 @@ class TestPanoptoProvider(TestCase):
         self.assertEqual(provider.list_page("groups", {"page": 3}, 10), ([], {"page": 3}))
         self.assertEqual(provider.list_page("unknown", {}, 10), ([], {}))
 
-    def test_the_users_phase_pages_until_the_total_is_reached(self):
+    def test_the_users_phase_pages_until_the_total_is_reached_and_then_ends(self):
         provider = PanoptoProvider(CONNECTION, {})
         pages = {0: (["u1", "u2"], 5), 1: (["u3", "u4"], 5), 2: (["u5"], 5)}
         with mock.patch.object(provider, "list_users", side_effect=lambda page, size: pages[page]) as listed:
             seen, cursor = [], {}
-            for _ in range(5):
-                ids, nxt = provider.list_page("users", cursor, 2)
-                seen += ids
-                if nxt == cursor:
+            for _ in range(10):
+                ids, cursor = provider.list_page("users", cursor, 2)
+                if not ids:
                     break
-                cursor = nxt
+                seen += ids
 
         self.assertEqual(seen, ["u1", "u2", "u3", "u4", "u5"])
-        self.assertEqual([call.args[0] for call in listed.call_args_list], [0, 1, 2])
+        self.assertEqual(listed.call_count, 3)
 
-
-class TestPanoptoShapes(TestCase):
-    """Folder and session records exactly as the live API returns them."""
+    def test_a_single_page_of_users_is_listed_once(self):
+        provider = PanoptoProvider(CONNECTION, {})
+        with mock.patch.object(provider, "list_users", return_value=(["u1", "u2"], 2)) as listed:
+            first = provider.list_page("users", {}, 10)
+            second = provider.list_page("users", first[1], 10)
+        self.assertEqual(first[0], ["u1", "u2"])
+        self.assertEqual(second[0], [])
+        self.assertEqual(listed.call_count, 1)
 
     def test_a_folder_knows_its_own_path(self):
         folder = {
@@ -321,7 +325,7 @@ class TestPanoptoAccessMapping(TestCase):
                 "u1": {"id": "u1", "username": "owner", "email": "owner@example.edu", "fullName": "Owner"},
                 "u2": {"id": "u2", "username": "viewer", "email": "viewer@example.edu", "fullName": "Viewer"},
                 "u3": {"id": "u3", "username": "creator", "email": "creator@example.edu", "fullName": "Creator"},
-                "u4": {"id": "u4", "username": "publisher", "email": "publisher@example.edu", "fullName": "Publisher", "role": "admin"},
+                "u4": {"id": "u4", "username": "publisher", "email": "publisher@example.edu", "fullName": "Publisher", "roleName": "Admin"},
             },
             members={"g-viewers": ["u2"], "g-creators": ["u3"], "g-publishers": ["u4"]},
         )
@@ -339,6 +343,13 @@ class TestPanoptoAccessMapping(TestCase):
         category = media.category.get()
         self.assertEqual(media.state, "public")
         self.assertFalse(category.is_rbac_category)
+
+    def test_an_unlisted_recording_is_unlisted(self):
+        self.provider.access["f1"] = access(organisation=True)
+        self.provider.sessions["s1"] = a_session(owner={"id": "u1", "username": "owner"}, folder_kind="personal", access=access(organisation=True), access_level="OrganizationUnlisted")
+        media = import_panopto_session(self.service, self.provider, "s1")
+        media.refresh_from_db()
+        self.assertEqual(media.state, "unlisted")
 
     def test_a_recording_in_a_restricted_lms_folder_is_private_and_the_course_becomes_an_rbac_group(self):
         principals = [
@@ -414,12 +425,39 @@ class TestPanoptoAccessMapping(TestCase):
         self.assertEqual(MediaPermission.objects.get(media=media).permission, "owner")
 
     def test_a_panopto_administrator_becomes_a_superuser_and_a_videographer_an_editor(self):
-        self.provider.users["u5"] = {"id": "u5", "username": "video", "email": "video@example.edu", "fullName": "Video", "role": "editor"}
+        self.provider.users["u5"] = {"id": "u5", "username": "video", "email": "video@example.edu", "fullName": "Video", "roleName": "Videographer"}
         admin = import_panopto_user(self.service, self.provider, "u4")
         editor = import_panopto_user(self.service, self.provider, "u5")
         self.assertTrue(admin.is_superuser and admin.is_staff)
         self.assertTrue(editor.is_editor)
         self.assertFalse(editor.is_superuser)
+
+    def test_a_panopto_administrator_sharing_an_email_with_an_lms_account_keeps_its_own(self):
+        self.provider.users["u6"] = {"id": "u6", "username": "MoodleTrial-Instance\\publisher", "email": "publisher@example.edu", "fullName": "Publisher", "roleName": "None"}
+        lms = import_panopto_user(self.service, self.provider, "u6")
+        admin = import_panopto_user(self.service, self.provider, "u4")
+        self.assertNotEqual(lms.id, admin.id)
+        self.assertEqual(lms.email, "publisher@example.edu")
+        self.assertEqual((admin.username, admin.email), ("publisher", "publisher@email-conflict.invalid"))
+        self.assertTrue(admin.is_superuser)
+        self.assertFalse(lms.is_superuser)
+
+    def test_the_system_role_map_can_be_overridden(self):
+        service = make_service(role_map=[{"id": "", "name": "Admin", "role": "manager"}])
+        user = import_panopto_user(service, self.provider, "u4")
+        self.assertTrue(user.is_manager)
+        self.assertFalse(user.is_superuser)
+
+    def test_the_folder_role_map_can_be_overridden(self):
+        roles = [{"name": "Viewer", "share": "editor", "rbac": "contributor"}, {"name": "ViewerWithLink", "share": "viewer", "rbac": "member"}]
+        self.service = make_service(folder_role_map=roles)
+        media = self.import_from("personal", access(), access(principals=[{"type": "User", "id": "u2", "role": "Viewer with Link"}, {"type": "User", "id": "u3", "role": "Viewer"}]))
+        self.assertEqual(dict(MediaPermission.objects.filter(media=media).values_list("user__username", "permission")), {"viewer": "viewer", "creator": "editor"})
+
+        self.provider.categories["f9"] = {"id": "f9", "name": "Department A", "fullName": "Department A", "parentName": "", "parentId": ""}
+        self.provider.access["f9"] = access(principals=[{"type": "Group", "id": "g-viewers", "role": "Viewer"}])
+        category = import_panopto_folder(self.service, self.provider, "f9")
+        self.assertEqual(list(RBACMembership.objects.filter(rbac_group__categories=category).values_list("user__username", "role")), [("viewer", "contributor")])
 
     def test_a_folder_with_no_recordings_still_becomes_a_category(self):
         self.provider.categories["f9"] = {"id": "f9", "name": "Department A", "fullName": "Department A", "parentName": "", "parentId": ""}
@@ -467,15 +505,53 @@ class TestPanoptoRecordingDetails(TestCase):
         record = MigrationRecord.objects.get(service=listed, object_type="media", source_id="s1")
         self.assertEqual(record.status, "skipped")
 
-    def test_a_playlist_holds_the_recordings_this_migration_brought_over(self):
+    def test_a_playlist_holds_the_recordings_and_belongs_to_their_owner(self):
         service = make_service()
         media = import_panopto_session(service, self.provider, "s1")
         self.provider.playlists["pl1"] = {"id": "pl1", "name": "Featured", "description": "For the home page", "owner": {}, "entry_ids": ["s1", "not-migrated"]}
         playlist = import_panopto_playlist(service, self.provider, "pl1")
-        self.assertEqual((playlist.title, playlist.description, playlist.user.username), ("Featured", "For the home page", "admin"))
+        self.assertEqual((playlist.title, playlist.description, playlist.user), ("Featured", "For the home page", media.user))
         self.assertEqual(list(playlist.media.all()), [media])
-        self.assertIn("1 not migrated: not-migrated", MigrationRecord.objects.get(service=service, object_type="playlist").log)
+        row = MigrationRecord.objects.get(service=service, object_type="playlist")
+        self.assertEqual(row.status, "success")
+        self.assertIn(f"for {media.user.username}, the owner of most of its recordings", row.log)
+        self.assertIn("1 not migrated: not-migrated", row.log)
         self.assertEqual(import_panopto_playlist(service, self.provider, "pl1"), playlist)
+        self.assertEqual(Playlist.objects.count(), 1)
+
+    def test_a_playlist_with_nothing_migrated_goes_to_the_fallback_owner(self):
+        service = make_service()
+        self.provider.playlists["pl1"] = {"id": "pl1", "name": "Featured", "description": "", "owner": {}, "entry_ids": ["not-migrated"]}
+        playlist = import_panopto_playlist(service, self.provider, "pl1")
+        self.assertEqual(playlist.user.username, "admin")
+        self.assertIn("the fallback owner", MigrationRecord.objects.get(service=service, object_type="playlist").log)
+
+    def test_recordings_an_earlier_migration_brought_over_are_in_the_playlist(self):
+        service = make_service()
+        media = import_panopto_session(service, self.provider, "s1")
+        later = make_service()
+        MigrationRecord.objects.create(service=later, object_type="media", source_id="s1", status="skipped", log="already migrated", target_id=media.pk)
+        self.provider.playlists["pl1"] = {"id": "pl1", "name": "Featured", "description": "", "owner": {}, "entry_ids": ["s1"]}
+        self.assertEqual(list(import_panopto_playlist(later, self.provider, "pl1").media.all()), [media])
+
+    def test_a_playlist_waiting_on_a_failed_recording_is_completed_by_a_rerun(self):
+        service = make_service()
+        media = import_panopto_session(service, self.provider, "s1")
+        failed = MigrationRecord.objects.filter(service=service, object_type="media", source_id="s1")
+        failed.update(status="failed")
+        self.provider.playlists["pl1"] = {"id": "pl1", "name": "Featured", "description": "", "owner": {}, "entry_ids": ["s1"]}
+
+        first = import_panopto_playlist(service, self.provider, "pl1")
+        row = MigrationRecord.objects.get(service=service, object_type="playlist")
+        self.assertEqual((row.status, first.media.count()), ("failed", 0))
+        self.assertIn("1 failed, run the migration again to add them: s1", row.log)
+
+        failed.update(status="success")
+        again = import_panopto_playlist(service, self.provider, "pl1")
+        row.refresh_from_db()
+        self.assertEqual(again, first)
+        self.assertEqual(list(again.media.all()), [media])
+        self.assertEqual(row.status, "success")
         self.assertEqual(Playlist.objects.count(), 1)
 
     @override_settings(USE_LTI=True)
