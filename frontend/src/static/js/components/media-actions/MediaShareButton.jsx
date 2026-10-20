@@ -49,7 +49,7 @@ export function MediaShareButton(props) {
   }
 
   return (
-    <div className="share">
+    <div className="share" data-action-tooltip={translateString('Share')}>
       <PopupTrigger contentRef={popupContentRef}>
         <button>
           <CircleIconButton type="span">

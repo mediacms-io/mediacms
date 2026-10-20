@@ -312,18 +312,6 @@ dialog {
         }
       }
     }
-
-    .disliked-media {
-      > * {
-        > * {
-          &.dislike {
-            &:before {
-              @include border_color_gradient();
-            }
-          }
-        }
-      }
-    }
   }
 
   .media-views-actions {
@@ -335,13 +323,6 @@ dialog {
             &.like button,
             &.like .circle-icon-button {
               @include font_color_gradient();
-            }
-
-            &.like,
-            &.dislike {
-              &:before {
-                @include border_color_gradient();
-              }
             }
           }
         }
@@ -356,13 +337,6 @@ dialog {
             &.dislike button,
             &.dislike .circle-icon-button {
               @include font_color_gradient();
-            }
-
-            &.like,
-            &.dislike {
-              &:before {
-                @include border_color_gradient();
-              }
             }
           }
         }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { textsConfig } from '../../utils/contexts/';
 import { MediaPageStore } from '../../utils/stores/';
-import { formatViewsNumber } from '../../utils/helpers/';
+import { formatViewsNumber, translateString } from '../../utils/helpers/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon } from '../_shared/';
 
@@ -48,7 +48,7 @@ export function MediaDislikeIcon() {
   }, []);
 
   return (
-    <div className="like">
+    <div className="dislike" data-action-tooltip={translateString('Dislike')}>
       <button onClick={toggleDislike}>
         <CircleIconButton type="span">
           <MaterialIcon type="thumb_down" />

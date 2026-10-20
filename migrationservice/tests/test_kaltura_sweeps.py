@@ -234,6 +234,58 @@ class TestCategorySweep(SimpleTestCase):
         self.assertEqual(provider._client.list_entries_page.call_args.args[2]["categoriesFullNameIn"], "MediaSpace>site>galleries")
 
 
+class TestMediaSweepSelection(SimpleTestCase):
+    ROOTS = [
+        {"id": "10", "fullName": "MediaSpace"},
+        {"id": "20", "fullName": "moodle_jPsFc"},
+        {"id": "30", "fullName": "ltigeneric_8yrU6"},
+        {"id": "31", "fullName": "ltigeneric_8yrU6>site"},
+    ]
+    FILED = {"0_kms": {"10"}, "0_moodle": {"20"}, "0_kaf": {"30"}, "0_both": {"10", "30"}, "0_loose": set()}
+
+    def provider(self, selected):
+        def answer(service, action, filter, pager):
+            wanted = set(filter["idIn"].split(","))
+            roots = set(filter["categoryAncestorIdIn"].split(","))
+            return {"objects": [{"id": entry_id} for entry_id in sorted(wanted) if self.FILED[entry_id] & roots]}
+
+        provider = make_provider(answer, source_category_ids=selected)
+        provider._all_categories = mock.Mock(return_value=self.ROOTS)
+        return provider
+
+    def test_media_filed_only_under_roots_nobody_chose_is_left_out(self):
+        provider = self.provider("10,20")
+        provider._client.list_entries_page.return_value = ([{"id": entry_id} for entry_id in self.FILED], {"created_at": 5})
+        self.assertEqual(provider.list_page("media", {}, 10), (["0_kms", "0_moodle", "0_both", "0_loose"], {"created_at": 5}))
+
+    def test_choosing_the_root_brings_its_media(self):
+        provider = self.provider("30")
+        provider._client.list_entries_page.return_value = ([{"id": entry_id} for entry_id in self.FILED], {"created_at": 5})
+        self.assertEqual(provider.list_page("media", {}, 10)[0], ["0_kaf", "0_both", "0_loose"])
+
+    def test_a_page_the_selection_empties_is_not_the_end_of_the_media_phase(self):
+        provider = self.provider("10")
+        provider._client.list_entries_page.side_effect = [([{"id": "0_kaf"}, {"id": "0_moodle"}], {"created_at": 1}), ([{"id": "0_kms"}], {"created_at": 2})]
+        self.assertEqual(provider.list_page("media", {}, 2), (["0_kms"], {"created_at": 2}))
+
+    def test_running_out_of_media_ends_the_phase_where_it_stood(self):
+        provider = self.provider("10")
+        provider._client.list_entries_page.side_effect = [([{"id": "0_kaf"}], {"created_at": 1}), ([], {"created_at": 1})]
+        self.assertEqual(provider.list_page("media", {}, 2), ([], {"created_at": 1}))
+
+    def test_the_unchosen_roots_are_read_once(self):
+        provider = self.provider("10")
+        provider._client.list_entries_page.return_value = ([{"id": "0_kms"}], {"created_at": 1})
+        provider.list_page("media", {}, 2)
+        provider.list_page("media", {}, 2)
+        provider._all_categories.assert_called_once()
+
+    def test_the_total_leaves_out_media_under_unchosen_roots(self):
+        provider = self.provider("10")
+        provider._client.count.side_effect = lambda service, kfilter=None: 3 if (kfilter or {}).get("categoryAncestorIdIn") == "20,30" else 10
+        self.assertEqual(provider._entries_in_selection(), 7)
+
+
 class TestChildEntriesAndCourses(SimpleTestCase):
     def test_the_other_stream_of_a_recording(self):
         provider = make_provider(lambda service, action, filter, pager: {"objects": [{"id": "1_cam"}, {"name": "no id"}]})

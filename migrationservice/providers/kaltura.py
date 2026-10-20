@@ -889,6 +889,7 @@ class KalturaProvider(BaseProvider):
         super().__init__(connection, options)
         self._client = None
         self._selected_paths = None
+        self._unselected_roots = None
         self._category_paths = None
         self._group_ids = None
 
@@ -933,12 +934,21 @@ class KalturaProvider(BaseProvider):
         categories = [category for category in self._all_categories() if self.worth_importing(category)]
 
         return {
+            "entries": self._entries_in_selection(),
             "users": len(self.restricted_user_ids()) or len(people),
             "groups": self.client.count("user", {"typeIn": str(USER_TYPE_GROUP)}) if self.options.get("migrate_groups") else 0,
             "playlists": len(self._migratable_playlists()) if self.options.get("migrate_playlists") else 0,
             "categories": len([c for c in categories if ">site>channels>" not in (c.get("fullName") or "")]),
             "channels": len([c for c in categories if ">site>channels>" in (c.get("fullName") or "")]),
         }
+
+    def _entries_in_selection(self):
+        kfilter = self._entry_filter()
+        total = self.client.count("media", kfilter)
+        unselected = self._unselected_root_ids()
+        if unselected:
+            total -= self.client.count("media", dict(kfilter, categoryAncestorIdIn=",".join(unselected)))
+        return total
 
     def _migratable_playlists(self):
         """The playlists a run would bring. Counted from the objects, not from totalCount,
@@ -1008,8 +1018,16 @@ class KalturaProvider(BaseProvider):
 
     def list_page(self, phase, cursor, page_size):
         if phase == "media":
-            entries, next_cursor = self.client.list_entries_page(cursor, page_size, self._entry_filter())
-            return [str(entry["id"]) for entry in entries], next_cursor
+            while True:
+                entries, next_cursor = self.client.list_entries_page(cursor, page_size, self._entry_filter())
+                if not entries:
+                    return [], next_cursor
+                entry_ids = [str(entry["id"]) for entry in entries]
+                outside = self.outside_selection(entry_ids)
+                kept = [entry_id for entry_id in entry_ids if entry_id not in outside]
+                if kept:
+                    return kept, next_cursor
+                cursor = next_cursor
 
         if phase == "users":
             # Kaltura ignores a filter field it does not support, so this was verified live
@@ -1040,6 +1058,30 @@ class KalturaProvider(BaseProvider):
                 result = self.client.call("category", "list", filter={"idIn": ",".join(wanted)})
                 self._selected_paths = [category.get("fullName") or "" for category in (result.get("objects") or [])]
         return self._selected_paths
+
+    def _unselected_root_ids(self):
+        if self._unselected_roots is None:
+            chosen = set(self.restricted_category_ids())
+            self._unselected_roots = [
+                str(category["id"]) for category in self._all_categories() if category.get("id") and is_selectable_category(category.get("fullName") or "") and str(category["id"]) not in chosen
+            ]
+        return self._unselected_roots
+
+    def _entries_under(self, entry_ids, category_ids):
+        if not entry_ids or not category_ids:
+            return set()
+        result = self.client.call(
+            "media",
+            "list",
+            filter={"idIn": ",".join(entry_ids), "categoryAncestorIdIn": ",".join(category_ids)},
+            pager={"pageSize": min(len(entry_ids), 500), "pageIndex": 1},
+        )
+        objects = (result.get("objects") or []) if isinstance(result, dict) else []
+        return {str(entry.get("id")) for entry in objects if entry.get("id")}
+
+    def outside_selection(self, entry_ids):
+        elsewhere = self._entries_under(entry_ids, self._unselected_root_ids())
+        return elsewhere - self._entries_under(sorted(elsewhere), self.restricted_category_ids())
 
     def within_selection(self, full_name):
         """Whether a path is one of the chosen roots or sits beneath one"""

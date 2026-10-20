@@ -73,7 +73,7 @@ export function VideoMediaDownloadLink(props) {
   const [downloadOptionsCurrentPage, setDownloadOptionsCurrentPage] = useState('main');
 
   return (
-    <div className="video-downloads hidden-only-in-small">
+    <div className="video-downloads hidden-only-in-small" data-action-tooltip={translateString('Download')}>
       <PopupTrigger contentRef={popupContentRef}>
         <button>
           <CircleIconButton type="span">

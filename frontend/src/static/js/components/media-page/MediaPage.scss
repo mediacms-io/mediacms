@@ -85,13 +85,6 @@
                     }
                 }
 
-                &.like,
-                &.dislike {
-                    &:before {
-                        border-color: var(--media-actions-like-before-border-color);
-                    }
-                }
-
                 &.share {
                     .share-popup-title {
                         color: var(--media-actions-share-title-text-color);
@@ -938,6 +931,46 @@
                     margin-top: -4px;
                 }
 
+                &[data-action-tooltip]::after {
+                    content: attr(data-action-tooltip);
+                    position: absolute;
+                    top: 100%;
+                    left: 50%;
+                    z-index: 6;
+                    margin-top: -4px;
+                    padding: 6px 8px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    line-height: 1.25;
+                    letter-spacing: normal;
+                    white-space: nowrap;
+                    color: #fff;
+                    background-color: #595959;
+                    border-radius: 2px;
+                    pointer-events: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateX(var(--action-tooltip-x, -50%));
+                }
+
+                &[data-action-tooltip]:last-child::after {
+                    --action-tooltip-x: 0;
+                    left: auto;
+                    right: 0;
+                }
+
+                @media (hover: hover) {
+                    &[data-action-tooltip]:hover:not(:has(.popup))::after {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+
+                &[data-action-tooltip]:has(:focus-visible):not(:has(.popup))::after {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
                 &.like,
                 &.dislike,
                 &.edit,
@@ -961,24 +994,6 @@
                 &.dislike,
                 &.more-options {
                     letter-spacing: 0.0007px;
-                }
-
-                &.like,
-                &.dislike {
-                    &:before {
-                        content: "";
-                        position: absolute;
-                        bottom: 0;
-                        left: -4px;
-                        right: -4px;
-                        border-bottom: 2px solid;
-                    }
-                }
-
-                &.like {
-                }
-
-                &.dislike {
                 }
 
                 &.share {
@@ -1294,57 +1309,6 @@
                                         overflow-y: auto;
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        .disliked-media {
-            > * {
-                > * {
-                    &.dislike {
-                        &:before {
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    .media-views-actions {
-        &.liked-media {
-            .media-actions {
-                > * {
-                    > * {
-                        &.like,
-                        &.like button,
-                        &.like .circle-icon-button {
-                        }
-
-                        &.like,
-                        &.dislike {
-                            &:before {
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        &.disliked-media {
-            .media-actions {
-                > * {
-                    > * {
-                        &.dislike,
-                        &.dislike button,
-                        &.dislike .circle-icon-button {
-                        }
-
-                        &.like,
-                        &.dislike {
-                            &:before {
                             }
                         }
                     }

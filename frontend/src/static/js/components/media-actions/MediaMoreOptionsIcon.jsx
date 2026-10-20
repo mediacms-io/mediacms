@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { formatInnerLink } from '../../utils/helpers/';
+import { formatInnerLink, translateString } from '../../utils/helpers/';
 import { usePopup, useUser } from '../../utils/hooks/';
 import { siteConfig } from '../../utils/contexts/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
@@ -362,7 +362,7 @@ export function MediaMoreOptionsIcon(rawProps) {
   }, []);
 
   return !visible ? null : (
-    <div className={containerClassname}>
+    <div className={containerClassname} data-action-tooltip={translateString('More options')}>
       <PopupTrigger contentRef={popupContentRef}>
         <span>
           <CircleIconButton type="button">
