@@ -22,8 +22,8 @@ export function MediaEditButton() {
   }
 
   return (
-    <div className="edit">
-      <a href={link} rel="nofollow" title={translateString('Edit media')}>
+    <div className="edit" data-action-tooltip={translateString('Edit media')}>
+      <a href={link} rel="nofollow">
         <CircleIconButton type="span">
           <MaterialIcon type="edit" />
         </CircleIconButton>

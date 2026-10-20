@@ -66,8 +66,8 @@ describe('components/media-actions', () => {
         test('Renders dislikes counter and dispatches dislikeMedia', () => {
             const { container, unmount } = renderIntoContainer(<MediaDislikeIcon />);
             expect(container.querySelector('.dislikes-counter')?.textContent).toBe('3');
-            expect(container.querySelector('.like i')?.getAttribute('data-icon')).toBe('thumb_down');
-            click(container.querySelector('.like button'));
+            expect(container.querySelector('.dislike i')?.getAttribute('data-icon')).toBe('thumb_down');
+            click(container.querySelector('.dislike button'));
             expect(actions.dislikeMedia).toHaveBeenCalledTimes(1);
             unmount();
             expect(store.listenerCount('disliked_media')).toBe(0);
@@ -76,7 +76,7 @@ describe('components/media-actions', () => {
         test('Click on already disliked media does nothing, since a dislike cannot be taken back', () => {
             store.__set('user-disliked-media', true);
             const { container, unmount } = renderIntoContainer(<MediaDislikeIcon />);
-            expect(() => click(container.querySelector('.like button'))).not.toThrow();
+            expect(() => click(container.querySelector('.dislike button'))).not.toThrow();
             expect(actions.dislikeMedia).not.toHaveBeenCalled();
             unmount();
         });

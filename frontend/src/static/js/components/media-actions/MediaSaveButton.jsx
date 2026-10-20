@@ -34,7 +34,7 @@ export function MediaSaveButton(props) {
   }
 
   return (
-    <div className="save">
+    <div className="save" data-action-tooltip={translateString('Save')}>
       <PopupTrigger contentRef={popupContentRef}>
         <button>
           <CircleIconButton type="span">

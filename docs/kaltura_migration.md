@@ -126,7 +126,7 @@ Every migration is different, so read these before starting rather than after.
 | Import statistics (Plays/Views) | on | Copy play counts onto the migrated media. |
 | Maintain publish state of media | on | Derive public, unlisted or private from the source. Unmoderated media stays private. See [Permissions](#permissions). |
 | Migrate media flavors / encodings | on | Import existing Kaltura flavors as MediaCMS encodings instead of re-encoding. Off imports the original file only and MediaCMS encodes it. |
-| Categories | **required** | On the Connection tab, loaded by Test connection. Fetch only the media in the chosen top level categories, and everything beneath them. At least one is required. |
+| Categories | **required** | On the Connection tab, loaded by Test connection. Fetch the media in the chosen top level categories and everything beneath them, plus media in no category. Media filed only under other top level categories is left out. At least one is required. |
 
 ### How users are matched
 
@@ -168,15 +168,19 @@ Every migration is scoped to what you choose. There is no "migrate everything" s
 because there is no sensible case for pointing a migration at an entire Kaltura account and
 hoping, and a migration nobody has scoped would sweep the lot by accident.
 
-**The categories you pick do not decide which media comes over.** That follows the owners,
-under [Import options](#import-options): every user's media by default, or only the listed
-users' media when you name them. Every entry has exactly one owner, so that is the axis that
-actually partitions a library, while a great many entries belong to no category at all and no
-category filter can reach them.
+**Each top level category is its own site**, a KMS or KAF instance with its own users, and one
+Kaltura partner often holds several. A media filed only under top level categories you did not
+pick belongs to another site, so it is **not migrated**, and neither is its owner unless
+**Migrate all users** is chosen, which still brings every account on the partner. A media that
+sits both in a tree you picked and in one you did not comes over, and loses only the filing
+outside your selection.
 
-What the picker decides is **which categories exist**, and which of them a media may be filed
-under. An entry that also sits in a tree you did not pick keeps its media and loses only that
-filing.
+**A media in no category at all is migrated**, whoever owns it: nothing on it says which site
+it came from. Within that, the user options decide as before: every user's media by default,
+or only the listed users' media when you name them.
+
+The picker also decides **which categories exist**, and which of them a media may be filed
+under.
 
 The picker lives on the **Connection** tab, because what you can choose depends on the
 connection working first. Press **Test connection**: when it succeeds it loads the list, and
