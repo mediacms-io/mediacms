@@ -1,12 +1,12 @@
 """Combining a multi-stream recording into one picture.
 
-Kaltura Capture records the screen and the camera as two entries linked by parentEntryId.
-A normal sweep only ever returns the parent, so the second stream is lost unless it is
-asked for by name. Both are brought over and drawn as one video, the camera inset over the
-screen, because MediaCMS plays one file per media.
+Kaltura Capture records the camera and the screens as entries linked by parentEntryId.
+A normal sweep only ever returns the parent, so the other streams are lost unless they are
+asked for by name. They are brought over and drawn side by side in one video, because
+MediaCMS plays one file per media.
 
-Compositing always re-encodes: overlay decodes both inputs and writes a new picture, and
-there is no stream copy that combines two of them.
+Compositing always re-encodes: overlay decodes every input and writes a new picture, and
+there is no stream copy that combines them.
 """
 
 import logging
@@ -17,43 +17,49 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-INSET_RATIO = 0.25
-INSET_MARGIN_RATIO = 1 / 72
+MAX_STREAMS = 3
 
-# parent plus one child: three pictures in one frame is not a recording anybody wants
-MAX_STREAMS = 2
+CANVAS_ASPECT = 16 / 9
+DEFAULT_FRAME_RATE = "30"
 
 COMPOSE_TIMEOUT = 60 * 60
 
 
 class ComposeError(Exception):
-    """ffmpeg could not draw the two streams as one"""
+    """ffmpeg could not draw the streams as one"""
 
 
 def stream_area(entry):
     return (entry.get("width") or 0) * (entry.get("height") or 0)
 
 
-def pick_base_and_inset(entries):
-    """(screen, camera) of a multi-stream recording.
-
-    The screen capture is the bigger picture of the two, and the one worth reading, so it
-    is the one that keeps its size.
-    """
-    ordered = sorted(entries, key=stream_area, reverse=True)
-    return ordered[0], ordered[1]
+def even(value):
+    value = int(value or 0)
+    return max(2, value - (value % 2))
 
 
-def inset_width_for(base_width):
-    width = int((base_width or 0) * INSET_RATIO)
-    return max(2, width - (width % 2))
+def canvas_size(height):
+    height = even(height)
+    return even(round(height * CANVAS_ASPECT)), height
 
 
-def pick_inset_flavor(flavors, needed_width):
-    """The smallest flavor wide enough to be the inset, or the widest there is.
+def layout_boxes(stream_count, width, height):
+    if stream_count == 2:
+        child_width = even(width * 3 // 4)
+        return [(0, 0, child_width, height), (child_width, 0, width - child_width, height)]
+    if stream_count == 3:
+        half_width, half_height = even(width // 2), even(height // 2)
+        parent_width = even(width // 3)
+        parent_x = half_width + (width - half_width - parent_width) // 2
+        return [(0, 0, half_width, half_height), (0, half_height, half_width, height - half_height), (parent_x, 0, parent_width, height)]
+    raise ValueError(f"no layout for {stream_count} streams")
 
-    The inset is a quarter of the frame, so one camera file serves every rendition of the
-    screen: there is no reason to fetch a 1080p camera to draw it 432 wide.
+
+def pick_flavor_for_width(flavors, needed_width):
+    """The smallest flavor wide enough for its box, or the widest there is.
+
+    One file of each smaller stream serves every rendition of the canvas: there is no reason
+    to fetch a 1080p camera to draw it 480 wide.
     """
     playable = [flavor for flavor in flavors if (flavor.get("fileExt") or "").lower() in ("mp4", "webm")]
     if not playable:
@@ -64,34 +70,28 @@ def pick_inset_flavor(flavors, needed_width):
     return max(playable, key=lambda flavor: flavor.get("width") or 0)
 
 
-def compose_pip(base_path, inset_path, dest_path, base_width=0):
-    """Draw inset_path over base_path and write dest_path.
+def compose_side_by_side(paths, dest_path, width, height):
+    """Draw paths, the children in order and then the parent, side by side into dest_path.
 
-    The audio is the screen's, falling back to the camera's: both streams carry the same
+    The audio is the parent's, falling back to a child's: every stream carries the same
     microphone, so mixing them would play everything twice. shortest stops a stream that
     runs a few frames long from leaving a frozen tail.
     """
-    base_width = base_width or probe_width(base_path)
-    width = inset_width_for(base_width)
-    margin = max(8, int(base_width * INSET_MARGIN_RATIO))
-    audio = "0:a" if has_audio(base_path) else ("1:a" if has_audio(inset_path) else "")
+    boxes = layout_boxes(len(paths), width, height)
+    parent_first = [paths[-1]] + paths[:-1]
+    audio_path = next((path for path in parent_first if has_audio(path)), None)
 
-    command = [
-        getattr(settings, "FFMPEG_COMMAND", "ffmpeg"),
-        "-v",
-        "error",
-        "-y",
-        "-i",
-        base_path,
-        "-i",
-        inset_path,
-        "-filter_complex",
-        f"[1:v]scale={width}:-2[pip];[0:v][pip]overlay=W-w-{margin}:H-h-{margin}:shortest=1[v]",
-        "-map",
-        "[v]",
-    ]
-    if audio:
-        command += ["-map", audio, "-c:a", "aac"]
+    filters = [f"color=c=black:s={width}x{height}:r={probe_frame_rate(paths[0])}[c0]"]
+    for index, (x, y, box_width, box_height) in enumerate(boxes):
+        filters.append(f"[{index}:v]scale={box_width}:{box_height}:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1[s{index}]")
+        filters.append(f"[c{index}][s{index}]overlay=x={x}+({box_width}-w)/2:y={y}+({box_height}-h)/2:shortest=1[c{index + 1}]")
+
+    command = [getattr(settings, "FFMPEG_COMMAND", "ffmpeg"), "-v", "error", "-y"]
+    for path in paths:
+        command += ["-i", path]
+    command += ["-filter_complex", ";".join(filters), "-map", f"[c{len(boxes)}]"]
+    if audio_path:
+        command += ["-map", f"{paths.index(audio_path)}:a", "-c:a", "aac"]
     command += [
         "-c:v",
         "libx264",
@@ -136,7 +136,7 @@ def has_audio(path):
         return False
 
 
-def probe_width(path):
+def probe_frame_rate(path):
     command = [
         getattr(settings, "FFPROBE_COMMAND", "ffprobe"),
         "-v",
@@ -144,13 +144,17 @@ def probe_width(path):
         "-select_streams",
         "v:0",
         "-show_entries",
-        "stream=width",
+        "stream=r_frame_rate",
         "-of",
         "csv=p=0",
         path,
     ]
     try:
         result = subprocess.run(command, capture_output=True, timeout=60)
-        return int((result.stdout or b"").decode().strip().rstrip(",") or 0)
-    except (ValueError, subprocess.SubprocessError):
-        return 0
+    except subprocess.SubprocessError:
+        return DEFAULT_FRAME_RATE
+    rate = (result.stdout or b"").decode().strip().rstrip(",")
+    numerator, _, denominator = rate.partition("/")
+    if not numerator.isdigit() or int(numerator) == 0 or (denominator and (not denominator.isdigit() or int(denominator) == 0)):
+        return DEFAULT_FRAME_RATE
+    return rate

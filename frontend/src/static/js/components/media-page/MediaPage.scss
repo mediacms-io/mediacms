@@ -6,7 +6,7 @@
     padding-left: 0;
 }
 
-.media-author-actions {
+.media-delete-confirm {
     .popup-message-bottom {
         button {
             &.cancel-comment-removal {
@@ -745,90 +745,7 @@
     }
 }
 
-.media-author-actions {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: inherit;
-    margin-bottom: -8px;
-
-    button {
-        &:focus {
-            box-shadow: none;
-        }
-    }
-
-    .edit-media-icon,
-    .remove-media-icon {
-        text-decoration: none;
-        color: #fff;
-        border: 0;
-        line-height: 1;
-        padding: 0;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-        .material-icons {
-            font-size: 20px;
-            line-height: 1;
-        }
-
-        &:active {
-            transform: scale(0.98);
-        }
-    }
-
-    .edit-media-icon {
-        background-color: rgba(0, 153, 51, 0.9);
-
-        &:hover {
-            background-color: rgba(0, 153, 51, 1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        .dark_theme & {
-            background-color: rgba(102, 187, 102, 0.9);
-
-            &:hover {
-                background-color: rgba(102, 187, 102, 1);
-            }
-        }
-    }
-
-    .remove-media-icon {
-        background-color: rgba(220, 53, 69, 0.9);
-
-        &:hover {
-            background-color: rgba(220, 53, 69, 1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        .dark_theme & {
-            background-color: rgba(255, 107, 107, 0.9);
-
-            &:hover {
-                background-color: rgba(255, 107, 107, 1);
-            }
-        }
-    }
-
-    .popup {
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        margin-bottom: 8px;
-    }
-
+.media-delete-confirm {
     .popup-message-bottom {
         button {
             position: relative;
@@ -922,6 +839,29 @@
             display: table-cell;
             vertical-align: middle;
         }
+
+        &.compact-actions,
+        &.stacked-actions {
+            .media-actions > * > * {
+                margin-left: 0;
+
+                > *:not(.popup) > *:nth-child(2) {
+                    display: none !important;
+                }
+            }
+        }
+
+        &.stacked-actions {
+            display: block;
+
+            > * {
+                display: block;
+            }
+
+            .media-actions {
+                display: flow-root;
+            }
+        }
     }
 
     .media-views {
@@ -1000,6 +940,7 @@
 
                 &.like,
                 &.dislike,
+                &.edit,
                 &.share,
                 &.save,
                 &.download,
@@ -1191,6 +1132,7 @@
                     }
                 }
 
+                &.edit a,
                 &.share,
                 &.save,
                 &.download a {
@@ -1205,6 +1147,7 @@
 
                     .nav-page-main,
                     .nav-page-mediaStatusInfo,
+                    .nav-page-mediaDelete,
                     .nav-page-videoDownloadOptions {
                         .popup {
                             width: auto;

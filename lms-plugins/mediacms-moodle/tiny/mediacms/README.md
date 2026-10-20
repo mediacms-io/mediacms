@@ -8,17 +8,36 @@ A TinyMCE editor plugin for Moodle that provides media embedding capabilities wi
 
 ## Build Information
 
+Changes to PHP, templates and language strings need no build. Changes to `amd/src/*.js` must be built with Moodle's own toolchain, which lints the code and writes `amd/build/*.min.js` and their source maps. The commands below are run from the MediaCMS repository root, with a Moodle 5.1 checkout in `moodle/`.
+
 ### Preparation
-1. Get and extract Moodle 5.1
-2. cp -r lms-plugins/mediacms-moodle/tiny/mediacms/ moodle/public/lib/editor/tiny/plugins/
-3. nvm use 22 && cd moodle/public && npm install
+1. Get and extract Moodle 5.1 into `moodle/`.
+2. Copy the plugin into Moodle. There is no trailing slash after `mediacms`, so it lands in `plugins/mediacms` and not loose in `plugins/`:
+
+   ```bash
+   cp -r lms-plugins/mediacms-moodle/tiny/mediacms moodle/public/lib/editor/tiny/plugins/
+   ```
+3. Install Moodle's build tools. Moodle 5.1 keeps `package.json` in its root folder, not in `public/`:
+
+   ```bash
+   cd moodle && nvm use 22 && npm install && cd ..
+   ```
 
 ### Actual build
-4. cd lib/editor/tiny/plugins/mediacms && npx grunt amd
+4. Run Moodle's AMD build in the plugin folder:
 
-### Test the output
-5. To test the output:
-cp * ../../../../../../../lms-plugins/mediacms-moodle/tiny/mediacms/ -r
+   ```bash
+   (cd moodle/public/lib/editor/tiny/plugins/mediacms && npx grunt amd)
+   ```
 
-6. Then copy to Moodle server and purge caches
+### Copy the output back
+5. Only `amd/build` changes, so copy that folder back:
 
+   ```bash
+   cp -r moodle/public/lib/editor/tiny/plugins/mediacms/amd/build/. lms-plugins/mediacms-moodle/tiny/mediacms/amd/build/
+   ```
+
+If the Moodle folder is owned by the web server user (for example `www-data`), run steps 2, 4 and 5 with `sudo`, or give your user ownership of `moodle/` first.
+
+### Package and test
+6. Package the plugins as described in the suite README (`lms-plugins/mediacms-moodle/README.md`), install the ZIP on a Moodle server and purge the caches (`php admin/cli/purge_caches.php`).

@@ -41,7 +41,9 @@ class CategoryList(APIView):
     """List categories"""
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title and description'),
+        ],
         tags=['Categories'],
         operation_summary='Lists Categories',
         operation_description='Lists all categories',
@@ -51,6 +53,9 @@ class CategoryList(APIView):
     )
     def get(self, request, format=None):
         categories = visible_categories(request).order_by("title")
+        query = request.GET.get("q", "").strip()
+        if query:
+            categories = categories.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data
@@ -106,6 +111,7 @@ class TagList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title'),
         ],
         tags=['Tags'],
         operation_summary='Lists Tags',
@@ -116,6 +122,9 @@ class TagList(APIView):
     )
     def get(self, request, format=None):
         tags = Tag.objects.filter().order_by("-media_count")
+        query = request.GET.get("q", "").strip()
+        if query:
+            tags = tags.filter(title__icontains=query)
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         page = paginator.paginate_queryset(tags, request)

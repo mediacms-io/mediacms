@@ -1,11 +1,17 @@
 import React from 'react';
 import { apiUrlConfig } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
+import { SearchFieldStore } from '../utils/stores/';
 import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageUsersFilters } from '../components/management-table/ManageUsersFilters.jsx';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
 import { Page } from './_Page';
+
+function searchArgs() {
+  const query = SearchFieldStore.get('search-query');
+  return query ? 'name=' + encodeURIComponent(query) : '';
+}
 
 function genReqUrl(url, filters, sort, page) {
   const ret = url + '?' + filters + ('' === filters ? '' : '&') + sort + ('' === sort ? '' : '&') + 'page=' + page;
@@ -16,12 +22,14 @@ export class ManageUsersPage extends Page {
   constructor(props) {
     super(props, 'manage-users');
 
+    this.searchArgs = searchArgs();
+
     this.state = {
       resultsCount: null,
       currentPage: 1,
-      requestUrl: apiUrlConfig.manage.users,
+      requestUrl: genReqUrl(apiUrlConfig.manage.users, this.searchArgs, '', 1),
       hiddenFilters: true,
-      filterArgs: '',
+      filterArgs: this.searchArgs,
       sortingArgs: '',
       sortBy: 'add_date',
       ordering: 'desc',
@@ -64,7 +72,7 @@ export class ManageUsersPage extends Page {
   onFiltersUpdate(updatedArgs) {
     // console.log( "==>", updatedArgs );
 
-    const newArgs = [];
+    const newArgs = '' === this.searchArgs ? [] : [this.searchArgs];
 
     for (let arg in updatedArgs) {
       if (null !== updatedArgs[arg] && 'all' !== updatedArgs[arg]) {
@@ -113,7 +121,7 @@ export class ManageUsersPage extends Page {
       {
         resultsCount: null,
         refresh: this.state.refresh + 1,
-        requestUrl: apiUrlConfig.manage.users,
+        requestUrl: genReqUrl(apiUrlConfig.manage.users, this.searchArgs, '', 1),
       },
       function () {
         if (multipleItems) {

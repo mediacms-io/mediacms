@@ -113,6 +113,20 @@ class ManageMediaTest(TestCase):
         self.assertEqual(self.tokens({'category': 'Managed category'}), [self.public.friendly_token])
         self.assertEqual(self.tokens({'category': 'No such category'}), [])
 
+    def test_searches_by_title(self):
+        self.assertEqual(self.tokens({'q': 'PRIVATE'}), [self.private.friendly_token])
+        self.assertEqual(self.tokens({'q': 'nothing like this'}), [])
+
+    def test_searches_by_owner_name_or_username(self):
+        other = create_account(username='ownerless', email='ownerless@example.com', name='Zoe Other')
+        theirs = create_media(other, title='e theirs', state='public')
+        self.assertEqual(self.tokens({'owner': 'zoe'}), [theirs.friendly_token])
+        self.assertEqual(self.tokens({'owner': 'OWNERLESS'}), [theirs.friendly_token])
+        self.assertEqual(len(self.tokens({'owner': self.owner.username})), 4)
+
+    def test_title_and_owner_searches_combine_with_filters(self):
+        self.assertEqual(self.tokens({'owner': self.owner.username, 'q': 'public', 'state': 'public'}), [self.public.friendly_token])
+
     def test_sorts_by_requested_field_and_direction(self):
         self.assertEqual(self.titles({'sort_by': 'title', 'ordering': 'asc'}), ['a private', 'b public', 'c unlisted', 'd video'])
         self.assertEqual(self.titles({'sort_by': 'title', 'ordering': 'desc'}), ['d video', 'c unlisted', 'b public', 'a private'])
@@ -204,6 +218,18 @@ class ManageUsersTest(TestCase):
         self.assertEqual(self.usernames({'role': 'manager'}), [self.manager.username])
         self.assertEqual(self.usernames({'role': 'editor'}), [self.editor.username])
         self.assertEqual(len(self.usernames({'role': 'astronaut'})), 4)
+
+    def test_searches_by_name_or_username(self):
+        self.assertEqual(self.usernames({'name': 'zed'}), [self.manager.username])
+        self.assertEqual(self.usernames({'name': self.pending.username.upper()}), [self.pending.username])
+        self.assertEqual(self.usernames({'name': 'nobody at all'}), [])
+
+    @override_settings(USER_SEARCH_FIELD='name_username_email')
+    def test_searches_by_email_only_when_configured(self):
+        self.assertEqual(self.usernames({'name': self.approved.email}), [self.approved.username])
+
+    def test_does_not_search_by_email_by_default(self):
+        self.assertEqual(self.usernames({'name': self.approved.email}), [])
 
     def test_sorts_by_name(self):
         self.assertEqual(self.usernames({'sort_by': 'name', 'ordering': 'asc'}), [self.approved.username, self.pending.username, self.editor.username, self.manager.username])

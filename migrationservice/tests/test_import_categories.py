@@ -201,12 +201,12 @@ class TestImportCategory(TestCase):
         self.assertEqual(RBACGroup.objects.count(), 1)
         self.assertEqual(RBACMembership.objects.count(), 2)
 
-    def test_a_moderator_becomes_a_contributor(self):
+    def test_a_moderator_becomes_a_manager(self):
         self.provider.categories["8813"]["members"] = [{"userId": "asmith", "permissionLevel": 1}]
         with override_settings(USE_RBAC=True):
             category = import_category(self.service, self.provider, "8813")
         membership = RBACMembership.objects.get(rbac_group__categories=category, user__username="asmith")
-        self.assertEqual(membership.role, "contributor")
+        self.assertEqual(membership.role, "manager")
 
     def test_a_pending_member_is_not_given_access(self):
         self.provider.categories["8813"]["members"] = [{"userId": "asmith", "permissionLevel": 3, "status": 2}]

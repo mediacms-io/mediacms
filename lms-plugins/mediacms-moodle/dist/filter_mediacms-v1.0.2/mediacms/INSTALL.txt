@@ -1,5 +1,5 @@
 ================================================================================
-MediaCMS Moodle Plugin Suite v1.0.0
+MediaCMS Moodle Plugin Suite v1.0.2
 Installation Guide
 ================================================================================
 
@@ -12,8 +12,8 @@ Requirements
 
 The suite consists of two plugins that are distributed as separate ZIP files:
 
-- filter_mediacms-v1.0.0.zip  (Text filter - install FIRST)
-- tiny_mediacms-v1.0.0.zip    (TinyMCE editor button - requires the filter)
+- filter_mediacms-v1.0.2.zip  (Text filter - install FIRST)
+- tiny_mediacms-v1.0.2.zip    (TinyMCE editor button - requires the filter)
 
 tiny_mediacms declares a dependency on filter_mediacms, so Moodle will not
 let you install the editor plugin without the filter being present.
@@ -24,8 +24,8 @@ Installation - Option A: Upload through Moodle (recommended)
 
 1. Log in as Administrator
 2. Go to: Site Administration → Plugins → Install plugins
-3. Upload filter_mediacms-v1.0.0.zip and complete the installation
-4. Upload tiny_mediacms-v1.0.0.zip and complete the installation
+3. Upload filter_mediacms-v1.0.2.zip and complete the installation
+4. Upload tiny_mediacms-v1.0.2.zip and complete the installation
 5. Set the MediaCMS tool under the LTI Tool
 
 
@@ -35,8 +35,8 @@ Installation - Option B: Extract manually
 1. Extract the zip files to the Moodle root public directory:
 
    cd /var/www/moodle/public
-   unzip filter_mediacms-v1.0.0.zip -d filter/
-   unzip tiny_mediacms-v1.0.0.zip -d lib/editor/tiny/plugins/
+   unzip filter_mediacms-v1.0.2.zip -d filter/
+   unzip tiny_mediacms-v1.0.2.zip -d lib/editor/tiny/plugins/
 
    This will place files in:
    - filter/mediacms/

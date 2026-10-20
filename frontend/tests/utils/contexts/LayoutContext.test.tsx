@@ -9,12 +9,12 @@ import * as PageActions from '../../../src/static/js/utils/actions/PageActions';
 const CACHE_KEY = 'MediaCMS[mediacms-test][layout][visible-sidebar]';
 
 function cacheSidebar(value: boolean) {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ value, expire: Date.now() + 60000 }));
+    localStorage.setItem(CACHE_KEY, value ? 'true' : 'false');
 }
 
 function readCachedSidebar() {
     const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw).value : undefined;
+    return null === raw ? undefined : 'true' === raw;
 }
 
 function renderLayout() {
@@ -75,6 +75,36 @@ describe('utils/contexts', () => {
             expect(ref.current.visibleSidebar).toBe(false);
             expect(readCachedSidebar()).toBeUndefined();
             unmount();
+        });
+
+        test('Starts hidden below the wide screen width and does not cache the value', () => {
+            window.innerWidth = 1279;
+            const { ref, unmount } = renderLayout();
+            expect(ref.current.visibleSidebar).toBe(false);
+            expect(readCachedSidebar()).toBeUndefined();
+            unmount();
+        });
+
+        test('Keeps a hidden sidebar however long ago it was hidden', () => {
+            cacheSidebar(false);
+            jest.useFakeTimers();
+            jest.setSystemTime(Date.now() + 400 * 24 * 60 * 60 * 1000);
+            const { ref, unmount } = renderLayout();
+            expect(ref.current.visibleSidebar).toBe(false);
+            unmount();
+        });
+
+        test('Falls back to the default when storage is unavailable', () => {
+            jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+                throw new Error('blocked');
+            });
+            jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+                throw new Error('blocked');
+            });
+            const { ref, unmount } = renderLayout();
+            expect(ref.current.visibleSidebar).toBe(true);
+            unmount();
+            jest.restoreAllMocks();
         });
 
         test('Detects an existing sidebar element', () => {

@@ -57,6 +57,16 @@ class TestSearch(TestCase):
         self.assertIn(self.media1.title, media_titles, "Media with 'Python' in title should be in results")
         self.assertNotIn(self.media3.title, media_titles, "Media without 'Python' should not be in results")
 
+    def test_search_matches_the_uploaders_name_but_not_their_email(self):
+        self.user.name = "Quentin Zebrowski"
+        self.user.email = "zq9mailbox@example.org"
+        self.user.save()
+        self.media1.update_search_vector()
+
+        by_name = [item['title'] for item in self.client.get('/api/v1/search?q=zebrowski').data['results']]
+        self.assertIn(self.media1.title, by_name)
+        self.assertFalse(self.client.get('/api/v1/search?q=zq9mailbox').data['results'])
+
     def test_search_by_category(self):
         """Test searching media by category uid"""
         url = f'/api/v1/search?c={self.category.uid}'

@@ -133,12 +133,19 @@ Every migration is different, so read these before starting rather than after.
 Accounts are created lazily, as the media that belong to them arrive, and an existing account
 is reused rather than duplicated:
 
-1. **By email**, case insensitively. This is the normal link, and what lets a re-run attach
-   new media to accounts an earlier run created.
-2. **By username**, but only when the existing account has no email of its own. Otherwise it
+1. **By its own earlier record.** A Kaltura user an earlier run already migrated keeps that
+   account.
+2. **By email**, case insensitively, unless another Kaltura user already holds that account.
+   Kaltura lets several accounts share an email (a native account and the one an LMS
+   created, typically), and merging them would pool their media and drop the second one's
+   role. So the second one gets an account of its own, under its own username, with a
+   unique address on the reserved `email-conflict.invalid` domain, and the run log names
+   the conflict. Searching users for `email-conflict.invalid` after the run lists every
+   account whose email an administrator still has to decide.
+3. **By username**, but only when the existing account has no email of its own. Otherwise it
    is a different, already identified person who happens to collide on the sanitised username,
    and linking would hand them someone else's media.
-3. **Otherwise a new account**, with an unusable password, a numeric suffix if the username is
+4. **Otherwise a new account**, with an unusable password, a numeric suffix if the username is
    taken, and no notification email to anyone.
 
 The three user options are one question with three answers — sweep the whole directory, name
@@ -290,14 +297,15 @@ as on the root it hangs from.
 | --- | --- | --- |
 | `privacyContexts` | set, e.g. `MediaSpace` | empty |
 | Category permissions | honoured, see [Permissions](#permissions) | none to honour |
-| Media state | from the category type | public |
+| Media state | from the category type | private, reached through the course |
 
 The consequence worth understanding: **the permission fields on an LMS category do nothing at
-the source.** Kaltura serves that content to anyone regardless of what `privacy` says, because
-there is no privacy context for it to enforce. So the migration reads those categories as
-public rather than importing a restriction that was never in force, which would hide media the
-source was showing and hand out RBAC groups gating something nobody gated. A payload with no
-`privacyContexts` field at all is read as KMS, the cautious direction.
+the source**, because there is no privacy context for Kaltura to enforce them in. What gates LMS
+content is the course itself: it is shown to the people enrolled in it. So the migration reads
+LMS categories as private and imports no permissions from them; an entry only in LMS courses
+arrives private, and the course's RBAC group (see below) is how its people reach it. MediaCMS
+shows such an entry as **Shared**. An entry that is also in a public KMS gallery stays public.
+A payload with no `privacyContexts` field at all is read as KMS.
 
 An LMS integration also does not put a course's media in the course channel. It creates a
 child named **InContext** and parks the media there, leaving the course itself empty. That
@@ -448,7 +456,7 @@ answered by `privacy` alone.
 | --- | --- | --- | --- |
 | No Restriction | No Restriction | plain | public |
 | No Restriction | Private | RBAC category with a group | public |
-| Requires Authentication | No Restriction | RBAC category with a group | unlisted |
+| Requires Authentication | No Restriction | RBAC category with a group | private, visible to the group |
 | Requires Authentication | Private | RBAC category with a group | private |
 | Private | either | RBAC category with a group | private, visible to the group |
 | Shared Repository | either | RBAC category with a group | private, visible to the group |
@@ -458,7 +466,13 @@ it never makes a category less visible than its privacy says: KMS's "Public, Res
 means anyone may watch while only members may contribute, and that arrives public.
 
 An entry in more than one category takes the most permissive of them, which is how Kaltura
-behaves too. An entry in no category at all is private. Two things override all of this:
+behaves too. An entry in no category at all is private. KMS marks an entry as Unlisted by
+placing it in its `<root>>unlisted` category, which is open to everyone, so that category
+is read by what it marks rather than by its privacy: it counts as an unlisted category. An
+entry in it arrives **unlisted**, unless it is also published to a public gallery or channel,
+in which case it is **public**, as it is to anyone browsing that gallery on Kaltura.
+`<root>>private` is read the same way but overrides everything: an entry in it is private. The
+`archive` and `playlists` categories do not count at all. Two things override all of this:
 `displayInSearch` set to none downgrades public to unlisted, and an entry that has not
 cleared moderation is private wherever it sits, because it was not published on the source
 either. An entry still awaiting approval inside a moderated category does not inherit that
@@ -466,12 +480,10 @@ category's state.
 
 Two things about this mapping are worth knowing before you run it.
 
-**Open becomes unlisted, which is a downgrade in one direction and not in the other.** Open
-in Kaltura means any logged in user may watch. MediaCMS has no such state: it has public,
-unlisted and private. Unlisted is the closest fit, and on a portal where
-`GLOBAL_LOGIN_REQUIRED` is off it is reachable by anyone holding the link. If that matters
-for your content, turn **Maintain publish state of media** off and set the states yourself, or set
-`GLOBAL_LOGIN_REQUIRED = True`.
+**Open becomes private and shared with the channel's group.** Open in Kaltura means any logged
+in user may watch. MediaCMS has no such state, so the entry arrives private in an RBAC
+category, and the people Kaltura named on the channel see it through its group. MediaCMS
+shows such an entry as **Shared**. Widening it to everyone is then the owner's decision.
 
 **Requires Authentication becomes a group holding the people Kaltura named**, the owner
 among them, rather than a plain category. MediaCMS has no "any logged in user may view"
@@ -486,7 +498,7 @@ then adds the members Kaltura reports:
 | Kaltura permission level | MediaCMS role |
 | --- | --- |
 | Manager | manager |
-| Moderator | contributor |
+| Moderator | manager |
 | Contributor | contributor |
 | Member | member |
 
@@ -582,29 +594,39 @@ Images have no flavors in Kaltura, so their file comes from the entry itself.
 
 ### Multi-stream recordings
 
-Kaltura Capture records the screen and the camera as **two entries** joined by
-`parentEntryId`. A listing never returns the child, so without asking for it by name the
-second stream is simply lost. Each entry is asked, one `baseEntry.list` call apiece.
+Kaltura Capture records the camera and each screen as **separate entries** joined by
+`parentEntryId`. A listing never returns the children, so without asking for them by name
+the other streams are simply lost. Each entry is asked, one `baseEntry.list` call apiece.
 
-When a child is found, the two are drawn as one video: the bigger picture is the base, the
-other is inset over its bottom right corner at a quarter of the width. MediaCMS plays one
-file per media, so one picture is what it has to be.
+When children are found, the streams are drawn side by side in one video on a 16:9 canvas,
+each scaled to fit its box:
 
-**Combining always re-encodes.** There is no stream copy that merges two pictures, so the
-work has to happen somewhere, and **Skip transcoding** decides where:
+| Streams | Layout |
+| --- | --- |
+| 2 | The child large on the left, the parent small on the right. |
+| 3 | The children stacked on the left, the parent small in the middle of the right. |
+
+MediaCMS plays one file per media, so one picture is what the recording becomes. Every
+stream is **also** imported as a media of its own, titled "<recording> (stream 1)",
+"(stream 2)" and so on, with the parent's camera as stream 1. They keep the recording's
+owner, state and date but none of its categories, so a gallery shows each recording once.
+
+**Combining always re-encodes.** There is no stream copy that merges pictures, so the work
+has to happen somewhere, and **Skip transcoding** decides where:
 
 | Skip transcoding | What happens | Ladder |
 | --- | --- | --- |
-| on | Every rung of the screen's ladder is drawn and attached as an encoding. MediaCMS transcodes nothing. | whatever Kaltura had |
+| on | Every rung of the biggest screen's ladder is drawn and attached as an encoding. MediaCMS transcodes nothing. | whatever Kaltura had |
 | off | Only the originals are drawn, and MediaCMS builds its own ladder from that. | the portal's full ladder |
 
-The camera is fetched **once** whatever the setting: it is drawn a quarter of the width, so
-one modest flavor serves every rung.
+Every other stream is fetched **once** whatever the setting: one flavor wide enough for its
+box serves every rung. If the streams cannot be drawn together, the entry arrives as its own
+stream alone and the children still arrive as media of their own.
 
-Two limits worth knowing. Only two streams are combined; a third is logged and left behind,
-because three pictures in one frame is not a recording anybody wants. And the audio is taken
-from one stream only, the base's where it has any: both carry the same microphone, so mixing
-them would play everything twice.
+Two limits worth knowing. Up to three streams are combined; a fourth is logged and left out
+of the picture, though it still arrives as a media of its own. And the audio is taken from
+one stream only, the parent's where it has any: every stream carries the same microphone, so
+mixing them would play everything twice.
 
 ### Quiet hours
 

@@ -6,6 +6,8 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from actions.models import MediaAction
+from files import tasks
 from files.models import Category, Media, MediaPermission, Tag
 from files.tests import create_account, create_media, fixture_path
 from rbac.models import RBACGroup, RBACMembership
@@ -49,6 +51,20 @@ class MediaUploadTest(TestCase):
         self.assertEqual(media.media_type, "image")
         self.assertEqual(media.state, "public")
         self.assertEqual(media.description, "uploaded through the api")
+
+    def test_an_upload_counts_as_the_uploaders_first_view(self):
+        response = self.upload(title="api upload")
+        media = Media.objects.get(friendly_token=response.data["friendly_token"])
+        self.assertEqual(list(MediaAction.objects.filter(media=media).values_list("user", "action")), [(self.user.id, "watch")])
+
+        tasks.save_user_action({"user_id": self.user.id, "remote_ip_addr": "10.0.0.1"}, friendly_token=media.friendly_token)
+        media.refresh_from_db()
+        self.assertEqual(media.views, 1)
+
+        viewer = create_account()
+        tasks.save_user_action({"user_id": viewer.id, "remote_ip_addr": "10.0.0.2"}, friendly_token=media.friendly_token)
+        media.refresh_from_db()
+        self.assertEqual(media.views, 2)
 
     def test_title_defaults_to_the_file_name(self):
         response = self.upload(media_file=image_upload("holiday.png"))

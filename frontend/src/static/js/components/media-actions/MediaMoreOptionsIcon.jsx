@@ -126,10 +126,22 @@ function optionsItems(userCan, mediaData, allowDownload, downloadLink, mediaRepo
     }
   }
 
+  if (userCan.deleteMedia) {
+    items.push({
+      itemType: 'open-subpage',
+      text: 'Delete',
+      icon: 'delete',
+      buttonAttr: {
+        className: 'change-page',
+        'data-page-id': 'mediaDelete',
+      },
+    });
+  }
+
   return items;
 }
 
-function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaReported, submitReportForm, cancelReportForm) {
+function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaReported, submitReportForm, cancelReportForm, proceedMediaRemoval, cancelMediaRemoval) {
 
   const mediaUrl = mediaData.url;
   const mediaType = mediaData.media_type;
@@ -197,6 +209,28 @@ function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaRep
     );
   }
 
+  if (userCan.deleteMedia) {
+    pages.mediaDelete = (
+      <div className="media-delete-confirm">
+        <PopupMain>
+          <div className="popup-message">
+            <span className="popup-message-title">Media removal</span>
+            <span className="popup-message-main">You're willing to remove media permanently?</span>
+          </div>
+          <hr />
+          <span className="popup-message-bottom">
+            <button className="button-link cancel-comment-removal" onClick={cancelMediaRemoval}>
+              CANCEL
+            </button>
+            <button className="button-link proceed-comment-removal" onClick={proceedMediaRemoval}>
+              PROCEED
+            </button>
+          </span>
+        </PopupMain>
+      </div>
+    );
+  }
+
   if (allowDownload && userCan.downloadMedia && mediaIsVideo) {
     pages.videoDownloadOptions = (
       <div className="video-download-options">
@@ -236,6 +270,13 @@ export function MediaMoreOptionsIcon(rawProps) {
   function cancelReportFormSubmission() {
     popupContentRef.current.toggle();
   }
+  function proceedMediaRemoval() {
+    MediaPageActions.removeMedia();
+    popupContentRef.current.toggle();
+  }
+  function cancelMediaRemoval() {
+    popupContentRef.current.toggle();
+  }
   function onPopupPageChange(newPage) {
     setPopupCurrentPage(newPage);
   }
@@ -264,7 +305,7 @@ export function MediaMoreOptionsIcon(rawProps) {
   }, [visible]);
 
   useEffect(() => {
-    setVisible(Object.keys(popupPages).length && props.allowDownload && userCan.downloadMedia);
+    setVisible(!!popupPages.main);
   }, [popupPages]);
 
   useEffect(() => {
@@ -292,7 +333,9 @@ export function MediaMoreOptionsIcon(rawProps) {
         downloadLink,
         reported,
         submitReportForm,
-        cancelReportFormSubmission
+        cancelReportFormSubmission,
+        proceedMediaRemoval,
+        cancelMediaRemoval
       )
     );
   }, [reported]);
@@ -306,7 +349,9 @@ export function MediaMoreOptionsIcon(rawProps) {
         downloadLink,
         reported,
         submitReportForm,
-        cancelReportFormSubmission
+        cancelReportFormSubmission,
+        proceedMediaRemoval,
+        cancelMediaRemoval
       )
     );
     return () => {

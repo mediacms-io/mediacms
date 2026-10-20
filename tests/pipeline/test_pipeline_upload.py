@@ -11,6 +11,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 
+from actions.models import MediaAction
+from files import tasks
 from files.models import Encoding, Media
 from files.tests import create_account, fixture_path
 from files.tests.media_utils import IMAGE, IMAGE_JPG, SMALL_VIDEO
@@ -94,6 +96,14 @@ class UploadSingleRequestTest(TestCase):
         self.assertEqual(media.encoding_status, "success")
         with open(media.media_file.path, "rb") as handle:
             self.assertEqual(md5(handle.read()), md5(read_fixture(IMAGE)))
+
+    def test_an_upload_counts_as_the_uploaders_first_view(self):
+        media = media_from_response(upload(self.client, read_fixture(IMAGE), "pipeline_view.png"))
+        self.assertEqual(list(MediaAction.objects.filter(media=media).values_list("user", "action")), [(self.user.id, "watch")])
+
+        tasks.save_user_action({"user_id": self.user.id, "remote_ip_addr": "10.0.0.1"}, friendly_token=media.friendly_token)
+        media.refresh_from_db()
+        self.assertEqual(media.views, 1)
 
     def test_an_invalid_qquuid_is_replaced_and_the_upload_still_succeeds(self):
         for qquuid in ("../../etc/passwd", "not-a-uuid"):

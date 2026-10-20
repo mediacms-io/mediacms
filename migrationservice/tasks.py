@@ -1,16 +1,21 @@
+import hashlib
 import logging
 import os
+import re
 import shutil
 import tempfile
 import time
+from collections import Counter
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
 from celery import chord
 from celery import shared_task as task
 from django.conf import settings
+from django.conf.locale import LANG_INFO
 from django.core.files import File
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -21,6 +26,7 @@ from files.models import (
     Encoding,
     Language,
     Media,
+    MediaPermission,
     Playlist,
     PlaylistMedia,
     Subtitle,
@@ -33,10 +39,11 @@ from users.models import User
 
 from .compose import (
     MAX_STREAMS,
-    compose_pip,
-    inset_width_for,
-    pick_base_and_inset,
-    pick_inset_flavor,
+    canvas_size,
+    compose_side_by_side,
+    layout_boxes,
+    pick_flavor_for_width,
+    stream_area,
 )
 from .models import MigrationRecord, MigrationService
 from .providers import get_provider
@@ -52,8 +59,16 @@ from .providers.kaltura import (
     media_state,
     mediacms_role,
     needs_rbac_group,
+    parse_comma_list,
     sanitize_username,
     unique_category_title,
+)
+from .providers.panopto import (
+    DEFAULT_FOLDER_ROLE_MAP,
+    RBAC_ROLE_RANK,
+    SHARE_ROLE_RANK,
+    recording_state,
+    role_key,
 )
 from .providers.youtube import pick_profile
 from .scheduling import (
@@ -101,6 +116,87 @@ def unique_username(candidate):
         index += 1
 
 
+CONFLICT_EMAIL_DOMAIN = "email-conflict.invalid"
+
+
+def claimed_by_another(service, user, source_id):
+    return (
+        MigrationRecord.objects.filter(
+            service__source_system=service.source_system,
+            object_type="user",
+            target_id=user.pk,
+            status="success",
+        )
+        .exclude(source_id=str(source_id))
+        .exists()
+    )
+
+
+def conflict_email(username):
+    """A unique address on a reserved domain, for an account whose real email is taken"""
+    local = re.sub(r"[^a-z0-9._-]+", "-", username.lower()).strip("-.") or "user"
+    candidate = f"{local}@{CONFLICT_EMAIL_DOMAIN}"
+    index = 2
+    while User.objects.filter(email__iexact=candidate).exists():
+        candidate = f"{local}-{index}@{CONFLICT_EMAIL_DOMAIN}"
+        index += 1
+    return candidate
+
+
+def claim_key(email):
+    return int.from_bytes(hashlib.blake2b(email.lower().encode("utf-8"), digest_size=8).digest(), "big", signed=True)
+
+
+@contextmanager
+def claiming(email):
+    """Serialise the imports of source users sharing an email until one has claimed it.
+
+    Parallel workers would otherwise both find the account unclaimed, since the claim is
+    the record written at the end. The lock is a transaction scoped advisory lock, so it
+    is released by the commit, or by a rollback if the import fails.
+    """
+    with transaction.atomic():
+        if email:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_xact_lock(%s)", [claim_key(email)])
+        yield
+
+
+def link_or_create_user(service, source_id, username, email, name):
+    """The MediaCMS account for one source user, and whether it was created.
+
+    A source user already migrated keeps its account. Otherwise an email links to the
+    account holding it, unless another source user of the same system got there first:
+    sources let several accounts share an email, so the later one gets an account of its
+    own with an address on a reserved domain, for an administrator to correct. A username
+    only links to an account with no email of its own.
+    """
+    migrated = MigrationRecord.already_migrated(service.source_system, "user", str(source_id))
+    if migrated is not None:
+        return migrated.target(), False
+
+    user = None
+    taken_by = None
+    if email:
+        user = User.objects.filter(email__iexact=email).first()
+        if user is not None and claimed_by_another(service, user, source_id):
+            user, taken_by = None, user
+    if user is None:
+        candidate = User.objects.filter(username__iexact=username).first()
+        if candidate is not None and not candidate.email and not claimed_by_another(service, candidate, source_id):
+            user = candidate
+    if user is not None:
+        return user, False
+
+    user = User(username=unique_username(username), email=conflict_email(username) if taken_by else email, name=name)
+    user.set_unusable_password()
+    user._skip_admin_notification = True
+    user.save()
+    if taken_by:
+        service.append_log(f"user {source_id}: {email} already belongs to {taken_by.username}, created {user.username} as {user.email}")
+    return user, True
+
+
 def import_user(service, provider, source_id):
     """Create or link the MediaCMS user for one source user, and record it"""
     options = service.get_options()
@@ -108,48 +204,17 @@ def import_user(service, provider, source_id):
 
     email = (payload.get("email") or "").strip()
     username = sanitize_username(payload.get("id") or source_id)
+    with claiming(email):
+        user, created = link_or_create_user(service, source_id, username, email, payload.get("fullName") or payload.get("screenName") or username)
 
-    user = None
-    if email:
-        user = User.objects.filter(email__iexact=email).first()
-    if user is None:
-        # an account with an email of its own is a different person who merely collides
-        # on the sanitised name
-        candidate = User.objects.filter(username__iexact=username).first()
-        if candidate is not None and not candidate.email:
-            claimed = (
-                MigrationRecord.objects.filter(
-                    service__source_system=service.source_system,
-                    object_type="user",
-                    target_id=candidate.pk,
-                    status="success",
-                )
-                .exclude(source_id=str(source_id))
-                .exists()
-            )
-            if not claimed:
-                user = candidate
+        if created:
+            role = mediacms_role(payload.get("roleId"), payload.get("roleName"), options.get("role_map"))
+            if role:
+                # only for a mapped role: set_role_from_mapping resets everything on an unknown value
+                user.set_role_from_mapping(role)
 
-    created = False
-    if user is None:
-        user = User(
-            username=unique_username(username),
-            email=email,
-            name=payload.get("fullName") or payload.get("screenName") or username,
-        )
-        user.set_unusable_password()
-        user._skip_admin_notification = True
-        user.save()
-        created = True
-
-    if created:
-        role = mediacms_role(payload.get("roleId"), payload.get("roleName"), options.get("role_map"))
-        if role:
-            # only for a mapped role: set_role_from_mapping resets everything on an unknown value
-            user.set_role_from_mapping(role)
-
-    action = "created" if created else "linked to existing user"
-    record(service, "user", source_id, "success", f"{action} {user.username}", target=user)
+        action = "created" if created else "linked to existing user"
+        record(service, "user", source_id, "success", f"{action} {user.username}", target=user)
     return user
 
 
@@ -404,51 +469,39 @@ def import_youtube_video(service, provider, source_id):
 
 
 def import_panopto_user(service, provider, source_id):
-    """Create or link the MediaCMS account for one Panopto user.
-
-    The matching rules are the ones the other sources use, for the same reasons: an email
-    is a person, and a username is only a person when the account it lands on has no email
-    of its own. Roles are absent because Panopto exposes none through this API.
-    """
+    """Create or link the MediaCMS account for one Panopto user, matched the way the other
+    sources are, with its system role on creation."""
     payload = provider.fetch_user(source_id)
     email = (payload.get("email") or "").strip()
     username = sanitize_username(payload.get("username") or payload.get("id") or source_id)
+    with claiming(email):
+        user, created = link_or_create_user(service, source_id, username, email, payload.get("fullName") or username)
+        role = mediacms_role("", payload.get("roleName"), service.get_options().get("role_map") or [])
+        if created and role:
+            user.set_role_from_mapping(role)
 
-    user = None
-    if email:
-        user = User.objects.filter(email__iexact=email).first()
-    if user is None:
-        candidate = User.objects.filter(username__iexact=username).first()
-        if candidate is not None and not candidate.email:
-            claimed = (
-                MigrationRecord.objects.filter(
-                    service__source_system=service.source_system,
-                    object_type="user",
-                    target_id=candidate.pk,
-                    status="success",
-                )
-                .exclude(source_id=str(source_id))
-                .exists()
-            )
-            if not claimed:
-                user = candidate
-
-    created = False
-    if user is None:
-        user = User(username=unique_username(username), email=email, name=payload.get("fullName") or username)
-        user.set_unusable_password()
-        user._skip_admin_notification = True
-        user.save()
-        created = True
-
-    record(service, "user", source_id, "success", f"{'created' if created else 'linked to existing user'} {user.username}", target=user)
+        record(service, "user", source_id, "success", f"{'created' if created else 'linked to existing user'} {user.username}", target=user)
     return user
+
+
+def panopto_owner_is_listed(provider, owner, listed):
+    wanted = {value.lower() for value in parse_comma_list(listed)}
+    if not wanted or not owner.get("id"):
+        return False
+    if {str(owner.get("id")).lower(), str(owner.get("username") or "").lower()} & wanted:
+        return True
+    try:
+        user = provider.fetch_user(owner["id"])
+    except Exception:  # noqa: BLE001
+        return False
+    return bool({str(user.get("username") or "").lower(), str(user.get("email") or "").lower()} & wanted)
 
 
 def resolve_panopto_owner(service, provider, owner):
     """The MediaCMS user a migrated recording belongs to"""
     options = service.get_options()
-    if options.get("create_users", True) and owner.get("id"):
+    wants_real_owner = options.get("migrate_all_users", False) or options.get("create_users", True) or options.get("restrict_to_users", False)
+    if wants_real_owner and owner.get("id"):
         try:
             return import_panopto_user(service, provider, owner["id"])
         except Exception as exc:  # noqa: BLE001 - fall back rather than lose the recording
@@ -477,6 +530,94 @@ def unique_panopto_title(title, parent_name, taken):
         index += 1
 
 
+def panopto_folder_roles(service, target, rank):
+    """Panopto folder role to MediaCMS role, for sharing ("share") or a category ("rbac")"""
+    rows = service.get_options().get("folder_role_map") or DEFAULT_FOLDER_ROLE_MAP
+    return {role_key(row.get("name")): row.get(target) for row in rows if row.get(target) in rank}
+
+
+def panopto_people(service, provider, principals, role_map, rank):
+    people = {}
+    for principal in principals:
+        role = role_map.get(role_key(principal.get("role")))
+        if not role:
+            continue
+        if principal.get("type") == "User":
+            user_ids = [principal["id"]]
+        else:
+            try:
+                user_ids = provider.group_members(principal["id"])
+            except Exception as exc:  # noqa: BLE001
+                service.append_log(f"could not read the members of Panopto group {principal['id']}: {exc}")
+                getattr(provider, "unreadable_groups", set()).add(principal["id"])
+                continue
+        for user_id in user_ids:
+            try:
+                user = import_panopto_user(service, provider, user_id)
+            except Exception as exc:  # noqa: BLE001
+                service.append_log(f"could not import Panopto user {user_id}: {exc}")
+                continue
+            if user not in people or rank.index(role) > rank.index(people[user]):
+                people[user] = role
+    return people
+
+
+def grant_rbac_role(group, user, role):
+    membership = RBACMembership.objects.filter(user=user, rbac_group=group).first()
+    if membership is None:
+        RBACMembership.objects.create(user=user, rbac_group=group, role=role)
+    elif RBAC_ROLE_RANK.index(role) > RBAC_ROLE_RANK.index(membership.role):
+        membership.role = role
+        membership.save(update_fields=["role"])
+
+
+def attach_panopto_group(service, provider, category, folder, access):
+    folder_id = str(folder.get("id"))
+    uid = rbac_group_uid(service, folder_id)
+    group = RBACGroup.objects.filter(uid=uid, identity_provider=None).first()
+    if group is None:
+        taken = set(RBACGroup.objects.filter(identity_provider=None).values_list("name", flat=True))
+        group = RBACGroup.objects.create(
+            uid=uid,
+            name=unique_group_name(category.title, folder_id, taken),
+            description=f"Members of {(folder.get('fullName') or category.title).replace('>', ': ')}",
+        )
+    group.categories.add(category)
+
+    people = panopto_people(service, provider, access.get("principals") or [], panopto_folder_roles(service, "rbac", RBAC_ROLE_RANK), RBAC_ROLE_RANK)
+    for user, role in people.items():
+        grant_rbac_role(group, user, role)
+    service.append_log(f"folder {folder_id}: {len(people)} members in group {group.name}")
+    return group
+
+
+def configure_panopto_folder_access(service, provider, category, folder):
+    access = provider.folder_access(str(folder.get("id")))
+    if access.get("public"):
+        return
+    if not getattr(settings, "USE_RBAC", False):
+        service.append_log(f"folder {folder.get('id')}: restricted in Panopto, but RBAC is off, so '{category.title}' is a plain category")
+        return
+    category.is_rbac_category = True
+    category.is_lms_course = bool(access.get("lms"))
+    category.save(update_fields=["is_rbac_category", "is_lms_course"])
+    group = attach_panopto_group(service, provider, category, folder, access)
+
+    platform = lti_platform_for(service)
+    course_ids = access.get("lms_course_ids") or []
+    if platform is not None and course_ids and provider.is_lms_course_folder(str(folder.get("id"))):
+        attach_lti_course(service, category, platform, course_ids[0], label=category.title, rbac_group=group)
+
+
+def import_panopto_folder(service, provider, source_id):
+    provider.unreadable_groups = set()
+    category = get_or_import_panopto_folder(service, provider, provider.fetch_category(source_id))
+    if category is not None and provider.unreadable_groups:
+        groups = ", ".join(sorted(provider.unreadable_groups))
+        record(service, "category", source_id, "failed", f"members of Panopto group(s) {groups} could not be read, run the migration again to retry", target=category)
+    return category
+
+
 def get_or_import_panopto_folder(service, provider, folder):
     """The MediaCMS category for one Panopto folder, created if this run has not made it.
 
@@ -493,6 +634,13 @@ def get_or_import_panopto_folder(service, provider, folder):
         if category is not None:
             return category
 
+    retried = MigrationRecord.objects.filter(service=service, object_type="category", source_id=folder_id, status="failed").exclude(target_id=None).first()
+    if retried is not None and retried.target() is not None:
+        category = retried.target()
+        record(service, "category", folder_id, "success", f"retried category {category.title}", target=category)
+        configure_panopto_folder_access(service, provider, category, folder)
+        return category
+
     claimed = Category.objects.filter(uid=folder_id[:CATEGORY_UID_MAX]).first()
     if claimed is not None:
         record(service, "category", folder_id, "success", f"reused existing category {claimed.title}", target=claimed)
@@ -508,6 +656,7 @@ def get_or_import_panopto_folder(service, provider, folder):
             is_global=True,
         )
         record(service, "category", folder_id, "success", f"created category {category.title}", target=category)
+    configure_panopto_folder_access(service, provider, category, folder)
     return category
 
 
@@ -515,11 +664,13 @@ def import_panopto_session(service, provider, source_id):
     """Import one Panopto recording.
 
     Its own importer rather than the portal shaped one: Panopto has no flavors to match,
-    no publish state to derive and no view count to carry, so what arrives is one mp4, the
-    fields the API does offer, and the folder it came from.
+    so what arrives is one mp4, the fields the API does offer, and the folder it came from.
     """
     options = service.get_options()
     payload = provider.fetch_media(source_id)
+    if options.get("restrict_to_users") and not panopto_owner_is_listed(provider, payload.get("owner") or {}, options.get("source_user_ids")):
+        record(service, "media", source_id, "skipped", "its owner is not one of the listed users")
+        return None
     owner = resolve_panopto_owner(service, provider, payload.get("owner") or {})
 
     tmp_dir = tempfile.mkdtemp(prefix=f"panopto-{source_id[:8]}-")
@@ -539,11 +690,31 @@ def import_panopto_session(service, provider, source_id):
         created_at = parse_datetime(payload.get("created_at") or "")
         if created_at:
             Media.objects.filter(pk=media.pk).update(add_date=created_at)
+        if options.get("preserve_views", True) and payload.get("views"):
+            Media.objects.filter(pk=media.pk).update(views=payload["views"])
+        attach_tags(media, payload.get("tags") or [], media.user)
 
         folder = payload.get("folder") or {}
-        category = get_or_import_panopto_folder(service, provider, folder)
-        if category:
-            media.category.add(category)
+        folder_kind = payload.get("folder_kind") or "folder"
+        access = payload.get("access") or {}
+        folder_access = provider.folder_access(str(folder["id"])) if folder.get("id") else {}
+
+        media.state = recording_state(payload.get("access_level"), access.get("public") or folder_access.get("public"))
+        media.save(update_fields=["state", "listable"])
+
+        if folder_kind == "folder":
+            category = get_or_import_panopto_folder(service, provider, folder)
+            if category:
+                media.category.add(category)
+                for group in category.rbac_groups.all():
+                    grant_rbac_role(group, media.user, "contributor")
+
+        principals = list(access.get("principals") or [])
+        if folder_kind == "personal":
+            principals += folder_access.get("principals") or []
+        for user, permission in panopto_people(service, provider, principals, panopto_folder_roles(service, "share", SHARE_ROLE_RANK), SHARE_ROLE_RANK).items():
+            if user != media.user:
+                MediaPermission.objects.update_or_create(owner_user=media.user, user=user, media=media, defaults={"permission": permission})
 
         if options.get("import_captions", True):
             for caption in payload.get("captions") or []:
@@ -554,11 +725,62 @@ def import_panopto_session(service, provider, source_id):
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
+def import_panopto_playlist(service, provider, source_id):
+    """Create, or complete, the MediaCMS playlist for one Panopto playlist.
+
+    Panopto does not say who made a playlist, so without an owner it goes to whoever owns
+    most of its recordings, and to the fallback owner only when none was migrated. A
+    recording counts when any migration of this Panopto brought it over. A playlist whose
+    recordings failed is recorded as failed, so a re-run adds them once they arrive.
+    """
+    payload = provider.fetch_playlist(source_id)
+
+    existing = MigrationRecord.objects.filter(service=service, object_type="playlist", source_id=str(source_id)).exclude(target_id=None).first()
+    playlist = existing.target() if existing else None
+
+    found, missing, failed = [], [], []
+    for position, session_id in enumerate(payload.get("entry_ids") or [], start=1):
+        row = MigrationRecord.objects.filter(service=service, object_type="media", source_id=session_id).first()
+        media = row.target() if row and row.status in ("success", "skipped") else None
+        if media is not None:
+            found.append((position, media))
+        elif row is not None and row.status == "failed":
+            failed.append(session_id)
+        else:
+            missing.append(session_id)
+
+    if playlist is None:
+        if (payload.get("owner") or {}).get("id"):
+            owner, picked = resolve_panopto_owner(service, provider, payload["owner"]), "its Panopto owner"
+        elif found:
+            owner, picked = Counter(media.user for _position, media in found).most_common(1)[0][0], "the owner of most of its recordings"
+        else:
+            owner, picked = fallback_owner(service), "the fallback owner"
+        playlist = Playlist.objects.create(
+            title=(payload.get("name") or f"playlist-{source_id}")[:100],
+            description=payload.get("description") or "",
+            user=owner,
+        )
+        log = f"created playlist {playlist.title} for {owner.username}, {picked}"
+    else:
+        log = f"completed playlist {playlist.title}"
+
+    for position, media in found:
+        PlaylistMedia.objects.get_or_create(playlist=playlist, media=media, defaults={"ordering": position})
+    log += f", with {len(found)} media"
+    if missing:
+        log += f", {len(missing)} not migrated: {', '.join(missing[:5])}"
+    if failed:
+        log += f", {len(failed)} failed, run the migration again to add them: {', '.join(failed[:5])}"
+    record(service, "playlist", source_id, "failed" if failed else "success", log, target=playlist)
+    return playlist
+
+
 def import_panopto_caption(service, provider, media, caption, tmp_dir):
     """Attach the one caption file Panopto offers, if it offers one"""
     code = caption.get("language") or "en"
     try:
-        language, _created = Language.objects.get_or_create(code=code, defaults={"title": code})
+        language, _created = Language.objects.get_or_create(code=code, defaults={"title": LANG_INFO.get(code, {}).get("name") or code})
         path = os.path.join(tmp_dir, f"caption-{code}.srt")
         provider.download(caption["url"], path)
 
@@ -656,7 +878,7 @@ def lti_platform_for(service):
     return LTIPlatform.objects.filter(pk=platform_id).first()
 
 
-def attach_lti_course(service, category, platform, context_id, label=""):
+def attach_lti_course(service, category, platform, context_id, label="", rbac_group=None):
     """Wire a migrated LMS course to the platform the course lives on.
 
     A launch finds its course through LTIResourceLink(platform, context_id), so writing
@@ -670,7 +892,7 @@ def attach_lti_course(service, category, platform, context_id, label=""):
         return None
 
     link = LTIResourceLink.objects.filter(platform=platform, context_id=context_id).first()
-    group = link.rbac_group if link else None
+    group = (link.rbac_group if link else None) or rbac_group
     if group is None:
         uid = rbac_group_uid(service, context_id, kind="lti")
         group = RBACGroup.objects.filter(uid=uid, identity_provider=None).first()
@@ -1093,62 +1315,122 @@ def _throughput(size_bytes, seconds):
     return f"({megabytes:.0f}MB at {megabytes / seconds:.1f}MB/s)"
 
 
-def combine_streams(service, provider, source_id, data, tmp_dir, want_renditions):
-    """Draw a multi stream recording as one picture, camera inset over screen.
+STREAM_SOURCE_SUFFIX = ":stream"
+
+
+def combine_streams(service, provider, source_id, data, children, tmp_dir, want_renditions):
+    """Draw a multi stream recording as one picture, its streams side by side.
 
     Returns (original_flavor, flavors, extension) with a local path on each, or None when
-    this entry is not a multi stream recording. With renditions wanted, every screen flavor
-    becomes one: the inset is a quarter of the frame, so a single camera file serves them
-    all rather than one download per rung.
+    this entry is not a multi stream recording or its streams cannot be drawn together.
+    With renditions wanted, every flavor of the biggest stream becomes one: each smaller
+    stream is fetched once and drawn into its box on every rendition.
     """
-    children = provider.child_entries(source_id)
     if not children:
         return None
 
-    entry = data.get("entry") or {}
     if len(children) + 1 > MAX_STREAMS:
         kept = children[: MAX_STREAMS - 1]
-        service.append_log(f"entry {source_id}: {len(children) + 1} streams, combining the first {MAX_STREAMS} and leaving {', '.join(child['id'] for child in children[len(kept):])}")
+        left = ", ".join((child.get("entry") or {}).get("id") or "" for child in children[len(kept) :])
+        service.append_log(f"entry {source_id}: {len(children) + 1} streams, combining the first {MAX_STREAMS} and leaving {left}")
         children = kept
 
-    child_data = provider.fetch_media(children[0]["id"])
-    child_entry = child_data.get("entry") or {}
-    base_entry, inset_entry = pick_base_and_inset([entry, child_entry])
-    base_flavors = data.get("flavors") if base_entry is entry else child_data.get("flavors")
-    inset_flavors = child_data.get("flavors") if base_entry is entry else data.get("flavors")
-
-    base_original = pick_original_flavor(base_flavors or [])
-    inset_original = pick_inset_flavor(inset_flavors or [], inset_width_for(base_entry.get("width") or 0))
-    if base_original is None or inset_original is None:
+    streams = children + [data]
+    driver = max(children, key=lambda stream: stream_area(stream.get("entry") or {}))
+    driver_original = pick_original_flavor(driver.get("flavors") or [])
+    if driver_original is None:
         service.append_log(f"entry {source_id}: a stream has no downloadable flavor, importing it on its own")
         return None
 
-    inset_path = os.path.join(tmp_dir, f"inset_{inset_original['id']}.mp4")
-    provider.download_flavor(inset_original, inset_path)
-    service.append_log(f"entry {source_id}: multi stream, {base_entry.get('id')} with {inset_entry.get('id')} inset over it")
+    def canvas_height(flavor):
+        return flavor.get("height") or (driver.get("entry") or {}).get("height") or 1080
+
+    width, height = canvas_size(canvas_height(driver_original))
+    boxes = layout_boxes(len(streams), width, height)
+    fixed_paths = {}
+    for index, stream in enumerate(streams):
+        if stream is driver:
+            continue
+        flavor = pick_flavor_for_width(stream.get("flavors") or [], boxes[index][2])
+        if flavor is None:
+            service.append_log(f"entry {source_id}: a stream has no downloadable flavor, importing it on its own")
+            return None
+        fixed_paths[index] = os.path.join(tmp_dir, f"stream_{flavor['id']}.mp4")
+        provider.download_flavor(flavor, fixed_paths[index])
+
+    child_ids = ", ".join((child.get("entry") or {}).get("id") or "" for child in children)
+    service.append_log(f"entry {source_id}: multi stream, {child_ids} side by side with {source_id}")
 
     def draw(flavor, name):
         source = os.path.join(tmp_dir, f"src_{flavor['id']}.mp4")
         provider.download_flavor(flavor, source)
+        rung_width, rung_height = canvas_size(canvas_height(flavor))
+        paths = [source if stream is driver else fixed_paths[index] for index, stream in enumerate(streams)]
         dest = os.path.join(tmp_dir, name)
-        compose_pip(source, inset_path, dest, base_width=flavor.get("width") or 0)
+        compose_side_by_side(paths, dest, rung_width, rung_height)
         if os.path.exists(source):
             os.remove(source)
-        return dest
+        return dict(flavor, fileExt="mp4", width=rung_width, height=rung_height, _local_path=dest)
 
-    original = dict(base_original, fileExt="mp4", _local_path=draw(base_original, f"{source_id}.mp4"))
+    try:
+        original = draw(driver_original, f"{source_id}.mp4")
+    except Exception as exc:  # noqa: BLE001
+        service.append_log(f"entry {source_id}: could not combine the streams, importing it on its own: {exc}")
+        return None
 
     composed = []
     if want_renditions:
-        for flavor in base_flavors or []:
-            if flavor.get("id") == base_original.get("id") or (flavor.get("fileExt") or "").lower() not in ("mp4", "webm"):
+        for flavor in driver.get("flavors") or []:
+            if flavor.get("id") == driver_original.get("id") or (flavor.get("fileExt") or "").lower() not in ("mp4", "webm"):
                 continue
             try:
-                composed.append(dict(flavor, fileExt="mp4", _local_path=draw(flavor, f"pip_{flavor['id']}.mp4")))
+                composed.append(draw(flavor, f"combined_{flavor['id']}.mp4"))
             except Exception as exc:  # noqa: BLE001 - one rung must not lose the media
                 service.append_log(f"entry {source_id}: could not combine flavor {flavor.get('id')}: {exc}")
 
     return original, composed + [original], "mp4"
+
+
+def import_stream_item(service, provider, key, stream, number, main, tmp_dir):
+    existing = MigrationRecord.objects.filter(service=service, object_type="media", source_id=key).first()
+    previous = existing.target() if existing else None
+    if existing and existing.status in ("success", "skipped") and previous is not None:
+        return previous
+    if previous is not None:
+        previous.delete()
+
+    options = service.get_options()
+    try:
+        flavors = stream.get("flavors") or []
+        original = pick_original_flavor(flavors)
+        if original is None:
+            raise ValueError("no downloadable flavor")
+        extension = source_extension(stream.get("entry") or {}, original)
+        path = os.path.join(tmp_dir, f"stream_original_{original['id']}.{extension}")
+        provider.download_flavor(original, path)
+
+        media = Media(user=main.user, title=f"{main.title[:88]} (stream {number})", description=main.description)
+        if options.get("skip_transcoding", True):
+            media._do_not_transcode = True
+        media._skip_admin_notification = True
+        with open(path, "rb") as handle:
+            media.media_file.save(content=File(handle), name=f"{key.replace(STREAM_SOURCE_SUFFIX, '_stream')}.{extension}", save=False)
+        media.save()
+        record(service, "media", key, "failed", "import started", target=media)
+
+        if media.media_type == "video" and options.get("skip_transcoding", True):
+            attach_flavor_encodings(service, provider, media, flavors, original, path, tmp_dir)
+
+        media.state = main.state
+        media.add_date = main.add_date
+        media.save(update_fields=["state", "add_date", "listable"])
+    except Exception as exc:  # noqa: BLE001
+        record(service, "media", key, "failed", f"stream {number} of media {main.friendly_token}: {exc}")
+        service.append_log(f"media {main.friendly_token}: stream {number} ({key}) failed: {exc}")
+        return None
+
+    record(service, "media", key, "success", f"imported stream {number} of '{main.title}' as media {media.id}", target=media)
+    return media
 
 
 def import_media_entry(service, provider, source_id):
@@ -1187,10 +1469,12 @@ def import_media_entry(service, provider, source_id):
 
     with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmp_dir:
         combined = None
+        children = []
         if not is_image:
             with timings.step("multi stream") as step:
-                combined = combine_streams(service, provider, source_id, data, tmp_dir, options.get("skip_transcoding", True))
-                step.extra = "(combined)" if combined else "(single stream)"
+                children = [provider.fetch_media(child["id"]) for child in provider.child_entries(source_id)]
+                combined = combine_streams(service, provider, source_id, data, children, tmp_dir, options.get("skip_transcoding", True))
+                step.extra = "(combined)" if combined else ("(not combined)" if children else "(single stream)")
 
         if combined is not None:
             original, flavors, extension = combined
@@ -1239,6 +1523,13 @@ def import_media_entry(service, provider, source_id):
         with timings.step("metadata + categories"):
             apply_entry_metadata(service, provider, media, data)
 
+        if children:
+            streams = [(f"{source_id}{STREAM_SOURCE_SUFFIX}" if combined is not None else None, data)]
+            streams += [((child.get("entry") or {}).get("id"), child) for child in children]
+            with timings.step("streams as media") as step:
+                imported = [import_stream_item(service, provider, key, stream, number, media, tmp_dir) for number, (key, stream) in enumerate(streams, start=1) if key]
+                step.extra = f"({len([item for item in imported if item is not None])} of {len(imported)})"
+
     service.append_log(timings.summary())
     media.refresh_from_db()
     record(service, "media", source_id, "success", f"imported '{media.title}' as media {media.id}", target=media)
@@ -1254,9 +1545,12 @@ RECORD_TYPE = {"users": "user", "groups": "group", "categories": "category", "me
 IMPORTERS = {"users": import_user, "groups": import_group, "categories": import_category, "media": import_media_entry, "playlists": import_playlist}
 
 
-PROVIDER_PHASES = {"youtube": ["media"], "panopto": ["users", "media"]}
+PROVIDER_PHASES = {"youtube": ["media"], "panopto": ["users", "categories", "media", "playlists"]}
 
-PROVIDER_IMPORTERS = {"youtube": {"media": import_youtube_video}, "panopto": {"users": import_panopto_user, "media": import_panopto_session}}
+PROVIDER_IMPORTERS = {
+    "youtube": {"media": import_youtube_video},
+    "panopto": {"users": import_panopto_user, "categories": import_panopto_folder, "media": import_panopto_session, "playlists": import_panopto_playlist},
+}
 
 
 def phases_for(service):

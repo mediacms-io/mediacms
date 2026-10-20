@@ -17,6 +17,7 @@ MediaCMS.user = {
 		editProfile: {% if CAN_EDIT %}true{% else %}false{% endif %},
 		deleteProfile: {% if CAN_DELETE %}true{% else %}false{% endif %},
 		canSeeMembersPage: {% if CAN_SEE_MEMBERS_PAGE %}true{% else %}false{% endif %},
+		canSearchAuthors: {% if CAN_SEARCH_AUTHORS %}true{% else %}false{% endif %},
 		manageMedia: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
 		manageUsers: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}true{% else %}false{% endif %},
 		manageComments: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},

@@ -33,6 +33,8 @@ class MediaList(APIView):
             openapi.Parameter(name='ordering', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Order by: asc, desc'),
             openapi.Parameter(name='state', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Media state, options: private", "public", "unlisted'),
             openapi.Parameter(name='encoding_status', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Encoding status, options "pending", "running", "fail", "success"'),
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title'),
+            openapi.Parameter(name='owner', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by owner name or username'),
         ],
         tags=['Manage'],
         operation_summary='Manage Media',
@@ -49,6 +51,8 @@ class MediaList(APIView):
         featured = params.get("featured", "").strip()
         is_reviewed = params.get("is_reviewed", "").strip()
         category = params.get("category", "").strip()
+        query = params.get("q", "").strip()
+        owner = params.get("owner", "").strip()
 
         sort_by_options = [
             "title",
@@ -107,6 +111,11 @@ class MediaList(APIView):
                 qs = qs.filter(category=category_obj)
             else:
                 qs = qs.filter(category__title=category)
+
+        if query:
+            qs = qs.filter(title__icontains=query)
+        if owner:
+            qs = qs.filter(Q(user__name__icontains=owner) | Q(user__username__icontains=owner))
 
         media = qs.order_by(f"{ordering}{sort_by}")
 
@@ -200,7 +209,9 @@ class UserList(APIView):
     parser_classes = (JSONParser,)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name, username, and optionally email (depending on USER_SEARCH_FIELD setting)'),
+        ],
         tags=['Manage'],
         operation_summary='Manage Users',
         operation_description='Manage users for MediaCMS managers and reviewers',
@@ -210,6 +221,7 @@ class UserList(APIView):
         ordering = params.get("ordering", "").strip()
         sort_by = params.get("sort_by", "").strip()
         role = params.get("role", "all").strip()
+        name = params.get("name", "").strip()
 
         sort_by_options = ["date_added", "name"]
         if sort_by not in sort_by_options:
@@ -233,6 +245,12 @@ class UserList(APIView):
                 qs = qs.filter(is_approved=True)
             elif is_approved == "false":
                 qs = qs.filter(Q(is_approved=False) | Q(is_approved__isnull=True))
+
+        if name:
+            if settings.USER_SEARCH_FIELD == "name_username_email":
+                qs = qs.filter(Q(name__icontains=name) | Q(username__icontains=name) | Q(email__icontains=name))
+            else:
+                qs = qs.filter(Q(name__icontains=name) | Q(username__icontains=name))
 
         users = qs.order_by(f"{ordering}{sort_by}")
 

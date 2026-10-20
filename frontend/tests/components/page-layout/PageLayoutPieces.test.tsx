@@ -45,8 +45,36 @@ describe('components/page-layout', () => {
 
     describe('PageSidebarContentOverlay', () => {
         test('Renders the overlay element', () => {
-            const { container, unmount } = renderIntoContainer(<PageSidebarContentOverlay />);
+            const { container, unmount } = renderIntoContainer(
+                <LayoutContext.Provider value={{ visibleSidebar: false, toggleSidebar: jest.fn() } as any}>
+                    <PageSidebarContentOverlay />
+                </LayoutContext.Provider>
+            );
             expect(container.innerHTML).toBe('<div class="page-sidebar-content-overlay"></div>');
+            unmount();
+        });
+
+        test('Closes a visible sidebar when clicked', () => {
+            const toggleSidebar = jest.fn();
+            const { container, unmount } = renderIntoContainer(
+                <LayoutContext.Provider value={{ visibleSidebar: true, toggleSidebar } as any}>
+                    <PageSidebarContentOverlay />
+                </LayoutContext.Provider>
+            );
+            (container.querySelector('.page-sidebar-content-overlay') as HTMLElement).click();
+            expect(toggleSidebar).toHaveBeenCalledTimes(1);
+            unmount();
+        });
+
+        test('Does nothing when the sidebar is already hidden', () => {
+            const toggleSidebar = jest.fn();
+            const { container, unmount } = renderIntoContainer(
+                <LayoutContext.Provider value={{ visibleSidebar: false, toggleSidebar } as any}>
+                    <PageSidebarContentOverlay />
+                </LayoutContext.Provider>
+            );
+            (container.querySelector('.page-sidebar-content-overlay') as HTMLElement).click();
+            expect(toggleSidebar).not.toHaveBeenCalled();
             unmount();
         });
     });

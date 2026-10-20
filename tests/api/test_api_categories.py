@@ -72,6 +72,14 @@ class CategoryVisibilityTest(TestCase):
         for title in ('Plain category', 'Rbac category', 'Other rbac category', 'Course category'):
             self.assertIn(title, listed)
 
+    def test_search_matches_title_or_description(self):
+        self.assertEqual(titles(Client().get(CATEGORIES_URL, {'q': 'PLAIN'})), ['Plain category'])
+        self.assertEqual(titles(Client().get(CATEGORIES_URL, {'q': 'open to'})), ['Plain category'])
+        self.assertEqual(titles(Client().get(CATEGORIES_URL, {'q': 'nothing like this'})), [])
+
+    def test_search_never_reveals_hidden_categories(self):
+        self.assertEqual(titles(Client().get(CATEGORIES_URL, {'q': 'rbac'})), [])
+
     @override_settings(SHOW_LMS_COURSES_IN_CATEGORIES=False)
     def test_lms_courses_can_be_hidden_from_listing(self):
         for client in (Client(), logged_in(self.editor)):
@@ -156,3 +164,8 @@ class TagListTest(TestCase):
         self.assertEqual([t['title'] for t in response.data['results']], ['very popular', 'somewhat used', 'rarely used'])
         self.assertEqual(response.data['count'], 3)
         self.assertEqual(response.data['results'][0]['media_count'], 9)
+
+    def test_tags_can_be_searched_by_title(self):
+        response = Client().get(TAGS_URL, {'q': 'USED'})
+        self.assertEqual([t['title'] for t in response.data['results']], ['somewhat used', 'rarely used'])
+        self.assertEqual(response.data['count'], 2)

@@ -168,10 +168,42 @@ const MEDIACMS_ROLES = [
   { value: 'admin', label: 'Super user and staff' },
 ];
 
+const PANOPTO_ROLE_MAP = [
+  { id: '', name: 'Admin', role: 'admin' },
+  { id: '', name: 'Videographer', role: 'editor' },
+  { id: '', name: 'None', role: '' },
+];
+
+const PANOPTO_FOLDER_ROLE_MAP = [
+  { name: 'Viewer with Link', share: '', rbac: '' },
+  { name: 'Viewer', share: 'viewer', rbac: 'member' },
+  { name: 'Creator', share: 'editor', rbac: 'contributor' },
+  { name: 'Content Organizer', share: 'editor', rbac: 'contributor' },
+  { name: 'Caption Requester', share: 'editor', rbac: 'contributor' },
+  { name: 'Publisher', share: 'owner', rbac: 'manager' },
+  { name: 'Analytics Manager', share: 'owner', rbac: 'manager' },
+  { name: 'DropboxViewer', share: '', rbac: '' },
+];
+
+const SHARE_ROLES = [
+  { value: '', label: 'None' },
+  { value: 'viewer', label: 'Co-viewer' },
+  { value: 'editor', label: 'Co-editor' },
+  { value: 'owner', label: 'Co-owner' },
+];
+
+const RBAC_ROLES = [
+  { value: '', label: 'None' },
+  { value: 'member', label: 'Member' },
+  { value: 'contributor', label: 'Contributor' },
+  { value: 'manager', label: 'Manager' },
+];
+
 const TABS = [
   { id: 'connection', label: 'Connection' },
   { id: 'options', label: 'Import options' },
-  { id: 'roles', label: 'Global role mapping', providers: ['kaltura'] },
+  { id: 'roles', label: 'Global role mapping', providers: ['kaltura', 'panopto'] },
+  { id: 'folder_roles', label: 'Folder role mapping', providers: ['panopto'] },
   { id: 'schedule', label: 'Migration scheduling' },
 ];
 
@@ -218,24 +250,49 @@ const YOUTUBE_DEFAULT_OPTIONS = Object.assign(
 const PANOPTO_OPTIONS = [
   {
     key: 'migrate_all_users',
+    group: USER_CHOICE,
     label: 'Migrate all users',
     help: 'Every account on the Panopto instance gets a MediaCMS account, whether or not it owns a recording.',
   },
   {
-    key: 'create_users',
-    label: 'Only migrate users that own media',
-    help: 'Panopto has no way to list its users through the API, so owners are created as the recordings that belong to them arrive.',
+    key: 'restrict_to_users',
+    group: USER_CHOICE,
+    label: 'Only migrate below listed users',
+    help: 'Only recordings owned by these users are migrated. Panopto user ids, usernames or emails.',
+    field: { key: 'source_user_ids', placeholder: 'jdoe@example.edu, MoodleTrial-Instance\\jdoe' },
   },
   {
-    key: 'fallback_username',
-    label: 'Fallback owner',
-    isText: true,
-    help: 'Used for a recording whose owner Panopto does not name, and for every recording when the option above is off.',
+    key: 'create_users',
+    group: USER_CHOICE,
+    label: 'Only migrate users that own media',
+    help: 'Owners are created as the recordings that belong to them arrive.',
   },
   {
     key: 'import_captions',
     label: 'Import captions',
-    help: 'Captions Panopto offers for a recording are migrated as subtitles.',
+    help: 'Captions Panopto offers for a recording are migrated as subtitles, in their own language.',
+  },
+  {
+    key: 'preserve_views',
+    label: 'Preserve views',
+    help: 'Panopto keeps no play count, so the number of people who watched a recording is carried over instead.',
+  },
+  {
+    key: 'migrate_playlists',
+    label: 'Migrate playlists',
+    help: 'Playlists in the chosen folders, with the recordings of theirs this migration brings over.',
+  },
+  {
+    key: 'lti_platform_id',
+    label: 'LTI platform for LMS courses',
+    isSelect: true,
+    blankLabel: 'Not wired to LTI',
+    help: 'Course folders of an LMS integration are linked to this LTI platform, so course launches land in the migrated category. Can be set up under: MediaCMS Admin \u2192 LTI 1.3 Integration \u2192 LTI Platforms.',
+  },
+  {
+    key: 'import_personal_folders',
+    label: 'Include My Folder recordings',
+    help: "Recordings in everyone's My Folder are migrated to their owner's media, shared with the people the folder names. The Users folder itself is not offered above and its sub-folders do not become categories.",
   },
 ];
 
@@ -243,9 +300,16 @@ const PANOPTO_DEFAULT_OPTIONS = Object.assign(
   {
     source_category_ids: '',
     migrate_all_users: false,
+    restrict_to_users: false,
+    source_user_ids: '',
     create_users: true,
-    fallback_username: 'admin',
+    import_personal_folders: true,
     import_captions: true,
+    preserve_views: true,
+    migrate_playlists: true,
+    lti_platform_id: '',
+    role_map: PANOPTO_ROLE_MAP,
+    folder_role_map: PANOPTO_FOLDER_ROLE_MAP,
   },
   SCHEDULE_DEFAULTS
 );
@@ -487,6 +551,13 @@ export class MigrationEditPage extends Page {
     });
 
     return Object.assign({}, this.state.options, { role_map });
+  }
+
+  setFolderRoleFor(index, target, value) {
+    const folder_role_map = (this.state.options.folder_role_map || []).map((row, position) =>
+      position === index ? Object.assign({}, row, { [target]: value }) : row
+    );
+    this.setOptionValue('folder_role_map', folder_role_map);
   }
 
   setRoleFor(index, value) {
@@ -872,7 +943,94 @@ export class MigrationEditPage extends Page {
     );
   }
 
+  renderPanoptoRoleMap() {
+    const rows = this.state.options.role_map || [];
+
+    return (
+      <>
+        <p className="migration-edit-help">
+          {translateString('Map Panopto\u2019s system roles with MediaCMS\u2019s global roles.')}
+          <br />
+          {translateString(
+            'Panopto exposes only these three to its API: global roles such as Caption Requester are not readable, so they cannot be mapped.'
+          )}
+        </p>
+
+        <div className="migration-edit-roles">
+          <div className="migration-edit-role migration-edit-role--head">
+            <span>{translateString('Source role')}</span>
+            <span></span>
+            <span>{translateString('MediaCMS role')}</span>
+          </div>
+          {rows.map((row, index) => (
+            <div className="migration-edit-role" key={(row.name || '') + '-' + index}>
+              <span>{row.name}</span>
+              <span></span>
+              <select value={row.role || ''} onChange={(e) => this.setRoleFor(index, e.target.value)}>
+                {MEDIACMS_ROLES.map((choice) => (
+                  <option key={choice.value} value={choice.value}>
+                    {translateString(choice.label)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        <p className="migration-edit-help">
+          {translateString(
+            'Only applied to accounts created by this migration. Existing accounts retain their roles as they are.'
+          )}
+        </p>
+      </>
+    );
+  }
+
+  renderFolderRoleMap() {
+    const rows = this.state.options.folder_role_map || [];
+    const choose = (index, target, choices, value) => (
+      <select value={value || ''} onChange={(e) => this.setFolderRoleFor(index, target, e.target.value)}>
+        {choices.map((choice) => (
+          <option key={choice.value} value={choice.value}>
+            {translateString(choice.label)}
+          </option>
+        ))}
+      </select>
+    );
+
+    return (
+      <>
+        <p className="migration-edit-help">
+          {translateString('Map the roles people hold on Panopto folders and recordings.')}
+          <br />
+          {translateString(
+            'In My Folder they become sharing of the media, in any other folder membership of the category.'
+          )}
+        </p>
+
+        <div className="migration-edit-roles migration-edit-roles--folders">
+          <div className="migration-edit-role migration-edit-role--head">
+            <span>{translateString('Source role')}</span>
+            <span>{translateString('My Folder sharing')}</span>
+            <span>{translateString('Category membership')}</span>
+          </div>
+          {rows.map((row, index) => (
+            <div className="migration-edit-role" key={(row.name || '') + '-' + index}>
+              <span>{row.name}</span>
+              {choose(index, 'share', SHARE_ROLES, row.share)}
+              {choose(index, 'rbac', RBAC_ROLES, row.rbac)}
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
   renderRoleMap() {
+    if ('panopto' === this.state.provider) {
+      return this.renderPanoptoRoleMap();
+    }
+
     const rows = this.state.options.role_map || [];
 
     return (
@@ -1130,6 +1288,8 @@ export class MigrationEditPage extends Page {
 
 
             <div hidden={'roles' !== this.state.activeTab}>{this.renderRoleMap()}</div>
+
+            <div hidden={'folder_roles' !== this.state.activeTab}>{this.renderFolderRoleMap()}</div>
 
             <div hidden={'schedule' !== this.state.activeTab}>{this.renderSchedule()}</div>
 
