@@ -1,4 +1,4 @@
-FROM python:3.13.5-slim-bookworm AS build-image
+FROM python:3.13.16-slim-trixie AS build-image
 
 # Install system dependencies needed for downloading and extracting
 RUN apt-get update -y && \
@@ -17,7 +17,7 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ BASE RUNTIME IMAGE ############
-FROM python:3.13.5-slim-bookworm AS base
+FROM python:3.13.16-slim-trixie AS base
 
 SHELL ["/bin/bash", "-c"]
 
@@ -41,7 +41,7 @@ RUN apt-get update -y && \
         zlib1g \
         libxml2-dev \
         libxmlsec1-dev \
-        libxmlsec1-openssl \
+        libxmlsec1t64-openssl \
         libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -78,7 +78,7 @@ COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
 # required for sprite thumbnail generation for large video files
-COPY deploy/docker/policy.xml /etc/ImageMagick-6/policy.xml
+COPY deploy/docker/policy.xml /etc/ImageMagick-7/policy.xml
 
 # Set process control environment variables
 ENV ENABLE_UWSGI='yes' \

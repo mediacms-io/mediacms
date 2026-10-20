@@ -1643,7 +1643,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                 if (playerRef.current && !playerRef.current.isDisposed()) {
                                     try {
                                         await playerRef.current.play();
-                                    } catch (error) {
+                                    } catch {
                                         playerRef.current.pause();
                                     }
                                 }
