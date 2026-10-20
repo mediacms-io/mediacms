@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.3.1](https://github.com/mediacms-io/mediacms/compare/v9.3.0...v9.3.1) (2026-10-20)
+
+### Bug Fixes
+
+* like and dislike buttons ([#1608](https://github.com/mediacms-io/mediacms/issues/1608)) ([f065841](https://github.com/mediacms-io/mediacms/commit/f0658414439b59d3fabab82c007c2739114e6fb4))
+
 ## [9.3.0](https://github.com/mediacms-io/mediacms/compare/v9.2.1...v9.3.0) (2026-10-20)
 
 ### Features
