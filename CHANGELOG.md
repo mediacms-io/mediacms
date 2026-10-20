@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.3.0](https://github.com/mediacms-io/mediacms/compare/v9.2.1...v9.3.0) (2026-10-20)
+
+### Features
+
+* misc Kaltura fixes ([#1606](https://github.com/mediacms-io/mediacms/issues/1606)) ([92d5313](https://github.com/mediacms-io/mediacms/commit/92d531304b53068647da14f70eeebfea5cabd4d4))
+
+### Documentation
+
+* add ZopDay to Commercial Hostings ([#1604](https://github.com/mediacms-io/mediacms/issues/1604)) ([874e687](https://github.com/mediacms-io/mediacms/commit/874e687d29bfcacb7c4d67f409d6ea0e73ca0365))
+
 ## [9.2.1](https://github.com/mediacms-io/mediacms/compare/v9.2.0...v9.2.1) (2026-10-07)
 
 ### Bug Fixes
