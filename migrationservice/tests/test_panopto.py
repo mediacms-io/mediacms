@@ -162,6 +162,7 @@ class StubPanopto(PanoptoProvider):
         self.categories = categories or {}
         self.playlists = {}
         self.course_folders = set()
+        self.lms_groups = set()
         self.downloads = []
 
     def folder_access(self, folder_id):
@@ -178,6 +179,9 @@ class StubPanopto(PanoptoProvider):
 
     def is_lms_course_folder(self, folder_id):
         return folder_id in self.course_folders
+
+    def is_lms_group(self, group_id):
+        return group_id in self.lms_groups
 
     def list_page(self, phase, cursor, page_size):
         page = int((cursor or {}).get("page") or 0)
@@ -414,6 +418,52 @@ class TestPanoptoAccessMapping(TestCase):
         self.assertEqual(again, first)
         self.assertEqual(roles, {"viewer": "member", "publisher": "manager"})
         self.assertEqual(MigrationRecord.objects.get(service=self.service, object_type="category", source_id="f9").status, "success")
+
+    def test_an_assignment_submission_has_no_category_and_is_shared_with_the_teachers_only(self):
+        principals = [
+            {"type": "Group", "id": "g-creators", "role": "Creator"},
+            {"type": "Group", "id": "g-publishers", "role": "Publisher"},
+            {"type": "Group", "id": "g-viewers", "role": "DropboxViewer"},
+        ]
+        media = self.import_from("assignment", access(lms=True, principals=principals))
+        shared = dict(MediaPermission.objects.filter(media=media).values_list("user__username", "permission"))
+        self.assertEqual(media.state, "private")
+        self.assertEqual(media.category.count(), 0)
+        self.assertFalse(RBACMembership.objects.filter(user=media.user).exists())
+        self.assertEqual(shared, {"creator": "editor", "publisher": "owner"})
+
+    def test_a_distributor_is_a_co_viewer(self):
+        media = self.import_from("personal", access(principals=[{"type": "User", "id": "u2", "role": "Distributor"}]))
+        self.assertEqual(dict(MediaPermission.objects.filter(media=media).values_list("user__username", "permission")), {"viewer": "viewer"})
+
+    def test_a_role_missing_from_the_mapping_is_logged_once(self):
+        self.service = make_service(folder_role_map=[{"name": "Viewer", "share": "viewer", "rbac": "member"}])
+        principals = [{"type": "User", "id": "u2", "role": "Distributor"}, {"type": "User", "id": "u3", "role": "Distributor"}]
+        media = self.import_from("personal", access(principals=principals))
+        self.service.refresh_from_db()
+        self.assertFalse(MediaPermission.objects.filter(media=media).exists())
+        self.assertEqual(self.service.log.count("Panopto role 'Distributor' is not in the folder role mapping"), 1)
+
+    def test_a_role_mapped_to_nothing_is_not_logged(self):
+        self.import_from("personal", access(principals=[{"type": "User", "id": "u2", "role": "DropboxViewer"}]))
+        self.service.refresh_from_db()
+        self.assertNotIn("is not in the folder role mapping", self.service.log)
+
+    def test_lms_permissions_can_be_left_to_lti(self):
+        self.service = make_service(migrate_lms_permissions=False)
+        self.provider.lms_groups = {"g-creators"}
+        principals = [{"type": "Group", "id": "g-creators", "role": "Creator"}, {"type": "Group", "id": "g-publishers", "role": "Publisher"}, {"type": "User", "id": "u2", "role": "Viewer"}]
+        media = self.import_from("folder", access(lms=True, principals=principals))
+        category = media.category.get()
+        roles = dict(RBACMembership.objects.filter(rbac_group__categories=category).values_list("user__username", "role"))
+        self.assertTrue(category.is_lms_course)
+        self.assertEqual(roles, {"publisher": "manager", "viewer": "member", "owner": "contributor"})
+
+    def test_lms_permissions_are_migrated_by_default(self):
+        self.provider.lms_groups = {"g-creators"}
+        media = self.import_from("folder", access(lms=True, principals=[{"type": "Group", "id": "g-creators", "role": "Creator"}]))
+        roles = dict(RBACMembership.objects.filter(rbac_group__categories=media.category.get()).values_list("user__username", "role"))
+        self.assertEqual(roles, {"creator": "contributor", "owner": "contributor"})
 
     def test_viewer_with_link_grants_nothing(self):
         media = self.import_from("personal", access(), access(principals=[{"type": "User", "id": "u2", "role": "Viewer with Link"}]))

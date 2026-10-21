@@ -180,6 +180,7 @@ const PANOPTO_FOLDER_ROLE_MAP = [
   { name: 'Creator', share: 'editor', rbac: 'contributor' },
   { name: 'Content Organizer', share: 'editor', rbac: 'contributor' },
   { name: 'Caption Requester', share: 'editor', rbac: 'contributor' },
+  { name: 'Distributor', share: 'viewer', rbac: 'member' },
   { name: 'Publisher', share: 'owner', rbac: 'manager' },
   { name: 'Analytics Manager', share: 'owner', rbac: 'manager' },
   { name: 'DropboxViewer', share: '', rbac: '' },
@@ -290,6 +291,11 @@ const PANOPTO_OPTIONS = [
     help: 'Course folders of an LMS integration are linked to this LTI platform, so course launches land in the migrated category. Can be set up under: MediaCMS Admin \u2192 LTI 1.3 Integration \u2192 LTI Platforms.',
   },
   {
+    key: 'migrate_lms_permissions',
+    label: 'Migrate LMS course permissions',
+    help: 'Members of the course groups an LMS created in Panopto are added to the migrated categories and shares. Turn this off to leave course access to LTI launches; people and groups added in Panopto itself are still migrated.',
+  },
+  {
     key: 'import_personal_folders',
     label: 'Include My Folder recordings',
     help: "Recordings in everyone's My Folder are migrated to their owner's media, shared with the people the folder names. The Users folder itself is not offered above and its sub-folders do not become categories.",
@@ -308,6 +314,7 @@ const PANOPTO_DEFAULT_OPTIONS = Object.assign(
     preserve_views: true,
     migrate_playlists: true,
     lti_platform_id: '',
+    migrate_lms_permissions: true,
     role_map: PANOPTO_ROLE_MAP,
     folder_role_map: PANOPTO_FOLDER_ROLE_MAP,
   },

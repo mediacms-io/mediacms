@@ -1,6 +1,12 @@
 {% extends "root.html" %}
 {% load static %}
 
+{% block topimports %}
+{% if media_type == "video" or media_type == "audio" %}
+<link href="{{FRONTEND_HOST}}/static/video_js/video-js.js?v={{VERSION}}" rel="preload" as="script">
+{% endif %}
+{% endblock topimports %}
+
 {% block content %}<div id="page-embed"></div>{% endblock content %}
 
 {% block bottomimports %}

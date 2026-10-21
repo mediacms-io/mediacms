@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './BulkActionPublishStateModal.scss';
-import { translateString } from '../utils/helpers/';
+import { storedLmsEmbedMode, translateString } from '../utils/helpers/';
 
 interface BulkActionPublishStateModalProps {
   isOpen: boolean;
@@ -25,9 +25,7 @@ export const BulkActionPublishStateModal: React.FC<BulkActionPublishStateModalPr
   onError,
   csrfToken,
 }) => {
-  const isLmsEmbedMode =
-    sessionStorage.getItem('lms_embed_mode') === 'true' ||
-    new URLSearchParams(window.location.search).get('mode') === 'lms_embed_mode';
+  const isLmsEmbedMode = storedLmsEmbedMode() || new URLSearchParams(window.location.search).get('mode') === 'lms_embed_mode';
   const availableStates = isLmsEmbedMode ? PUBLISH_STATES.filter((s) => s.value !== 'public') : PUBLISH_STATES;
 
   const [selectedState, setSelectedState] = useState('');
