@@ -51,6 +51,7 @@ happily and then has nothing to hand over.
 | Preserve views | on | The play count is the sum of the Views Panopto reports for the recording (SOAP UsageReporting GetSessionSummaryUsage, daily totals since 2000). If that cannot be read, the number of people who watched it is carried over instead. Panopto counts the migration's own download as a view, so each run adds one there; the count is read before the download, so it is not carried over. |
 | Migrate playlists | on | Playlists in the chosen folders, holding their recordings that any migration of this Panopto brought over. Panopto does not expose who made a playlist, so it goes to whoever owns most of its recordings, or to the fallback owner if none was migrated; the log says which. A playlist waiting on a failed recording is recorded as failed, and a re-run adds the recording to it. |
 | LTI platform for LMS courses | none | Course folders of an LMS integration are wired to this platform, keyed on the LMS course id Panopto keeps on the course groups, so a course launch lands in the migrated category. Their `[assignments]` folders are not. Needs LTI and RBAC switched on. |
+| Migrate LMS course permissions | on | The members of the course groups an LMS created in Panopto, such as `Course::Creator`, are added to the migrated categories and shares. Off leaves course access to LTI: a course category starts with no members and students join it on their first launch, so pick an LTI platform too. People and groups added in Panopto itself are migrated either way. |
 | Include My Folder recordings | on | Recordings in everyone's My Folder come along whatever folders are chosen. The `Users` and `Remote Recorders` folders are never offered as folders to choose. |
 
 ## What a run does
@@ -115,13 +116,29 @@ nothing. The defaults:
 
 | Panopto role | Shared recording | RBAC category |
 | --- | --- | --- |
-| Viewer | co-viewer | member |
+| Viewer, Distributor | co-viewer | member |
 | Creator, Content Organizer, Caption Requester | co-editor | contributor |
 | Publisher, Analytics Manager | co-owner | manager |
 | Viewer with Link, DropboxViewer | nothing | nothing |
 
 Somebody named twice keeps the highest role. A recording's owner is always a contributor of
-its folder's group.
+its folder's group. A role the mapping does not list is written to the run log once, by
+name, so a role this table does not know about shows up instead of silently granting nothing.
+Panopto has no call that lists its roles, so the tab cannot offer them by itself.
+
+### Assignment folders
+
+An LMS course gets a `<course> [assignments]` folder next to it, where students hand in
+recordings. Its students hold **DropboxViewer**: they can upload, and see only their own.
+MediaCMS has no such role, since every member of a category sees all of it, so an assignment
+folder becomes **no category**. A folder is treated as one when its name ends in
+`[assignments]` or it names somebody as DropboxViewer.
+
+Each submission stays with the student who made it, private, and is shared with the people
+the folder names in its other roles, the course's Creators and Publishers, as co-editor and
+co-owner. No student is shared on another student's submission. With **Migrate LMS course
+permissions** off those are LMS groups too, so the submission is shared with nobody and the
+teachers reach it through the LMS activity it was handed in to.
 
 ## Listing users
 

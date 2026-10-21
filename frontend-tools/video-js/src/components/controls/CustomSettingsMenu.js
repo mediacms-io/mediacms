@@ -245,7 +245,7 @@ class CustomSettingsMenu extends Component {
 
         // Get current preferences for display
         const currentPlaybackRate = this.userPreferences.getPreference('playbackRate');
-        const currentQuality = this.userPreferences.getPreference('quality');
+        const currentQuality = this.userPreferences.getQualityPreference();
         // Find current subtitle selection for label
         let currentSubtitleLabel = 'Off';
         try {

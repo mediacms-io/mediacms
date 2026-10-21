@@ -530,21 +530,41 @@ def unique_panopto_title(title, parent_name, taken):
         index += 1
 
 
+def panopto_folder_role_rows(options):
+    saved = {role_key(row.get("name")): row for row in options.get("folder_role_map") or []}
+    rows = [saved.pop(role_key(row["name"]), row) for row in DEFAULT_FOLDER_ROLE_MAP]
+    return rows + list(saved.values())
+
+
 def panopto_folder_roles(service, target, rank):
     """Panopto folder role to MediaCMS role, for sharing ("share") or a category ("rbac")"""
-    rows = service.get_options().get("folder_role_map") or DEFAULT_FOLDER_ROLE_MAP
+    rows = panopto_folder_role_rows(service.get_options())
     return {role_key(row.get("name")): row.get(target) for row in rows if row.get(target) in rank}
 
 
+def log_unmapped_panopto_role(service, name):
+    line = f"Panopto role '{name}' is not in the folder role mapping, so it grants nothing"
+    if not MigrationService.objects.filter(pk=service.pk, log__contains=line).exists():
+        service.append_log(line)
+
+
 def panopto_people(service, provider, principals, role_map, rank):
+    options = service.get_options()
+    known = {role_key(row.get("name")) for row in panopto_folder_role_rows(options)}
+    lms_permissions = options.get("migrate_lms_permissions", True)
     people = {}
     for principal in principals:
-        role = role_map.get(role_key(principal.get("role")))
+        key = role_key(principal.get("role"))
+        role = role_map.get(key)
         if not role:
+            if key and key not in known:
+                log_unmapped_panopto_role(service, principal.get("role"))
             continue
         if principal.get("type") == "User":
             user_ids = [principal["id"]]
         else:
+            if not lms_permissions and provider.is_lms_group(principal["id"]):
+                continue
             try:
                 user_ids = provider.group_members(principal["id"])
             except Exception as exc:  # noqa: BLE001
@@ -710,7 +730,7 @@ def import_panopto_session(service, provider, source_id):
                     grant_rbac_role(group, media.user, "contributor")
 
         principals = list(access.get("principals") or [])
-        if folder_kind == "personal":
+        if folder_kind in ("personal", "assignment"):
             principals += folder_access.get("principals") or []
         for user, permission in panopto_people(service, provider, principals, panopto_folder_roles(service, "share", SHARE_ROLE_RANK), SHARE_ROLE_RANK).items():
             if user != media.user:
@@ -840,10 +860,14 @@ def import_playlist(service, provider, source_id):
         user=owner,
     )
 
-    added, missing = 0, []
+    added, missing, elsewhere = 0, [], []
     for position, entry_id in enumerate(payload.get("entry_ids") or [], start=1):
         row = MigrationRecord.objects.filter(service=service, object_type="media", source_id=entry_id, status__in=("success", "skipped")).exclude(target_id=None).first()
         media = row.target() if row else None
+
+        if media is None and provider.outside_selection([entry_id]):
+            elsewhere.append(entry_id)
+            continue
 
         if media is None:
             try:
@@ -862,6 +886,8 @@ def import_playlist(service, provider, source_id):
     log = f"created playlist {playlist.title} with {added} media"
     if missing:
         log += f", {len(missing)} not available at the source: {', '.join(missing[:5])}"
+    if elsewhere:
+        log += f", {len(elsewhere)} left out as they sit only under categories not chosen: {', '.join(elsewhere[:5])}"
     record(service, "playlist", source_id, "success", log, target=playlist)
     return playlist
 

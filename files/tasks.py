@@ -750,7 +750,8 @@ def check_media_states():
     changed = 0
     for m in media:
         m.set_encoding_status()
-        m.save(update_fields=["encoding_status"])
+        m.load_stored_listing_fields()
+        m.save(update_fields=["encoding_status", "listable"])
         changed += 1
     if changed:
         logger.info(f"changed encoding status to {changed} media items")

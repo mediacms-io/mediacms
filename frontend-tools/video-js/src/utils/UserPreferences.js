@@ -5,10 +5,10 @@ class UserPreferences {
         this.storageKey = 'videojs_user_preferences';
         this.isRestoringSubtitles = false; // Flag to prevent interference during restoration
         this.subtitleAutoSaveDisabled = false; // Emergency flag to completely disable subtitle auto-save
+        this.currentVideoQuality = 'auto';
         this.defaultPreferences = {
             volume: 1.0, // 100%
             playbackRate: 1.0, // Normal speed
-            quality: 'auto', // Auto quality
             subtitleLanguage: null, // No subtitles by default
             subtitleEnabled: false, // Subtitles off by default
             muted: false,
@@ -641,7 +641,7 @@ class UserPreferences {
      * @returns {string} Quality preference
      */
     getQualityPreference() {
-        return this.getPreference('quality');
+        return this.currentVideoQuality;
     }
 
     /**
@@ -649,7 +649,7 @@ class UserPreferences {
      * @param {string} quality - Quality setting
      */
     setQualityPreference(quality) {
-        this.setPreference('quality', quality);
+        this.currentVideoQuality = quality;
     }
 
     /**
