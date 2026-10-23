@@ -1008,6 +1008,42 @@ class TestPlaylists(SimpleTestCase):
         )
 
 
+class TestAssignmentFolders(SimpleTestCase):
+    def provider(self):
+        client = tree_client()
+        client.calls["/folders/a1"] = {"Id": "a1", "Name": "Biology [Assignments]", "ParentFolder": {"Id": "c1", "Name": "Biology"}}
+        client.calls["/folders/users"] = {"Id": "users", "Name": "Users"}
+        client.calls["/folders/mine"] = {"Id": "mine", "Name": "jdoe [assignments]", "ParentFolder": {"Id": "users", "Name": "Users"}}
+        provider = make_provider(client, source_category_ids="r1")
+        dropbox = {"public": False, "organisation": False, "lms": True, "lms_course_ids": ["14"], "principals": [{"type": "Group", "id": "g", "role": "Dropbox Viewer"}]}
+        provider._folder_access["g1"] = dropbox
+        return provider
+
+    def test_an_assignment_folder_is_told_by_its_name_or_its_dropbox_role(self):
+        provider = self.provider()
+        self.assertTrue(provider.is_assignment_folder("a1"))
+        self.assertTrue(provider.is_assignment_folder("g1"))
+        self.assertFalse(provider.is_assignment_folder("c1"))
+        self.assertFalse(provider.is_assignment_folder("mine"))
+        self.assertFalse(provider.is_assignment_folder(""))
+
+    def test_an_assignment_folder_is_no_category(self):
+        self.assertEqual(self.provider().list_page("categories", {}, 50), (["c1", "r1"], {"done": True}))
+
+    def test_a_recording_in_an_assignment_folder_says_so(self):
+        provider = self.provider()
+        provider._client.calls["/sessions/s1"] = {"Id": "s1", "CreatedBy": {"Id": "u1"}, "Folder": "g1"}
+        self.assertEqual(provider.fetch_media("s1")["folder_kind"], "assignment")
+
+    def test_an_lms_group_is_one_the_lms_created(self):
+        provider = self.provider()
+        provider._client.calls["/groups/g-course"] = {"Id": "g-course", "GroupType": 2}
+        provider._client.calls["/groups/g-dept"] = {"Id": "g-dept", "GroupType": 3}
+        self.assertTrue(provider.is_lms_group("g-course"))
+        self.assertFalse(provider.is_lms_group("g-dept"))
+        self.assertFalse(provider.is_lms_group("gone"))
+
+
 class TestLmsCourseFolders(SimpleTestCase):
     def test_a_course_is_the_top_lms_folder_and_its_assignments_folder_is_not(self):
         provider = make_provider()

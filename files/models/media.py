@@ -11,7 +11,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.files import File
 from django.db import models, transaction
-from django.db.models import Func, Value
+from django.db.models import ExpressionWrapper, Func, Q, Value
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -39,6 +39,8 @@ from .video_data import VideoTrimRequest
 logger = logging.getLogger(__name__)
 
 HLS_VALID_RESOLUTIONS = [144, 240, 360, 480, 720, 1080, 1440, 2160]
+
+LISTING_CONDITION = {"state": "public", "encoding_status": "success", "is_reviewed": True}
 
 
 def hls_stream_resolution(resolution):
@@ -334,12 +336,20 @@ class Media(models.Model):
             self.state = helpers.get_default_state(user=self.user)
 
         # condition to appear on listings
-        if self.state == "public" and self.encoding_status == "success" and self.is_reviewed is True:
-            self.listable = True
-        else:
-            self.listable = False
+        listable = all(getattr(self, field) == value for field, value in LISTING_CONDITION.items())
+        self.listable = listable
 
-        super(Media, self).save(*args, **kwargs)
+        update_fields = kwargs.get("update_fields")
+        if self.pk and update_fields and "listable" in update_fields:
+            saved = {field: value for field, value in LISTING_CONDITION.items() if field in update_fields}
+            not_saved = {field: value for field, value in LISTING_CONDITION.items() if field not in update_fields}
+            if not_saved and all(getattr(self, field) == value for field, value in saved.items()):
+                self.listable = ExpressionWrapper(Q(**not_saved), output_field=models.BooleanField())
+
+        try:
+            super(Media, self).save(*args, **kwargs)
+        finally:
+            self.listable = listable
 
         # produce a thumbnail out of an uploaded poster
         # will run only when a poster is uploaded for the first time

@@ -184,7 +184,11 @@
     document.addEventListener("DOMContentLoaded", function(event) {
 
         var urlParams = new URLSearchParams(window.location.search);
-        var isLmsEmbedMode = sessionStorage.getItem('lms_embed_mode') === 'true' && urlParams.get('action') === 'select_media';
+        var storedEmbedMode = null;
+        try {
+            storedEmbedMode = sessionStorage.getItem('lms_embed_mode');
+        } catch (error) {}
+        var isLmsEmbedMode = storedEmbedMode === 'true' && urlParams.get('action') === 'select_media';
 
         // Add compact styles if in LMS embed mode
         if (isLmsEmbedMode) {
