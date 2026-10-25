@@ -166,7 +166,7 @@ translation_strings = {
     "Published": "Veröffentlicht",
     "Published on": "Veröffentlicht am",
     "Recent uploads": "Neue Uploads",
-    "Recommended": "Empfohlen",
+    "Recommended": "Vorgeschlagen",
     "Record": "",
     "Record Screen": "Bildschirm aufnehmen",
     "Record Screen with Audio": "",
