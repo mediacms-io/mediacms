@@ -10,6 +10,7 @@ django-redis==5.4.0
 celery==5.4.0
 drf-yasg==1.21.8
 Pillow==12.3.0
+fonttools==4.66.1
 django-imagekit==5.0.0
 markdown==3.8.1
 django-filter==24.3

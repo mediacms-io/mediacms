@@ -34,6 +34,7 @@ RUN apt-get update -y && \
         supervisor \
         nginx \
         imagemagick \
+        fonts-dejavu-core \
         procps \
         build-essential \
         pkg-config \

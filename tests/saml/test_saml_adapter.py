@@ -176,21 +176,22 @@ class AddUserLogoTest(TestCase):
 
     def test_default_photo_attribute_sets_logo_for_user_without_one(self):
         user = make_user("saml_logo_user")
-        self.assertEqual(user.logo.name, "userlogos/user.jpg")
+        self.assertTrue(user.has_placeholder_logo)
         add_user_logo(user, {"jpegPhoto": [png_base64()]})
         user.refresh_from_db()
-        self.assertNotEqual(user.logo.name, "userlogos/user.jpg")
+        self.assertFalse(user.has_placeholder_logo)
         self.assertTrue(user.logo.name.startswith("userlogos/"))
 
     def test_configured_attribute_name_is_used(self):
         configuration = make_configuration(self.social_app, user_logo="thumbnailPhoto")
         user = make_user("saml_custom_logo_user")
+        generated = user.logo.name
         add_user_logo(user, {"jpegPhoto": [png_base64()]}, configuration)
         user.refresh_from_db()
-        self.assertEqual(user.logo.name, "userlogos/user.jpg")
+        self.assertEqual(user.logo.name, generated)
         add_user_logo(user, {"thumbnailPhoto": [png_base64()]}, configuration)
         user.refresh_from_db()
-        self.assertNotEqual(user.logo.name, "userlogos/user.jpg")
+        self.assertFalse(user.has_placeholder_logo)
 
     def test_existing_custom_logo_is_not_overwritten(self):
         user = make_user("saml_has_logo_user")
@@ -202,10 +203,11 @@ class AddUserLogoTest(TestCase):
 
     def test_undecodable_photo_is_logged_and_ignored(self):
         user = make_user("saml_bad_logo_user")
+        generated = user.logo.name
         with self.assertLogs(level="ERROR"):
             self.assertTrue(add_user_logo(user, {"jpegPhoto": ["not base64!"]}))
         user.refresh_from_db()
-        self.assertEqual(user.logo.name, "userlogos/user.jpg")
+        self.assertEqual(user.logo.name, generated)
 
 
 class HandleRoleMappingTest(TestCase):

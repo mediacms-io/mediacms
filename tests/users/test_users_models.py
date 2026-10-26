@@ -1,6 +1,8 @@
 import io
 import os
 import uuid
+from io import StringIO
+from unittest.mock import patch
 
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from allauth.socialaccount.models import SocialAccount
@@ -9,16 +11,18 @@ from django.contrib.admin.sites import site as admin_site
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import RequestFactory, TestCase, override_settings
 from PIL import Image
 
+from files import letter_cloud
 from files.models import Category, Media, MediaPermission, Tag
 from files.tests import create_account, create_media
 from rbac.models import RBACGroup, RBACMembership
 from users.adapter import MyAccountAdapter
 from users.admin import UserAdmin
 from users.forms import ChannelForm, SignupForm, UserForm
-from users.models import Channel, Notification, User
+from users.models import DEFAULT_LOGO, Channel, Notification, User
 from users.validators import (
     ASCIIUsernameValidator,
     LEssRestrictiveUsernameValidator,
@@ -69,7 +73,7 @@ class UserModelTest(TestCase):
         self.assertIsNone(self.user.banner_thumbnail_url())
 
     def test_thumbnail_urls_point_to_media_url(self):
-        self.assertEqual(self.user.thumbnail_url(), f"{settings.MEDIA_URL}userlogos/user.jpg")
+        self.assertEqual(self.user.thumbnail_url(), f"{settings.MEDIA_URL}{self.user.logo.name}")
         self.assertEqual(self.user.banner_thumbnail_url(), f"{settings.MEDIA_URL}userlogos/banner.jpg")
 
     def test_thumbnail_url_is_none_without_logo(self):
@@ -462,3 +466,112 @@ class UserAdminTest(TestCase):
         self.assertNotIn("password", fields)
         self.assertNotIn("is_approved", fields)
         self.assertIn("is_manager", fields)
+
+
+class LetterCloudLogoTest(TestCase):
+    def test_new_user_gets_a_letter_cloud_logo(self):
+        user = make_user("cloud", name="Ελένη Γεωργίου")
+        self.assertIn("letter_cloud", user.logo.name)
+        self.assertTrue(user.has_placeholder_logo)
+        with Image.open(user.logo.path) as image:
+            self.assertEqual((image.format, image.size), ("JPEG", (200, 200)))
+
+    def test_same_name_gives_the_same_logo(self):
+        first = letter_cloud.letter_cloud_logo("Emily Johnson").read()
+        self.assertEqual(first, letter_cloud.letter_cloud_logo("Emily Johnson").read())
+        self.assertNotEqual(first, letter_cloud.letter_cloud_logo("Emily Jonson").read())
+
+    def test_name_without_letters_keeps_the_default_logo(self):
+        user = make_user("cloud", name="1234")
+        self.assertEqual(user.logo.name, DEFAULT_LOGO)
+
+    def test_letters_without_a_font_keep_the_default_logo(self):
+        with patch("files.letter_cloud.font_library", return_value=letter_cloud.FontLibrary([])):
+            user = make_user("cloud", name="Emily Johnson")
+        self.assertEqual(user.logo.name, DEFAULT_LOGO)
+
+    def test_logo_given_at_creation_is_kept(self):
+        token = uuid.uuid4().hex[:10]
+        user = User.objects.create(username=f"cloud_{token}", email=f"cloud_{token}@example.com", name="Emily Johnson", logo="userlogos/custom.jpg")
+        self.assertEqual(user.logo.name, "userlogos/custom.jpg")
+
+    def test_logo_is_not_regenerated_on_later_saves(self):
+        user = make_user("cloud", name="Emily Johnson")
+        logo = user.logo.name
+        user.name = "Someone Else"
+        user.save()
+        user.refresh_from_db()
+        self.assertEqual(user.logo.name, logo)
+
+    def test_placeholder_logos(self):
+        self.assertTrue(User(logo="").has_placeholder_logo)
+        self.assertTrue(User(logo=DEFAULT_LOGO).has_placeholder_logo)
+        self.assertTrue(User(logo="userlogos/2026/10/26/letter_cloud_AbC1234.jpg").has_placeholder_logo)
+        self.assertFalse(User(logo="userlogos/2026/10/26/photo.jpg").has_placeholder_logo)
+
+
+class PopulateUserLogosCommandTest(TestCase):
+    def run_command(self, *args):
+        out, err = StringIO(), StringIO()
+        call_command("populate_user_logos", *args, stdout=out, stderr=err)
+        return out.getvalue(), err.getvalue()
+
+    def user_with_logo(self, logo, name="Emily Johnson"):
+        user = make_user("populate", name=name)
+        User.objects.filter(pk=user.pk).update(logo=logo)
+        user.refresh_from_db()
+        return user
+
+    def test_creates_logos_for_users_without_one(self):
+        default = self.user_with_logo(DEFAULT_LOGO)
+        empty = self.user_with_logo("")
+        out, _ = self.run_command()
+        self.assertIn("2 logos created, 0 skipped", out)
+        for user in (default, empty):
+            user.refresh_from_db()
+            self.assertIn("letter_cloud", user.logo.name)
+
+    def test_users_with_a_logo_are_left_alone(self):
+        custom = self.user_with_logo("userlogos/custom.jpg")
+        generated = make_user("populate", name="Emily Johnson")
+        logo = generated.logo.name
+        out, _ = self.run_command()
+        self.assertIn("0 users have no logo", out)
+        custom.refresh_from_db()
+        generated.refresh_from_db()
+        self.assertEqual(custom.logo.name, "userlogos/custom.jpg")
+        self.assertEqual(generated.logo.name, logo)
+
+    def test_dry_run_changes_nothing(self):
+        user = self.user_with_logo(DEFAULT_LOGO)
+        out, _ = self.run_command("--dry-run")
+        self.assertIn(f"would create a logo for {user.username}", out)
+        user.refresh_from_db()
+        self.assertEqual(user.logo.name, DEFAULT_LOGO)
+
+    def test_username_narrows_the_run(self):
+        first = self.user_with_logo(DEFAULT_LOGO)
+        second = self.user_with_logo(DEFAULT_LOGO)
+        self.run_command("--username", second.username)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual(first.logo.name, DEFAULT_LOGO)
+        self.assertIn("letter_cloud", second.logo.name)
+
+    def test_limit_stops_after_that_many_users(self):
+        first = self.user_with_logo(DEFAULT_LOGO)
+        second = self.user_with_logo(DEFAULT_LOGO)
+        out, _ = self.run_command("--limit", "1")
+        self.assertIn("1 logos created", out)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIn("letter_cloud", first.logo.name)
+        self.assertEqual(second.logo.name, DEFAULT_LOGO)
+
+    def test_user_without_drawable_letters_is_skipped(self):
+        user = self.user_with_logo(DEFAULT_LOGO, name="1234")
+        out, err = self.run_command()
+        self.assertIn("0 logos created, 1 skipped", out)
+        self.assertIn(f"skipped {user.username}", err)
+        user.refresh_from_db()
+        self.assertEqual(user.logo.name, DEFAULT_LOGO)

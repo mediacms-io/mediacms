@@ -86,7 +86,7 @@ def add_user_logo(user, extra_data, saml_configuration=None):
     # back to "jpegPhoto" when it is left empty
     logo_key = (saml_configuration.user_logo if saml_configuration and saml_configuration.user_logo else None) or "jpegPhoto"
     try:
-        if extra_data.get(logo_key) and user.logo.name in ["userlogos/user.jpg", "", None]:
+        if extra_data.get(logo_key) and user.has_placeholder_logo:
             base64_string = extra_data.get(logo_key)[0]
             image_data = base64.b64decode(base64_string)
             image_content = ContentFile(image_data)

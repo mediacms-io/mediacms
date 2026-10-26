@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.mail import EmailMessage
@@ -11,8 +13,12 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 import files.helpers as helpers
+from files.letter_cloud import letter_cloud_logo
 from files.models import Category, Media, MediaPermission, Tag
 from rbac.models import RBACGroup
+
+DEFAULT_LOGO = "userlogos/user.jpg"
+GENERATED_LOGO_NAME = "letter_cloud.jpg"
 
 
 class User(AbstractUser):
@@ -59,6 +65,18 @@ class User(AbstractUser):
         if self.logo:
             return helpers.url_from_path(self.logo.path)
         return None
+
+    @property
+    def has_placeholder_logo(self):
+        name = self.logo.name or ""
+        return name in ("", DEFAULT_LOGO) or os.path.basename(name).startswith("letter_cloud")
+
+    def set_letter_cloud_logo(self):
+        content = letter_cloud_logo(self.name or self.username)
+        if content is None:
+            return False
+        self.logo.save(GENERATED_LOGO_NAME, content, save=False)
+        return True
 
     def banner_thumbnail_url(self):
         c = self.channels.filter().order_by("add_date").first()
@@ -113,6 +131,8 @@ class User(AbstractUser):
         strip_text_items = ["name", "description", "title"]
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
+        if self._state.adding and self.has_placeholder_logo:
+            self.set_letter_cloud_logo()
         super(User, self).save(*args, **kwargs)
 
     def get_user_rbac_groups(self):
