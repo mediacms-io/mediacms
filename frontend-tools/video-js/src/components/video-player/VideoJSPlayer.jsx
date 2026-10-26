@@ -30,6 +30,16 @@ import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 import sampleMediaData from '../../assets/sample-media-file.json';
 
 // Function to enable tooltips for all standard VideoJS buttons
+const MAX_PIXEL_RATIO = 2;
+
+const canUseLocalStorage = () => {
+    try {
+        return Boolean(window.localStorage);
+    } catch {
+        return false;
+    }
+};
+
 const enableStandardButtonTooltips = (player) => {
     // Wait a bit for all components to be initialized
     setTimeout(() => {
@@ -1234,6 +1244,13 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
 
                         // Play inline
                         playsinline: true,
+
+                        vhs: {
+                            useNetworkInformationApi: false,
+                            useBandwidthFromLocalStorage: canUseLocalStorage(),
+                            useDevicePixelRatio: true,
+                            customPixelRatio: Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO),
+                        },
                     },
 
                     // ===== COMPONENT CONFIGURATION =====
@@ -1363,6 +1380,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                             let touchStartTime = 0;
                             let touchStartPos = { x: 0, y: 0 };
 
+                            let controlsShownAt = 0;
+                            playerRef.current.on('useractive', () => {
+                                controlsShownAt = Date.now();
+                            });
+
                             const handleTouchStart = (e) => {
                                 touchStartTime = Date.now();
                                 const touch = e.touches[0];
@@ -1405,7 +1427,9 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                         // Check if controls are currently visible by examining control bar
                                         const controlBar = playerRef.current.getChild('controlBar');
                                         const controlBarEl = controlBar ? controlBar.el() : null;
+                                        const controlsAppearedWithThisTouch = controlsShownAt >= touchStartTime - 50;
                                         const isControlsVisible =
+                                            !controlsAppearedWithThisTouch &&
                                             controlBarEl &&
                                             window.getComputedStyle(controlBarEl).opacity !== '0' &&
                                             window.getComputedStyle(controlBarEl).visibility !== 'hidden';
@@ -1434,12 +1458,15 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                         if (isPaused) {
                                             // Always play if video is paused
                                             playerRef.current.play();
+                                            seekIndicator?.show('play');
                                         } else if (isTapOnCenterIcon) {
                                             // Pause if tapping on center icon (highest priority)
                                             playerRef.current.pause();
+                                            seekIndicator?.show('pause');
                                         } else if (isControlsVisible) {
                                             // Pause if controls are visible and not touching seekbar area
                                             playerRef.current.pause();
+                                            seekIndicator?.show('pause');
                                         } else {
                                             // If controls are not visible, show them AND show center pause icon
                                             playerRef.current.userActive(true);
@@ -2299,9 +2326,17 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                 // BEGIN: Initialize playback event handler
                 playbackEventHandler.current = new PlaybackEventHandler(playerRef, customComponents, {
                     isEmbedPlayer: isEmbedPlayer,
-                    showSeekIndicators: true,
+                    showSeekIndicators: false,
                 });
                 playbackEventHandler.current.init();
+
+                playerRef.current.on('click', (event) => {
+                    const indicator = customComponents.current?.seekIndicator;
+                    if (!indicator || !event.target.classList.contains('vjs-tech')) {
+                        return;
+                    }
+                    indicator.show(playerRef.current.paused() ? 'pause' : 'play');
+                });
 
                 // Store cleanup function for playback event handler
                 customComponents.current.cleanupPlaybackEventHandler = () => {

@@ -336,6 +336,30 @@ class PeriodicChecksTest(TestCase):
         self.video.refresh_from_db()
         self.assertEqual(self.video.encoding_status, "success")
 
+    def test_check_media_states_lists_a_media_whose_encoding_turns_out_done(self):
+        Encoding.objects.bulk_create([Encoding(media=self.video, profile=self.h240, status="success")])
+        Media.objects.filter(pk=self.video.pk).update(state="public", is_reviewed=True, encoding_status="running", listable=False)
+
+        self.assertTrue(tasks.check_media_states())
+
+        self.video.refresh_from_db()
+        self.assertEqual((self.video.encoding_status, self.video.listable), ("success", True))
+
+    def test_check_media_states_uses_the_state_stored_by_the_time_it_saves(self):
+        Encoding.objects.bulk_create([Encoding(media=self.video, profile=self.h240, status="success")])
+        Media.objects.filter(pk=self.video.pk).update(state="public", is_reviewed=True, encoding_status="running", listable=False)
+        original = Media.set_encoding_status
+
+        def made_private_meanwhile(media):
+            Media.objects.filter(pk=media.pk).update(state="private")
+            return original(media)
+
+        with mock.patch.object(Media, "set_encoding_status", autospec=True, side_effect=made_private_meanwhile):
+            self.assertTrue(tasks.check_media_states())
+
+        self.video.refresh_from_db()
+        self.assertEqual((self.video.state, self.video.encoding_status, self.video.listable), ("private", "success", False))
+
     def test_check_running_states_re_encodes_stale_running_encodings(self):
         stale = Encoding.objects.create(media=self.video, profile=self.h144, status="running")
         fresh = Encoding.objects.create(media=self.video, profile=self.h240, status="running")

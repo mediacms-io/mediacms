@@ -936,8 +936,8 @@ class KalturaProvider(BaseProvider):
         return {
             "entries": self._entries_in_selection(),
             "users": len(self.restricted_user_ids()) or len(people),
-            "groups": self.client.count("user", {"typeIn": str(USER_TYPE_GROUP)}) if self.options.get("migrate_groups") else 0,
-            "playlists": len(self._migratable_playlists()) if self.options.get("migrate_playlists") else 0,
+            "groups": len([group_id for group_id in self.group_ids() if self.group_in_selection(group_id)]) if self.options.get("migrate_groups") else 0,
+            "playlists": len([playlist for playlist in self._migratable_playlists() if self.playlist_in_selection(playlist)]) if self.options.get("migrate_playlists") else 0,
             "categories": len([c for c in categories if ">site>channels>" not in (c.get("fullName") or "")]),
             "channels": len([c for c in categories if ">site>channels>" in (c.get("fullName") or "")]),
         }
@@ -1034,10 +1034,10 @@ class KalturaProvider(BaseProvider):
             return self._list_kept("user", cursor, page_size, {"typeIn": str(USER_TYPE_USER)}, lambda user: not is_system_user(user.get("id")))
 
         if phase == "playlists":
-            return self._list_kept("playlist", cursor, page_size, None, self.playlist_is_migratable)
+            return self._list_kept("playlist", cursor, page_size, None, lambda playlist: self.playlist_is_migratable(playlist) and self.playlist_in_selection(playlist))
 
         if phase == "groups":
-            return self._list_kept("user", cursor, page_size, {"typeIn": str(USER_TYPE_GROUP)}, lambda group: True)
+            return self._list_kept("user", cursor, page_size, {"typeIn": str(USER_TYPE_GROUP)}, lambda group: self.group_in_selection(group["id"]))
 
         if phase == "categories":
             return self._list_importable_categories(cursor, page_size)
@@ -1067,21 +1067,44 @@ class KalturaProvider(BaseProvider):
             ]
         return self._unselected_roots
 
+    def _matching_entries(self, entry_ids, kfilter=None):
+        found = set()
+        for start in range(0, len(entry_ids), 500):
+            chunk = entry_ids[start : start + 500]
+            result = self.client.call("media", "list", filter=dict(kfilter or {}, idIn=",".join(chunk)), pager={"pageSize": len(chunk), "pageIndex": 1})
+            objects = (result.get("objects") or []) if isinstance(result, dict) else []
+            found.update(str(entry.get("id")) for entry in objects if entry.get("id"))
+        return found
+
     def _entries_under(self, entry_ids, category_ids):
         if not entry_ids or not category_ids:
             return set()
-        result = self.client.call(
-            "media",
-            "list",
-            filter={"idIn": ",".join(entry_ids), "categoryAncestorIdIn": ",".join(category_ids)},
-            pager={"pageSize": min(len(entry_ids), 500), "pageIndex": 1},
-        )
-        objects = (result.get("objects") or []) if isinstance(result, dict) else []
-        return {str(entry.get("id")) for entry in objects if entry.get("id")}
+        return self._matching_entries(entry_ids, {"categoryAncestorIdIn": ",".join(category_ids)})
 
     def outside_selection(self, entry_ids):
         elsewhere = self._entries_under(entry_ids, self._unselected_root_ids())
         return elsewhere - self._entries_under(sorted(elsewhere), self.restricted_category_ids())
+
+    def playlist_in_selection(self, playlist):
+        entry_ids = parse_playlist_content(playlist.get("playlistContent"))
+        existing = self._matching_entries(entry_ids)
+        return bool(existing - self.outside_selection(sorted(existing)))
+
+    def group_in_selection(self, group_id):
+        chosen = set(self.restricted_category_ids())
+        page_index = 1
+        while True:
+            result = self.client.call("categoryUser", "list", filter={"userIdEqual": str(group_id)}, pager={"pageSize": 500, "pageIndex": page_index})
+            objects = (result.get("objects") or []) if isinstance(result, dict) else []
+            for membership in objects:
+                if membership.get("status") != CATEGORY_USER_ACTIVE:
+                    continue
+                path = str(membership.get("categoryFullIds") or membership.get("categoryId") or "")
+                if chosen & set(path.split(">")):
+                    return True
+            if len(objects) < 500:
+                return False
+            page_index += 1
 
     def within_selection(self, full_name):
         """Whether a path is one of the chosen roots or sits beneath one"""

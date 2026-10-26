@@ -10,7 +10,11 @@
 <script>
   (function() {
     var url = new URL(window.location.href);
-    if (sessionStorage.getItem('lms_embed_mode') === 'true' && url.searchParams.get('mode') !== 'lms_embed_mode') {
+    var storedEmbedMode = null;
+    try {
+      storedEmbedMode = sessionStorage.getItem('lms_embed_mode');
+    } catch (error) {}
+    if (storedEmbedMode === 'true' && url.searchParams.get('mode') !== 'lms_embed_mode') {
       url.searchParams.set('mode', 'lms_embed_mode');
       window.location.replace(url.toString());
     }

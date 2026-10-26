@@ -126,6 +126,9 @@
 {% block topimports %}
 <link href="{% static "css/media.css" %}" rel="preload" as="style">
 <link href="{% static "css/media.css" %}" rel="stylesheet">
+{% if media_object.media_type == "video" or media_object.media_type == "audio" %}
+<link href="{{FRONTEND_HOST}}/static/video_js/video-js.js?v={{VERSION}}" rel="preload" as="script">
+{% endif %}
 {%endblock topimports %}
 
 {% block content %}

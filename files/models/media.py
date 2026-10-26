@@ -637,6 +637,11 @@ class Media(models.Model):
 
         return True
 
+    def load_stored_listing_fields(self):
+        stored = Media.objects.filter(pk=self.pk).values("state", "is_reviewed").first() or {}
+        for field, value in stored.items():
+            setattr(self, field, value)
+
     def post_encode_actions(self, encoding=None, action=None):
         """perform things after encode has run
         whether it has failed or succeeded
@@ -652,6 +657,8 @@ class Media(models.Model):
                 else:
                     self.preview_file_path = encoding.media_file.path
 
+        # this copy was loaded when encoding started; use the current state so a media made private meanwhile is not relisted
+        self.load_stored_listing_fields()
         self.save(update_fields=["encoding_status", "listable", "preview_file_path"])
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
