@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.4.0](https://github.com/mediacms-io/mediacms/compare/v9.3.1...v9.4.0) (2026-10-26)
+
+### Features
+
+* Video player optimizations ([#1610](https://github.com/mediacms-io/mediacms/issues/1610)) ([e4f9f97](https://github.com/mediacms-io/mediacms/commit/e4f9f973d5c4c9143227d1c549969cdb6a44d25e))
+
 ## [9.3.1](https://github.com/mediacms-io/mediacms/compare/v9.3.0...v9.3.1) (2026-10-20)
 
 ### Bug Fixes
