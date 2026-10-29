@@ -210,6 +210,29 @@ class MediaFileInfoTests(TempDirMixin, SimpleTestCase):
         self.assertEqual(len(info["md5sum"]), 32)
         self.assertIn("codec_name", info["video_info"])
 
+    def test_color_fields_are_read_from_their_own_ffprobe_keys(self):
+        stream = {
+            "codec_type": "video",
+            "codec_name": "hevc",
+            "width": 1920,
+            "height": 1080,
+            "duration": "1.0",
+            "r_frame_rate": "25/1",
+            "color_space": "bt2020nc",
+            "color_transfer": "smpte2084",
+        }
+
+        def fake_run_command(cmd, **kwargs):
+            if "-show_streams" in cmd:
+                return {"out": json.dumps({"streams": [stream]})}
+            return {"out": "1\n"}
+
+        with mock.patch.object(helpers, "run_command", side_effect=fake_run_command):
+            info = helpers.media_file_info(fixture_path("small_video.mp4"))
+
+        self.assertEqual(info["color_space"], "bt2020nc")
+        self.assertEqual(info["color_transfer"], "smpte2084")
+
     def test_still_image_is_not_treated_as_video(self):
         self.assertTrue(helpers.media_file_info(fixture_path("test_image.png")).get("fail"))
 
