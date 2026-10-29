@@ -172,7 +172,7 @@ class MediaListableTests(TestCase):
     def test_media_still_encoding_is_not_listable(self):
         self.assertFalse(create_media(self.user, title="encoding", encoding_status="running").listable)
 
-    def test_successful_preview_is_listable_when_only_preview_profile_is_active(self):
+    def test_successful_preview_is_listable_when_using_original_playback(self):
         EncodeProfile.objects.exclude(name="preview").update(active=False)
         media = create_media(self.user, filename=SMALL_VIDEO, title="preview only", state="public", is_reviewed=True, encoding_status="pending")
 

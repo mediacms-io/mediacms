@@ -336,7 +336,7 @@ class Media(models.Model):
         # A successful preview is enough to list a video when no regular encoding
         # profiles are enabled. Keep encoding_status pending in this case so the
         # player continues to serve the original file while no renditions exist.
-        encoding_ready_for_listing = self.encoding_status == "success" or self.is_preview_only_ready()
+        encoding_ready_for_listing = self.encoding_status == "success" or self.is_original_playback_listable()
         if self.state == "public" and encoding_ready_for_listing and self.is_reviewed is True:
             self.listable = True
         else:
@@ -355,12 +355,12 @@ class Media(models.Model):
                 thumbnail_name = helpers.get_file_name(self.uploaded_poster.path)
                 self.uploaded_thumbnail.save(content=myfile, name=thumbnail_name)
 
-    def is_preview_only_ready(self):
-        """Whether a successful preview is sufficient for public listings.
+    def is_original_playback_listable(self):
+        """Whether a video using its original file can appear in public listings.
 
         Preview encodings are not playable renditions. When no regular encoding
-        profiles are active, however, the original media is the available playback
-        source and a completed preview should not keep the video hidden.
+        profiles are active, the original media is the playback source, so a
+        completed preview should not keep the video hidden.
         """
         if not self.pk or self.media_type != "video" or self.encoding_status != "pending":
             return False
