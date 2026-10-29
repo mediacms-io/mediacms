@@ -333,8 +333,11 @@ class Media(models.Model):
 
             self.state = helpers.get_default_state(user=self.user)
 
-        # condition to appear on listings
-        if self.state == "public" and self.encoding_status == "success" and self.is_reviewed is True:
+        # A successful preview is enough to list a video when no regular encoding
+        # profiles are enabled. Keep encoding_status pending in this case so the
+        # player continues to serve the original file while no renditions exist.
+        encoding_ready_for_listing = self.encoding_status == "success" or self.is_preview_only_ready()
+        if self.state == "public" and encoding_ready_for_listing and self.is_reviewed is True:
             self.listable = True
         else:
             self.listable = False
@@ -351,6 +354,21 @@ class Media(models.Model):
                 myfile = File(f)
                 thumbnail_name = helpers.get_file_name(self.uploaded_poster.path)
                 self.uploaded_thumbnail.save(content=myfile, name=thumbnail_name)
+
+    def is_preview_only_ready(self):
+        """Whether a successful preview is sufficient for public listings.
+
+        Preview encodings are not playable renditions. When no regular encoding
+        profiles are active, however, the original media is the available playback
+        source and a completed preview should not keep the video hidden.
+        """
+        if not self.pk or self.media_type != "video" or self.encoding_status != "pending":
+            return False
+
+        if EncodeProfile.objects.filter(active=True).exclude(name=PREVIEW_PROFILE_NAME).exists():
+            return False
+
+        return self.encodings.filter(profile__name=PREVIEW_PROFILE_NAME, status="success", chunk=False, media_file__gt="").exists()
 
     def transcribe_function(self):
         to_transcribe = False

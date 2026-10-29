@@ -153,6 +153,8 @@ class MediaWorkflowStateTests(TestCase):
 
 
 class MediaListableTests(TestCase):
+    fixtures = ["fixtures/encoding_profiles.json"]
+
     @classmethod
     def setUpTestData(cls):
         cls.user = make_user("listable_user")
@@ -169,6 +171,32 @@ class MediaListableTests(TestCase):
 
     def test_media_still_encoding_is_not_listable(self):
         self.assertFalse(create_media(self.user, title="encoding", encoding_status="running").listable)
+
+    def test_successful_preview_is_listable_when_only_preview_profile_is_active(self):
+        EncodeProfile.objects.exclude(name="preview").update(active=False)
+        media = create_media(self.user, filename=SMALL_VIDEO, title="preview only", state="public", is_reviewed=True, encoding_status="pending")
+
+        preview = EncodeProfile.objects.get(name="preview", active=True)
+        encoding = Encoding(media=media, profile=preview, status="success")
+        encoding.media_file.save("preview.mp4", ContentFile(b"preview"), save=False)
+        encoding.save()
+
+        media.refresh_from_db()
+        self.assertEqual(media.encoding_status, "pending")
+        self.assertTrue(media.listable)
+        self.assertEqual(media.encodings_info["0-original"]["h264"]["url"], helpers.url_from_path(media.media_file.path))
+
+    def test_preview_does_not_make_video_listable_while_regular_profiles_are_active(self):
+        media = create_media(self.user, filename=SMALL_VIDEO, title="still processing", state="public", is_reviewed=True, encoding_status="pending")
+
+        preview = EncodeProfile.objects.get(name="preview", active=True)
+        encoding = Encoding(media=media, profile=preview, status="success")
+        encoding.media_file.save("preview.mp4", ContentFile(b"preview"), save=False)
+        encoding.save()
+
+        media.refresh_from_db()
+        self.assertEqual(media.encoding_status, "pending")
+        self.assertFalse(media.listable)
 
     def test_listable_follows_later_state_changes(self):
         media = create_media(self.user, title="toggled", state="private")
