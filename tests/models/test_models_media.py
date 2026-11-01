@@ -182,7 +182,7 @@ class MediaListableTests(TestCase):
         encoding.save()
 
         media.refresh_from_db()
-        self.assertEqual(media.encoding_status, "pending")
+        self.assertEqual(media.encoding_status, "success")
         self.assertTrue(media.listable)
         self.assertEqual(media.encodings_info["0-original"]["h264"]["url"], helpers.url_from_path(media.media_file.path))
 

@@ -333,10 +333,9 @@ class Media(models.Model):
 
             self.state = helpers.get_default_state(user=self.user)
 
-        # A successful preview is enough to list a video when no regular encoding
-        # profiles are enabled. Keep encoding_status pending in this case so the
-        # player continues to serve the original file while no renditions exist.
-        encoding_ready_for_listing = self.encoding_status == "success" or self.is_original_playback_listable()
+        # A completed preview can finish processing when the original file is the
+        # configured playback source and no regular encoding profiles are enabled.
+        encoding_ready_for_listing = self.encoding_status == "success" or self.is_original_playback_ready()
         if self.state == "public" and encoding_ready_for_listing and self.is_reviewed is True:
             self.listable = True
         else:
@@ -355,17 +354,21 @@ class Media(models.Model):
                 thumbnail_name = helpers.get_file_name(self.uploaded_poster.path)
                 self.uploaded_thumbnail.save(content=myfile, name=thumbnail_name)
 
-    def is_original_playback_listable(self):
-        """Whether a video using its original file can appear in public listings.
+    def is_original_playback_ready(self):
+        """Whether a preview-only setup can play a video from its original file.
 
-        Preview encodings are not playable renditions. When no regular encoding
-        profiles are active, the original media is the playback source, so a
-        completed preview should not keep the video hidden.
+        Preview encodings do not provide a rendition. If no regular profiles are
+        active and there are no pending, running, or successful regular renditions,
+        a completed preview means processing is complete and the original is playable.
         """
-        if not self.pk or self.media_type != "video" or self.encoding_status != "pending":
+        if not self.pk or self.media_type != "video" or not self.media_file:
             return False
 
         if EncodeProfile.objects.filter(active=True).exclude(name=PREVIEW_PROFILE_NAME).exists():
+            return False
+
+        regular_encodings = self.encodings.filter(chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
+        if regular_encodings.filter(status__in=["pending", "running", "success"]).exists():
             return False
 
         return self.encodings.filter(profile__name=PREVIEW_PROFILE_NAME, status="success", chunk=False, media_file__gt="").exists()
@@ -699,12 +702,12 @@ class Media(models.Model):
         mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME))
         webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
-        if not mp4_statuses and not webm_statuses:
-            encoding_status = "pending"
-        elif "success" in mp4_statuses or "success" in webm_statuses:
+        if self.is_original_playback_ready() or "success" in mp4_statuses or "success" in webm_statuses:
             encoding_status = "success"
         elif "running" in mp4_statuses or "running" in webm_statuses:
             encoding_status = "running"
+        elif "pending" in mp4_statuses or "pending" in webm_statuses or not mp4_statuses and not webm_statuses:
+            encoding_status = "pending"
         else:
             encoding_status = "fail"
         self.encoding_status = encoding_status
@@ -754,6 +757,10 @@ class Media(models.Model):
             return ret
 
         if self.encoding_status in ["running", "pending"]:
+            ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
+            return ret
+
+        if self.is_original_playback_ready():
             ret['0-original'] = {"h264": {"url": helpers.url_from_path(self.media_file.path), "status": "success", "progress": 100}}
             return ret
 
