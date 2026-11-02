@@ -16,6 +16,7 @@ from django.core.cache import cache
 from django.core.files import File
 from django.db import DatabaseError
 from django.db.models import Q
+from django.utils import timezone
 
 from actions.models import USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
@@ -950,8 +951,9 @@ def get_list_of_popular_media():
     basic_query = Q(listable=True)
     media_x = Media.objects.filter(basic_query).values("friendly_token")
 
-    period_x = datetime.now() - timedelta(days=7)
-    period_y = datetime.now() - timedelta(days=30 * 6)
+    now = timezone.now()
+    period_x = now - timedelta(days=7)
+    period_y = now - timedelta(days=30 * 6)
 
     for media in media_x:
         ft = media["friendly_token"]
