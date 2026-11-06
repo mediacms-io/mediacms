@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import urlParse from 'url-parse';
-import { deleteRequest, csrfToken } from '../../../utils/helpers/';
+import { deleteRequest, csrfToken, takeRememberedMessage, rememberMessage } from '../../../utils/helpers/';
 import { usePopup } from '../../../utils/hooks/';
 import { PopupMain } from '../../_shared';
 import { PendingItemsList } from '../../item-list/PendingItemsList.jsx';
@@ -52,7 +52,7 @@ function AddNewUser({ onUserAdded, setMessage }) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'User created successfully.' }));
+        rememberMessage({ type: 'success', text: 'User created successfully.' });
         window.location.reload();
       })
       .catch((err) => {
@@ -523,10 +523,9 @@ export function ManageItemList(rawProps) {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    const storedMessage = sessionStorage.getItem('user-management-message');
+    const storedMessage = takeRememberedMessage();
     if (storedMessage) {
-      setMessage(JSON.parse(storedMessage));
-      sessionStorage.removeItem('user-management-message');
+      setMessage(storedMessage);
     }
   }, []);
 

@@ -347,6 +347,18 @@ class MediaDetailManagerActionsTest(TestCase):
         self.media.refresh_from_db()
         self.assertTrue(self.media.is_reviewed)
 
+    def test_review_lists_and_unlists_the_media(self):
+        Media.objects.filter(pk=self.media.pk).update(state="public", encoding_status="success", is_reviewed=False, listable=False)
+
+        self.assertEqual(self.post({"type": "review", "result": "true"}).status_code, 201)
+        self.media.refresh_from_db()
+        self.assertEqual((self.media.is_reviewed, self.media.listable), (True, True))
+
+        self.media.is_reviewed = False
+        self.media.save(update_fields=["is_reviewed", "listable"])
+        self.media.refresh_from_db()
+        self.assertEqual((self.media.is_reviewed, self.media.listable), (False, False))
+
     def test_unknown_action_is_rejected(self):
         response = self.post({"type": "explode"})
         self.assertEqual(response.status_code, 400)

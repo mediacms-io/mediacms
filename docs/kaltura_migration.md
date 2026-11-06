@@ -120,8 +120,8 @@ Every migration is different, so read these before starting rather than after.
 | Run unpaused during weekends | off | On the Migration scheduling tab. The window above is ignored on Saturday and Sunday, portal timezone. |
 | LTI platform for LMS courses | none | Links migrated LMS courses to a platform set up under **MediaCMS Admin → LTI 1.3 Integration → LTI Platforms**, so they stay in step with the LMS. Needs `USE_LTI`. See [Sites and learning platforms](#sites-and-learning-platforms). |
 | Add entries in sub-categories to parent categories | on | A KMS category shows the content of its sub-categories; MediaCMS categories are flat, so this adds it. See [Flat categories](#flat-categories). |
-| Migrate playlists | off | Static playlists become MediaCMS playlists, in order, fetching any media they name and creating its owners, whatever the user options say. Dynamic playlists are skipped. See [Playlists](#playlists). |
-| Migrate groups | off | Kaltura groups become MediaCMS RBAC groups, and their members are created whatever the user options say. Their media is not fetched: that follows the user options. Needs `USE_RBAC`. See [Groups](#groups). |
+| Migrate playlists | off | Static playlists holding media in the chosen top level categories, or in no category, become MediaCMS playlists, in order, fetching any such media they name and creating its owners, whatever the user options say. Dynamic playlists are skipped. See [Playlists](#playlists). |
+| Migrate groups | off | Kaltura groups that are members of a category in the chosen top level categories become MediaCMS RBAC groups, and their members are created whatever the user options say. Their media is not fetched: that follows the user options. Needs `USE_RBAC`. See [Groups](#groups). |
 | Import captions | on | Caption assets become WebVTT subtitles. One that fails to convert is recorded as failed and the media keeps the rest. Plain text transcripts have no equivalent and are only logged. |
 | Import statistics (Plays/Views) | on | Copy play counts onto the migrated media. |
 | Maintain publish state of media | on | Derive public, unlisted or private from the source. Unmoderated media stays private. See [Permissions](#permissions). |
@@ -228,10 +228,17 @@ frozen on whatever today happened to be. And KMS keeps a playlist per channel un
 internal account, which is plumbing nobody would recognise. On the portal this was built
 against, that leaves 4 of 10 playlists worth migrating.
 
+**Only playlists of the chosen sites come over.** Playlists belong to the partner, not to a
+site, so one is migrated when at least one entry it names sits under a chosen top level
+category or in no category at all. A playlist made of another site's media is left out, and so
+is its owner.
+
 **A playlist can name media the run never fetched**, because the user options narrowed it or
 because the playlist crosses into someone else's content. Those are fetched on the playlist's
 account and their owners created: asking for playlists is asking for whole playlists, and a
-list with holes in it is worse than an import that reached a little wider than asked.
+list with holes in it is worse than an import that reached a little wider than asked. The one
+exception is an entry filed only under top level categories you did not choose: it belongs to
+another site, so it is left out of the playlist and the log names it.
 
 Be aware of what that means. Switching playlists on fetches media owned by people outside
 **Only migrate below listed users**, and creates those people as users, or gives their media
@@ -259,7 +266,9 @@ so only people come through. Checked against a live portal, since Kaltura ignore
 field it does not support: 28 users unfiltered, 27 with `typeIn=0`, 1 with `typeIn=1`.
 
 Switch **Migrate groups** on and those groups become MediaCMS RBAC groups instead, keeping
-who is in them. Kaltura's group roles map straight across, MANAGER to manager and MEMBER to
+who is in them. Groups belong to the partner, not to a site, so only a group that is a member
+of a category under a chosen top level category comes over; one used only by another site, or
+by no category at all, is left out with its members. Kaltura's group roles map straight across, MANAGER to manager and MEMBER to
 member. It needs `USE_RBAC`; with RBAC off each group is recorded as skipped with the reason,
 rather than disappearing quietly.
 

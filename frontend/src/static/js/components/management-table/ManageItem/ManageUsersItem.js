@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { usePopup, useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
-import { csrfToken } from '../../../utils/helpers/';
+import { csrfToken, rememberMessage } from '../../../utils/helpers/';
 import { PopupMain } from '../../_shared';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon.jsx';
 import { ManageItemDate } from './ManageMediaItem';
@@ -83,7 +83,7 @@ function ManageUsersItemActions(props) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'Password changed successfully.' }));
+        rememberMessage({ type: 'success', text: 'Password changed successfully.' });
         window.location.reload();
       })
       .catch((err) => {
@@ -110,7 +110,7 @@ function ManageUsersItemActions(props) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'User approved successfully.' }));
+        rememberMessage({ type: 'success', text: 'User approved successfully.' });
         window.location.reload();
       })
       .catch((err) => {

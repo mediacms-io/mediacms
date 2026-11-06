@@ -624,13 +624,14 @@ def embed_media(request):
     if not friendly_token:
         return HttpResponseRedirect("/")
 
-    media = Media.objects.values("title").filter(friendly_token=friendly_token).first()
+    media = Media.objects.values("media_type").filter(friendly_token=friendly_token).first()
 
     if not media:
         return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
 
     context = {}
     context["media"] = friendly_token
+    context["media_type"] = media["media_type"]
     return render(request, "cms/embed.html", context)
 
 

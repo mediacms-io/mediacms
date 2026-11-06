@@ -80,6 +80,7 @@ DEFAULT_FOLDER_ROLE_MAP = [
     {"name": "Creator", "share": "editor", "rbac": "contributor"},
     {"name": "Content Organizer", "share": "editor", "rbac": "contributor"},
     {"name": "Caption Requester", "share": "editor", "rbac": "contributor"},
+    {"name": "Distributor", "share": "viewer", "rbac": "member"},
     {"name": "Publisher", "share": "owner", "rbac": "manager"},
     {"name": "Analytics Manager", "share": "owner", "rbac": "manager"},
     {"name": "DropboxViewer", "share": "", "rbac": ""},
@@ -97,6 +98,9 @@ ACCESS_LISTS = {
 }
 
 WALK_LIMIT = 400
+
+ASSIGNMENT_FOLDER_SUFFIX = "[assignments]"
+DROPBOX_ROLE = "dropboxviewer"
 
 CAPTION_LANGUAGE = "en"
 LANGUAGE_CODES = {info["name"].lower(): code for code, info in LANG_INFO.items() if info.get("name") and "-" not in code}
@@ -486,6 +490,7 @@ class PanoptoProvider(BaseProvider):
         "preserve_views": True,
         "migrate_playlists": True,
         "lti_platform_id": "",
+        "migrate_lms_permissions": True,
         "max_items": None,
         "role_map": DEFAULT_ROLE_MAP,
         "folder_role_map": DEFAULT_FOLDER_ROLE_MAP,
@@ -617,6 +622,16 @@ class PanoptoProvider(BaseProvider):
         if root in SYSTEM_ROOT_FOLDERS:
             return "system"
         return "folder"
+
+    def is_assignment_folder(self, folder_id):
+        if not folder_id or self.folder_kind(folder_id) != "folder":
+            return False
+        if (self.folder(folder_id).get("Name") or "").strip().lower().endswith(ASSIGNMENT_FOLDER_SUFFIX):
+            return True
+        return any(role_key(principal.get("role")) == DROPBOX_ROLE for principal in self.folder_access(folder_id).get("principals") or [])
+
+    def is_lms_group(self, group_id):
+        return self.group(group_id).get("GroupType") == GROUP_TYPE_EXTERNAL
 
     def wanted(self, folder_id, selected):
         if not selected or self.within_folders(folder_id, selected):
@@ -893,7 +908,11 @@ class PanoptoProvider(BaseProvider):
                 return [], dict(cursor)
             selected = self.selected_folder_ids()
             _roots, folders, _sessions = self.discover(selected or None)
-            wanted = [folder_id for folder_id in folders if self.folder_kind(folder_id) == "folder" and (not selected or self.within_folders(folder_id, selected))]
+            wanted = [
+                folder_id
+                for folder_id in folders
+                if self.folder_kind(folder_id) == "folder" and (not selected or self.within_folders(folder_id, selected)) and not self.is_assignment_folder(folder_id)
+            ]
             return sorted(wanted), {"done": True}
 
         if phase == "playlists":
@@ -968,7 +987,7 @@ class PanoptoProvider(BaseProvider):
                 "parentId": str((folder.get("ParentFolder") or {}).get("Id") or ""),
                 "parentName": (folder.get("ParentFolder") or {}).get("Name") or "",
             },
-            "folder_kind": self.folder_kind(folder_id) if folder_id else "folder",
+            "folder_kind": ("assignment" if self.is_assignment_folder(folder_id) else self.folder_kind(folder_id)) if folder_id else "folder",
             "access": self.session_access(session_id),
             "access_level": self.session_access_level(session_id),
             "download_url": urls.get("DownloadUrl") or self.client.podcast_url(source_id),

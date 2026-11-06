@@ -38,6 +38,9 @@ class BaseProvider:
         """Whether a path is one of the chosen roots or sits beneath one"""
         return True
 
+    def outside_selection(self, entry_ids):
+        return set()
+
     def worth_importing(self, category):
         """Whether a source category becomes a MediaCMS category of its own"""
         return True

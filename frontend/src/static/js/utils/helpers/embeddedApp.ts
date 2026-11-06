@@ -19,6 +19,14 @@ export function inEmbeddedApp() {
     }
 }
 
+export function storedLmsEmbedMode(): boolean {
+    try {
+        return sessionStorage.getItem('lms_embed_mode') === 'true';
+    } catch (e) {
+        return false;
+    }
+}
+
 export function isShareMediaDisabled(): boolean {
     try {
         const params = new URL(globalThis.location.href).searchParams;

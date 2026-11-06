@@ -9,6 +9,7 @@ from migrationservice.models import MigrationRecord, MigrationService
 from migrationservice.tasks import attach_flavor_encodings as real_attach
 from migrationservice.tasks import (
     import_media_entry,
+    import_playlist,
     migrate_item,
     pick_original_flavor,
 )
@@ -402,3 +403,21 @@ class TestCategoryScoping(TestCase):
         media.refresh_from_db()
         self.assertEqual(media.state, "private")
         self.assertEqual(media.category.count(), 0)
+
+
+class TestPlaylistSelection(TestCase):
+    fixtures = ["fixtures/encoding_profiles.json"]
+
+    def setUp(self):
+        create_account(username="admin")
+        self.service = make_service()
+        self.provider = make_provider()
+        self.provider.fetch_playlist = lambda source_id: {"id": source_id, "name": "Week 1", "description": "", "owner": "jdoe", "entry_ids": ["1_kaf", "1_a"]}
+        self.provider.outside_selection = lambda entry_ids: {entry_id for entry_id in entry_ids if entry_id == "1_kaf"}
+
+    def test_an_entry_only_under_unchosen_categories_is_left_out_of_a_playlist(self):
+        playlist = import_playlist(self.service, self.provider, "pl1")
+        self.assertEqual([media.title for media in playlist.media.all()], ["Circuit analysis lecture 4"])
+        self.assertNotIn(("fetch_media", "1_kaf"), self.provider.calls)
+        row = MigrationRecord.objects.get(service=self.service, object_type="playlist", source_id="pl1")
+        self.assertIn("1 left out as they sit only under categories not chosen: 1_kaf", row.log)
