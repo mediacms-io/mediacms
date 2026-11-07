@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext } from '../utils/contexts/';
+import { apiUrlConfig } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
@@ -17,7 +16,7 @@ export class ManageCommentsPage extends Page {
 
     this.state = {
       resultsCount: null,
-      requestUrl: ApiUrlContext._currentValue.manage.comments,
+      requestUrl: apiUrlConfig.manage.comments,
       currentPage: 1,
       sortingArgs: '',
       sortBy: 'add_date',
@@ -35,7 +34,7 @@ export class ManageCommentsPage extends Page {
   onTablePageChange(newPageUrl, updatedPage) {
     this.setState({
       currentPage: updatedPage,
-      requestUrl: genReqUrl(ApiUrlContext._currentValue.manage.comments, this.state.sortingArgs, updatedPage),
+      requestUrl: genReqUrl(apiUrlConfig.manage.comments, this.state.sortingArgs, updatedPage),
     });
   }
 
@@ -51,7 +50,7 @@ export class ManageCommentsPage extends Page {
       sortBy: sort,
       ordering: order,
       sortingArgs: newArgs,
-      requestUrl: genReqUrl(ApiUrlContext._currentValue.manage.comments, newArgs, this.state.currentPage),
+      requestUrl: genReqUrl(apiUrlConfig.manage.comments, newArgs, this.state.currentPage),
     });
   }
 
@@ -60,7 +59,7 @@ export class ManageCommentsPage extends Page {
       {
         resultsCount: null,
         refresh: this.state.refresh + 1,
-        requestUrl: ApiUrlContext._currentValue.manage.comments,
+        requestUrl: apiUrlConfig.manage.comments,
       },
       function () {
         if (multipleItems) {
@@ -103,10 +102,6 @@ export class ManageCommentsPage extends Page {
     );
   }
 }
-
-ManageCommentsPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ManageCommentsPage.defaultProps = {
   title: 'Manage comments',

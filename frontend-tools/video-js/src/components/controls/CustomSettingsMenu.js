@@ -239,15 +239,13 @@ class CustomSettingsMenu extends Component {
     }
 
     createSettingsOverlay() {
-        const controlBar = this.player().getChild('controlBar');
-
         // Create settings overlay
         this.settingsOverlay = document.createElement('div');
         this.settingsOverlay.className = 'custom-settings-overlay';
 
         // Get current preferences for display
         const currentPlaybackRate = this.userPreferences.getPreference('playbackRate');
-        const currentQuality = this.userPreferences.getPreference('quality');
+        const currentQuality = this.userPreferences.getQualityPreference();
         // Find current subtitle selection for label
         let currentSubtitleLabel = 'Off';
         try {
@@ -259,7 +257,7 @@ class CustomSettingsMenu extends Component {
                     break;
                 }
             }
-        } catch (e) {}
+        } catch {}
 
         // Format playback rate for display
         const playbackRateLabel = currentPlaybackRate === 1 ? 'Normal' : `${currentPlaybackRate}`;
@@ -349,7 +347,7 @@ class CustomSettingsMenu extends Component {
             // Prevent body scroll when overlay is open on mobile
             this.settingsOverlay.addEventListener(
                 'touchstart',
-                (e) => {
+                () => {
                     // e.stopPropagation();
                 },
                 { passive: true }
@@ -587,7 +585,7 @@ class CustomSettingsMenu extends Component {
                 }));
                 return this.sortAndDecorateQualities(normalized, desiredOrder);
             }
-        } catch (e) {
+        } catch {
             // ignore
         }
 
@@ -648,7 +646,7 @@ class CustomSettingsMenu extends Component {
         // Close button functionality
         const closeButton = this.settingsOverlay.querySelector('.settings-close-btn');
         if (closeButton) {
-            const closeFunction = (e) => {
+            const closeFunction = () => {
                 // e.stopPropagation();
                 this.settingsOverlay.classList.remove('show');
                 this.settingsOverlay.style.display = 'none';
@@ -978,7 +976,7 @@ class CustomSettingsMenu extends Component {
         window.scrollTo(0, scrollY);
     }
 
-    toggleSettings(e) {
+    toggleSettings() {
         // e.stopPropagation();
         const isVisible = this.settingsOverlay.classList.contains('show');
 
@@ -1176,7 +1174,7 @@ class CustomSettingsMenu extends Component {
                         break;
                     }
                 }
-            } catch (e) {}
+            } catch {}
 
             // Persist active subtitle language so it survives reloads
             if (activeSubtitleLang) {
@@ -1202,7 +1200,7 @@ class CustomSettingsMenu extends Component {
                         });
                     }
                 }
-            } catch (e) {}
+            } catch {}
 
             // Fallback: try TextTracks if no elements found and track.src exists
             if (subtitleTracksInfo.length === 0) {
@@ -1220,7 +1218,7 @@ class CustomSettingsMenu extends Component {
                             });
                         }
                     }
-                } catch (e) {}
+                } catch {}
             }
 
             player.addClass('vjs-changing-resolution');
@@ -1239,15 +1237,15 @@ class CustomSettingsMenu extends Component {
                             player.addRemoteTextTrack(trackInfo, false);
                         }
                     });
-                } catch (e) {}
+                } catch {}
 
                 // Restore time and rate
                 try {
                     player.playbackRate(rate);
-                } catch (e) {}
+                } catch {}
                 try {
                     if (!isNaN(currentTime)) player.currentTime(currentTime);
-                } catch (e) {}
+                } catch {}
 
                 // Resume state
                 if (!wasPaused) {
@@ -1284,7 +1282,7 @@ class CustomSettingsMenu extends Component {
                                 }
                             }
                         }
-                    } catch (e) {}
+                    } catch {}
                     // Sync UI
                     this.refreshSubtitlesSubmenu();
                     this.updateCurrentSubtitleDisplay();
@@ -1306,7 +1304,7 @@ class CustomSettingsMenu extends Component {
                             }
                         }
                     }
-                } catch (e) {}
+                } catch {}
 
                 player.removeClass('vjs-changing-resolution');
 
@@ -1377,11 +1375,6 @@ class CustomSettingsMenu extends Component {
                     const player = this.player();
                     const tracks = player.textTracks();
                     const saved = String(savedLanguage || '').toLowerCase();
-                    // First disable all subtitle tracks
-                    for (let i = 0; i < tracks.length; i++) {
-                        const t = tracks[i];
-                        if (t.kind === 'subtitles') t.mode = 'disabled';
-                    }
                     // Helper for robust language matching (language or srclang; en vs en-US)
                     const matches = (t) => {
                         const tl = String(t.language || t.srclang || '').toLowerCase();
@@ -1389,24 +1382,44 @@ class CustomSettingsMenu extends Component {
                         return tl === saved || tl.startsWith(saved + '-') || saved.startsWith(tl + '-');
                     };
 
-                    let restored = false;
+                    // Resolve the target before touching any mode: taking the track we are
+                    // about to show through 'disabled' starts a second lazy load of its .vtt
+                    // while the first is still in flight, and video.js appends both sets of
+                    // cues to the same track. This runs on a timer, on three readiness events
+                    // and on up to eight retries, so it has to be idempotent.
+                    let target = null;
                     for (let i = 0; i < tracks.length; i++) {
                         const t = tracks[i];
                         if (t.kind === 'subtitles' && matches(t)) {
-                            t.mode = 'showing';
-                            restored = true;
-                            // Persist enabled flag so iOS applies on next load
-                            try {
-                                this.userPreferences.setPreference('subtitleEnabled', true, true);
-                            } catch (e) {}
-                            // Refresh UI
-                            this.refreshSubtitlesSubmenu();
-                            this.updateCurrentSubtitleDisplay();
-                            try {
-                                player.trigger('texttrackchange');
-                            } catch (e) {}
+                            target = t;
                             break;
                         }
+                    }
+
+                    // Disable every other subtitle track, never the one being shown
+                    for (let i = 0; i < tracks.length; i++) {
+                        const t = tracks[i];
+                        if (t.kind === 'subtitles' && t !== target && t.mode !== 'disabled') {
+                            t.mode = 'disabled';
+                        }
+                    }
+
+                    let restored = false;
+                    if (target) {
+                        if (target.mode !== 'showing') {
+                            target.mode = 'showing';
+                        }
+                        restored = true;
+                        // Persist enabled flag so iOS applies on next load
+                        try {
+                            this.userPreferences.setPreference('subtitleEnabled', true, true);
+                        } catch {}
+                        // Refresh UI
+                        this.refreshSubtitlesSubmenu();
+                        this.updateCurrentSubtitleDisplay();
+                        try {
+                            player.trigger('texttrackchange');
+                        } catch {}
                     }
 
                     if (!restored && attempt < 8) {
@@ -1414,7 +1427,7 @@ class CustomSettingsMenu extends Component {
                         const delay = 150 * attempt;
                         setTimeout(() => tryRestore(attempt + 1), delay);
                     }
-                } catch (e) {
+                } catch {
                     if (attempt < 8) setTimeout(() => tryRestore(attempt + 1), 150 * attempt);
                 }
             };
@@ -1425,7 +1438,7 @@ class CustomSettingsMenu extends Component {
                 once('loadedmetadata');
                 once('loadeddata');
                 once('canplay');
-            } catch (e) {}
+            } catch {}
         }
     }
 
@@ -1475,7 +1488,7 @@ class CustomSettingsMenu extends Component {
         // Touch end
         button.addEventListener(
             'touchend',
-            (e) => {
+            () => {
                 const touchDuration = Date.now() - touchStartTime;
 
                 // Only show tooltip for quick taps (not swipes)

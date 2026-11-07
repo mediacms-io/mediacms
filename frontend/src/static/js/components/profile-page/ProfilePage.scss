@@ -576,6 +576,7 @@
         // Ensure icon buttons are visible on mobile
         &.media-search,
         &.media-filters-toggle,
+        &.media-sharing-toggle,
         &.media-tags-toggle,
         &.media-sorting-toggle {
           @media screen and (max-width: 768px) {
@@ -656,30 +657,6 @@
     }
   }
 
-  &.fixed-nav {
-    .profile-info-nav-wrap {
-      padding-bottom: $_authorPage-navHeight;
-    }
-
-    .profile-nav {
-      z-index: 3;
-      position: fixed;
-      top: var(--header-height);
-      left: 0;
-      right: 0;
-
-      @media screen and (min-width: 768px) {
-        .visible-sidebar & {
-          padding-left: var(--sidebar-width);
-        }
-
-        .sliding-sidebar & {
-          transition-property: padding-left;
-          transition-duration: 0.2s;
-        }
-      }
-    }
-  }
 }
 
 .page-main {
@@ -922,6 +899,13 @@ $-max-width: $-hor-spaces + ( 2 * $item-width ) - 1;
     .visible-sidebar .profile-page-header .profile-nav .profile-nav-inner {
       width: calc( #{$j} * var(--item-width, var(--default-item-width)));
     }
+  }
+}
+
+.mi-sharing-filter-options {
+  > .active button,
+  > * button:hover {
+    background-color: #3b82f6 !important;
   }
 }
 

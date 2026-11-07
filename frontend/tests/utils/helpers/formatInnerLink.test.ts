@@ -19,5 +19,18 @@ describe('js/utils/helpers', () => {
             const base = 'https://cdn.example.com';
             expect(formatInnerLink(url, base)).toBe('https://cdn.example.com/assets/file.txt');
         });
+
+        test('Does not produce a double slash when the base URL ends with a slash', () => {
+            expect(formatInnerLink('/images/picture.png', 'https://media.example.com/')).toBe(
+                'https://media.example.com/images/picture.png'
+            );
+            expect(formatInnerLink('assets/file.txt', 'https://cdn.example.com/')).toBe(
+                'https://cdn.example.com/assets/file.txt'
+            );
+        });
+
+        test('Keeps a base URL path prefix when joining', () => {
+            expect(formatInnerLink('/media/1', 'https://example.com/sub/')).toBe('https://example.com/sub/media/1');
+        });
     });
 });

@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from cms.authentication import NOT_APPROVED_MESSAGE
+
 from .models import User
 
 
@@ -125,6 +127,9 @@ class LoginSerializer(serializers.Serializer):
 
         if not user.is_active:
             raise serializers.ValidationError('User has been deactivated.')
+
+        if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_superuser and not user.is_approved:
+            raise serializers.ValidationError(NOT_APPROVED_MESSAGE)
 
         token = Token.objects.filter(user=user).first()
         if not token:

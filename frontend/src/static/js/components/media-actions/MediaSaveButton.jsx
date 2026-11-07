@@ -35,7 +35,7 @@ export function MediaSaveButton(props) {
   }
 
   return (
-    <div className="save">
+    <div className="save" data-action-tooltip={translateString('Save')}>
       <PopupTrigger contentRef={popupContentRef} onBeforeOpen={() => MediaPageActions.loadPlaylistsForSave()}>
         <button>
           <CircleIconButton type="span">

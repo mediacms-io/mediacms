@@ -52,9 +52,10 @@
 }
 
 .category-modal-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px 24px;
   border-bottom: 1px solid #e0e0e0;
 
@@ -71,6 +72,19 @@
     .dark_theme & {
       color: #fff;
     }
+  }
+}
+
+.category-modal-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #777;
+
+  .dark_theme & {
+    color: #aaa;
   }
 }
 
@@ -107,7 +121,8 @@
   gap: 24px;
   padding: 24px;
   flex: 1;
-  overflow: visible;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .category-panel {
@@ -348,6 +363,7 @@
 }
 
 .category-modal-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -419,6 +435,8 @@
 // Responsive design for smaller screens
 @media (max-width: 768px) {
   .category-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
     max-width: 95%;
   }
 
@@ -429,5 +447,12 @@
 
   .category-list.scrollable {
     max-height: 150px;
+  }
+}
+
+@media (max-height: 500px) {
+  .category-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
   }
 }

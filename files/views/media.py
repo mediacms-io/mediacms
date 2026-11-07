@@ -2,8 +2,11 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.postgres.search import SearchQuery
-from django.db.models import Count, Q
+from django.db.models import Count, F, Prefetch, Q, prefetch_related_objects
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -20,7 +23,7 @@ from rest_framework.views import APIView
 
 from actions.models import MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
+from cms.permissions import IsAuthorizedToAdd, IsMediaContributorOrEditor
 from users.models import User
 
 from .. import helpers
@@ -35,6 +38,8 @@ from ..methods import (
 )
 from ..models import (
     Category,
+    Comment,
+    EmbedMediaCourse,
     EncodeProfile,
     Media,
     MediaPermission,
@@ -112,6 +117,8 @@ class MediaList(APIView):
         upload_date = params.get('upload_date', '').strip()
         duration = params.get('duration', '').strip()
         publish_state = params.get('publish_state', '').strip()
+        shared_user = params.get('shared_user', '').strip()
+        shared_group = params.get('shared_group', '').strip()
         query = params.get("q", "").strip().lower()
 
         parsed_combined = False
@@ -152,6 +159,7 @@ class MediaList(APIView):
                 gte = datetime(year, 1, 1)
 
         already_sorted = False
+        include_sharing_info = False
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
         if show_param == "recommended":
@@ -164,26 +172,41 @@ class MediaList(APIView):
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
-                media = Media.objects.filter(permissions__owner_user=self.request.user).prefetch_related("user", "tags").distinct()
+                base_queryset = Media.objects.prefetch_related("user", "tags")
+                conditions = Q(permissions__owner_user=self.request.user)
+
+                if getattr(settings, 'USE_RBAC', False):
+                    rbac_categories = request.user.get_rbac_categories_as_contributor()
+                    conditions |= Q(category__in=rbac_categories, user=self.request.user)
+
+                media = base_queryset.filter(conditions).distinct()
+                include_sharing_info = True
         elif show_param == "shared_with_me":
             if not self.request.user.is_authenticated:
                 media = Media.objects.none()
             else:
                 base_queryset = Media.objects.prefetch_related("user", "tags")
 
-                # Build OR conditions similar to _get_media_queryset
-                conditions = Q(permissions__user=request.user)
+                exclude_lti_embed = request.GET.get('exclude_lti_embed') == '1'
+                # in LTI, if this is set, show only media that are shared explicitly with user
+                if exclude_lti_embed:
+                    conditions = Q(permissions__user=request.user, permissions__source=MediaPermission.SOURCE_EXPLICIT)
+                else:
+                    conditions = Q(permissions__user=request.user)
 
                 if getattr(settings, 'USE_RBAC', False):
                     rbac_categories = request.user.get_rbac_categories_as_member()
                     conditions |= Q(category__in=rbac_categories)
 
-                media = base_queryset.filter(conditions).distinct()
+                media = base_queryset.filter(conditions).exclude(user=request.user).distinct()
+                include_sharing_info = True
         elif author_param:
             user_queryset = User.objects.all()
             user = get_object_or_404(user_queryset, username=author_param)
             if self.request.user == user or is_mediacms_editor(self.request.user):
                 media = Media.objects.filter(user=user).prefetch_related("user", "tags")
+                if self.request.user == user:
+                    include_sharing_info = True
             else:
                 media = self._get_media_queryset(request, user)
                 already_sorted = True
@@ -234,6 +257,12 @@ class MediaList(APIView):
             elif publish_state in ['private', 'public', 'unlisted']:
                 media = media.filter(state=publish_state)
 
+        if shared_user and include_sharing_info:
+            media = media.filter(permissions__user__username=shared_user).distinct()
+
+        if shared_group and include_sharing_info:
+            media = media.filter(category__is_rbac_category=True, category__rbac_groups__name=shared_group).distinct()
+
         if not already_sorted:
             media = media.order_by(f"{ordering}{sort_by}")
 
@@ -242,6 +271,16 @@ class MediaList(APIView):
         paginator = pagination_class()
 
         page = paginator.paginate_queryset(media, request)
+
+        prefetch_related_objects(page, 'tags')
+
+        if include_sharing_info:
+            # this is the data for the Shared with me/by me pages on 'my media'
+            prefetch_related_objects(
+                page,
+                Prefetch('permissions', queryset=MediaPermission.objects.select_related('user').exclude(user=request.user)),
+                Prefetch('category', queryset=Category.objects.filter(is_rbac_category=True).prefetch_related('rbac_groups'), to_attr='rbac_categories_prefetched'),
+            )
 
         serializer = MediaSerializer(page, many=True, context={"request": request})
 
@@ -253,6 +292,19 @@ class MediaList(APIView):
 
         response = paginator.get_paginated_response(serializer.data)
         response.data['tags'] = tags
+
+        if include_sharing_info:
+            shared_users = {}
+            shared_groups = {}
+            for media_obj in page:
+                for perm in media_obj.permissions.all():
+                    shared_users[perm.user.username] = {"username": perm.user.username, "name": perm.user.name or perm.user.username}
+                for cat in getattr(media_obj, 'rbac_categories_prefetched', []):
+                    for group in cat.rbac_groups.all():
+                        shared_groups[group.name] = {"name": group.name}
+            response.data['shared_users'] = list(shared_users.values())
+            response.data['shared_groups'] = list(shared_groups.values())
+
         return response
 
     @swagger_auto_schema(
@@ -269,10 +321,14 @@ class MediaList(APIView):
     def post(self, request, format=None):
         # Add new media
 
+        media_file = request.data.get("media_file")
+        if not media_file:
+            return Response({"media_file": ["No file was submitted."]}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
-            media_file = request.data["media_file"]
-            serializer.save(user=request.user, media_file=media_file)
+            media = serializer.save(user=request.user, media_file=media_file)
+            MediaAction.objects.create(user=request.user, media=media, action="watch")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -295,6 +351,7 @@ class MediaBulkUserActions(APIView):
                     enum=[
                         "enable_comments",
                         "disable_comments",
+                        "delete_comments",
                         "delete_media",
                         "enable_download",
                         "disable_download",
@@ -313,6 +370,7 @@ class MediaBulkUserActions(APIView):
                         "remove_from_category",
                         "add_tags",
                         "remove_tags",
+                        "course_cleanup",
                     ],
                 ),
                 'playlist_ids': openapi.Schema(
@@ -360,11 +418,14 @@ class MediaBulkUserActions(APIView):
         media_ids = request.data.get('media_ids', [])
         action = request.data.get('action')
 
-        if not media_ids:
-            return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
-
         if not action:
             return Response({"detail": "action is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == "course_cleanup":
+            return self._handle_course_cleanup(request, media_ids)
+
+        if not media_ids:
+            return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
@@ -378,6 +439,10 @@ class MediaBulkUserActions(APIView):
         elif action == "disable_comments":
             media.update(enable_comments=False)
             return Response({"detail": f"Comments disabled for {media.count()} media items"})
+
+        elif action == "delete_comments":
+            deleted_count, _ = Comment.objects.filter(media__in=media).delete()
+            return Response({"detail": f"{deleted_count} comments deleted"})
 
         elif action == "delete_media":
             count = media.count()
@@ -409,7 +474,7 @@ class MediaBulkUserActions(APIView):
                         obj, created = PlaylistMedia.objects.get_or_create(
                             playlist=playlist,
                             media=m,
-                            ordering=media_in_playlist + 1,
+                            defaults={"ordering": media_in_playlist + 1},
                         )
                         if created:
                             added_count += 1
@@ -454,7 +519,16 @@ class MediaBulkUserActions(APIView):
 
                 m.save(update_fields=["state", "listable"])
 
-            return Response({"detail": f"State updated to {state} for {media.count()} media items"})
+            remove_sharing = request.data.get('remove_sharing', False)
+
+            if remove_sharing:
+                MediaPermission.objects.filter(media__in=media).delete()
+                for m in media:
+                    rbac_cats = m.category.filter(is_rbac_category=True)
+                    if rbac_cats.exists():
+                        m.category.remove(*rbac_cats)
+
+            return Response({"detail": f"State updated to {state}"})
 
         elif action == "change_owner":
             owner = request.data.get('owner')
@@ -492,8 +566,9 @@ class MediaBulkUserActions(APIView):
 
             users = (
                 MediaPermission.objects.filter(media__in=media, permission=ownership_type)
+                .exclude(user=request.user)
                 .values('user__name', 'user__username')
-                .annotate(media_count=Count('media', distinct=True))
+                .annotate(media_count=Count('media'))
                 .filter(media_count=media_count)
             )
 
@@ -561,7 +636,13 @@ class MediaBulkUserActions(APIView):
         elif action == "category_membership":
             media_count = media.count()
 
-            results = list(Category.objects.filter(media__in=media).values('title', 'uid').annotate(media_count=Count('media', distinct=True)).filter(media_count=media_count))
+            # Categories where ALL selected media are members via the M2M relation
+            m2m_uids = set(Category.objects.filter(media__in=media).annotate(selected_count=Count('media', distinct=True)).filter(selected_count=media_count).values_list('uid', flat=True))
+
+            # Categories where ANY selected media has an EmbedMediaCourse record
+            embed_uids = set(EmbedMediaCourse.objects.filter(media__in=media).values_list('category__uid', flat=True))
+
+            results = list(Category.objects.filter(uid__in=m2m_uids | embed_uids).values('title', 'uid'))
 
             return Response({'results': results})
 
@@ -574,12 +655,33 @@ class MediaBulkUserActions(APIView):
 
         elif action == "add_to_category":
             category_uids = request.data.get('category_uids', [])
-            if not category_uids:
-                return Response({"detail": "category_uids is required for add_to_category action"}, status=status.HTTP_400_BAD_REQUEST)
+            lti_context_id = request.data.get('lti_context_id')
 
-            categories = Category.objects.filter(uid__in=category_uids)
+            if not category_uids and not lti_context_id:
+                return Response({"detail": "category_uids or lti_context_id is required for add_to_category action"}, status=status.HTTP_400_BAD_REQUEST)
+
+            categories = Category.objects.none()
+
+            # Prioritize category_uids
+            if category_uids:
+                requested = Category.objects.filter(uid__in=category_uids)
+                allowed_ids = [cat.id for cat in requested if not cat.is_rbac_category or request.user.has_contributor_access_to_category(cat)]
+                categories = Category.objects.filter(id__in=allowed_ids)
+            elif lti_context_id:
+                # Filter categories by lti_context_id and ensure they ARE RBAC categories
+                potential_categories = Category.objects.filter(lti_context_id=lti_context_id, is_rbac_category=True)
+
+                # Check user access (must have contributor access)
+                valid_category_ids = []
+                for cat in potential_categories:
+                    if request.user.has_contributor_access_to_category(cat):
+                        valid_category_ids.append(cat.id)
+
+                if valid_category_ids:
+                    categories = Category.objects.filter(id__in=valid_category_ids)
+
             if not categories:
-                return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "No matching categories found or access denied"}, status=status.HTTP_400_BAD_REQUEST)
 
             added_count = 0
             for category in categories:
@@ -595,9 +697,11 @@ class MediaBulkUserActions(APIView):
             if not category_uids:
                 return Response({"detail": "category_uids is required for remove_from_category action"}, status=status.HTTP_400_BAD_REQUEST)
 
-            categories = Category.objects.filter(uid__in=category_uids)
+            requested = Category.objects.filter(uid__in=category_uids)
+            allowed_ids = [cat.id for cat in requested if not cat.is_rbac_category or request.user.has_contributor_access_to_category(cat)]
+            categories = Category.objects.filter(id__in=allowed_ids)
             if not categories:
-                return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"detail": "No matching categories found or access denied"}, status=status.HTTP_400_BAD_REQUEST)
 
             removed_count = 0
             for category in categories:
@@ -605,6 +709,9 @@ class MediaBulkUserActions(APIView):
                     if m.category.filter(uid=category.uid).exists():
                         m.category.remove(category)
                         removed_count += 1
+                    EmbedMediaCourse.objects.filter(media=m, category=category).delete()
+                    if not m.category.filter(is_rbac_category=True).exists() and not m.permissions.exclude(user=m.user).exists():
+                        m.permissions.filter(user=m.user).delete()
 
             return Response({"detail": f"Removed {removed_count} media items from {categories.count()} categories"})
 
@@ -647,6 +754,72 @@ class MediaBulkUserActions(APIView):
         else:
             return Response({"detail": f"Unknown action: {action}"}, status=status.HTTP_400_BAD_REQUEST)
 
+    def _handle_course_cleanup(self, request, media_ids):
+        category_uids = request.data.get('category_uids', [])
+        remove_permissions = request.data.get('remove_permissions', False)
+        remove_comments = request.data.get('remove_comments', False)
+        apply_to_all = request.data.get('apply_to_all', False)
+
+        if not category_uids:
+            return Response({"detail": "category_uids is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        categories = Category.objects.filter(uid__in=category_uids)
+        if not categories.exists():
+            return Response({"detail": "No matching categories found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_categories = [cat for cat in categories if request.user.has_contributor_access_to_category(cat)]
+        if not valid_categories:
+            return Response({"detail": "No contributor access to specified categories"}, status=status.HTTP_403_FORBIDDEN)
+
+        has_media = bool(media_ids)
+        selected_media = Media.objects.filter(user=request.user, friendly_token__in=media_ids) if has_media else Media.objects.none()
+
+        for category in valid_categories:
+            # All users who are members of any group linked to this category
+            group_users = User.objects.filter(rbac_groups__in=category.rbac_groups.all()).distinct()
+
+            # Get media explicitly embedded into this course via LTI
+            embed_qs = EmbedMediaCourse.objects.filter(category=category)
+            embedded_media_ids = list(embed_qs.values_list('media_id', flat=True))
+
+            all_course_media = Media.objects.filter(category=category)
+
+            if has_media:
+                selected_embedded = embed_qs.filter(media__in=selected_media)
+                selected_embedded_media_ids = list(selected_embedded.values_list('media_id', flat=True))
+                if remove_permissions:
+                    MediaPermission.objects.filter(media__in=selected_media, user__in=group_users).exclude(user=F('media__user')).delete()
+                    MediaPermission.objects.filter(media_id__in=selected_embedded_media_ids).exclude(user=F('media__user')).delete()
+                if remove_comments:
+                    Comment.objects.filter(media__in=selected_media).delete()
+
+                if apply_to_all:
+                    other_course_media = all_course_media.exclude(friendly_token__in=media_ids)
+                    other_embedded = embed_qs.exclude(media__in=selected_media)
+                    other_embedded_media_ids = list(other_embedded.values_list('media_id', flat=True))
+                    if remove_permissions:
+                        MediaPermission.objects.filter(media__in=other_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
+                        MediaPermission.objects.filter(media_id__in=other_embedded_media_ids).exclude(user=F('media__user')).delete()
+                    if remove_comments:
+                        Comment.objects.filter(media__in=other_course_media).delete()
+                    for m in other_course_media:
+                        m.category.remove(category)
+
+                for m in selected_media:
+                    m.category.remove(category)
+            else:
+                if remove_permissions:
+                    MediaPermission.objects.filter(media__in=all_course_media, user__in=group_users).exclude(user=F('media__user')).delete()
+                    MediaPermission.objects.filter(media_id__in=embedded_media_ids).exclude(user=F('media__user')).delete()
+                if remove_comments:
+                    Comment.objects.filter(media__in=all_course_media).delete()
+                    if embedded_media_ids:
+                        Comment.objects.filter(media_id__in=embedded_media_ids).delete()
+                for m in all_course_media:
+                    m.category.remove(category)
+
+        return Response({"detail": "Course cleanup completed successfully"})
+
 
 class MediaPlaylistMembership(APIView):
     """
@@ -684,16 +857,13 @@ class MediaDetail(APIView):
     Retrieve, update or delete a media instance.
     """
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsMediaContributorOrEditor)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get_object(self, friendly_token):
         try:
             media = Media.objects.select_related("user").prefetch_related("encodings__profile").get(friendly_token=friendly_token)
 
-            # this need be explicitly called, and will call
-            # has_object_permission() after has_permission has succeeded
-            self.check_object_permissions(self.request, media)
             if media.state == "private":
                 if self.request.user.has_member_access_to_media(media) or is_mediacms_editor(self.request.user):
                     pass
@@ -702,6 +872,9 @@ class MediaDetail(APIView):
                         {"detail": "media is private"},
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
+            # this need be explicitly called, and will call
+            # has_object_permission() after has_permission has succeeded
+            self.check_object_permissions(self.request, media)
             return media
         except PermissionDenied:
             return Response({"detail": "bad permissions"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -728,12 +901,9 @@ class MediaDetail(APIView):
             return media
 
         serializer = SingleMediaSerializer(media, context={"request": request})
-        if media.state == "private":
-            related_media = []
-        else:
-            related_media = show_related_media(media, request=request, limit=100)
-            related_media_serializer = MediaSerializer(related_media, many=True, context={"request": request})
-            related_media = related_media_serializer.data
+        related_media = show_related_media(media, request=request, limit=100)
+        related_media_serializer = MediaSerializer(related_media, many=True, context={"request": request})
+        related_media = related_media_serializer.data
         ret = serializer.data
 
         # update rattings info with user specific ratings
@@ -806,7 +976,7 @@ class MediaDetail(APIView):
                 media.is_reviewed = True
             elif result is False:
                 media.is_reviewed = False
-            media.save(update_fields=["is_reviewed"])
+            media.save(update_fields=["is_reviewed", "listable"])
             return Response({"detail": "media reviewed set"}, status=status.HTTP_201_CREATED)
         return Response(
             {"detail": "not valid action or no action specified"},
@@ -842,7 +1012,7 @@ class MediaDetail(APIView):
             #     serializer.save(user=request.user, media_file=media_file)
             # else:
             #     serializer.save(user=request.user)
-            serializer.save(user=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -891,17 +1061,17 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List reports for a media',
+        operation_description='When and why a media was reported. Only for its owner and MediaCMS editors, managers and admins.',
     )
     def get(self, request, friendly_token, format=None):
         # show date and reason for each time media was reported
         media = self.get_object(friendly_token)
-        if not (request.user == media.user or is_mediacms_editor(request.user)):
-            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
-
         if isinstance(media, Response):
             return media
+
+        if not (request.user == media.user or is_mediacms_editor(request.user)):
+            return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
         ret = {}
         reported = MediaAction.objects.filter(media=media, action="report")
@@ -915,8 +1085,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Like, dislike, report or watch a media',
+        operation_description='type is one of like, dislike, report or watch, and extra_info carries the reason for a report. Anonymous users can only perform the actions listed in ALLOW_ANONYMOUS_ACTIONS.',
     )
     def post(self, request, friendly_token, format=None):
         # perform like/dislike/report actions
@@ -950,8 +1120,8 @@ class MediaActions(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Reset reports for a media',
+        operation_description='With type set to report, removes every report of the media and resets its reported counter. Admins only.',
     )
     def delete(self, request, friendly_token, format=None):
         media = self.get_object(friendly_token)
@@ -986,8 +1156,8 @@ class MediaSearch(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Search'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Search media',
+        operation_description='Full text search over media the user can see. Filter with q (text), c (category uid or title), t (tag), media_type, author and upload_date, and sort with sort_by and ordering. show=titles returns only matching titles, for autocomplete.',
     )
     def get(self, request, format=None):
         params = self.request.query_params
@@ -1063,7 +1233,11 @@ class MediaSearch(APIView):
             media = media.filter(tags__title=tag)
 
         if category:
-            media = media.filter(category__title__contains=category)
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                media = media.filter(category=category_obj)
+            else:
+                media = media.filter(category__title=category)
 
         if media_type:
             media = media.filter(media_type=media_type)
@@ -1104,3 +1278,29 @@ class MediaSearch(APIView):
             page = paginator.paginate_queryset(media, request)
             serializer = MediaSearchSerializer(page, many=True, context={"request": request})
             return paginator.get_paginated_response(serializer.data)
+
+
+@csrf_exempt
+@require_POST
+def media_share(request, friendly_token):
+    """Mark a media item as shared when the owner embeds it via the LTI plugin."""
+    if not request.user.is_authenticated:
+        return HttpResponse(status=401)
+
+    media = get_object_or_404(Media, friendly_token=friendly_token)
+    if media.user != request.user:
+        return HttpResponse(status=403)
+
+    MediaPermission.objects.get_or_create(
+        media=media,
+        user=request.user,
+        defaults={'owner_user': request.user, 'permission': 'owner'},
+    )
+
+    courseid = request.POST.get('courseid')
+    if courseid:
+        category = Category.objects.filter(lti_context_id=str(courseid), is_rbac_category=True).first()
+        if category:
+            EmbedMediaCourse.objects.get_or_create(media=media, category=category)
+
+    return HttpResponse(status=200)

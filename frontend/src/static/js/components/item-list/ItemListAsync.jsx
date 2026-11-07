@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { useItemListSync } from '../../utils/hooks/';
 import { ItemList } from './ItemList';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
 import { ItemsListHandler } from './includes/itemLists/ItemsListHandler';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function ItemListAsync(props) {
+export function ItemListAsync(rawProps) {
+  const props = applyDefaultProps(rawProps, ItemListAsync.defaultPropValues);
   const [
     countedItems,
     items,
@@ -60,15 +61,8 @@ export function ItemListAsync(props) {
   );
 }
 
-ItemListAsync.propTypes = {
-  ...ItemList.propTypes,
-  items: PropTypes.array, // Reset 'isRequired' feature.
-  requestUrl: PropTypes.string.isRequired,
-  firstItemRequestUrl: PropTypes.string,
-};
-
-ItemListAsync.defaultProps = {
-  ...ItemList.defaultProps,
+ItemListAsync.defaultPropValues = {
+  ...ItemList.defaultPropValues,
   requestUrl: null,
   firstItemRequestUrl: null,
   pageItems: 24,
