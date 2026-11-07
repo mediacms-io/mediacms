@@ -369,8 +369,7 @@ def encode_media(
         chunk,
     )
     logger.debug(
-        "encode_media task details - encoding_url=%s, chunk_file_path=%s, task_id=%s",
-        encoding_url,
+        "encode_media task details - chunk_file_path=%s, task_id=%s",
         chunk_file_path,
         self.request.id if hasattr(self.request, 'id') else None,
     )
