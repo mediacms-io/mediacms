@@ -53,16 +53,12 @@ def build_sp_config(request, provider_config, org):
             "binding": OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT,
         },
     }
+    if _sp_config.get("x509cert"):
+        sp_config["x509cert"] = _sp_config["x509cert"]
+    if _sp_config.get("private_key"):
+        sp_config["privateKey"] = _sp_config["private_key"]
+
     avd = provider_config.get("advanced", {})
-    if avd.get("x509cert") is not None:
-        sp_config["x509cert"] = avd["x509cert"]
-
-    if avd.get("x509cert_new"):
-        sp_config["x509certNew"] = avd["x509cert_new"]
-
-    if avd.get("private_key") is not None:
-        sp_config["privateKey"] = avd["private_key"]
-
     if avd.get("name_id_format") is not None:
         sp_config["NameIDFormat"] = avd["name_id_format"]
 

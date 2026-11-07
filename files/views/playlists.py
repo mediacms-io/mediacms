@@ -16,7 +16,8 @@ from rest_framework.views import APIView
 
 from cms.permissions import IsAuthorizedToAdd, IsUserOrEditor
 
-from ..models import Media, MediaPermission, Playlist, PlaylistMedia
+from ..methods import is_mediacms_editor
+from ..models import Media, Playlist, PlaylistMedia
 from ..serializers import MediaSerializer, PlaylistDetailSerializer, PlaylistSerializer
 
 
@@ -29,8 +30,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List playlists',
+        operation_description='Paginated listing of playlists. Pass author=<username> to get the playlists of one user.',
         responses={
             200: openapi.Response('response description', PlaylistSerializer(many=True)),
         },
@@ -52,8 +53,8 @@ class PlaylistList(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Create a playlist',
+        operation_description='Create a playlist owned by the authenticated user. The friendly token is assigned by the server.',
     )
     def post(self, request, format=None):
         serializer = PlaylistSerializer(data=request.data, context={"request": request})
@@ -76,42 +77,17 @@ class PlaylistDetail(APIView):
             return playlist
         except PermissionDenied:
             return Response({"detail": "not enough permissions"}, status=status.HTTP_400_BAD_REQUEST)
-        except BaseException:
+        except Playlist.DoesNotExist:
             return Response(
                 {"detail": "Playlist does not exist"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    def _get_accessible_media_filter(self, request):
-        """
-        Build a Q object that filters media based on user permissions.
-        Returns media that is:
-        - listable (public)
-        - has direct MediaPermission for the user
-        - accessible via RBAC category membership (if USE_RBAC is enabled)
-        """
-        conditions = Q(media__listable=True)
-
-        if not request.user.is_authenticated:
-            return conditions
-
-        # Check for direct MediaPermission
-        if MediaPermission.objects.filter(user=request.user).exists():
-            conditions |= Q(media__permissions__user=request.user)
-
-        # Check for RBAC access
-        if getattr(settings, 'USE_RBAC', False):
-            rbac_categories = request.user.get_rbac_categories_as_member()
-            if rbac_categories.exists():
-                conditions |= Q(media__category__in=rbac_categories)
-
-        return conditions
-
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Get a playlist',
+        operation_description='Playlist details and its media. Only media the user is allowed to see are included.',
     )
     def get(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -120,13 +96,18 @@ class PlaylistDetail(APIView):
 
         serializer = PlaylistDetailSerializer(playlist, context={"request": request})
 
-        # If user is the author, show all media; otherwise, filter based on permissions (RBAC, direct permissions, or listable)
-        if request.user.is_authenticated and request.user == playlist.user:
-            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).prefetch_related("media__user").select_related("media")
+        base_qs = PlaylistMedia.objects.filter(playlist=playlist)
+        if is_mediacms_editor(request.user):
+            playlist_media = base_qs
         else:
-            # Apply permission filter to show media accessible via RBAC, direct permissions, or public visibility
-            accessible_filter = self._get_accessible_media_filter(request)
-            playlist_media = PlaylistMedia.objects.filter(playlist=playlist).filter(accessible_filter).prefetch_related("media__user").select_related("media").distinct()
+            accessible = Q(media__state__in=["public", "unlisted"])
+            if request.user.is_authenticated:
+                accessible |= Q(media__user=request.user) | Q(media__permissions__user=request.user)
+                if getattr(settings, 'USE_RBAC', False):
+                    accessible |= Q(media__category__in=request.user.get_rbac_categories_as_member())
+            playlist_media = base_qs.filter(accessible)
+
+        playlist_media = playlist_media.prefetch_related("media__user").select_related("media").distinct()
 
         playlist_media = [c.media for c in playlist_media]
 
@@ -139,8 +120,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Edit a playlist',
+        operation_description='Update the title and description of a playlist. Allowed for its owner and MediaCMS editors, managers and admins; the owner stays the same.',
     )
     def post(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -148,15 +129,15 @@ class PlaylistDetail(APIView):
             return playlist
         serializer = PlaylistDetailSerializer(playlist, data=request.data, context={"request": request})
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Add, remove or reorder media',
+        operation_description='type is one of add, remove or ordering, with media_friendly_token set to the media. ordering also needs the new position. Private media can only be added by users who can see them.',
     )
     def put(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)
@@ -175,6 +156,8 @@ class PlaylistDetail(APIView):
             media = Media.objects.filter(friendly_token=media_friendly_token).first()
             if media:
                 if action == "add":
+                    if media.state == "private" and not (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)):
+                        return Response({"detail": "media is not valid"}, status=status.HTTP_400_BAD_REQUEST)
                     media_in_playlist = PlaylistMedia.objects.filter(playlist=playlist).count()
                     if media_in_playlist >= settings.MAX_MEDIA_PER_PLAYLIST:
                         return Response(
@@ -185,7 +168,7 @@ class PlaylistDetail(APIView):
                         obj, created = PlaylistMedia.objects.get_or_create(
                             playlist=playlist,
                             media=media,
-                            ordering=media_in_playlist + 1,
+                            defaults={"ordering": media_in_playlist + 1},
                         )
                         obj.save()
                         return Response(
@@ -215,8 +198,8 @@ class PlaylistDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Playlists'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete a playlist',
+        operation_description='Delete a playlist. Allowed for its owner and MediaCMS editors, managers and admins.',
     )
     def delete(self, request, friendly_token, format=None):
         playlist = self.get_playlist(friendly_token)

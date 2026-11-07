@@ -1,4 +1,4 @@
-import { SiteContext } from '../../../utils/contexts/';
+import { siteConfig } from '../../../utils/contexts/';
 import { formatInnerLink } from '../../../utils/helpers/';
 
 const validVideoFormats = ['hls', 'h265', 'vp9', 'h264', 'vp8', 'mp4', 'theora']; // NOTE: Keep array items order.
@@ -172,7 +172,7 @@ export function videoAvailableCodecsAndResolutions(data, hlsData, supportedForma
       if (null !== k) {
         ret[k] = void 0 === ret[k] ? { format: [], url: [] } : ret[k];
         ret[k].format.push('hls');
-        ret[k].url.push(formatInnerLink(hlsData[i], SiteContext._currentValue.url));
+        ret[k].url.push(formatInnerLink(hlsData[i], siteConfig.url));
       }
     }
   }
@@ -205,7 +205,7 @@ export function videoAvailableCodecsAndResolutions(data, hlsData, supportedForma
               ) {
                 ret[k] = void 0 === ret[k] ? { format: [], url: [] } : ret[k];
                 ret[k].format.push(validVideoFormats[i]);
-                ret[k].url.push(formatInnerLink(data[k][validVideoFormats[i]].url, SiteContext._currentValue.url));
+                ret[k].url.push(formatInnerLink(data[k][validVideoFormats[i]].url, siteConfig.url));
               }
             }
           }

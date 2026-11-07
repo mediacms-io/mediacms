@@ -10,7 +10,7 @@ import { SidebarBottom } from './sidebar/SidebarBottom';
 import './PageSidebar.scss';
 
 export function PageSidebar() {
-  const { visibleSidebar, toggleSidebar } = useLayout();
+  const { visibleSidebar } = useLayout();
 
   const containerRef = useRef(null);
 
@@ -84,12 +84,6 @@ export function PageSidebar() {
     );
   }
 
-  function onClickSidebarContentOverlay(ev) {
-    ev.preventDefault();
-    ev.stopPropagation();
-    toggleSidebar();
-  }
-
   useEffect(() => {
     setIsRendered(true);
     setTimeout(initBottom, 20); // Must delay at least 20ms.
@@ -100,18 +94,9 @@ export function PageSidebar() {
       initBottom();
     }
 
-    const sidebarContentOverlay = document.querySelector('.page-sidebar-content-overlay');
-
-    if (sidebarContentOverlay) {
-      sidebarContentOverlay.addEventListener('click', onClickSidebarContentOverlay);
-    }
-
     return () => {
       if (bottomInited) {
         PageStore.removeListener('window_resize', onWindowResize);
-      }
-      if (sidebarContentOverlay) {
-        sidebarContentOverlay.removeEventListener('click', onClickSidebarContentOverlay);
       }
     };
   }, []);

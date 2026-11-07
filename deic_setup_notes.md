@@ -73,3 +73,8 @@ Can be set through the SAML Configurations tab:
 3. **Group Role Mapping**: Maps the role returned by SAML (as set in the SAML Configuration tab) with the role in groups that user will be added
 4. **Group mapping**: This creates groups associated with this IDP. Group ids as they come from SAML, associated with MediaCMS groups
 5. **Category Mapping**: This maps a group id (from SAML response) with a category in MediaCMS
+
+
+## More options
+USER_SEARCH_FIELD = "name_username_email"
+ALLOW_MEDIA_REPLACEMENT = True

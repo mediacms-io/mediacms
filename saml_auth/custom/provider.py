@@ -18,14 +18,28 @@ class CustomSAMLProvider(SAMLProvider):
             provider_config = self.app.settings
 
         raw_attributes = data.get_attributes()
+        # get_attributes() keys attributes by their full Name. Some IdPs send
+        # certain attributes only under their FriendlyName, so fall back to the
+        # FriendlyName-keyed attributes when a Name lookup misses. The Name
+        # lookup is always preferred, so attributes that already resolve are
+        # unaffected.
+        try:
+            friendly_attributes = data.get_friendlyname_attributes()
+        except AttributeError:
+            friendly_attributes = {}
         attributes = {}
         attribute_mapping = provider_config.get("attribute_mapping", self.default_attribute_mapping)
         # map configured provider attributes
         for key, provider_keys in attribute_mapping.items():
+            # skip mappings left empty/None in the SAML Configuration
+            if not provider_keys:
+                continue
             if isinstance(provider_keys, str):
                 provider_keys = [provider_keys]
             for provider_key in provider_keys:
-                attribute_list = raw_attributes.get(provider_key, None)
+                attribute_list = raw_attributes.get(provider_key)
+                if attribute_list is None:
+                    attribute_list = friendly_attributes.get(provider_key)
                 # if more than one keys, get them all comma separated
                 if attribute_list is not None and len(attribute_list) > 1:
                     attributes[key] = ",".join(attribute_list)

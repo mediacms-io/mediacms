@@ -5,8 +5,10 @@ import { ItemList } from './ItemList';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
 import { ItemsStaticListHandler } from './includes/itemLists/ItemsStaticListHandler';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function LazyLoadItemList(props) {
+export function LazyLoadItemList(rawProps) {
+  const props = applyDefaultProps(rawProps, LazyLoadItemList.defaultPropValues);
   const [
     items,
     countedItems,
@@ -61,11 +63,7 @@ export function LazyLoadItemList(props) {
   );
 }
 
-LazyLoadItemList.propTypes = {
-  ...ItemList.propTypes,
-};
-
-LazyLoadItemList.defaultProps = {
-  ...ItemList.defaultProps,
+LazyLoadItemList.defaultPropValues = {
+  ...ItemList.defaultPropValues,
   pageItems: 2,
 };

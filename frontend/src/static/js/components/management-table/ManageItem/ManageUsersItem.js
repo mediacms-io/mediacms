@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import { usePopup, useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
-import { csrfToken } from '../../../utils/helpers/';
+import { csrfToken, rememberMessage } from '../../../utils/helpers/';
 import { PopupMain } from '../../_shared';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon.jsx';
 import { ManageItemDate } from './ManageMediaItem';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
 function ManageItemName(props) {
   if (void 0 !== props.url) {
@@ -83,7 +83,7 @@ function ManageUsersItemActions(props) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'Password changed successfully.' }));
+        rememberMessage({ type: 'success', text: 'Password changed successfully.' });
         window.location.reload();
       })
       .catch((err) => {
@@ -110,7 +110,7 @@ function ManageUsersItemActions(props) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'User approved successfully.' }));
+        rememberMessage({ type: 'success', text: 'User approved successfully.' });
         window.location.reload();
       })
       .catch((err) => {
@@ -274,7 +274,8 @@ function ManageUsersItemActions(props) {
   );
 }
 
-export function ManageUsersItem(props) {
+export function ManageUsersItem(rawProps) {
+  const props = applyDefaultProps(rawProps, ManageUsersItem.defaultPropValues);
   const actionsContainerRef = useRef(null);
 
   const [selected, setSelected] = useState(false);
@@ -379,29 +380,7 @@ export function ManageUsersItem(props) {
   );
 }
 
-ManageUsersItem.propTypes = {
-  thumbnail_url: PropTypes.string,
-  name: PropTypes.string,
-  url: PropTypes.string,
-  username: PropTypes.string,
-  add_date: PropTypes.string,
-  is_featured: PropTypes.bool,
-  onCheckRow: PropTypes.func,
-  onUserUpdate: PropTypes.func,
-  setMessage: PropTypes.func,
-  selectedRow: PropTypes.bool.isRequired,
-  hideDeleteAction: PropTypes.bool.isRequired,
-  has_roles: PropTypes.bool,
-  has_verified: PropTypes.bool,
-  has_trusted: PropTypes.bool,
-  has_approved: PropTypes.bool,
-  roles: PropTypes.array,
-  is_verified: PropTypes.bool,
-  is_trusted: PropTypes.bool,
-  is_approved: PropTypes.bool,
-};
-
-ManageUsersItem.defaultProps = {
+ManageUsersItem.defaultPropValues = {
   has_roles: false,
   has_verified: false,
   has_trusted: false,

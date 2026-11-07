@@ -52,6 +52,7 @@
 }
 
 .tag-modal-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -107,7 +108,8 @@
   gap: 24px;
   padding: 24px;
   flex: 1;
-  overflow: visible;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .tag-panel {
@@ -348,6 +350,7 @@
 }
 
 .tag-modal-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -419,6 +422,8 @@
 // Responsive design for smaller screens
 @media (max-width: 768px) {
   .tag-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
     max-width: 95%;
   }
 
@@ -429,5 +434,12 @@
 
   .tag-list.scrollable {
     max-height: 150px;
+  }
+}
+
+@media (max-height: 500px) {
+  .tag-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
   }
 }

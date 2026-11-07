@@ -1,18 +1,19 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import UrlParse from 'url-parse';
-import { ApiUrlContext, MemberContext, SiteContext } from '../utils/contexts/';
+import { apiUrlConfig, memberConfig, siteConfig } from '../utils/contexts/';
 import { formatInnerLink, csrfToken, postRequest, inEmbeddedApp } from '../utils/helpers/';
 import { PageActions } from '../utils/actions/';
 import { PageStore, ProfilePageStore } from '../utils/stores/';
 import ProfilePagesHeader from '../components/profile-page/ProfilePagesHeader';
 import ProfilePagesContent from '../components/profile-page/ProfilePagesContent';
 import { MediaListRow } from '../components/MediaListRow';
-import { ProfileMediaPage } from './ProfileMediaPage';
+import { ProfileMediaPageBase } from './ProfileMediaPage';
 
 class ChannelContactForm extends React.PureComponent {
   constructor(props) {
     super(props);
+    this.msgSubject = React.createRef();
+    this.msgBody = React.createRef();
 
     this.state = {
       subject: '',
@@ -29,13 +30,13 @@ class ChannelContactForm extends React.PureComponent {
 
   onUpdateSubject() {
     this.setState({
-      subject: this.refs.msgSubject.value.trim(),
+      subject: this.msgSubject.current.value.trim(),
     });
   }
 
   onUpdateBody() {
     this.setState({
-      body: this.refs.msgBody.value.trim(),
+      body: this.msgBody.current.value.trim(),
     });
   }
 
@@ -93,7 +94,7 @@ class ChannelContactForm extends React.PureComponent {
         isSending: true,
       },
       function () {
-        const url = ApiUrlContext._currentValue.users + '/' + this.props.author.username + '/contact';
+        const url = apiUrlConfig.users + '/' + this.props.author.username + '/contact';
 
         postRequest(
           url,
@@ -124,7 +125,7 @@ class ChannelContactForm extends React.PureComponent {
           <span>
             <label>Subject</label>
             <input
-              ref="msgSubject"
+              ref={this.msgSubject}
               type="text"
               required={true}
               onChange={this.onUpdateSubject}
@@ -134,7 +135,7 @@ class ChannelContactForm extends React.PureComponent {
           <span>
             <label>Message</label>
             <textarea
-              ref="msgBody"
+              ref={this.msgBody}
               required={true}
               cols="40"
               rows="10"
@@ -149,7 +150,7 @@ class ChannelContactForm extends React.PureComponent {
   }
 }
 
-export class ProfileAboutPage extends ProfileMediaPage {
+export class ProfileAboutPage extends ProfileMediaPageBase {
   constructor(props) {
     super(props, 'author-about');
 
@@ -164,12 +165,12 @@ export class ProfileAboutPage extends ProfileMediaPage {
 
     if (this.state.author) {
       if (null === this.userIsAuthor) {
-        if (MemberContext._currentValue.is.anonymous) {
+        if (memberConfig.is.anonymous) {
           this.userIsAuthor = false;
           this.enabledContactForm = false;
         } else {
-          this.userIsAuthor = ProfilePageStore.get('author-data').username === MemberContext._currentValue.username;
-          this.enabledContactForm = !this.userIsAuthor && MemberContext._currentValue.can.contactUser;
+          this.userIsAuthor = ProfilePageStore.get('author-data').username === memberConfig.username;
+          this.enabledContactForm = !this.userIsAuthor && memberConfig.can.contactUser;
         }
       }
 
@@ -194,7 +195,7 @@ export class ProfileAboutPage extends ProfileMediaPage {
             locations.push(
               <a
                 key={i}
-                href={formatInnerLink(this.state.author.location_info[i].url, SiteContext._currentValue.url)}
+                href={formatInnerLink(this.state.author.location_info[i].url, siteConfig.url)}
                 title={this.state.author.location_info[i].title}
               >
                 {this.state.author.location_info[i].title}
@@ -295,10 +296,6 @@ export class ProfileAboutPage extends ProfileMediaPage {
     ];
   }
 }
-
-ProfileAboutPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ProfileAboutPage.defaultProps = {
   title: 'Biography',

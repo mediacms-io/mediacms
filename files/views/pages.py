@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -7,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
+from django.utils.html import strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
@@ -15,6 +17,7 @@ from users.models import User
 
 from .. import helpers
 from ..forms import (
+    CategoryForm,
     ContactForm,
     EditSubtitleForm,
     MediaMetadataForm,
@@ -24,8 +27,9 @@ from ..forms import (
     WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
-from ..helpers import get_alphanumeric_only
+from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
+    can_edit_category,
     can_transcribe_video,
     create_video_trim_request,
     get_user_or_session,
@@ -191,6 +195,32 @@ def categories(request):
     return render(request, "cms/categories.html", context)
 
 
+def edit_category(request, uid):
+    """Edit one category's title, description and thumbnail.
+
+    A plain Django form rather than part of the single page app: it is used rarely, by
+    administrators and group managers, and a server rendered form enforces who may open
+    it in one place instead of two.
+    """
+    category = Category.objects.filter(uid=uid).first()
+    if not category:
+        return HttpResponseRedirect("/")
+
+    if not can_edit_category(request.user, category):
+        return HttpResponseRedirect(category.get_absolute_url())
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, request.FILES, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.add_message(request, messages.INFO, "Category was updated")
+            return HttpResponseRedirect(category.get_absolute_url())
+    else:
+        form = CategoryForm(instance=category)
+
+    return render(request, "cms/edit_category.html", {"form": form, "category": category})
+
+
 def contact(request):
     """Contact view"""
 
@@ -243,6 +273,31 @@ def history(request):
     return render(request, "cms/history.html", context)
 
 
+_TIMESTAMP_RE = re.compile(r'^(?:(\d+):)?([0-5]?\d):([0-5]?\d)(?:\.(\d{1,3}))?$')
+
+
+def _timestamp_to_seconds(value):
+    """Parse 'HH:MM:SS.mmm', 'MM:SS.mmm', etc., or a numeric value, into float seconds.
+
+    Returns None if the value can't be parsed.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not isinstance(value, str):
+        return None
+    match = _TIMESTAMP_RE.match(value.strip())
+    if not match:
+        return None
+    hours = int(match.group(1)) if match.group(1) else 0
+    minutes = int(match.group(2))
+    seconds = int(match.group(3))
+    millis_str = match.group(4) or '0'
+    millis = int(millis_str.ljust(3, '0'))
+    return hours * 3600 + minutes * 60 + seconds + millis / 1000.0
+
+
 @csrf_exempt
 @login_required
 def video_chapters(request, friendly_token):
@@ -262,20 +317,39 @@ def video_chapters(request, friendly_token):
         data = request_data.get("chapters")
         if data is None:
             return JsonResponse({'success': False, 'error': 'Request must contain "chapters" array'}, status=400)
+        if not isinstance(data, list):
+            return JsonResponse({'success': False, 'error': '"chapters" must be an array'}, status=400)
+        if len(data) > 200:
+            return JsonResponse({'success': False, 'error': 'Too many chapters (max 200)'}, status=400)
 
         chapters = []
-        for _, chapter_data in enumerate(data):
-            start_time = chapter_data.get('startTime')
-            end_time = chapter_data.get('endTime')
+        for chapter_data in data:
+            if not isinstance(chapter_data, dict):
+                continue
+            raw_start = chapter_data.get('startTime')
+            raw_end = chapter_data.get('endTime')
             chapter_title = chapter_data.get('chapterTitle')
-            if start_time and end_time and chapter_title:
-                chapters.append(
-                    {
-                        'startTime': start_time,
-                        'endTime': end_time,
-                        'chapterTitle': chapter_title,
-                    }
-                )
+
+            start_seconds = _timestamp_to_seconds(raw_start)
+            end_seconds = _timestamp_to_seconds(raw_end)
+            if start_seconds is None or end_seconds is None:
+                continue
+            if start_seconds < 0 or end_seconds < 0 or start_seconds >= end_seconds:
+                continue
+
+            if not isinstance(chapter_title, str) or not chapter_title.strip():
+                continue
+            chapter_title = strip_tags(chapter_title).strip()[:500]
+            if not chapter_title:
+                continue
+
+            chapters.append(
+                {
+                    'startTime': raw_start if isinstance(raw_start, str) else start_seconds,
+                    'endTime': raw_end if isinstance(raw_end, str) else end_seconds,
+                    'chapterTitle': chapter_title,
+                }
+            )
     except Exception as e:  # noqa
         return JsonResponse({'success': False, 'error': 'Request data must be a list of video chapters with startTime, endTime, chapterTitle'}, status=400)
 
@@ -310,8 +384,8 @@ def edit_media(request):
                 media.tags.remove(tag)
             if form.cleaned_data.get("new_tags"):
                 for tag in form.cleaned_data.get("new_tags").split(","):
-                    tag = get_alphanumeric_only(tag)
-                    tag = tag[:99]
+                    tag = get_alphanumeric_and_spaces(tag)
+                    tag = tag[:100]
                     if tag:
                         try:
                             tag = Tag.objects.get(title=tag)
@@ -350,13 +424,13 @@ def publish_media(request):
         return HttpResponseRedirect(media.get_absolute_url())
 
     if request.method == "POST":
-        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media)
+        form = MediaPublishForm(request.user, request.POST, request.FILES, instance=media, request=request)
         if form.is_valid():
             media = form.save()
             messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Media was edited"))
             return HttpResponseRedirect(media.get_absolute_url())
     else:
-        form = MediaPublishForm(request.user, instance=media)
+        form = MediaPublishForm(request.user, instance=media, request=request)
 
     return render(
         request,
@@ -449,11 +523,17 @@ def edit_chapters(request):
     if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
-    chapters = media.chapter_data
+    chapters_json = helpers.json_for_script(media.chapter_data)
     return render(
         request,
         "cms/edit_chapters.html",
-        {"media_object": media, "add_subtitle_url": media.add_subtitle_url, "media_file_path": helpers.url_from_path(media.media_file.path), "media_id": media.friendly_token, "chapters": chapters},
+        {
+            "media_object": media,
+            "add_subtitle_url": media.add_subtitle_url,
+            "media_file_path": media.trim_video_url or helpers.url_from_path(media.media_file.path),
+            "media_id": media.friendly_token,
+            "chapters": chapters_json,
+        },
     )
 
 
@@ -544,13 +624,14 @@ def embed_media(request):
     if not friendly_token:
         return HttpResponseRedirect("/")
 
-    media = Media.objects.values("title").filter(friendly_token=friendly_token).first()
+    media = Media.objects.values("media_type").filter(friendly_token=friendly_token).first()
 
     if not media:
-        return HttpResponseRedirect("/")
+        return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
 
     context = {}
     context["media"] = friendly_token
+    context["media_type"] = media["media_type"]
     return render(request, "cms/embed.html", context)
 
 
@@ -599,8 +680,8 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
-    context = {'categories': list(categories)}
+    categories = Category.objects.all().order_by('title').values('uid', 'title')
+    context = {'categories': helpers.json_for_script(list(categories))}
     return render(request, "cms/manage_media.html", context)
 
 
@@ -697,7 +778,8 @@ def view_media(request):
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
     context = {}
     context["media"] = friendly_token
-    context["media_object"] = media
+    can_view = media.state != "private" or (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)))
+    context["media_object"] = media if can_view else None
 
     context["CAN_DELETE_MEDIA"] = False
     context["CAN_EDIT_MEDIA"] = False
@@ -731,7 +813,7 @@ def view_playlist(request, friendly_token):
 
     try:
         playlist = Playlist.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except Playlist.DoesNotExist:
         playlist = None
 
     context = {}

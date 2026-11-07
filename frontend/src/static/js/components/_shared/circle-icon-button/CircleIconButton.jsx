@@ -1,9 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import './CircleIconButton.scss';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function CircleIconButton(props) {
+export function CircleIconButton(rawProps) {
+  const props = applyDefaultProps(rawProps, CircleIconButton.defaultPropValues);
   const children = (
     <span>
       <span>{props.children}</span>
@@ -50,13 +51,7 @@ export function CircleIconButton(props) {
   );
 }
 
-CircleIconButton.propTypes = {
-  type: PropTypes.oneOf(['button', 'link', 'span']),
-  buttonShadow: PropTypes.bool,
-  className: PropTypes.string,
-};
-
-CircleIconButton.defaultProps = {
+CircleIconButton.defaultPropValues = {
   type: 'button',
   buttonShadow: false,
 };

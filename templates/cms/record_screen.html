@@ -11,7 +11,7 @@
 {% if can_add %}
 
 <div class="custom-page-wrapper">
-    <h2>{{ "Record Screen" | custom_translate:LANGUAGE_CODE}}</h2>
+    <h2>{{ "Record Screen with Audio" | custom_translate:LANGUAGE_CODE}}</h2>
     <hr/>
 
     <div style="text-align: center; padding: 40px 0;">
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             startBtn.disabled = true;
             return;
         }
-        document.querySelector('h2').textContent = 'Record Video';
+        document.querySelector('h2').textContent = 'Record Video and Audio';
         document.querySelector('p').textContent = 'Click \'Start Recording\' to start recording from your camera. Once recording is finished, click \'Stop Recording,\' and the recording will be uploaded.';
     } else {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {

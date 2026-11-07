@@ -1,1 +1,0 @@
-# mediacms-scripts
