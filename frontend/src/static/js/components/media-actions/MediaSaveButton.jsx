@@ -3,7 +3,7 @@ import { usePopup } from '../../utils/hooks/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, PopupMain } from '../_shared/';
 import { PlaylistsSelection } from '../playlists-selection/PlaylistsSelection';
 import { translateString } from '../../utils/helpers/';
-import { MediaPageActions } from '../../utils/actions/MediaPageActions';
+import { MediaPageActions } from '../../utils/actions/';
 
 function mediaSavePopupPages(onTriggerPopupClose) {
   return {
