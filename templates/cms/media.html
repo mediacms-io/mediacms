@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block headtitle %}{{media_object.title}} - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}{% if media_object %}{{media_object.title}} - {% endif %}{{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block headermeta %}
+{% if media_object %}
 
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
 
@@ -119,11 +120,15 @@
 {% else %}
 
 {% endif %}
+{% endif %}
 {% endblock headermeta %}
 
 {% block topimports %}
 <link href="{% static "css/media.css" %}" rel="preload" as="style">
 <link href="{% static "css/media.css" %}" rel="stylesheet">
+{% if media_object.media_type == "video" or media_object.media_type == "audio" %}
+<link href="{{FRONTEND_HOST}}/static/video_js/video-js.js?v={{VERSION}}" rel="preload" as="script">
+{% endif %}
 {%endblock topimports %}
 
 {% block content %}

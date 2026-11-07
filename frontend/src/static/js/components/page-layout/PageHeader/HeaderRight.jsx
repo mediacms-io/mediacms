@@ -88,7 +88,7 @@ function UploadMediaButton({ user, links }) {
     {
       link: '/record_screen',
       icon: 'videocam',
-      text: translateString('Record Screen'),
+      text: translateString('Record'),
     },
   ];
 

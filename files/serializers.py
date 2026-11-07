@@ -1,7 +1,8 @@
 from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
-from .methods import is_mediacms_editor
+from .methods import can_edit_category, is_mediacms_editor
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
 # TODO: put them in a more DRY way
@@ -98,7 +99,28 @@ class MediaSerializer(serializers.ModelSerializer):
                     self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
-class SingleMediaSerializer(serializers.ModelSerializer):
+class CategoriesInfoMixin(serializers.Serializer):
+    categories_info = serializers.SerializerMethodField()
+
+    def get_categories_info(self, obj):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        if user and user.is_authenticated:
+            accessible_rbac = set(user.get_rbac_categories_as_member().values_list("pk", flat=True))
+        else:
+            accessible_rbac = set()
+
+        ret = []
+        for cat in obj.category.all():
+            if cat.is_rbac_category and cat.pk not in accessible_rbac:
+                continue
+            ret.append({"title": cat.title, "uid": cat.uid, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+        # Sort alphabetically by title (case-insensitive)
+        return sorted(ret, key=lambda x: x["title"].lower())
+
+
+class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
     is_shared = serializers.SerializerMethodField()
@@ -177,7 +199,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         )
 
 
-class MediaSearchSerializer(serializers.ModelSerializer):
+class MediaSearchSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
 
@@ -215,6 +237,7 @@ class EncodeProfileSerializer(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
+    edit_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -226,7 +249,20 @@ class CategorySerializer(serializers.ModelSerializer):
             "media_count",
             "user",
             "thumbnail_url",
+            "is_lms_course",
+            "edit_url",
         )
+
+    def get_edit_url(self, obj):
+        """Where this viewer may edit the category, or empty if they may not.
+
+        Per viewer rather than a flag, so a listing cannot offer a link that leads to a
+        redirect. The page checks again itself.
+        """
+        request = self.context.get("request")
+        if request is None or not can_edit_category(request.user, obj):
+            return ""
+        return reverse("edit_category", args=[obj.uid])
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -240,7 +276,7 @@ class PlaylistSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Playlist
-        read_only_fields = ("add_date", "user")
+        read_only_fields = ("add_date", "user", "friendly_token")
         fields = ("id", "add_date", "title", "description", "user", "media_count", "url", "api_url", "thumbnail_url", "friendly_token")
 
 

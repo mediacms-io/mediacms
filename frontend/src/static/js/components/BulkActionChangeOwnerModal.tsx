@@ -47,7 +47,7 @@ export const BulkActionChangeOwnerModal: React.FC<BulkActionChangeOwnerModalProp
     }
 
     try {
-      const response = await fetch(`/api/v1/users?name=${encodeURIComponent(name)}`);
+      const response = await fetch(`/api/v1/users?name=${encodeURIComponent(name)}&exclude_self=True`);
       if (!response.ok) {
         throw new Error(translateString('Failed to search users'));
       }

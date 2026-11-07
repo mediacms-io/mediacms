@@ -1,11 +1,12 @@
 import React from 'react';
 import { format } from 'timeago.js';
 import { useItem } from '../../utils/hooks/';
-import { PositiveIntegerOrZero } from '../../utils/helpers/';
 import { PlaylistItemMetaDate } from './includes/items/';
 import { Item } from './Item';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function PlaylistItem(props) {
+export function PlaylistItem(rawProps) {
+  const props = applyDefaultProps(rawProps, PlaylistItem.defaultPropValues);
   const type = 'playlist';
 
   const { titleComponent, thumbnailUrl, UnderThumbWrapper } = useItem({ ...props, type });
@@ -53,21 +54,13 @@ export function PlaylistItem(props) {
         <UnderThumbWrapper title={props.title} link={props.link}>
           {titleComponent()}
           {metaComponents()}
-          <span className="view-full-playlist">
-            VIEW FULL PLAYLIST
-          </span>
         </UnderThumbWrapper>
       </div>
     </div>
   );
 }
 
-PlaylistItem.propTypes = {
-  ...Item.propTypes,
-  media_count: PositiveIntegerOrZero,
-};
-
-PlaylistItem.defaultProps = {
-  ...Item.defaultProps,
+PlaylistItem.defaultPropValues = {
+  ...Item.defaultPropValues,
   media_count: 0,
 };

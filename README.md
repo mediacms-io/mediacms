@@ -30,6 +30,7 @@ A demo is available at https://demo.mediacms.io
 - **Multiple media types support**: video, audio,  image, pdf
 - **Multiple media classification options**: categories, tags and custom
 - **Multiple media sharing options**: social media share, videos embed code generation
+- **Use in LMS**: LTI 1.3 support plus a Moodle plugin for embeding media in LMS
 - **Video Trimmer**: trim video, replace, save as new or create segments
 - **SAML support**: with ability to add mappings to system roles and groups
 - **Easy media searching**: enriched with live search functionality
@@ -42,7 +43,7 @@ A demo is available at https://demo.mediacms.io
 - **Multiple transcoding profiles**: sane defaults for multiple dimensions (144p, 240p, 360p, 480p, 720p, 1080p) and multiple profiles (h264, h265, vp9)
 - **Adaptive video streaming**: possible through HLS protocol
 - **Subtitles/CC**: support for multilingual subtitle files
-- **Scalable transcoding**: transcoding through priorities. Experimental support for remote workers
+- **Scalable transcoding**: transcoding through priorities.
 - **Chunked file uploads**: for pausable/resumable upload of content
 - **REST API**: Documented through Swagger
 - **Translation**: Most of the CMS is translated to a number of languages
@@ -78,6 +79,12 @@ You can deploy MediaCMS on Elestio using one-click deployment. Elestio supports 
 
 [![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/mediacms)
 
+**ZopDay**
+
+You can deploy MediaCMS with ZopDay, on managed ZopCloud or in an AWS or GCP account you already own.
+
+[![Deploy to ZopDay](https://zop.dev/deploytozopday-inkhard.svg)](https://zop.dev/zopday/app/deploy?image=mediacms/mediacms:latest&port=80&name=mediacms&utm_source=github&utm_medium=one_click&utm_content=mediacms)
+
 ## Hardware considerations
 
 For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.
@@ -90,7 +97,6 @@ In order to support automatic transcriptions through Whisper, consider more CPUs
 
 There are two ways to run MediaCMS, through Docker Compose and through installing it on a server via an automation script that installs and configures all needed services. Find the related pages:
 
-- [Single Server](docs/admins_docs.md#2-server-installation) page
 - [Docker Compose](docs/admins_docs.md#3-docker-installation) page
 
   A complete guide can be found on the blog post [How to self-host and share your videos in 2021](https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b).
@@ -104,11 +110,15 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 * [Transcoding](docs/transcoding.md) page
 * [Developer Experience](docs/dev_exp.md) page
 * [Media Permissions](docs/media_permissions.md) page
+* [Moodle Plugin](docs/moodle_plugin.md) page
+* [Kaltura migration](docs/kaltura_migration.md) page
+* [YouTube migration](docs/youtube_migration.md) page
+* [Panopto migration](docs/panopto_migration.md) page
 
 
 ## Technology
 
-This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, uWSGI, React, Fine Uploader, video.js, FFMPEG, Bento4
+This software uses the following list of awesome technologies: Python, Django, Django Rest Framework, Celery, PostgreSQL, Redis, Nginx, Gunicorn, React, Fine Uploader, video.js, FFMPEG, Bento4
 
 
 ## Who is using it

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './BulkActionCategoryModal.scss';
 import { translateString } from '../utils/helpers/';
+import { inEmbeddedApp } from '../utils/helpers/embeddedApp';
 
 interface Category {
   title: string;
@@ -24,6 +25,7 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
   onError,
   csrfToken,
 }) => {
+  const isLmsMode = inEmbeddedApp();
   const [existingCategories, setExistingCategories] = useState<Category[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [categoriesToAdd, setCategoriesToAdd] = useState<Category[]>([]);
@@ -66,20 +68,27 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
       const existingData = await existingResponse.json();
       const existing = existingData.results || [];
 
-      // Fetch all categories
-      const allResponse = await fetch('/api/v1/categories');
+      // Fetch all categories (or LMS courses only in embed mode)
+      const categoriesUrl = isLmsMode
+        ? '/api/v1/categories/contributor?lms_courses_only=true'
+        : '/api/v1/categories';
+      const allResponse = await fetch(categoriesUrl);
       if (!allResponse.ok) {
-        throw new Error(translateString('Failed to fetch all categories'));
+        throw new Error(isLmsMode ? translateString('Failed to fetch courses') : translateString('Failed to fetch all categories'));
       }
 
       const allData = await allResponse.json();
       const all = allData.results || allData;
 
-      setExistingCategories(existing);
+      // In LMS mode, filter existing to only show LMS course categories
+      const allUids = new Set(all.map((c: Category) => c.uid));
+      const filteredExisting = isLmsMode ? existing.filter((c: Category) => allUids.has(c.uid)) : existing;
+
+      setExistingCategories(filteredExisting);
       setAllCategories(all);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      onError(translateString('Failed to load categories'));
+      onError(isLmsMode ? translateString('Failed to load courses') : translateString('Failed to load categories'));
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +135,7 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
         });
 
         if (!addResponse.ok) {
-          throw new Error(translateString('Failed to add categories'));
+          throw new Error(isLmsMode ? translateString('Failed to add courses') : translateString('Failed to add categories'));
         }
       }
 
@@ -147,15 +156,15 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
         });
 
         if (!removeResponse.ok) {
-          throw new Error(translateString('Failed to remove categories'));
+          throw new Error(isLmsMode ? translateString('Failed to remove courses') : translateString('Failed to remove categories'));
         }
       }
 
-      onSuccess(translateString('Successfully updated categories'));
+      onSuccess(isLmsMode ? translateString('Successfully updated courses') : translateString('Successfully updated categories'));
       onCancel();
     } catch (error) {
       console.error('Error processing categories:', error);
-      onError(translateString('Failed to update categories. Please try again.'));
+      onError(isLmsMode ? translateString('Failed to update courses. Please try again.') : translateString('Failed to update categories. Please try again.'));
     } finally {
       setIsProcessing(false);
     }
@@ -184,7 +193,14 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
     <div className="category-modal-overlay">
       <div className="category-modal">
         <div className="category-modal-header">
-          <h2>{translateString('Add / Remove from Categories')}</h2>
+          <div>
+            <h2>{isLmsMode ? translateString('Share with Course') : translateString('Add / Remove from Categories')}</h2>
+            {isLmsMode && (
+              <div className="category-modal-subtitle">
+                <span>{translateString('Students will get viewer permissions, while lecturers will get co-owner permissions (same as owner, but cannot delete the media)')}</span>
+              </div>
+            )}
+          </div>
           <button className="category-modal-close" onClick={onCancel}>
             ×
           </button>
@@ -192,14 +208,14 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
 
         <div className="category-modal-content">
           <div className="category-panel">
-            <h3>{translateString('Categories')}</h3>
+            <h3>{isLmsMode ? translateString('Courses') : translateString('Categories')}</h3>
 
             {isLoading ? (
-              <div className="loading-message">{translateString('Loading categories...')}</div>
+              <div className="loading-message">{isLmsMode ? translateString('Loading courses...') : translateString('Loading categories...')}</div>
             ) : (
               <div className="category-list scrollable">
                 {leftPanelCategories.length === 0 ? (
-                  <div className="empty-message">{translateString('All categories already added')}</div>
+                  <div className="empty-message">{isLmsMode ? translateString('All courses already added') : translateString('All categories already added')}</div>
                 ) : (
                   leftPanelCategories.map((category) => (
                     <div
@@ -227,11 +243,11 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
             </h3>
 
             {isLoading ? (
-              <div className="loading-message">{translateString('Loading categories...')}</div>
+              <div className="loading-message">{isLmsMode ? translateString('Loading courses...') : translateString('Loading categories...')}</div>
             ) : (
               <div className="category-list scrollable">
                 {rightPanelCategories.length === 0 ? (
-                  <div className="empty-message">{translateString('No categories')}</div>
+                  <div className="empty-message">{isLmsMode ? translateString('No courses') : translateString('No categories')}</div>
                 ) : (
                   rightPanelCategories.map((category) => {
                     const isExisting = existingCategories.some((c) => c.uid === category.uid);
@@ -251,7 +267,7 @@ export const BulkActionCategoryModal: React.FC<BulkActionCategoryModalProps> = (
                               removeCategoryFromAddList(category);
                             }
                           }}
-                          title={isMarkedForRemoval ? translateString('Undo removal') : isExisting ? translateString('Remove category') : translateString('Remove from list')}
+                          title={isMarkedForRemoval ? translateString('Undo removal') : isExisting ? (isLmsMode ? translateString('Remove course') : translateString('Remove category')) : translateString('Remove from list')}
                         >
                           {isMarkedForRemoval ? '↺' : '×'}
                         </button>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { MaterialIcon } from '../material-icon/MaterialIcon.jsx';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function FiltersToggleButton(props) {
+export function FiltersToggleButton(rawProps) {
+  const props = applyDefaultProps(rawProps, FiltersToggleButton.defaultPropValues);
   const [isActive, setIsActive] = useState(props.active);
 
   function onClick() {
@@ -24,11 +25,6 @@ export function FiltersToggleButton(props) {
   );
 }
 
-FiltersToggleButton.propTypes = {
-  onClick: PropTypes.func,
-  active: PropTypes.bool,
-};
-
-FiltersToggleButton.defaultProps = {
+FiltersToggleButton.defaultPropValues = {
   active: false,
 };

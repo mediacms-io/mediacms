@@ -14,6 +14,7 @@ export default defineConfig({
         },
     },
     root: path.resolve(__dirname, 'src'),
+    publicDir: path.resolve(__dirname, 'static-assets'),
     define: {
         'process.env': {
             NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'production'),
@@ -29,6 +30,7 @@ export default defineConfig({
             fileName: () => 'video-js.js',
         },
         rollupOptions: {
+            external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
             output: {
                 // Ensure CSS file has a predictable name
                 assetFileNames: (assetInfo) => {
@@ -39,12 +41,13 @@ export default defineConfig({
                 globals: {
                     react: 'React',
                     'react-dom': 'ReactDOM',
+                    'react-dom/client': 'ReactDOMClient',
+                    'react/jsx-runtime': 'ReactJSXRuntime',
                 },
             },
         },
         // Output to Django's static directory
         outDir: '../../../static/video_js',
         emptyOutDir: true,
-        external: ['react', 'react-dom'],
     },
 });

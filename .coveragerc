@@ -1,4 +1,26 @@
 [run]
+source = .
 omit =
     *bento4*
     */migrations/*
+    */tests/*
+    tests/*
+    */tests.py
+    conftest.py
+    manage.py
+    cms/test_settings.py
+    cms/dev_settings.py
+    cms/wsgi.py
+    files/frontend_translations/*
+    deploy/*
+    docs/*
+    cli-tool/*
+    frontend/*
+    frontend-tools/*
+    lms-plugins/*
+    moodle/*
+    .venv/*
+
+[report]
+skip_covered = True
+sort = Miss

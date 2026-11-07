@@ -52,6 +52,7 @@
 }
 
 .playlist-modal-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -107,7 +108,8 @@
   gap: 24px;
   padding: 24px;
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .playlist-panel {
@@ -482,6 +484,7 @@
 }
 
 .playlist-modal-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -553,6 +556,8 @@
 // Responsive design for smaller screens
 @media (max-width: 768px) {
   .playlist-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
     max-width: 95%;
   }
 
@@ -563,5 +568,12 @@
 
   .playlist-list {
     max-height: 200px;
+  }
+}
+
+@media (max-height: 500px) {
+  .playlist-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
   }
 }
