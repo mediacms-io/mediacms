@@ -24,7 +24,6 @@ If applicable, add screenshots to help explain your problem.
 
 **Environment (please complete the following information):**
  - OS: [e.g. Ubuntu Linux]
- - Installation method: [Docker install, or single server install]
  - Browser, if applicable
 
 **Additional context**

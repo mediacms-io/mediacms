@@ -1,13 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { useUser } from '../../../utils/hooks/useUser';
 import { CircleIconButton } from '../circle-icon-button/CircleIconButton.jsx';
 import { MaterialIcon } from '../material-icon/MaterialIcon.jsx';
 
 import './UserThumbnail.scss';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function UserThumbnail(props) {
+export function UserThumbnail(rawProps) {
+  const props = applyDefaultProps(rawProps, UserThumbnail.defaultPropValues);
   const { thumbnail } = useUser();
 
   const attr = {
@@ -37,13 +38,7 @@ export function UserThumbnail(props) {
   );
 }
 
-UserThumbnail.propTypes = {
-  isButton: PropTypes.bool,
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
-  onClick: PropTypes.func,
-};
-
-UserThumbnail.defaultProps = {
+UserThumbnail.defaultPropValues = {
   isButton: false,
   size: 'medium',
 };

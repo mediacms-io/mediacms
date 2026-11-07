@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import re
+import shutil
 import subprocess
 from datetime import datetime
 
@@ -101,6 +102,25 @@ def is_mediacms_editor(user):
     except BaseException:
         pass
     return editor
+
+
+def can_edit_category(user, category):
+    """Whether this user may change a category's title, description or thumbnail.
+
+    Portal managers always may, and beyond them only the managers of an RBAC category,
+    which belongs to their group rather than the portal at large. A contributor may put
+    media in such a category but not rename it.
+    """
+    if not (user and user.is_authenticated):
+        return False
+
+    if is_mediacms_manager(user):
+        return True
+
+    if getattr(settings, "USE_RBAC", False) and category.is_rbac_category:
+        return user.has_manager_access_to_category(category)
+
+    return False
 
 
 def is_mediacms_manager(user):
@@ -238,6 +258,8 @@ def show_related_media(media, request=None, limit=100):
         return show_related_media_calculated(media, request, limit)
     elif settings.RELATED_MEDIA_STRATEGY == "author":
         return show_related_media_author(media, request, limit)
+    elif settings.RELATED_MEDIA_STRATEGY == "no_related":
+        return []
 
     return show_related_media_content(media, request, limit)
 
@@ -365,6 +387,8 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
         return False
 
     user = User.objects.filter(username=user_mentioned).first()
+    if not user:
+        return False
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
@@ -451,17 +475,21 @@ def kill_ffmpeg_process(filepath):
         filepath: Path to the file being processed by ffmpeg
 
     Returns:
-        subprocess.CompletedProcess: Result of the kill command
+        bool: True if the lookup ran, False if input was unusable
     """
-    if not filepath:
+    if not filepath or not isinstance(filepath, str):
         return False
-    cmd = "ps aux|grep 'ffmpeg'|grep %s|grep -v grep |awk '{print $2}'" % filepath
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    pid = result.stdout.decode("utf-8").strip()
-    if pid:
-        cmd = "kill -9 %s" % pid
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    return result
+    try:
+        ps = subprocess.run(["ps", "aux"], stdout=subprocess.PIPE, check=False)
+    except OSError:
+        return False
+    for line in ps.stdout.decode("utf-8", "replace").splitlines():
+        if "ffmpeg" not in line or filepath not in line or "grep" in line:
+            continue
+        parts = line.split()
+        if len(parts) > 1 and parts[1].isdigit():
+            subprocess.run(["kill", "-9", parts[1]], check=False)
+    return True
 
 
 def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
@@ -555,8 +583,10 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
 
             if not os.path.exists(new_p):
                 os.makedirs(new_p, exist_ok=True)
-            cmd = f"cp -r {p}/* {new_p}/"
-            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+            # Copy the contents of the HLS directory into new_p without invoking a
+            # shell (equivalent to `cp -r {p}/* {new_p}/`); avoids shell interpretation
+            # of the paths entirely.
+            shutil.copytree(p, new_p, dirs_exist_ok=True)
 
     return new_media
 

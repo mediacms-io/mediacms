@@ -195,13 +195,18 @@ class MediaPageStore extends EventEmitter {
       this.emit('loaded_media_data');
     }
 
-    this.loadPlaylists();
-    if (MediaCMS.features.media.actions.comment_mention === true) {
-      this.loadUsers();
-    }
+    // Skip loading playlists and comments when in embed mode (to reduce API calls)
+    const isEmbedMode = window.location.pathname.startsWith('/embed');
 
-    if (this.mediacms_config.member.can.readComment) {
-      this.loadComments();
+    if (!isEmbedMode) {
+      this.loadPlaylists();
+      if (MediaCMS.features.media.actions.comment_mention === true) {
+        this.loadUsers();
+      }
+
+      if (this.mediacms_config.member.can.readComment) {
+        this.loadComments();
+      }
     }
   }
 
@@ -882,7 +887,7 @@ class MediaPageStore extends EventEmitter {
 
   submitCommentResponse(response) {
     if (response && 201 === response.status && response.data && Object.keys(response.data)) {
-      MediaPageStoreData[this.id].comments.push(response.data);
+      MediaPageStoreData[this.id].comments.unshift(response.data);
       this.emit('comment_submit', response.data.uid);
     }
     setTimeout(

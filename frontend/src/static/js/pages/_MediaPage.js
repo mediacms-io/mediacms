@@ -1,7 +1,6 @@
 import React from 'react';
 import { PageStore, MediaPageStore } from '../utils/stores/';
 import { MediaPageActions } from '../utils/actions/';
-import { inEmbeddedApp } from '../utils/helpers/';
 import ViewerError from '../components/media-page/ViewerError';
 import ViewerInfo from '../components/media-page/ViewerInfo';
 import ViewerSidebar from '../components/media-page/ViewerSidebar';
@@ -87,22 +86,18 @@ export class _MediaPage extends Page {
                     {!this.state.infoAndSidebarViewType
                         ? [
                               <ViewerInfo key="viewer-info" />,
-                              !inEmbeddedApp() && this.state.pagePlaylistLoaded ? (
-                                  <ViewerSidebar
-                                      key="viewer-sidebar"
-                                      mediaId={MediaPageStore.get('media-id')}
-                                      playlistData={MediaPageStore.get('playlist-data')}
-                                  />
-                              ) : null,
+                              <ViewerSidebar
+                                  key="viewer-sidebar"
+                                  mediaId={MediaPageStore.get('media-id')}
+                                  playlistData={MediaPageStore.get('playlist-data')}
+                              />,
                           ]
                         : [
-                              !inEmbeddedApp() && this.state.pagePlaylistLoaded ? (
-                                  <ViewerSidebar
-                                      key="viewer-sidebar"
-                                      mediaId={MediaPageStore.get('media-id')}
-                                      playlistData={MediaPageStore.get('playlist-data')}
-                                  />
-                              ) : null,
+                              <ViewerSidebar
+                                  key="viewer-sidebar"
+                                  mediaId={MediaPageStore.get('media-id')}
+                                  playlistData={MediaPageStore.get('playlist-data')}
+                              />,
                               <ViewerInfo key="viewer-info" />,
                           ]}
                 </div>

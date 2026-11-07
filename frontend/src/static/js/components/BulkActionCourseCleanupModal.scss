@@ -1,0 +1,33 @@
+.course-cleanup-options {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-cleanup-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  line-height: 1.4;
+
+  .dark_theme & {
+    color: #ccc;
+  }
+
+  input[type='checkbox'] {
+    flex-shrink: 0;
+    margin-top: 2px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: var(--default-theme-color, #009933);
+  }
+
+  span {
+    flex: 1;
+  }
+}

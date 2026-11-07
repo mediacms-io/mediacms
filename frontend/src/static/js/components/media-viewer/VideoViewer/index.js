@@ -1,9 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { VideoViewerActions } from '../../../utils/actions/';
-import { SiteContext, SiteConsumer } from '../../../utils/contexts/';
+import { siteConfig, SiteConsumer } from '../../../utils/contexts/';
 import { PageStore, MediaPageStore, VideoViewerStore } from '../../../utils/stores/';
-import { addClassname, removeClassname, formatInnerLink } from '../../../utils/helpers/';
+import { addClassname, removeClassname, formatInnerLink, inEmbeddedApp } from '../../../utils/helpers/';
 import { BrowserCache, UpNextLoaderView, MediaDurationInfo } from '../../../utils/classes/';
 import {
     orderedSupportedVideoFormats,
@@ -139,7 +138,7 @@ export default class VideoViewer extends React.PureComponent {
 
         PageStore.on('switched_media_auto_play', this.onUpdateMediaAutoPlay.bind(this));
 
-        this.browserCache = new BrowserCache(SiteContext._currentValue.id, 86400); // Keep cache data "fresh" for one day.
+        this.browserCache = new BrowserCache(siteConfig.id, 86400); // Keep cache data "fresh" for one day.
 
         const _MediaDurationInfo = new MediaDurationInfo();
 
@@ -176,11 +175,13 @@ export default class VideoViewer extends React.PureComponent {
                 topLeftHtml = document.createElement('div');
                 topLeftHtml.setAttribute('class', 'media-links-top-left');
 
+                const linkTarget = inEmbeddedApp() || window.location.href.indexOf('lms_embed_mode') > -1 ? '_self' : '_blank';
+
                 if (titleLink) {
                     titleLink.setAttribute('class', 'title-link');
-                    titleLink.setAttribute('href', this.props.data.url);
+                    titleLink.setAttribute('href', this.props.data.url || '#');
+                    titleLink.setAttribute('target', linkTarget);
                     titleLink.setAttribute('title', this.props.data.title);
-                    titleLink.setAttribute('target', '_blank');
                     titleLink.innerHTML = this.props.data.title;
                 }
 
@@ -191,7 +192,7 @@ export default class VideoViewer extends React.PureComponent {
                         formatInnerLink(this.props.data.author_profile, this.props.siteUrl)
                     );
                     userThumbLink.setAttribute('title', this.props.data.author_name);
-                    userThumbLink.setAttribute('target', '_blank');
+                    userThumbLink.setAttribute('target', linkTarget);
                     userThumbLink.setAttribute(
                         'style',
                         'background-image:url(' +
@@ -378,15 +379,13 @@ export default class VideoViewer extends React.PureComponent {
                     key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
                     className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
                     style={this.props.containerStyles}
-                    ref="playerContainer"
                 >
                     <div
                         className="player-container-inner"
-                        ref="playerContainerInner"
                         style={this.props.containerStyles}
                     >
                         {/* this.state.displayPlayer && */ null == MediaPageStore.get('media-load-error-type') ? (
-                            <div className="video-player" ref="videoJSPlayerWrapper" key="videoJSPlayerWrapper">
+                            <div className="video-player" key="videoJSPlayerWrapper">
                                 <SiteConsumer>
                                     {(site) => {
                                         return React.createElement(VideoJSEmbed, {
@@ -411,6 +410,7 @@ export default class VideoViewer extends React.PureComponent {
                                             previewSprite: previewSprite,
                                             subtitlesInfo: this.props.data.subtitles_info,
                                             inEmbed: this.props.inEmbed,
+                                            parentMediaBase: this.props.parentMediaBase || null,
                                             showTitle: this.props.showTitle,
                                             showRelated: this.props.showRelated,
                                             showUserAvatar: this.props.showUserAvatar,
@@ -444,14 +444,4 @@ VideoViewer.defaultProps = {
     showUserAvatar: !0,
     linkTitle: !0,
     timestamp: null,
-    siteUrl: PropTypes.string.isRequired,
-};
-
-VideoViewer.propTypes = {
-    inEmbed: PropTypes.bool,
-    showTitle: PropTypes.bool,
-    showRelated: PropTypes.bool,
-    showUserAvatar: PropTypes.bool,
-    linkTitle: PropTypes.bool,
-    timestamp: PropTypes.number,
 };

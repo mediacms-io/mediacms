@@ -1,0 +1,233 @@
+import os
+import re
+from functools import reduce
+from operator import or_
+from urllib.parse import quote, unquote
+
+from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Q
+from django.http import FileResponse, Http404, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.utils.http import content_disposition_header
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_safe
+
+from ..methods import is_mediacms_editor
+from ..models import Category, Media, Subtitle
+
+UID_RE = re.compile(r"^[0-9a-f]{32}$")
+FILENAME_UID_RE = re.compile(r"^([0-9a-f]{32})(?:[._]|$)")
+
+THUMBNAILS_PREFIX = "original/thumbnails/"
+SUBTITLES_PREFIX = "original/subtitles/"
+CATEGORIES_PREFIX = "original/categories/"
+
+THUMBNAIL_FIELDS = ("uploaded_thumbnail", "uploaded_poster", "thumbnail", "poster", "sprites")
+
+
+def _ttl():
+    return getattr(settings, "X_ACCEL_AUTH_CACHE_SECONDS", 300)
+
+
+def _decoded_path(uri):
+    # nginx merges slashes before choosing the file it serves, so the decision must too
+    return re.sub(r"/{2,}", "/", unquote(uri.split("?", 1)[0]))
+
+
+def _has_traversal(path):
+    return any(segment == ".." for segment in path.split("/"))
+
+
+def _relpath(path):
+    """The MEDIA_ROOT relative path a decoded request path refers to, or None"""
+    media_url = settings.MEDIA_URL
+    if path.startswith(media_url):
+        return path[len(media_url) :] or None
+    return None
+
+
+def _uid_at_its_position(relpath):
+    """The uid a path states outright, read only from where its family puts it"""
+    parts = relpath.split("/")
+    if parts[0] == "hls":
+        return parts[1] if len(parts) > 1 and UID_RE.match(parts[1]) else None
+    match = FILENAME_UID_RE.match(parts[-1])
+    return match.group(1) if match else None
+
+
+def _uid_by_stored_path(relpath):
+    """The uid of the media that actually owns this exact file, or None.
+
+    The authoritative resolution for the families whose filenames are arbitrary and so
+    state no uid: subtitles, uploaded thumbnails and posters. Matched by the path stored
+    on the row and scoped to the owner named in the path.
+    """
+    path_key = f"xaccel:path:{relpath}"
+    cached = cache.get(path_key)
+    if cached is not None:
+        return cached or None
+
+    parts = relpath.split("/", 4)
+    uid_hex = ""
+    if len(parts) == 5 and parts[2] == "user":
+        username = parts[3]
+        if relpath.startswith(SUBTITLES_PREFIX):
+            row = Subtitle.objects.filter(media__user__username=username, subtitle_file=relpath).values("media__uid").first()
+            uid_hex = row["media__uid"].hex if row else ""
+        elif relpath.startswith(THUMBNAILS_PREFIX):
+            stored_on = reduce(or_, (Q(**{field: relpath}) for field in THUMBNAIL_FIELDS))
+            row = Media.objects.filter(user__username=username).filter(stored_on).values("uid").first()
+            uid_hex = row["uid"].hex if row else ""
+
+    cache.set(path_key, uid_hex, _ttl())
+    return uid_hex or None
+
+
+def _resolve_uid(relpath):
+    """The one media uid a protected path resolves to, or None.
+
+    Subtitles carry no uid, so they are resolved by their stored path or not at all. A
+    thumbnail may be an upload with an arbitrary name or a generated file named after its
+    own media, so the path is tried first and the name second; a generated name begins
+    with its own media's uid, so neither route can name another media. Everything else
+    states its uid positionally.
+    """
+    if relpath.startswith(SUBTITLES_PREFIX):
+        return _uid_by_stored_path(relpath)
+    if relpath.startswith(THUMBNAILS_PREFIX):
+        return _uid_by_stored_path(relpath) or _uid_at_its_position(relpath)
+    return _uid_at_its_position(relpath)
+
+
+def _category_by_stored_path(relpath):
+    """(id, whether it is RBAC) of the category whose poster this file is, or (None, False)"""
+    path_key = f"xaccel:category:{relpath}"
+    cached = cache.get(path_key)
+    if cached is not None:
+        return cached
+
+    row = Category.objects.filter(thumbnail=relpath).values("id", "is_rbac_category").first()
+    value = (row["id"], row["is_rbac_category"]) if row else (None, False)
+    cache.set(path_key, value, _ttl())
+    return value
+
+
+def _decide_category(relpath, user):
+    """A category poster is as reachable as the category it fronts"""
+    category_id, is_rbac = _category_by_stored_path(relpath)
+    if category_id is None:
+        return False
+    if not (is_rbac and getattr(settings, "USE_RBAC", False)):
+        return True
+    if not user.is_authenticated:
+        return False
+    if is_mediacms_editor(user):
+        return True
+    return user.has_member_access_to_category(category_id)
+
+
+def _lookup_state(uid):
+    """Return (state, owner_id) for a uid, or (None, None) if missing.
+
+    Cached on uid alone since state/ownership do not depend on the requester.
+    Uses .values() rather than .only() because Media.__init__ touches deferred
+    file fields, which would otherwise recurse via refresh_from_db.
+    """
+    state_key = f"xaccel:state:{uid}"
+    cached = cache.get(state_key)
+    if cached is not None:
+        return cached
+    row = Media.objects.filter(uid=uid).values("state", "user_id").first()
+    value = (row["state"], row["user_id"]) if row else (None, None)
+    cache.set(state_key, value, _ttl())
+    return value
+
+
+def _cached_decision(subject, user, decide):
+    cache_key = f"xaccel:auth:{subject}:{user.id if user.is_authenticated else 'anon'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    allowed = decide()
+    cache.set(cache_key, allowed, _ttl())
+    return allowed
+
+
+def _decide(uid, user):
+    state, owner_id = _lookup_state(uid)
+    if state is None:
+        return False
+    if state in ("public", "unlisted"):
+        return True
+    # private
+    if not user.is_authenticated:
+        return False
+    if owner_id == user.id:
+        return True
+    if is_mediacms_editor(user):
+        return True
+    # RBAC / MediaPermission path needs a full Media instance.
+    try:
+        media = Media.objects.get(uid=uid)
+    except Media.DoesNotExist:
+        return False
+    return user.has_member_access_to_media(media)
+
+
+@csrf_exempt
+@require_GET
+def media_auth(request):
+    """Authorize a protected media request from nginx auth_request.
+
+    nginx passes the original request URI, query string included, but resolves the file
+    it will serve from the path alone. So the decision is taken from the path alone too:
+    the query string is discarded before anything reads it. Anything unresolvable is
+    denied.
+    """
+    if not getattr(settings, "USE_X_ACCEL_REDIRECT", True):
+        return HttpResponse(status=204)
+
+    uri = request.META.get("HTTP_X_ORIGINAL_URI", "")
+    path = _decoded_path(uri)
+
+    if _has_traversal(path):
+        return HttpResponse(status=403)
+
+    relpath = _relpath(path)
+    if not relpath:
+        return HttpResponse(status=403)
+
+    user = request.user
+
+    if relpath.startswith(CATEGORIES_PREFIX):
+        allowed = _cached_decision(f"category:{relpath}", user, lambda: _decide_category(relpath, user))
+        return HttpResponse(status=204 if allowed else 403)
+
+    uid = _resolve_uid(relpath)
+    if not uid:
+        return HttpResponse(status=403)
+
+    allowed = _cached_decision(uid, user, lambda: _decide(uid, user))
+    return HttpResponse(status=204 if allowed else 403)
+
+
+@require_safe
+def view_pdf(request, friendly_token):
+    media = get_object_or_404(Media.objects.select_related("user"), friendly_token=friendly_token, media_type="pdf")
+    if media.state == "private" and not (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user))):
+        return HttpResponse(status=403)
+    if not settings.SHOW_ORIGINAL_MEDIA or not media.media_file or not media.media_file.storage.exists(media.media_file.name):
+        raise Http404
+
+    if getattr(settings, "USE_X_ACCEL_REDIRECT", True) and not getattr(settings, "DEVELOPMENT_MODE", False):
+        response = HttpResponse(content_type="application/pdf")
+        response["X-Accel-Redirect"] = "/_protected_pdf/" + quote(media.media_file.name, safe="/")
+    else:
+        response = FileResponse(media.media_file.open("rb"), content_type="application/pdf")
+
+    filename = os.path.splitext(os.path.basename(media.media_file.name))[0] + ".pdf"
+    response["Content-Disposition"] = content_disposition_header(False, filename)
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private"
+    return response

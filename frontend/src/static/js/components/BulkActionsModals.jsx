@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { BulkActionConfirmModal } from './BulkActionConfirmModal';
 import { BulkActionPermissionModal } from './BulkActionPermissionModal';
 import { BulkActionPlaylistModal } from './BulkActionPlaylistModal';
@@ -7,6 +6,7 @@ import { BulkActionChangeOwnerModal } from './BulkActionChangeOwnerModal';
 import { BulkActionPublishStateModal } from './BulkActionPublishStateModal';
 import { BulkActionCategoryModal } from './BulkActionCategoryModal';
 import { BulkActionTagModal } from './BulkActionTagModal';
+import { BulkActionCourseCleanupModal } from './BulkActionCourseCleanupModal';
 
 /**
  * Renders all bulk action modals
@@ -57,6 +57,12 @@ export function BulkActionsModals({
   onTagModalCancel,
   onTagModalSuccess,
   onTagModalError,
+
+  // Course cleanup modal props
+  showCourseCleanupModal,
+  onCourseCleanupModalCancel,
+  onCourseCleanupModalSuccess,
+  onCourseCleanupModalError,
 
   // Common props
   csrfToken,
@@ -131,6 +137,15 @@ export function BulkActionsModals({
         csrfToken={csrfToken}
       />
 
+      <BulkActionCourseCleanupModal
+        isOpen={showCourseCleanupModal}
+        selectedMediaIds={selectedMediaIds}
+        onCancel={onCourseCleanupModalCancel}
+        onSuccess={onCourseCleanupModalSuccess}
+        onError={onCourseCleanupModalError}
+        csrfToken={csrfToken}
+      />
+
       {showNotification && (
         <div
           style={{
@@ -153,49 +168,3 @@ export function BulkActionsModals({
     </>
   );
 }
-
-BulkActionsModals.propTypes = {
-  showConfirmModal: PropTypes.bool.isRequired,
-  confirmMessage: PropTypes.string.isRequired,
-  onConfirmCancel: PropTypes.func.isRequired,
-  onConfirmProceed: PropTypes.func.isRequired,
-
-  showPermissionModal: PropTypes.bool.isRequired,
-  permissionType: PropTypes.oneOf(['viewer', 'editor', 'owner', null]),
-  selectedMediaIds: PropTypes.array.isRequired,
-  onPermissionModalCancel: PropTypes.func.isRequired,
-  onPermissionModalSuccess: PropTypes.func.isRequired,
-  onPermissionModalError: PropTypes.func.isRequired,
-
-  showPlaylistModal: PropTypes.bool.isRequired,
-  onPlaylistModalCancel: PropTypes.func.isRequired,
-  onPlaylistModalSuccess: PropTypes.func.isRequired,
-  onPlaylistModalError: PropTypes.func.isRequired,
-  username: PropTypes.string,
-
-  showChangeOwnerModal: PropTypes.bool.isRequired,
-  onChangeOwnerModalCancel: PropTypes.func.isRequired,
-  onChangeOwnerModalSuccess: PropTypes.func.isRequired,
-  onChangeOwnerModalError: PropTypes.func.isRequired,
-
-  showPublishStateModal: PropTypes.bool.isRequired,
-  onPublishStateModalCancel: PropTypes.func.isRequired,
-  onPublishStateModalSuccess: PropTypes.func.isRequired,
-  onPublishStateModalError: PropTypes.func.isRequired,
-
-  showCategoryModal: PropTypes.bool.isRequired,
-  onCategoryModalCancel: PropTypes.func.isRequired,
-  onCategoryModalSuccess: PropTypes.func.isRequired,
-  onCategoryModalError: PropTypes.func.isRequired,
-
-  showTagModal: PropTypes.bool.isRequired,
-  onTagModalCancel: PropTypes.func.isRequired,
-  onTagModalSuccess: PropTypes.func.isRequired,
-  onTagModalError: PropTypes.func.isRequired,
-
-  csrfToken: PropTypes.string.isRequired,
-
-  showNotification: PropTypes.bool.isRequired,
-  notificationMessage: PropTypes.string.isRequired,
-  notificationType: PropTypes.oneOf(['success', 'error']).isRequired,
-};

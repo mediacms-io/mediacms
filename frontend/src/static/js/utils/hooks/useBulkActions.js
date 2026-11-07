@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { translateString } from '../helpers';
+import { inEmbeddedApp } from '../helpers/embeddedApp';
 
 /**
  * Custom hook for managing bulk actions on media items
@@ -22,6 +23,20 @@ export function useBulkActions() {
   const [showPublishStateModal, setShowPublishStateModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showCourseCleanupModal, setShowCourseCleanupModal] = useState(false);
+  const [hasContributorCourses, setHasContributorCourses] = useState(false);
+
+  useEffect(() => {
+    if (!inEmbeddedApp()) return;
+    fetch('/api/v1/categories/contributor?lms_courses_only=true')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        const courses = data.results || data;
+        setHasContributorCourses(Array.isArray(courses) && courses.length > 0);
+      })
+      .catch(() => {});
+  }, []);
 
   // Get CSRF token from cookies
   const getCsrfToken = () => {
@@ -95,6 +110,11 @@ export function useBulkActions() {
   const handleBulkAction = (action) => {
     const selectedCount = selectedMedia.size;
 
+    if (action === 'course-cleanup') {
+      setShowCourseCleanupModal(true);
+      return;
+    }
+
     if (selectedCount === 0) {
       return;
     }
@@ -111,6 +131,10 @@ export function useBulkActions() {
       setShowConfirmModal(true);
       setPendingAction(action);
       setConfirmMessage(translateString('You are going to disable comments to') + ` ${selectedCount} ` + translateString('media, are you sure?'));
+    } else if (action === 'delete-comments') {
+      setShowConfirmModal(true);
+      setPendingAction(action);
+      setConfirmMessage(translateString('You are going to delete all comments from') + ` ${selectedCount} ` + translateString('media, are you sure?'));
     } else if (action === 'enable-download') {
       setShowConfirmModal(true);
       setPendingAction(action);
@@ -165,6 +189,8 @@ export function useBulkActions() {
       executeEnableComments();
     } else if (action === 'disable-comments') {
       executeDisableComments();
+    } else if (action === 'delete-comments') {
+      executeDeleteComments();
     } else if (action === 'enable-download') {
       executeEnableDownload();
     } else if (action === 'disable-download') {
@@ -267,6 +293,37 @@ export function useBulkActions() {
       })
       .catch((error) => {
         showNotificationMessage(translateString('Failed to disable comments.'), 'error');
+        clearSelection();
+      });
+  };
+
+  // Execute delete comments
+  const executeDeleteComments = () => {
+    const selectedIds = Array.from(selectedMedia);
+
+    fetch('/api/v1/media/user/bulk_actions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify({
+        action: 'delete_comments',
+        media_ids: selectedIds,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to delete comments');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        showNotificationMessage(translateString('Successfully deleted comments'));
+        clearSelection();
+      })
+      .catch((error) => {
+        showNotificationMessage(translateString('Failed to delete comments.'), 'error');
         clearSelection();
       });
   };
@@ -463,6 +520,22 @@ export function useBulkActions() {
     setShowTagModal(false);
   };
 
+  // Course cleanup modal handlers
+  const handleCourseCleanupModalCancel = () => {
+    setShowCourseCleanupModal(false);
+  };
+
+  const handleCourseCleanupModalSuccess = (message) => {
+    showNotificationMessage(message);
+    clearSelectionAndRefresh();
+    setShowCourseCleanupModal(false);
+  };
+
+  const handleCourseCleanupModalError = (message) => {
+    showNotificationMessage(message, 'error');
+    setShowCourseCleanupModal(false);
+  };
+
   return {
     // State
     selectedMedia,
@@ -480,6 +553,8 @@ export function useBulkActions() {
     showPublishStateModal,
     showCategoryModal,
     showTagModal,
+    showCourseCleanupModal,
+    hasContributorCourses,
 
     // Handlers
     handleMediaSelection,
@@ -507,6 +582,9 @@ export function useBulkActions() {
     handleTagModalCancel,
     handleTagModalSuccess,
     handleTagModalError,
+    handleCourseCleanupModalCancel,
+    handleCourseCleanupModalSuccess,
+    handleCourseCleanupModalError,
 
     // Utility
     getCsrfToken,

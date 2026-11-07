@@ -5,8 +5,10 @@ import { ItemListAsync } from './ItemListAsync';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
 import { ItemsListHandler } from './includes/itemLists/ItemsListHandler';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function InlineSliderItemListAsync(props) {
+export function InlineSliderItemListAsync(rawProps) {
+  const props = applyDefaultProps(rawProps, InlineSliderItemListAsync.defaultPropValues);
   const { visibleSidebar } = useLayout();
 
   const [
@@ -72,11 +74,7 @@ export function InlineSliderItemListAsync(props) {
   );
 }
 
-InlineSliderItemListAsync.propTypes = {
-  ...ItemListAsync.propTypes,
-};
-
-InlineSliderItemListAsync.defaultProps = {
-  ...ItemListAsync.defaultProps,
+InlineSliderItemListAsync.defaultPropValues = {
+  ...ItemListAsync.defaultPropValues,
   pageItems: 12,
 };

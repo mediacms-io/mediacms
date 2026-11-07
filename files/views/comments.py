@@ -75,8 +75,11 @@ class CommentDetail(APIView):
         try:
             media = Media.objects.select_related("user").get(friendly_token=friendly_token)
             self.check_object_permissions(self.request, media)
-            if media.state == "private" and self.request.user != media.user:
-                return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
+            if media.state == "private":
+                user = self.request.user
+                has_access = user.is_authenticated and (user.has_member_access_to_media(media) or is_mediacms_editor(user))
+                if not has_access:
+                    return Response({"detail": "media is private"}, status=status.HTTP_400_BAD_REQUEST)
             return media
         except PermissionDenied:
             return Response({"detail": "bad permissions"}, status=status.HTTP_400_BAD_REQUEST)
@@ -89,15 +92,15 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List comments',
+        operation_description='Paginated comments of a media, newest first. Private media need the same access as viewing the media.',
     )
     def get(self, request, friendly_token):
         # list comments for a media
         media = self.get_object(friendly_token)
         if isinstance(media, Response):
             return media
-        comments = media.comments.filter().prefetch_related("user")
+        comments = media.comments.filter().prefetch_related("user").order_by("-add_date")
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         page = paginator.paginate_queryset(comments, request)
@@ -107,8 +110,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete a comment',
+        operation_description='Delete the comment with the given uid. Allowed for the comment author, the media owner and MediaCMS editors, managers and admins.',
     )
     def delete(self, request, friendly_token, uid=None):
         """Delete a comment
@@ -132,8 +135,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Add a comment',
+        operation_description='Post a comment on a media, if comments are enabled for it. The media owner is notified, and so are mentioned users when mentions are enabled.',
     )
     def post(self, request, friendly_token):
         """Create a comment"""

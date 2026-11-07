@@ -14,6 +14,8 @@ class SAMLConfiguration(models.Model):
 
     # Certificates
     idp_cert = models.TextField(help_text='x509cert')
+    sp_cert = models.TextField(blank=True, null=True, help_text='SP x509cert (PEM). Optional; required if SP private key is set.')
+    sp_private_key = models.TextField(blank=True, null=True, help_text='SP private key (PEM). Optional; required if SP certificate is set.')
 
     # Attribute Mapping Fields
     uid = models.CharField(max_length=100, help_text='eg eduPersonPrincipalName')
@@ -49,6 +51,11 @@ class SAMLConfiguration(models.Model):
         if existing_conf.exists():
             raise ValidationError({'social_app': 'Cannot create configuration for the same social app because one configuration already exists.'})
 
+        if self.sp_cert and not self.sp_private_key:
+            raise ValidationError({'sp_private_key': 'Required when SP certificate is provided.'})
+        if self.sp_private_key and not self.sp_cert:
+            raise ValidationError({'sp_cert': 'Required when SP private key is provided.'})
+
         super().clean()
 
     @property
@@ -56,6 +63,10 @@ class SAMLConfiguration(models.Model):
         # provide settings in a way for Social App SAML provider
         provider_settings = {}
         provider_settings["sp"] = {"entity_id": self.sp_metadata_url}
+        if self.sp_cert:
+            provider_settings["sp"]["x509cert"] = self.sp_cert
+        if self.sp_private_key:
+            provider_settings["sp"]["private_key"] = self.sp_private_key
         provider_settings["idp"] = {"slo_url": self.slo_url, "sso_url": self.sso_url, "x509cert": self.idp_cert, "entity_id": self.idp_id}
 
         provider_settings["attribute_mapping"] = {

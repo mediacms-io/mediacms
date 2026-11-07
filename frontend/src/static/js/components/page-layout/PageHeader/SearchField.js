@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useLayout, usePopup } from '../../../utils/hooks/';
-import { LinksContext } from '../../../utils/contexts/';
+import { useLayout, usePopup, useUser } from '../../../utils/hooks/';
+import { linksConfig } from '../../../utils/contexts/';
 import { PageStore, SearchFieldStore } from '../../../utils/stores/';
 import { SearchFieldActions } from '../../../utils/actions/';
 import { MaterialIcon, PopupMain } from '../../_shared';
@@ -101,6 +101,66 @@ function SearchPredictionItem(props) {
   );
 }
 
+function trimmedPath(path) {
+  return (path || '').replace(/\/+$/, '');
+}
+
+function pageSearchScopes(canSearchAuthors) {
+  const path = trimmedPath(window.location.pathname);
+  const media = { id: 'media', title: 'Media', action: linksConfig.search.base, name: 'q', placeholder: 'Search', predictions: true };
+
+  if (path === trimmedPath(linksConfig.members)) {
+    return canSearchAuthors
+      ? [media, { id: 'members', title: 'Members', action: linksConfig.members, name: 'q', placeholder: 'Search members' }]
+      : [];
+  }
+  if (path === trimmedPath(linksConfig.archive.categories)) {
+    return [media, { id: 'categories', title: 'Category', action: linksConfig.archive.categories, name: 'q', placeholder: 'Search categories' }];
+  }
+  if (path === trimmedPath(linksConfig.archive.tags)) {
+    return [media, { id: 'tags', title: 'Tags', action: linksConfig.archive.tags, name: 'q', placeholder: 'Search tags' }];
+  }
+  if (linksConfig.manage.media && path === trimmedPath(linksConfig.manage.media)) {
+    return [
+      { id: 'media', title: 'Media', action: linksConfig.manage.media, name: 'q', placeholder: 'Search media' },
+      { id: 'members', title: 'Members', action: linksConfig.manage.users, name: 'q', placeholder: 'Search members' },
+      { id: 'owner', title: 'Owner', action: linksConfig.manage.media, name: 'owner', placeholder: 'Search owners' },
+    ];
+  }
+  return [];
+}
+
+function scopeQuery(scope) {
+  return SearchFieldStore.get('owner' === scope.name ? 'search-owner' : 'search-query');
+}
+
+function defaultScope(scopes) {
+  const path = trimmedPath(window.location.pathname);
+  const onPage = scopes.filter((scope) => trimmedPath(scope.action) === path);
+  return onPage.find((scope) => '' !== scopeQuery(scope)) || onPage[0] || scopes[0];
+}
+
+function SearchScopeFilter(props) {
+  return (
+    <div className={'search-field-filters' + (props.scopes[0] === props.scope ? '' : ' active')}>
+      <button type="button" className="search-field-filters-button" aria-label={translateString('Search filters')} aria-haspopup="true">
+        <MaterialIcon type="filter_list" />
+      </button>
+
+      <div className="search-field-filters-popup">
+        <div className="search-field-filters-options" role="radiogroup" aria-label={translateString('Search in')}>
+          {props.scopes.map((option) => (
+            <label key={option.id}>
+              <input type="radio" checked={option === props.scope} onChange={() => props.onScopeChange(option)} />
+              <span>{translateString(option.title)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SearchField(props) {
   const searchInputRef = useRef(null);
   const formRef = useRef(null);
@@ -109,10 +169,15 @@ export function SearchField(props) {
 
   const [itemsDomRef, setItemsDomRef] = useState([]);
 
-  const [predictionItems, setPredictionItems] = useState([]);
-  const [queryVal, setQueryVal] = useState(SearchFieldStore.get('search-query'));
-
   const { visibleMobileSearch } = useLayout();
+  const { userCan } = useUser();
+
+  const [scopes] = useState(() => pageSearchScopes(!!userCan.canSearchAuthors));
+  const [scope, setScope] = useState(() => (scopes.length ? defaultScope(scopes) : null));
+  const isFirstScope = useRef(true);
+
+  const [predictionItems, setPredictionItems] = useState([]);
+  const [queryVal, setQueryVal] = useState(scope ? scopeQuery(scope) : SearchFieldStore.get('search-query'));
 
   function getItemsArr(index) {
     return -1 === index ? searchInputRef.current : itemsDomRef[index];
@@ -156,7 +221,7 @@ export function SearchField(props) {
 
     setQueryVal(val);
 
-    if ('' !== val.trim()) {
+    if ('' !== val.trim() && (!scope || scope.predictions)) {
       SearchFieldActions.requestPredictions(val.trim());
     }
   }
@@ -254,6 +319,17 @@ export function SearchField(props) {
     }
   }
 
+  useEffect(() => {
+    if (isFirstScope.current) {
+      isFirstScope.current = false;
+      return;
+    }
+    setPredictionItems([]);
+    if ('' !== searchInputRef.current.value.trim()) {
+      formRef.current.submit();
+    }
+  }, [scope]);
+
   function onPopupHide() {
     setPredictionItems([]);
   }
@@ -288,7 +364,7 @@ export function SearchField(props) {
         <form
           ref={formRef}
           method="get"
-          action={LinksContext._currentValue.search.base}
+          action={scope ? scope.action : linksConfig.search.base}
           autoComplete="off"
           onSubmit={onFormSubmit}
         >
@@ -297,14 +373,16 @@ export function SearchField(props) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={translateString("Search")}
+                placeholder={translateString(scope ? scope.placeholder : 'Search')}
                 aria-label="Search"
-                name="q"
+                name={scope ? scope.name : 'q'}
                 value={queryVal}
                 onChange={onQueryChange}
                 onFocus={onInputFocus}
                 onBlur={onInputBlur}
               />
+
+              {scope ? <SearchScopeFilter scopes={scopes} scope={scope} onScopeChange={setScope} /> : null}
 
               <PopupContent contentRef={popupContentRef} hideCallback={onPopupHide}>
                 <PopupMain>
