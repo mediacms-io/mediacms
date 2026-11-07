@@ -77,9 +77,6 @@ def stuff(request):
     ret["CAN_DELETE_COMMENTS"] = False
     ret["CAN_DELETE"] = False
 
-    # Default media_object (can be overridden by views)
-    ret["media_object"] = None
-
     # Default media (can be overridden by views, used in config/index.html)
     ret["media"] = None
 

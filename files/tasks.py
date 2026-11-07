@@ -1339,8 +1339,12 @@ def task_sent_handler(sender=None, headers=None, body=None, **kwargs):
     # Also, removing the Encoding object,
     # since the task that would prepare it was killed
     # Maybe add a killed state for Encoding objects
+    uid = None
     try:
-        uid = kwargs["request"].task_id
+        request = kwargs.get("request")
+        if request is None:
+            return True
+        uid = getattr(request, "task_id", None)
         if uid:
             encoding = Encoding.objects.get(task_id=uid)
             encoding.delete()

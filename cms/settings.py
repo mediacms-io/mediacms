@@ -743,7 +743,7 @@ LOGGING = {
         "saml_auth": {
             "handlers": ["file"],
             "level": effective_log_level,
-            "propagate": False,
+            "propagate": True,  # Allow assertLogs(root) / parent capture in tests
         },
         "rbac": {
             "handlers": ["file"],

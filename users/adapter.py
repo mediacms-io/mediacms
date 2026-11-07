@@ -87,18 +87,13 @@ class MyAccountAdapter(DefaultAccountAdapter):
         return user
 
     def pre_login(self, request, user, **kwargs):
-        """Called before login - check for approval if needed"""
+        """Allow login; ApprovalMiddleware holds unapproved users on the pending page."""
         if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_approved:
             client_ip = get_client_ip_for_logging(request) if request else 'unknown'
             logger.warning(
-                "Login failed (django-allauth) - user_not_approved, user_id=%s, username=%s, ip=%s",
+                "Login of unapproved user (django-allauth) - user_id=%s, username=%s, ip=%s",
                 user.id,
                 user.username,
                 client_ip,
             )
-            from allauth.exceptions import ImmediateHttpResponse
-            from django.http import HttpResponseRedirect
-            from django.urls import reverse
-
-            raise ImmediateHttpResponse(HttpResponseRedirect(reverse('account_login') + '?approval_required=1'))
         return super().pre_login(request, user, **kwargs)

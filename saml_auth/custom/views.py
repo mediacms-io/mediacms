@@ -66,8 +66,8 @@ class FinishACSView(SAMLViewMixin, View):
         acs_session.delete()
         if not acs_request:
             client_ip = get_client_ip_for_logging(request)
-            logger.warning(
-                "Login failed (SAML) - session_missing, organization_slug=%s, ip=%s",
+            logger.error(
+                "Unable to finish login, SAML ACS session missing - organization_slug=%s, ip=%s",
                 organization_slug,
                 client_ip,
             )
@@ -92,11 +92,11 @@ class FinishACSView(SAMLViewMixin, View):
             # e.g. ['invalid_response']
             error_reason = auth.get_last_error_reason() or error_reason
             client_ip = get_client_ip_for_logging(request)
-            logger.warning(
-                "Login failed (SAML) - saml_error, organization_slug=%s, errors=%s, error_reason=%s, ip=%s",
-                organization_slug,
+            logger.error(
+                "Error processing SAML ACS response: %s: %s - organization_slug=%s, ip=%s",
                 ", ".join(errors),
                 error_reason,
+                organization_slug,
                 client_ip,
             )
             return render_authentication_error(
@@ -126,8 +126,8 @@ class FinishACSView(SAMLViewMixin, View):
             reject = provider.app.settings.get("advanced", {}).get("reject_idp_initiated_sso", True)
             if reject:
                 client_ip = get_client_ip_for_logging(request)
-                logger.warning(
-                    "Login failed (SAML) - idp_initiated_rejected, organization_slug=%s, ip=%s",
+                logger.error(
+                    "IdP initiated SSO rejected - organization_slug=%s, ip=%s",
                     organization_slug,
                     client_ip,
                 )

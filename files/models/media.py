@@ -1238,5 +1238,5 @@ def media_m2m(sender, instance, action, pk_set, **kwargs):
         for tag in instance.tags.all():
             tag.update_tag_media()
 
-    if kwargs.get("action") in ("post_add", "post_remove", "post_clear"):
+    if action in ("post_add", "post_remove", "post_clear"):
         instance.update_search_vector()

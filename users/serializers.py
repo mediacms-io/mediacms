@@ -142,21 +142,20 @@ class LoginSerializer(serializers.Serializer):
 
         if user is None:
             if user_exists:
-                # User exists but password is wrong
+                # User exists but password is wrong — keep public message identical to
+                # user-not-found so callers cannot enumerate accounts.
                 logger.warning(
                     "Login failed - wrong_password, attempted_username_or_email=%s, ip=%s",
                     username_or_email,
                     client_ip,
                 )
-                raise serializers.ValidationError('Invalid credentials.')
             else:
-                # User doesn't exist
                 logger.warning(
                     "Login failed - user_not_found, attempted_username_or_email=%s, ip=%s",
                     username_or_email,
                     client_ip,
                 )
-                raise serializers.ValidationError('User not found.')
+            raise serializers.ValidationError('User not found.')
 
         if not user.is_active:
             logger.warning(
