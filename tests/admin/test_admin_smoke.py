@@ -9,6 +9,7 @@ from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from rest_framework.authtoken.models import Token, TokenProxy
 
+from actions.models import MediaAction
 from files.models import (
     Category,
     Comment,
@@ -74,6 +75,7 @@ def build_instances(superuser):
         EncodeProfile: profile,
         Comment: Comment.objects.create(media=media, user=superuser, text="smoke comment"),
         media.__class__: media,
+        MediaAction: MediaAction.objects.create(user=superuser, media=media, action="like"),
         Encoding: Encoding.objects.create(media=media, profile=profile, status="success"),
         Category: category,
         Page: Page.objects.create(slug="smoke-page", title="Smoke page", description="<p>hi</p>"),
