@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { useItemListSync } from '../../utils/hooks/';
-import { PositiveIntegerOrZero } from '../../utils/helpers';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
 import { ItemsStaticListHandler } from './includes/itemLists/ItemsStaticListHandler';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function ItemList(props) {
+export function ItemList(rawProps) {
+  const props = applyDefaultProps(rawProps, ItemList.defaultPropValues);
   const [
     countedItems,
     items,
@@ -51,35 +51,7 @@ export function ItemList(props) {
   );
 }
 
-ItemList.propTypes = {
-  items: PropTypes.array.isRequired,
-  className: PropTypes.string,
-  hideDate: PropTypes.bool,
-  hideViews: PropTypes.bool,
-  hideAuthor: PropTypes.bool,
-  hidePlaylistOptions: PropTypes.bool,
-  hidePlaylistOrderNumber: PropTypes.bool,
-  hideAllMeta: PropTypes.bool,
-  preferSummary: PropTypes.bool,
-  inPlaylistView: PropTypes.bool,
-  inPlaylistPage: PropTypes.bool,
-  playlistActiveItem: PositiveIntegerOrZero,
-  playlistId: PropTypes.string,
-  /* ################################################## */
-  maxItems: PropTypes.number.isRequired,
-  pageItems: PropTypes.number.isRequired,
-  horizontalItemsOrientation: PropTypes.bool.isRequired,
-  singleLinkContent: PropTypes.bool.isRequired,
-  inTagsList: PropTypes.bool,
-  inCategoriesList: PropTypes.bool,
-  itemsCountCallback: PropTypes.func,
-  itemsLoadCallback: PropTypes.func,
-  firstItemViewer: PropTypes.bool,
-  firstItemDescr: PropTypes.bool,
-  canEdit: PropTypes.bool,
-};
-
-ItemList.defaultProps = {
+ItemList.defaultPropValues = {
   hideDate: false,
   hideViews: false,
   hideAuthor: false,

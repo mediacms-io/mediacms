@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class MyAccountAdapter(DefaultAccountAdapter):
-    def get_email_confirmation_url_stub(self, request, emailconfirmation):
+    def get_email_confirmation_url(self, request, emailconfirmation):
         url = reverse("account_confirm_email", args=[emailconfirmation.key])
         return settings.SSL_FRONTEND_HOST + url
 

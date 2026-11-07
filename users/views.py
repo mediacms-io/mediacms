@@ -1,10 +1,13 @@
 import logging
 
+from allauth.account.adapter import get_adapter
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -134,15 +137,10 @@ def edit_user(request, username):
 
 
 def view_channel(request, friendly_token):
-    context = {}
-    channel = Channel.objects.filter(friendly_token=friendly_token).first()
+    channel = Channel.objects.filter(friendly_token=friendly_token).select_related("user").first()
     if not channel:
-        user = None
-    else:
-        user = channel.user
-    context["user"] = user
-    context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
-    return render(request, "cms/channel.html", context)
+        raise Http404("Channel does not exist")
+    return HttpResponseRedirect(channel.user.get_absolute_url())
 
 
 @login_required
@@ -284,6 +282,11 @@ class UserList(APIView):
         if not all([username, password, email, name]):
             return Response({"detail": "username, password, email, and name are required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            username = get_adapter().clean_username(username, shallow=True)
+        except DjangoValidationError as e:
+            return Response({"detail": e.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+
         if User.objects.filter(username=username).exists():
             return Response({"detail": "A user with that username already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -389,9 +392,15 @@ class UserDetail(APIView):
 
         if action == "change_password":
             # Permission to edit user is already checked by self.get_user -> self.check_object_permissions
+            if user.is_superuser and not request.user.is_superuser:
+                raise PermissionDenied("You do not have permission to change a superuser's password.")
             password = request.data.get("password")
             if not password:
                 return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                validate_password(password, user=user)
+            except DjangoValidationError as exc:
+                return Response({"detail": list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
             changed_by_self = request.user.id == user.id
             user.set_password(password)
             user.save()
@@ -437,14 +446,17 @@ class UserDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Users'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete a user',
+        operation_description='Delete a user together with their media. Users can delete their own account; managers and admins can delete others, but only admins can delete an admin.',
     )
     def delete(self, request, username, format=None):
         # Delete a user
         user = self.get_user(username)
         if isinstance(user, Response):
             return user
+
+        if user.is_superuser and not request.user.is_superuser:
+            raise PermissionDenied("You do not have permission to delete a superuser.")
 
         user_id = user.id
         user_username = user.username
@@ -503,6 +515,7 @@ class UserToken(APIView):
 
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
+    global_login_exempt = True
     serializer_class = LoginSerializer
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 

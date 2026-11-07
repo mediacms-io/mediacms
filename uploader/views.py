@@ -9,6 +9,7 @@ from django.core.files import File
 from django.http import JsonResponse
 from django.views import generic
 
+from actions.models import MediaAction
 from files.helpers import rm_file
 from files.methods import user_allowed_to_upload
 from files.models import Media
@@ -127,11 +128,10 @@ class FineUploaderView(generic.FormView):
             )
             self.upload.save()
             return self.make_response({"success": True})
-        # create media!
+
         media_file = os.path.join(settings.MEDIA_ROOT, self.upload.real_path)
+        file_size = None
         try:
-            # Get file size for logging
-            file_size = None
             if os.path.exists(media_file):
                 file_size = os.path.getsize(media_file)
                 logger.debug(
@@ -144,6 +144,7 @@ class FineUploaderView(generic.FormView):
             with open(media_file, "rb") as f:
                 myfile = File(f)
                 new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
+            MediaAction.objects.create(user=self.request.user, media=new, action="watch")
             logger.info(
                 "Media uploaded successfully - user_id=%s, friendly_token=%s, filename=%s, file_size=%s bytes",
                 self.request.user.id,

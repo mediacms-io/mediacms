@@ -54,6 +54,7 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+from .models.utils import PREVIEW_PROFILE_NAME
 
 logger = get_task_logger(__name__)
 
@@ -64,6 +65,95 @@ ERRORS_LIST = [
     "Invalid data found when processing input",
     "Unable to find a suitable output format for",
 ]
+
+
+PREVIEW_POSITIONS = (0.08, 0.23, 0.38, 0.53, 0.68, 0.83)
+PREVIEW_SEGMENT_SECONDS = 1
+PREVIEW_FPS = 12
+PREVIEW_WIDTH = 320
+
+
+def preview_positions(duration):
+    """The seconds to cut preview clips from, for a video of this duration.
+
+    A video too short for distinct moments gets one clip from the start, which also keeps
+    one shorter than the first offset from producing nothing.
+    """
+    if not duration or duration < len(PREVIEW_POSITIONS) * PREVIEW_SEGMENT_SECONDS:
+        return [0]
+    return [round(duration * position, 2) for position in PREVIEW_POSITIONS]
+
+
+def produce_preview(media, output_path, extension="mp4"):
+    """Build the hover preview: short clips sampled across the whole video.
+
+    Returns True when output_path holds a preview. Clips are cut separately and then
+    joined, because the concat demuxer needs its inputs to share a format.
+    """
+    source = media.media_file.path
+    positions = preview_positions(media.duration)
+
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
+        segments = []
+        for index, start in enumerate(positions):
+            segment = os.path.join(temp_dir, f"segment-{index}.mp4")
+            command = [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-ss",
+                str(start),
+                "-t",
+                str(PREVIEW_SEGMENT_SECONDS),
+                "-i",
+                source,
+                "-hide_banner",
+                "-an",
+                "-vf",
+                f"fps={PREVIEW_FPS},scale={PREVIEW_WIDTH}:-2:flags=lanczos",
+                "-c:v",
+                "libx264",
+                "-crf",
+                "30",
+                "-pix_fmt",
+                "yuv420p",
+                segment,
+            ]
+            run_command(command)
+            if os.path.exists(segment) and os.path.getsize(segment):
+                segments.append(segment)
+
+        if not segments:
+            return False
+
+        list_file = os.path.join(temp_dir, "segments.txt")
+        with open(list_file, "w") as handle:
+            for segment in segments:
+                handle.write(f"file '{segment}'\n")
+
+        joined = os.path.join(temp_dir, f"preview.{extension}")
+        run_command(
+            [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-hide_banner",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                list_file,
+                "-c",
+                "copy",
+                "-movflags",
+                "+faststart",
+                joined,
+            ]
+        )
+        if not (os.path.exists(joined) and os.path.getsize(joined)):
+            return False
+
+        shutil.copyfile(joined, output_path)
+        return True
 
 
 def handle_pending_running_encodings(media):
@@ -177,8 +267,7 @@ def chunkize_media(self, friendly_token, profiles, force=True):
                     continue
             encoding = Encoding(media=media, profile=profile)
             encoding.save()
-            enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
-            encode_media.delay(friendly_token, profile.id, encoding.id, enc_url, force=force)
+            encode_media.delay(friendly_token, profile.id, encoding.id, force=force)
         return False
 
     chunks = [os.path.join(cwd, ch) for ch in chunks]
@@ -208,13 +297,12 @@ def chunkize_media(self, friendly_token, profiles, force=True):
             )
 
             encoding.save()
-            enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
             if profile.resolution in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                 priority = 0
             else:
                 priority = 9
             encode_media.apply_async(
-                args=[friendly_token, profile.id, encoding.id, enc_url],
+                args=[friendly_token, profile.id, encoding.id],
                 kwargs={"force": force, "chunk": True, "chunk_file_path": chunk},
                 priority=priority,
             )
@@ -266,7 +354,6 @@ def encode_media(
     friendly_token,
     profile_id,
     encoding_id,
-    encoding_url,
     force=True,
     chunk=False,
     chunk_file_path="",
@@ -414,35 +501,18 @@ def encode_media(
     encoding.retries = self.request.retries
     encoding.save()
 
-    if profile.extension == "gif":
-        tf = create_temp_file(suffix=".gif")
-        # -ss 5 start from 5 second. -t 25 until 25 sec
-        command = [
-            settings.FFMPEG_COMMAND,
-            "-y",
-            "-ss",
-            "3",
-            "-i",
-            media.media_file.path,
-            "-hide_banner",
-            "-vf",
-            "scale=344:-1:flags=lanczos,fps=1",
-            "-t",
-            "25",
-            "-f",
-            "gif",
-            tf,
-        ]
-        ret = run_command(command)
-        if os.path.exists(tf) and get_file_type(tf) == "image":
+    if profile.name == PREVIEW_PROFILE_NAME:
+        tf = create_temp_file(suffix=f".{profile.extension}")
+        produced = produce_preview(media, tf, profile.extension)
+        if produced and os.path.exists(tf) and get_file_type(tf) in ("video", "image"):
             with open(tf, "rb") as f:
                 myfile = File(f)
                 encoding.status = "success"
                 encoding.media_file.save(content=myfile, name=tf)
                 rm_file(tf)
                 return True
-        else:
-            return False
+        rm_file(tf)
+        return False
 
     if chunk:
         original_media_path = chunk_file_path
@@ -684,9 +754,13 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         subtitle_name = f"{video_file_path}.vtt"
         output_name = f"{tmpdirname}/{subtitle_name}"
 
-        cmd = f"whisper /home/mediacms.io/mediacms/media_files/{media.media_file.name} --model {settings.WHISPER_MODEL} --output_dir {tmpdirname}"
+        # Build the command as an argument list (not a shell string) so that any
+        # characters in the file path are passed as a single literal argument and
+        # never interpreted by a shell. Using media_file.path also avoids the
+        # previously hardcoded install prefix, which was wrong on non-default deployments.
+        cmd = ["whisper", media.media_file.path, "--model", settings.WHISPER_MODEL, "--output_dir", tmpdirname]
         if translate_to_english:
-            cmd += " --task translate"
+            cmd += ["--task", "translate"]
 
         logger.info(
             "Whisper transcribe command ready - friendly_token=%s, translate_to_english=%s, model=%s",
@@ -934,7 +1008,8 @@ def check_media_states():
     changed = 0
     for m in media:
         m.set_encoding_status()
-        m.save(update_fields=["encoding_status"])
+        m.load_stored_listing_fields()
+        m.save(update_fields=["encoding_status", "listable"])
         changed += 1
     if changed:
         logger.info(f"changed encoding status to {changed} media items")
@@ -1154,7 +1229,7 @@ def save_user_action(user_or_session, friendly_token=None, action="watch", extra
 
         if media.reported_times >= settings.REPORTED_TIMES_THRESHOLD:
             media.state = "private"
-        media.save(update_fields=["reported_times", "state"])
+        media.save(update_fields=["reported_times", "state", "listable"])
 
         notify_users(
             friendly_token=media.friendly_token,
@@ -1209,6 +1284,9 @@ def get_list_of_popular_media():
     return True
 
 
+MEDIA_STATES_FOR_RBAC_TILE = ("public", "unlisted", "private")
+
+
 @task(name="update_listings_thumbnails", queue="long_tasks")
 def update_listings_thumbnails():
     """Populate listings_thumbnail field for models"""
@@ -1216,19 +1294,26 @@ def update_listings_thumbnails():
     # Categories
     used_media = []
     saved = 0
+    cleared = 0
     qs = Category.objects.filter()
     for object in qs:
-        media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state="public", is_reviewed=True).order_by("-views").first()
+        states = MEDIA_STATES_FOR_RBAC_TILE if object.is_rbac_category else ("public",)
+        media = Media.objects.exclude(friendly_token__in=used_media).filter(category=object, state__in=states, is_reviewed=True).order_by("-views").first()
         if media:
             object.listings_thumbnail = media.thumbnail_url
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.debug("Categories thumbnails updated - count=%s", saved)
+        elif object.listings_thumbnail:
+            object.listings_thumbnail = None
+            object.save(update_fields=["listings_thumbnail"])
+            cleared += 1
+    logger.debug("Categories thumbnails updated - saved=%s, cleared=%s", saved, cleared)
 
     # Tags
     used_media = []
     saved = 0
+    cleared = 0
     qs = Tag.objects.filter()
     for object in qs:
         media = Media.objects.exclude(friendly_token__in=used_media).filter(tags=object, state="public", is_reviewed=True).order_by("-views").first()
@@ -1237,7 +1322,11 @@ def update_listings_thumbnails():
             object.save(update_fields=["listings_thumbnail"])
             used_media.append(media.friendly_token)
             saved += 1
-    logger.debug("Tags thumbnails updated - count=%s", saved)
+        elif object.listings_thumbnail:
+            object.listings_thumbnail = None
+            object.save(update_fields=["listings_thumbnail"])
+            cleared += 1
+    logger.debug("Tags thumbnails updated - saved=%s, cleared=%s", saved, cleared)
 
     return True
 
@@ -1312,7 +1401,7 @@ def post_trim_action(friendly_token):
         return False
 
     media.set_media_type()
-    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+    encodings = media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
     # if they are still not encoded, when the first one will be encoded, it will have the chance to
     # call post_trim_action again
     if encodings:
@@ -1320,6 +1409,10 @@ def post_trim_action(friendly_token):
             # update encoding size, in case they don't have one, due to the
             # way the copy_video took place
             update_encoding_size(encoding.id)
+
+        preview_profiles = EncodeProfile.objects.filter(name=PREVIEW_PROFILE_NAME, extension="mp4", active=True)
+        if preview_profiles:
+            media.encode(profiles=preview_profiles, chunkize=False)
 
         media.produce_thumbnails_from_video()
         produce_sprite_from_video.delay(friendly_token)
@@ -1388,7 +1481,7 @@ def video_trim_task(self, trim_request_id):
 
         deleted_encodings = handle_pending_running_encodings(target_media)
         # the following could be un-necessary, read commend in pre_trim_video_actions to see why
-        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+        encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
         for encoding in encodings:
             trim_result = trim_video_method(encoding.media_file.path, timestamps_encodings)
             if not trim_result:
@@ -1414,7 +1507,7 @@ def video_trim_task(self, trim_request_id):
             original_trim_result = trim_video_method(target_media.media_file.path, [timestamp])
             deleted_encodings = handle_pending_running_encodings(target_media)  # noqa
             # the following could be un-necessary, read commend in pre_trim_video_actions to see why
-            encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False)
+            encodings = target_media.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
             for encoding in encodings:
                 trim_result = trim_video_method(encoding.media_file.path, [timestamp])
                 if not trim_result:

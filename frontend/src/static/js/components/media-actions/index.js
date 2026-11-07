@@ -1,4 +1,5 @@
 export * from './MediaDislikeIcon.jsx';
+export * from './MediaEditButton.jsx';
 export * from './MediaLikeIcon.jsx';
 export * from './MediaMoreOptionsIcon.jsx';
 export * from './MediaSaveButton.jsx';

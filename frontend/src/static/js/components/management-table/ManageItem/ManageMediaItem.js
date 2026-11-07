@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import { usePopup } from '../../../utils/hooks/usePopup';
 import { formatManagementTableDate } from '../../../utils/helpers/';
 import { PageStore } from '../../../utils/stores/';
@@ -235,22 +234,3 @@ export function ManageMediaItem(props) {
     </div>
   );
 }
-
-ManageMediaItem.propTypes = {
-  thumbnail_url: PropTypes.string,
-  token: PropTypes.string,
-  title: PropTypes.string,
-  url: PropTypes.string,
-  author_name: PropTypes.string,
-  author_url: PropTypes.string,
-  add_date: PropTypes.string,
-  media_type: PropTypes.string,
-  encoding_status: PropTypes.string,
-  state: PropTypes.string,
-  is_reviewed: PropTypes.bool,
-  featured: PropTypes.bool,
-  reported_times: PropTypes.number,
-  onCheckRow: PropTypes.func,
-  selectedRow: PropTypes.bool.isRequired,
-  hideDeleteAction: PropTypes.bool.isRequired,
-};

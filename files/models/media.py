@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.files import File
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Func, Value
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
@@ -25,16 +25,52 @@ from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
 from .subtitle import TranscriptionRequest
 from .utils import (
+    EDITOR_VIDEO_RESOLUTION,
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
     MEDIA_STATES,
     MEDIA_TYPES_SUPPORTED,
+    PREVIEW_PROFILE_NAME,
     original_media_file_path,
     original_thumbnail_file_path,
 )
 from .video_data import VideoTrimRequest
 
 logger = logging.getLogger(__name__)
+
+HLS_VALID_RESOLUTIONS = [144, 240, 360, 480, 720, 1080, 1440, 2160]
+
+
+def hls_stream_resolution(resolution):
+    """The resolution label to advertise for one HLS stream.
+
+    The number a viewer recognises is the short side: 1920x1080 and 1080x1920 are both
+    1080. A stream this portal did not transcode can have a non standard short side, an
+    imported 480x272, so it snaps to the nearest standard one.
+    """
+    if not resolution:
+        return None
+    short_side = min(resolution[0], resolution[1])
+    return min(HLS_VALID_RESOLUTIONS, key=lambda valid: abs(valid - short_side))
+
+
+def add_hls_stream(res, bandwidths, suffix, stream_info, uri):
+    """Add one HLS stream to the info dict, keyed by its resolution label.
+
+    Two renditions can share a resolution, which is the key, so keep the higher bitrate
+    one rather than letting whichever comes last overwrite it.
+    """
+    resolution = hls_stream_resolution(getattr(stream_info, "resolution", None))
+    if resolution is None:
+        return
+
+    key = f"{resolution}_{suffix}"
+    bandwidth = getattr(stream_info, "average_bandwidth", None) or getattr(stream_info, "bandwidth", None) or 0
+    if key in res and bandwidth <= bandwidths.get(key, 0):
+        return
+
+    bandwidths[key] = bandwidth
+    res[key] = helpers.url_from_path(uri)
 
 
 class Media(models.Model):
@@ -76,7 +112,7 @@ class Media(models.Model):
     hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
 
     is_reviewed = models.BooleanField(
-        default=settings.MEDIA_IS_REVIEWED,
+        default=helpers.get_media_is_reviewed,
         db_index=True,
         help_text="Whether media is reviewed, so it can appear on public listings",
     )
@@ -154,7 +190,7 @@ class Media(models.Model):
     state = models.CharField(
         max_length=20,
         choices=MEDIA_STATES,
-        default=helpers.get_portal_workflow(),
+        default=helpers.get_portal_workflow,
         db_index=True,
         help_text="state of Media",
     )
@@ -352,19 +388,23 @@ class Media(models.Model):
         # first get anything interesting out of the media
         # that needs to be search able
 
-        a_tags = b_tags = ""
+        a_tags = ""
+        a_categories = ""
         if self.id:
             a_tags = " ".join([tag.title for tag in self.tags.all()])
-            b_tags = " ".join([tag.title.replace("-", " ") for tag in self.tags.all()])
+            category_text = []
+            for category in self.category.all():
+                category_text.extend([category.title, category.description])
+            a_categories = " ".join([item for item in category_text if item])
 
         items = [
+            self.friendly_token,
             self.title,
             self.user.username,
-            self.user.email,
             self.user.name,
             self.description,
             a_tags,
-            b_tags,
+            a_categories,
         ]
 
         for subtitle in self.subtitles.all():
@@ -392,12 +432,12 @@ class Media(models.Model):
             helpers.rm_file(self.media_file.path)
             if self.state == "public":
                 self.state = "unlisted"
-                self.save(update_fields=["state"])
+                self.save(update_fields=["state", "listable"])
             return False
 
         if self.media_type == "video":
             self.set_thumbnail(force=True)
-            if settings.DO_NOT_TRANSCODE_VIDEO:
+            if settings.DO_NOT_TRANSCODE_VIDEO or getattr(self, "_do_not_transcode", False):
                 self.encoding_status = "success"
                 self.save()
                 self.produce_sprite_from_video()
@@ -560,7 +600,9 @@ class Media(models.Model):
 
         from .. import tasks
 
-        tasks.produce_sprite_from_video.delay(self.friendly_token)
+        # Defer until the surrounding transaction commits so the worker can
+        # actually find the Media row. Runs immediately if not in a tx.
+        transaction.on_commit(lambda token=self.friendly_token: tasks.produce_sprite_from_video.delay(token))
         return True
 
     def encode(self, profiles=[], force=True, chunkize=True):
@@ -593,13 +635,12 @@ class Media(models.Model):
         # attempt to break media file in chunks
         if self.duration > settings.CHUNKIZE_VIDEO_DURATION and chunkize:
             for profile in profiles:
-                if profile.extension == "gif":
+                if profile.name == PREVIEW_PROFILE_NAME:
                     profiles.remove(profile)
                     encoding = Encoding(media=self, profile=profile)
                     encoding.save()
-                    enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
                     tasks.encode_media.apply_async(
-                        args=[self.friendly_token, profile.id, encoding.id, enc_url],
+                        args=[self.friendly_token, profile.id, encoding.id],
                         kwargs={"force": force},
                         priority=0,
                     )
@@ -607,24 +648,28 @@ class Media(models.Model):
             tasks.chunkize_media.delay(self.friendly_token, profiles, force=force)
         else:
             for profile in profiles:
-                if profile.extension != "gif":
+                if profile.name != PREVIEW_PROFILE_NAME:
                     if self.video_height and self.video_height < profile.resolution:
                         if profile.resolution not in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                             continue
                 encoding = Encoding(media=self, profile=profile)
                 encoding.save()
-                enc_url = settings.SSL_FRONTEND_HOST + encoding.get_absolute_url()
                 if profile.resolution in settings.MINIMUM_RESOLUTIONS_TO_ENCODE:
                     priority = 9
                 else:
                     priority = 0
                 tasks.encode_media.apply_async(
-                    args=[self.friendly_token, profile.id, encoding.id, enc_url],
+                    args=[self.friendly_token, profile.id, encoding.id],
                     kwargs={"force": force},
                     priority=priority,
                 )
 
         return True
+
+    def load_stored_listing_fields(self):
+        stored = Media.objects.filter(pk=self.pk).values("state", "is_reviewed").first() or {}
+        for field, value in stored.items():
+            setattr(self, field, value)
 
     def post_encode_actions(self, encoding=None, action=None):
         """perform things after encode has run
@@ -635,12 +680,14 @@ class Media(models.Model):
 
         # set a preview url
         if encoding:
-            if self.media_type == "video" and encoding.profile.extension == "gif":
+            if self.media_type == "video" and encoding.profile.name == PREVIEW_PROFILE_NAME:
                 if action == "delete":
                     self.preview_file_path = ""
                 else:
                     self.preview_file_path = encoding.media_file.path
 
+        # this copy was loaded when encoding started; use the current state so a media made private meanwhile is not relisted
+        self.load_stored_listing_fields()
         self.save(update_fields=["encoding_status", "listable", "preview_file_path"])
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add" and not encoding.chunk:
@@ -661,7 +708,7 @@ class Media(models.Model):
         Set success if at least one mp4 or webm exists
         """
         old_status = self.encoding_status
-        mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False))
+        mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME))
         webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
         if not mp4_statuses and not webm_statuses:
@@ -689,7 +736,8 @@ class Media(models.Model):
         if self.media_type not in ["video", "audio"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        encodings = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME)
+        ret = encodings.filter(profile__resolution__lte=EDITOR_VIDEO_RESOLUTION).order_by("-profile__resolution").first() or encodings.order_by("profile__resolution").first()
         if ret:
             return helpers.url_from_path(ret.media_file.path)
 
@@ -701,7 +749,7 @@ class Media(models.Model):
         if self.media_type not in ["video", "audio"]:
             return None
 
-        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).order_by("-profile__resolution").first()
+        ret = self.encodings.filter(status="success", profile__extension='mp4', chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME).order_by("-profile__resolution").first()
         if ret:
             return ret.media_file.path
 
@@ -730,7 +778,7 @@ class Media(models.Model):
             return ret
 
         for encoding in self.encodings.select_related("profile").filter(chunk=False):
-            if encoding.profile.extension == "gif":
+            if encoding.profile.name == PREVIEW_PROFILE_NAME:
                 continue
             enc = self.get_encoding_info(encoding, full=full)
             resolution = encoding.profile.resolution
@@ -778,15 +826,6 @@ class Media(models.Model):
         return ep
 
     @property
-    def categories_info(self):
-        """Property used on serializers"""
-
-        ret = []
-        for cat in self.category.all():
-            ret.append({"title": cat.title, "url": cat.get_absolute_url()})
-        return ret
-
-    @property
     def tags_info(self):
         """Property used on serializers"""
 
@@ -817,6 +856,8 @@ class Media(models.Model):
             return helpers.url_from_path(self.thumbnail.path)
         if self.media_type == "audio":
             return helpers.url_from_path("userlogos/poster_audio.jpg")
+        if self.media_type == "pdf":
+            return helpers.url_from_path("userlogos/poster_pdf.jpg")
         return None
 
     @property
@@ -832,6 +873,8 @@ class Media(models.Model):
             return helpers.url_from_path(self.poster.path)
         if self.media_type == "audio":
             return helpers.url_from_path("userlogos/poster_audio.jpg")
+        if self.media_type == "pdf":
+            return helpers.url_from_path("userlogos/poster_pdf.jpg")
 
         return None
 
@@ -905,7 +948,7 @@ class Media(models.Model):
 
         # get preview_file out of the encodings, since some times preview_file_path
         # is empty but there is the gif encoding!
-        preview_media = self.encodings.filter(profile__extension="gif").first()
+        preview_media = self.encodings.filter(profile__name=PREVIEW_PROFILE_NAME).first()
         if preview_media and preview_media.media_file:
             return helpers.url_from_path(preview_media.media_file.path)
         return None
@@ -917,7 +960,6 @@ class Media(models.Model):
         """
 
         res = {}
-        valid_resolutions = [144, 240, 360, 480, 720, 1080, 1440, 2160]
         if self.hls_file:
             if os.path.exists(self.hls_file):
                 hls_file = self.hls_file
@@ -925,25 +967,15 @@ class Media(models.Model):
                 m3u8_obj = m3u8.load(hls_file)
                 if os.path.exists(hls_file):
                     res["master_file"] = helpers.url_from_path(hls_file)
+                    bandwidths = {}
                     for iframe_playlist in m3u8_obj.iframe_playlists:
                         uri = os.path.join(p, iframe_playlist.uri)
                         if os.path.exists(uri):
-                            resolution = iframe_playlist.iframe_stream_info.resolution[1]
-                            # most probably video is vertical, getting the first value to
-                            # be the resolution
-                            if resolution not in valid_resolutions:
-                                resolution = iframe_playlist.iframe_stream_info.resolution[0]
-
-                            res[f"{resolution}_iframe"] = helpers.url_from_path(uri)
+                            add_hls_stream(res, bandwidths, "iframe", iframe_playlist.iframe_stream_info, uri)
                     for playlist in m3u8_obj.playlists:
                         uri = os.path.join(p, playlist.uri)
                         if os.path.exists(uri):
-                            resolution = playlist.stream_info.resolution[1]
-                            # same as above
-                            if resolution not in valid_resolutions:
-                                resolution = playlist.stream_info.resolution[0]
-
-                            res[f"{resolution}_playlist"] = helpers.url_from_path(uri)
+                            add_hls_stream(res, bandwidths, "playlist", playlist.stream_info, uri)
 
         return res
 
@@ -1012,6 +1044,12 @@ class Media(models.Model):
             return chapter_data.chapter_data
         return data
 
+    @property
+    def is_shared(self):
+        if not self.pk:
+            return False
+        return self.permissions.exists() or self.category.filter(is_rbac_category=True).exists()
+
 
 class MediaPermission(models.Model):
     """Model to store user permissions for media"""
@@ -1022,10 +1060,18 @@ class MediaPermission(models.Model):
         ("owner", "Owner"),
     )
 
+    SOURCE_LTI_EMBED = 'lti_embed'
+    SOURCE_EXPLICIT = 'explicit'
+    SOURCE_CHOICES = (
+        (SOURCE_LTI_EMBED, 'LTI Embed'),
+        (SOURCE_EXPLICIT, 'Explicit'),
+    )
+
     owner_user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='granted_permissions')
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
     media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='permissions')
     permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    source = models.CharField(max_length=32, choices=SOURCE_CHOICES, default=SOURCE_EXPLICIT)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1033,6 +1079,29 @@ class MediaPermission(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.media.title} ({self.permission})"
+
+
+class EmbedMediaCourse(models.Model):
+    """
+    Records that a user shared a media item into a course during an LTI session.
+
+    This is a pure audit/tracking table used by the course cleanup bulk action to
+    identify which MediaPermission records were created via LTI embedding and should
+    be removed when the course is cleaned up.
+
+    It does NOT add the media to the category (Media.category M2M is untouched),
+    so no m2m_changed signals fire and no category counts are affected.
+    """
+
+    media = models.ForeignKey('Media', on_delete=models.CASCADE, related_name='embed_courses')
+    category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='embedded_media')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('media', 'category')
+
+    def __str__(self):
+        return f"{self.media.title} in {self.category.title}"
 
 
 @receiver(post_save, sender=Media)
@@ -1058,7 +1127,8 @@ def media_save(sender, instance, created, **kwargs):
             instance.title[:50] if instance.title else None,
         )
         instance.media_init()
-        notify_users(friendly_token=instance.friendly_token, action="media_added")
+        if not getattr(instance, "_skip_admin_notification", False):
+            notify_users(friendly_token=instance.friendly_token, action="media_added")
     else:
         # Log significant updates
         logger.debug(
@@ -1167,3 +1237,6 @@ def media_m2m(sender, instance, action, pk_set, **kwargs):
     if instance.tags.all():
         for tag in instance.tags.all():
             tag.update_tag_media()
+
+    if kwargs.get("action") in ("post_add", "post_remove", "post_clear"):
+        instance.update_search_vector()

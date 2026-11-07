@@ -2,7 +2,6 @@
 
 ## Table of contents
 - [1. Welcome](#1-welcome)
-- [2. Single Server Installaton](#2-single-server-installation)
 - [3. Docker Installation](#3-docker-installation)
 - [4. Docker Deployment options](#4-docker-deployment-options)
 - [5. Configuration](#5-configuration)
@@ -31,62 +30,11 @@
 - [28. User upload limits](#28-user-upload-limits)
 - [29. Whisper Transcribe for Automatic Subtitles](#29-whisper-transcribe-for-automatic-subtitles)
 - [30. Logging Configuration and Management](#30-logging-configuration-and-management)
+- [31. Migrating from another platform](#31-migrating-from-another-platform)
 
 
 ## 1. Welcome
 This page is created for MediaCMS administrators that are responsible for setting up the software, maintaining it and making modifications.
-
-## 2. Single Server Installation
-
-The core dependencies are python3, Django, celery, PostgreSQL, redis, ffmpeg. Any system that can have these dependencies installed, can run MediaCMS. But the install.sh is only tested in Linux Ubuntu 24 and 22 versions.
-
-Installation on an Ubuntu 22/24 system with git utility installed should be completed in a few minutes with the following steps.
-Make sure you run it as user root, on a clear system, since the automatic script will install and configure the following services: Celery/PostgreSQL/Redis/Nginx and will override any existing settings.
-
-
-
-```bash
-mkdir /home/mediacms.io && cd /home/mediacms.io/
-git clone https://github.com/mediacms-io/mediacms
-cd /home/mediacms.io/mediacms/ && bash ./install.sh
-```
-
-The script will ask if you have a URL where you want to deploy MediaCMS, otherwise it will use localhost. If you provide a URL, it will use Let's Encrypt service to install a valid ssl certificate.
-
-
-### Update
-
-If you've used the above way to install MediaCMS, update with the following:
-
-```bash
-cd /home/mediacms.io/mediacms # enter mediacms directory
-source  /home/mediacms.io/bin/activate # use virtualenv
-git pull # update code
-pip install -r requirements.txt -U # run pip install to update
-python manage.py migrate # run Django migrations
-sudo systemctl restart mediacms celery_long celery_short # restart services
-```
-
-### Update from version 2 to version 3
-Version 3 is using Django 4 and Celery 5, and needs a recent Python 3.x version. If you are updating from an older version, make sure Python is updated first. Version 2 could run on Python 3.6, but version 3 needs Python3.8 and higher.
-The syntax for starting Celery has also changed, so you have to copy the celery related systemctl files and restart
-
-```
-# cp deploy/local_install/celery_long.service /etc/systemd/system/celery_long.service
-# cp deploy/local_install/celery_short.service /etc/systemd/system/celery_short.service
-# cp deploy/local_install/celery_beat.service /etc/systemd/system/celery_beat.service
-# systemctl daemon-reload
-# systemctl start celery_long celery_short celery_beat
-```
-
-
-
-### Configuration
-Checkout the configuration section here.
-
-
-### Maintenance
-Database can be backed up with pg_dump and media_files on /home/mediacms.io/mediacms/media_files include original files and encoded/transcoded versions
 
 
 ## 3. Docker Installation
@@ -143,6 +91,14 @@ docker pull mediacms/mediacms
 docker compose down
 docker compose up
 ```
+
+### Custom nginx configuration
+
+If you run MediaCMS behind your own nginx configuration instead of the one shipped in `deploy/docker/nginx_http_only.conf`, copy these blocks from that file when you update:
+
+- `location = /_media_auth` and `location ~ ^/media/(encoded|hls)/(.*)$`: nginx asks Django whether the user may access protected media files.
+- `location ~ ^/media/original/(.*)$`: the same check for original files. It serves only known media types inline. Any other file (html, svg, js...) is sent as a download, so an uploaded file cannot run scripts on the portal's domain.
+- `location ^~ /_protected_pdf/`: an internal location that Django hands PDF responses to. Without it, PDFs fail to display on media pages.
 
 ### Update from version 2 to version 3
 Version 3 is using Python 3.11 and PostgreSQL 15. If you are updating from an older version, that was using PostgreSQL 13, the automatic update will not work, as you will receive the following message when the PostgreSQL container starts:
@@ -222,13 +178,9 @@ Several options are available on `cms/settings.py`, most of the things that are 
 
 It is advisable to override any of them by adding it to `local_settings.py` .
 
-In case of a the single server installation, add to `cms/local_settings.py` .
-
 In case of a docker compose installation, add to `deploy/docker/local_settings.py` . This will automatically overwrite `cms/local_settings.py` .
 
 Any change needs restart of MediaCMS in order to take effect.
-
-Single server installation: edit `cms/local_settings.py`, make a change and restart MediaCMS
 
 ```bash
 #systemctl restart mediacms
@@ -596,6 +548,13 @@ to be written
 ## 11. Add/delete categories and tags
 Through the admin section - http://your_installation/admin/
 
+A category's title, description and thumbnail can also be edited from the category page
+itself, by a portal manager or, for an RBAC category, by a manager of its group.
+
+The thumbnail a category shows on the listings is the first of these it has: an image
+uploaded for it, a tile borrowed from its most viewed media, or `static/images/category_default.jpg`.
+Replace that file to change the placeholder for the whole portal.
+
 ## 12. Video transcoding
 Add / remove resolutions and profiles by modifying the database table of `Encode profiles` through https://your_installation/admin/files/encodeprofile/
 
@@ -797,14 +756,7 @@ Instructions contributed by @alberto98fx
 On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
 In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
 
-Enter the Django shell, example if you're using the Single Server installation:
-
-```bash
-source  /home/mediacms.io/bin/activate
-python manage.py shell
-```
-
-and inside the shell
+Enter the Django shell and inside the shell
 
 ```bash
 from django.core.mail import EmailMessage
@@ -936,6 +888,40 @@ After that, newly uploaded videos will have sprites generated with the new numbe
 
 
 
+## 21b. Hover previews: gif to mp4
+
+The small preview that plays when you hover a video used to be an animated gif and is now a
+short mp4: a handful of clips sampled across the whole video rather than the opening seconds,
+which makes it far more useful on a lecture, and a fraction of the size.
+
+Both formats are recognised, so nothing has to change. A preview is identified by its encoding
+profile being named `preview`, not by its extension, which is what lets a portal serve gifs
+for old media and mp4 for new at the same time.
+
+**On an existing installation**, migrating switches the profile over: new videos get an mp4
+preview, and every gif already produced stays on disk and keeps being served. Nothing is
+re-encoded and nothing is deleted.
+
+**On a new installation** the fixture already has the mp4 profile active and the gif one
+inactive, so only mp4 previews are ever made.
+
+To finish the job on an existing installation and be rid of the gifs:
+
+```bash
+python manage.py upgrade_previews --dry-run          # list what would change
+python manage.py upgrade_previews --token=AbCdEfGhI  # try one first
+python manage.py upgrade_previews                    # all of them, one at a time
+```
+
+It encodes the mp4 before removing the gif, so a media that fails to encode keeps the preview
+it has rather than losing both. Encoding runs in the command itself, one media at a time, on
+purpose: `--async` hands them all to the `long_tasks` queue at once, which on a large library
+is enough to bring a machine down. If you do use `--async`, the gifs are left in place and you
+run the command again, without it, to clear them once the encodes have finished.
+
+The frontend picks the player from the file extension, so a portal holding both formats needs
+`make build-frontend` for the mp4 previews to render.
+
 ## 22. Role-Based Access Control
 
 By default there are 3 statuses for any Media that lives on the system, public, unlisted, private. When RBAC support is added, a user that is part of a group has access to media that are published to one or more categories that the group is associated with. The workflow is this:
@@ -1013,6 +999,8 @@ Select the SAML Configurations tab, create a new one and set:
 3. **SSO URL**:
 4. **SLO URL**:
 5. **SP Metadata URL**: The metadata URL that the IDP will utilize. This can be https://{portal}/saml/metadata and is autogenerated by MediaCMS
+6. **SP Certificate** (optional): SP x509 certificate (PEM). Enables encrypted/signed SAML communication. If set, the SP Private Key must also be provided, and the certificate is published in the SP metadata so the IDP can encrypt assertions to MediaCMS.
+7. **SP Private Key** (optional): SP private key (PEM). Used to sign AuthnRequests/LogoutRequests and to decrypt assertions encrypted by the IDP. Required if SP Certificate is provided.
 
 - Step 3: Set other Options
 1. **Email Settings**:
@@ -2185,3 +2173,20 @@ LOGGING["loggers"]["django"]["handlers"].append("syslog")
 
 - For information on adding logging to code, see [Developer Documentation - Logging in MediaCMS](developers_docs.md#8-logging-in-mediacms)
 - For debugging specific issues, check the relevant sections in this documentation
+
+## 31. Migrating from another platform
+
+MediaCMS can import a whole portal from another video platform: the media files, the people
+who own them, the categories they sit in, the captions, the play counts and whether each
+item was public. It runs as a job you start, watch, pause and resume, and every imported
+object is recorded so you can check the result afterwards or run it again to pick up what
+changed. Only superusers can reach it, at **Migrations** in the top right menu.
+
+Kaltura and YouTube are supported.
+
+Each platform needs its own credentials, its own options and its own decisions, so the
+details live per platform rather than in one generic page:
+
+* [Kaltura migration](kaltura_migration.md)
+* [YouTube migration](youtube_migration.md)
+* [Panopto migration](panopto_migration.md)

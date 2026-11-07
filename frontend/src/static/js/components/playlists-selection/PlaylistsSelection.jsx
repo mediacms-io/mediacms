@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { CircleIconButton, MaterialIcon } from '../_shared';
 import { PlaylistCreationForm } from '../playlist-form/PlaylistCreationForm';
 
 import './PlaylistsSelection.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-function PlaylistsSingleSelection(props) {
+function PlaylistsSingleSelection(rawProps) {
+  const props = applyDefaultProps(rawProps, PlaylistsSingleSelection.defaultPropValues);
   function onChange(ev) {
     ev.persist();
 
@@ -27,13 +28,7 @@ function PlaylistsSingleSelection(props) {
   ) : null;
 }
 
-PlaylistsSingleSelection.propTypes = {
-  playlistId: PropTypes.string,
-  isChecked: PropTypes.bool,
-  title: PropTypes.string,
-};
-
-PlaylistsSingleSelection.defaultProps = {
+PlaylistsSingleSelection.defaultPropValues = {
   isChecked: false,
   title: '',
 };
@@ -179,7 +174,3 @@ export function PlaylistsSelection(props) {
     </div>
   );
 }
-
-PlaylistsSelection.propTypes = {
-  triggerPopupClose: PropTypes.func,
-};

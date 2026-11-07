@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useManagementTableHeader } from '../../../utils/hooks/';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon';
 
@@ -45,11 +44,3 @@ export function ManageCommentsItemHeader(props) {
     </div>
   );
 }
-
-ManageCommentsItemHeader.propTypes = {
-  sort: PropTypes.string.isRequired,
-  order: PropTypes.string.isRequired,
-  selected: PropTypes.bool.isRequired,
-  onClickColumnSort: PropTypes.func,
-  onCheckAllRows: PropTypes.func,
-};

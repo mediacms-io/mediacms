@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 
 function setValue(value, min, max) {
   if (void 0 !== value) {
@@ -109,14 +108,3 @@ export function NumericInputWithUnit(props) {
     </div>
   );
 }
-
-NumericInputWithUnit.propTypes = {
-  label: PropTypes.string,
-  units: PropTypes.array.isRequired,
-  defaultUnit: PropTypes.string,
-  defaultValue: PropTypes.number,
-  minValue: PropTypes.number,
-  maxValue: PropTypes.number,
-  valueCallback: PropTypes.func,
-  unitCallback: PropTypes.func,
-};

@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from cms.authentication import NOT_APPROVED_MESSAGE
 from cms.utils import get_client_ip_for_logging
 
 from .models import User
@@ -166,14 +167,14 @@ class LoginSerializer(serializers.Serializer):
             )
             raise serializers.ValidationError('User has been deactivated.')
 
-        if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_approved:
+        if settings.USERS_NEEDS_TO_BE_APPROVED and not user.is_superuser and not user.is_approved:
             logger.warning(
                 "Login failed - user_not_approved, user_id=%s, username=%s, ip=%s",
                 user.id,
                 user.username,
                 client_ip,
             )
-            raise serializers.ValidationError('User account is pending approval.')
+            raise serializers.ValidationError(NOT_APPROVED_MESSAGE)
 
         token = Token.objects.filter(user=user).first()
         if not token:

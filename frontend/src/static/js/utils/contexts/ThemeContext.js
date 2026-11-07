@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { BrowserCache } from '../classes/';
 import { addClassname, removeClassname, supportsSvgAsImg } from '../helpers/';
 import { config as mediacmsConfig } from '../settings/config.js';
 import SiteContext from './SiteContext';
@@ -44,12 +43,26 @@ function initMode(cachedValue, defaultValue) {
   return 'light' === cachedValue || 'dark' === cachedValue ? cachedValue : defaultValue;
 }
 
+function storedMode(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    return null;
+  }
+}
+
+function storeMode(key, mode) {
+  try {
+    localStorage.setItem(key, mode);
+  } catch (error) {}
+}
+
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const site = useContext(SiteContext);
-  const cache = new BrowserCache('MediaCMS[' + site.id + '][theme]', 86400);
-  const [themeMode, setThemeMode] = useState(initMode(cache.get('mode'), config.theme.mode));
+  const storageKey = 'MediaCMS[' + site.id + '][theme][mode]';
+  const [themeMode, setThemeMode] = useState(initMode(storedMode(storageKey), config.theme.mode));
   const logos = initLogo(config.theme.logo);
   const [logo, setLogo] = useState(logos[themeMode]);
 
@@ -63,7 +76,7 @@ export const ThemeProvider = ({ children }) => {
     } else {
       removeClassname(document.body, 'dark_theme');
     }
-    cache.set('mode', themeMode);
+    storeMode(storageKey, themeMode);
     setLogo(logos[themeMode]);
   }, [themeMode]);
 
