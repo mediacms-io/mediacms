@@ -1171,9 +1171,9 @@ def media_m2m(sender, instance, **kwargs):
         for category in categories_to_update:
             category.update_category_media()
 
-        # Refresh instance from DB to ensure we have latest data
+        # Do not refresh_from_db() here: it clears cached FKs and can leave
+        # update_search_vector() reading a stale user. M2M managers already reflect DB.
         if instance.id:
-            instance.refresh_from_db()
             instance.update_search_vector()
 
 
@@ -1206,7 +1206,5 @@ def media_tags_m2m(sender, instance, **kwargs):
         for tag in tags_to_update:
             tag.update_tag_media()
 
-        # Refresh instance from DB to ensure we have latest tags
         if instance.id:
-            instance.refresh_from_db()
             instance.update_search_vector()
