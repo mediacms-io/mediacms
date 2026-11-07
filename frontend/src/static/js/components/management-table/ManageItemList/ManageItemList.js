@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import urlParse from 'url-parse';
-import { deleteRequest, csrfToken } from '../../../utils/helpers/';
+import { deleteRequest, csrfToken, takeRememberedMessage, rememberMessage } from '../../../utils/helpers/';
 import { usePopup } from '../../../utils/hooks/';
 import { PopupMain } from '../../_shared';
 import { PendingItemsList } from '../../item-list/PendingItemsList.jsx';
@@ -11,6 +10,7 @@ import { ManageItemsListHandler } from './includes/ManageItemsListHandler';
 import { translateString } from '../../../utils/helpers/';
 
 import './ManageItemList.scss';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
 function AddNewUser({ onUserAdded, setMessage }) {
   const [popupRef, PopupContent, PopupTrigger] = usePopup();
@@ -52,7 +52,7 @@ function AddNewUser({ onUserAdded, setMessage }) {
         });
       })
       .then(() => {
-        sessionStorage.setItem('user-management-message', JSON.stringify({ type: 'success', text: 'User created successfully.' }));
+        rememberMessage({ type: 'success', text: 'User created successfully.' });
         window.location.reload();
       })
       .catch((err) => {
@@ -90,10 +90,6 @@ function AddNewUser({ onUserAdded, setMessage }) {
     </div>
   );
 }
-AddNewUser.propTypes = {
-  onUserAdded: PropTypes.func,
-  setMessage: PropTypes.func,
-};
 
 function useManageItemList(props, itemsListRef) {
   let previousItemsLength = 0;
@@ -509,7 +505,8 @@ function paginationButtonsList(maxPagin, pagesNumber) {
   return ret;
 }
 
-export function ManageItemList(props) {
+export function ManageItemList(rawProps) {
+  const props = applyDefaultProps(rawProps, ManageItemList.defaultPropValues);
   const [
     countedItems,
     totalItems,
@@ -526,10 +523,9 @@ export function ManageItemList(props) {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    const storedMessage = sessionStorage.getItem('user-management-message');
+    const storedMessage = takeRememberedMessage();
     if (storedMessage) {
-      setMessage(JSON.parse(storedMessage));
-      sessionStorage.removeItem('user-management-message');
+      setMessage(storedMessage);
     }
   }, []);
 
@@ -762,18 +758,7 @@ export function ManageItemList(props) {
   );
 }
 
-ManageItemList.defaultProps = {
-  itemsCountCallback: PropTypes.func,
-  maxItems: PropTypes.number.isRequired,
-  pageItems: PropTypes.number.isRequired,
-  requestUrl: PropTypes.string.isRequired,
-  onPageChange: PropTypes.func,
-  onRowsDelete: PropTypes.func,
-  onRowsDeleteFail: PropTypes.func,
-  pageItems: 24,
-};
-
-ManageItemList.defaultProps = {
+ManageItemList.defaultPropValues = {
   maxItems: 99999,
   pageItems: 24,
   requestUrl: null,

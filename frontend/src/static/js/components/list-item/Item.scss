@@ -145,6 +145,24 @@ a.item-thumb {
   transition: all 750ms;
 }
 
+.item-video-preview {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 400ms;
+}
+
+.item:hover .item-video-preview {
+  opacity: 1;
+}
+
 .item-duration,
 .item-type-icon {
   position: absolute;
@@ -487,23 +505,6 @@ a.item-edit-link {
     .item-meta {
     }
 
-    a.view-full-playlist {
-      position: relative;
-      float: left;
-      clear: both;
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 12.5px;
-      font-weight: 500;
-    }
-
-    a.view-full-playlist {
-      color: var(--playlist-item-main-view-full-link-text-color);
-
-      &:hover {
-        color: var(--playlist-item-main-view-full-link-hover-text-color);
-      }
-    }
   }
 }
 

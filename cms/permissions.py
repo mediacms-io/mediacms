@@ -63,6 +63,21 @@ class IsUserOrEditor(permissions.BasePermission):
         return obj.user == request.user
 
 
+class IsMediaContributorOrEditor(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            if obj.state != "private":
+                return True
+            return request.user.is_authenticated and (request.user.has_member_access_to_media(obj) or is_mediacms_editor(request.user))
+        if request.user.is_superuser or is_mediacms_editor(request.user):
+            return True
+        if obj.user == request.user:
+            return True
+        if request.method in ("PUT", "PATCH"):
+            return request.user.has_contributor_access_to_media(obj)
+        return False
+
+
 def user_allowed_to_comment(request):
     """Any custom logic for whether a user is allowed
     to comment lives here

@@ -1,5 +1,199 @@
 # Changelog
 
+## [9.4.0](https://github.com/mediacms-io/mediacms/compare/v9.3.1...v9.4.0) (2026-10-26)
+
+### Features
+
+* Video player optimizations ([#1610](https://github.com/mediacms-io/mediacms/issues/1610)) ([e4f9f97](https://github.com/mediacms-io/mediacms/commit/e4f9f973d5c4c9143227d1c549969cdb6a44d25e))
+
+## [9.3.1](https://github.com/mediacms-io/mediacms/compare/v9.3.0...v9.3.1) (2026-10-20)
+
+### Bug Fixes
+
+* like and dislike buttons ([#1608](https://github.com/mediacms-io/mediacms/issues/1608)) ([f065841](https://github.com/mediacms-io/mediacms/commit/f0658414439b59d3fabab82c007c2739114e6fb4))
+
+## [9.3.0](https://github.com/mediacms-io/mediacms/compare/v9.2.1...v9.3.0) (2026-10-20)
+
+### Features
+
+* misc Kaltura fixes ([#1606](https://github.com/mediacms-io/mediacms/issues/1606)) ([92d5313](https://github.com/mediacms-io/mediacms/commit/92d531304b53068647da14f70eeebfea5cabd4d4))
+
+### Documentation
+
+* add ZopDay to Commercial Hostings ([#1604](https://github.com/mediacms-io/mediacms/issues/1604)) ([874e687](https://github.com/mediacms-io/mediacms/commit/874e687d29bfcacb7c4d67f409d6ea0e73ca0365))
+
+## [9.2.1](https://github.com/mediacms-io/mediacms/compare/v9.2.0...v9.2.1) (2026-10-07)
+
+### Bug Fixes
+
+* trimming video ([#1600](https://github.com/mediacms-io/mediacms/issues/1600)) ([a1ffd46](https://github.com/mediacms-io/mediacms/commit/a1ffd4677cfb976a1dd591227783f881e6fc2ad9))
+
+## [9.2.0](https://github.com/mediacms-io/mediacms/compare/v9.1.2...v9.2.0) (2026-10-07)
+
+### Features
+
+* upgrade React from 17 to 19 and modernize build ([#1599](https://github.com/mediacms-io/mediacms/issues/1599)) ([d1112c0](https://github.com/mediacms-io/mediacms/commit/d1112c06b13b0c13d836316daf0201f8b705244c))
+
+## [9.1.2](https://github.com/mediacms-io/mediacms/compare/v9.1.1...v9.1.2) (2026-10-05)
+
+### Bug Fixes
+
+* tests infrastructure ([#1598](https://github.com/mediacms-io/mediacms/issues/1598)) ([ce49813](https://github.com/mediacms-io/mediacms/commit/ce49813cc6aa1a1ab58c015f5118558291efbae3))
+
+## [9.1.1](https://github.com/mediacms-io/mediacms/compare/v9.1.0...v9.1.1) (2026-10-05)
+
+### Bug Fixes
+
+* issue with trim video ([#1597](https://github.com/mediacms-io/mediacms/issues/1597)) ([2cdf017](https://github.com/mediacms-io/mediacms/commit/2cdf0174533df6e5efa4bf62d438199d73bc2dc2))
+
+## [9.1.0](https://github.com/mediacms-io/mediacms/compare/v9.0.0...v9.1.0) (2026-10-01)
+
+### Features
+
+* LTI changes for ItsLearning LMS support ([#1596](https://github.com/mediacms-io/mediacms/issues/1596)) ([db74610](https://github.com/mediacms-io/mediacms/commit/db74610908c7575310159f472e1b3b7759d1cae7))
+
+## [9.0.0](https://github.com/mediacms-io/mediacms/compare/v8.4.0...v9.0.0) (2026-10-01)
+
+### ⚠ BREAKING CHANGES
+
+* migrate media from Kaltura, YouTube and Panopto (#1571)
+
+### Features
+
+* migrate media from Kaltura, YouTube and Panopto ([#1571](https://github.com/mediacms-io/mediacms/issues/1571)) ([cb14ea9](https://github.com/mediacms-io/mediacms/commit/cb14ea94f79960180550cafe6f207690a75a9ff9))
+
+## [8.4.0](https://github.com/mediacms-io/mediacms/compare/v8.3.5...v8.4.0) (2026-08-25)
+
+### Features
+
+* trigger release ([6efb9a4](https://github.com/mediacms-io/mediacms/commit/6efb9a494a8c0dcdf2264f4adc0ff49b892417ea))
+
+## [8.3.5](https://github.com/mediacms-io/mediacms/compare/v8.3.4...v8.3.5) (2026-08-25)
+
+### Bug Fixes
+
+* subtitles errors ([#1560](https://github.com/mediacms-io/mediacms/issues/1560)) ([7d25502](https://github.com/mediacms-io/mediacms/commit/7d25502050865ed3303682e1f88f8851b6e85ab0))
+
+## [8.3.4](https://github.com/mediacms-io/mediacms/compare/v8.3.3...v8.3.4) (2026-07-15)
+
+### Bug Fixes
+
+* use shutil ([e421546](https://github.com/mediacms-io/mediacms/commit/e421546e580efac3cbf19b8a84efc5e9f013b194))
+
+## [8.3.3](https://github.com/mediacms-io/mediacms/compare/v8.3.2...v8.3.3) (2026-07-08)
+
+### Bug Fixes
+
+* private media and playlists ([#1549](https://github.com/mediacms-io/mediacms/issues/1549)) ([44715e4](https://github.com/mediacms-io/mediacms/commit/44715e4eb348a4464124b449b801ea8f6653c6dc))
+
+## [8.3.2](https://github.com/mediacms-io/mediacms/compare/v8.3.1...v8.3.2) (2026-06-24)
+
+### Bug Fixes
+
+* nginx traversal ([#1545](https://github.com/mediacms-io/mediacms/issues/1545)) ([a223f0f](https://github.com/mediacms-io/mediacms/commit/a223f0fd6015305d8f620474ef0d84ec5869ea97))
+
+## [8.3.1](https://github.com/mediacms-io/mediacms/compare/v8.3.0...v8.3.1) (2026-06-23)
+
+### Bug Fixes
+
+* update documentation regarding plugin ([#1544](https://github.com/mediacms-io/mediacms/issues/1544)) ([15e9e50](https://github.com/mediacms-io/mediacms/commit/15e9e509e5a27745b8aff575d59d93a7f33e0f57))
+
+## [8.3.0](https://github.com/mediacms-io/mediacms/compare/v8.2.1...v8.3.0) (2026-06-19)
+
+### Features
+
+* split moodle plugin into 2 ([d02dfcf](https://github.com/mediacms-io/mediacms/commit/d02dfcf7d60c4c26ce222b58cd2a178e12f6b78a))
+
+### Documentation
+
+* Moodle plugin doc ([#1539](https://github.com/mediacms-io/mediacms/issues/1539)) ([8a59eb6](https://github.com/mediacms-io/mediacms/commit/8a59eb6977c48c0c63d586332db4921fc67dba18))
+* Moodle Plugin Documentation ([#1537](https://github.com/mediacms-io/mediacms/issues/1537)) ([7ee720f](https://github.com/mediacms-io/mediacms/commit/7ee720fee4ac1d416bf1614b7447a987a018bb01))
+
+## [8.2.1](https://github.com/mediacms-io/mediacms/compare/v8.2.0...v8.2.1) (2026-06-07)
+
+### Bug Fixes
+
+* SAML provider add guard to skip empty mappings before iterating ([#1536](https://github.com/mediacms-io/mediacms/issues/1536)) ([9da6a85](https://github.com/mediacms-io/mediacms/commit/9da6a85ad86f5092edb96495eeb1cca22d5334bf))
+
+## [8.2.0](https://github.com/mediacms-io/mediacms/compare/v8.1.3...v8.2.0) (2026-05-31)
+
+### Features
+
+* configure SP certificate and private key via SAMLConfiguration ([#1531](https://github.com/mediacms-io/mediacms/issues/1531)) ([95644dc](https://github.com/mediacms-io/mediacms/commit/95644dc9615f428191d9fda0847c1b91a0b094a5))
+
+## [8.1.3](https://github.com/mediacms-io/mediacms/compare/v8.1.2...v8.1.3) (2026-05-19)
+
+### Bug Fixes
+
+* django connection settings ([#1529](https://github.com/mediacms-io/mediacms/issues/1529)) ([e89c4a3](https://github.com/mediacms-io/mediacms/commit/e89c4a3c8523574b5852a434ed67e281b6290584))
+* prestart.sh loaddata re-runs on every container restart ([#1502](https://github.com/mediacms-io/mediacms/issues/1502)) ([777b06b](https://github.com/mediacms-io/mediacms/commit/777b06bbebf141e5b1cb27e17533fe65d57eb6cd))
+
+## [8.1.2](https://github.com/mediacms-io/mediacms/compare/v8.1.1...v8.1.2) (2026-05-18)
+
+### Bug Fixes
+
+* remove redundant check ([#1528](https://github.com/mediacms-io/mediacms/issues/1528)) ([c7a673b](https://github.com/mediacms-io/mediacms/commit/c7a673bbbf46efc37621dc4a5109a85fc10e1317))
+
+## [8.1.1](https://github.com/mediacms-io/mediacms/compare/v8.1.0...v8.1.1) (2026-05-18)
+
+### Bug Fixes
+
+* x-accell headers on uploaded poster ([#1526](https://github.com/mediacms-io/mediacms/issues/1526)) ([ae63a5a](https://github.com/mediacms-io/mediacms/commit/ae63a5af647c8865b96e6e50dda1ea9d29b5bd0b))
+
+## [8.1.0](https://github.com/mediacms-io/mediacms/compare/v8.0.8...v8.1.0) (2026-05-17)
+
+### Features
+
+* introduce x-accell headers ([9302559](https://github.com/mediacms-io/mediacms/commit/9302559d4bb3e4d0adb299ed37438b04c39e1864))
+
+## [8.0.8](https://github.com/mediacms-io/mediacms/compare/v8.0.7...v8.0.8) (2026-05-13)
+
+### Bug Fixes
+
+* update documentation and fix smaller issues ([#1520](https://github.com/mediacms-io/mediacms/issues/1520)) ([d6a1151](https://github.com/mediacms-io/mediacms/commit/d6a11514e54b9341ec8a306a259adce6b4199d42))
+
+## [8.0.7](https://github.com/mediacms-io/mediacms/compare/v8.0.6...v8.0.7) (2026-05-12)
+
+### Bug Fixes
+
+* bring related items back ([#1515](https://github.com/mediacms-io/mediacms/issues/1515)) ([6ee5bef](https://github.com/mediacms-io/mediacms/commit/6ee5bef6ce31cf849941f65d0817e53b8f03362f))
+
+## [8.0.6](https://github.com/mediacms-io/mediacms/compare/v8.0.5...v8.0.6) (2026-05-11)
+
+### Bug Fixes
+
+* better place secret key settings ([4f11add](https://github.com/mediacms-io/mediacms/commit/4f11addcfd6657e7e63eed0570b1d4d9bca75698))
+
+## [8.0.5](https://github.com/mediacms-io/mediacms/compare/v8.0.4...v8.0.5) (2026-05-11)
+
+### Bug Fixes
+
+* add secret key to gitignore ([b6da9c4](https://github.com/mediacms-io/mediacms/commit/b6da9c4662b3fba234b8dc69700ffa44fced7482))
+
+## [8.0.4](https://github.com/mediacms-io/mediacms/compare/v8.0.3...v8.0.4) (2026-05-11)
+
+### Bug Fixes
+
+* docker compose settings, provide key ([318dad0](https://github.com/mediacms-io/mediacms/commit/318dad0e5d2512d68068c019eb87f942f83318e9))
+
+## [8.0.3](https://github.com/mediacms-io/mediacms/compare/v8.0.2...v8.0.3) (2026-05-11)
+
+### Bug Fixes
+
+* secret key ([559977f](https://github.com/mediacms-io/mediacms/commit/559977f9bc74412739784926862b94a558e6fd84))
+
+## [8.0.2](https://github.com/mediacms-io/mediacms/compare/v8.0.1...v8.0.2) (2026-05-11)
+
+### Bug Fixes
+
+* provide Bento4 url ([c19c520](https://github.com/mediacms-io/mediacms/commit/c19c5207e907cbd7d0c968d8cd8caaec20706277))
+
+## [7.7.0](https://github.com/mediacms-io/mediacms/compare/v7.6.0...v7.7.0) (2026-05-11)
+
+### Features
+
+* LTI support and Moodle plugin ([55ab7ff](https://github.com/mediacms-io/mediacms/commit/55ab7ff34fcd05806b845cf958f07841a7cdfc78))
+
 ## [7.6.0](https://github.com/mediacms-io/mediacms/compare/v7.5.0...v7.6.0) (2026-02-07)
 
 ### Features

@@ -6,7 +6,7 @@ ADMIN_PASSWORD=${ADMIN_PASSWORD:-$RANDOM_ADMIN_PASS}
 if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
     echo "Running migrations service"
     python manage.py migrate
-    EXISTING_INSTALLATION=`echo "from users.models import User; print(User.objects.exists())" |python manage.py shell`
+    EXISTING_INSTALLATION=`echo "from users.models import User; print(User.objects.exists())" |python manage.py shell 2>/dev/null | tail -1`
     if [ "$EXISTING_INSTALLATION" = "True" ]; then
         echo "Loaddata has already run"
     else
@@ -37,7 +37,6 @@ fi
 
 cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-available/default
 cp deploy/docker/nginx_http_only.conf /etc/nginx/sites-enabled/default
-cp deploy/docker/uwsgi_params /etc/nginx/sites-enabled/uwsgi_params
 cp deploy/docker/nginx.conf /etc/nginx/
 
 #### Supervisord Configurations #####
@@ -45,12 +44,12 @@ cp deploy/docker/nginx.conf /etc/nginx/
 cp deploy/docker/supervisord/supervisord-debian.conf /etc/supervisor/conf.d/supervisord-debian.conf
 
 if [ X"$ENABLE_UWSGI" = X"yes" ] ; then
-    echo "Enabling uwsgi app server"
-    cp deploy/docker/supervisord/supervisord-uwsgi.conf /etc/supervisor/conf.d/supervisord-uwsgi.conf
+    echo "Enabling gunicorn app server"
+    cp deploy/docker/supervisord/supervisord-gunicorn.conf /etc/supervisor/conf.d/supervisord-gunicorn.conf
 fi
 
 if [ X"$ENABLE_NGINX" = X"yes" ] ; then
-    echo "Enabling nginx as uwsgi app proxy and media server"
+    echo "Enabling nginx as gunicorn app proxy and media server"
     cp deploy/docker/supervisord/supervisord-nginx.conf /etc/supervisor/conf.d/supervisord-nginx.conf
 fi
 

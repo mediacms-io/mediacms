@@ -2,8 +2,9 @@ import React from 'react';
 import { MediaListRow } from './MediaListRow';
 import { BulkActionsDropdown } from './BulkActionsDropdown';
 import { SelectAllCheckbox } from './SelectAllCheckbox';
-import { CircleIconButton, MaterialIcon } from './_shared';
+import { CircleIconButton, MaterialIcon, PopupMain, NavigationMenuList } from './_shared';
 import { LinksConsumer } from '../utils/contexts';
+import { usePopup } from '../utils/hooks';
 import { translateString } from '../utils/helpers/';
 import './MediaListWrapper.scss';
 
@@ -21,6 +22,7 @@ interface MediaListWrapperProps {
   onSelectAll?: () => void;
   onDeselectAll?: () => void;
   showAddMediaButton?: boolean;
+  hasContributorCourses?: boolean;
 }
 
 export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
@@ -37,36 +39,61 @@ export const MediaListWrapper: React.FC<MediaListWrapperProps> = ({
   onSelectAll = () => {},
   onDeselectAll = () => {},
   showAddMediaButton = false,
-}) => (
-  <div className={(className ? className + ' ' : '') + 'media-list-wrapper'} style={style}>
-    <MediaListRow title={title} viewAllLink={viewAllLink} viewAllText={viewAllText}>
-      {showBulkActions && (
-        <LinksConsumer>
-          {(links) => (
-            <div className="bulk-actions-container">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} />
-                <SelectAllCheckbox
-                  totalCount={totalCount}
-                  selectedCount={selectedCount}
-                  onSelectAll={onSelectAll}
-                  onDeselectAll={onDeselectAll}
-                />
-              </div>
-              {showAddMediaButton && (
-                <div className="add-media-button">
-                  <a href={links.user.addMedia} title={translateString('Add media')}>
-                    <CircleIconButton>
-                      <MaterialIcon type="video_call" />
-                    </CircleIconButton>
-                  </a>
+  hasContributorCourses = false,
+}) => {
+  const [popupContentRef, PopupContent, PopupTrigger] = usePopup() as [any, any, any];
+
+  return (
+    <div className={(className ? className + ' ' : '') + 'media-list-wrapper'} style={style}>
+      <MediaListRow title={title} viewAllLink={viewAllLink} viewAllText={viewAllText}>
+        {showBulkActions && (
+          <LinksConsumer>
+            {(links) => {
+              const uploadMenuItems = [
+                {
+                  link: links.user.addMedia,
+                  icon: 'upload',
+                  text: translateString('Upload'),
+                },
+                {
+                  link: '/record_screen',
+                  icon: 'videocam',
+                  text: translateString('Record'),
+                },
+              ];
+
+              return (
+                <div className="bulk-actions-container">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <BulkActionsDropdown selectedCount={selectedCount} onActionSelect={onBulkAction} hasContributorCourses={hasContributorCourses} />
+                    <SelectAllCheckbox
+                      totalCount={totalCount}
+                      selectedCount={selectedCount}
+                      onSelectAll={onSelectAll}
+                      onDeselectAll={onDeselectAll}
+                    />
+                  </div>
+                  {showAddMediaButton && (
+                    <div className="add-media-button">
+                      <PopupTrigger contentRef={popupContentRef}>
+                        <CircleIconButton title={translateString('Add media')}>
+                          <MaterialIcon type="video_call" />
+                        </CircleIconButton>
+                      </PopupTrigger>
+                      <PopupContent contentRef={popupContentRef}>
+                        <PopupMain>
+                          <NavigationMenuList items={uploadMenuItems} />
+                        </PopupMain>
+                      </PopupContent>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-        </LinksConsumer>
-      )}
-      {children || null}
-    </MediaListRow>
-  </div>
-);
+              );
+            }}
+          </LinksConsumer>
+        )}
+        {children || null}
+      </MediaListRow>
+    </div>
+  );
+};

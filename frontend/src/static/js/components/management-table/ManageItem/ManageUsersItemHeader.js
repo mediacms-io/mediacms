@@ -1,9 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useManagementTableHeader } from '../../../utils/hooks/';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function ManageUsersItemHeader(props) {
+export function ManageUsersItemHeader(rawProps) {
+  const props = applyDefaultProps(rawProps, ManageUsersItemHeader.defaultPropValues);
   const [sort, order, isSelected, sortByColumn, checkAll] = useManagementTableHeader({ ...props, type: 'users' });
 
   return (
@@ -51,19 +52,7 @@ export function ManageUsersItemHeader(props) {
   );
 }
 
-ManageUsersItemHeader.propTypes = {
-  sort: PropTypes.string.isRequired,
-  order: PropTypes.string.isRequired,
-  selected: PropTypes.bool.isRequired,
-  onClickColumnSort: PropTypes.func,
-  onCheckAllRows: PropTypes.func,
-  has_roles: PropTypes.bool,
-  has_verified: PropTypes.bool,
-  has_trusted: PropTypes.bool,
-  has_approved: PropTypes.bool,
-};
-
-ManageUsersItemHeader.defaultProps = {
+ManageUsersItemHeader.defaultPropValues = {
   has_roles: false,
   has_verified: false,
   has_trusted: false,

@@ -30,7 +30,7 @@ class BaseFineUploader(object):
             # something nasty client side could be happening here
             # generate new uuid to ensure this is uuid
             # not sure if this will work with the chunked uploads though
-            self.uuid = uuid.uuid4()
+            self.uuid = str(uuid.uuid4())
         self.original_filename = self.filename
         self.filename = os.path.basename(self.filename)
         self.filename = strip_delimiters(self.filename)

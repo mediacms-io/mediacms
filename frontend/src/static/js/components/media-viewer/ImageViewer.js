@@ -120,7 +120,7 @@ export default function ImageViewer() {
             <div className="slideshow-image">
               {isImgLoading && <SpinnerLoader size="large" />}
               <img
-                src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url}
+                src={site.url + '/' + slideshowItems[currentIndex]?.original_media_url?.replace(/^\//, '')}
                 alt={`Slide ${currentIndex + 1}`}
                 onClick={() => handleImageClick(currentIndex)}
                 onLoad={() => setIsImgLoading(false)}
@@ -147,7 +147,7 @@ export default function ImageViewer() {
                 {slideshowItems.map((item, index) => (
                   <img
                     key={index}
-                    src={site.url + '/' + item.thumbnail_url}
+                    src={site.url + '/' + item.thumbnail_url?.replace(/^\//, '')}
                     alt={`Thumbnail ${index + 1}`}
                     className={`thumbnail ${currentIndex === index ? 'active' : ''}`}
                     onClick={() => handleDotClick(index)}

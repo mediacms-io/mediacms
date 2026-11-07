@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.core.files import File
 from django.test import Client, TestCase
 
@@ -65,3 +67,43 @@ class TestMediaListings(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200, "Recommended media endpoint should return 200")
+
+
+class TestFinishedEncodingUsesTheStoredState(TestCase):
+    fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+
+    def setUp(self):
+        self.user = create_account(password='this_is_a_fake_password')
+        with open('fixtures/test_image2.jpg', "rb") as f:
+            self.media = Media.objects.create(title="Encoded", user=self.user, state="public", encoding_status="success", is_reviewed=True, media_file=File(f))
+        Media.objects.filter(pk=self.media.pk).update(state="public", encoding_status="success", is_reviewed=True, listable=True)
+
+    def finish_encoding(self, media):
+        with mock.patch.object(Media, "set_encoding_status"):
+            media.post_encode_actions()
+
+    def test_an_encode_finishing_on_an_old_copy_does_not_relist_a_media_made_private(self):
+        encoding_task_copy = Media.objects.get(pk=self.media.pk)
+        Media.objects.filter(pk=self.media.pk).update(state="private", listable=False)
+
+        self.finish_encoding(encoding_task_copy)
+
+        self.media.refresh_from_db()
+        self.assertEqual((self.media.state, self.media.listable), ("private", False))
+        self.assertNotIn("Encoded", [item['title'] for item in Client().get('/api/v1/media').data['results']])
+
+    def test_an_encode_finishing_on_an_old_copy_lists_a_media_made_public(self):
+        Media.objects.filter(pk=self.media.pk).update(state="private", listable=False)
+        encoding_task_copy = Media.objects.get(pk=self.media.pk)
+        Media.objects.filter(pk=self.media.pk).update(state="public")
+
+        self.finish_encoding(encoding_task_copy)
+
+        self.media.refresh_from_db()
+        self.assertEqual((self.media.state, self.media.listable), ("public", True))
+
+    def test_the_stored_state_is_read_without_building_a_media(self):
+        encoding_task_copy = Media.objects.get(pk=self.media.pk)
+        with mock.patch.object(Media, "from_db", wraps=Media.from_db) as built:
+            encoding_task_copy.load_stored_listing_fields()
+        built.assert_not_called()

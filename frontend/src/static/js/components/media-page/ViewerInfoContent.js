@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { SiteContext } from '../../utils/contexts/';
-import { useUser, usePopup } from '../../utils/hooks/';
+import { siteConfig } from '../../utils/contexts/';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
-import { PageActions, MediaPageActions } from '../../utils/actions/';
+import { PageActions } from '../../utils/actions/';
 import { formatInnerLink, inEmbeddedApp, publishedOnDate } from '../../utils/helpers/';
-import { PopupMain } from '../_shared/';
 import CommentsList from '../comments/Comments';
 import { replaceString } from '../../utils/helpers/';
 import { translateString } from '../../utils/helpers/';
@@ -72,52 +70,32 @@ function MediaMetaField(props) {
     );
 }
 
-function EditMediaButton(props) {
-    let link = props.link;
-
-    if (window.MediaCMS.site.devEnv) {
-        link = '/edit-media.html';
-    }
-
-    return (
-        <a href={link} rel="nofollow" title={translateString('Edit media')} className="edit-media-icon">
-            <i className="material-icons">edit</i>
-        </a>
-    );
-}
-
 export default function ViewerInfoContent(props) {
-    const { userCan } = useUser();
-
     const description = props.description.trim();
     const tagsContent =
         !PageStore.get('config-enabled').taxonomies.tags || PageStore.get('config-enabled').taxonomies.tags.enabled
             ? metafield(MediaPageStore.get('media-tags'))
             : [];
+    let mediaCategories = MediaPageStore.get('media-categories');
+
+    // Filter to show only LMS courses when in embed mode
+    if (inEmbeddedApp()) {
+        mediaCategories = mediaCategories.filter(cat => cat.is_lms_course === true);
+    }
+
     const categoriesContent = PageStore.get('config-options').pages.media.categoriesWithTitle
         ? []
         : !PageStore.get('config-enabled').taxonomies.categories ||
             PageStore.get('config-enabled').taxonomies.categories.enabled
-          ? metafield(MediaPageStore.get('media-categories'))
+          ? metafield(mediaCategories)
           : [];
 
     let summary = MediaPageStore.get('media-summary');
 
     summary = summary ? summary.trim() : '';
 
-    const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
-
     const [hasSummary, setHasSummary] = useState('' !== summary);
     const [isContentVisible, setIsContentVisible] = useState('' == summary);
-
-    function proceedMediaRemoval() {
-        MediaPageActions.removeMedia();
-        popupContentRef.current.toggle();
-    }
-
-    function cancelMediaRemoval() {
-        popupContentRef.current.toggle();
-    }
 
     function onMediaDelete(mediaId) {
         // FIXME: Without delay creates conflict [ Uncaught Error: Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch. ].
@@ -125,7 +103,7 @@ export default function ViewerInfoContent(props) {
             PageActions.addNotification('Media removed. Redirecting...', 'mediaDelete');
             setTimeout(function () {
                 window.location.href =
-                    SiteContext._currentValue.url +
+                    siteConfig.url +
                     '/' +
                     MediaPageStore.get('media-data').author_profile.replace(/^\//g, '');
             }, 2000);
@@ -160,8 +138,8 @@ export default function ViewerInfoContent(props) {
         };
     }, []);
 
-    const authorLink = formatInnerLink(props.author.url, SiteContext._currentValue.url);
-    const authorThumb = formatInnerLink(props.author.thumb, SiteContext._currentValue.url);
+    const authorLink = formatInnerLink(props.author.url, siteConfig.url);
+    const authorThumb = formatInnerLink(props.author.thumb, siteConfig.url);
 
     function setTimestampAnchors(text) {
         function wrapTimestampWithAnchor(match, string) {
@@ -220,61 +198,21 @@ export default function ViewerInfoContent(props) {
                         <MediaMetaField
                             value={categoriesContent}
                             title={
-                                1 < categoriesContent.length
-                                    ? translateString('Categories')
-                                    : translateString('Category')
+                                inEmbeddedApp()
+                                    ? (1 < categoriesContent.length
+                                        ? translateString('Courses')
+                                        : translateString('Course'))
+                                    : (1 < categoriesContent.length
+                                        ? translateString('Categories')
+                                        : translateString('Category'))
                             }
                             id="categories"
                         />
                     ) : null}
-
-                    {userCan.editMedia ? (
-                        <div className="media-author-actions">
-                            {userCan.editMedia ? (
-                                <EditMediaButton link={MediaPageStore.get('media-data').edit_url} />
-                            ) : null}
-
-                            {userCan.deleteMedia ? (
-                                <PopupTrigger contentRef={popupContentRef}>
-                                    <button className="remove-media-icon" title={translateString('Delete media')}>
-                                        <i className="material-icons">delete</i>
-                                    </button>
-                                </PopupTrigger>
-                            ) : null}
-
-                            {userCan.deleteMedia ? (
-                                <PopupContent contentRef={popupContentRef}>
-                                    <PopupMain>
-                                        <div className="popup-message">
-                                            <span className="popup-message-title">Media removal</span>
-                                            <span className="popup-message-main">
-                                                You're willing to remove media permanently?
-                                            </span>
-                                        </div>
-                                        <hr />
-                                        <span className="popup-message-bottom">
-                                            <button
-                                                className="button-link cancel-comment-removal"
-                                                onClick={cancelMediaRemoval}
-                                            >
-                                                CANCEL
-                                            </button>
-                                            <button
-                                                className="button-link proceed-comment-removal"
-                                                onClick={proceedMediaRemoval}
-                                            >
-                                                PROCEED
-                                            </button>
-                                        </span>
-                                    </PopupMain>
-                                </PopupContent>
-                            ) : null}
-                        </div>
-                    ) : null}
                 </div>
             </div>
 
-            {!inEmbeddedApp() && <CommentsList />}
+            <CommentsList />
         </div>
     );
 }

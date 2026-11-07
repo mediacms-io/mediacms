@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { findDOMNode } from 'react-dom';
-import PropTypes from 'prop-types';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function NavigationContentApp(props) {
+export function NavigationContentApp(rawProps) {
+  const props = applyDefaultProps(rawProps, NavigationContentApp.defaultPropValues);
   const containerRef = useRef(null);
 
   const [currentPage, setCurrentPage] = useState(null);
@@ -10,7 +10,7 @@ export function NavigationContentApp(props) {
   let changePageElements = [];
 
   function initEvents() {
-    let domElem = findDOMNode(containerRef.current);
+    let domElem = containerRef.current;
     let elems = domElem.querySelectorAll(props.pageChangeSelector);
 
     let i, pageId;
@@ -89,15 +89,6 @@ export function NavigationContentApp(props) {
   return !currentPage ? null : <div ref={containerRef}>{React.cloneElement(props.pages[currentPage])}</div>;
 }
 
-NavigationContentApp.propTypes = {
-  initPage: PropTypes.string,
-  pages: PropTypes.object.isRequired,
-  pageChangeSelector: PropTypes.string.isRequired,
-  pageIdSelectorAttr: PropTypes.string.isRequired,
-  focusFirstItemOnPageChange: PropTypes.bool,
-  pageChangeCallback: PropTypes.func,
-};
-
-NavigationContentApp.defaultProps = {
+NavigationContentApp.defaultPropValues = {
   focusFirstItemOnPageChange: true,
 };
