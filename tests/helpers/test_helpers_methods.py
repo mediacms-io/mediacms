@@ -514,6 +514,19 @@ class VideoChaptersAndOwnershipTests(TestCase):
         self.assertEqual(media.user, self.new_owner)
         self.assertEqual(list(MediaPermission.objects.filter(media=media).values_list("user", "owner_user")), [(self.viewer.id, self.new_owner.id)])
 
+    def test_change_owner_updates_listable_media_counts_for_both_users(self):
+        create_media(self.owner, title="kept by owner")
+        transferred = create_media(self.owner, title="transferred listable")
+        create_media(self.new_owner, title="already owned")
+
+        self.assertEqual(Media.objects.filter(user=self.owner, listable=True).count(), 2)
+        self.assertEqual(Media.objects.filter(user=self.new_owner, listable=True).count(), 1)
+
+        methods.change_media_owner(transferred.id, self.new_owner)
+
+        self.assertEqual(Media.objects.filter(user=self.owner, listable=True).count(), 1)
+        self.assertEqual(Media.objects.filter(user=self.new_owner, listable=True).count(), 2)
+
     def test_change_owner_of_missing_media_returns_none(self):
         self.assertIsNone(methods.change_media_owner(0, self.new_owner))
 

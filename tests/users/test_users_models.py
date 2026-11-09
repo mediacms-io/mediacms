@@ -113,14 +113,21 @@ class UserModelTest(TestCase):
 
 
 class UserMediaCountTest(TestCase):
-    def test_update_user_media_counts_only_listable_media(self):
+    def test_listable_media_count_excludes_private_media(self):
         user = make_user("counter")
         create_media(user, title=unique("public"), state="public")
         create_media(user, title=unique("private"), state="private")
-        user.update_user_media()
-        user.refresh_from_db()
-        self.assertEqual(user.media_count, Media.objects.filter(user=user, listable=True).count())
-        self.assertEqual(user.media_count, 1)
+        self.assertEqual(Media.objects.filter(user=user, listable=True).count(), 1)
+
+    def test_user_admin_annotates_listable_media_count(self):
+        user = make_user("admin_counter")
+        create_media(user, title=unique("public"), state="public")
+        create_media(user, title=unique("private"), state="private")
+        request = RequestFactory().get("/admin/")
+        request.user = make_user("admin_root", is_superuser=True)
+        annotated = UserAdmin(User, admin_site).get_queryset(request).get(pk=user.pk)
+        self.assertEqual(annotated.media_count_annot, 1)
+        self.assertEqual(UserAdmin(User, admin_site).media_count(annotated), 1)
 
 
 class SetRoleFromMappingTest(TestCase):

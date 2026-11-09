@@ -681,7 +681,6 @@ class MediaDeleteTests(TestCase):
 
         category.refresh_from_db()
         tag.refresh_from_db()
-        self.user.refresh_from_db()
         self.assertEqual(category.media_count, 1)
         self.assertEqual(tag.media_count, 1)
-        self.assertEqual(self.user.media_count, 1)
+        self.assertEqual(Media.objects.filter(user=self.user, listable=True).count(), 1)

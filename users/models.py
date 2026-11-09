@@ -33,7 +33,6 @@ class User(AbstractUser):
 
     title = models.CharField("Title", max_length=250, blank=True)
     advancedUser = models.BooleanField("advanced user", default=False, db_index=True)
-    media_count = models.IntegerField(default=0)  # save number of videos
     notification_on_comments = models.BooleanField(
         "Whether you will receive email notifications for comments added to your content",
         default=True,
@@ -49,11 +48,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.name} - {self.email}"
-
-    def update_user_media(self):
-        self.media_count = Media.objects.filter(listable=True, user=self).count()
-        self.save(update_fields=["media_count"])
-        return True
 
     def thumbnail_url(self):
         if self.logo:
