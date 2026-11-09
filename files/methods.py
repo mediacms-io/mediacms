@@ -13,7 +13,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files import File
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, get_connection
 from django.db.models import Q
 from django.utils import timezone
 
@@ -23,6 +23,22 @@ from . import helpers, models
 from .helpers import mask_ip
 
 logger = logging.getLogger(__name__)
+
+CELERY_EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
+SMTP_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+
+def get_interactive_email_connection():
+    """Return a mail connection that delivers now and surfaces failures.
+
+    Production uses CeleryEmailBackend so most sends enqueue on short_tasks.
+    Interactive flows (contact forms, allauth) need a synchronous backend so
+    callers can report real SMTP success or failure to the user.
+    """
+    backend = settings.EMAIL_BACKEND
+    if backend == CELERY_EMAIL_BACKEND:
+        backend = SMTP_EMAIL_BACKEND
+    return get_connection(backend=backend, fail_silently=False)
 
 
 def get_user_or_session(request):

@@ -1,6 +1,7 @@
 import io
 import os
 import uuid
+from unittest import mock
 
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from allauth.socialaccount.models import SocialAccount
@@ -377,6 +378,21 @@ class AccountAdapterTest(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, [user.email])
         self.assertIn("https://x/reset", mail.outbox[0].body)
+
+    def test_send_mail_does_not_swallow_delivery_errors(self):
+        user = make_user("resetfail")
+        with mock.patch("users.adapter.get_interactive_email_connection"):
+            with mock.patch.object(self.adapter, "render_mail") as render_mail:
+                message = mock.Mock()
+                message.send.side_effect = OSError("smtp down")
+                render_mail.return_value = message
+                with self.assertRaises(OSError):
+                    self.adapter.send_mail(
+                        "account/email/password_reset_key",
+                        user.email,
+                        {"user": user, "password_reset_url": "https://x/reset", "request": None},
+                    )
+                message.send.assert_called_once_with(fail_silently=False)
 
 
 class UserFormTest(TestCase):

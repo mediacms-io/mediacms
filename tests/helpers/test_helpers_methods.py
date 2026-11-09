@@ -557,3 +557,17 @@ class AllowedTypeTests(TestCase):
     @override_settings(ALLOWED_MEDIA_UPLOAD_TYPES=["all"])
     def test_all_allows_anything(self):
         self.assertTrue(methods.is_media_allowed_type(Media(media_type="")))
+
+
+class InteractiveEmailConnectionTests(TestCase):
+    @override_settings(EMAIL_BACKEND="djcelery_email.backends.CeleryEmailBackend")
+    def test_celery_backend_is_replaced_with_smtp_for_interactive_sends(self):
+        connection = methods.get_interactive_email_connection()
+        self.assertEqual(connection.__class__.__module__, "django.core.mail.backends.smtp")
+        self.assertFalse(connection.fail_silently)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_non_celery_backend_is_left_unchanged(self):
+        connection = methods.get_interactive_email_connection()
+        self.assertEqual(connection.__class__.__module__, "django.core.mail.backends.locmem")
+        self.assertFalse(connection.fail_silently)

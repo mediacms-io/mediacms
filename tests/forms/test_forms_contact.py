@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import AnonymousUser
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -66,4 +68,28 @@ class ContactPageTest(TestCase):
         response = self.client.post("/contact", {"from_email": "visitor@example.com", "message": ""})
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("success_msg", response.context)
+        self.assertIsInstance(response.context["form"], ContactForm)
         self.assertEqual(mail.outbox, [])
+
+    def test_send_failure_shows_an_error_instead_of_success(self):
+        with mock.patch("files.views.pages.EmailMessage") as email_cls:
+            email_cls.return_value.send.side_effect = OSError("smtp down")
+            response = self.client.post(
+                "/contact",
+                {"from_email": "visitor@example.com", "name": "Vera Visitor", "message": "Please help"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("success_msg", response.context)
+        self.assertEqual(response.context["error_msg"], "Message could not be sent. Please try again later.")
+        self.assertIsInstance(response.context["form"], ContactForm)
+        self.assertEqual(mail.outbox, [])
+
+    def test_send_returning_zero_shows_an_error(self):
+        with mock.patch("files.views.pages.EmailMessage") as email_cls:
+            email_cls.return_value.send.return_value = 0
+            response = self.client.post(
+                "/contact",
+                {"from_email": "visitor@example.com", "name": "Vera Visitor", "message": "Please help"},
+            )
+        self.assertNotIn("success_msg", response.context)
+        self.assertEqual(response.context["error_msg"], "Message could not be sent. Please try again later.")
