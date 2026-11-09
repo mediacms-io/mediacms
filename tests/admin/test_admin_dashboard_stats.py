@@ -5,7 +5,12 @@ from django.urls import reverse
 from django.utils import timezone
 
 from actions.models import MediaAction
-from admin_customizations.admin import calculate_statistics, get_media_statistics, get_moderation_statistics, get_user_statistics
+from admin_customizations.admin import (
+    calculate_statistics,
+    get_media_statistics,
+    get_moderation_statistics,
+    get_user_statistics,
+)
 from files.methods import clear_media_reports, confirm_media_reports, set_media_reviewed
 from files.models import Media
 from files.tests import create_account, create_media

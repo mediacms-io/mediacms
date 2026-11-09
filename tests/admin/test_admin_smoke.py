@@ -26,7 +26,6 @@ from files.models import (
     VideoTrimRequest,
 )
 from files.tests import create_account, create_media
-from users.models import Channel
 from lti.models import (
     LTILaunchLog,
     LTIPlatform,
@@ -37,6 +36,7 @@ from lti.models import (
 )
 from migrationservice.models import MigrationRecord, MigrationService
 from rbac.models import RBACGroup
+from users.models import Channel
 
 PASSWORD = "admin-smoke-password"
 

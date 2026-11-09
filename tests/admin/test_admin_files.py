@@ -12,8 +12,20 @@ from django.urls import reverse
 import users.admin
 from actions.models import MediaAction
 from files.admin import MEDIA_REPORT_TAB_ACTIONS, CategoryAdminForm, PageAdminForm
-from files.methods import can_delete_original_media_file, delete_original_media_file, media_has_original_file
-from files.models import Category, Comment, EncodeProfile, Encoding, Media, Playlist, PlaylistMedia
+from files.methods import (
+    can_delete_original_media_file,
+    delete_original_media_file,
+    media_has_original_file,
+)
+from files.models import (
+    Category,
+    Comment,
+    EncodeProfile,
+    Encoding,
+    Media,
+    Playlist,
+    PlaylistMedia,
+)
 from files.tests import create_account, create_media
 from files.tests.media_utils import SMALL_VIDEO
 from rbac.models import RBACGroup

@@ -1,7 +1,16 @@
 from django.test import TestCase
 
-from actions.models import MODERATION_MEDIA_ACTIONS, PUBLIC_USER_MEDIA_ACTIONS, MediaAction
-from files.methods import clear_media_reports, confirm_media_reports, record_moderation_action, set_media_reviewed
+from actions.models import (
+    MODERATION_MEDIA_ACTIONS,
+    PUBLIC_USER_MEDIA_ACTIONS,
+    MediaAction,
+)
+from files.methods import (
+    clear_media_reports,
+    confirm_media_reports,
+    record_moderation_action,
+    set_media_reviewed,
+)
 from files.models import Media
 from files.tasks import VALID_USER_ACTIONS, save_user_action
 from files.tests import create_account, create_media

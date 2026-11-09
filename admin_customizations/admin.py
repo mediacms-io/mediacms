@@ -68,12 +68,7 @@ def get_media_statistics():
 
     recent_upload_values = ('id', 'title', 'add_date', 'friendly_token', 'user__username')
     media_stats['recent_by_type'] = {
-        media_type: list(
-            Media.objects.filter(media_type=media_type)
-            .order_by('-add_date')[:5]
-            .values(*recent_upload_values)
-        )
-        for media_type in ('video', 'audio', 'image', 'pdf')
+        media_type: list(Media.objects.filter(media_type=media_type).order_by('-add_date')[:5].values(*recent_upload_values)) for media_type in ('video', 'audio', 'image', 'pdf')
     }
 
     return media_stats
@@ -89,22 +84,12 @@ def get_moderation_statistics(seven_days_ago):
     moderation_stats['reported_threshold'] = reported_threshold
     moderation_stats['unreviewed'] = Media.objects.filter(is_reviewed=False).count()
 
-    moderation_stats['clears_last_7_days'] = MediaAction.objects.filter(
-        action='report_cleared', action_date__gte=seven_days_ago
-    ).count()
-    moderation_stats['confirms_last_7_days'] = MediaAction.objects.filter(
-        action='report_confirmed', action_date__gte=seven_days_ago
-    ).count()
-    moderation_stats['approved_last_7_days'] = MediaAction.objects.filter(
-        action='media_reviewed', action_date__gte=seven_days_ago
-    ).count()
+    moderation_stats['clears_last_7_days'] = MediaAction.objects.filter(action='report_cleared', action_date__gte=seven_days_ago).count()
+    moderation_stats['confirms_last_7_days'] = MediaAction.objects.filter(action='report_confirmed', action_date__gte=seven_days_ago).count()
+    moderation_stats['approved_last_7_days'] = MediaAction.objects.filter(action='media_reviewed', action_date__gte=seven_days_ago).count()
 
     moderation_stats['top_reviewers'] = list(
-        MediaAction.objects.filter(action='media_reviewed')
-        .exclude(user=None)
-        .values('user_id', 'user__username')
-        .annotate(review_count=Count('id'))
-        .order_by('-review_count')[:5]
+        MediaAction.objects.filter(action='media_reviewed').exclude(user=None).values('user_id', 'user__username').annotate(review_count=Count('id')).order_by('-review_count')[:5]
     )
 
     recent_moderation_values = (
@@ -118,15 +103,9 @@ def get_moderation_statistics(seven_days_ago):
         'media__friendly_token',
     )
 
-    moderation_stats['recent_report_confirmations'] = list(
-        MediaAction.objects.filter(action='report_confirmed').order_by('-action_date')[:5].values(*recent_moderation_values)
-    )
-    moderation_stats['recent_report_clears'] = list(
-        MediaAction.objects.filter(action='report_cleared').order_by('-action_date')[:5].values(*recent_moderation_values)
-    )
-    moderation_stats['recent_media_reviews'] = list(
-        MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values)
-    )
+    moderation_stats['recent_report_confirmations'] = list(MediaAction.objects.filter(action='report_confirmed').order_by('-action_date')[:5].values(*recent_moderation_values))
+    moderation_stats['recent_report_clears'] = list(MediaAction.objects.filter(action='report_cleared').order_by('-action_date')[:5].values(*recent_moderation_values))
+    moderation_stats['recent_media_reviews'] = list(MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values))
 
     return moderation_stats
 
@@ -142,14 +121,9 @@ def get_engagement_statistics(seven_days_ago):
     engagement_stats['most_liked'] = list(Media.objects.order_by('-likes')[:5].values('id', 'title', 'likes', 'friendly_token'))
     engagement_stats['most_viewed'] = list(Media.objects.order_by('-views')[:5].values('id', 'title', 'views', 'friendly_token'))
     engagement_stats['most_commented'] = list(
-        Media.objects.annotate(comment_count=Count('comments'))
-        .filter(comment_count__gt=0)
-        .order_by('-comment_count')[:5]
-        .values('id', 'title', 'comment_count', 'friendly_token')
+        Media.objects.annotate(comment_count=Count('comments')).filter(comment_count__gt=0).order_by('-comment_count')[:5].values('id', 'title', 'comment_count', 'friendly_token')
     )
-    engagement_stats['most_disliked'] = list(
-        Media.objects.order_by('-dislikes')[:5].values('id', 'title', 'dislikes', 'friendly_token')
-    )
+    engagement_stats['most_disliked'] = list(Media.objects.order_by('-dislikes')[:5].values('id', 'title', 'dislikes', 'friendly_token'))
 
     return engagement_stats
 
@@ -164,10 +138,7 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
     user_stats['active_users'] = User.objects.filter(media__add_date__gte=thirty_days_ago).distinct().count()
 
     user_stats['top_uploaders'] = list(
-        User.objects.annotate(media_count_annotated=Count('media'))
-        .filter(media_count_annotated__gt=0)
-        .order_by('-media_count_annotated')[:5]
-        .values('id', 'username', 'media_count_annotated')
+        User.objects.annotate(media_count_annotated=Count('media')).filter(media_count_annotated__gt=0).order_by('-media_count_annotated')[:5].values('id', 'username', 'media_count_annotated')
     )
 
     approval_enabled = getattr(settings, 'USERS_NEEDS_TO_BE_APPROVED', False)
@@ -176,40 +147,19 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
         pending_q = Q(is_approved=False) | Q(is_approved__isnull=True)
         user_stats['pending_approvals'] = User.objects.filter(pending_q).count()
         user_stats['approved_users'] = User.objects.filter(is_approved=True).count()
-        user_stats['recent_pending_users'] = list(
-            User.objects.filter(pending_q).order_by('-date_added')[:5].values('id', 'username', 'date_added')
-        )
+        user_stats['recent_pending_users'] = list(User.objects.filter(pending_q).order_by('-date_added')[:5].values('id', 'username', 'date_added'))
     else:
         user_stats['pending_approvals'] = 0
         user_stats['approved_users'] = 0
         user_stats['recent_pending_users'] = []
 
-    user_stats['top_commenters'] = list(
-        Comment.objects.exclude(user=None)
-        .values('user_id', 'user__username')
-        .annotate(comment_count=Count('id'))
-        .order_by('-comment_count')[:5]
-    )
-    user_stats['top_likers'] = list(
-        MediaAction.objects.filter(action='like')
-        .exclude(user=None)
-        .values('user_id', 'user__username')
-        .annotate(action_count=Count('id'))
-        .order_by('-action_count')[:5]
-    )
+    user_stats['top_commenters'] = list(Comment.objects.exclude(user=None).values('user_id', 'user__username').annotate(comment_count=Count('id')).order_by('-comment_count')[:5])
+    user_stats['top_likers'] = list(MediaAction.objects.filter(action='like').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5])
     user_stats['top_dislikers'] = list(
-        MediaAction.objects.filter(action='dislike')
-        .exclude(user=None)
-        .values('user_id', 'user__username')
-        .annotate(action_count=Count('id'))
-        .order_by('-action_count')[:5]
+        MediaAction.objects.filter(action='dislike').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5]
     )
     user_stats['top_reporters'] = list(
-        MediaAction.objects.filter(action='report')
-        .exclude(user=None)
-        .values('user_id', 'user__username')
-        .annotate(action_count=Count('id'))
-        .order_by('-action_count')[:5]
+        MediaAction.objects.filter(action='report').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5]
     )
 
     return user_stats

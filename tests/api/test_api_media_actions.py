@@ -69,11 +69,7 @@ class MediaActionsPostTest(TestCase):
             response = self.act(action)
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.data["detail"], "not valid action")
-        self.assertFalse(
-            MediaAction.objects.filter(
-                media=self.media, action__in=["report_cleared", "report_confirmed", "media_reviewed", "media_unreviewed"]
-            ).exists()
-        )
+        self.assertFalse(MediaAction.objects.filter(media=self.media, action__in=["report_cleared", "report_confirmed", "media_reviewed", "media_unreviewed"]).exists())
 
     @override_settings(REPORTED_TIMES_THRESHOLD=2)
     def test_media_becomes_private_once_reports_reach_threshold(self):

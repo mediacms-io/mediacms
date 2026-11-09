@@ -19,9 +19,6 @@ from files.admin_helpers import (
     admin_changelist_url,
     join_links,
 )
-
-# Open reports plus moderation audit events shown on the Media "Reports" tab.
-MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
 from files.methods import (
     can_delete_original_media_file,
     change_media_owner,
@@ -54,6 +51,9 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+
+# Open reports plus moderation audit events shown on the Media "Reports" tab.
+MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
 
 
 class ReportedTimesFilter(admin.SimpleListFilter):
@@ -234,12 +234,7 @@ class MediaAdmin(admin.ModelAdmin):
         return fieldsets
 
     def get_queryset(self, request):
-        return (
-            super()
-            .get_queryset(request)
-            .select_related("user", "channel")
-            .annotate(_comments_count=Count("comments", distinct=True), _encodings_count=Count("encodings", distinct=True))
-        )
+        return super().get_queryset(request).select_related("user", "channel").annotate(_comments_count=Count("comments", distinct=True), _encodings_count=Count("encodings", distinct=True))
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -300,8 +295,7 @@ class MediaAdmin(admin.ModelAdmin):
         actions = MediaAction.objects.filter(media=obj, action__in=MEDIA_REPORT_TAB_ACTIONS).select_related("user").order_by("-action_date")
         changelist = admin_changelist_url(MediaAction, media__id__exact=obj.pk)
         header = format_html(
-            '<p style="margin-bottom:0.75em;"><a href="{}">Open all MediaActions for this media</a> · '
-            '<a href="{}">Open reports only</a></p>',
+            '<p style="margin-bottom:0.75em;"><a href="{}">Open all MediaActions for this media</a> · ' '<a href="{}">Open reports only</a></p>',
             changelist,
             admin_changelist_url(MediaAction, media__id__exact=obj.pk, action__exact="report"),
         )
@@ -318,14 +312,7 @@ class MediaAdmin(admin.ModelAdmin):
             ip = escape(action.remote_ip or "—")
             rows.append(
                 format_html(
-                    "<tr>"
-                    '<td><a href="{}">{}</a></td>'
-                    "<td>{}</td>"
-                    "<td>{}</td>"
-                    "<td>{}</td>"
-                    "<td>{}</td>"
-                    '<td><a class="btn btn-xs btn-primary" href="{}">View</a></td>'
-                    "</tr>",
+                    "<tr>" '<td><a href="{}">{}</a></td>' "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" '<td><a class="btn btn-xs btn-primary" href="{}">View</a></td>' "</tr>",
                     action_url,
                     action_label,
                     user_cell,
@@ -337,10 +324,7 @@ class MediaAdmin(admin.ModelAdmin):
             )
 
         table = format_html(
-            '<table class="table table-sm table-striped">'
-            "<thead><tr>"
-            "<th>Action</th><th>User</th><th>Extra info</th><th>When</th><th>IP</th><th></th>"
-            "</tr></thead><tbody>{}</tbody></table>",
+            '<table class="table table-sm table-striped">' "<thead><tr>" "<th>Action</th><th>User</th><th>Extra info</th><th>When</th><th>IP</th><th></th>" "</tr></thead><tbody>{}</tbody></table>",
             mark_safe("".join(str(row) for row in rows)),
         )
         return mark_safe(f"{header}{table}")
