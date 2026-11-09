@@ -16,7 +16,9 @@ from files.models import (
     EncodeProfile,
     Encoding,
     Language,
+    MediaPermission,
     Page,
+    Playlist,
     Subtitle,
     Tag,
     TinyMCEMedia,
@@ -24,6 +26,7 @@ from files.models import (
     VideoTrimRequest,
 )
 from files.tests import create_account, create_media
+from users.models import Channel
 from lti.models import (
     LTILaunchLog,
     LTIPlatform,
@@ -78,6 +81,8 @@ def build_instances(superuser):
         MediaAction: MediaAction.objects.create(user=superuser, media=media, action="like"),
         Encoding: Encoding.objects.create(media=media, profile=profile, status="success"),
         Category: category,
+        Playlist: Playlist.objects.create(title="admin smoke playlist", user=superuser),
+        MediaPermission: MediaPermission.objects.create(media=media, user=superuser, owner_user=superuser, permission="owner"),
         Page: Page.objects.create(slug="smoke-page", title="Smoke page", description="<p>hi</p>"),
         Tag: Tag.objects.create(title="smoketag"),
         Subtitle: Subtitle.objects.create(language=language, media=media, user=superuser, subtitle_file=SimpleUploadedFile("smoke.vtt", VTT)),
@@ -85,6 +90,7 @@ def build_instances(superuser):
         VideoTrimRequest: VideoTrimRequest.objects.create(media=media, video_action="replace", timestamps=[{"startTime": 0, "endTime": 1}]),
         TranscriptionRequest: TranscriptionRequest.objects.create(media=media),
         superuser.__class__: superuser,
+        Channel: Channel.objects.get(user=superuser),
         LTIPlatform: platform,
         LTIResourceLink: resource_link,
         LTIUserMapping: LTIUserMapping.objects.create(platform=platform, lti_user_id="lti-sub", user=superuser),

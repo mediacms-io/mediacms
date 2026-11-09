@@ -10,6 +10,9 @@ class AdminCustomizationsConfig(AppConfig):
     def ready(self):
         # Import here to avoid AppRegistryNotReady error
         from .admin import calculate_statistics
+        from .object_actions import patch_model_admin_object_actions
+
+        patch_model_admin_object_actions()
 
         # Patch the index method to add statistics
         original_index = admin.site.index

@@ -64,6 +64,17 @@ class MediaActionsPostTest(TestCase):
         self.media.refresh_from_db()
         self.assertEqual(self.media.reported_times, 1)
 
+    def test_moderation_actions_cannot_be_posted_publicly(self):
+        for action in ("report_cleared", "report_confirmed", "media_reviewed", "media_unreviewed"):
+            response = self.act(action)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.data["detail"], "not valid action")
+        self.assertFalse(
+            MediaAction.objects.filter(
+                media=self.media, action__in=["report_cleared", "report_confirmed", "media_reviewed", "media_unreviewed"]
+            ).exists()
+        )
+
     @override_settings(REPORTED_TIMES_THRESHOLD=2)
     def test_media_becomes_private_once_reports_reach_threshold(self):
         self.act("report", extra_info="one")
@@ -87,8 +98,10 @@ class MediaActionsPostTest(TestCase):
         listing = APIClient().get("/api/v1/media")
         self.assertNotIn(self.media.friendly_token, [item["friendly_token"] for item in listing.data["results"]])
 
-    def test_unknown_action_is_accepted_but_not_recorded(self):
-        self.assertEqual(self.act("explode").status_code, 201)
+    def test_unknown_action_is_rejected(self):
+        response = self.act("explode")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data["detail"], "not valid action")
         self.assertFalse(MediaAction.objects.filter(media=self.media).exists())
 
     def test_missing_action_is_rejected(self):
@@ -187,11 +200,15 @@ class MediaActionsReportsTest(TestCase):
         self.assertEqual(APIClient().get(actions_url(self.media)).status_code, 400)
 
     def test_superuser_can_reset_reports(self):
-        response = self.client_for(create_account(is_superuser=True)).delete(actions_url(self.media), {"type": "report"}, format="json")
+        admin = create_account(is_superuser=True)
+        response = self.client_for(admin).delete(actions_url(self.media), {"type": "report"}, format="json")
         self.assertEqual(response.status_code, 201)
         self.media.refresh_from_db()
         self.assertEqual(self.media.reported_times, 0)
         self.assertFalse(MediaAction.objects.filter(media=self.media, action="report").exists())
+        cleared = MediaAction.objects.get(media=self.media, action="report_cleared")
+        self.assertEqual(cleared.user_id, admin.pk)
+        self.assertIn("spam", cleared.extra_info)
 
     def test_reset_requires_an_action_type(self):
         response = self.client_for(create_account(is_superuser=True)).delete(actions_url(self.media), {}, format="json")

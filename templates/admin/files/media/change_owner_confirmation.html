@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans "Change media owner" %}</h1>
+
+    <p>{% trans "Transfer ownership of the selected media to another user. Related MediaPermission owner_user rows are updated." %}</p>
+
+    <h2>{% trans "Selected media" %}</h2>
+    <ul>
+        {% for media in media_items %}
+        <li>
+            <strong>{{ media.title|truncatechars:60 }}</strong>
+            ({{ media.friendly_token }}) — {% trans "current owner" %}: {{ media.user.username }}
+        </li>
+        {% empty %}
+        <li>{% trans "No media selected." %}</li>
+        {% endfor %}
+    </ul>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="{{ action_name }}">
+        <input type="hidden" name="apply" value="1">
+        {% for media in media_items %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ media.pk|unlocalize }}">
+        {% endfor %}
+
+        <div>
+            <label for="id_new_owner">{% trans "New owner username" %}:</label>
+            <input type="text" name="new_owner" id="id_new_owner" value="{{ new_owner }}" required autocomplete="off">
+        </div>
+        <div style="margin-top: 1em;">
+            <input type="submit" class="default" value="{% trans 'Change owner' %}">
+            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "No, take me back" %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -4,12 +4,12 @@ from rest_framework.parsers import JSONParser
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from actions.models import USER_MEDIA_ACTIONS
+from actions.models import PUBLIC_USER_MEDIA_ACTIONS
 
 from ..models import Media
 from ..serializers import MediaSerializer
 
-VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
+VALID_USER_ACTIONS = [action for action, name in PUBLIC_USER_MEDIA_ACTIONS]
 
 
 class UserActions(APIView):

@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from actions.models import MediaAction
+from actions.models import PUBLIC_USER_MEDIA_ACTIONS, MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
 from cms.permissions import IsAuthorizedToAdd, IsMediaContributorOrEditor
 from users.models import User
@@ -29,9 +29,11 @@ from users.models import User
 from .. import helpers
 from ..methods import (
     change_media_owner,
+    clear_media_reports,
     copy_media,
     get_user_or_session,
     is_mediacms_editor,
+    set_media_reviewed,
     show_recommended_media,
     show_related_media,
     update_user_ratings,
@@ -941,11 +943,10 @@ class MediaDetail(APIView):
             media.encode(profiles=valid_profiles)
             return Response({"detail": "media will be encoded"}, status=status.HTTP_201_CREATED)
         elif action == "review":
-            if result:
-                media.is_reviewed = True
-            elif result is False:
-                media.is_reviewed = False
-            media.save(update_fields=["is_reviewed", "listable"])
+            if result is False:
+                set_media_reviewed(media, False, user=request.user)
+            else:
+                set_media_reviewed(media, True, user=request.user)
             return Response({"detail": "media reviewed set"}, status=status.HTTP_201_CREATED)
         return Response(
             {"detail": "not valid action or no action specified"},
@@ -1065,6 +1066,9 @@ class MediaActions(APIView):
 
         action = request.data.get("type")
         extra = request.data.get("extra_info")
+        public_actions = {name for name, _label in PUBLIC_USER_MEDIA_ACTIONS}
+        if action and action not in public_actions:
+            return Response({"detail": "not valid action"}, status=status.HTTP_400_BAD_REQUEST)
         if request.user.is_anonymous:
             # there is a list of allowed actions for
             # anonymous users, specified in settings
@@ -1102,10 +1106,8 @@ class MediaActions(APIView):
 
         action = request.data.get("type")
         if action:
-            if action == "report":  # delete reported actions
-                MediaAction.objects.filter(media=media, action="report").delete()
-                media.reported_times = 0
-                media.save(update_fields=["reported_times"])
+            if action == "report":
+                clear_media_reports(Media.objects.filter(pk=media.pk), user=request.user)
                 return Response(
                     {"detail": "reset reported times counter"},
                     status=status.HTTP_201_CREATED,

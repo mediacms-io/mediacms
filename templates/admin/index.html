@@ -9,6 +9,519 @@
     <!-- Statistics Dashboard -->
     {% if dashboard_stats %}
         {% with stats=dashboard_stats %}
+            <!-- Content Moderation Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-shield-alt mr-2"></i>{% trans 'Content Moderation' %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.reported_media }}</h3>
+                                        <p>{% trans 'Reported Media' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-flag"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?reported=yes" class="small-box-footer">
+                                        {% trans 'Review reports' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.reported_above_threshold }}</h3>
+                                        <p>{% trans 'Above Threshold' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?reported=threshold" class="small-box-footer">
+                                        {% trans 'Urgent review' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.unreviewed }}</h3>
+                                        <p>{% trans 'Unreviewed Media' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0" class="small-box-footer">
+                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.clears_last_7_days }}</h3>
+                                        <p>{% trans 'Report Clears (7d)' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-broom"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_cleared" class="small-box-footer">
+                                        {% trans 'View clears' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.confirms_last_7_days }}</h3>
+                                        <p>{% trans 'Report Confirms (7d)' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_confirmed" class="small-box-footer">
+                                        {% trans 'View confirms' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-6">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.moderation.approved_last_7_days }}</h3>
+                                        <p>{% trans 'Media Approved (7d)' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=media_reviewed" class="small-box-footer">
+                                        {% trans 'View approvals' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Report Confirmations' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Media' %}</th>
+                                                    <th>{% trans 'Moderator' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for confirmation in stats.moderation.recent_report_confirmations %}
+                                                    <tr>
+                                                        <td title="{{ confirmation.extra_info|default:'' }}">{{ confirmation.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ confirmation.user__username|default:'-' }}</td>
+                                                        <td>{{ confirmation.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if confirmation.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Report Clears' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Media' %}</th>
+                                                    <th>{% trans 'Moderator' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for clear in stats.moderation.recent_report_clears %}
+                                                    <tr>
+                                                        <td title="{{ clear.extra_info|default:'' }}">{{ clear.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ clear.user__username|default:'-' }}</td>
+                                                        <td>{{ clear.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if clear.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Media Reviews' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Media' %}</th>
+                                                    <th>{% trans 'Moderator' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for review in stats.moderation.recent_media_reviews %}
+                                                    <tr>
+                                                        <td>{{ review.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ review.user__username|default:'-' }}</td>
+                                                        <td>{{ review.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if review.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' review.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Reviewers' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Reviews' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for reviewer in stats.moderation.top_reviewers %}
+                                                    <tr>
+                                                        <td>{{ reviewer.user__username }}</td>
+                                                        <td><span class="badge badge-secondary">{{ reviewer.review_count }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' reviewer.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Statistics Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-users mr-2"></i>{% trans 'User Statistics' %}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.total }}</h3>
+                                        <p>{% trans 'Total Users' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.registered_last_7_days }}</h3>
+                                        <p>{% trans 'New Users (7d)' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% if stats.users.approval_workflow_enabled %}
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.pending_approvals }}</h3>
+                                        <p>{% trans 'Pending Approvals' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-clock"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=0" class="small-box-footer">
+                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.approved_users }}</h3>
+                                        <p>{% trans 'Approved Users' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=1" class="small-box-footer">
+                                        {% trans 'View approved' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.active_users }}</h3>
+                                        <p>{% trans 'Active Users (30d)' %}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mt-3">
+                            {% if stats.users.approval_workflow_enabled %}
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Pending Users' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Joined' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_pending_users %}
+                                                    <tr>
+                                                        <td>{{ user.username }}</td>
+                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                            {% else %}
+                            <div class="col-md-12">
+                            {% endif %}
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Uploaders' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Media Count' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_uploaders %}
+                                                    <tr>
+                                                        <td>{{ user.username }}</td>
+                                                        <td><span class="badge badge-info">{{ user.media_count_annotated }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Commenters' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Comments' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_commenters %}
+                                                    <tr>
+                                                        <td>{{ user.user__username }}</td>
+                                                        <td><span class="badge badge-primary">{{ user.comment_count }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Reporters' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Reports' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_reporters %}
+                                                    <tr>
+                                                        <td>{{ user.user__username }}</td>
+                                                        <td><span class="badge badge-warning">{{ user.action_count }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Likers' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Likes' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_likers %}
+                                                    <tr>
+                                                        <td>{{ user.user__username }}</td>
+                                                        <td><span class="badge badge-success">{{ user.action_count }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Top Dislikers' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Username' %}</th>
+                                                    <th>{% trans 'Dislikes' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_dislikers %}
+                                                    <tr>
+                                                        <td>{{ user.user__username }}</td>
+                                                        <td><span class="badge badge-danger">{{ user.action_count }}</span></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Media Overview Section -->
             <div class="col-12">
                 <div class="card">
@@ -46,35 +559,35 @@
                                 </div>
                             </div>
                             <div class="col-lg-3 col-6">
-                                <div class="small-box bg-warning">
+                                <div class="small-box bg-danger">
                                     <div class="inner">
-                                        <h3>{{ stats.media.needs_review }}</h3>
-                                        <p>{% trans 'Needs Review' %}</p>
+                                        <h3>{{ stats.media.failed }}</h3>
+                                        <p>{% trans 'Failed Encodings' %}</p>
                                     </div>
                                     <div class="icon">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-times-circle"></i>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0" class="small-box-footer">
-                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
+                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=fail" class="small-box-footer">
+                                        {% trans 'View failed' %} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
                             <div class="col-lg-3 col-6">
-                                <div class="small-box bg-primary">
+                                <div class="small-box bg-warning">
                                     <div class="inner">
-                                        <h3>{{ stats.media.uploaded_last_7_days }}</h3>
-                                        <p>{% trans 'Uploaded (7 days)' %}</p>
+                                        <h3>{{ stats.media.encoding_queue }}</h3>
+                                        <p>{% trans 'Encoding Queue' %}</p>
                                     </div>
                                     <div class="icon">
-                                        <i class="fas fa-upload"></i>
+                                        <i class="fas fa-tasks"></i>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="small-box-footer">
+                                        {% trans 'View queue' %} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row mt-3">
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
@@ -129,12 +642,17 @@
                                                 <td><strong>{{ stats.media.by_state.unlisted }}</strong></td>
                                                 <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
                                             </tr>
+                                            <tr>
+                                                <td><i class="fas fa-star text-primary"></i> {% trans 'Featured' %}</td>
+                                                <td><strong>{{ stats.media.featured }}</strong></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
+                                            </tr>
                                         </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row mt-3">
                             <div class="col-md-12">
                                 <div class="card card-outline card-secondary">
@@ -184,72 +702,138 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Content Moderation Section -->
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-shield-alt mr-2"></i>{% trans 'Content Moderation' %}</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-danger">
-                                    <div class="inner">
-                                        <h3>{{ stats.moderation.reported_media }}</h3>
-                                        <p>{% trans 'Reported Media' %}</p>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Video Uploads' %}</h3>
                                     </div>
-                                    <div class="icon">
-                                        <i class="fas fa-flag"></i>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Uploader' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.video %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:30 }}</td>
+                                                        <td>{{ media.user__username|default:'-' }}</td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?reported_times__gt=0" class="small-box-footer">
-                                        {% trans 'Review reports' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-warning">
-                                    <div class="inner">
-                                        <h3>{{ stats.moderation.reported_above_threshold }}</h3>
-                                        <p>{% trans 'Above Threshold' %}</p>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Audio Uploads' %}</h3>
                                     </div>
-                                    <div class="icon">
-                                        <i class="fas fa-exclamation-triangle"></i>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Uploader' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.audio %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:30 }}</td>
+                                                        <td>{{ media.user__username|default:'-' }}</td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?reported_times__gte={{ stats.moderation.reported_threshold }}" class="small-box-footer">
-                                        {% trans 'Urgent review' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-info">
-                                    <div class="inner">
-                                        <h3>{{ stats.moderation.recent_reports }}</h3>
-                                        <p>{% trans 'Recent Reports (7d)' %}</p>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent Image Uploads' %}</h3>
                                     </div>
-                                    <div class="icon">
-                                        <i class="fas fa-clock"></i>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Uploader' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.image %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:30 }}</td>
+                                                        <td>{{ media.user__username|default:'-' }}</td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report" class="small-box-footer">
-                                        {% trans 'View reports' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-secondary">
-                                    <div class="inner">
-                                        <h3>{{ stats.moderation.unreviewed }}</h3>
-                                        <p>{% trans 'Unreviewed Media' %}</p>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Recent PDF Uploads' %}</h3>
                                     </div>
-                                    <div class="icon">
-                                        <i class="fas fa-eye-slash"></i>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Uploader' %}</th>
+                                                    <th>{% trans 'When' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.pdf %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:30 }}</td>
+                                                        <td>{{ media.user__username|default:'-' }}</td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0" class="small-box-footer">
-                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -322,7 +906,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row mt-3">
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
@@ -343,7 +927,10 @@
                                                     <tr>
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-success">{{ media.likes }}</span></td>
-                                                        <td><a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
                                                     <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
@@ -372,7 +959,77 @@
                                                     <tr>
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-primary">{{ media.views }}</span></td>
-                                                        <td><a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Most Commented Media' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Comments' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_commented %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:40 }}</td>
+                                                        <td><span class="badge badge-info">{{ media.comment_count }}</span></td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{% trans 'Most Disliked Media' %}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans 'Title' %}</th>
+                                                    <th>{% trans 'Dislikes' %}</th>
+                                                    <th>{% trans 'Action' %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_disliked %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:40 }}</td>
+                                                        <td><span class="badge badge-danger">{{ media.dislikes }}</span></td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
                                                     <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
@@ -387,109 +1044,6 @@
                 </div>
             </div>
 
-            <!-- User Statistics Section -->
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-users mr-2"></i>{% trans 'User Statistics' %}</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-info">
-                                    <div class="inner">
-                                        <h3>{{ stats.users.total }}</h3>
-                                        <p>{% trans 'Total Users' %}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-success">
-                                    <div class="inner">
-                                        <h3>{{ stats.users.registered_last_7_days }}</h3>
-                                        <p>{% trans 'New Users (7d)' %}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-plus"></i>
-                                    </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-warning">
-                                    <div class="inner">
-                                        <h3>{{ stats.users.active_users }}</h3>
-                                        <p>{% trans 'Active Users (30d)' %}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-check"></i>
-                                    </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {% if stats.users.pending_approvals > 0 %}
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-danger">
-                                    <div class="inner">
-                                        <h3>{{ stats.users.pending_approvals }}</h3>
-                                        <p>{% trans 'Pending Approvals' %}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-user-clock"></i>
-                                    </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=0" class="small-box-footer">
-                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        {% if stats.users.top_uploaders %}
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <div class="card card-outline card-info">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Uploaders' %}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Media Count' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for user in stats.users.top_uploaders %}
-                                                    <tr>
-                                                        <td>{{ user.username }}</td>
-                                                        <td><span class="badge badge-info">{{ user.media_count_annotated }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
             <!-- System/Infrastructure Section -->
             <div class="col-12">
                 <div class="card">
@@ -499,31 +1053,31 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-lg-3 col-6">
-                                <div class="info-box">
+                                <a href="{% url 'admin:users_channel_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-info"><i class="fas fa-folder"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">{% trans 'Channels' %}</span>
                                         <span class="info-box-number">{{ stats.system.total_channels }}</span>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                             <div class="col-lg-3 col-6">
-                                <div class="info-box">
+                                <a href="{% url 'admin:files_category_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-success"><i class="fas fa-tags"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">{% trans 'Categories' %}</span>
                                         <span class="info-box-number">{{ stats.system.total_categories }}</span>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                             <div class="col-lg-3 col-6">
-                                <div class="info-box">
+                                <a href="{% url 'admin:files_playlist_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-warning"><i class="fas fa-list"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">{% trans 'Playlists' %}</span>
                                         <span class="info-box-number">{{ stats.system.total_playlists }}</span>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                             <div class="col-lg-3 col-6">
                                 <div class="info-box">
@@ -544,7 +1098,7 @@
                                     <div class="card-body">
                                         <h4>{{ stats.system.encoding_queue }}</h4>
                                         <p class="text-muted">{% trans 'Media pending or running encoding' %}</p>
-                                        <a href="{% url 'admin:files_media_changelist' %}?encoding_status__in=pending,running" class="btn btn-warning">
+                                        <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="btn btn-warning">
                                             {% trans 'View Queue' %}
                                         </a>
                                     </div>
@@ -586,4 +1140,3 @@
         </div>
     {% endif %}
 {% endblock %}
-

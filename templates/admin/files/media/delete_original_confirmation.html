@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% trans "Delete original media files" %}</h1>
+
+    <p class="errornote">
+        {% trans "This permanently deletes the uploaded original file from disk. The Media row, encodings, HLS, thumbnails, and sprites are kept. Re-encode, new thumbnails/sprites, trim, and transcription will fail without the original. The database path remains as a stale reference. This cannot be undone without re-uploading." %}
+    </p>
+
+    {% if blocked %}
+    <h2>{% trans "Blocked (will not be deleted)" %}</h2>
+    <ul>
+        {% for item in blocked %}
+        <li>
+            <strong>{{ item.media.title|truncatechars:60 }}</strong>
+            ({{ item.media.friendly_token }}) — {{ item.reason }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if eligible %}
+    <h2>{% trans "Eligible for deletion" %}</h2>
+    <ul>
+        {% for media in eligible %}
+        <li>
+            <strong>{{ media.title|truncatechars:60 }}</strong>
+            ({{ media.friendly_token }}) — {{ media.media_type }}, encoding={{ media.encoding_status }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p><strong>{% trans "No eligible media. Fix encodings or selection, then try again." %}</strong></p>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="{{ action_name }}">
+        <input type="hidden" name="apply" value="1">
+        {% for media in media_items %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ media.pk|unlocalize }}">
+        {% endfor %}
+
+        {% if can_confirm %}
+        <div>
+            <label for="id_confirmation_text">
+                {% trans 'Type' %} <strong>I am sure</strong> {% trans 'to confirm:' %}
+            </label>
+            <input type="text" name="confirmation_text" id="id_confirmation_text" autocomplete="off" required>
+        </div>
+        <div style="margin-top: 1em;">
+            <input type="submit" class="default" value="{% trans 'Yes, delete original files' %}">
+            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "No, take me back" %}</a>
+        </div>
+        {% else %}
+        <div style="margin-top: 1em;">
+            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "Back to media list" %}</a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

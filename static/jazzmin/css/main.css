@@ -123,6 +123,37 @@ tr.djn-tr>.original {
     color: white;
 }
 
+.object-tools .object-tools-actions {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.object-tools .object-tools-actions > summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.object-tools .object-tools-actions > summary::-webkit-details-marker {
+    display: none;
+}
+
+.object-tools .object-tools-actions-menu {
+    width: 100%;
+    margin-top: 0.25rem;
+    max-height: 20rem;
+    overflow-y: auto;
+}
+
+.object-tools .object-tools-actions-menu form {
+    margin: 0;
+}
+
+.object-tools .object-tools-actions-menu .btn {
+    margin-top: 0.25rem;
+    white-space: normal;
+    text-align: left;
+}
+
 .jazzmin-avatar {
     font-size: 20px;
 }

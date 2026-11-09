@@ -346,6 +346,10 @@ class MediaDetailManagerActionsTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.media.refresh_from_db()
         self.assertTrue(self.media.is_reviewed)
+        from actions.models import MediaAction
+
+        event = MediaAction.objects.get(media=self.media, action="media_reviewed")
+        self.assertEqual(event.user_id, self.editor.pk)
 
     def test_review_lists_and_unlists_the_media(self):
         Media.objects.filter(pk=self.media.pk).update(state="public", encoding_status="success", is_reviewed=False, listable=False)

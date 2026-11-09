@@ -1,0 +1,25 @@
+{% extends "admin/change_form.html" %}
+{% load i18n jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block extra_actions %}
+{{ block.super }}
+{% if object_actions %}
+<details class="object-tools-actions">
+    <summary class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm">
+        {% trans "Actions" %}
+    </summary>
+    <div class="object-tools-actions-menu">
+        {% for action in object_actions %}
+        <form method="post" action="{{ object_action_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="{{ action.name }}">
+            <button type="submit" class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm text-left">
+                {{ action.description }}
+            </button>
+        </form>
+        {% endfor %}
+    </div>
+</details>
+{% endif %}
+{% endblock %}
