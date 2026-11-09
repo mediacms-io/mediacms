@@ -379,15 +379,9 @@ FILE_UPLOAD_HANDLERS = [
 
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
+# LOGS_DIR can be overridden in local_settings.py, which is imported at the end of
+# this file, so the directory and the log file are created down there instead.
 error_filename = os.path.join(LOGS_DIR, "debug.log")
-if not os.path.exists(LOGS_DIR):
-    try:
-        os.mkdir(LOGS_DIR)
-    except PermissionError:
-        pass
-
-if not os.path.isfile(error_filename):
-    open(error_filename, 'a').close()
 
 LOGGING = {
     "version": 1,
@@ -667,6 +661,22 @@ try:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
 except ImportError:
+    pass
+
+
+# LOGS_DIR may have been overridden in local_settings.py or dev_settings.py, so the
+# log file is resolved, and its directory created, only now. While this ran next to
+# the LOGGING definition an overridden LOGS_DIR was ignored and errors kept being
+# written to <BASE_DIR>/logs/debug.log.
+error_filename = os.path.join(LOGS_DIR, "debug.log")
+LOGGING["handlers"]["file"]["filename"] = error_filename
+
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    if not os.path.isfile(error_filename):
+        open(error_filename, 'a').close()
+except OSError:
+    # read-only or missing parent directory: let logging surface it when it writes
     pass
 
 
