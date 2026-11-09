@@ -108,6 +108,34 @@ db_1              | 2023-06-27 11:07:42.959 UTC [1] DETAIL:  The data directory 
 
 At this point there are two options: either edit the Docker Compose file and make use of the existing postgres:13 image, or otherwise you have to perform the migration from postgresql 13 to version 15. More notes on https://github.com/mediacms-io/mediacms/pull/749
 
+### Switching PostgreSQL Docker images (Debian/glibc vs Alpine/musl)
+
+Changing the kind of Postgres server image is not a drop-in update for existing installations. This only affects sites whose data directory was created under one C library and later pointed at an image built on another.
+
+Current MediaCMS Docker Compose files use Alpine-based Postgres tags such as `postgres:17.2-alpine`. Older installations often used a Debian/Ubuntu-based image (glibc). If you switch an existing glibc-backed volume to Alpine (musl), Postgres may spam logs with:
+
+```
+WARNING: database "mediacms" has no actual collation version, but a version was recorded
+```
+
+The data directory recorded a collation version from glibc; Alpine's musl-based image cannot supply a matching version. The warning is a collation mismatch, not a MediaCMS application bug, and it cannot be "fixed" by staying on the same volume while flipping image flavors.
+
+**Option 1 — Keep the Debian/Ubuntu-based image (simplest and safest)**
+
+Edit your docker-compose file and set the database image to the matching non-alpine tag (for example `postgres:17.2`). Leave the existing volume alone.
+
+**Option 2 — Logical migration to Alpine**
+
+1. Dump the database from the current (glibc) instance.
+2. Start a fresh Alpine Postgres container with a **new empty** volume.
+3. Restore the dump into the Alpine-based instance.
+
+That rebuilds objects under Alpine collations and avoids the warning. New installs that start on Alpine are unaffected.
+
+### Major PostgreSQL version upgrades
+
+Postgres does not automatically upgrade an on-disk data directory when the server major version changes (see the version 2 → 3 notes above). Besides dump/restore, community helpers such as [pgautoupgrade](https://hub.docker.com/r/pgautoupgrade/pgautoupgrade) can automate upgrading the data directory across major versions; expect downtime of at least a few minutes. Always back up before any database image or version change.
+
 
 
 ## Configuration
