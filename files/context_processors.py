@@ -53,10 +53,7 @@ def stuff(request):
     if request.user.is_authenticated:
         ret["CAN_SEARCH_AUTHORS"] = can_see_members_page
     else:
-        ret["CAN_SEARCH_AUTHORS"] = (
-            settings.CAN_SEE_MEMBERS_PAGE in ("all", "anonymous")
-            and settings.ALLOW_ANONYMOUS_USER_LISTING
-        )
+        ret["CAN_SEARCH_AUTHORS"] = settings.CAN_SEE_MEMBERS_PAGE in ("all", "anonymous") and settings.ALLOW_ANONYMOUS_USER_LISTING
     ret["ALLOW_RATINGS"] = settings.ALLOW_RATINGS
     ret["ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY"] = settings.ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY
     ret["VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE"] = settings.VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE
