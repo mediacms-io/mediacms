@@ -191,6 +191,13 @@ class MembersPageTest(TestCase):
     def test_anonymous_user_is_not_offered_the_members_link(self):
         self.assertFalse(self.members().context["CAN_SEE_MEMBERS_PAGE"])
 
+    @override_settings(CAN_SEE_MEMBERS_PAGE="anonymous")
+    def test_anonymous_user_is_offered_the_members_link_when_open_to_anonymous(self):
+        response = self.members()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["CAN_SEE_MEMBERS_PAGE"])
+        self.assertTrue(self.members(self.user).context["CAN_SEE_MEMBERS_PAGE"])
+
     @override_settings(CAN_SEE_MEMBERS_PAGE="editors")
     def test_only_editors_see_members_when_restricted_to_editors(self):
         self.assertRedirects(self.members(), "/", fetch_redirect_response=False)
