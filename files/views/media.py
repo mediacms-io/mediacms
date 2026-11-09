@@ -312,10 +312,60 @@ class MediaList(APIView):
             openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True, description="media_file"),
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
+            openapi.Parameter(
+                name="state",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Visibility: private, public, or unlisted",
+                enum=["private", "public", "unlisted"],
+            ),
+            openapi.Parameter(
+                name="category_uids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated category UIDs or titles (uid matched first, then title)",
+            ),
+            openapi.Parameter(
+                name="category_titles",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated category titles",
+            ),
+            openapi.Parameter(
+                name="tag_titles",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tag titles",
+            ),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Whether comments are allowed",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Whether download is allowed",
+            ),
+            openapi.Parameter(
+                name="owner",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Username to own the media (editors only)",
+            ),
         ],
         tags=['Media'],
         operation_summary='Add new Media',
-        operation_description='Adds a new media, for authenticated users',
+        operation_description='Adds a new media, for authenticated users. Optional state, category_uids (uid or title), category_titles, tag_titles, enable_comments, allow_download. Editors may set owner to upload as another user.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def post(self, request, format=None):
@@ -329,7 +379,7 @@ class MediaList(APIView):
         if serializer.is_valid():
             media = serializer.save(user=request.user, media_file=media_file)
             MediaAction.objects.create(user=request.user, media=media, action="watch")
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(MediaSerializer(media, context={"request": request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -427,7 +477,12 @@ class MediaBulkUserActions(APIView):
         if not media_ids:
             return Response({"detail": "media_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
+        # change_owner: editors may target any media; others only their own.
+        # All other actions stay scoped to the caller's media.
+        if action == "change_owner" and is_mediacms_editor(request.user):
+            media = Media.objects.filter(friendly_token__in=media_ids)
+        else:
+            media = Media.objects.filter(user=request.user, friendly_token__in=media_ids)
 
         if not media:
             return Response({"detail": "No matching media found"}, status=status.HTTP_400_BAD_REQUEST)
@@ -957,10 +1012,60 @@ class MediaDetail(APIView):
             openapi.Parameter(name="description", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="description"),
             openapi.Parameter(name="title", in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=False, description="title"),
             openapi.Parameter(name="media_file", in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=False, description="media_file"),
+            openapi.Parameter(
+                name="state",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Visibility: private, public, or unlisted",
+                enum=["private", "public", "unlisted"],
+            ),
+            openapi.Parameter(
+                name="category_uids",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated category UIDs or titles to add (uid matched first, then title)",
+            ),
+            openapi.Parameter(
+                name="category_titles",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated category titles to add",
+            ),
+            openapi.Parameter(
+                name="tag_titles",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Comma-separated tag titles to add",
+            ),
+            openapi.Parameter(
+                name="enable_comments",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Whether comments are allowed",
+            ),
+            openapi.Parameter(
+                name="allow_download",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="Whether download is allowed",
+            ),
+            openapi.Parameter(
+                name="owner",
+                in_=openapi.IN_FORM,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Username to transfer ownership to (editors only)",
+            ),
         ],
         tags=['Media'],
         operation_summary='Update Media',
-        operation_description='Update a Media, for Media uploader',
+        operation_description='Update a Media, for Media uploader. Optional state, category_uids (uid or title), category_titles, tag_titles, enable_comments, allow_download. Editors may set owner.',
         responses={201: openapi.Response('response description', MediaSerializer), 401: 'bad request'},
     )
     def put(self, request, friendly_token, format=None):
@@ -981,8 +1086,8 @@ class MediaDetail(APIView):
             #     serializer.save(user=request.user, media_file=media_file)
             # else:
             #     serializer.save(user=request.user)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            media = serializer.save()
+            return Response(MediaSerializer(media, context={"request": request}).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(

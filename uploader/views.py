@@ -71,7 +71,18 @@ class FineUploaderView(generic.FormView):
 
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
-        return self.make_response({"success": True, "media_url": new.get_absolute_url()})
+
+        # Refresh so media_init thumbnail/poster fields are visible for FineUploader.
+        new.refresh_from_db()
+        response_data = {
+            "success": True,
+            "media_url": new.get_absolute_url(),
+            "friendly_token": new.friendly_token,
+        }
+        # FineUploader replaces the queue preview when this key is present.
+        if new.thumbnail_url:
+            response_data["thumbnailUrl"] = self.request.build_absolute_uri(new.thumbnail_url)
+        return self.make_response(response_data)
 
     def form_invalid(self, form):
         data = {"success": False, "error": "%s" % repr(form.errors)}

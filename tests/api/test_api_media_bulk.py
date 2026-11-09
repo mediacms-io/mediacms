@@ -112,6 +112,19 @@ class BulkSimpleActionsTest(BulkActionsTestCase):
         self.assert_rejected(self.bulk("change_owner", owner="no-such-user"), "User not found")
         self.assertEqual(Media.objects.filter(user=self.owner).count(), 2)
 
+    def test_editor_can_change_owner_of_another_users_media(self):
+        editor = APIClient()
+        editor.force_authenticate(create_account(is_editor=True))
+        response = self.bulk("change_owner", media_ids=[self.foreign.friendly_token], client=editor, owner=self.owner.username)
+        self.assertEqual(response.status_code, 200)
+        self.foreign.refresh_from_db()
+        self.assertEqual(self.foreign.user, self.owner)
+
+    def test_non_editor_still_cannot_change_owner_of_another_users_media(self):
+        self.assert_rejected(self.bulk("change_owner", media_ids=[self.foreign.friendly_token], owner=self.owner.username), "No matching media found")
+        self.foreign.refresh_from_db()
+        self.assertEqual(self.foreign.user, self.other)
+
 
 class BulkSetStateTest(BulkActionsTestCase):
     def test_state_validation(self):
