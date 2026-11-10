@@ -6,18 +6,21 @@
 {{ block.super }}
 {% if object_action_choices %}
 <li class="object-tools-actions">
-    <form method="post" action="{{ object_action_url }}" class="object-tools-actions-form">
-        {% csrf_token %}
+    <div class="object-tools-actions-form">
         <label class="sr-only" for="id_object_action">{% trans "Actions" %}</label>
-        <select name="action" id="id_object_action" class="form-control object-tools-actions-select" required>
+        <select name="action" id="id_object_action" class="form-control object-tools-actions-select">
             {% for value, label, disabled in object_action_choices %}
             <option value="{{ value }}"{% if disabled %} disabled{% endif %}{% if not value %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn {{ jazzmin_ui.button_classes.primary }} btn-sm object-tools-actions-go" title="{% trans "Run the selected action" %}">
+        <button type="submit"
+                class="btn {{ jazzmin_ui.button_classes.primary }} btn-sm object-tools-actions-go"
+                title="{% trans "Run the selected action" %}"
+                formaction="{{ object_action_url }}"
+                formmethod="post">
             {% trans "Go" %}
         </button>
-    </form>
+    </div>
 </li>
 {% endif %}
 {% endblock %}

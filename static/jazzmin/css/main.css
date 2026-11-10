@@ -199,7 +199,7 @@ tr.djn-tr>.original {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
     width: 100%;
 }
 
@@ -211,6 +211,9 @@ tr.djn-tr>.original {
 
 .object-tools .object-tools-actions-go {
     flex: 0 0 auto;
+    min-width: 3.5rem;
+    padding: 0.35rem 0.9rem;
+    font-weight: 600;
 }
 
 .jazzmin-avatar {
@@ -1049,7 +1052,7 @@ body.jazzmin-login-page {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem 0.5rem;
     margin-block: 0.75rem;
     padding: 0.75rem 1rem;
     border: 1px solid #dee2e6;
@@ -1060,13 +1063,14 @@ body.jazzmin-login-page {
 #changelist .actions label,
 #changelist .actions .changelist-actions-select {
     margin: 0;
-    flex: 1 1 auto;
+    /* Keep the select sized to its content so Go sits next to it */
+    flex: 0 1 auto;
     min-width: 0;
 }
 
 #changelist .actions select,
 #changelist .actions .select2-container {
-    min-width: 16rem;
+    min-width: 14rem;
     max-width: 100%;
     width: auto;
 }
@@ -1074,6 +1078,18 @@ body.jazzmin-login-page {
 #changelist .actions .changelist-actions-go {
     flex: 0 0 auto;
     margin: 0;
+    min-width: 4.5rem;
+    padding: 0.5rem 1.35rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#changelist .actions .action-counter,
+#changelist .actions .all,
+#changelist .actions .question,
+#changelist .actions .clear {
+    margin-inline-start: 0.5rem;
 }
 
 #changelist-filter {

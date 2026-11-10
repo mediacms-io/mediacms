@@ -32,7 +32,12 @@ class ObjectActionsChangeFormTest(TestCase):
         self.assertContains(response, "object-tools-actions")
         self.assertContains(response, "Generate missing encodings")
         self.assertContains(response, "---------")
-        self.assertContains(response, reverse("admin:files_media_object_action", args=[self.media.pk]))
+        action_url = reverse("admin:files_media_object_action", args=[self.media.pk])
+        self.assertContains(response, action_url)
+        # Nested <form> is invalid inside Jazzmin's change form; Go must use formaction.
+        self.assertContains(response, f'formaction="{action_url}"')
+        self.assertContains(response, 'formmethod="post"')
+        self.assertNotContains(response, f'<form method="post" action="{action_url}"')
         self.assertContains(response, 'id="id_object_action"')
         self.assertContains(response, "object-tools-actions-go")
         choice_values = [value for value, _label, _disabled in response.context["object_action_choices"]]
