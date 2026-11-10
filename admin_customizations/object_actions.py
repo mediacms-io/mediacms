@@ -8,12 +8,24 @@ from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.urls import path, reverse
 
+from admin_customizations.action_choices import object_action_select_choices
+
 CHANGE_FORM_TEMPLATE = "admin/change_form_with_object_actions.html"
 EXCLUDED_ACTIONS = frozenset({"delete_selected"})
 
 
+def object_action_choices_for_request(model_admin, request):
+    """Return grouped (value, label, disabled) choices for the change-form Actions select."""
+    return object_action_select_choices(
+        model_admin.get_actions(request),
+        getattr(model_admin, "action_groups", None),
+        exclude=EXCLUDED_ACTIONS,
+        opts=model_admin.opts,
+    )
+
+
 def object_actions_for_request(model_admin, request):
-    """Return change-form Actions dropdown entries from get_actions()."""
+    """Return change-form Actions dropdown entries from get_actions() (flat list)."""
     actions = []
     for name, (_func, _name, description) in model_admin.get_actions(request).items():
         if name in EXCLUDED_ACTIONS:
@@ -79,9 +91,12 @@ def patch_model_admin_object_actions():
 
     def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
         if change and obj is not None:
-            object_actions = object_actions_for_request(self, request)
-            context["object_actions"] = object_actions
-            if object_actions:
+            object_action_choices = object_action_choices_for_request(self, request)
+            # Drop placeholder-only lists so models with no actions stay clean.
+            has_real_actions = any(value for value, _label, _disabled in object_action_choices)
+            context["object_action_choices"] = object_action_choices if has_real_actions else []
+            context["object_actions"] = object_actions_for_request(self, request)
+            if has_real_actions:
                 context["object_action_url"] = _object_action_url(self, obj)
         return original_render_change_form(self, request, context, add=add, change=change, form_url=form_url, obj=obj)
 

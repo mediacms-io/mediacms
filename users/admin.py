@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib import admin, messages
 
+from admin_customizations.action_choices import (GroupedActionForm,
+                                                 build_grouped_action_choices)
 from files.admin_helpers import admin_change_link, admin_changelist_link
 from files.models import Comment, Media, Playlist
 
@@ -32,6 +34,15 @@ class UserAdmin(admin.ModelAdmin):
         "related_playlists",
         "related_comments",
     )
+    action_form = GroupedActionForm
+    action_groups = [
+        ["approve_users", "unapprove_users"],
+        ["deactivate_users", "reactivate_users"],
+        ["delete_selected"],
+    ]
+
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
 
     if settings.USERS_NEEDS_TO_BE_APPROVED:
         list_display.append("is_approved")
@@ -67,22 +78,22 @@ class UserAdmin(admin.ModelAdmin):
         count = Comment.objects.filter(user=obj).count()
         return admin_changelist_link(Comment, f"View {count} comment(s)", user__id__exact=obj.pk)
 
-    @admin.action(description="Approve selected users", permissions=["change"])
+    @admin.action(description="Approve users", permissions=["change"])
     def approve_users(self, request, queryset):
         updated = queryset.update(is_approved=True)
         self.message_user(request, f"Approved {updated} user(s).", messages.SUCCESS)
 
-    @admin.action(description="Unapprove selected users", permissions=["change"])
+    @admin.action(description="Unapprove users", permissions=["change"])
     def unapprove_users(self, request, queryset):
         updated = queryset.update(is_approved=False)
         self.message_user(request, f"Unapproved {updated} user(s).", messages.SUCCESS)
 
-    @admin.action(description="Deactivate selected users", permissions=["change"])
+    @admin.action(description="Deactivate users", permissions=["change"])
     def deactivate_users(self, request, queryset):
         updated = queryset.exclude(pk=request.user.pk).update(is_active=False)
         self.message_user(request, f"Deactivated {updated} user(s).", messages.SUCCESS)
 
-    @admin.action(description="Reactivate selected users", permissions=["change"])
+    @admin.action(description="Reactivate users", permissions=["change"])
     def reactivate_users(self, request, queryset):
         updated = queryset.update(is_active=True)
         self.message_user(request, f"Reactivated {updated} user(s).", messages.SUCCESS)

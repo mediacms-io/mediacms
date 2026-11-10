@@ -4,22 +4,20 @@
 
 {% block extra_actions %}
 {{ block.super }}
-{% if object_actions %}
-<details class="object-tools-actions">
-    <summary class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm">
-        {% trans "Actions" %}
-    </summary>
-    <div class="object-tools-actions-menu">
-        {% for action in object_actions %}
-        <form method="post" action="{{ object_action_url }}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="{{ action.name }}">
-            <button type="submit" class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm text-left">
-                {{ action.description }}
-            </button>
-        </form>
-        {% endfor %}
-    </div>
-</details>
+{% if object_action_choices %}
+<li class="object-tools-actions">
+    <form method="post" action="{{ object_action_url }}" class="object-tools-actions-form">
+        {% csrf_token %}
+        <label class="sr-only" for="id_object_action">{% trans "Actions" %}</label>
+        <select name="action" id="id_object_action" class="form-control object-tools-actions-select" required>
+            {% for value, label, disabled in object_action_choices %}
+            <option value="{{ value }}"{% if disabled %} disabled{% endif %}{% if not value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn {{ jazzmin_ui.button_classes.primary }} btn-sm object-tools-actions-go" title="{% trans "Run the selected action" %}">
+            {% trans "Go" %}
+        </button>
+    </form>
+</li>
 {% endif %}
 {% endblock %}

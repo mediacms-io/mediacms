@@ -1,8 +1,10 @@
 {% extends "admin/base.html" %}
-{% load i18n static admin_urls jazzmin %}
+{% load i18n static admin_urls jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
 
 {% block content_title %}
-    {% trans 'Dashboard' %}
+    {{ "Dashboard"|custom_translate:LANGUAGE_CODE }}
 {% endblock %}
 
 {% block content %}
@@ -13,7 +15,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-shield-alt mr-2"></i>{% trans 'Content Moderation' %}</h3>
+                        <h3 class="card-title"><i class="fas fa-shield-alt me-2"></i>{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -21,13 +23,13 @@
                                 <div class="small-box bg-warning">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.reported_media }}</h3>
-                                        <p>{% trans 'Reported Media' %}</p>
+                                        <p>{{ "Reported media"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-flag"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?reported=yes" class="small-box-footer">
-                                        {% trans 'Review reports' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -35,13 +37,13 @@
                                 <div class="small-box bg-danger">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.reported_above_threshold }}</h3>
-                                        <p>{% trans 'Above Threshold' %}</p>
+                                        <p>{{ "Above report limit"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?reported=threshold" class="small-box-footer">
-                                        {% trans 'Urgent review' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open urgent reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -49,13 +51,13 @@
                                 <div class="small-box bg-secondary">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.unreviewed }}</h3>
-                                        <p>{% trans 'Unreviewed Media' %}</p>
+                                        <p>{{ "Media not reviewed"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-eye-slash"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0" class="small-box-footer">
-                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open media not reviewed"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -63,13 +65,13 @@
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.clears_last_7_days }}</h3>
-                                        <p>{% trans 'Report Clears (7d)' %}</p>
+                                        <p>{{ "Reports cleared (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-broom"></i>
                                     </div>
                                     <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_cleared" class="small-box-footer">
-                                        {% trans 'View clears' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open cleared reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -77,13 +79,13 @@
                                 <div class="small-box bg-danger">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.confirms_last_7_days }}</h3>
-                                        <p>{% trans 'Report Confirms (7d)' %}</p>
+                                        <p>{{ "Reports confirmed (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-user-shield"></i>
                                     </div>
                                     <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_confirmed" class="small-box-footer">
-                                        {% trans 'View confirms' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open confirmed reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -91,13 +93,13 @@
                                 <div class="small-box bg-success">
                                     <div class="inner">
                                         <h3>{{ stats.moderation.approved_last_7_days }}</h3>
-                                        <p>{% trans 'Media Approved (7d)' %}</p>
+                                        <p>{{ "Media approved (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-check-circle"></i>
                                     </div>
                                     <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=media_reviewed" class="small-box-footer">
-                                        {% trans 'View approvals' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open approvals"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -107,16 +109,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Report Confirmations' %}</h3>
+                                        <h3 class="card-title">{{ "Recent confirmed reports"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Media' %}</th>
-                                                    <th>{% trans 'Moderator' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -127,14 +129,14 @@
                                                         <td>{{ confirmation.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if confirmation.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -144,16 +146,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Report Clears' %}</h3>
+                                        <h3 class="card-title">{{ "Recent cleared reports"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Media' %}</th>
-                                                    <th>{% trans 'Moderator' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -164,14 +166,14 @@
                                                         <td>{{ clear.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if clear.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -181,16 +183,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Media Reviews' %}</h3>
+                                        <h3 class="card-title">{{ "Recent media reviews"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Media' %}</th>
-                                                    <th>{% trans 'Moderator' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -201,14 +203,14 @@
                                                         <td>{{ review.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if review.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' review.media_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                                <a href="{% url 'admin:files_media_change' review.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -218,15 +220,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-secondary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Reviewers' %}</h3>
+                                        <h3 class="card-title">{{ "Top reviewers"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Reviews' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Reviews"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -234,10 +236,10 @@
                                                     <tr>
                                                         <td>{{ reviewer.user__username }}</td>
                                                         <td><span class="badge badge-secondary">{{ reviewer.review_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' reviewer.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' reviewer.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -253,7 +255,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-users mr-2"></i>{% trans 'User Statistics' %}</h3>
+                        <h3 class="card-title"><i class="fas fa-users me-2"></i>{{ "Users"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -261,13 +263,13 @@
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h3>{{ stats.users.total }}</h3>
-                                        <p>{% trans 'Total Users' %}</p>
+                                        <p>{{ "Total users"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-users"></i>
                                     </div>
                                     <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -275,13 +277,13 @@
                                 <div class="small-box bg-success">
                                     <div class="inner">
                                         <h3>{{ stats.users.registered_last_7_days }}</h3>
-                                        <p>{% trans 'New Users (7d)' %}</p>
+                                        <p>{{ "New users (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-user-plus"></i>
                                     </div>
                                     <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -290,13 +292,13 @@
                                 <div class="small-box bg-danger">
                                     <div class="inner">
                                         <h3>{{ stats.users.pending_approvals }}</h3>
-                                        <p>{% trans 'Pending Approvals' %}</p>
+                                        <p>{{ "Users waiting for approval"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-user-clock"></i>
                                     </div>
                                     <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=0" class="small-box-footer">
-                                        {% trans 'Review now' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open users waiting for approval"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -304,13 +306,13 @@
                                 <div class="small-box bg-primary">
                                     <div class="inner">
                                         <h3>{{ stats.users.approved_users }}</h3>
-                                        <p>{% trans 'Approved Users' %}</p>
+                                        <p>{{ "Approved users"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-user-check"></i>
                                     </div>
                                     <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=1" class="small-box-footer">
-                                        {% trans 'View approved' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open approved users"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -319,13 +321,13 @@
                                 <div class="small-box bg-warning">
                                     <div class="inner">
                                         <h3>{{ stats.users.active_users }}</h3>
-                                        <p>{% trans 'Active Users (30d)' %}</p>
+                                        <p>{{ "Active users (30 days)"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-user-check"></i>
                                     </div>
                                     <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -337,15 +339,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Pending Users' %}</h3>
+                                        <h3 class="card-title">{{ "Recent users waiting for approval"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Joined' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -353,10 +355,10 @@
                                                     <tr>
                                                         <td>{{ user.username }}</td>
                                                         <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -369,15 +371,15 @@
                             {% endif %}
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Uploaders' %}</h3>
+                                        <h3 class="card-title">{{ "Top uploaders"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Media Count' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Media count"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -385,10 +387,10 @@
                                                     <tr>
                                                         <td>{{ user.username }}</td>
                                                         <td><span class="badge badge-info">{{ user.media_count_annotated }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -401,15 +403,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Commenters' %}</h3>
+                                        <h3 class="card-title">{{ "Top commenters"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Comments' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -417,10 +419,10 @@
                                                     <tr>
                                                         <td>{{ user.user__username }}</td>
                                                         <td><span class="badge badge-primary">{{ user.comment_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -430,15 +432,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Reporters' %}</h3>
+                                        <h3 class="card-title">{{ "Top reporters"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Reports' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Reports"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -446,10 +448,10 @@
                                                     <tr>
                                                         <td>{{ user.user__username }}</td>
                                                         <td><span class="badge badge-warning">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -462,15 +464,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Likers' %}</h3>
+                                        <h3 class="card-title">{{ "Top likers"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Likes' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -478,10 +480,10 @@
                                                     <tr>
                                                         <td>{{ user.user__username }}</td>
                                                         <td><span class="badge badge-success">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -491,15 +493,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Top Dislikers' %}</h3>
+                                        <h3 class="card-title">{{ "Top dislikers"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Username' %}</th>
-                                                    <th>{% trans 'Dislikes' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -507,10 +509,10 @@
                                                     <tr>
                                                         <td>{{ user.user__username }}</td>
                                                         <td><span class="badge badge-danger">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -526,7 +528,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-video mr-2"></i>{% trans 'Media Overview' %}</h3>
+                        <h3 class="card-title"><i class="fas fa-video me-2"></i>{{ "Media"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -534,13 +536,13 @@
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h3>{{ stats.media.total }}</h3>
-                                        <p>{% trans 'Total Media' %}</p>
+                                        <p>{{ "Total media"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-file-video"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -548,13 +550,13 @@
                                 <div class="small-box bg-success">
                                     <div class="inner">
                                         <h3>{{ stats.media.by_encoding_status.success }}</h3>
-                                        <p>{% trans 'Successfully Encoded' %}</p>
+                                        <p>{{ "Encoded"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-check-circle"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=success" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -562,13 +564,13 @@
                                 <div class="small-box bg-danger">
                                     <div class="inner">
                                         <h3>{{ stats.media.failed }}</h3>
-                                        <p>{% trans 'Failed Encodings' %}</p>
+                                        <p>{{ "Failed encodings"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-times-circle"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=fail" class="small-box-footer">
-                                        {% trans 'View failed' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open failed"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -576,13 +578,13 @@
                                 <div class="small-box bg-warning">
                                     <div class="inner">
                                         <h3>{{ stats.media.encoding_queue }}</h3>
-                                        <p>{% trans 'Encoding Queue' %}</p>
+                                        <p>{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-tasks"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="small-box-footer">
-                                        {% trans 'View queue' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open encoding queue"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -592,29 +594,29 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Media by Type' %}</h3>
+                                        <h3 class="card-title">{{ "Media by type"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
                                         <table class="table table-sm">
                                             <tr>
-                                                <td><i class="fas fa-video text-danger"></i> {% trans 'Video' %}</td>
+                                                <td><i class="fas fa-video text-danger"></i> {{ "Video"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_type.video }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video" class="btn btn-sm btn-outline-primary">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-music text-info"></i> {% trans 'Audio' %}</td>
+                                                <td><i class="fas fa-music text-info"></i> {{ "Audio"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_type.audio }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio" class="btn btn-sm btn-outline-primary">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-image text-success"></i> {% trans 'Image' %}</td>
+                                                <td><i class="fas fa-image text-success"></i> {{ "Image"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_type.image }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image" class="btn btn-sm btn-outline-primary">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-file-pdf text-danger"></i> {% trans 'PDF' %}</td>
+                                                <td><i class="fas fa-file-pdf text-danger"></i> {{ "PDF"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_type.pdf }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf" class="btn btn-sm btn-outline-primary">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -623,29 +625,29 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Media by State' %}</h3>
+                                        <h3 class="card-title">{{ "Media by state"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
                                         <table class="table table-sm">
                                             <tr>
-                                                <td><i class="fas fa-globe text-success"></i> {% trans 'Public' %}</td>
+                                                <td><i class="fas fa-globe text-success"></i> {{ "Public"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_state.public }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-lock text-warning"></i> {% trans 'Private' %}</td>
+                                                <td><i class="fas fa-lock text-warning"></i> {{ "Private"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_state.private }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-eye-slash text-secondary"></i> {% trans 'Unlisted' %}</td>
+                                                <td><i class="fas fa-eye-slash text-secondary"></i> {{ "Unlisted"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.by_state.unlisted }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-star text-primary"></i> {% trans 'Featured' %}</td>
+                                                <td><i class="fas fa-star text-primary"></i> {{ "Featured"|custom_translate:LANGUAGE_CODE }}</td>
                                                 <td><strong>{{ stats.media.featured }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1" class="btn btn-sm btn-outline-info">{% trans 'View' %}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -657,7 +659,7 @@
                             <div class="col-md-12">
                                 <div class="card card-outline card-secondary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Encoding Status' %}</h3>
+                                        <h3 class="card-title">{{ "Encoding status"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
@@ -665,7 +667,7 @@
                                                 <div class="info-box">
                                                     <span class="info-box-icon bg-info"><i class="fas fa-clock"></i></span>
                                                     <div class="info-box-content">
-                                                        <span class="info-box-text">{% trans 'Pending' %}</span>
+                                                        <span class="info-box-text">{{ "Pending"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.pending }}</span>
                                                     </div>
                                                 </div>
@@ -674,7 +676,7 @@
                                                 <div class="info-box">
                                                     <span class="info-box-icon bg-warning"><i class="fas fa-spinner fa-spin"></i></span>
                                                     <div class="info-box-content">
-                                                        <span class="info-box-text">{% trans 'Running' %}</span>
+                                                        <span class="info-box-text">{{ "Running"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.running }}</span>
                                                     </div>
                                                 </div>
@@ -683,7 +685,7 @@
                                                 <div class="info-box">
                                                     <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
                                                     <div class="info-box-content">
-                                                        <span class="info-box-text">{% trans 'Success' %}</span>
+                                                        <span class="info-box-text">{{ "Success"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.success }}</span>
                                                     </div>
                                                 </div>
@@ -692,7 +694,7 @@
                                                 <div class="info-box">
                                                     <span class="info-box-icon bg-danger"><i class="fas fa-times"></i></span>
                                                     <div class="info-box-content">
-                                                        <span class="info-box-text">{% trans 'Failed' %}</span>
+                                                        <span class="info-box-text">{{ "Failed"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.fail }}</span>
                                                     </div>
                                                 </div>
@@ -707,16 +709,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Video Uploads' %}</h3>
+                                        <h3 class="card-title">{{ "Recent video uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Uploader' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -726,11 +728,11 @@
                                                         <td>{{ media.user__username|default:'-' }}</td>
                                                         <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -740,16 +742,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Audio Uploads' %}</h3>
+                                        <h3 class="card-title">{{ "Recent audio uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Uploader' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -759,11 +761,11 @@
                                                         <td>{{ media.user__username|default:'-' }}</td>
                                                         <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -773,16 +775,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent Image Uploads' %}</h3>
+                                        <h3 class="card-title">{{ "Recent image uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Uploader' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -792,11 +794,11 @@
                                                         <td>{{ media.user__username|default:'-' }}</td>
                                                         <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -806,16 +808,16 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Recent PDF Uploads' %}</h3>
+                                        <h3 class="card-title">{{ "Recent PDF uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Uploader' %}</th>
-                                                    <th>{% trans 'When' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -825,11 +827,11 @@
                                                         <td>{{ media.user__username|default:'-' }}</td>
                                                         <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -845,7 +847,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-heart mr-2"></i>{% trans 'Engagement Metrics' %}</h3>
+                        <h3 class="card-title"><i class="fas fa-heart me-2"></i>{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -853,13 +855,13 @@
                                 <div class="small-box bg-success">
                                     <div class="inner">
                                         <h3>{{ stats.engagement.total_comments }}</h3>
-                                        <p>{% trans 'Total Comments' %}</p>
+                                        <p>{{ "Total comments"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-comments"></i>
                                     </div>
                                     <a href="{% url 'admin:files_comment_changelist' %}" class="small-box-footer">
-                                        {% trans 'View all' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -867,13 +869,13 @@
                                 <div class="small-box bg-info">
                                     <div class="inner">
                                         <h3>{{ stats.engagement.total_likes|floatformat:0 }}</h3>
-                                        <p>{% trans 'Total Likes' %}</p>
+                                        <p>{{ "Total likes"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-thumbs-up"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {% trans 'View media' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -881,13 +883,13 @@
                                 <div class="small-box bg-warning">
                                     <div class="inner">
                                         <h3>{{ stats.engagement.total_dislikes|floatformat:0 }}</h3>
-                                        <p>{% trans 'Total Dislikes' %}</p>
+                                        <p>{{ "Total dislikes"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-thumbs-down"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {% trans 'View media' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -895,13 +897,13 @@
                                 <div class="small-box bg-primary">
                                     <div class="inner">
                                         <h3>{{ stats.media.total_views|floatformat:0 }}</h3>
-                                        <p>{% trans 'Total Views' %}</p>
+                                        <p>{{ "Total views"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon">
                                         <i class="fas fa-eye"></i>
                                     </div>
                                     <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {% trans 'View media' %} <i class="fas fa-arrow-circle-right"></i>
+                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -911,15 +913,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Most Liked Media' %}</h3>
+                                        <h3 class="card-title">{{ "Most liked media"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Likes' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -928,12 +930,12 @@
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-success">{{ media.likes }}</span></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
-                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -943,15 +945,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Most Viewed Media' %}</h3>
+                                        <h3 class="card-title">{{ "Most viewed media"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Views' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Views"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -960,12 +962,12 @@
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-primary">{{ media.views }}</span></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
-                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -978,15 +980,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Most Commented Media' %}</h3>
+                                        <h3 class="card-title">{{ "Most commented media"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Comments' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -995,12 +997,12 @@
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-info">{{ media.comment_count }}</span></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
-                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -1010,15 +1012,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Most Disliked Media' %}</h3>
+                                        <h3 class="card-title">{{ "Most disliked media"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans 'Title' %}</th>
-                                                    <th>{% trans 'Dislikes' %}</th>
-                                                    <th>{% trans 'Action' %}</th>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1027,12 +1029,12 @@
                                                         <td>{{ media.title|truncatechars:40 }}</td>
                                                         <td><span class="badge badge-danger">{{ media.dislikes }}</span></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{% trans 'View' %}</a>
-                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{% trans 'View on site' %}</a>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{% trans 'No data available' %}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -1048,7 +1050,7 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fas fa-server mr-2"></i>{% trans 'System & Infrastructure' %}</h3>
+                        <h3 class="card-title"><i class="fas fa-server me-2"></i>{{ "System"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -1056,7 +1058,7 @@
                                 <a href="{% url 'admin:users_channel_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-info"><i class="fas fa-folder"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">{% trans 'Channels' %}</span>
+                                        <span class="info-box-text">{{ "Channels"|custom_translate:LANGUAGE_CODE }}</span>
                                         <span class="info-box-number">{{ stats.system.total_channels }}</span>
                                     </div>
                                 </a>
@@ -1065,7 +1067,7 @@
                                 <a href="{% url 'admin:files_category_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-success"><i class="fas fa-tags"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">{% trans 'Categories' %}</span>
+                                        <span class="info-box-text">{{ "Categories"|custom_translate:LANGUAGE_CODE }}</span>
                                         <span class="info-box-number">{{ stats.system.total_categories }}</span>
                                     </div>
                                 </a>
@@ -1074,7 +1076,7 @@
                                 <a href="{% url 'admin:files_playlist_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-warning"><i class="fas fa-list"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">{% trans 'Playlists' %}</span>
+                                        <span class="info-box-text">{{ "Playlists"|custom_translate:LANGUAGE_CODE }}</span>
                                         <span class="info-box-number">{{ stats.system.total_playlists }}</span>
                                     </div>
                                 </a>
@@ -1083,7 +1085,7 @@
                                 <div class="info-box">
                                     <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">{% trans 'Encoding Failures' %}</span>
+                                        <span class="info-box-text">{{ "Encoding failures"|custom_translate:LANGUAGE_CODE }}</span>
                                         <span class="info-box-number">{{ stats.system.encoding_failures }}</span>
                                     </div>
                                 </div>
@@ -1093,13 +1095,13 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h3 class="card-title">{% trans 'Encoding Queue' %}</h3>
+                                        <h3 class="card-title">{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
                                         <h4>{{ stats.system.encoding_queue }}</h4>
-                                        <p class="text-muted">{% trans 'Media pending or running encoding' %}</p>
+                                        <p class="text-muted">{{ "Media with encoding pending or running"|custom_translate:LANGUAGE_CODE }}</p>
                                         <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="btn btn-warning">
-                                            {% trans 'View Queue' %}
+                                            {{ "Open encoding queue"|custom_translate:LANGUAGE_CODE }}
                                         </a>
                                     </div>
                                 </div>
@@ -1116,7 +1118,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-th-large mr-2"></i>{% trans 'Applications' %}</h3>
+                    <h3 class="card-title"><i class="fas fa-th-large me-2"></i>{{ "Applications"|custom_translate:LANGUAGE_CODE }}</h3>
                 </div>
                 <div class="card-body">
                     {% for app in app_list %}

@@ -30,9 +30,14 @@ class ObjectActionsChangeFormTest(TestCase):
         response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "object-tools-actions")
-        self.assertContains(response, "Generate missing encoding(s)")
+        self.assertContains(response, "Generate missing encodings")
+        self.assertContains(response, "---------")
         self.assertContains(response, reverse("admin:files_media_object_action", args=[self.media.pk]))
-        self.assertNotContains(response, 'name="action" value="delete_selected"')
+        self.assertContains(response, 'id="id_object_action"')
+        self.assertContains(response, "object-tools-actions-go")
+        choice_values = [value for value, _label, _disabled in response.context["object_action_choices"]]
+        self.assertIn("generate_missing_encodings", choice_values)
+        self.assertNotIn("delete_selected", choice_values)
         self.assertIn("generate_missing_encodings", [a["name"] for a in response.context["object_actions"]])
         self.assertNotIn("delete_selected", [a["name"] for a in response.context["object_actions"]])
 
@@ -40,6 +45,7 @@ class ObjectActionsChangeFormTest(TestCase):
         response = self.client.get(reverse("admin:files_comment_change", args=[self.comment.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context.get("object_actions") or [], [])
+        self.assertEqual(response.context.get("object_action_choices") or [], [])
         self.assertNotContains(response, "object-tools-actions")
 
     def test_object_action_runs_bulk_action_for_single_object(self):

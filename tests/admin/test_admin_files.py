@@ -323,13 +323,30 @@ class DeleteOriginalMediaAdminTest(AdminRequestMixin, TestCase):
             {
                 "action": "delete_original_media_files",
                 "apply": "1",
-                "confirmation_text": "not sure",
+                "confirmation_text": "not-the-token",
                 "_selected_action": [self.video.pk],
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(media_has_original_file(self.video))
         self.assertFalse(MediaAction.objects.filter(media=self.video, action="original_deleted").exists())
+
+    def test_confirmation_rejects_wrong_case_token(self):
+        self.assertTrue(media_has_original_file(self.video))
+        wrong_case = self.video.friendly_token.swapcase()
+        if wrong_case == self.video.friendly_token:
+            wrong_case = self.video.friendly_token + "X"
+        response = self.client.post(
+            reverse("admin:files_media_changelist"),
+            {
+                "action": "delete_original_media_files",
+                "apply": "1",
+                "confirmation_text": wrong_case,
+                "_selected_action": [self.video.pk],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(media_has_original_file(self.video))
 
     def test_confirmation_deletes_original_and_audits(self):
         path = self.video.media_file.path
@@ -339,7 +356,7 @@ class DeleteOriginalMediaAdminTest(AdminRequestMixin, TestCase):
             {
                 "action": "delete_original_media_files",
                 "apply": "1",
-                "confirmation_text": "I am sure",
+                "confirmation_text": self.video.friendly_token,
                 "_selected_action": [self.video.pk],
             },
         )

@@ -1,21 +1,25 @@
 {% extends "admin/base_site.html" %}
-{% load i18n l10n admin_urls %}
+{% load i18n l10n admin_urls custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
 
 {% block content %}
-<div id="content-main">
-    <h1>{% trans "Change media owner" %}</h1>
+<div id="content-main" class="admin-confirm-page">
+    <h1>{{ "Change media owner"|custom_translate:LANGUAGE_CODE }}</h1>
 
-    <p>{% trans "Transfer ownership of the selected media to another user. Related MediaPermission owner_user rows are updated." %}</p>
+    <p>{{ "Change the owner of the selected media. Related owner permissions update."|custom_translate:LANGUAGE_CODE }}</p>
 
-    <h2>{% trans "Selected media" %}</h2>
+    <h2>{{ "Selected media"|custom_translate:LANGUAGE_CODE }}</h2>
     <ul>
         {% for media in media_items %}
         <li>
             <strong>{{ media.title|truncatechars:60 }}</strong>
-            ({{ media.friendly_token }}) — {% trans "current owner" %}: {{ media.user.username }}
+            (<code class="media-id" dir="ltr">{{ media.friendly_token }}</code>) —
+            {{ "Current owner"|custom_translate:LANGUAGE_CODE }}:
+            <span class="media-id" dir="ltr">{{ media.user.username }}</span>
         </li>
         {% empty %}
-        <li>{% trans "No media selected." %}</li>
+        <li>{{ "No media selected."|custom_translate:LANGUAGE_CODE }}</li>
         {% endfor %}
     </ul>
 
@@ -28,12 +32,12 @@
         {% endfor %}
 
         <div>
-            <label for="id_new_owner">{% trans "New owner username" %}:</label>
-            <input type="text" name="new_owner" id="id_new_owner" value="{{ new_owner }}" required autocomplete="off">
+            <label for="id_new_owner">{{ "New owner username"|custom_translate:LANGUAGE_CODE }}:</label>
+            <input type="text" name="new_owner" id="id_new_owner" class="media-id-input" dir="ltr" value="{{ new_owner }}" required autocomplete="off" spellcheck="false">
         </div>
-        <div style="margin-top: 1em;">
-            <input type="submit" class="default" value="{% trans 'Change owner' %}">
-            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "No, take me back" %}</a>
+        <div class="submit-row" style="margin-top: 1em;">
+            <input type="submit" class="default" value="{{ "Change owner"|custom_translate:LANGUAGE_CODE }}">
+            <a href="{{ cancel_url }}" class="button cancel-link">{{ "Cancel"|custom_translate:LANGUAGE_CODE }}</a>
         </div>
     </form>
 </div>

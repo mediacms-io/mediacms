@@ -11,46 +11,24 @@ from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
-from files.admin_helpers import (
-    ReadOnlyTabularInline,
-    admin_change_link,
-    admin_change_url,
-    admin_changelist_link,
-    admin_changelist_url,
-    join_links,
-)
-from files.methods import (
-    can_delete_original_media_file,
-    change_media_owner,
-    clear_media_reports,
-    confirm_media_reports,
-    delete_original_media_file,
-    is_mediacms_editor,
-    media_has_original_file,
-    record_moderation_action,
-    set_media_reviewed,
-)
+from admin_customizations.action_choices import (GroupedActionForm,
+                                                 build_grouped_action_choices)
+from files.admin_helpers import (ReadOnlyTabularInline, admin_change_link,
+                                 admin_change_url, admin_changelist_link,
+                                 admin_changelist_url, join_links)
+from files.methods import (can_delete_original_media_file, change_media_owner,
+                           clear_media_reports, confirm_media_reports,
+                           delete_original_media_file, is_mediacms_editor,
+                           media_has_original_file, record_moderation_action,
+                           set_media_reviewed)
 from files.models.utils import PREVIEW_PROFILE_NAME
 from rbac.models import RBACGroup
 from users.models import User
 
-from .models import (
-    Category,
-    Comment,
-    EncodeProfile,
-    Encoding,
-    Language,
-    Media,
-    MediaPermission,
-    Page,
-    Playlist,
-    PlaylistMedia,
-    Subtitle,
-    Tag,
-    TinyMCEMedia,
-    TranscriptionRequest,
-    VideoTrimRequest,
-)
+from .models import (Category, Comment, EncodeProfile, Encoding, Language,
+                     Media, MediaPermission, Page, Playlist, PlaylistMedia,
+                     Subtitle, Tag, TinyMCEMedia, TranscriptionRequest,
+                     VideoTrimRequest)
 
 # Open reports plus moderation audit events shown on the Media "Reports" tab.
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
@@ -192,6 +170,57 @@ class MediaAdmin(admin.ModelAdmin):
     list_select_related = ("user", "channel")
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
+    action_form = GroupedActionForm
+    action_groups = [
+        [
+            "generate_missing_encodings",
+            "force_reencode",
+            "regenerate_thumbnails",
+            "regenerate_sprites",
+            "regenerate_preview",
+            "regenerate_hls",
+            "refresh_derivatives",
+        ],
+        [
+            "mark_as_reviewed",
+            "mark_as_unreviewed",
+            "clear_reports",
+            "confirm_reports_set_private",
+            "clear_reports_keep_private",
+            "clear_reports_set_public",
+        ],
+        [
+            "set_state_public",
+            "set_state_private",
+            "set_state_unlisted",
+        ],
+        [
+            "enable_download",
+            "disable_download",
+            "enable_comments",
+            "disable_comments",
+            "feature_selected",
+            "unfeature_selected",
+        ],
+        [
+            "change_owner",
+            "delete_original_media_files",
+        ],
+        [
+            "delete_selected",
+        ],
+    ]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            func, name, _description = actions["delete_selected"]
+            actions["delete_selected"] = (func, name, "Delete selected media")
+        return actions
+
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
+
     readonly_fields = (
         "link_user",
         "tags",
@@ -391,7 +420,7 @@ class MediaAdmin(admin.ModelAdmin):
             context.update(extra)
         return context
 
-    @admin.action(description="Generate missing encoding(s)", permissions=["change"])
+    @admin.action(description="Generate missing encodings", permissions=["change"])
     def generate_missing_encodings(self, request, queryset):
         queued = 0
         skipped = 0
@@ -501,7 +530,7 @@ class MediaAdmin(admin.ModelAdmin):
             messages.SUCCESS if done else messages.WARNING,
         )
 
-    @admin.action(description="Refresh derivatives (thumbs/sprites/preview/HLS)", permissions=["change"])
+    @admin.action(description="Refresh all derivatives", permissions=["change"])
     def refresh_derivatives(self, request, queryset):
         from files.tasks import create_hls
 
@@ -546,20 +575,20 @@ class MediaAdmin(admin.ModelAdmin):
                 count += 1
         self.message_user(request, f"Marked {count} media item(s) as reviewed.", messages.SUCCESS)
 
-    @admin.action(description="Mark as unreviewed", permissions=["change"])
+    @admin.action(description="Mark as not reviewed", permissions=["change"])
     def mark_as_unreviewed(self, request, queryset):
         count = 0
         for media in queryset:
             if set_media_reviewed(media, False, user=request.user):
                 count += 1
-        self.message_user(request, f"Marked {count} media item(s) as unreviewed.", messages.SUCCESS)
+        self.message_user(request, f"Marked {count} media item(s) as not reviewed.", messages.SUCCESS)
 
     @admin.action(description="Clear reports", permissions=["clear_reports"])
     def clear_reports(self, request, queryset):
         count = clear_media_reports(queryset, user=request.user)
         self.message_user(request, f"Cleared reports for {count} media item(s).", messages.SUCCESS)
 
-    @admin.action(description="Confirm reports: set private", permissions=["change"])
+    @admin.action(description="Confirm reports and set private", permissions=["change"])
     def confirm_reports_set_private(self, request, queryset):
         count = confirm_media_reports(queryset, user=request.user)
         self.message_user(
@@ -568,7 +597,7 @@ class MediaAdmin(admin.ModelAdmin):
             messages.SUCCESS,
         )
 
-    @admin.action(description="Clear reports, keep private", permissions=["clear_reports"])
+    @admin.action(description="Clear reports and keep private", permissions=["clear_reports"])
     def clear_reports_keep_private(self, request, queryset):
         cleared = clear_media_reports(queryset, user=request.user)
         for media in queryset:
@@ -580,7 +609,7 @@ class MediaAdmin(admin.ModelAdmin):
             messages.SUCCESS,
         )
 
-    @admin.action(description="Clear reports, set public", permissions=["clear_reports"])
+    @admin.action(description="Clear reports and set public", permissions=["clear_reports"])
     def clear_reports_set_public(self, request, queryset):
         cleared = clear_media_reports(queryset, user=request.user)
         for media in queryset:
@@ -592,7 +621,7 @@ class MediaAdmin(admin.ModelAdmin):
             messages.SUCCESS,
         )
 
-    @admin.action(description="Set state: public", permissions=["change"])
+    @admin.action(description="Set public", permissions=["change"])
     def set_state_public(self, request, queryset):
         count = 0
         for media in queryset:
@@ -601,7 +630,7 @@ class MediaAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f"Set {count} media item(s) to public.", messages.SUCCESS)
 
-    @admin.action(description="Set state: private", permissions=["change"])
+    @admin.action(description="Set private", permissions=["change"])
     def set_state_private(self, request, queryset):
         count = 0
         for media in queryset:
@@ -610,7 +639,7 @@ class MediaAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f"Set {count} media item(s) to private.", messages.SUCCESS)
 
-    @admin.action(description="Set state: unlisted", permissions=["change"])
+    @admin.action(description="Set unlisted", permissions=["change"])
     def set_state_unlisted(self, request, queryset):
         count = 0
         for media in queryset:
@@ -639,17 +668,17 @@ class MediaAdmin(admin.ModelAdmin):
         updated = queryset.update(enable_comments=False)
         self.message_user(request, f"Disabled comments for {updated} media item(s).", messages.SUCCESS)
 
-    @admin.action(description="Feature selected", permissions=["change"])
+    @admin.action(description="Feature", permissions=["change"])
     def feature_selected(self, request, queryset):
         updated = queryset.update(featured=True)
         self.message_user(request, f"Featured {updated} media item(s).", messages.SUCCESS)
 
-    @admin.action(description="Unfeature selected", permissions=["change"])
+    @admin.action(description="Unfeature", permissions=["change"])
     def unfeature_selected(self, request, queryset):
         updated = queryset.update(featured=False)
         self.message_user(request, f"Unfeatured {updated} media item(s).", messages.SUCCESS)
 
-    @admin.action(description="Delete original media file", permissions=["delete_original"])
+    @admin.action(description="Delete original file", permissions=["delete_original"])
     def delete_original_media_files(self, request, queryset):
         queryset = self._media_action_queryset(request, queryset)
         eligible = []
@@ -661,12 +690,15 @@ class MediaAdmin(admin.ModelAdmin):
             else:
                 blocked.append({"media": media, "reason": reason})
 
+        expected_tokens = [media.friendly_token for media in eligible]
+
         if "apply" in request.POST:
             confirmation = (request.POST.get("confirmation_text") or "").strip()
-            if confirmation != "I am sure":
-                self.message_user(request, 'Confirmation text must be exactly "I am sure".', messages.ERROR)
+            entered_tokens = {line.strip() for line in confirmation.splitlines() if line.strip()}
+            if entered_tokens != set(expected_tokens):
+                self.message_user(request, "The media ID does not match. Enter the exact media ID.", messages.ERROR)
             elif not eligible:
-                self.message_user(request, "No eligible media selected for original file deletion.", messages.ERROR)
+                self.message_user(request, "No media can be deleted. Change the selection and try again.", messages.ERROR)
             else:
                 deleted = 0
                 failed = 0
@@ -694,6 +726,7 @@ class MediaAdmin(admin.ModelAdmin):
                 "eligible": eligible,
                 "blocked": blocked,
                 "can_confirm": bool(eligible),
+                "expected_tokens": expected_tokens,
             },
         )
         return TemplateResponse(request, "admin/files/media/delete_original_confirmation.html", context)
@@ -940,6 +973,14 @@ class EncodingAdmin(admin.ModelAdmin):
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
     actions = ["retry_failed_encodings"]
+    action_form = GroupedActionForm
+    action_groups = [
+        ["retry_failed_encodings"],
+        ["delete_selected"],
+    ]
+
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
 
     @admin.display(description="Encoding", ordering="media__title")
     def get_title(self, obj):

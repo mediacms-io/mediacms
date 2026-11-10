@@ -1,38 +1,44 @@
 {% extends "admin/base_site.html" %}
-{% load i18n l10n admin_urls %}
+{% load i18n l10n admin_urls custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
 
 {% block content %}
-<div id="content-main">
-    <h1>{% trans "Delete original media files" %}</h1>
+<div id="content-main" class="admin-confirm-page">
+    <h1>{{ "Delete original media files"|custom_translate:LANGUAGE_CODE }}</h1>
 
-    <p class="errornote">
-        {% trans "This permanently deletes the uploaded original file from disk. The Media row, encodings, HLS, thumbnails, and sprites are kept. Re-encode, new thumbnails/sprites, trim, and transcription will fail without the original. The database path remains as a stale reference. This cannot be undone without re-uploading." %}
-    </p>
+    <div class="errornote">
+        <p>{{ "This action deletes the original file from disk."|custom_translate:LANGUAGE_CODE }}</p>
+        <p>{{ "The media record stays. Encodings, HLS, thumbnails, and sprites stay."|custom_translate:LANGUAGE_CODE }}</p>
+        <p>{{ "You cannot encode, create thumbnails, create sprites, trim, or transcribe without the original file."|custom_translate:LANGUAGE_CODE }}</p>
+        <p>{{ "The file path in the database becomes invalid."|custom_translate:LANGUAGE_CODE }}</p>
+        <p>{{ "You cannot undo this action. Upload the file again if you need the original."|custom_translate:LANGUAGE_CODE }}</p>
+    </div>
 
     {% if blocked %}
-    <h2>{% trans "Blocked (will not be deleted)" %}</h2>
+    <h2>{{ "Cannot delete"|custom_translate:LANGUAGE_CODE }}</h2>
     <ul>
         {% for item in blocked %}
         <li>
             <strong>{{ item.media.title|truncatechars:60 }}</strong>
-            ({{ item.media.friendly_token }}) — {{ item.reason }}
+            (<code class="media-id" dir="ltr">{{ item.media.friendly_token }}</code>) — {{ item.reason }}
         </li>
         {% endfor %}
     </ul>
     {% endif %}
 
     {% if eligible %}
-    <h2>{% trans "Eligible for deletion" %}</h2>
+    <h2>{{ "Can delete"|custom_translate:LANGUAGE_CODE }}</h2>
     <ul>
         {% for media in eligible %}
         <li>
             <strong>{{ media.title|truncatechars:60 }}</strong>
-            ({{ media.friendly_token }}) — {{ media.media_type }}, encoding={{ media.encoding_status }}
+            (<code class="media-id" dir="ltr">{{ media.friendly_token }}</code>) — {{ media.media_type }}, encoding={{ media.encoding_status }}
         </li>
         {% endfor %}
     </ul>
     {% else %}
-    <p><strong>{% trans "No eligible media. Fix encodings or selection, then try again." %}</strong></p>
+    <p><strong>{{ "No media can be deleted. Change the selection and try again."|custom_translate:LANGUAGE_CODE }}</strong></p>
     {% endif %}
 
     <form method="post">
@@ -44,19 +50,23 @@
         {% endfor %}
 
         {% if can_confirm %}
-        <div>
-            <label for="id_confirmation_text">
-                {% trans 'Type' %} <strong>I am sure</strong> {% trans 'to confirm:' %}
-            </label>
-            <input type="text" name="confirmation_text" id="id_confirmation_text" autocomplete="off" required>
+        <div class="confirm-token-block">
+            <p>{{ "To confirm, enter the media ID:"|custom_translate:LANGUAGE_CODE }}</p>
+            <ul class="confirm-token-list">
+                {% for token in expected_tokens %}
+                <li><code class="media-id" dir="ltr">{{ token }}</code></li>
+                {% endfor %}
+            </ul>
+            <label for="id_confirmation_text" class="sr-only">{{ "To confirm, enter the media ID:"|custom_translate:LANGUAGE_CODE }}</label>
+            <textarea name="confirmation_text" id="id_confirmation_text" class="media-id-input" dir="ltr" rows="{% if expected_tokens|length > 1 %}{{ expected_tokens|length }}{% else %}1{% endif %}" autocomplete="off" spellcheck="false" required></textarea>
         </div>
-        <div style="margin-top: 1em;">
-            <input type="submit" class="default" value="{% trans 'Yes, delete original files' %}">
-            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "No, take me back" %}</a>
+        <div class="submit-row" style="margin-top: 1em;">
+            <input type="submit" class="default" value="{{ "Delete original files"|custom_translate:LANGUAGE_CODE }}">
+            <a href="{{ cancel_url }}" class="button cancel-link">{{ "Cancel"|custom_translate:LANGUAGE_CODE }}</a>
         </div>
         {% else %}
-        <div style="margin-top: 1em;">
-            <a href="{{ cancel_url }}" class="button cancel-link">{% trans "Back to media list" %}</a>
+        <div class="submit-row" style="margin-top: 1em;">
+            <a href="{{ cancel_url }}" class="button cancel-link">{{ "Back to media list"|custom_translate:LANGUAGE_CODE }}</a>
         </div>
         {% endif %}
     </form>
