@@ -11,24 +11,50 @@ from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
-from admin_customizations.action_choices import (GroupedActionForm,
-                                                 build_grouped_action_choices)
-from files.admin_helpers import (ReadOnlyTabularInline, admin_change_link,
-                                 admin_change_url, admin_changelist_link,
-                                 admin_changelist_url, join_links)
-from files.methods import (can_delete_original_media_file, change_media_owner,
-                           clear_media_reports, confirm_media_reports,
-                           delete_original_media_file, is_mediacms_editor,
-                           media_has_original_file, record_moderation_action,
-                           set_media_reviewed)
+from admin_customizations.action_choices import (
+    GroupedActionForm,
+    build_grouped_action_choices,
+)
+from files.admin_helpers import (
+    ReadOnlyTabularInline,
+    admin_change_link,
+    admin_change_url,
+    admin_changelist_link,
+    admin_changelist_url,
+    join_links,
+)
+from files.methods import (
+    can_delete_original_media_file,
+    change_media_owner,
+    clear_media_reports,
+    confirm_media_reports,
+    delete_original_media_file,
+    is_mediacms_editor,
+    media_has_original_file,
+    record_moderation_action,
+    set_media_reviewed,
+)
 from files.models.utils import PREVIEW_PROFILE_NAME
 from rbac.models import RBACGroup
 from users.models import User
 
-from .models import (Category, Comment, EncodeProfile, Encoding, Language,
-                     Media, MediaPermission, Page, Playlist, PlaylistMedia,
-                     Subtitle, Tag, TinyMCEMedia, TranscriptionRequest,
-                     VideoTrimRequest)
+from .models import (
+    Category,
+    Comment,
+    EncodeProfile,
+    Encoding,
+    Language,
+    Media,
+    MediaPermission,
+    Page,
+    Playlist,
+    PlaylistMedia,
+    Subtitle,
+    Tag,
+    TinyMCEMedia,
+    TranscriptionRequest,
+    VideoTrimRequest,
+)
 
 # Open reports plus moderation audit events shown on the Media "Reports" tab.
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)

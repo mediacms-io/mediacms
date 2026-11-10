@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.contrib import admin, messages
 
-from admin_customizations.action_choices import (GroupedActionForm,
-                                                 build_grouped_action_choices)
+from admin_customizations.action_choices import (
+    GroupedActionForm,
+    build_grouped_action_choices,
+)
 from files.admin_helpers import admin_change_link, admin_changelist_link
 from files.models import Comment, Media, Playlist
 

@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.test import RequestFactory, TestCase
 
-from admin_customizations.action_choices import (ACTIONS_PLACEHOLDER,
-                                                 SEPARATOR_LABEL,
-                                                 SEPARATOR_PREFIX,
-                                                 build_grouped_action_choices,
-                                                 is_separator_choice)
+from admin_customizations.action_choices import (
+    ACTIONS_PLACEHOLDER,
+    SEPARATOR_LABEL,
+    SEPARATOR_PREFIX,
+    build_grouped_action_choices,
+    is_separator_choice,
+)
 from files.models import Media
 from files.tests import create_account
 
