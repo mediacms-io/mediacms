@@ -10,8 +10,21 @@ from django.db import models
 from django.utils import timezone
 
 from actions.models import MediaAction
-from files.models import Category, Comment, Media, Playlist, PlaylistMedia, Tag
-from users.models import User
+from files.models import (
+    Category,
+    Comment,
+    Language,
+    Media,
+    MediaPermission,
+    Page,
+    Playlist,
+    PlaylistMedia,
+    Subtitle,
+    Tag,
+    VideoChapterData,
+    VideoTrimRequest,
+)
+from users.models import Channel, User
 
 
 class Command(BaseCommand):
@@ -46,18 +59,22 @@ class Command(BaseCommand):
         users = self.create_users()
         self.stdout.write(self.style.SUCCESS(f'Created {len(users)} users'))
 
-        # Step 2: Setup tags and categories
+        # Step 2: Enrich default channels and create additional ones
+        channels = self.setup_channels(users)
+        self.stdout.write(self.style.SUCCESS(f'Set up {len(channels)} channels'))
+
+        # Step 3: Setup tags and categories
         tags = self.setup_tags(users)
         categories = self.setup_categories()
         self.stdout.write(self.style.SUCCESS(f'Created {len(tags)} tags and {len(categories)} categories'))
 
-        # Step 3: Get fixture files
+        # Step 4: Get fixture files
         fixture_files = self.get_fixture_files()
         if not fixture_files:
             self.stdout.write(self.style.ERROR('No fixture files found. Please ensure fixture files exist.'))
             return
 
-        # Step 4: Generate media records
+        # Step 5: Generate media records
         created_media = []
         reported_media = []
 
@@ -84,32 +101,62 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'Created {len(created_media)} media records'))
 
-        # Step 5: Create playlists and assign media
+        # Step 6: Create playlists and assign media
         playlists = self.create_playlists(users)
         self.stdout.write(self.style.SUCCESS(f'Created {len(playlists)} playlists'))
 
         self.assign_media_to_playlists(created_media, playlists)
         self.stdout.write(self.style.SUCCESS('Assigned media to playlists'))
 
-        # Step 6: Create MediaAction records (reports, likes, dislikes, watches)
+        # Step 7: Create MediaAction records (reports, likes, dislikes, watches)
         self.create_media_actions(created_media, reported_media, users)
         self.stdout.write(self.style.SUCCESS('Created MediaAction records'))
 
-        # Step 7: Create comments
+        # Step 8: Create comments
         comments = self.create_comments(created_media, users)
         self.stdout.write(self.style.SUCCESS(f'Created {len(comments)} comments'))
 
-        # Step 8: Update reported_times for reported media
+        # Step 9: Update reported_times for reported media
         for media in reported_media:
             report_count = MediaAction.objects.filter(media=media, action='report').count()
             media.reported_times = report_count
             media.save(update_fields=['reported_times'])
 
-        # Step 9: Post-processing
+        # Step 10: Create subtitles and chapters for eligible videos
+        subtitle_count, chapter_count = self.create_subtitles_and_chapters(created_media)
+        self.stdout.write(self.style.SUCCESS(f'Created {subtitle_count} subtitles and {chapter_count} chapter sets'))
+
+        # Step 11: Create media permissions with common share patterns
+        permission_count = self.create_media_permissions(created_media, users)
+        self.stdout.write(self.style.SUCCESS(f'Created {permission_count} media permissions'))
+
+        # Step 12: Create video trim requests
+        trim_request_count = self.create_trim_requests(created_media)
+        self.stdout.write(self.style.SUCCESS(f'Created {trim_request_count} video trim requests'))
+
+        # Step 13: Create CMS pages
+        pages = self.create_pages()
+        self.stdout.write(self.style.SUCCESS(f'Ensured {len(pages)} CMS pages'))
+
+        # Step 14: Post-processing
         self.post_process(created_media, tags, categories)
 
-        # Step 10: Display summary
-        self.display_summary(created_media, users, tags, categories, reported_media, playlists, comments)
+        # Step 15: Display summary
+        self.display_summary(
+            created_media,
+            users,
+            tags,
+            categories,
+            reported_media,
+            playlists,
+            comments,
+            channels=channels,
+            subtitle_count=subtitle_count,
+            chapter_count=chapter_count,
+            permission_count=permission_count,
+            trim_request_count=trim_request_count,
+            pages=pages,
+        )
 
         self.stdout.write(self.style.SUCCESS(f'\nSuccessfully populated {count} fake media records!'))
 
@@ -164,6 +211,64 @@ class Command(BaseCommand):
             users.append(user)
 
         return users
+
+    def setup_channels(self, users):
+        """Enrich auto-created default channels, add extras, and wire subscribers."""
+        channel_themes = [
+            ('Tech Talks', 'Talks and demos about technology and software.'),
+            ('Campus Lectures', 'Recorded lectures and course sessions.'),
+            ('Creative Studio', 'Original creative media and experiments.'),
+            ('Sports Highlights', 'Game clips, highlights, and analysis.'),
+            ('Music Lab', 'Performances, mixes, and audio projects.'),
+            ('Science Hour', 'Science explainers and lab demos.'),
+            ('Travel Diaries', 'Trips, places, and field recordings.'),
+            ('News Desk', 'Updates, briefings, and announcements.'),
+            ('Workshop Series', 'Hands-on workshops and how-to sessions.'),
+            ('Archive', 'Older media kept for reference.'),
+        ]
+
+        channels = []
+        for user in users:
+            user_channels = list(user.channels.order_by('add_date'))
+            default = user_channels[0] if user_channels else None
+
+            if default:
+                # Give the auto-created "default" channel a real title/description
+                first_name = (user.name or user.username).split()[0]
+                default.title = f"{first_name}'s Channel"
+                default.description = (
+                    f"Primary channel for {user.name or user.username}. "
+                    "Demo content generated for dashboard testing."
+                )
+                default.save(update_fields=['title', 'description'])
+                channels.append(default)
+
+            # ~35% of users get 1–2 additional themed channels
+            if random.random() < 0.35:
+                extra_count = random.randint(1, 2)
+                themes = random.sample(channel_themes, min(extra_count, len(channel_themes)))
+                for title, description in themes:
+                    channel = Channel.objects.create(
+                        user=user,
+                        title=title,
+                        description=description,
+                    )
+                    channels.append(channel)
+
+        # Add overlapping subscriber relationships so channels look active
+        if len(users) >= 2:
+            for channel in channels:
+                # Deterministic-ish pool so the same users subscribe in common combinations
+                others = [u for u in users if u.pk != channel.user_id]
+                if not others:
+                    continue
+                rng = random.Random(channel.pk)
+                shuffled = others[:]
+                rng.shuffle(shuffled)
+                num_subscribers = random.randint(1, min(5, len(shuffled)))
+                channel.subscribers.add(*shuffled[:num_subscribers])
+
+        return channels
 
     def setup_tags(self, users):
         """Create 20-30 fake tags"""
@@ -265,12 +370,16 @@ class Command(BaseCommand):
         fixture_dir = os.path.join(settings.BASE_DIR, 'fixtures')
         fixture_files = []
 
-        # List of fixture files to look for
+        # List of fixture files to look for (images/videos shipped with the repo;
+        # sample_audio.wav and sample_document.pdf are original unrestricted samples)
         files_to_check = [
             'test_image.png',
             'test_image2.jpg',
             'small_video.mp4',
             'medium_video.mp4',
+            'sample_audio.wav',
+            'sample_audio.mp3',
+            'sample_document.pdf',
         ]
 
         for filename in files_to_check:
@@ -473,6 +582,8 @@ class Command(BaseCommand):
             media_type = 'image'
         elif ext in ['.mp4', '.webm', '.avi']:
             media_type = 'video'
+        elif ext in ['.mp3', '.wav', '.ogg', '.m4a', '.flac']:
+            media_type = 'audio'
         elif ext == '.pdf':
             media_type = 'pdf'
         else:
@@ -524,6 +635,12 @@ class Command(BaseCommand):
             duration = random.randint(30, 3600)  # 30 seconds to 1 hour
             video_height = random.choice([360, 480, 720, 1080])
 
+        # Assign most media to one of the owner's channels
+        channel = None
+        owner_channels = list(user.channels.all())
+        if owner_channels and random.random() < 0.85:
+            channel = random.choice(owner_channels)
+
         # Open fixture file and create media
         with open(fixture_file_path, 'rb') as f:
             media_file = File(f, name=filename)
@@ -536,6 +653,7 @@ class Command(BaseCommand):
                 description=description,
                 media_file=media_file,
                 media_type=media_type,
+                channel=channel,
                 add_date=add_date,
                 views=views,
                 likes=likes,
@@ -786,6 +904,320 @@ class Command(BaseCommand):
 
         return all_comments
 
+    def _sample_vtt_path(self, filename):
+        """Resolve a sample VTT path under frontend-tools/video-js/public."""
+        return os.path.join(settings.BASE_DIR, 'frontend-tools', 'video-js', 'public', filename)
+
+    def _parse_chapters_vtt(self, vtt_path):
+        """Parse a WebVTT chapters file into VideoChapterData JSON entries."""
+        chapters = []
+        with open(vtt_path, 'r', encoding='utf-8') as f:
+            lines = [line.strip() for line in f.readlines()]
+
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if '-->' in line:
+                parts = line.split('-->')
+                if len(parts) == 2:
+                    start_time = parts[0].strip()
+                    end_time = parts[1].strip()
+                    title_parts = []
+                    i += 1
+                    while i < len(lines) and lines[i] and '-->' not in lines[i] and not lines[i].startswith('NOTE'):
+                        title_parts.append(lines[i])
+                        i += 1
+                    chapter_title = ' '.join(title_parts).strip()
+                    if chapter_title:
+                        chapters.append(
+                            {
+                                'startTime': start_time,
+                                'endTime': end_time,
+                                'chapterTitle': chapter_title,
+                            }
+                        )
+                    continue
+            i += 1
+        return chapters
+
+    def _attach_subtitle(self, media, language, vtt_path, filename):
+        """Attach a VTT caption file to media for the given language."""
+        subtitle = Subtitle(language=language, media=media, user=media.user)
+        with open(vtt_path, 'rb') as f:
+            subtitle.subtitle_file.save(filename, File(f), save=False)
+        subtitle.save()
+        return subtitle
+
+    def create_subtitles_and_chapters(self, created_media):
+        """Attach sample captions/chapters to a subset of successfully encoded videos."""
+        english_vtt = self._sample_vtt_path('sample-subtitles.vtt')
+        greek_vtt = self._sample_vtt_path('sample-subtitles-greek.vtt')
+        chapters_vtt = self._sample_vtt_path('sample-chapters.vtt')
+
+        if not os.path.exists(english_vtt):
+            self.stdout.write(self.style.WARNING(f'Sample subtitles not found: {english_vtt}'))
+            english_vtt = None
+        if not os.path.exists(greek_vtt):
+            self.stdout.write(self.style.WARNING(f'Sample Greek subtitles not found: {greek_vtt}'))
+            greek_vtt = None
+        if not os.path.exists(chapters_vtt):
+            self.stdout.write(self.style.WARNING(f'Sample chapters not found: {chapters_vtt}'))
+            chapters_vtt = None
+
+        if not english_vtt and not greek_vtt and not chapters_vtt:
+            return 0, 0
+
+        english_lang, _ = Language.objects.get_or_create(code='en', defaults={'title': 'English'})
+        greek_lang, _ = Language.objects.get_or_create(code='el', defaults={'title': 'Greek'})
+
+        chapter_data = self._parse_chapters_vtt(chapters_vtt) if chapters_vtt else []
+        if chapters_vtt and not chapter_data:
+            self.stdout.write(self.style.WARNING('Sample chapters VTT parsed to empty chapter list'))
+
+        eligible = [
+            m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success'
+        ]
+        if not eligible:
+            return 0, 0
+
+        # Attach captions to ~25–35% of eligible videos
+        caption_ratio = random.uniform(0.25, 0.35)
+        caption_count = max(1, int(len(eligible) * caption_ratio))
+        captioned = random.sample(eligible, min(caption_count, len(eligible)))
+
+        subtitle_count = 0
+        for media in captioned:
+            if english_vtt:
+                self._attach_subtitle(media, english_lang, english_vtt, 'sample-subtitles.vtt')
+                subtitle_count += 1
+            # ~half of captioned videos also get Greek captions
+            if greek_vtt and random.random() < 0.5:
+                self._attach_subtitle(media, greek_lang, greek_vtt, 'sample-subtitles-greek.vtt')
+                subtitle_count += 1
+
+        # Chapters on ~40% of captioned videos (overlap for dashboard demos)
+        chapter_count = 0
+        if chapter_data and captioned:
+            chapter_target = max(1, int(len(captioned) * 0.4))
+            chaptered = random.sample(captioned, min(chapter_target, len(captioned)))
+            for media in chaptered:
+                VideoChapterData.objects.create(media=media, data=chapter_data)
+                if media.duration < 45:
+                    media.duration = 45
+                    media.save(update_fields=['duration'])
+                chapter_count += 1
+
+        return subtitle_count, chapter_count
+
+    def _owner_collaborator_pool(self, owner, users, pool_size=5):
+        """Stable-ish collaborator pool for an owner so users share in common combinations."""
+        others = [u for u in users if u.pk != owner.pk]
+        if not others:
+            return []
+        # Deterministic shuffle per owner so the same owner reuses similar collaborators
+        rng = random.Random(owner.pk)
+        shuffled = others[:]
+        rng.shuffle(shuffled)
+        return shuffled[: min(pool_size, len(shuffled))]
+
+    def _grant_permission(self, owner, user, media, permission, created_pairs):
+        """Create a MediaPermission if (user, media) is new. Returns 1 if created, else 0."""
+        key = (user.pk, media.pk)
+        if key in created_pairs:
+            return 0
+        MediaPermission.objects.create(
+            owner_user=owner,
+            user=user,
+            media=media,
+            permission=permission,
+            source=MediaPermission.SOURCE_EXPLICIT,
+        )
+        created_pairs.add(key)
+        return 1
+
+    def create_media_permissions(self, created_media, users):
+        """Create MediaPermission rows with overlapping share patterns across users."""
+        if len(users) < 2 or not created_media:
+            return 0
+
+        private_media = [m for m in created_media if m.state == 'private']
+        unlisted_media = [m for m in created_media if m.state == 'unlisted']
+        public_media = [m for m in created_media if m.state == 'public']
+        private_unlisted = private_media + unlisted_media
+
+        created_pairs = set()
+        permission_count = 0
+        assigned = set()  # media pks already assigned a primary pattern
+
+        def pick(media_list, ratio):
+            candidates = [m for m in media_list if m.pk not in assigned]
+            if not candidates:
+                return []
+            count = max(1, int(len(media_list) * ratio)) if media_list else 0
+            selected = random.sample(candidates, min(count, len(candidates)))
+            for m in selected:
+                assigned.add(m.pk)
+            return selected
+
+        # Shared private (viewers): ~20% of private
+        for media in pick(private_media, 0.20):
+            pool = self._owner_collaborator_pool(media.user, users)
+            if not pool:
+                continue
+            permission_count += self._grant_permission(media.user, media.user, media, 'owner', created_pairs)
+            num_viewers = min(random.randint(2, 4), len(pool))
+            for user in pool[:num_viewers]:
+                permission_count += self._grant_permission(media.user, user, media, 'viewer', created_pairs)
+
+        # Editor collaboration: ~15% of private/unlisted
+        for media in pick(private_unlisted, 0.15):
+            pool = self._owner_collaborator_pool(media.user, users)
+            if not pool:
+                continue
+            permission_count += self._grant_permission(media.user, media.user, media, 'owner', created_pairs)
+            permission_count += self._grant_permission(media.user, pool[0], media, 'editor', created_pairs)
+            viewer_pool = pool[1:]
+            if viewer_pool:
+                num_viewers = min(random.randint(1, 2), len(viewer_pool))
+                for user in viewer_pool[:num_viewers]:
+                    permission_count += self._grant_permission(media.user, user, media, 'viewer', created_pairs)
+
+        # Co-owner: ~8% of any state
+        for media in pick(created_media, 0.08):
+            pool = self._owner_collaborator_pool(media.user, users)
+            if not pool:
+                continue
+            permission_count += self._grant_permission(media.user, media.user, media, 'owner', created_pairs)
+            permission_count += self._grant_permission(media.user, pool[0], media, 'owner', created_pairs)
+
+        # Public collab: ~10% of public
+        for media in pick(public_media, 0.10):
+            pool = self._owner_collaborator_pool(media.user, users)
+            if not pool:
+                continue
+            permission_count += self._grant_permission(media.user, media.user, media, 'owner', created_pairs)
+            num_editors = min(random.randint(1, 2), len(pool))
+            for user in pool[:num_editors]:
+                permission_count += self._grant_permission(media.user, user, media, 'editor', created_pairs)
+
+        # Owner-self only: ~5% of any
+        for media in pick(created_media, 0.05):
+            permission_count += self._grant_permission(media.user, media.user, media, 'owner', created_pairs)
+
+        return permission_count
+
+    def _format_trim_timestamp(self, seconds):
+        """Format seconds as HH:MM:SS.mmm for trim request timestamps."""
+        seconds = max(0, float(seconds))
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = seconds % 60
+        whole = int(secs)
+        millis = int(round((secs - whole) * 1000))
+        if millis == 1000:
+            whole += 1
+            millis = 0
+        return f'{hours:02d}:{minutes:02d}:{whole:02d}.{millis:03d}'
+
+    def _random_trim_segments(self, duration):
+        """Build 1–3 trim segments that fit within the media duration."""
+        duration = max(int(duration or 0), 30)
+        num_segments = random.randint(1, 3)
+        segments = []
+        cursor = 0.0
+        remaining_slots = num_segments
+
+        for i in range(num_segments):
+            remaining_slots = num_segments - i
+            # Leave room for remaining segments (at least ~2s each)
+            max_start = max(0, duration - (remaining_slots * 2))
+            start = random.uniform(cursor, max_start) if max_start > cursor else cursor
+            max_end = duration if i == num_segments - 1 else duration - ((remaining_slots - 1) * 2)
+            min_end = min(start + 2, max_end)
+            end = random.uniform(min_end, max_end) if max_end > min_end else max_end
+            if end <= start:
+                end = min(start + 2, duration)
+            segments.append(
+                {
+                    'startTime': self._format_trim_timestamp(start),
+                    'endTime': self._format_trim_timestamp(end),
+                }
+            )
+            cursor = end
+            if cursor >= duration:
+                break
+
+        return segments
+
+    def create_trim_requests(self, created_media):
+        """Create VideoTrimRequest rows for a subset of successfully encoded videos."""
+        eligible = [
+            m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success'
+        ]
+        if not eligible:
+            return 0
+
+        # ~12–20% of eligible videos get at least one trim request
+        target = max(1, int(len(eligible) * random.uniform(0.12, 0.20)))
+        selected = random.sample(eligible, min(target, len(eligible)))
+
+        statuses = ['initial', 'running', 'success', 'fail']
+        status_weights = [0.35, 0.15, 0.35, 0.15]
+        actions = ['replace', 'save_new', 'create_segments']
+        action_weights = [0.45, 0.35, 0.20]
+        styles = ['no_encoding', 'precise']
+        style_weights = [0.7, 0.3]
+
+        created = 0
+        for media in selected:
+            # Most get one request; a few get two (e.g. retry after fail)
+            num_requests = 2 if random.random() < 0.15 else 1
+            for _ in range(num_requests):
+                VideoTrimRequest.objects.create(
+                    media=media,
+                    status=random.choices(statuses, weights=status_weights, k=1)[0],
+                    video_action=random.choices(actions, weights=action_weights, k=1)[0],
+                    media_trim_style=random.choices(styles, weights=style_weights, k=1)[0],
+                    timestamps=self._random_trim_segments(media.duration),
+                )
+                created += 1
+
+        return created
+
+    def create_pages(self):
+        """Ensure a couple of CMS pages exist for the enhanced dashboard."""
+        pages_spec = [
+            {
+                'slug': 'about',
+                'title': 'About',
+                'description': (
+                    '<p>Welcome to this MediaCMS demo portal.</p>'
+                    '<p>This About page was created by the fake media generator for dashboard testing.</p>'
+                ),
+            },
+            {
+                'slug': 'faq',
+                'title': 'FAQ',
+                'description': (
+                    '<h2>Frequently Asked Questions</h2>'
+                    '<p><strong>How do I upload media?</strong> Use the upload page after signing in.</p>'
+                    '<p><strong>Who can view private media?</strong> Owners and users with explicit share permissions.</p>'
+                ),
+            },
+        ]
+
+        pages = []
+        for spec in pages_spec:
+            page, _created = Page.objects.get_or_create(
+                slug=spec['slug'],
+                defaults={
+                    'title': spec['title'],
+                    'description': spec['description'],
+                },
+            )
+            pages.append(page)
+        return pages
+
     def post_process(self, created_media, tags, categories):
         """Post-processing: update search vectors, tag/category counts"""
         self.stdout.write('Updating search vectors...')
@@ -799,8 +1231,28 @@ class Command(BaseCommand):
         for category in categories:
             category.update_category_media()
 
-    def display_summary(self, created_media, users, tags, categories, reported_media, playlists, comments):
+    def display_summary(
+        self,
+        created_media,
+        users,
+        tags,
+        categories,
+        reported_media,
+        playlists,
+        comments,
+        channels=None,
+        subtitle_count=0,
+        chapter_count=0,
+        permission_count=0,
+        trim_request_count=0,
+        pages=None,
+    ):
         """Display summary statistics"""
+        if pages is None:
+            pages = []
+        if channels is None:
+            channels = []
+
         self.stdout.write(self.style.SUCCESS('\n' + '=' * 60))
         self.stdout.write(self.style.SUCCESS('SUMMARY STATISTICS'))
         self.stdout.write(self.style.SUCCESS('=' * 60))
@@ -808,11 +1260,29 @@ class Command(BaseCommand):
         # Basic counts
         self.stdout.write(f'\nTotal media created: {len(created_media)}')
         self.stdout.write(f'Total users: {len(users)}')
+        self.stdout.write(f'Total channels: {len(channels)}')
         self.stdout.write(f'Total tags: {len(tags)}')
         self.stdout.write(f'Total categories: {len(categories)}')
         self.stdout.write(f'Total playlists: {len(playlists)}')
         self.stdout.write(f'Total comments: {len(comments)}')
         self.stdout.write(f'Reported media: {len(reported_media)}')
+        self.stdout.write(f'Subtitles created: {subtitle_count}')
+        self.stdout.write(f'Chapter sets created: {chapter_count}')
+        self.stdout.write(f'Media permissions created: {permission_count}')
+        self.stdout.write(f'Video trim requests created: {trim_request_count}')
+        self.stdout.write(f'CMS pages: {len(pages)}')
+        if pages:
+            for page in pages:
+                self.stdout.write(f'  /{page.slug} — {page.title}')
+
+        if channels:
+            media_with_channel = sum(1 for m in created_media if m.channel_id)
+            users_with_extra = sum(1 for u in users if u.channels.count() > 1)
+            self.stdout.write('\nChannel statistics:')
+            self.stdout.write(f'  Media assigned to a channel: {media_with_channel}')
+            self.stdout.write(f'  Users with extra channels: {users_with_extra}')
+            subscriber_total = sum(c.subscribers.count() for c in channels)
+            self.stdout.write(f'  Total channel subscriptions: {subscriber_total}')
 
         # Breakdown by state
         self.stdout.write('\nBreakdown by state:')
