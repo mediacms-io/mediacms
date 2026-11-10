@@ -18,18 +18,21 @@ def admin_changelist_link(model, text, **query):
     return format_html('<a href="{}">{}</a>', admin_changelist_url(model, **query), text)
 
 
-def admin_change_url(obj):
+def admin_change_url(obj, fragment=None):
     if obj is None or obj.pk is None:
         return ""
     opts = obj._meta
-    return reverse(f"admin:{opts.app_label}_{opts.model_name}_change", args=[obj.pk])
+    url = reverse(f"admin:{opts.app_label}_{opts.model_name}_change", args=[obj.pk])
+    if fragment:
+        return f"{url}#{fragment.lstrip('#')}"
+    return url
 
 
-def admin_change_link(obj, text=None):
+def admin_change_link(obj, text=None, fragment=None):
     if obj is None or obj.pk is None:
         return "—"
     label = text if text is not None else str(obj)
-    return format_html('<a href="{}">{}</a>', admin_change_url(obj), label)
+    return format_html('<a href="{}">{}</a>', admin_change_url(obj, fragment=fragment), label)
 
 
 def join_links(links, empty="—"):

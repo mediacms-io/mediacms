@@ -9,9 +9,11 @@ class AdminCustomizationsConfig(AppConfig):
 
     def ready(self):
         # Import here to avoid AppRegistryNotReady error
+        from .action_choices import patch_model_admin_action_choices
         from .admin import calculate_statistics
         from .object_actions import patch_model_admin_object_actions
 
+        patch_model_admin_action_choices()
         patch_model_admin_object_actions()
 
         # Patch the index method to add statistics

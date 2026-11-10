@@ -8,7 +8,7 @@ from admin_customizations.action_choices import (
     build_grouped_action_choices,
     is_separator_choice,
 )
-from files.models import Media
+from files.models import Category, Comment, EncodeProfile, Media
 from files.tests import create_account
 
 PASSWORD = "admin-action-choices-password"
@@ -39,6 +39,22 @@ class ActionChoicesHelperTest(TestCase):
         sep_values = [value for value, _label in choices if is_separator_choice(value)]
         self.assertTrue(sep_values)
         self.assertTrue(all(value.startswith(SEPARATOR_PREFIX) for value in sep_values))
+
+    def test_default_only_admins_use_actions_placeholder(self):
+        from admin_customizations.action_choices import GroupedActionForm
+
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        for model in (Category, Comment, EncodeProfile):
+            with self.subTest(model=model.__name__):
+                model_admin = admin.site._registry[model]
+                self.assertIs(model_admin.action_form, GroupedActionForm)
+                choices = model_admin.get_action_choices(request)
+                self.assertEqual(choices[0], ACTIONS_PLACEHOLDER)
+                labels = [label for _value, label in choices]
+                self.assertTrue(any(label.startswith("Delete selected ") for label in labels))
+                self.assertFalse(any("%(" in label for label in labels))
+                self.assertFalse(any(is_separator_choice(value) for value, _label in choices))
 
     def test_build_grouped_action_choices_excludes_and_leftovers(self):
         actions = {

@@ -1,0 +1,29 @@
+{% load i18n jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<div class="actions">
+    {% block actions %}
+        {% block actions-form %}
+            {% for field in action_form %}<label class="changelist-actions-select">{{ field }}</label>{% endfor %}
+        {% endblock %}
+        {% block actions-submit %}
+            <button type="submit" class="btn {{ jazzmin_ui.button_classes.primary }} changelist-actions-go" title="{% trans "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
+                {% trans "Go" %}
+            </button>
+        {% endblock %}
+        {% block actions-counter %}
+            {% if actions_selection_counter %}
+                <span class="action-counter" data-actions-icnt="{{ cl.result_list|length }}">{{ selection_note }}</span>
+                {% if cl.result_count != cl.result_list|length %}
+                    <span class="all hidden">{{ selection_note_all }}</span>
+                    <span class="question hidden">
+                        <a href="#" title="{% trans "Click here to select the objects across all pages" %}">
+                            {% blocktrans with cl.result_count as total_count %}Select all {{ total_count }} {{ module_name }}{% endblocktrans %}
+                        </a>
+                    </span>
+                    <span class="clear" style="display: none;"><a href="#">{% trans "Clear selection" %}</a></span>
+                {% endif %}
+            {% endif %}
+        {% endblock %}
+    {% endblock %}
+</div>

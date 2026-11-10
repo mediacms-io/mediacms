@@ -57,6 +57,8 @@ class MediaAction(models.Model):
         return self.action
 
     class Meta:
+        verbose_name = "Media action"
+        verbose_name_plural = "Media actions"
         indexes = [
             models.Index(fields=["user", "action", "-action_date"]),
             models.Index(fields=["session_key", "action"]),

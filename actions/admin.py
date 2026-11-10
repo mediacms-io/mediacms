@@ -1,10 +1,17 @@
 from django.contrib import admin, messages
 
+from admin_customizations.action_choices import (
+    GroupedActionForm,
+    build_grouped_action_choices,
+)
 from files.admin_helpers import admin_change_link
 from files.methods import clear_media_reports, is_mediacms_editor
 from files.models import Media
 
-from .models import MediaAction
+from .models import MODERATION_MEDIA_ACTIONS, MediaAction
+
+# Keep in sync with files.admin.MEDIA_REPORT_TAB_ACTIONS (avoid importing files.admin here).
+MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
 
 
 @admin.register(MediaAction)
@@ -16,6 +23,11 @@ class MediaActionAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'media', 'action_date', 'remote_ip', 'session_key', 'link_media', 'link_user']
     ordering = ('-action_date',)
     date_hierarchy = 'action_date'
+    action_form = GroupedActionForm
+    action_groups = [
+        ["clear_reports_for_related_media"],
+        ["delete_selected"],
+    ]
 
     fieldsets = (
         ('Action Details', {'fields': ('action', 'link_media', 'link_user', 'session_key')}),
@@ -24,7 +36,8 @@ class MediaActionAdmin(admin.ModelAdmin):
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
-        return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+        fragment = "reports-tab" if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
+        return admin_change_link(obj.media, obj.media.title if obj.media_id else None, fragment=fragment)
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -41,3 +54,13 @@ class MediaActionAdmin(admin.ModelAdmin):
         self.message_user(request, f"Cleared reports for {count} media item(s).", messages.SUCCESS)
 
     actions = [clear_reports_for_related_media]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            func, name, _description = actions["delete_selected"]
+            actions["delete_selected"] = (func, name, "Delete selected media actions")
+        return actions
+
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)

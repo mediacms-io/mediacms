@@ -129,7 +129,7 @@
                                                         <td>{{ confirmation.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if confirmation.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
@@ -166,7 +166,7 @@
                                                         <td>{{ clear.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if clear.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
@@ -203,7 +203,7 @@
                                                         <td>{{ review.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if review.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' review.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' review.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
@@ -220,26 +220,34 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-secondary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top reviewers"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title">{{ "Recent reports"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Reviews"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Reporter"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for reviewer in stats.moderation.top_reviewers %}
+                                                {% for report in stats.moderation.recent_reports %}
                                                     <tr>
-                                                        <td>{{ reviewer.user__username }}</td>
-                                                        <td><span class="badge badge-secondary">{{ reviewer.review_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' reviewer.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td title="{{ report.extra_info|default:'' }}">{{ report.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ report.user__username|default:'-' }}</td>
+                                                        <td>{{ report.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if report.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' report.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

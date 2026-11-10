@@ -39,13 +39,17 @@ class DashboardStatisticsTest(TestCase):
         MediaAction.objects.create(user=self.admin, media=self.media, action="report", extra_info="spam")
         self.media.reported_times = 1
         self.media.save(update_fields=["reported_times"])
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        open_report_stats = get_moderation_statistics(seven_days_ago)
+        self.assertEqual(open_report_stats["recent_reports"][0]["media_id"], self.media.pk)
+        self.assertNotIn("top_reviewers", open_report_stats)
+
         confirm_media_reports(Media.objects.filter(pk=self.media.pk), user=self.admin)
         clear_media_reports(Media.objects.filter(pk=self.media.pk), user=self.admin)
         self.queued.is_reviewed = False
         self.queued.save(update_fields=["is_reviewed"])
         set_media_reviewed(self.queued, True, user=self.admin)
 
-        seven_days_ago = timezone.now() - timedelta(days=7)
         stats = get_moderation_statistics(seven_days_ago)
         self.assertGreaterEqual(stats["clears_last_7_days"], 1)
         self.assertGreaterEqual(stats["confirms_last_7_days"], 1)
@@ -119,5 +123,7 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(response, "Recent audio uploads")
         self.assertContains(response, "Recent image uploads")
         self.assertContains(response, "Recent PDF uploads")
+        self.assertContains(response, "Recent reports")
+        self.assertNotContains(response, "Top reviewers")
         self.assertNotContains(response, "Top Videos by Duration")
         self.assertNotContains(response, "Needs Review")

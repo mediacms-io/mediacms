@@ -954,6 +954,7 @@ class TagAdmin(admin.ModelAdmin):
 
 class EncodeProfileAdmin(admin.ModelAdmin):
     list_display = ("name", "extension", "resolution", "codec", "description", "active")
+    list_editable = ("active",)
     list_filter = ["extension", "resolution", "codec", "active"]
     search_fields = ["name", "extension", "resolution", "codec", "description"]
     list_per_page = 100

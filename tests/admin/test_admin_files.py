@@ -168,6 +168,11 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
             self.assertIn(field, model_admin.list_editable)
             self.assertIn(field, model_admin.list_display)
 
+    def test_encode_profile_list_editable_active(self):
+        model_admin = admin.site._registry[EncodeProfile]
+        self.assertIn("active", model_admin.list_editable)
+        self.assertIn("active", model_admin.list_display)
+
     def test_reports_tab_shows_report_and_moderation_actions(self):
         model_admin = admin.site._registry[Media]
         fieldsets = model_admin.get_fieldsets(self.admin_request(), obj=self.public)
@@ -400,6 +405,24 @@ class MediaActionAdminTest(TestCase):
         self.assertEqual(self.media.reported_times, 0)
         self.assertFalse(MediaAction.objects.filter(media=self.media, action="report").exists())
         self.assertTrue(MediaAction.objects.filter(media=self.media, action="report_cleared", user=self.superuser).exists())
+
+    def test_grouped_action_choices_and_reports_tab_media_link(self):
+        from admin_customizations.action_choices import ACTIONS_PLACEHOLDER
+
+        model_admin = admin.site._registry[MediaAction]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        choices = model_admin.get_action_choices(request)
+        self.assertEqual(choices[0], ACTIONS_PLACEHOLDER)
+        choice_values = [value for value, _label in choices]
+        self.assertIn("clear_reports_for_related_media", choice_values)
+        self.assertIn("delete_selected", choice_values)
+
+        html = str(model_admin.link_media(self.report))
+        self.assertIn("#reports-tab", html)
+        like = MediaAction.objects.create(user=self.superuser, media=self.media, action="like")
+        like_html = str(model_admin.link_media(like))
+        self.assertNotIn("#reports-tab", like_html)
 
 
 class EncodingAdminTest(TestCase):

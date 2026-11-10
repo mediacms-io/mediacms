@@ -543,14 +543,13 @@ The Django admin index (`/admin/`) includes a Jazzmin dashboard with site metric
 | Needs Review / Unreviewed | Media list with `is_reviewed=No` | Select rows → **Mark as reviewed**, or toggle **Is reviewed** inline and click Save |
 | Reported Media | Media list with Reports = Has reports | Review the media, then **Clear reports** and/or **Set state: private/public** |
 | Above Threshold | Media list with Reports = Above threshold | Same as above; these items may already have been auto-set to private |
-| Recent Reports | Media actions filtered to `report` | Read **Extra info** (reason); select rows → **Clear reports for related media** |
+| Recent reports | Media change page `#reports-tab` | Read **Extra info** (reason); triage via **Clear reports** / confirm actions |
 | Pending user approvals | Users with `is_approved=No` (when enabled) | Select → **Approve selected users**, or toggle **Is approved** inline |
 | Encoding queue | Media with Encoding queue = In queue | Monitor status; use **Generate missing encoding(s)** if needed |
 | Channels / Categories / Playlists | Matching changelists | Inspect counts from the System section |
-| Top Videos by Duration | Media change page | Inspect long videos that may need encoding or moderation attention |
-| Top Reviewers | User change page | See who has marked media as reviewed (`media_reviewed` audit actions) |
-| Recent Report Clears | Media change page | Inspect recently cleared reports (`report_cleared` audit actions) |
-| Recent Media Reviews | Media change page | Inspect recently approved/reviewed media (`media_reviewed` audit actions) |
+| Recent Report Clears | Media change page `#reports-tab` | Inspect recently cleared reports (`report_cleared` audit actions) |
+| Recent confirmed reports | Media change page `#reports-tab` | Inspect recently confirmed reports (`report_confirmed` audit actions) |
+| Recent Media Reviews | Media change page `#reports-tab` | Inspect recently approved/reviewed media (`media_reviewed` audit actions) |
 | Most Commented / Most Disliked Media | Media change page | Triage high-engagement or contested media |
 | Top Commenters / Likers / Dislikers / Reporters | User change page | Identify highly active users by comment and MediaAction counts |
 

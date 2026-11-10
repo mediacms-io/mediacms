@@ -1,6 +1,7 @@
 """Shared admin Actions dropdown choices: placeholder + hyphen-separated groups."""
 
 from django import forms
+from django.contrib.admin import ModelAdmin
 from django.contrib.admin.helpers import ActionForm
 from django.contrib.admin.utils import model_format_dict
 
@@ -89,3 +90,21 @@ def object_action_select_choices(actions_dict, group_order=None, exclude=None, o
     for value, label in build_grouped_action_choices(actions_dict, group_order, exclude, opts=opts):
         choices.append((value, label, is_separator_choice(value)))
     return choices
+
+
+def patch_model_admin_action_choices():
+    """Use GroupedActionForm + Actions placeholder for every ModelAdmin changelist."""
+    if getattr(ModelAdmin, "_mediacms_action_choices_patched", False):
+        return
+
+    ModelAdmin.action_form = GroupedActionForm
+
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            getattr(self, "action_groups", None),
+            opts=self.opts,
+        )
+
+    ModelAdmin.get_action_choices = get_action_choices
+    ModelAdmin._mediacms_action_choices_patched = True

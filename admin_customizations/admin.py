@@ -88,10 +88,6 @@ def get_moderation_statistics(seven_days_ago):
     moderation_stats['confirms_last_7_days'] = MediaAction.objects.filter(action='report_confirmed', action_date__gte=seven_days_ago).count()
     moderation_stats['approved_last_7_days'] = MediaAction.objects.filter(action='media_reviewed', action_date__gte=seven_days_ago).count()
 
-    moderation_stats['top_reviewers'] = list(
-        MediaAction.objects.filter(action='media_reviewed').exclude(user=None).values('user_id', 'user__username').annotate(review_count=Count('id')).order_by('-review_count')[:5]
-    )
-
     recent_moderation_values = (
         'id',
         'action_date',
@@ -103,6 +99,7 @@ def get_moderation_statistics(seven_days_ago):
         'media__friendly_token',
     )
 
+    moderation_stats['recent_reports'] = list(MediaAction.objects.filter(action='report').order_by('-action_date')[:5].values(*recent_moderation_values))
     moderation_stats['recent_report_confirmations'] = list(MediaAction.objects.filter(action='report_confirmed').order_by('-action_date')[:5].values(*recent_moderation_values))
     moderation_stats['recent_report_clears'] = list(MediaAction.objects.filter(action='report_cleared').order_by('-action_date')[:5].values(*recent_moderation_values))
     moderation_stats['recent_media_reviews'] = list(MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values))

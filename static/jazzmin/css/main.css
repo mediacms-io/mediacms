@@ -81,6 +81,73 @@ div.inline-related {
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
+/*
+ * Jazzmin applies Bootstrap input chrome but drops Django's compact tabular widths,
+ * and .text-nowrap on the inline table inherits into cells so raw-id / ordering
+ * inputs grow huge and clip behind .inline-group overflow.
+ */
+.tabular table.text-nowrap {
+    table-layout: fixed;
+    width: 100%;
+    white-space: normal !important;
+}
+
+.tabular .vForeignKeyRawIdAdminField {
+    width: 5rem;
+    max-width: 100%;
+    flex: 0 0 auto;
+}
+
+.tabular .vIntegerField,
+.tabular input[type="number"].vIntegerField {
+    width: 4rem;
+    max-width: 100%;
+}
+
+.tabular th.column-ordering,
+.tabular td.field-ordering {
+    width: 5.5rem;
+    white-space: nowrap;
+}
+
+.tabular th.column-action_date,
+.tabular td.field-action_date {
+    width: 9.5rem;
+    white-space: nowrap;
+}
+
+.tabular th.original,
+.tabular td.original {
+    width: 2rem;
+}
+
+.tabular td.delete,
+.tabular th:last-child {
+    width: 4.5rem;
+    white-space: nowrap;
+}
+
+.tabular td.field-media > div {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.tabular td.field-media > div > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tabular td.field-ordering > div {
+    display: flex;
+    align-items: center;
+}
+
 td.djn-td,
 th.djn-th {
     padding: 10px;
@@ -990,13 +1057,23 @@ body.jazzmin-login-page {
     background-color: #f8f9fa;
 }
 
-#changelist .actions label {
+#changelist .actions label,
+#changelist .actions .changelist-actions-select {
     margin: 0;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 #changelist .actions select,
 #changelist .actions .select2-container {
     min-width: 16rem;
+    max-width: 100%;
+    width: auto;
+}
+
+#changelist .actions .changelist-actions-go {
+    flex: 0 0 auto;
+    margin: 0;
 }
 
 #changelist-filter {
