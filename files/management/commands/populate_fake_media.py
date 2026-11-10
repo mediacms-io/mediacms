@@ -48,6 +48,8 @@ class Command(BaseCommand):
         clear_existing = options['clear']
 
         self.stdout.write(self.style.SUCCESS(f'Starting to populate {count} fake media records...'))
+        self._init_time_horizon()
+        self.stdout.write(self.style.SUCCESS(f'Dating content from {self._horizon_start.date()} to {self._now.date()} (12 months)'))
 
         # Clear existing media if requested
         if clear_existing:
@@ -160,6 +162,38 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'\nSuccessfully populated {count} fake media records!'))
 
+    def _init_time_horizon(self):
+        """Use a rolling 12-month window for all generated timestamps."""
+        self._now = timezone.now()
+        self._horizon_start = self._now - timedelta(days=365)
+
+    def _clamp_dt(self, value, start=None, end=None):
+        start = start if start is not None else self._horizon_start
+        end = end if end is not None else self._now
+        if value < start:
+            return start
+        if value > end:
+            return end
+        return value
+
+    def _random_datetime_between(self, start, end, *, recent_bias=False):
+        """Pick a datetime in [start, end]. recent_bias skews toward end."""
+        start = self._clamp_dt(start)
+        end = self._clamp_dt(end)
+        if start >= end:
+            return start
+        span = (end - start).total_seconds()
+        if recent_bias:
+            # Square-complement biases toward more recent times.
+            t = 1.0 - (random.random() ** 2)
+        else:
+            t = random.random()
+        return start + timedelta(seconds=int(span * t))
+
+    def _backdate(self, model, pk, field, when):
+        """Set auto_now / auto_now_add fields that ignore values on Model.save()."""
+        model.objects.filter(pk=pk).update(**{field: when})
+
     def generate_random_string(self, length=8):
         """Generate a random alphanumeric string"""
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
@@ -178,7 +212,7 @@ class Command(BaseCommand):
         return f"{username}@{random.choice(domains)}"
 
     def create_users(self):
-        """Create 10-15 fake users"""
+        """Create 10-15 fake users with join dates spread over the last 12 months."""
         num_users = random.randint(10, 15)
         users = []
 
@@ -198,6 +232,13 @@ class Command(BaseCommand):
                 username = f"{original_username}{counter}"
                 counter += 1
 
+            # Keep enough early joiners so media can fill the full 12-month window.
+            if i < max(3, num_users // 3):
+                join_end = self._horizon_start + timedelta(days=120)
+                date_joined = self._random_datetime_between(self._horizon_start, join_end)
+            else:
+                date_joined = self._random_datetime_between(self._horizon_start, self._now - timedelta(days=7))
+
             user = User.objects.create(
                 username=username,
                 email=email,
@@ -205,9 +246,13 @@ class Command(BaseCommand):
                 description=f"Fake user account for testing purposes. User #{i + 1}",
                 is_editor=is_editor,
                 is_manager=is_manager,
+                date_joined=date_joined,
             )
             user.set_password('testpass123')  # Simple password for all fake users
             user.save()
+            # set_password/save can refresh timestamps; force the intended join date.
+            self._backdate(User, user.pk, 'date_joined', date_joined)
+            user.date_joined = date_joined
             users.append(user)
 
         return users
@@ -238,6 +283,13 @@ class Command(BaseCommand):
                 default.title = f"{first_name}'s Channel"
                 default.description = f"Primary channel for {user.name or user.username}. " "Demo content generated for dashboard testing."
                 default.save(update_fields=['title', 'description'])
+                # Channel is created by the user post_save signal; place it just after join.
+                channel_date = self._random_datetime_between(
+                    user.date_joined,
+                    min(user.date_joined + timedelta(days=3), self._now),
+                )
+                self._backdate(Channel, default.pk, 'add_date', channel_date)
+                default.add_date = channel_date
                 channels.append(default)
 
             # ~35% of users get 1–2 additional themed channels
@@ -250,6 +302,9 @@ class Command(BaseCommand):
                         title=title,
                         description=description,
                     )
+                    channel_date = self._random_datetime_between(user.date_joined, self._now)
+                    self._backdate(Channel, channel.pk, 'add_date', channel_date)
+                    channel.add_date = channel_date
                     channels.append(channel)
 
         # Add overlapping subscriber relationships so channels look active
@@ -590,9 +645,8 @@ class Command(BaseCommand):
         title = self.generate_title()
         description = self.generate_description()
 
-        # Random add date (past 6 months)
-        days_ago = random.randint(0, 180)
-        add_date = timezone.now() - timedelta(days=days_ago)
+        # Media date must be after the owner joined; slight recent bias for dashboards.
+        add_date = self._random_datetime_between(user.date_joined, self._now, recent_bias=True)
 
         # Generate metrics
         views = random.randint(0, 50000)
@@ -668,9 +722,10 @@ class Command(BaseCommand):
             # The Media.save() method overrides state on creation, so we need to set it here
             media.state = state
             media.encoding_status = encoding_status
+            media.add_date = add_date
             # Recalculate listable based on our desired encoding_status
             media.listable = state == 'public' and encoding_status == 'success' and is_reviewed
-            media.save(update_fields=['state', 'encoding_status', 'listable'])
+            media.save(update_fields=['state', 'encoding_status', 'listable', 'add_date'])
 
         return media
 
@@ -699,9 +754,17 @@ class Command(BaseCommand):
                 title=title,
                 description=description,
             )
+            playlist_date = self._random_datetime_between(user.date_joined, self._now)
+            self._backdate(Playlist, playlist.pk, 'add_date', playlist_date)
+            playlist.add_date = playlist_date
             playlists.append(playlist)
 
         return playlists
+
+    def _playlist_media_action_date(self, playlist, media):
+        """Playlist membership cannot precede the playlist or the media."""
+        earliest = max(playlist.add_date, media.add_date or self._horizon_start)
+        return self._random_datetime_between(earliest, self._now)
 
     def assign_media_to_playlists(self, created_media, playlists):
         """Randomly assign media to playlists with proper ordering"""
@@ -715,11 +778,12 @@ class Command(BaseCommand):
 
             # Add media to playlist with ordering
             for order, media in enumerate(selected_media, start=1):
-                PlaylistMedia.objects.create(
+                pm = PlaylistMedia.objects.create(
                     playlist=playlist,
                     media=media,
                     ordering=order,
                 )
+                self._backdate(PlaylistMedia, pm.pk, 'action_date', self._playlist_media_action_date(playlist, media))
 
         # Also randomly assign some media to additional playlists
         # Each media can be in 0-3 playlists total
@@ -734,11 +798,25 @@ class Command(BaseCommand):
                         # Get the current max ordering for this playlist
                         max_ordering = PlaylistMedia.objects.filter(playlist=playlist).aggregate(max_order=models.Max('ordering'))['max_order'] or 0
 
-                        PlaylistMedia.objects.create(
+                        pm = PlaylistMedia.objects.create(
                             playlist=playlist,
                             media=media,
                             ordering=max_ordering + 1,
                         )
+                        self._backdate(PlaylistMedia, pm.pk, 'action_date', self._playlist_media_action_date(playlist, media))
+
+    def _create_dated_media_action(self, media, users, action, extra_info=None, user_chance=0.7):
+        """Create a MediaAction dated after the media upload."""
+        user = random.choice(users) if random.random() < user_chance else None
+        media_action = MediaAction.objects.create(
+            media=media,
+            user=user,
+            action=action,
+            extra_info=extra_info or '',
+        )
+        action_date = self._random_datetime_between(media.add_date or self._horizon_start, self._now, recent_bias=True)
+        self._backdate(MediaAction, media_action.pk, 'action_date', action_date)
+        return media_action
 
     def create_media_actions(self, created_media, reported_media, users):
         """Create MediaAction records for likes, dislikes, watches, and reports"""
@@ -756,45 +834,29 @@ class Command(BaseCommand):
             # Not all views need actions, but create some for realism
             num_watches = min(media.views // 10, 100)  # Create up to 100 watch actions
             for _ in range(num_watches):
-                user = random.choice(users) if random.random() < 0.7 else None
-                MediaAction.objects.create(
-                    media=media,
-                    user=user,
-                    action='watch',
-                )
+                self._create_dated_media_action(media, users, 'watch', user_chance=0.7)
 
             # Create like actions
             num_likes = min(media.likes, 50)  # Create up to 50 like actions
             for _ in range(num_likes):
-                user = random.choice(users) if random.random() < 0.8 else None
-                MediaAction.objects.create(
-                    media=media,
-                    user=user,
-                    action='like',
-                )
+                self._create_dated_media_action(media, users, 'like', user_chance=0.8)
 
             # Create dislike actions
             num_dislikes = min(media.dislikes, 20)  # Create up to 20 dislike actions
             for _ in range(num_dislikes):
-                user = random.choice(users) if random.random() < 0.7 else None
-                MediaAction.objects.create(
-                    media=media,
-                    user=user,
-                    action='dislike',
-                )
+                self._create_dated_media_action(media, users, 'dislike', user_chance=0.7)
 
         # Create report actions for reported media
         for media in reported_media:
             # 1-10 reports per media
             num_reports = random.randint(1, 10)
             for _ in range(num_reports):
-                user = random.choice(users) if random.random() < 0.6 else None
-                reason = random.choice(report_reasons)
-                MediaAction.objects.create(
-                    media=media,
-                    user=user,
-                    action='report',
-                    extra_info=reason,
+                self._create_dated_media_action(
+                    media,
+                    users,
+                    'report',
+                    extra_info=random.choice(report_reasons),
+                    user_chance=0.6,
                 )
 
     def create_comments(self, created_media, users):
@@ -806,7 +868,6 @@ class Command(BaseCommand):
             return []
 
         all_comments = []
-        media_comment_counts = {}
 
         for media in media_with_comments:
             # Determine number of comments based on distribution
@@ -823,48 +884,30 @@ class Command(BaseCommand):
             if num_comments == 0:
                 continue
 
-            media_comment_counts[media] = num_comments
             comments_for_media = []
-
-            # Calculate time range for comments (spread over time since media creation)
-            media_age_days = (timezone.now() - media.add_date).days
-            if media_age_days < 1:
-                media_age_days = 1
+            media_start = media.add_date or self._horizon_start
 
             # Create comments
             for i in range(num_comments):
-                # Random user (can be media owner or other users)
                 comment_user = random.choice(users)
-
-                # Generate comment text
                 comment_text = self.generate_comment_text(media.title)
 
-                # Calculate comment date (spread over time since media creation)
-                # More recent comments for active media
+                # Active threads skew recent; quieter ones spread across the media lifetime.
                 if num_comments > 10:
-                    # Very active media: more recent comments
-                    days_ago = random.randint(0, min(media_age_days, 30))
+                    recent_start = max(media_start, self._now - timedelta(days=30))
+                    comment_date = self._random_datetime_between(recent_start, self._now, recent_bias=True)
                 else:
-                    # Less active: spread more evenly
-                    days_ago = random.randint(0, media_age_days)
+                    comment_date = self._random_datetime_between(media_start, self._now)
 
-                comment_date = media.add_date + timedelta(days=days_ago)
-                # Ensure comment date is not in the future
-                if comment_date > timezone.now():
-                    comment_date = timezone.now()
-
-                # Create comment
                 comment = Comment(
                     media=media,
                     user=comment_user,
                     text=comment_text,
-                    add_date=comment_date,
                 )
-                comments_for_media.append(comment)
-
-            # Save comments (MPTT models need individual saves)
-            for comment in comments_for_media:
                 comment.save()
+                self._backdate(Comment, comment.pk, 'add_date', comment_date)
+                comment.add_date = comment_date
+                comments_for_media.append(comment)
                 all_comments.append(comment)
 
             # Create nested/reply comments for media with 5+ comments
@@ -872,31 +915,24 @@ class Command(BaseCommand):
                 # 10-30% of comments are replies
                 num_replies = int(num_comments * random.uniform(0.1, 0.3))
                 if num_replies > 0:
-                    # Get top-level comments (no parent)
                     top_level_comments = [c for c in comments_for_media if c.parent is None]
                     if top_level_comments:
-                        # Select random comments to reply to
                         parent_comments = random.sample(top_level_comments, min(num_replies, len(top_level_comments)))
 
                         for parent_comment in parent_comments:
-                            # Create reply
                             reply_user = random.choice(users)
                             reply_text = self.generate_comment_text(media.title)
-
-                            # Reply date should be after parent comment
-                            days_after_parent = random.randint(0, min(7, media_age_days))
-                            reply_date = parent_comment.add_date + timedelta(days=days_after_parent)
-                            if reply_date > timezone.now():
-                                reply_date = timezone.now()
+                            reply_date = self._random_datetime_between(parent_comment.add_date, self._now)
 
                             reply = Comment(
                                 media=media,
                                 user=reply_user,
                                 text=reply_text,
                                 parent=parent_comment,
-                                add_date=reply_date,
                             )
                             reply.save()
+                            self._backdate(Comment, reply.pk, 'add_date', reply_date)
+                            reply.add_date = reply_date
                             all_comments.append(reply)
 
         return all_comments
@@ -1020,13 +1056,15 @@ class Command(BaseCommand):
         key = (user.pk, media.pk)
         if key in created_pairs:
             return 0
-        MediaPermission.objects.create(
+        perm = MediaPermission.objects.create(
             owner_user=owner,
             user=user,
             media=media,
             permission=permission,
             source=MediaPermission.SOURCE_EXPLICIT,
         )
+        created_at = self._random_datetime_between(media.add_date or self._horizon_start, self._now)
+        self._backdate(MediaPermission, perm.pk, 'created_at', created_at)
         created_pairs.add(key)
         return 1
 
@@ -1165,14 +1203,18 @@ class Command(BaseCommand):
         for media in selected:
             # Most get one request; a few get two (e.g. retry after fail)
             num_requests = 2 if random.random() < 0.15 else 1
+            previous_date = media.add_date or self._horizon_start
             for _ in range(num_requests):
-                VideoTrimRequest.objects.create(
+                trim_request = VideoTrimRequest.objects.create(
                     media=media,
                     status=random.choices(statuses, weights=status_weights, k=1)[0],
                     video_action=random.choices(actions, weights=action_weights, k=1)[0],
                     media_trim_style=random.choices(styles, weights=style_weights, k=1)[0],
                     timestamps=self._random_trim_segments(media.duration),
                 )
+                trim_date = self._random_datetime_between(previous_date, self._now)
+                self._backdate(VideoTrimRequest, trim_request.pk, 'add_date', trim_date)
+                previous_date = trim_date
                 created += 1
 
         return created
@@ -1198,13 +1240,17 @@ class Command(BaseCommand):
 
         pages = []
         for spec in pages_spec:
-            page, _created = Page.objects.get_or_create(
+            page, created = Page.objects.get_or_create(
                 slug=spec['slug'],
                 defaults={
                     'title': spec['title'],
                     'description': spec['description'],
                 },
             )
+            if created:
+                page_date = self._random_datetime_between(self._horizon_start, self._now)
+                self._backdate(Page, page.pk, 'add_date', page_date)
+                page.add_date = page_date
             pages.append(page)
         return pages
 
@@ -1264,6 +1310,18 @@ class Command(BaseCommand):
         if pages:
             for page in pages:
                 self.stdout.write(f'  /{page.slug} — {page.title}')
+
+        if created_media:
+            media_dates = [m.add_date for m in created_media if m.add_date]
+            if media_dates:
+                self.stdout.write('\nDate distribution:')
+                self.stdout.write(f'  Media range: {min(media_dates).date()} → {max(media_dates).date()}')
+                user_joins = [u.date_joined for u in users]
+                self.stdout.write(f'  User joins: {min(user_joins).date()} → {max(user_joins).date()}')
+                if comments:
+                    comment_dates = [c.add_date for c in comments if c.add_date]
+                    if comment_dates:
+                        self.stdout.write(f'  Comments: {min(comment_dates).date()} → {max(comment_dates).date()}')
 
         if channels:
             media_with_channel = sum(1 for m in created_media if m.channel_id)
