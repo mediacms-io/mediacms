@@ -180,9 +180,9 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertEqual(len(reports_fieldsets), 1)
         self.assertEqual(reports_fieldsets[0]["fields"], ("reported_times", "report_actions_table"))
         self.assertIn("tab", reports_fieldsets[0]["classes"])
-        main_fields = fieldsets[0][1]["fields"]
-        self.assertNotIn("reported_times", main_fields)
-        self.assertNotIn("report_actions_table", main_fields)
+        content_fields = dict(fieldsets)["Content"]["fields"]
+        self.assertNotIn("reported_times", content_fields)
+        self.assertNotIn("report_actions_table", content_fields)
 
         MediaAction.objects.create(user=self.superuser, media=self.public, action="report", extra_info="spam")
         MediaAction.objects.create(user=self.superuser, media=self.public, action="report_cleared", extra_info="cleared 1")
@@ -199,6 +199,26 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
 
         related = str(model_admin.related_reports(self.public))
         self.assertIn("3 report/moderation", related)
+
+    def test_media_change_fieldsets_are_grouped_by_purpose(self):
+        model_admin = admin.site._registry[Media]
+        fieldsets = dict(model_admin.get_fieldsets(self.admin_request(), obj=self.public))
+        self.assertEqual(
+            list(fieldsets.keys()),
+            ["Content", "Publishing", "Sharing", "Media file", "Details", "Reports"],
+        )
+        self.assertIn("title", fieldsets["Content"]["fields"])
+        self.assertIn("state", fieldsets["Publishing"]["fields"])
+        self.assertEqual(
+            fieldsets["Sharing"]["fields"],
+            ("allow_download", "enable_comments", "password"),
+        )
+        self.assertIn("media_file", fieldsets["Media file"]["fields"])
+        self.assertNotIn("allow_whisper_transcribe", fieldsets["Media file"]["fields"])
+        self.assertIn("friendly_token", fieldsets["Details"]["fields"])
+        self.assertNotIn("allow_download", model_admin.readonly_fields)
+        for machine_field in ("encoding_status", "duration", "md5sum", "search", "views"):
+            self.assertIn(machine_field, model_admin.readonly_fields)
 
     def test_clear_reports_action_available_to_editors(self):
         model_admin = admin.site._registry[Media]

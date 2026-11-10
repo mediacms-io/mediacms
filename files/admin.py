@@ -128,7 +128,7 @@ class MediaPermissionInline(ReadOnlyTabularInline):
     model = MediaPermission
     fields = ("user", "owner_user", "permission", "source", "created_at")
     readonly_fields = ("user", "owner_user", "permission", "source", "created_at")
-    verbose_name_plural = "Sharing permissions"
+    verbose_name_plural = "User permissions"
 
 
 class PlaylistMediaInline(admin.TabularInline):
@@ -252,6 +252,25 @@ class MediaAdmin(admin.ModelAdmin):
         "tags",
         "category",
         "link_channel",
+        "listable",
+        "media_type",
+        "encoding_status",
+        "duration",
+        "size",
+        "video_height",
+        "hls_file",
+        "preview_file_path",
+        "poster",
+        "thumbnail",
+        "sprites",
+        "uid",
+        "friendly_token",
+        "md5sum",
+        "media_info",
+        "search",
+        "views",
+        "likes",
+        "dislikes",
         "report_actions_table",
         "related_comments",
         "related_encodings",
@@ -265,18 +284,107 @@ class MediaAdmin(admin.ModelAdmin):
     exclude = ("user", "channel")
 
     def get_fieldsets(self, request, obj=None):
-        """Single Reports tab: reported_times plus report/clear/moderation MediaActions table."""
-        fieldsets = list(super().get_fieldsets(request, obj))
-        if not fieldsets:
-            return fieldsets
+        """Organize the change form into purpose-based Jazzmin tabs."""
+        media_file_fields = [
+            "media_file",
+            "media_type",
+            "encoding_status",
+            "duration",
+            "size",
+            "video_height",
+            "hls_file",
+            "preview_file_path",
+            "poster",
+            "thumbnail",
+            "sprites",
+        ]
+        if getattr(settings, "USE_WHISPER_TRANSCRIBE", False):
+            media_file_fields.extend(
+                [
+                    "allow_whisper_transcribe",
+                    "allow_whisper_transcribe_and_translate",
+                ]
+            )
 
-        name, options = fieldsets[0]
-        fields = list(options.get("fields", ()))
-        for field_name in ("reported_times", "report_actions_table"):
-            if field_name in fields:
-                fields.remove(field_name)
-        fieldsets[0] = (name, {**options, "fields": tuple(fields)})
-        fieldsets.append(
+        return (
+            (
+                "Content",
+                {
+                    "fields": (
+                        "title",
+                        "description",
+                        "link_user",
+                        "link_channel",
+                        "license",
+                        "tags",
+                        "category",
+                        "rating_category",
+                        "uploaded_poster",
+                        "uploaded_thumbnail",
+                        "thumbnail_time",
+                    ),
+                    "classes": ("tab",),
+                },
+            ),
+            (
+                "Publishing",
+                {
+                    "fields": (
+                        "state",
+                        "is_reviewed",
+                        "listable",
+                        "featured",
+                        "user_featured",
+                        "add_date",
+                    ),
+                    "classes": ("tab",),
+                    "description": "Visibility and editorial status for listings.",
+                },
+            ),
+            (
+                "Sharing",
+                {
+                    "fields": (
+                        "allow_download",
+                        "enable_comments",
+                        "password",
+                    ),
+                    "classes": ("tab",),
+                    "description": "How viewers can interact with this media. Per-user grants are listed under User permissions.",
+                },
+            ),
+            (
+                "Media file",
+                {
+                    "fields": tuple(media_file_fields),
+                    "classes": ("tab",),
+                    "description": "Original upload and generated derivatives. Most values here are produced by the media pipeline.",
+                },
+            ),
+            (
+                "Details",
+                {
+                    "fields": (
+                        "views",
+                        "likes",
+                        "dislikes",
+                        "uid",
+                        "friendly_token",
+                        "md5sum",
+                        "media_info",
+                        "search",
+                        "related_playlists",
+                        "related_trim_requests",
+                        "related_transcription_requests",
+                        "related_comments",
+                        "related_encodings",
+                        "related_actions",
+                        "related_reports",
+                    ),
+                    "classes": ("tab",),
+                    "description": "Identifiers, engagement counters, and links to related admin records.",
+                },
+            ),
             (
                 "Reports",
                 {
@@ -284,9 +392,8 @@ class MediaAdmin(admin.ModelAdmin):
                     "classes": ("tab",),
                     "description": "Open reports and related moderation audit events. Use Clear reports actions to reset counters.",
                 },
-            )
+            ),
         )
-        return fieldsets
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user", "channel").annotate(_comments_count=Count("comments", distinct=True), _encodings_count=Count("encodings", distinct=True))

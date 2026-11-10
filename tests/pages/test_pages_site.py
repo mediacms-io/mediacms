@@ -41,6 +41,13 @@ class StaticPagesTest(TestCase):
         self.assertTemplateUsed(response, "cms/page.html")
         self.assertEqual(response.context["page"], page)
         self.assertContains(response, "Ask away")
+        self.assertContains(response, "<title>Frequent questions - MediaCMS</title>")
+        self.assertContains(response, 'mainMenuExtraItems:')
+        self.assertContains(response, 'link: "/faq"')
+        self.assertContains(response, 'text: "Frequent questions"')
+        # About stays in the dedicated navMenuItems list, not CMS extras.
+        extras = response.content.decode().split("mainMenuExtraItems:", 1)[1].split("belowNavMenu", 1)[0]
+        self.assertNotIn('link: "/about"', extras)
 
     def test_unknown_slug_renders_the_not_found_template(self):
         response = self.client.get("/no-such-page")

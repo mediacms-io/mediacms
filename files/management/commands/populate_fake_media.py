@@ -236,10 +236,7 @@ class Command(BaseCommand):
                 # Give the auto-created "default" channel a real title/description
                 first_name = (user.name or user.username).split()[0]
                 default.title = f"{first_name}'s Channel"
-                default.description = (
-                    f"Primary channel for {user.name or user.username}. "
-                    "Demo content generated for dashboard testing."
-                )
+                default.description = f"Primary channel for {user.name or user.username}. " "Demo content generated for dashboard testing."
                 default.save(update_fields=['title', 'description'])
                 channels.append(default)
 
@@ -974,9 +971,7 @@ class Command(BaseCommand):
         if chapters_vtt and not chapter_data:
             self.stdout.write(self.style.WARNING('Sample chapters VTT parsed to empty chapter list'))
 
-        eligible = [
-            m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success'
-        ]
+        eligible = [m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success']
         if not eligible:
             return 0, 0
 
@@ -1151,9 +1146,7 @@ class Command(BaseCommand):
 
     def create_trim_requests(self, created_media):
         """Create VideoTrimRequest rows for a subset of successfully encoded videos."""
-        eligible = [
-            m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success'
-        ]
+        eligible = [m for m in created_media if m.media_type == 'video' and m.encoding_status == 'success']
         if not eligible:
             return 0
 
@@ -1190,10 +1183,7 @@ class Command(BaseCommand):
             {
                 'slug': 'about',
                 'title': 'About',
-                'description': (
-                    '<p>Welcome to this MediaCMS demo portal.</p>'
-                    '<p>This About page was created by the fake media generator for dashboard testing.</p>'
-                ),
+                'description': ('<p>Welcome to this MediaCMS demo portal.</p>' '<p>This About page was created by the fake media generator for dashboard testing.</p>'),
             },
             {
                 'slug': 'faq',
