@@ -11,8 +11,11 @@ from django.utils import timezone
 
 from actions.models import MediaAction
 from files.management.commands.fake_media_locales import (
+    CJK_LANGUAGE_CODES,
     FAKE_MEDIA_LOCALES,
     RTL_LANGUAGE_CODES,
+    SECONDARY_LANGUAGE_CODES,
+    SINGLE_LANGUAGE_CODES,
 )
 from files.models import (
     Category,
@@ -64,10 +67,30 @@ class Command(BaseCommand):
             help='Clear existing fake media before creating new ones',
         )
         parser.add_argument(
+            '--secondary-language',
+            choices=list(SECONDARY_LANGUAGE_CODES) + ['random'],
+            default='random',
+            help='Secondary LTR language mixed at ~20%% (default: random among de, es, el)',
+        )
+        parser.add_argument(
             '--rtl-language',
             choices=list(RTL_LANGUAGE_CODES) + ['random'],
             default='random',
-            help='RTL language mixed with Greek for titles/names/comments (default: random among ar, he, ur)',
+            help='RTL language mixed at ~20%% (default: random among ar, he, ur)',
+        )
+        parser.add_argument(
+            '--cjk-language',
+            choices=list(CJK_LANGUAGE_CODES) + ['random'],
+            default='random',
+            help='CJK language mixed at ~20%% (default: random among zh, ja, ko). CJK is LTR, not RTL.',
+        )
+        parser.add_argument(
+            '--single-language',
+            nargs='?',
+            const='en',
+            default=None,
+            choices=list(SINGLE_LANGUAGE_CODES),
+            help='Generate content in only one language (default: en when the flag is passed without a code)',
         )
 
     def handle(self, *args, **options):
@@ -75,7 +98,12 @@ class Command(BaseCommand):
         clear_existing = options['clear']
 
         self.stdout.write(self.style.SUCCESS(f'Starting to populate {count} fake media records...'))
-        self._init_content_locales(options['rtl_language'])
+        self._init_content_locales(
+            rtl_language=options['rtl_language'],
+            secondary_language=options['secondary_language'],
+            cjk_language=options['cjk_language'],
+            single_language=options['single_language'],
+        )
         self._init_time_horizon()
         self.stdout.write(self.style.SUCCESS(f'Dating content from {self._horizon_start.date()} to {self._now.date()} (12 months)'))
 
@@ -85,8 +113,8 @@ class Command(BaseCommand):
             Media.objects.all().delete()
             self.stdout.write(self.style.SUCCESS('Cleared existing media'))
 
-        # Step 1: Create users
-        users = self.create_users()
+        # Step 1: Create users (scaled to ~15-20% of media count)
+        users = self.create_users(media_count=count)
         self.stdout.write(self.style.SUCCESS(f'Created {len(users)} users'))
 
         # Step 2: Enrich default channels and create additional ones
@@ -132,8 +160,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'Created {len(created_media)} media records'))
 
-        # Step 6: Create playlists and assign media
-        playlists = self.create_playlists(users)
+        # Step 6: Create playlists and assign media (scaled to ~15-20% of media count)
+        playlists = self.create_playlists(users, media_count=count)
         self.stdout.write(self.style.SUCCESS(f'Created {len(playlists)} playlists'))
 
         self.assign_media_to_playlists(created_media, playlists)
@@ -197,26 +225,62 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'\nSuccessfully populated {count} fake media records!'))
 
-    def _init_content_locales(self, rtl_language='random'):
-        """Mix Greek with exactly one RTL language for generated text."""
-        if rtl_language == 'random':
-            rtl_code = random.choice(RTL_LANGUAGE_CODES)
-        elif rtl_language in RTL_LANGUAGE_CODES:
-            rtl_code = rtl_language
-        else:
-            raise CommandError(f'Unsupported RTL language: {rtl_language}. Choose from {", ".join(RTL_LANGUAGE_CODES)} or random.')
+    def _resolve_language_choice(self, choice, allowed, label):
+        if choice == 'random':
+            return random.choice(allowed)
+        if choice in allowed:
+            return choice
+        raise CommandError(f'Unsupported {label}: {choice}. Choose from {", ".join(allowed)} or random.')
 
-        greek = FAKE_MEDIA_LOCALES['el']
+    def _init_content_locales(self, rtl_language='random', secondary_language='random', cjk_language='random', single_language=None):
+        """Configure mixed (default) or single-language content generation."""
+        if single_language is not None:
+            if single_language not in SINGLE_LANGUAGE_CODES:
+                raise CommandError(f'Unsupported single language: {single_language}. Choose from {", ".join(SINGLE_LANGUAGE_CODES)}.')
+            locale = FAKE_MEDIA_LOCALES[single_language]
+            self.content_locales = [locale]
+            self.content_locale_weights = [100]
+            self.secondary_language_code = single_language if single_language in SECONDARY_LANGUAGE_CODES else None
+            self.rtl_language_code = single_language if single_language in RTL_LANGUAGE_CODES else None
+            self.cjk_language_code = single_language if single_language in CJK_LANGUAGE_CODES else None
+            self.single_language_code = single_language
+            self.stdout.write(self.style.SUCCESS(f'Content language: {locale["name"]} ({single_language}) only'))
+            return
+
+        secondary_code = self._resolve_language_choice(secondary_language, SECONDARY_LANGUAGE_CODES, 'secondary language')
+        rtl_code = self._resolve_language_choice(rtl_language, RTL_LANGUAGE_CODES, 'RTL language')
+        cjk_code = self._resolve_language_choice(cjk_language, CJK_LANGUAGE_CODES, 'CJK language')
+
+        english = FAKE_MEDIA_LOCALES['en']
+        secondary = FAKE_MEDIA_LOCALES[secondary_code]
         rtl = FAKE_MEDIA_LOCALES[rtl_code]
-        self.content_locales = [greek, rtl]
+        cjk = FAKE_MEDIA_LOCALES[cjk_code]
+        self.content_locales = [english, secondary, rtl, cjk]
+        self.content_locale_weights = [40, 20, 20, 20]
+        self.secondary_language_code = secondary_code
         self.rtl_language_code = rtl_code
-        self.stdout.write(self.style.SUCCESS(f'Content languages: Greek (el) + {rtl["name"]} ({rtl_code}, RTL)'))
+        self.cjk_language_code = cjk_code
+        self.single_language_code = None
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Content languages: English (en, ~40%) + {secondary["name"]} ({secondary_code}, ~20%) + ' f'{rtl["name"]} ({rtl_code}, RTL, ~20%) + {cjk["name"]} ({cjk_code}, CJK, ~20%)'
+            )
+        )
 
     def _locale(self):
-        """Pick Greek or the run's RTL language at random."""
+        """Pick a content locale using the configured mix weights."""
         if not getattr(self, 'content_locales', None):
-            self._init_content_locales('random')
-        return random.choice(self.content_locales)
+            self._init_content_locales()
+        weights = getattr(self, 'content_locale_weights', None) or [1] * len(self.content_locales)
+        return random.choices(self.content_locales, weights=weights, k=1)[0]
+
+    def _scaled_related_count(self, media_count, low_ratio=0.15, high_ratio=0.20, minimum=3):
+        """Scale related object counts to a fraction of media volume."""
+        if media_count <= 0:
+            return minimum
+        low = max(minimum, int(round(media_count * low_ratio)))
+        high = max(low, int(round(media_count * high_ratio)))
+        return random.randint(low, high)
 
     def _init_time_horizon(self):
         """Use a rolling 12-month window for all generated timestamps."""
@@ -266,9 +330,9 @@ class Command(BaseCommand):
         domains = ['example.com', 'test.com', 'demo.org', 'sample.net', 'fake.io']
         return f"{username}@{random.choice(domains)}"
 
-    def create_users(self):
-        """Create 10-15 fake users with join dates spread over the last 12 months."""
-        num_users = random.randint(10, 15)
+    def create_users(self, media_count=150):
+        """Create fake users scaled to ~15-20% of media count, dated over the last 12 months."""
+        num_users = self._scaled_related_count(media_count)
         users = []
 
         for i in range(num_users):
@@ -368,49 +432,44 @@ class Command(BaseCommand):
 
         return channels
 
+    def _normalize_tag_title(self, word):
+        """Keep letters/digits from any script; strip spaces and punctuation."""
+        return ''.join(c for c in word if c.isalnum())[:100]
+
+    def _pick_localized_tag_title(self, existing_titles):
+        """Pick a unique common-word tag from the configured language mix."""
+        if not getattr(self, 'content_locales', None):
+            self._init_content_locales()
+
+        for _ in range(80):
+            locale = self._locale()
+            raw = random.choice(locale['tag_words'])
+            title = self._normalize_tag_title(raw)
+            if title and title not in existing_titles:
+                return title
+
+        # Fallback: exhaust unique remaining words from all active locales.
+        for locale in self.content_locales:
+            for raw in locale['tag_words']:
+                title = self._normalize_tag_title(raw)
+                if title and title not in existing_titles:
+                    return title
+        return None
+
     def setup_tags(self, users):
-        """Create 20-30 fake tags"""
+        """Create 20-30 tags from common words in the configured content languages."""
         num_tags = random.randint(20, 30)
         tags = []
-
-        # Pool tag words from Greek and the selected RTL language
-        tag_words = []
-        for locale in self.content_locales:
-            tag_words.extend(locale['tag_words'])
-
-        # Get existing tags to avoid duplicates
         existing_tag_titles = set(Tag.objects.values_list('title', flat=True))
 
-        for i in range(num_tags):
-            # Generate tag title from common words or random string
-            if random.random() < 0.7:
-                tag_title = random.choice(tag_words)
-                if random.random() < 0.3:
-                    tag_title = f"{tag_title}{random.randint(1, 99)}"
-            else:
-                tag_title = self.generate_random_string(random.randint(5, 10))
-
-            # Keep letters/digits from any script; strip spaces and punctuation
-            tag_title = ''.join(c for c in tag_title if c.isalnum())
-            tag_title = tag_title[:100]  # Max length
-
-            # Ensure uniqueness
-            counter = 1
-            original_title = tag_title
-            while tag_title in existing_tag_titles:
-                tag_title = f"{original_title}{counter}"
-                counter += 1
+        for _ in range(num_tags):
+            tag_title = self._pick_localized_tag_title(existing_tag_titles)
+            if not tag_title:
+                break
 
             existing_tag_titles.add(tag_title)
-
-            # Randomly assign user or None
             user = random.choice(users) if random.random() < 0.3 else None
-
-            tag = Tag.objects.create(
-                title=tag_title,
-                user=user,
-            )
-            tags.append(tag)
+            tags.append(Tag.objects.create(title=tag_title, user=user))
 
         return tags
 
@@ -570,7 +629,7 @@ class Command(BaseCommand):
         return text
 
     def generate_playlist_title(self, locale=None):
-        """Generate a random playlist title in Greek or the run's RTL language."""
+        """Generate a random playlist title in the configured content languages."""
         locale = locale or self._locale()
         template = random.choice(locale['playlist_templates'])
         topic = random.choice(locale['topics'])
@@ -699,9 +758,9 @@ class Command(BaseCommand):
 
         return media
 
-    def create_playlists(self, users):
-        """Create 10-20 playlists distributed across users"""
-        num_playlists = random.randint(10, 20)
+    def create_playlists(self, users, media_count=150):
+        """Create playlists scaled to ~15-20% of media count, distributed across users."""
+        num_playlists = self._scaled_related_count(media_count)
         playlists = []
 
         for i in range(num_playlists):
@@ -1426,7 +1485,7 @@ class Command(BaseCommand):
 <p>Whichever of these are present: <code>test_image.png</code>, <code>test_image2.jpg</code>, <code>small_video.mp4</code>, <code>medium_video.mp4</code>, <code>sample_audio.wav</code>, <code>sample_audio.mp3</code>, and <code>sample_document.pdf</code>.</p>
 {figure}
 <h3>How do I run it?</h3>
-<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones. Titles, names, and comments randomly mix Greek with one RTL language (<code>--rtl-language</code>: <code>ar</code>, <code>he</code>, <code>ur</code>, or <code>random</code>).</p>
+<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones. Users and playlists scale to about 15–20% of that media count. By default, titles, names, and comments are about 40% English, with ~20% in one secondary language (<code>--secondary-language</code>: <code>de</code>, <code>es</code>, <code>el</code>, or <code>random</code>), ~20% in one RTL language (<code>--rtl-language</code>: <code>ar</code>, <code>he</code>, <code>ur</code>, or <code>random</code>), and ~20% in one CJK language (<code>--cjk-language</code>: <code>zh</code>, <code>ja</code>, <code>ko</code>, or <code>random</code>; CJK is LTR, not RTL). Pass <code>--single-language</code> (optionally with a code such as <code>en</code>, <code>de</code>, or <code>ja</code>) to generate only one language.</p>
 <h3>Will running it again duplicate these pages?</h3>
 <p>No. About, FAQ, and Terms are updated in place while they still contain the generator marker comment. Media, users, and comments are added again, so those counts grow unless you pass <code>--clear</code>, and that flag only removes media.</p>
 <h3>Why do some videos have captions, chapters, or trim requests?</h3>

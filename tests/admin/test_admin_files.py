@@ -220,6 +220,24 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         editable = model_admin.get_list_editable(self._media_admin_request())
         self.assertEqual(editable, ())
 
+    def test_queryset_skips_count_annotations_when_optional_columns_hidden(self):
+        model_admin = admin.site._registry[Media]
+        hidden_request = self._media_admin_request()
+        hidden_qs = model_admin.get_queryset(hidden_request)
+        self.assertNotIn("_comments_count", hidden_qs.query.annotations)
+        self.assertNotIn("_encodings_count", hidden_qs.query.annotations)
+
+        encoding_request = self._media_admin_request({"encoding_status__exact": "pending"})
+        encoding_qs = model_admin.get_queryset(encoding_request)
+        self.assertIn("_encodings_count", encoding_qs.query.annotations)
+        self.assertNotIn("_comments_count", encoding_qs.query.annotations)
+
+        session = {"mediacms_media_admin_optional_columns": ["get_comments_count", "get_encodings_count"]}
+        visible_request = self._media_admin_request(session=session)
+        visible_qs = model_admin.get_queryset(visible_request)
+        self.assertIn("_comments_count", visible_qs.query.annotations)
+        self.assertIn("_encodings_count", visible_qs.query.annotations)
+
     def test_related_filters_force_optional_columns(self):
         model_admin = admin.site._registry[Media]
         reviewed = model_admin.get_list_display(self._media_admin_request({"is_reviewed__exact": "0"}))

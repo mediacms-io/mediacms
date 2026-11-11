@@ -767,7 +767,16 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("user", "channel").annotate(_comments_count=Count("comments", distinct=True), _encodings_count=Count("encodings", distinct=True))
+        qs = super().get_queryset(request).select_related("user", "channel")
+        display = set(self.get_list_display(request))
+        annotations = {}
+        if "get_comments_count" in display:
+            annotations["_comments_count"] = Count("comments", distinct=True)
+        if "get_encodings_count" in display:
+            annotations["_encodings_count"] = Count("encodings", distinct=True)
+        if annotations:
+            qs = qs.annotate(**annotations)
+        return qs
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -1627,7 +1636,7 @@ class LanguageAdmin(admin.ModelAdmin):
 
 class SubtitleAdmin(admin.ModelAdmin):
     list_display = ["id", "link_language", "link_media", "link_user"]
-    list_filter = ["language", ("media", admin.RelatedOnlyFieldListFilter)]
+    list_filter = ["language"]
     search_fields = ["media__title", "user__username"]
     list_select_related = ("media", "user", "language")
     readonly_fields = ("link_language", "link_media", "link_user")
@@ -1665,7 +1674,7 @@ class SubtitleAdmin(admin.ModelAdmin):
 class VideoTrimRequestAdmin(admin.ModelAdmin):
     list_display = ["id", "link_media", "display_status", "add_date", "display_video_action", "display_media_trim_style"]
     list_display_links = ("id", "display_status")
-    list_filter = ["status", "video_action", "media_trim_style", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
+    list_filter = ["status", "video_action", "media_trim_style", "add_date"]
     search_fields = ["media__title"]
     list_select_related = ("media",)
     autocomplete_fields = ("media",)
@@ -1707,9 +1716,10 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
 
 class EncodingAdmin(admin.ModelAdmin):
     list_display = ["get_title", "link_media", "chunk", "profile", "progress", "display_status", "has_file"]
-    list_filter = ["chunk", "profile", "status", ("media", admin.RelatedOnlyFieldListFilter)]
+    list_filter = ["chunk", "profile", "status"]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
+    autocomplete_fields = ("media", "profile")
     readonly_fields = ("link_media", "has_file")
     actions = ["retry_failed_encodings"]
     action_form = GroupedActionForm
@@ -1782,9 +1792,10 @@ class EncodingAdmin(admin.ModelAdmin):
 class TranscriptionRequestAdmin(admin.ModelAdmin):
     list_display = ["id", "link_media", "display_status", "translate_to_english", "add_date"]
     list_display_links = ("id", "link_media")
-    list_filter = ["status", "translate_to_english", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
+    list_filter = ["status", "translate_to_english", "add_date"]
     search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
+    autocomplete_fields = ("media",)
     readonly_fields = ("add_date", "link_media")
     ordering = ("-add_date",)
     fieldsets = (

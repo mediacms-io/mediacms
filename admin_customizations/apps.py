@@ -23,9 +23,8 @@ class AdminCustomizationsConfig(AppConfig):
             """Custom index with statistics"""
             extra_context = extra_context or {}
 
-            # Calculate statistics
-            stats = calculate_statistics()
-            extra_context['dashboard_stats'] = stats
+            force_refresh = request.GET.get("refresh_stats") == "1" and request.user.is_staff
+            extra_context["dashboard_stats"] = calculate_statistics(force_refresh=force_refresh)
 
             # Call original index to get app_list and other context
             response = original_index(request, extra_context)

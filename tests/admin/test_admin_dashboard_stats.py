@@ -1,15 +1,21 @@
 from datetime import timedelta
+from unittest.mock import patch
 
+from django.core.cache import cache
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
 from actions.models import MediaAction
 from admin_customizations.admin import (
+    DASHBOARD_STATS_CACHE_KEY,
     calculate_statistics,
     get_media_statistics,
     get_moderation_statistics,
     get_user_statistics,
+    invalidate_dashboard_stats_cache,
 )
 from files.methods import clear_media_reports, confirm_media_reports, set_media_reviewed
 from files.models import Comment, Media
@@ -23,6 +29,9 @@ class DashboardStatisticsTest(TestCase):
         cls.admin = create_account(username="dash_stats_admin", is_superuser=True, is_editor=True)
         cls.media = create_media(cls.admin, title="dash stats media", encoding_status="fail", featured=True)
         cls.queued = create_media(cls.admin, title="dash stats queued", encoding_status="pending")
+
+    def setUp(self):
+        invalidate_dashboard_stats_cache()
 
     def test_media_stats_expose_failed_queue_featured_without_longest_videos(self):
         stats = get_media_statistics()
@@ -104,6 +113,37 @@ class DashboardStatisticsTest(TestCase):
         self.assertIn("users", stats)
         self.assertIn("engagement", stats)
         self.assertIn("system", stats)
+
+    def test_calculate_statistics_caches_payload_and_skips_db_on_hit(self):
+        first = calculate_statistics(force_refresh=True)
+        self.assertIsNotNone(cache.get(DASHBOARD_STATS_CACHE_KEY))
+        with CaptureQueriesContext(connection) as ctx:
+            second = calculate_statistics()
+        self.assertEqual(len(ctx), 0)
+        self.assertEqual(second["media"]["total"], first["media"]["total"])
+        self.assertEqual(second["system"]["encoding_queue"], first["media"]["encoding_queue"])
+
+    def test_calculate_statistics_force_refresh_bypasses_cache(self):
+        calculate_statistics(force_refresh=True)
+        with patch("admin_customizations.admin.get_media_statistics", wraps=get_media_statistics) as media_stats:
+            calculate_statistics(force_refresh=True)
+            self.assertEqual(media_stats.call_count, 1)
+            calculate_statistics()
+            self.assertEqual(media_stats.call_count, 1)
+
+    def test_admin_index_refresh_stats_forces_recompute(self):
+        self.client.force_login(self.admin)
+        calculate_statistics(force_refresh=True)
+        cached_total = cache.get(DASHBOARD_STATS_CACHE_KEY)["media"]["total"]
+        create_media(self.admin, title="dash refresh media")
+
+        stale = self.client.get(reverse("admin:index"))
+        self.assertEqual(stale.status_code, 200)
+        self.assertEqual(stale.context["dashboard_stats"]["media"]["total"], cached_total)
+
+        refreshed = self.client.get(reverse("admin:index"), {"refresh_stats": "1"})
+        self.assertEqual(refreshed.status_code, 200)
+        self.assertGreater(refreshed.context["dashboard_stats"]["media"]["total"], cached_total)
 
     def test_dashboard_links_use_item_text_and_filtered_counts(self):
         Comment.objects.create(media=self.media, user=self.admin, text="dash comment")
@@ -214,8 +254,9 @@ class DashboardStatisticsTest(TestCase):
         staff = create_account(username="dash_staff_user")
         staff.is_staff = True
         staff.save(update_fields=["is_staff"])
-        MediaAction.objects.create(user=editor, media=self.media, action="like")
-        create_media(manager, title="dash manager activity")
+        now = timezone.now()
+        User.objects.filter(pk=editor.pk).update(last_login=now - timedelta(minutes=5))
+        User.objects.filter(pk=manager.pk).update(last_login=now)
 
         seven_days_ago = timezone.now() - timedelta(days=7)
         thirty_days_ago = timezone.now() - timedelta(days=30)
@@ -251,6 +292,7 @@ class DashboardIndexOrderTest(TestCase):
         cls.admin = create_account(username="dash_index_admin", is_superuser=True)
 
     def setUp(self):
+        invalidate_dashboard_stats_cache()
         self.client.force_login(self.admin)
 
     def test_admin_index_section_order(self):

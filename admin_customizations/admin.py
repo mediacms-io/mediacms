@@ -1,8 +1,10 @@
+from collections import defaultdict
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Case, Count, FloatField, Max, Q, Sum, Value, When
-from django.db.models.functions import Cast, Greatest, Replace
+from django.core.cache import cache
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
@@ -13,8 +15,9 @@ from users.models import Channel, User
 # submissions and media approval reviews, which have their own tiles).
 REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in ("media_reviewed",))
 REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
-# Media.size is a display string such as "12.3MB", not a numeric column.
-UPLOAD_SIZE_PATTERN = r"^[0-9]+(\.[0-9]+)?MB$"
+
+DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v1"
+DASHBOARD_STATS_CACHE_TTL = 60
 
 
 def format_upload_size(megabytes):
@@ -25,210 +28,314 @@ def format_upload_size(megabytes):
     return f"{megabytes:.1f} MB"
 
 
-def calculate_statistics():
-    """Calculate all dashboard statistics"""
+def invalidate_dashboard_stats_cache():
+    cache.delete(DASHBOARD_STATS_CACHE_KEY)
+
+
+def calculate_statistics(*, force_refresh=False):
+    """Calculate all dashboard statistics, with a short-lived Redis cache."""
+    if not force_refresh:
+        cached = cache.get(DASHBOARD_STATS_CACHE_KEY)
+        if cached is not None:
+            return cached
+
     now = timezone.now()
     seven_days_ago = now - timedelta(days=7)
     thirty_days_ago = now - timedelta(days=30)
 
-    stats = {}
-
-    # Media Statistics
-    stats['media'] = get_media_statistics()
-
-    # Content Moderation
-    stats['moderation'] = get_moderation_statistics(seven_days_ago)
-
-    # Engagement Metrics
-    stats['engagement'] = get_engagement_statistics(seven_days_ago)
-
-    # User Statistics
-    stats['users'] = get_user_statistics(seven_days_ago, thirty_days_ago)
-
-    # System/Infrastructure
-    stats['system'] = get_system_statistics()
-
+    media_stats = get_media_statistics()
+    stats = {
+        "media": media_stats,
+        "moderation": get_moderation_statistics(seven_days_ago, media_stats=media_stats),
+        "engagement": get_engagement_statistics(seven_days_ago, media_stats=media_stats),
+        "users": get_user_statistics(seven_days_ago, thirty_days_ago),
+        "system": get_system_statistics(media_stats=media_stats),
+    }
+    cache.set(DASHBOARD_STATS_CACHE_KEY, stats, DASHBOARD_STATS_CACHE_TTL)
     return stats
 
 
 def get_media_statistics():
-    """Calculate media-related statistics"""
+    """Calculate media-related statistics with a single aggregate query."""
     media_stats = {}
+    aggregates = Media.objects.aggregate(
+        total=Count("id"),
+        video=Count("id", filter=Q(media_type="video")),
+        audio=Count("id", filter=Q(media_type="audio")),
+        image=Count("id", filter=Q(media_type="image")),
+        pdf=Count("id", filter=Q(media_type="pdf")),
+        public=Count("id", filter=Q(state="public")),
+        private=Count("id", filter=Q(state="private")),
+        unlisted=Count("id", filter=Q(state="unlisted")),
+        pending=Count("id", filter=Q(encoding_status="pending")),
+        running=Count("id", filter=Q(encoding_status="running")),
+        success=Count("id", filter=Q(encoding_status="success")),
+        fail=Count("id", filter=Q(encoding_status="fail")),
+        featured=Count("id", filter=Q(featured=True)),
+        reported_media=Count("id", filter=Q(reported_times__gt=0)),
+        reported_above_threshold=Count(
+            "id",
+            filter=Q(reported_times__gte=getattr(settings, "REPORTED_TIMES_THRESHOLD", 10)),
+        ),
+        unreviewed=Count("id", filter=Q(is_reviewed=False)),
+        total_views=Coalesce(Sum("views"), 0),
+        total_likes=Coalesce(Sum("likes"), 0),
+        total_dislikes=Coalesce(Sum("dislikes"), 0),
+    )
 
-    media_stats['total'] = Media.objects.count()
-
-    media_stats['by_type'] = {
-        'video': Media.objects.filter(media_type='video').count(),
-        'audio': Media.objects.filter(media_type='audio').count(),
-        'image': Media.objects.filter(media_type='image').count(),
-        'pdf': Media.objects.filter(media_type='pdf').count(),
+    media_stats["total"] = aggregates["total"]
+    media_stats["by_type"] = {
+        "video": aggregates["video"],
+        "audio": aggregates["audio"],
+        "image": aggregates["image"],
+        "pdf": aggregates["pdf"],
     }
-
-    media_stats['by_state'] = {
-        'public': Media.objects.filter(state='public').count(),
-        'private': Media.objects.filter(state='private').count(),
-        'unlisted': Media.objects.filter(state='unlisted').count(),
+    media_stats["by_state"] = {
+        "public": aggregates["public"],
+        "private": aggregates["private"],
+        "unlisted": aggregates["unlisted"],
     }
-
-    media_stats['by_encoding_status'] = {
-        'pending': Media.objects.filter(encoding_status='pending').count(),
-        'running': Media.objects.filter(encoding_status='running').count(),
-        'success': Media.objects.filter(encoding_status='success').count(),
-        'fail': Media.objects.filter(encoding_status='fail').count(),
+    media_stats["by_encoding_status"] = {
+        "pending": aggregates["pending"],
+        "running": aggregates["running"],
+        "success": aggregates["success"],
+        "fail": aggregates["fail"],
     }
+    media_stats["failed"] = aggregates["fail"]
+    media_stats["encoding_queue"] = aggregates["pending"] + aggregates["running"]
+    media_stats["featured"] = aggregates["featured"]
+    media_stats["total_views"] = aggregates["total_views"]
+    media_stats["reported_media"] = aggregates["reported_media"]
+    media_stats["reported_above_threshold"] = aggregates["reported_above_threshold"]
+    media_stats["unreviewed"] = aggregates["unreviewed"]
+    media_stats["total_likes"] = aggregates["total_likes"]
+    media_stats["total_dislikes"] = aggregates["total_dislikes"]
 
-    media_stats['failed'] = media_stats['by_encoding_status']['fail']
-    media_stats['encoding_queue'] = Media.objects.filter(encoding_status__in=['pending', 'running']).count()
-    media_stats['featured'] = Media.objects.filter(featured=True).count()
-    media_stats['total_views'] = Media.objects.aggregate(total=Sum('views'))['total'] or 0
-
-    recent_upload_values = ('id', 'title', 'add_date', 'friendly_token', 'user_id', 'user__username')
-    media_stats['recent_by_type'] = {
-        media_type: list(Media.objects.filter(media_type=media_type).order_by('-add_date')[:5].values(*recent_upload_values)) for media_type in ('video', 'audio', 'image', 'pdf')
+    recent_upload_values = ("id", "title", "add_date", "friendly_token", "user_id", "user__username")
+    media_stats["recent_by_type"] = {
+        media_type: list(Media.objects.filter(media_type=media_type).order_by("-add_date")[:5].values(*recent_upload_values)) for media_type in ("video", "audio", "image", "pdf")
     }
 
     return media_stats
 
 
-def get_moderation_statistics(seven_days_ago):
+def get_moderation_statistics(seven_days_ago, media_stats=None):
     """Calculate content moderation statistics"""
     moderation_stats = {}
+    reported_threshold = getattr(settings, "REPORTED_TIMES_THRESHOLD", 10)
+    moderation_stats["reported_threshold"] = reported_threshold
 
-    reported_threshold = getattr(settings, 'REPORTED_TIMES_THRESHOLD', 10)
-    moderation_stats['reported_media'] = Media.objects.filter(reported_times__gt=0).count()
-    moderation_stats['reported_above_threshold'] = Media.objects.filter(reported_times__gte=reported_threshold).count()
-    moderation_stats['reported_threshold'] = reported_threshold
-    moderation_stats['unreviewed'] = Media.objects.filter(is_reviewed=False).count()
+    if media_stats is None:
+        media_counts = Media.objects.aggregate(
+            reported_media=Count("id", filter=Q(reported_times__gt=0)),
+            reported_above_threshold=Count("id", filter=Q(reported_times__gte=reported_threshold)),
+            unreviewed=Count("id", filter=Q(is_reviewed=False)),
+        )
+        moderation_stats["reported_media"] = media_counts["reported_media"]
+        moderation_stats["reported_above_threshold"] = media_counts["reported_above_threshold"]
+        moderation_stats["unreviewed"] = media_counts["unreviewed"]
+    else:
+        moderation_stats["reported_media"] = media_stats["reported_media"]
+        moderation_stats["reported_above_threshold"] = media_stats["reported_above_threshold"]
+        moderation_stats["unreviewed"] = media_stats["unreviewed"]
 
-    moderation_stats['clears_last_7_days'] = MediaAction.objects.filter(action='report_cleared', action_date__gte=seven_days_ago).count()
-    moderation_stats['confirms_last_7_days'] = MediaAction.objects.filter(action='report_confirmed', action_date__gte=seven_days_ago).count()
-    moderation_stats['approved_last_7_days'] = MediaAction.objects.filter(action='media_reviewed', action_date__gte=seven_days_ago).count()
+    action_counts = MediaAction.objects.aggregate(
+        clears_last_7_days=Count("id", filter=Q(action="report_cleared", action_date__gte=seven_days_ago)),
+        confirms_last_7_days=Count("id", filter=Q(action="report_confirmed", action_date__gte=seven_days_ago)),
+        approved_last_7_days=Count("id", filter=Q(action="media_reviewed", action_date__gte=seven_days_ago)),
+    )
+    moderation_stats.update(action_counts)
 
     recent_moderation_values = (
-        'id',
-        'action',
-        'action_date',
-        'extra_info',
-        'user_id',
-        'user__username',
-        'media_id',
-        'media__title',
-        'media__friendly_token',
+        "id",
+        "action",
+        "action_date",
+        "extra_info",
+        "user_id",
+        "user__username",
+        "media_id",
+        "media__title",
+        "media__friendly_token",
     )
 
-    moderation_stats['recent_reports'] = list(MediaAction.objects.filter(action='report').order_by('-action_date')[:5].values(*recent_moderation_values))
-    recent_report_audits = list(MediaAction.objects.filter(action__in=REPORT_AUDIT_ACTIONS).order_by('-action_date')[:5].values(*recent_moderation_values))
+    moderation_stats["recent_reports"] = list(MediaAction.objects.filter(action="report").order_by("-action_date")[:5].values(*recent_moderation_values))
+    recent_report_audits = list(MediaAction.objects.filter(action__in=REPORT_AUDIT_ACTIONS).order_by("-action_date")[:5].values(*recent_moderation_values))
     for row in recent_report_audits:
-        row['action_label'] = REPORT_AUDIT_ACTION_LABELS.get(row['action'], row['action'])
-    moderation_stats['recent_report_audits'] = recent_report_audits
-    moderation_stats['recent_pending_review'] = list(
-        Media.objects.filter(is_reviewed=False).select_related('user').order_by('-add_date')[:5].values('id', 'title', 'add_date', 'user_id', 'user__username', 'friendly_token')
-    )
-    moderation_stats['recent_approved'] = list(MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values))
+        row["action_label"] = REPORT_AUDIT_ACTION_LABELS.get(row["action"], row["action"])
+    moderation_stats["recent_report_audits"] = recent_report_audits
+    moderation_stats["recent_pending_review"] = list(Media.objects.filter(is_reviewed=False).order_by("-add_date")[:5].values("id", "title", "add_date", "user_id", "user__username", "friendly_token"))
+    moderation_stats["recent_approved"] = list(MediaAction.objects.filter(action="media_reviewed").order_by("-action_date")[:5].values(*recent_moderation_values))
 
     return moderation_stats
 
 
-def get_engagement_statistics(seven_days_ago):
+def get_engagement_statistics(seven_days_ago, media_stats=None):
     """Calculate engagement metrics"""
     engagement_stats = {}
 
-    engagement_stats['total_comments'] = Comment.objects.count()
-    engagement_stats['recent_comments'] = Comment.objects.filter(add_date__gte=seven_days_ago).count()
-    engagement_stats['total_likes'] = Media.objects.aggregate(total=Sum('likes'))['total'] or 0
-    engagement_stats['total_dislikes'] = Media.objects.aggregate(total=Sum('dislikes'))['total'] or 0
-    engagement_stats['most_liked'] = list(Media.objects.order_by('-likes')[:5].values('id', 'title', 'likes', 'friendly_token'))
-    engagement_stats['most_viewed'] = list(Media.objects.order_by('-views')[:5].values('id', 'title', 'views', 'friendly_token'))
-    engagement_stats['most_commented'] = list(
-        Media.objects.annotate(comment_count=Count('comments')).filter(comment_count__gt=0).order_by('-comment_count')[:5].values('id', 'title', 'comment_count', 'friendly_token')
+    comment_counts = Comment.objects.aggregate(
+        total_comments=Count("id"),
+        recent_comments=Count("id", filter=Q(add_date__gte=seven_days_ago)),
     )
-    engagement_stats['most_disliked'] = list(Media.objects.order_by('-dislikes')[:5].values('id', 'title', 'dislikes', 'friendly_token'))
+    engagement_stats["total_comments"] = comment_counts["total_comments"]
+    engagement_stats["recent_comments"] = comment_counts["recent_comments"]
+
+    if media_stats is None:
+        sums = Media.objects.aggregate(
+            total_likes=Coalesce(Sum("likes"), 0),
+            total_dislikes=Coalesce(Sum("dislikes"), 0),
+        )
+        engagement_stats["total_likes"] = sums["total_likes"]
+        engagement_stats["total_dislikes"] = sums["total_dislikes"]
+    else:
+        engagement_stats["total_likes"] = media_stats["total_likes"]
+        engagement_stats["total_dislikes"] = media_stats["total_dislikes"]
+
+    engagement_stats["most_liked"] = list(Media.objects.order_by("-likes")[:5].values("id", "title", "likes", "friendly_token"))
+    engagement_stats["most_viewed"] = list(Media.objects.order_by("-views")[:5].values("id", "title", "views", "friendly_token"))
+    engagement_stats["most_disliked"] = list(Media.objects.order_by("-dislikes")[:5].values("id", "title", "dislikes", "friendly_token"))
+
+    # Prefer grouping comments (smaller table) over annotating every Media row.
+    top_commented = list(
+        Comment.objects.values("media_id", "media__title", "media__friendly_token")
+        .annotate(comment_count=Count("id"))
+        .filter(comment_count__gt=0, media_id__isnull=False)
+        .order_by("-comment_count")[:5]
+    )
+    engagement_stats["most_commented"] = [
+        {
+            "id": row["media_id"],
+            "title": row["media__title"],
+            "comment_count": row["comment_count"],
+            "friendly_token": row["media__friendly_token"],
+        }
+        for row in top_commented
+    ]
 
     return engagement_stats
+
+
+def _top_uploaders_by_size(limit=5):
+    """Sum Media.size display strings in Python to avoid SQL regex scans."""
+    totals = defaultdict(lambda: {"username": "", "upload_mb": 0.0})
+    for user_id, username, size in Media.objects.exclude(size="").values_list("user_id", "user__username", "size"):
+        if not user_id or not size or not size.endswith("MB"):
+            continue
+        try:
+            megabytes = float(size[:-2])
+        except ValueError:
+            continue
+        totals[user_id]["username"] = username
+        totals[user_id]["upload_mb"] += megabytes
+
+    ranked = sorted(totals.items(), key=lambda item: item[1]["upload_mb"], reverse=True)[:limit]
+    result = []
+    for user_id, payload in ranked:
+        if payload["upload_mb"] <= 0:
+            continue
+        result.append(
+            {
+                "id": user_id,
+                "username": payload["username"],
+                "upload_mb": payload["upload_mb"],
+                "upload_size_label": format_upload_size(payload["upload_mb"]),
+            }
+        )
+    return result
 
 
 def get_user_statistics(seven_days_ago, thirty_days_ago):
     """Calculate user-related statistics"""
     user_stats = {}
 
-    user_stats['total'] = User.objects.count()
-    user_stats['registered_last_7_days'] = User.objects.filter(date_added__gte=seven_days_ago).count()
-    user_stats['registered_last_30_days'] = User.objects.filter(date_added__gte=thirty_days_ago).count()
-    user_stats['active_users'] = User.objects.filter(media__add_date__gte=thirty_days_ago).distinct().count()
-    user_stats['inactive_users'] = User.objects.filter(is_active=False).count()
-    user_stats['superusers'] = User.objects.filter(is_superuser=True).count()
-    user_stats['staff_users'] = User.objects.filter(is_staff=True).count()
-    user_stats['editors'] = User.objects.filter(is_editor=True).count()
-    user_stats['managers'] = User.objects.filter(is_manager=True).count()
-    user_stats['regular_users'] = User.objects.filter(
-        is_superuser=False,
-        is_staff=False,
-        is_editor=False,
-        is_manager=False,
-    ).count()
-    user_stats['recent_registered'] = list(User.objects.order_by('-date_added')[:10].values('id', 'username', 'date_added'))
-    user_stats['recent_activity'] = list(
-        User.objects.annotate(
-            last_media=Max('media__add_date'),
-            last_action=Max('useractions__action_date'),
-            last_comment=Max('comment__add_date'),
-        )
-        .annotate(last_activity=Greatest('last_login', 'last_media', 'last_action', 'last_comment'))
-        .filter(last_activity__isnull=False)
-        .order_by('-last_activity')[:10]
-        .values('id', 'username', 'last_activity')
-    )
-
-    user_stats['top_uploaders'] = list(
-        User.objects.annotate(media_count_annotated=Count('media')).filter(media_count_annotated__gt=0).order_by('-media_count_annotated')[:5].values('id', 'username', 'media_count_annotated')
-    )
-    upload_mb = Sum(
-        Case(
-            When(
-                media__size__regex=UPLOAD_SIZE_PATTERN,
-                then=Cast(Replace('media__size', Value('MB'), Value('')), FloatField()),
+    pending_q = Q(is_approved=False) | Q(is_approved__isnull=True)
+    aggregates = User.objects.aggregate(
+        total=Count("id"),
+        registered_last_7_days=Count("id", filter=Q(date_added__gte=seven_days_ago)),
+        registered_last_30_days=Count("id", filter=Q(date_added__gte=thirty_days_ago)),
+        inactive_users=Count("id", filter=Q(is_active=False)),
+        superusers=Count("id", filter=Q(is_superuser=True)),
+        staff_users=Count("id", filter=Q(is_staff=True)),
+        editors=Count("id", filter=Q(is_editor=True)),
+        managers=Count("id", filter=Q(is_manager=True)),
+        regular_users=Count(
+            "id",
+            filter=Q(
+                is_superuser=False,
+                is_staff=False,
+                is_editor=False,
+                is_manager=False,
             ),
-            default=Value(0.0),
-            output_field=FloatField(),
-        )
+        ),
+        pending_approvals=Count("id", filter=pending_q),
+        approved_users=Count("id", filter=Q(is_approved=True)),
     )
-    top_by_size = list(User.objects.annotate(upload_mb=upload_mb).filter(upload_mb__gt=0).order_by('-upload_mb')[:5].values('id', 'username', 'upload_mb'))
-    for row in top_by_size:
-        row['upload_size_label'] = format_upload_size(row['upload_mb'])
-    user_stats['top_uploaders_by_size'] = top_by_size
+    user_stats.update(
+        {
+            "total": aggregates["total"],
+            "registered_last_7_days": aggregates["registered_last_7_days"],
+            "registered_last_30_days": aggregates["registered_last_30_days"],
+            "inactive_users": aggregates["inactive_users"],
+            "superusers": aggregates["superusers"],
+            "staff_users": aggregates["staff_users"],
+            "editors": aggregates["editors"],
+            "managers": aggregates["managers"],
+            "regular_users": aggregates["regular_users"],
+        }
+    )
+    user_stats["active_users"] = User.objects.filter(media__add_date__gte=thirty_days_ago).distinct().count()
+    user_stats["recent_registered"] = list(User.objects.order_by("-date_added")[:10].values("id", "username", "date_added"))
+    # Prefer indexed last_login over Greatest/Max joins across media/actions/comments.
+    user_stats["recent_activity"] = [
+        {"id": row["id"], "username": row["username"], "last_activity": row["last_login"]}
+        for row in User.objects.filter(last_login__isnull=False).order_by("-last_login")[:10].values("id", "username", "last_login")
+    ]
 
-    approval_enabled = getattr(settings, 'USERS_NEEDS_TO_BE_APPROVED', False)
-    user_stats['approval_workflow_enabled'] = approval_enabled
+    user_stats["top_uploaders"] = list(
+        User.objects.annotate(media_count_annotated=Count("media")).filter(media_count_annotated__gt=0).order_by("-media_count_annotated")[:5].values("id", "username", "media_count_annotated")
+    )
+    user_stats["top_uploaders_by_size"] = _top_uploaders_by_size()
+
+    approval_enabled = getattr(settings, "USERS_NEEDS_TO_BE_APPROVED", False)
+    user_stats["approval_workflow_enabled"] = approval_enabled
     if approval_enabled:
-        pending_q = Q(is_approved=False) | Q(is_approved__isnull=True)
-        user_stats['pending_approvals'] = User.objects.filter(pending_q).count()
-        user_stats['approved_users'] = User.objects.filter(is_approved=True).count()
-        user_stats['recent_pending_users'] = list(User.objects.filter(pending_q).order_by('-date_added')[:5].values('id', 'username', 'date_added'))
+        user_stats["pending_approvals"] = aggregates["pending_approvals"]
+        user_stats["approved_users"] = aggregates["approved_users"]
+        user_stats["recent_pending_users"] = list(User.objects.filter(pending_q).order_by("-date_added")[:5].values("id", "username", "date_added"))
     else:
-        user_stats['pending_approvals'] = 0
-        user_stats['approved_users'] = 0
-        user_stats['recent_pending_users'] = []
+        user_stats["pending_approvals"] = 0
+        user_stats["approved_users"] = 0
+        user_stats["recent_pending_users"] = []
 
-    user_stats['top_commenters'] = list(Comment.objects.exclude(user=None).values('user_id', 'user__username').annotate(comment_count=Count('id')).order_by('-comment_count')[:5])
-    user_stats['top_likers'] = list(MediaAction.objects.filter(action='like').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5])
-    user_stats['top_dislikers'] = list(
-        MediaAction.objects.filter(action='dislike').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5]
+    user_stats["top_commenters"] = list(Comment.objects.exclude(user=None).values("user_id", "user__username").annotate(comment_count=Count("id")).order_by("-comment_count")[:5])
+    user_stats["top_likers"] = list(MediaAction.objects.filter(action="like").exclude(user=None).values("user_id", "user__username").annotate(action_count=Count("id")).order_by("-action_count")[:5])
+    user_stats["top_dislikers"] = list(
+        MediaAction.objects.filter(action="dislike").exclude(user=None).values("user_id", "user__username").annotate(action_count=Count("id")).order_by("-action_count")[:5]
     )
-    user_stats['top_reporters'] = list(
-        MediaAction.objects.filter(action='report').exclude(user=None).values('user_id', 'user__username').annotate(action_count=Count('id')).order_by('-action_count')[:5]
+    user_stats["top_reporters"] = list(
+        MediaAction.objects.filter(action="report").exclude(user=None).values("user_id", "user__username").annotate(action_count=Count("id")).order_by("-action_count")[:5]
     )
 
     return user_stats
 
 
-def get_system_statistics():
+def get_system_statistics(media_stats=None):
     """Calculate system/infrastructure statistics"""
-    system_stats = {}
+    system_stats = {
+        "total_channels": Channel.objects.count(),
+        "total_categories": Category.objects.count(),
+        "total_playlists": Playlist.objects.count(),
+    }
 
-    system_stats['total_channels'] = Channel.objects.count()
-    system_stats['total_categories'] = Category.objects.count()
-    system_stats['total_playlists'] = Playlist.objects.count()
-    system_stats['encoding_failures'] = Media.objects.filter(encoding_status='fail').count()
-    system_stats['encoding_queue'] = Media.objects.filter(encoding_status__in=['pending', 'running']).count()
+    if media_stats is None:
+        encoding = Media.objects.aggregate(
+            encoding_failures=Count("id", filter=Q(encoding_status="fail")),
+            encoding_queue=Count("id", filter=Q(encoding_status__in=["pending", "running"])),
+        )
+        system_stats["encoding_failures"] = encoding["encoding_failures"]
+        system_stats["encoding_queue"] = encoding["encoding_queue"]
+    else:
+        system_stats["encoding_failures"] = media_stats["failed"]
+        system_stats["encoding_queue"] = media_stats["encoding_queue"]
 
     return system_stats

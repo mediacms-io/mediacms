@@ -62,4 +62,5 @@ class MediaAction(models.Model):
         indexes = [
             models.Index(fields=["user", "action", "-action_date"]),
             models.Index(fields=["session_key", "action"]),
+            models.Index(fields=["action", "-action_date"]),
         ]
