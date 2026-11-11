@@ -742,10 +742,17 @@ def tags(request):
 
 
 def tos(request):
-    """Terms of service view"""
+    """Terms of service view.
 
-    context = {}
-    return render(request, "cms/tos.html", context)
+    A Page with slug ``tos`` replaces the placeholder template, the same way a
+    Page with slug ``about`` replaces the default About page.
+    """
+
+    page = Page.objects.filter(slug="tos").first()
+    if page:
+        return render(request, "cms/page.html", {"page": page})
+
+    return render(request, "cms/tos.html", {})
 
 
 @login_required

@@ -107,117 +107,6 @@
 
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <div class="card card-outline card-danger">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Recent confirmed reports"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for confirmation in stats.moderation.recent_report_confirmations %}
-                                                    <tr>
-                                                        <td title="{{ confirmation.extra_info|default:'' }}">{{ confirmation.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ confirmation.user__username|default:'-' }}</td>
-                                                        <td>{{ confirmation.action_date|date:"Y-m-d H:i" }}</td>
-                                                        <td>
-                                                            {% if confirmation.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' confirmation.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
-                                                            {% else %}
-                                                                -
-                                                            {% endif %}
-                                                        </td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card card-outline card-warning">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Recent cleared reports"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for clear in stats.moderation.recent_report_clears %}
-                                                    <tr>
-                                                        <td title="{{ clear.extra_info|default:'' }}">{{ clear.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ clear.user__username|default:'-' }}</td>
-                                                        <td>{{ clear.action_date|date:"Y-m-d H:i" }}</td>
-                                                        <td>
-                                                            {% if clear.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' clear.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
-                                                            {% else %}
-                                                                -
-                                                            {% endif %}
-                                                        </td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card card-outline card-success">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Recent media reviews"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for review in stats.moderation.recent_media_reviews %}
-                                                    <tr>
-                                                        <td>{{ review.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ review.user__username|default:'-' }}</td>
-                                                        <td>{{ review.action_date|date:"Y-m-d H:i" }}</td>
-                                                        <td>
-                                                            {% if review.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' review.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
-                                                            {% else %}
-                                                                -
-                                                            {% endif %}
-                                                        </td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
                                 <div class="card card-outline card-secondary">
                                     <div class="card-header">
                                         <h3 class="card-title">{{ "Recent reports"|custom_translate:LANGUAGE_CODE }}</h3>
@@ -241,6 +130,115 @@
                                                         <td>
                                                             {% if report.media_id %}
                                                                 <a href="{% url 'admin:files_media_change' report.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent report audit actions"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Audit"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for audit in stats.moderation.recent_report_audits %}
+                                                    <tr>
+                                                        <td title="{{ audit.extra_info|default:'' }}">{{ audit.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ audit.user__username|default:'-' }}</td>
+                                                        <td>{{ audit.action_label }}</td>
+                                                        <td>{{ audit.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if audit.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' audit.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% else %}
+                                                                -
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent pending review"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.moderation.recent_pending_review %}
+                                                    <tr>
+                                                        <td>{{ media.title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ media.user__username|default:'-' }}</td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recently approved"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for approval in stats.moderation.recent_approved %}
+                                                    <tr>
+                                                        <td>{{ approval.media__title|truncatechars:30|default:'-' }}</td>
+                                                        <td>{{ approval.user__username|default:'-' }}</td>
+                                                        <td>{{ approval.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>
+                                                            {% if approval.media_id %}
+                                                                <a href="{% url 'admin:files_media_change' approval.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}

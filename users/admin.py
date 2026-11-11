@@ -5,10 +5,46 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
-from files.admin_helpers import admin_change_link, admin_changelist_link
+from files.admin_helpers import (
+    ReadOnlyTabularInline,
+    admin_change_link,
+    admin_changelist_link,
+)
 from files.models import Comment, Media, Playlist
 
 from .models import Channel, User
+
+
+class ChannelMediaInline(ReadOnlyTabularInline):
+    model = Media
+    fk_name = "channel"
+    fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
+    readonly_fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
+    ordering = ("-add_date",)
+    classes = ["tab"]
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+    @admin.display(description="Media")
+    def link_title(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, obj.title)
+
+    @admin.display(description="Owner")
+    def link_owner(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_change_link(obj.user, obj.user.username)
+
+    @admin.display(description="Listable", boolean=True)
+    def is_listable(self, obj):
+        if not obj:
+            return None
+        return obj.listable
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -119,6 +155,24 @@ class ChannelAdmin(admin.ModelAdmin):
     date_hierarchy = "add_date"
     readonly_fields = ("friendly_token", "link_user", "related_media")
     exclude = ("user",)
+    inlines = [ChannelMediaInline]
+    fieldsets = (
+        (
+            "Channel",
+            {
+                "fields": (
+                    "title",
+                    "description",
+                    "link_user",
+                    "friendly_token",
+                    "banner_logo",
+                    "subscribers",
+                    "related_media",
+                ),
+                "classes": ("tab",),
+            },
+        ),
+    )
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):

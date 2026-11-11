@@ -1,0 +1,35 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{# Must sit outside #changelist-form — nested forms are ignored by browsers. #}
+{% block search %}
+{{ block.super }}
+{% if media_optional_columns %}
+<div class="media-column-chooser card card-outline card-secondary mb-3">
+    <div class="card-header py-2">
+        <strong>{% trans "Columns" %}</strong>
+        <span class="text-muted small ml-2">{% trans "Optional columns are hidden by default. Related filters can force a column on." %}</span>
+    </div>
+    <div class="card-body py-2">
+        <form method="get" action="" class="media-column-chooser-form">
+            <input type="hidden" name="set_media_columns" value="1">
+            {% for key, value in media_column_chooser_preserved_qsl %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
+            <div class="d-flex flex-wrap align-items-center" style="gap: 0.75rem 1.25rem;">
+                {% for column in media_optional_columns %}
+                <label class="mb-0" title="{% if column.filter_forced %}{% trans "Shown because an active filter needs this column" %}{% endif %}">
+                    <input type="checkbox"
+                           name="media_col"
+                           value="{{ column.key }}"
+                           {% if column.checked %}checked{% endif %}>
+                    {{ column.label }}{% if column.filter_forced %} *{% endif %}
+                </label>
+                {% endfor %}
+                <button type="submit" class="btn btn-sm btn-primary">{% trans "Apply columns" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

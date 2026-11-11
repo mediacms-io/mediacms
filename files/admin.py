@@ -4,6 +4,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import escape, format_html
@@ -44,6 +45,7 @@ from .models import (
     EncodeProfile,
     Encoding,
     Language,
+    License,
     Media,
     MediaPermission,
     Page,
@@ -119,27 +121,148 @@ class EncodingInline(ReadOnlyTabularInline):
 
 class SubtitleInline(ReadOnlyTabularInline):
     model = Subtitle
-    fields = ("language", "user")
-    readonly_fields = ("language", "user")
+    fields = ("link_language", "user")
+    readonly_fields = ("link_language", "user")
     verbose_name_plural = "Subtitles"
+
+    @admin.display(description="Language")
+    def link_language(self, obj):
+        if not obj or not obj.language_id:
+            return "—"
+        return admin_change_link(obj.language, obj.language.title)
+
+
+class TranscriptionRequestInline(ReadOnlyTabularInline):
+    model = TranscriptionRequest
+    fields = ("status", "translate_to_english", "add_date")
+    readonly_fields = ("status", "translate_to_english", "add_date")
+    ordering = ("-add_date",)
+    can_delete = True
+    verbose_name = "Caption Request"
+    verbose_name_plural = "Caption Requests"
+
+
+class LanguageCaptionInline(ReadOnlyTabularInline):
+    model = Subtitle
+    fields = ("link_media", "link_user")
+    readonly_fields = ("link_media", "link_user")
+    ordering = ("media__title",)
+    can_delete = True
+    verbose_name = "Caption"
+    verbose_name_plural = "Captions"
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+    @admin.display(description="User")
+    def link_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_change_link(obj.user, obj.user.username)
 
 
 class MediaPermissionInline(ReadOnlyTabularInline):
     model = MediaPermission
-    fields = ("user", "owner_user", "permission", "source", "created_at")
-    readonly_fields = ("user", "owner_user", "permission", "source", "created_at")
+    fields = ("user", "owner_user", "permission", "source")
+    readonly_fields = ("user", "owner_user", "permission", "source")
+    ordering = ("-created_at",)
     verbose_name_plural = "User permissions"
 
 
-class PlaylistMediaInline(admin.TabularInline):
+class PlaylistMediaInline(ReadOnlyTabularInline):
     model = PlaylistMedia
-    extra = 0
-    fields = ("media", "ordering", "action_date")
-    readonly_fields = ("action_date",)
-    raw_id_fields = ("media",)
-    show_change_link = True
+    fields = ("link_media", "link_owner", "is_listable", "ordering")
+    readonly_fields = ("link_media", "link_owner", "is_listable", "ordering")
     ordering = ("ordering",)
+    can_delete = True
     verbose_name_plural = "Playlist media"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("media", "media__user")
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+    @admin.display(description="Owner")
+    def link_owner(self, obj):
+        if not obj or not obj.media_id or not obj.media.user_id:
+            return "—"
+        return admin_change_link(obj.media.user, obj.media.user.username)
+
+    @admin.display(description="Listable", boolean=True)
+    def is_listable(self, obj):
+        if not obj or not obj.media_id:
+            return None
+        return obj.media.listable
+
+
+class CategoryMediaInline(ReadOnlyTabularInline):
+    model = Media.category.through
+    fields = ("link_media", "link_owner", "is_listable")
+    readonly_fields = ("link_media", "link_owner", "is_listable")
+    ordering = ("media__title",)
+    can_delete = True
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("media", "media__user")
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+    @admin.display(description="Owner")
+    def link_owner(self, obj):
+        if not obj or not obj.media_id or not obj.media.user_id:
+            return "—"
+        return admin_change_link(obj.media.user, obj.media.user.username)
+
+    @admin.display(description="Listable", boolean=True)
+    def is_listable(self, obj):
+        if not obj or not obj.media_id:
+            return None
+        return obj.media.listable
+
+
+class TagMediaInline(ReadOnlyTabularInline):
+    model = Media.tags.through
+    fields = ("link_media", "link_owner", "is_listable")
+    readonly_fields = ("link_media", "link_owner", "is_listable")
+    ordering = ("media__title",)
+    can_delete = True
+    classes = ["tab"]
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("media", "media__user")
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+    @admin.display(description="Owner")
+    def link_owner(self, obj):
+        if not obj or not obj.media_id or not obj.media.user_id:
+            return "—"
+        return admin_change_link(obj.media.user, obj.media.user.username)
+
+    @admin.display(description="Listable", boolean=True)
+    def is_listable(self, obj):
+        if not obj or not obj.media_id:
+            return None
+        return obj.media.listable
 
 
 class CommentAdmin(admin.ModelAdmin):
@@ -162,6 +285,8 @@ class CommentAdmin(admin.ModelAdmin):
 
 class MediaAdmin(admin.ModelAdmin):
     search_fields = ["title", "user__username", "friendly_token"]
+    change_list_template = "admin/files/media/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
     list_display = [
         "title",
         "link_user",
@@ -171,6 +296,7 @@ class MediaAdmin(admin.ModelAdmin):
         "state",
         "is_reviewed",
         "encoding_status",
+        "listable",
         "reported_times",
         "featured",
         "allow_download",
@@ -178,17 +304,33 @@ class MediaAdmin(admin.ModelAdmin):
         "get_comments_count",
         "get_encodings_count",
     ]
+    # Hidden by default; shown via column chooser and/or when a related filter is active.
+    optional_list_columns = (
+        ("duration", "Duration", ()),
+        ("is_reviewed", "Is reviewed", ("is_reviewed__exact",)),
+        ("featured", "Featured", ("featured__exact",)),
+        ("get_comments_count", "Comments", ()),
+        ("get_encodings_count", "Encodings", ("encoding_status__exact", "encoding_queue")),
+        ("reported_times", "Reported times", ("reported",)),
+        ("allow_download", "Allow download", ("allow_download__exact",)),
+        ("enable_comments", "Allow comments", ("enable_comments__exact",)),
+    )
+    optional_columns_session_key = "mediacms_media_admin_optional_columns"
     list_filter = [
         "state",
         "is_reviewed",
         "encoding_status",
         EncodingQueueFilter,
         "featured",
+        "listable",
         "media_type",
         ReportedTimesFilter,
         "allow_download",
         "enable_comments",
         "category",
+        ("tags", admin.RelatedOnlyFieldListFilter),
+        ("playlist", admin.RelatedOnlyFieldListFilter),
+        ("license", admin.RelatedOnlyFieldListFilter),
         ("channel", admin.RelatedOnlyFieldListFilter),
         ("user", admin.RelatedOnlyFieldListFilter),
     ]
@@ -247,10 +389,95 @@ class MediaAdmin(admin.ModelAdmin):
     def get_action_choices(self, request, default_choices=None):
         return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        """Optional columns forced visible because a related list filter is active."""
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        return [column for column in self.list_display if column not in self._optional_column_keys() or column in visible_optional]
+
+    def get_list_editable(self, request):
+        display = set(self.get_list_display(request))
+        return tuple(field for field in self.list_editable if field in display)
+
+    def get_changelist_instance(self, request):
+        """Use request-aware list_editable so hidden optional columns are not editable."""
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+        if self.get_actions(request):
+            list_display = ["action_checkbox", *list_display]
+        ChangeList = self.get_changelist(request)
+        return ChangeList(
+            request,
+            self.model,
+            list_display,
+            list_display_links,
+            self.get_list_filter(request),
+            self.date_hierarchy,
+            self.get_search_fields(request),
+            self.get_list_select_related(request),
+            self.list_per_page,
+            self.list_max_show_all,
+            self.get_list_editable(request),
+            self,
+            self.get_sortable_by(request),
+            self.search_help_text,
+        )
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and request.GET.get("set_media_columns") == "1":
+            allowed = self._optional_column_keys()
+            selected = [key for key in request.GET.getlist("media_col") if key in allowed]
+            request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_media_columns", None)
+            params.pop("media_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        extra_context["media_optional_columns"] = [
+            {
+                "key": key,
+                "label": label,
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        # Preserve current filters/search when submitting the column chooser.
+        preserved = request.GET.copy()
+        preserved.pop("set_media_columns", None)
+        preserved.pop("media_col", None)
+        extra_context["media_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
     readonly_fields = (
         "link_user",
-        "tags",
-        "category",
         "link_channel",
         "listable",
         "media_type",
@@ -280,7 +507,8 @@ class MediaAdmin(admin.ModelAdmin):
         "related_trim_requests",
         "related_transcription_requests",
     )
-    inlines = [CommentInline, EncodingInline, SubtitleInline, MediaPermissionInline]
+    autocomplete_fields = ("license",)
+    inlines = [CommentInline, EncodingInline, SubtitleInline, TranscriptionRequestInline, MediaPermissionInline]
     exclude = ("user", "channel")
 
     def get_fieldsets(self, request, obj=None):
@@ -306,23 +534,30 @@ class MediaAdmin(admin.ModelAdmin):
                 ]
             )
 
+        content_fields = [
+            "title",
+            "description",
+            "link_user",
+            "link_channel",
+            "license",
+            "tags",
+            "category",
+        ]
+        if getattr(settings, "ALLOW_RATINGS", False):
+            content_fields.append("rating_category")
+        content_fields.extend(
+            [
+                "uploaded_poster",
+                "uploaded_thumbnail",
+                "thumbnail_time",
+            ]
+        )
+
         return (
             (
                 "Content",
                 {
-                    "fields": (
-                        "title",
-                        "description",
-                        "link_user",
-                        "link_channel",
-                        "license",
-                        "tags",
-                        "category",
-                        "rating_category",
-                        "uploaded_poster",
-                        "uploaded_thumbnail",
-                        "thumbnail_time",
-                    ),
+                    "fields": tuple(content_fields),
                     "classes": ("tab",),
                 },
             ),
@@ -991,10 +1226,11 @@ class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
     search_fields = ["title", "uid"]
-    list_display = ["title", "user", "add_date", "media_count"]
+    list_display = ["title", "user", "related_media_count"]
     list_filter = []
     ordering = ("-add_date",)
-    readonly_fields = ("user", "media_count", "lti_platform", "lti_context_id")
+    readonly_fields = ("user", "related_media", "lti_platform", "lti_context_id")
+    inlines = [CategoryMediaInline]
     change_form_template = 'admin/files/category/change_form.html'
 
     def get_list_filter(self, request):
@@ -1025,7 +1261,7 @@ class CategoryAdmin(admin.ModelAdmin):
             (
                 'Category Information',
                 {
-                    'fields': ['uid', 'title', 'description', 'user', 'media_count', 'thumbnail', 'listings_thumbnail'],
+                    'fields': ['uid', 'title', 'description', 'user', 'related_media', 'thumbnail', 'listings_thumbnail'],
                 },
             ),
         ]
@@ -1052,11 +1288,55 @@ class CategoryAdmin(admin.ModelAdmin):
 
         return basic_fieldset + additional_fieldsets
 
+    @admin.display(description="Media")
+    def related_media(self, obj):
+        if not obj.pk:
+            return "—"
+        count = obj.media_count if obj.media_count is not None else Media.objects.filter(category=obj).count()
+        return admin_changelist_link(Media, f"View {count} media item(s)", category__id__exact=obj.pk)
+
+    @admin.display(description="Media count", ordering="media_count")
+    def related_media_count(self, obj):
+        count = obj.media_count if obj.media_count is not None else Media.objects.filter(category=obj).count()
+        return admin_changelist_link(Media, str(count), category__id__exact=obj.pk)
+
 
 class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]
-    list_display = ["title", "user", "media_count"]
-    readonly_fields = ("user", "media_count")
+    list_display = ["title", "user", "related_media_count"]
+    readonly_fields = ("user", "related_media")
+    inlines = [TagMediaInline]
+    fieldsets = (
+        (
+            "General",
+            {
+                "fields": ("title", "user", "related_media", "listings_thumbnail"),
+                "classes": ("tab",),
+            },
+        ),
+    )
+
+    def get_queryset(self, request):
+        # Total tagged media (not the public/reviewed-only media_count field).
+        return super().get_queryset(request).annotate(_media_total=Count("media"))
+
+    def _media_total(self, obj):
+        if hasattr(obj, "_media_total"):
+            return obj._media_total
+        if not obj.pk:
+            return 0
+        return Media.objects.filter(tags=obj).count()
+
+    @admin.display(description="Media")
+    def related_media(self, obj):
+        if not obj.pk:
+            return "—"
+        count = self._media_total(obj)
+        return admin_changelist_link(Media, f"View {count} media item(s)", tags__id__exact=obj.pk)
+
+    @admin.display(description="Media count", ordering="_media_total")
+    def related_media_count(self, obj):
+        return admin_changelist_link(Media, str(self._media_total(obj)), tags__id__exact=obj.pk)
 
 
 class EncodeProfileAdmin(admin.ModelAdmin):
@@ -1069,15 +1349,39 @@ class EncodeProfileAdmin(admin.ModelAdmin):
 
 
 class LanguageAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["title", "code", "related_captions_count"]
+    search_fields = ["title", "code"]
+    ordering = ("title",)
+    fields = ("title", "code", "related_captions")
+    readonly_fields = ("related_captions",)
+    inlines = [LanguageCaptionInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_captions_count=Count("subtitle"))
+
+    @admin.display(description="Captions")
+    def related_captions(self, obj):
+        if not obj.pk:
+            return "—"
+        count = getattr(obj, "_captions_count", obj.subtitle_set.count())
+        return admin_changelist_link(Subtitle, f"View {count} caption(s)", language__id__exact=obj.pk)
+
+    @admin.display(description="Captions", ordering="_captions_count")
+    def related_captions_count(self, obj):
+        count = getattr(obj, "_captions_count", obj.subtitle_set.count())
+        return admin_changelist_link(Subtitle, str(count), language__id__exact=obj.pk)
 
 
 class SubtitleAdmin(admin.ModelAdmin):
-    list_display = ["id", "language", "link_media", "link_user"]
+    list_display = ["id", "link_language", "link_media", "link_user"]
     list_filter = ["language", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "user__username"]
     list_select_related = ("media", "user", "language")
-    readonly_fields = ("media", "user", "link_media", "link_user")
+    readonly_fields = ("media", "user", "link_media", "link_user", "link_language")
+
+    @admin.display(description="Language", ordering="language__title")
+    def link_language(self, obj):
+        return admin_change_link(obj.language, obj.language.title if obj.language_id else None)
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
@@ -1150,11 +1454,13 @@ class EncodingAdmin(admin.ModelAdmin):
 
 
 class TranscriptionRequestAdmin(admin.ModelAdmin):
-    list_display = ["link_media", "add_date", "status", "translate_to_english"]
+    list_display = ["id", "link_media", "status", "translate_to_english", "add_date"]
+    list_display_links = ("id", "link_media")
     list_filter = ["status", "translate_to_english", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
-    search_fields = ["media__title"]
+    search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
-    readonly_fields = ("add_date", "logs")
+    readonly_fields = ("add_date", "link_media")
+    fields = ("link_media", "media", "status", "translate_to_english", "logs", "add_date")
     ordering = ("-add_date",)
 
     @admin.display(description="Media", ordering="media__title")
@@ -1182,7 +1488,7 @@ class PageAdmin(admin.ModelAdmin):
 
 class PlaylistAdmin(admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
-    list_display = ["title", "link_user", "add_date", "friendly_token", "get_media_count"]
+    list_display = ["title", "link_user", "add_date", "friendly_token", "related_media_count"]
     list_select_related = ("user",)
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
@@ -1191,20 +1497,26 @@ class PlaylistAdmin(admin.ModelAdmin):
     exclude = ("user",)
     inlines = [PlaylistMediaInline]
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_media_count=Count("media"))
+
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
-    @admin.display(description="Media count")
-    def get_media_count(self, obj):
-        return obj.media_count
+    @admin.display(description="Media count", ordering="_media_count")
+    def related_media_count(self, obj):
+        count = getattr(obj, "_media_count", obj.media.count())
+        return admin_changelist_link(Media, str(count), playlist__id__exact=obj.pk)
 
 
 class MediaPermissionAdmin(admin.ModelAdmin):
-    list_display = ["link_media", "link_user", "link_owner", "permission", "source", "created_at"]
+    list_display = ["id", "link_media", "link_user", "link_owner", "permission", "source", "created_at"]
+    list_display_links = ("id", "link_media")
     list_filter = ["permission", "source", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "user__username", "owner_user__username"]
     list_select_related = ("media", "user", "owner_user")
+    autocomplete_fields = ("media", "user", "owner_user")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
 
@@ -1219,6 +1531,28 @@ class MediaPermissionAdmin(admin.ModelAdmin):
     @admin.display(description="Owner", ordering="owner_user__username")
     def link_owner(self, obj):
         return admin_change_link(obj.owner_user, obj.owner_user.username if obj.owner_user_id else None)
+
+
+class LicenseAdmin(admin.ModelAdmin):
+    search_fields = ["title", "description"]
+    list_display = ["title", "related_media_count"]
+    readonly_fields = ("related_media",)
+    ordering = ("title",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_media_count=Count("media"))
+
+    @admin.display(description="Media")
+    def related_media(self, obj):
+        if not obj.pk:
+            return "—"
+        count = getattr(obj, "_media_count", Media.objects.filter(license=obj).count())
+        return admin_changelist_link(Media, f"View {count} media item(s)", license__id__exact=obj.pk)
+
+    @admin.display(description="Media count", ordering="_media_count")
+    def related_media_count(self, obj):
+        count = getattr(obj, "_media_count", Media.objects.filter(license=obj).count())
+        return admin_changelist_link(Media, str(count), license__id__exact=obj.pk)
 
 
 @admin.register(TinyMCEMedia)
@@ -1239,6 +1573,7 @@ admin.site.register(Page, PageAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
+admin.site.register(License, LicenseAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
 admin.site.register(Playlist, PlaylistAdmin)

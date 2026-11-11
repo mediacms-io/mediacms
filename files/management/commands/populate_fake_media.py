@@ -14,6 +14,7 @@ from files.models import (
     Category,
     Comment,
     Language,
+    License,
     Media,
     MediaPermission,
     Page,
@@ -21,10 +22,26 @@ from files.models import (
     PlaylistMedia,
     Subtitle,
     Tag,
+    TinyMCEMedia,
+    TranscriptionRequest,
     VideoChapterData,
     VideoTrimRequest,
 )
 from users.models import Channel, User
+
+# HTML comment kept on pages this command owns. A later run refreshes those
+# pages. An admin who replaces the body and deletes the comment keeps their copy.
+GENERATOR_PAGE_MARKER = 'generated-by-populate-fake-media'
+
+# Bodies written by earlier versions of this command, so an existing demo can be upgraded.
+_LEGACY_GENERATOR_PAGE_DESCRIPTIONS = {
+    'about': ('<p>Welcome to this MediaCMS demo portal.</p>' '<p>This About page was created by the fake media generator for dashboard testing.</p>'),
+    'faq': (
+        '<h2>Frequently Asked Questions</h2>'
+        '<p><strong>How do I upload media?</strong> Use the upload page after signing in.</p>'
+        '<p><strong>Who can view private media?</strong> Owners and users with explicit share permissions.</p>'
+    ),
+}
 
 
 class Command(BaseCommand):
@@ -65,10 +82,11 @@ class Command(BaseCommand):
         channels = self.setup_channels(users)
         self.stdout.write(self.style.SUCCESS(f'Set up {len(channels)} channels'))
 
-        # Step 3: Setup tags and categories
+        # Step 3: Setup tags, categories, and licenses
         tags = self.setup_tags(users)
         categories = self.setup_categories()
-        self.stdout.write(self.style.SUCCESS(f'Created {len(tags)} tags and {len(categories)} categories'))
+        licenses = self.setup_licenses()
+        self.stdout.write(self.style.SUCCESS(f'Created {len(tags)} tags, {len(categories)} categories, and {len(licenses)} licenses'))
 
         # Step 4: Get fixture files
         fixture_files = self.get_fixture_files()
@@ -84,7 +102,7 @@ class Command(BaseCommand):
             if (i + 1) % 50 == 0:
                 self.stdout.write(f'Created {i + 1}/{count} media records...')
 
-            media = self.create_media_record(users, fixture_files, i)
+            media = self.create_media_record(users, fixture_files, i, licenses=licenses)
             created_media.append(media)
 
             # Determine if this media should be reported
@@ -128,22 +146,26 @@ class Command(BaseCommand):
         subtitle_count, chapter_count = self.create_subtitles_and_chapters(created_media)
         self.stdout.write(self.style.SUCCESS(f'Created {subtitle_count} subtitles and {chapter_count} chapter sets'))
 
-        # Step 11: Create media permissions with common share patterns
+        # Step 11: Create caption (transcription) requests with statuses matching captions
+        transcription_request_count = self.create_transcription_requests(created_media)
+        self.stdout.write(self.style.SUCCESS(f'Created {transcription_request_count} caption requests'))
+
+        # Step 12: Create media permissions with common share patterns
         permission_count = self.create_media_permissions(created_media, users)
         self.stdout.write(self.style.SUCCESS(f'Created {permission_count} media permissions'))
 
-        # Step 12: Create video trim requests
+        # Step 13: Create video trim requests
         trim_request_count = self.create_trim_requests(created_media)
         self.stdout.write(self.style.SUCCESS(f'Created {trim_request_count} video trim requests'))
 
-        # Step 13: Create CMS pages
+        # Step 14: Create CMS pages
         pages = self.create_pages()
         self.stdout.write(self.style.SUCCESS(f'Ensured {len(pages)} CMS pages'))
 
-        # Step 14: Post-processing
+        # Step 15: Post-processing
         self.post_process(created_media, tags, categories)
 
-        # Step 15: Display summary
+        # Step 16: Display summary
         self.display_summary(
             created_media,
             users,
@@ -153,8 +175,10 @@ class Command(BaseCommand):
             playlists,
             comments,
             channels=channels,
+            licenses=licenses,
             subtitle_count=subtitle_count,
             chapter_count=chapter_count,
+            transcription_request_count=transcription_request_count,
             permission_count=permission_count,
             trim_request_count=trim_request_count,
             pages=pages,
@@ -417,6 +441,52 @@ class Command(BaseCommand):
 
         return categories
 
+    def setup_licenses(self):
+        """Ensure common public-style licenses exist for demo media."""
+        license_specs = [
+            (
+                'CC0 1.0 Universal',
+                'Public domain dedication. You can copy, modify, and distribute the work without asking permission.',
+            ),
+            (
+                'Public Domain Mark',
+                'Work identified as free of known copyright restrictions.',
+            ),
+            (
+                'CC BY 4.0',
+                'Creative Commons Attribution 4.0. Credit must be given to the creator.',
+            ),
+            (
+                'CC BY-SA 4.0',
+                'Creative Commons Attribution-ShareAlike 4.0. Credit required; adaptations must use the same license.',
+            ),
+            (
+                'CC BY-NC 4.0',
+                'Creative Commons Attribution-NonCommercial 4.0. Credit required; non-commercial use only.',
+            ),
+            (
+                'CC BY-NC-SA 4.0',
+                'Creative Commons Attribution-NonCommercial-ShareAlike 4.0. Credit required; non-commercial; share-alike.',
+            ),
+            (
+                'CC BY-ND 4.0',
+                'Creative Commons Attribution-NoDerivatives 4.0. Credit required; no adaptations allowed.',
+            ),
+            (
+                'CC BY-NC-ND 4.0',
+                'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0. Credit required; non-commercial; no adaptations.',
+            ),
+        ]
+
+        licenses = []
+        for title, description in license_specs:
+            license_obj, _created = License.objects.get_or_create(
+                title=title,
+                defaults={'description': description},
+            )
+            licenses.append(license_obj)
+        return licenses
+
     def get_fixture_files(self):
         """Get available fixture files"""
         fixture_dir = os.path.join(settings.BASE_DIR, 'fixtures')
@@ -619,7 +689,7 @@ class Command(BaseCommand):
 
         return title[:100]  # Max 100 chars
 
-    def create_media_record(self, users, fixture_files, index):
+    def create_media_record(self, users, fixture_files, index, licenses=None):
         """Create a single media record with randomized fields"""
         # Select random user
         user = random.choice(users)
@@ -692,6 +762,11 @@ class Command(BaseCommand):
         if owner_channels and random.random() < 0.85:
             channel = random.choice(owner_channels)
 
+        # ~80% of media get a random public-style license
+        license_obj = None
+        if licenses and random.random() < 0.80:
+            license_obj = random.choice(licenses)
+
         # Open fixture file and create media
         with open(fixture_file_path, 'rb') as f:
             media_file = File(f, name=filename)
@@ -705,6 +780,7 @@ class Command(BaseCommand):
                 media_file=media_file,
                 media_type=media_type,
                 channel=channel,
+                license=license_obj,
                 add_date=add_date,
                 views=views,
                 likes=likes,
@@ -1040,6 +1116,104 @@ class Command(BaseCommand):
 
         return subtitle_count, chapter_count
 
+    def _create_transcription_request(self, media, status, translate_to_english, logs, previous_date):
+        """Create and backdate one Caption Request. Returns (request, add_date)."""
+        request = TranscriptionRequest.objects.create(
+            media=media,
+            status=status,
+            translate_to_english=translate_to_english,
+            logs=logs,
+        )
+        request_date = self._random_datetime_between(previous_date, self._now)
+        self._backdate(TranscriptionRequest, request.pk, 'add_date', request_date)
+        return request, request_date
+
+    def create_transcription_requests(self, created_media):
+        """Create Caption Requests with statuses that match caption state.
+
+        - Media that already have captions → success (and translate success when multi-lang)
+        - A subset of remaining video/audio → pending / running / fail for admin demos
+        """
+        eligible = [m for m in created_media if m.media_type in ('video', 'audio') and m.encoding_status == 'success']
+        if not eligible:
+            return 0
+
+        captioned_ids = set(Subtitle.objects.filter(media_id__in=[m.pk for m in eligible]).values_list('media_id', flat=True))
+        multi_caption_ids = set(Subtitle.objects.filter(media_id__in=captioned_ids).values('media_id').annotate(n=models.Count('id')).filter(n__gt=1).values_list('media_id', flat=True))
+
+        created = 0
+        whisper_flag_updates = []
+
+        # Captioned media: completed transcription requests
+        for media in eligible:
+            if media.pk not in captioned_ids:
+                continue
+            previous_date = media.add_date or self._horizon_start
+            _, previous_date = self._create_transcription_request(
+                media,
+                status='success',
+                translate_to_english=False,
+                logs='Transcription took 12.4 seconds (fake media generator).',
+                previous_date=previous_date,
+            )
+            created += 1
+            has_translate = media.pk in multi_caption_ids or random.random() < 0.25
+            if has_translate:
+                _, previous_date = self._create_transcription_request(
+                    media,
+                    status='success',
+                    translate_to_english=True,
+                    logs='Translation took 15.1 seconds (fake media generator).',
+                    previous_date=previous_date,
+                )
+                created += 1
+            # Set flags without Media.save() so we don't enqueue duplicate pending requests
+            whisper_flag_updates.append((media.pk, True, has_translate))
+
+        if whisper_flag_updates:
+            for media_id, transcribe, translate in whisper_flag_updates:
+                Media.objects.filter(pk=media_id).update(
+                    allow_whisper_transcribe=transcribe,
+                    allow_whisper_transcribe_and_translate=translate,
+                )
+
+        # Non-captioned media: in-flight / failed requests for dashboard variety
+        uncaptioned = [m for m in eligible if m.pk not in captioned_ids]
+        if uncaptioned:
+            target = max(1, int(len(uncaptioned) * random.uniform(0.12, 0.20)))
+            selected = random.sample(uncaptioned, min(target, len(uncaptioned)))
+            open_statuses = ['pending', 'running', 'fail']
+            open_weights = [0.45, 0.25, 0.30]
+            fail_logs = (
+                'model not found',
+                'CUDA out of memory',
+                'No speech detected in audio track',
+                'Whisper timed out after 7200 seconds',
+            )
+            for media in selected:
+                status = random.choices(open_statuses, weights=open_weights, k=1)[0]
+                translate = random.random() < 0.35
+                if status == 'fail':
+                    logs = random.choice(fail_logs)
+                elif status == 'running':
+                    logs = 'Whisper transcription in progress (fake media generator).'
+                else:
+                    logs = None
+                self._create_transcription_request(
+                    media,
+                    status=status,
+                    translate_to_english=translate,
+                    logs=logs,
+                    previous_date=media.add_date or self._horizon_start,
+                )
+                created += 1
+                Media.objects.filter(pk=media.pk).update(
+                    allow_whisper_transcribe=not translate,
+                    allow_whisper_transcribe_and_translate=translate,
+                )
+
+        return created
+
     def _owner_collaborator_pool(self, owner, users, pool_size=5):
         """Stable-ish collaborator pool for an owner so users share in common combinations."""
         others = [u for u in users if u.pk != owner.pk]
@@ -1220,39 +1394,189 @@ class Command(BaseCommand):
         return created
 
     def create_pages(self):
-        """Ensure a couple of CMS pages exist for the enhanced dashboard."""
-        pages_spec = [
+        """Create or refresh the demo About, FAQ, and Terms pages.
+
+        Terms is a Page with slug ``tos``, which the ``/tos`` view serves in
+        place of the placeholder template. Each page embeds one TinyMCE media
+        file. Pages this command wrote carry a marker comment and are refreshed
+        on later runs. A page whose body was replaced in admin is left alone.
+        """
+        author = User.objects.filter(is_superuser=True).order_by('pk').first()
+        pages = []
+        for spec in self._demo_page_specs():
+            page = Page.objects.filter(slug=spec['slug']).first()
+            if page is not None and not self._demo_page_is_generated(page):
+                self.stdout.write(self.style.WARNING(f"Left customized page /{spec['slug']} unchanged"))
+                pages.append(page)
+                continue
+
+            attachment = self._ensure_demo_page_attachment(spec, author)
+            description = spec['body'](self, attachment)
+            if page is None:
+                page = Page.objects.create(slug=spec['slug'], title=spec['title'], description=description)
+                page_date = self._random_datetime_between(self._horizon_start, self._now)
+                self._backdate(Page, page.pk, 'add_date', page_date)
+                page.add_date = page_date
+                self.stdout.write(f"Created CMS page /{page.slug}")
+            else:
+                page.title = spec['title']
+                page.description = description
+                page.save()
+                self.stdout.write(f"Updated CMS page /{page.slug}")
+            pages.append(page)
+        return pages
+
+    def _demo_page_is_generated(self, page):
+        description = page.description or ''
+        if GENERATOR_PAGE_MARKER in description:
+            return True
+        legacy = _LEGACY_GENERATOR_PAGE_DESCRIPTIONS.get(page.slug)
+        return bool(legacy) and description == legacy
+
+    def _demo_page_specs(self):
+        return [
             {
                 'slug': 'about',
                 'title': 'About',
-                'description': ('<p>Welcome to this MediaCMS demo portal.</p>' '<p>This About page was created by the fake media generator for dashboard testing.</p>'),
+                'fixture': 'test_image.png',
+                'attachment_filename': 'sample-portal-still.png',
+                'file_type': 'image',
+                'body': Command._about_page_body,
             },
             {
                 'slug': 'faq',
                 'title': 'FAQ',
-                'description': (
-                    '<h2>Frequently Asked Questions</h2>'
-                    '<p><strong>How do I upload media?</strong> Use the upload page after signing in.</p>'
-                    '<p><strong>Who can view private media?</strong> Owners and users with explicit share permissions.</p>'
-                ),
+                'fixture': 'test_image2.jpg',
+                'attachment_filename': 'sample-portal-still.jpg',
+                'file_type': 'image',
+                'body': Command._faq_page_body,
+            },
+            {
+                'slug': 'tos',
+                'title': 'Terms',
+                'fixture': 'sample_document.pdf',
+                'attachment_filename': 'sample-document.pdf',
+                'file_type': 'media',
+                'body': Command._terms_page_body,
             },
         ]
 
-        pages = []
-        for spec in pages_spec:
-            page, created = Page.objects.get_or_create(
-                slug=spec['slug'],
-                defaults={
-                    'title': spec['title'],
-                    'description': spec['description'],
-                },
-            )
-            if created:
-                page_date = self._random_datetime_between(self._horizon_start, self._now)
-                self._backdate(Page, page.pk, 'add_date', page_date)
-                page.add_date = page_date
-            pages.append(page)
-        return pages
+    def _ensure_demo_page_attachment(self, spec, user):
+        """Store the fixture file once and reuse it when the command runs again."""
+        filename = spec['attachment_filename']
+        existing = TinyMCEMedia.objects.filter(original_filename=filename).order_by('pk').first()
+        if existing:
+            return existing
+
+        fixture_path = os.path.join(settings.BASE_DIR, 'fixtures', spec['fixture'])
+        if not os.path.exists(fixture_path):
+            self.stdout.write(self.style.WARNING(f"Skipping attachment for /{spec['slug']}: fixtures/{spec['fixture']} is missing"))
+            return None
+
+        with open(fixture_path, 'rb') as handle:
+            attachment = TinyMCEMedia(file_type=spec['file_type'], original_filename=filename, user=user)
+            attachment.file.save(filename, File(handle), save=True)
+        uploaded_at = self._random_datetime_between(self._horizon_start, self._now)
+        self._backdate(TinyMCEMedia, attachment.pk, 'uploaded_at', uploaded_at)
+        return attachment
+
+    def _embed_attachment(self, attachment, *, alt, caption, link_label):
+        if attachment is None:
+            return '<p><em>The sample file for this page was not in fixtures/, so nothing was attached.</em></p>'
+        if attachment.file_type == 'image':
+            return f'<figure><img src="{attachment.url}" alt="{alt}"><figcaption>{caption}</figcaption></figure>'
+        return f'<p><a href="{attachment.url}">{link_label}</a></p>'
+
+    def _about_page_body(self, attachment):
+        figure = self._embed_attachment(
+            attachment,
+            alt='Sample image shipped with MediaCMS and reused by the fake media generator',
+            caption='Sample still stored as TinyMCE media. The generator copies fixtures/test_image.png and embeds it here. Many video and image listings reuse this same file under different titles.',
+            link_label='',
+        )
+        return f'''<!-- {GENERATOR_PAGE_MARKER} -->
+<h2 class="emphasis-large">This portal is filled with sample content</h2>
+<p>The media, accounts, playlists, comments, captions, and pages on this site were created by the <code>populate_fake_media</code> management command. They are synthetic demo data built from the small files in the repository <code>fixtures/</code> directory. They are not recordings of real events, and they are not a production archive.</p>
+<p>Read this page before treating anything else on the site as real. The <a href="/faq">FAQ</a> explains the generator. The <a href="/tos">Terms</a> page states how to treat the demo.</p>
+{figure}
+<h2 class="emphasis-large">What the generator added</h2>
+<ul>
+<li>Media copied from <code>fixtures/</code>: short videos, test images, sample audio, and a sample PDF. One file is saved many times under different titles, descriptions, and dates.</li>
+<li>Users and channels, categories, tags, licenses, playlists, comments, likes, reports, subtitles, chapters, caption requests, share permissions, and trim requests.</li>
+<li>Timestamps spread across the previous 12 months so listings and dashboards have history.</li>
+<li>This About page, the FAQ, and a Terms page that replaces the placeholder at <code>/tos</code>. Each of those pages stores one file in TinyMCE media.</li>
+</ul>
+<h2 class="emphasis-large">Warnings</h2>
+<ul>
+<li>Do not treat titles, descriptions, comments, or profiles as factual, or as belonging to real people. Names and message text are random.</li>
+<li>Every account the generator created uses the password <code>testpass123</code>. Remove those accounts before anyone else can reach this portal, and do not reuse that password anywhere else. The installation admin account is separate and is not reset by the command.</li>
+<li>Playback, transcoding, and captions reflect those small fixtures. A long title does not mean there is a long recording behind it.</li>
+<li>Running the command again adds more media, users, and comments. <code>--clear</code> deletes existing media records first. It does not delete users, playlists, comments, or these pages.</li>
+<li>The contact form sends mail to the configured admin addresses when outbound email is enabled. A message sent from this demo is a real email.</li>
+</ul>
+<h2 class="emphasis-large">Guidance</h2>
+<ul>
+<li>Sign in as the portal admin and use the management pages, or Django admin, to review and delete generated records.</li>
+<li>Upload your own media from the upload page when you are ready to replace the samples. New uploads follow the portal workflow and are processed by the transcoding workers.</li>
+<li>These three pages are rewritten the next time the generator runs, as long as this marker comment is still in the HTML. Edit them under Admin, Pages. Delete the marker comment if a later run should leave your edits in place.</li>
+<li>Keep the site private to the people evaluating MediaCMS until the sample data and these disclosures are gone.</li>
+</ul>'''
+
+    def _faq_page_body(self, attachment):
+        figure = self._embed_attachment(
+            attachment,
+            alt='Second sample image shipped with MediaCMS',
+            caption='Another fixture image, fixtures/test_image2.jpg, stored as TinyMCE media. Image listings that look distinct may still be this file or the other sample still.',
+            link_label='',
+        )
+        return f'''<!-- {GENERATOR_PAGE_MARKER} -->
+<h2 class="emphasis-large">Frequently asked questions</h2>
+<h3>Is the media on this site real?</h3>
+<p>No. <code>populate_fake_media</code> copied sample files from <code>fixtures/</code> and invented the titles, descriptions, and authors. The same bytes are reused for many listings.</p>
+<h3>What does the generator create?</h3>
+<p>Users and channels, categories, tags, licenses, media (video, audio, image, and PDF), playlists, comments, likes, reports, subtitles, chapters, caption requests, share permissions, trim requests, and the About, FAQ, and Terms pages. Dates are spread over the previous 12 months.</p>
+<h3>Which sample files does it use?</h3>
+<p>Whichever of these are present: <code>test_image.png</code>, <code>test_image2.jpg</code>, <code>small_video.mp4</code>, <code>medium_video.mp4</code>, <code>sample_audio.wav</code>, <code>sample_audio.mp3</code>, and <code>sample_document.pdf</code>.</p>
+{figure}
+<h3>How do I run it?</h3>
+<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones.</p>
+<h3>Will running it again duplicate these pages?</h3>
+<p>No. About, FAQ, and Terms are updated in place while they still contain the generator marker comment. Media, users, and comments are added again, so those counts grow unless you pass <code>--clear</code>, and that flag only removes media.</p>
+<h3>Why do some videos have captions, chapters, or trim requests?</h3>
+<p>The command adds those records to a portion of the videos so the management and media pages have something to show, including pending, running, success, and failed states.</p>
+<h3>Are the user accounts safe to keep?</h3>
+<p>No. They are not real people, and every generated account uses the password <code>testpass123</code>. Delete them before exposing the portal. The admin account created at installation is not one of these users, and the command does not change its password.</p>
+<h3>How do I upload my own media?</h3>
+<p>Sign in and use the upload page. New uploads follow the portal workflow (public, private, or unlisted) and are processed by the transcoding workers. That is the point at which the library stops being only samples.</p>
+<h3>Who can view private media?</h3>
+<p>The owner, and users who were granted an explicit share permission. Unlisted media is omitted from listings and is available to anyone with the link.</p>'''
+
+    def _terms_page_body(self, attachment):
+        attachment_html = self._embed_attachment(
+            attachment,
+            alt='',
+            caption='',
+            link_label='Download the sample document attached to these terms (fixtures/sample_document.pdf)',
+        )
+        return f'''<!-- {GENERATOR_PAGE_MARKER} -->
+<h2 class="emphasis-large">Terms for this demo portal</h2>
+<p>These terms replace the placeholder Terms page because this installation was loaded with generated sample content. They describe the demo. They are not a legal agreement for a production MediaCMS service, and they are not legal advice. Publish your own terms before anyone outside your evaluation group uses the portal.</p>
+{attachment_html}
+<h2 class="emphasis-large">Sample content</h2>
+<p>Media, accounts, comments, and the records around them were generated from repository fixtures for testing and demonstration. A title, a channel name, or a comment is not an official statement, a real lecture, or a work owned by the person named on the page. See the <a href="/about">About</a> page for what the generator wrote and the <a href="/faq">FAQ</a> for how to run or remove it.</p>
+<h2 class="emphasis-large">No warranty</h2>
+<p>The portal is a demo environment. Listings can be incomplete, duplicated, or inconsistent because titles, states, and dates were randomized. Do not rely on it for archival, teaching, compliance, or any decision that depends on the media being what the title says it is.</p>
+<h2 class="emphasis-large">Accounts and privacy</h2>
+<ul>
+<li>Generated users are not real people. Their names, email addresses, and descriptions are invented.</li>
+<li>Generated accounts share the password <code>testpass123</code>. Do not reuse that password, and delete the accounts before a deployment that other people can reach.</li>
+<li>Likes, reports, and watch history on generated media are synthetic or local to this installation.</li>
+<li>The contact form delivers messages to the site's configured admin addresses when email is enabled. Do not send sensitive information through it on a demo.</li>
+</ul>
+<h2 class="emphasis-large">Sample files</h2>
+<p>Files under <code>fixtures/</code> are the bytes behind many media items, and the PDF linked above is one of those fixtures stored as TinyMCE media. Respect the terms that apply to those files in the MediaCMS repository. Do not present a generated listing as the original work, and do not redistribute a fixture as if this portal were its source.</p>
+<h2 class="emphasis-large">Taking this portal out of demo mode</h2>
+<p>Delete the generated media and users, replace this page, and remove the About and FAQ disclosures. Until you do, keep the site private to the people evaluating MediaCMS. Replace this body under Admin, Pages, and delete the generator marker comment, so a later run of the command leaves your terms in place.</p>'''
 
     def post_process(self, created_media, tags, categories):
         """Post-processing: update search vectors, tag/category counts"""
@@ -1277,8 +1601,10 @@ class Command(BaseCommand):
         playlists,
         comments,
         channels=None,
+        licenses=None,
         subtitle_count=0,
         chapter_count=0,
+        transcription_request_count=0,
         permission_count=0,
         trim_request_count=0,
         pages=None,
@@ -1288,6 +1614,8 @@ class Command(BaseCommand):
             pages = []
         if channels is None:
             channels = []
+        if licenses is None:
+            licenses = []
 
         self.stdout.write(self.style.SUCCESS('\n' + '=' * 60))
         self.stdout.write(self.style.SUCCESS('SUMMARY STATISTICS'))
@@ -1299,17 +1627,22 @@ class Command(BaseCommand):
         self.stdout.write(f'Total channels: {len(channels)}')
         self.stdout.write(f'Total tags: {len(tags)}')
         self.stdout.write(f'Total categories: {len(categories)}')
+        self.stdout.write(f'Total licenses: {len(licenses)}')
         self.stdout.write(f'Total playlists: {len(playlists)}')
         self.stdout.write(f'Total comments: {len(comments)}')
         self.stdout.write(f'Reported media: {len(reported_media)}')
         self.stdout.write(f'Subtitles created: {subtitle_count}')
         self.stdout.write(f'Chapter sets created: {chapter_count}')
+        self.stdout.write(f'Caption requests created: {transcription_request_count}')
         self.stdout.write(f'Media permissions created: {permission_count}')
         self.stdout.write(f'Video trim requests created: {trim_request_count}')
         self.stdout.write(f'CMS pages: {len(pages)}')
         if pages:
             for page in pages:
                 self.stdout.write(f'  /{page.slug} — {page.title}')
+        if licenses and created_media:
+            licensed = sum(1 for m in created_media if m.license_id)
+            self.stdout.write(f'  Media with a license: {licensed}/{len(created_media)}')
 
         if created_media:
             media_dates = [m.add_date for m in created_media if m.add_date]

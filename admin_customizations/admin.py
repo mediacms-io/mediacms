@@ -4,9 +4,14 @@ from django.conf import settings
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from actions.models import MediaAction
+from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
 from files.models import Category, Comment, Media, Playlist
 from users.models import Channel, User
+
+# Report-related moderator audit events shown on the dashboard (excludes user "report"
+# submissions and media approval reviews, which have their own tiles).
+REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in ("media_reviewed",))
+REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
 
 
 def calculate_statistics():
@@ -90,6 +95,7 @@ def get_moderation_statistics(seven_days_ago):
 
     recent_moderation_values = (
         'id',
+        'action',
         'action_date',
         'extra_info',
         'user_id',
@@ -100,9 +106,14 @@ def get_moderation_statistics(seven_days_ago):
     )
 
     moderation_stats['recent_reports'] = list(MediaAction.objects.filter(action='report').order_by('-action_date')[:5].values(*recent_moderation_values))
-    moderation_stats['recent_report_confirmations'] = list(MediaAction.objects.filter(action='report_confirmed').order_by('-action_date')[:5].values(*recent_moderation_values))
-    moderation_stats['recent_report_clears'] = list(MediaAction.objects.filter(action='report_cleared').order_by('-action_date')[:5].values(*recent_moderation_values))
-    moderation_stats['recent_media_reviews'] = list(MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values))
+    recent_report_audits = list(MediaAction.objects.filter(action__in=REPORT_AUDIT_ACTIONS).order_by('-action_date')[:5].values(*recent_moderation_values))
+    for row in recent_report_audits:
+        row['action_label'] = REPORT_AUDIT_ACTION_LABELS.get(row['action'], row['action'])
+    moderation_stats['recent_report_audits'] = recent_report_audits
+    moderation_stats['recent_pending_review'] = list(
+        Media.objects.filter(is_reviewed=False).select_related('user').order_by('-add_date')[:5].values('id', 'title', 'add_date', 'user_id', 'user__username', 'friendly_token')
+    )
+    moderation_stats['recent_approved'] = list(MediaAction.objects.filter(action='media_reviewed').order_by('-action_date')[:5].values(*recent_moderation_values))
 
     return moderation_stats
 

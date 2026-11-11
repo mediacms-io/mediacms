@@ -49,11 +49,24 @@ class DashboardStatisticsTest(TestCase):
         self.queued.is_reviewed = False
         self.queued.save(update_fields=["is_reviewed"])
         set_media_reviewed(self.queued, True, user=self.admin)
+        pending = create_media(self.admin, title="dash pending review")
+        Media.objects.filter(pk=pending.pk).update(is_reviewed=False)
 
         stats = get_moderation_statistics(seven_days_ago)
         self.assertGreaterEqual(stats["clears_last_7_days"], 1)
         self.assertGreaterEqual(stats["confirms_last_7_days"], 1)
         self.assertGreaterEqual(stats["approved_last_7_days"], 1)
+        pending_ids = {item["id"] for item in stats["recent_pending_review"]}
+        self.assertIn(pending.pk, pending_ids)
+        self.assertNotIn("recent_media_reviews", stats)
+        self.assertNotIn("recent_report_confirmations", stats)
+        self.assertNotIn("recent_report_clears", stats)
+        audit_actions = {item["action"] for item in stats["recent_report_audits"]}
+        self.assertTrue(audit_actions.issubset({"report_cleared", "report_confirmed", "media_unreviewed", "original_deleted"}))
+        self.assertNotIn("report", audit_actions)
+        self.assertNotIn("media_reviewed", audit_actions)
+        approved_ids = {item["media_id"] for item in stats["recent_approved"]}
+        self.assertIn(self.queued.pk, approved_ids)
 
     @override_settings(USERS_NEEDS_TO_BE_APPROVED=True)
     def test_user_stats_expose_pending_approved_and_recent_pending(self):
@@ -124,6 +137,19 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(response, "Recent image uploads")
         self.assertContains(response, "Recent PDF uploads")
         self.assertContains(response, "Recent reports")
+        self.assertContains(response, "Recent report audit actions")
+        self.assertContains(response, "Recent pending review")
+        self.assertContains(response, "Recently approved")
+        self.assertNotContains(response, "Recent confirmed reports")
+        self.assertNotContains(response, "Recent cleared reports")
+        self.assertNotContains(response, "Recent media reviews")
+        reports = content.find("Recent reports")
+        audits = content.find("Recent report audit actions")
+        pending = content.find("Recent pending review")
+        approved = content.find("Recently approved")
+        self.assertGreater(audits, reports)
+        self.assertGreater(pending, audits)
+        self.assertGreater(approved, pending)
         self.assertNotContains(response, "Top reviewers")
         self.assertNotContains(response, "Top Videos by Duration")
         self.assertNotContains(response, "Needs Review")

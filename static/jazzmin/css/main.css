@@ -85,23 +85,25 @@ div.inline-related {
  * Jazzmin applies Bootstrap input chrome but drops Django's compact tabular widths,
  * and .text-nowrap on the inline table inherits into cells so raw-id / ordering
  * inputs grow huge and clip behind .inline-group overflow.
+ * Use auto layout so short columns shrink-wrap; cap raw-id/number inputs explicitly.
  */
 .tabular table.text-nowrap {
-    table-layout: fixed;
-    width: 100%;
+    table-layout: auto;
+    width: auto;
+    max-width: 100%;
     white-space: normal !important;
 }
 
 .tabular .vForeignKeyRawIdAdminField {
     width: 5rem;
-    max-width: 100%;
+    max-width: 5rem;
     flex: 0 0 auto;
 }
 
 .tabular .vIntegerField,
 .tabular input[type="number"].vIntegerField {
     width: 4rem;
-    max-width: 100%;
+    max-width: 4rem;
 }
 
 .tabular th.column-ordering,
@@ -111,8 +113,37 @@ div.inline-related {
 }
 
 .tabular th.column-action_date,
-.tabular td.field-action_date {
-    width: 9.5rem;
+.tabular td.field-action_date,
+.tabular th.column-update_date,
+.tabular td.field-update_date,
+.tabular th.column-created_at,
+.tabular td.field-created_at {
+    white-space: nowrap;
+}
+
+/* Shrink-wrap short Encoding / Subtitle columns so leftover space isn't trapped between them */
+.tabular th.column-profile,
+.tabular td.field-profile,
+.tabular th.column-status,
+.tabular td.field-status,
+.tabular th.column-progress,
+.tabular td.field-progress,
+.tabular th.column-chunk,
+.tabular td.field-chunk,
+.tabular th.column-language,
+.tabular td.field-language,
+.tabular th.column-permission,
+.tabular td.field-permission,
+.tabular th.column-source,
+.tabular td.field-source {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.tabular th.column-user,
+.tabular td.field-user,
+.tabular th.column-owner_user,
+.tabular td.field-owner_user {
     white-space: nowrap;
 }
 
@@ -272,6 +303,53 @@ table.dataTable thead .sorting_desc_disabled::after {
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     right: 5px !important;
     top: unset !important;
+}
+
+/*
+ * Select2 4.1 multi chips: AdminLTE styles assume blue chips + white text, but the
+ * stock Select2 stylesheet keeps a light-gray chip and absolute-positions the
+ * remove control, which yields white-on-gray text and an overlapping ×.
+ */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #007bff !important;
+    border: 1px solid #006fe6 !important;
+    color: #fff !important;
+    padding: 0 0.55rem 0 1.35rem !important;
+    margin-top: 0.31rem;
+    position: relative;
+    line-height: 1.6rem;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+    color: #fff !important;
+    padding: 0;
+    cursor: default;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1.15rem;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 0;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover,
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:focus {
+    background: rgba(0, 0, 0, 0.15) !important;
+    color: #fff !important;
 }
 
 .select2-results__option {
