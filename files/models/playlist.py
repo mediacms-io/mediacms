@@ -60,6 +60,17 @@ class Playlist(models.Model):
             return True
         return False
 
+    def resequence_media(self):
+        """Renumber playlist media ordering to a contiguous 1..n sequence."""
+        items = list(self.playlistmedia_set.order_by("ordering", "-action_date"))
+        to_update = []
+        for index, pm in enumerate(items, start=1):
+            if pm.ordering != index:
+                pm.ordering = index
+                to_update.append(pm)
+        if to_update:
+            PlaylistMedia.objects.bulk_update(to_update, ["ordering"])
+
     def save(self, *args, **kwargs):
         strip_text_items = ["title", "description"]
         for item in strip_text_items:

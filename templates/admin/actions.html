@@ -1,7 +1,7 @@
 {% load i18n jazzmin %}
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 
-<div class="actions">
+<div class="actions{% if cl.formset and cl.result_count %} has-list-editable-save{% endif %}">
     {% block actions %}
         {% block actions-form %}
             {% for field in action_form %}<label class="changelist-actions-select">{{ field }}</label>{% endfor %}
@@ -23,6 +23,18 @@
                     </span>
                     <span class="clear" style="display: none;"><a href="#">{% trans "Clear selection" %}</a></span>
                 {% endif %}
+            {% endif %}
+        {% endblock %}
+        {% block actions-list-editable-save %}
+            {% if cl.formset and cl.result_count %}
+                <button type="submit"
+                        name="_save"
+                        value="{% trans 'Save' %}"
+                        class="btn {{ jazzmin_ui.button_classes.success }} changelist-list-editable-save"
+                        disabled
+                        title="{% trans 'Save changes made in the list' %}">
+                    {% trans "Save" %}
+                </button>
             {% endif %}
         {% endblock %}
     {% endblock %}

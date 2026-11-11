@@ -108,6 +108,8 @@ class CommentInline(ReadOnlyTabularInline):
     readonly_fields = ("user", "text", "add_date")
     ordering = ("-add_date",)
     can_delete = True
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Comment"
     verbose_name_plural = "Comments"
 
 
@@ -116,20 +118,41 @@ class EncodingInline(ReadOnlyTabularInline):
     fields = ("profile", "status", "progress", "chunk", "update_date")
     readonly_fields = ("profile", "status", "progress", "chunk", "update_date")
     ordering = ("-update_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Encoding"
     verbose_name_plural = "Encodings"
 
 
 class SubtitleInline(ReadOnlyTabularInline):
     model = Subtitle
-    fields = ("link_language", "user")
-    readonly_fields = ("link_language", "user")
-    verbose_name_plural = "Subtitles"
+    fields = ("link_caption", "link_language", "link_user")
+    readonly_fields = ("link_caption", "link_language", "link_user")
+    can_delete = True
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Caption"
+    verbose_name_plural = "Captions"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("language", "user")
+
+    @admin.display(description="Caption")
+    def link_caption(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        label = obj.subtitle_file.name.rsplit("/", 1)[-1] if obj.subtitle_file else f"Caption {obj.pk}"
+        return admin_change_link(obj, label)
 
     @admin.display(description="Language")
     def link_language(self, obj):
         if not obj or not obj.language_id:
             return "—"
         return admin_change_link(obj.language, obj.language.title)
+
+    @admin.display(description="User")
+    def link_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_change_link(obj.user, obj.user.username)
 
 
 class TranscriptionRequestInline(ReadOnlyTabularInline):
@@ -138,8 +161,26 @@ class TranscriptionRequestInline(ReadOnlyTabularInline):
     readonly_fields = ("status", "translate_to_english", "add_date")
     ordering = ("-add_date",)
     can_delete = True
+    classes = ["tab", "related-objects-tab"]
     verbose_name = "Caption Request"
     verbose_name_plural = "Caption Requests"
+
+
+class VideoTrimRequestInline(ReadOnlyTabularInline):
+    model = VideoTrimRequest
+    fields = ("link_request", "status", "video_action", "media_trim_style", "add_date")
+    readonly_fields = ("link_request", "status", "video_action", "media_trim_style", "add_date")
+    ordering = ("-add_date",)
+    can_delete = True
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Trim Request"
+    verbose_name_plural = "Trim Requests"
+
+    @admin.display(description="Trim request")
+    def link_request(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, f"#{obj.pk}")
 
 
 class LanguageCaptionInline(ReadOnlyTabularInline):
@@ -148,6 +189,7 @@ class LanguageCaptionInline(ReadOnlyTabularInline):
     readonly_fields = ("link_media", "link_user")
     ordering = ("media__title",)
     can_delete = True
+    classes = ["tab", "related-objects-tab"]
     verbose_name = "Caption"
     verbose_name_plural = "Captions"
 
@@ -169,6 +211,8 @@ class MediaPermissionInline(ReadOnlyTabularInline):
     fields = ("user", "owner_user", "permission", "source")
     readonly_fields = ("user", "owner_user", "permission", "source")
     ordering = ("-created_at",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "User permission"
     verbose_name_plural = "User permissions"
 
 
@@ -178,7 +222,11 @@ class PlaylistMediaInline(ReadOnlyTabularInline):
     readonly_fields = ("link_media", "link_owner", "is_listable", "ordering")
     ordering = ("ordering",)
     can_delete = True
-    verbose_name_plural = "Playlist media"
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+    related_changelist_model = Media
+    related_changelist_filters = "playlist__id__exact"
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("media", "media__user")
@@ -208,8 +256,11 @@ class CategoryMediaInline(ReadOnlyTabularInline):
     readonly_fields = ("link_media", "link_owner", "is_listable")
     ordering = ("media__title",)
     can_delete = True
+    classes = ["tab", "related-objects-tab"]
     verbose_name = "Media"
     verbose_name_plural = "Media"
+    related_changelist_model = Media
+    related_changelist_filters = "category__id__exact"
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("media", "media__user")
@@ -239,9 +290,11 @@ class TagMediaInline(ReadOnlyTabularInline):
     readonly_fields = ("link_media", "link_owner", "is_listable")
     ordering = ("media__title",)
     can_delete = True
-    classes = ["tab"]
+    classes = ["tab", "related-objects-tab"]
     verbose_name = "Media"
     verbose_name_plural = "Media"
+    related_changelist_model = Media
+    related_changelist_filters = "tags__id__exact"
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("media", "media__user")
@@ -265,6 +318,38 @@ class TagMediaInline(ReadOnlyTabularInline):
         return obj.media.listable
 
 
+class LicenseMediaInline(ReadOnlyTabularInline):
+    model = Media
+    fk_name = "license"
+    fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
+    readonly_fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
+    ordering = ("-add_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+    @admin.display(description="Media")
+    def link_title(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, obj.title)
+
+    @admin.display(description="Owner")
+    def link_owner(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_change_link(obj.user, obj.user.username)
+
+    @admin.display(description="Listable", boolean=True)
+    def is_listable(self, obj):
+        if not obj:
+            return None
+        return obj.listable
+
+
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text", "user__username", "media__title"]
     list_display = ["text", "add_date", "link_user", "link_media"]
@@ -272,7 +357,24 @@ class CommentAdmin(admin.ModelAdmin):
     list_select_related = ("user", "media")
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
-    readonly_fields = ("user", "media", "parent", "link_user", "link_media")
+    readonly_fields = ("link_user", "link_media", "parent", "add_date", "uid")
+    exclude = ("media", "user")
+    fieldsets = (
+        (
+            "Comment",
+            {
+                "fields": ("text", "parent", "add_date", "uid"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_user", "link_media"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -506,13 +608,25 @@ class MediaAdmin(admin.ModelAdmin):
         "related_playlists",
         "related_trim_requests",
         "related_transcription_requests",
+        "related_captions",
     )
     autocomplete_fields = ("license",)
-    inlines = [CommentInline, EncodingInline, SubtitleInline, TranscriptionRequestInline, MediaPermissionInline]
+    inlines = [
+        VideoTrimRequestInline,
+        TranscriptionRequestInline,
+        SubtitleInline,
+        CommentInline,
+        EncodingInline,
+        MediaPermissionInline,
+    ]
     exclude = ("user", "channel")
 
     def get_fieldsets(self, request, obj=None):
-        """Organize the change form into purpose-based Jazzmin tabs."""
+        """Organize the change form into purpose-based Jazzmin tabs.
+
+        Object tabs come first, then Related (links/counts), then related-object
+        inline tabs (Trim Requests, Captions, Comments, etc.).
+        """
         media_file_fields = [
             "media_file",
             "media_type",
@@ -608,16 +722,9 @@ class MediaAdmin(admin.ModelAdmin):
                         "md5sum",
                         "media_info",
                         "search",
-                        "related_playlists",
-                        "related_trim_requests",
-                        "related_transcription_requests",
-                        "related_comments",
-                        "related_encodings",
-                        "related_actions",
-                        "related_reports",
                     ),
                     "classes": ("tab",),
-                    "description": "Identifiers, engagement counters, and links to related admin records.",
+                    "description": "Identifiers and engagement counters.",
                 },
             ),
             (
@@ -626,6 +733,23 @@ class MediaAdmin(admin.ModelAdmin):
                     "fields": ("reported_times", "report_actions_table"),
                     "classes": ("tab",),
                     "description": "Open reports and related moderation audit events. Use Clear reports actions to reset counters.",
+                },
+            ),
+            (
+                "Related",
+                {
+                    "fields": (
+                        "related_playlists",
+                        "related_trim_requests",
+                        "related_transcription_requests",
+                        "related_captions",
+                        "related_comments",
+                        "related_encodings",
+                        "related_actions",
+                        "related_reports",
+                    ),
+                    "classes": ("tab", "related-links-tab"),
+                    "description": "Links to filtered admin lists for related records. Detail tables are on the tabs that follow.",
                 },
             ),
         )
@@ -753,6 +877,13 @@ class MediaAdmin(admin.ModelAdmin):
             return "—"
         count = obj.transcriptionrequests.count()
         return admin_changelist_link(TranscriptionRequest, f"View {count} transcription request(s)", media__id__exact=obj.pk)
+
+    @admin.display(description="Captions")
+    def related_captions(self, obj):
+        if not obj.pk:
+            return "—"
+        count = obj.subtitles.count()
+        return admin_changelist_link(Subtitle, f"View {count} caption(s)", media__id__exact=obj.pk)
 
     def has_clear_reports_permission(self, request):
         return is_mediacms_editor(request.user)
@@ -1257,36 +1388,64 @@ class CategoryAdmin(admin.ModelAdmin):
         return list_display
 
     def get_fieldsets(self, request, obj=None):
-        basic_fieldset = [
+        fieldsets = [
             (
-                'Category Information',
+                "General",
                 {
-                    'fields': ['uid', 'title', 'description', 'user', 'related_media', 'thumbnail', 'listings_thumbnail'],
+                    "fields": ("uid", "title", "description", "user", "thumbnail", "listings_thumbnail"),
+                    "classes": ("tab",),
                 },
             ),
         ]
 
-        additional_fieldsets = []
+        if getattr(settings, "USE_LTI", False):
+            fieldsets.append(
+                (
+                    "LTI Integration",
+                    {
+                        "fields": ("lti_platform", "lti_context_id"),
+                        "classes": ("tab",),
+                        "description": "LTI/LMS integration settings (automatically managed by LTI provisioning)",
+                    },
+                )
+            )
 
-        if getattr(settings, 'USE_LTI', False):
-            lti_fieldset = [
-                ('LTI Integration', {'fields': ['lti_platform', 'lti_context_id'], 'classes': ['tab'], 'description': 'LTI/LMS integration settings (automatically managed by LTI provisioning)'}),
-            ]
-            additional_fieldsets.extend(lti_fieldset)
-
-        if getattr(settings, 'USE_RBAC', False):
-            rbac_fieldset = [
-                ('RBAC Settings', {'fields': ['is_rbac_category'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
-                ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
-            ]
-            if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
-                rbac_fieldset = [
-                    ('RBAC Settings', {'fields': ['is_rbac_category', 'identity_provider'], 'classes': ['tab'], 'description': 'Role-Based Access Control settings'}),
-                    ('Group Access', {'fields': ['rbac_groups'], 'description': 'Select the Groups that have access to category'}),
+        if getattr(settings, "USE_RBAC", False):
+            rbac_fields = ["is_rbac_category"]
+            if getattr(settings, "USE_IDENTITY_PROVIDERS", False):
+                rbac_fields.append("identity_provider")
+            fieldsets.extend(
+                [
+                    (
+                        "RBAC Settings",
+                        {
+                            "fields": tuple(rbac_fields),
+                            "classes": ("tab",),
+                            "description": "Role-Based Access Control settings",
+                        },
+                    ),
+                    (
+                        "Group Access",
+                        {
+                            "fields": ("rbac_groups",),
+                            "classes": ("tab",),
+                            "description": "Select the Groups that have access to category",
+                        },
+                    ),
                 ]
-            additional_fieldsets.extend(rbac_fieldset)
+            )
 
-        return basic_fieldset + additional_fieldsets
+        fieldsets.append(
+            (
+                "Related",
+                {
+                    "fields": ("related_media",),
+                    "classes": ("tab", "related-links-tab"),
+                    "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
+                },
+            )
+        )
+        return fieldsets
 
     @admin.display(description="Media")
     def related_media(self, obj):
@@ -1303,15 +1462,24 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]
-    list_display = ["title", "user", "related_media_count"]
-    readonly_fields = ("user", "related_media")
+    list_display = ["title", "link_user", "related_media_count"]
+    list_select_related = ("user",)
+    readonly_fields = ("link_user", "related_media")
     inlines = [TagMediaInline]
     fieldsets = (
         (
             "General",
             {
-                "fields": ("title", "user", "related_media", "listings_thumbnail"),
+                "fields": ("title", "link_user", "listings_thumbnail"),
                 "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("related_media",),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
             },
         ),
     )
@@ -1326,6 +1494,10 @@ class TagAdmin(admin.ModelAdmin):
         if not obj.pk:
             return 0
         return Media.objects.filter(tags=obj).count()
+
+    @admin.display(description="User", ordering="user__username")
+    def link_user(self, obj):
+        return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
     @admin.display(description="Media")
     def related_media(self, obj):
@@ -1344,17 +1516,42 @@ class EncodeProfileAdmin(admin.ModelAdmin):
     list_editable = ("active",)
     list_filter = ["extension", "resolution", "codec", "active"]
     search_fields = ["name", "extension", "resolution", "codec", "description"]
+    ordering = ("-active", "resolution", "name")
     list_per_page = 100
-    fields = ("name", "extension", "resolution", "codec", "description", "active")
+    fieldsets = (
+        (
+            "General",
+            {
+                "fields": ("name", "extension", "resolution", "codec", "description", "active"),
+                "classes": ("tab",),
+            },
+        ),
+    )
 
 
 class LanguageAdmin(admin.ModelAdmin):
     list_display = ["title", "code", "related_captions_count"]
     search_fields = ["title", "code"]
     ordering = ("title",)
-    fields = ("title", "code", "related_captions")
     readonly_fields = ("related_captions",)
     inlines = [LanguageCaptionInline]
+    fieldsets = (
+        (
+            "General",
+            {
+                "fields": ("title", "code"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("related_captions",),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Links to filtered admin lists for related records. Captions are listed on the following tab.",
+            },
+        ),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(_captions_count=Count("subtitle"))
@@ -1377,7 +1574,24 @@ class SubtitleAdmin(admin.ModelAdmin):
     list_filter = ["language", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "user__username"]
     list_select_related = ("media", "user", "language")
-    readonly_fields = ("media", "user", "link_media", "link_user", "link_language")
+    readonly_fields = ("link_language", "link_media", "link_user")
+    exclude = ("media", "user", "language")
+    fieldsets = (
+        (
+            "Caption",
+            {
+                "fields": ("subtitle_file",),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_language", "link_media", "link_user"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     @admin.display(description="Language", ordering="language__title")
     def link_language(self, obj):
@@ -1393,12 +1607,30 @@ class SubtitleAdmin(admin.ModelAdmin):
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
-    list_display = ["link_media", "status", "add_date", "video_action", "media_trim_style", "timestamps"]
+    list_display = ["id", "link_media", "status", "add_date", "video_action", "media_trim_style"]
+    list_display_links = ("id", "status")
     list_filter = ["status", "video_action", "media_trim_style", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title"]
     list_select_related = ("media",)
-    readonly_fields = ("add_date",)
+    autocomplete_fields = ("media",)
+    readonly_fields = ("add_date", "link_media")
     ordering = ("-add_date",)
+    fieldsets = (
+        (
+            "Trim request",
+            {
+                "fields": ("status", "video_action", "media_trim_style", "timestamps", "add_date"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_media", "media"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
@@ -1410,12 +1642,29 @@ class EncodingAdmin(admin.ModelAdmin):
     list_filter = ["chunk", "profile", "status", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
+    readonly_fields = ("link_media", "has_file")
     actions = ["retry_failed_encodings"]
     action_form = GroupedActionForm
     action_groups = [
         ["retry_failed_encodings"],
         ["delete_selected"],
     ]
+    fieldsets = (
+        (
+            "Encoding",
+            {
+                "fields": ("profile", "status", "progress", "chunk", "has_file"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_media", "media"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     def get_action_choices(self, request, default_choices=None):
         return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
@@ -1460,8 +1709,23 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
     search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
     readonly_fields = ("add_date", "link_media")
-    fields = ("link_media", "media", "status", "translate_to_english", "logs", "add_date")
     ordering = ("-add_date",)
+    fieldsets = (
+        (
+            "Caption request",
+            {
+                "fields": ("status", "translate_to_english", "logs", "add_date"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_media", "media"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
@@ -1484,6 +1748,42 @@ class PageAdminForm(forms.ModelForm):
 
 class PageAdmin(admin.ModelAdmin):
     form = PageAdminForm
+    search_fields = ["title", "slug"]
+    list_display = ["title", "link_slug", "page_url"]
+    list_display_links = ("title",)
+    ordering = ("title",)
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ("add_date", "edit_date", "link_slug", "page_url")
+    fieldsets = (
+        (
+            "Page",
+            {
+                "fields": ("title", "slug", "description", "add_date", "edit_date"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_slug", "page_url"),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Live site links for this page.",
+            },
+        ),
+    )
+
+    @admin.display(description="Slug", ordering="slug")
+    def link_slug(self, obj):
+        if not obj or not obj.slug:
+            return "—"
+        return format_html('<a href="{}" target="_blank" rel="noopener noreferrer">{}</a>', obj.get_absolute_url(), obj.slug)
+
+    @admin.display(description="Page URL")
+    def page_url(self, obj):
+        if not obj or not obj.slug:
+            return "—"
+        url = f"{settings.SSL_FRONTEND_HOST.rstrip('/')}{obj.get_absolute_url()}"
+        return format_html('<a href="{0}" target="_blank" rel="noopener noreferrer">{0}</a>', url)
 
 
 class PlaylistAdmin(admin.ModelAdmin):
@@ -1493,16 +1793,45 @@ class PlaylistAdmin(admin.ModelAdmin):
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
-    readonly_fields = ("uid", "friendly_token", "link_user")
+    readonly_fields = ("uid", "friendly_token", "link_user", "related_media")
     exclude = ("user",)
     inlines = [PlaylistMediaInline]
+    fieldsets = (
+        (
+            "Playlist",
+            {
+                "fields": ("title", "description", "link_user", "friendly_token", "uid"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("related_media",),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
+            },
+        ),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(_media_count=Count("media"))
 
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        # Inline deletes leave gaps in ordering; keep remaining media sequential.
+        form.instance.resequence_media()
+
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="Media")
+    def related_media(self, obj):
+        if not obj.pk:
+            return "—"
+        count = getattr(obj, "_media_count", obj.media.count())
+        return admin_changelist_link(Media, f"View {count} media item(s)", playlist__id__exact=obj.pk)
 
     @admin.display(description="Media count", ordering="_media_count")
     def related_media_count(self, obj):
@@ -1517,8 +1846,24 @@ class MediaPermissionAdmin(admin.ModelAdmin):
     search_fields = ["media__title", "user__username", "owner_user__username"]
     list_select_related = ("media", "user", "owner_user")
     autocomplete_fields = ("media", "user", "owner_user")
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "link_media", "link_user", "link_owner")
     ordering = ("-created_at",)
+    fieldsets = (
+        (
+            "Permission",
+            {
+                "fields": ("permission", "source", "created_at"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_media", "media", "link_user", "user", "link_owner", "owner_user"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
+    )
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
@@ -1538,6 +1883,24 @@ class LicenseAdmin(admin.ModelAdmin):
     list_display = ["title", "related_media_count"]
     readonly_fields = ("related_media",)
     ordering = ("title",)
+    inlines = [LicenseMediaInline]
+    fieldsets = (
+        (
+            "General",
+            {
+                "fields": ("title", "description"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("related_media",),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
+            },
+        ),
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(_media_count=Count("media"))
@@ -1557,11 +1920,16 @@ class LicenseAdmin(admin.ModelAdmin):
 
 @admin.register(TinyMCEMedia)
 class TinyMCEMediaAdmin(admin.ModelAdmin):
-    list_display = ['original_filename', 'file_type', 'uploaded_at', 'user']
-    list_filter = ['file_type', 'uploaded_at']
-    search_fields = ['original_filename']
-    readonly_fields = ['uploaded_at']
-    date_hierarchy = 'uploaded_at'
+    list_display = ["original_filename", "file_type", "link_user"]
+    list_filter = ["file_type", "uploaded_at"]
+    list_select_related = ("user",)
+    search_fields = ["original_filename", "user__username"]
+    readonly_fields = ["uploaded_at", "link_user"]
+    date_hierarchy = "uploaded_at"
+
+    @admin.display(description="User", ordering="user__username")
+    def link_user(self, obj):
+        return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
 
 admin.site.register(EncodeProfile, EncodeProfileAdmin)

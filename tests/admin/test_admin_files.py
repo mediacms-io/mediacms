@@ -3,6 +3,7 @@ import os
 from unittest.mock import patch
 
 from allauth.socialaccount.models import SocialApp
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.admin.sites import all_sites
@@ -13,6 +14,7 @@ from django.urls import reverse
 import users.admin
 from actions.models import MediaAction
 from files.admin import MEDIA_REPORT_TAB_ACTIONS, CategoryAdminForm, PageAdminForm
+from files.admin_helpers import RELATED_INLINE_LIMIT
 from files.methods import (
     can_delete_original_media_file,
     delete_original_media_file,
@@ -27,11 +29,14 @@ from files.models import (
     License,
     Media,
     MediaPermission,
+    Page,
     Playlist,
     PlaylistMedia,
     Subtitle,
     Tag,
+    TinyMCEMedia,
     TranscriptionRequest,
+    VideoTrimRequest,
 )
 from files.tests import create_account, create_media
 from files.tests.media_utils import SMALL_VIDEO
@@ -261,6 +266,20 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         model_admin = admin.site._registry[EncodeProfile]
         self.assertIn("active", model_admin.list_editable)
         self.assertIn("active", model_admin.list_display)
+        self.assertEqual(model_admin.ordering, ("-active", "resolution", "name"))
+
+    def test_list_editable_save_lives_in_bulk_actions(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse("admin:files_encodeprofile_changelist"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("changelist-list-editable-save", html)
+        self.assertIn('name="_save"', html)
+        # Bulk actions (with Save) appear above and below the table; not in pagination.
+        self.assertEqual(html.count('class="actions'), 2)
+        self.assertEqual(html.count("changelist-list-editable-save"), 2)
+        self.assertIn("change-list-actions-bottom", html)
+        self.assertNotIn('name="_save"', html.split('class="dataTables_info"', 1)[-1].split("</div>", 1)[0])
 
     def test_reports_tab_shows_report_and_moderation_actions(self):
         model_admin = admin.site._registry[Media]
@@ -294,7 +313,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         fieldsets = dict(model_admin.get_fieldsets(self.admin_request(), obj=self.public))
         self.assertEqual(
             list(fieldsets.keys()),
-            ["Content", "Publishing", "Sharing", "Media file", "Details", "Reports"],
+            ["Content", "Publishing", "Sharing", "Media file", "Details", "Reports", "Related"],
         )
         self.assertIn("title", fieldsets["Content"]["fields"])
         self.assertNotIn("rating_category", fieldsets["Content"]["fields"])
@@ -306,9 +325,15 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertIn("media_file", fieldsets["Media file"]["fields"])
         self.assertNotIn("allow_whisper_transcribe", fieldsets["Media file"]["fields"])
         self.assertIn("friendly_token", fieldsets["Details"]["fields"])
+        self.assertNotIn("related_captions", fieldsets["Details"]["fields"])
+        self.assertIn("related_captions", fieldsets["Related"]["fields"])
+        self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
         self.assertNotIn("allow_download", model_admin.readonly_fields)
         for machine_field in ("encoding_status", "duration", "md5sum", "search", "views"):
             self.assertIn(machine_field, model_admin.readonly_fields)
+        for inline in model_admin.inlines:
+            self.assertIn("tab", inline.classes)
+            self.assertIn("related-objects-tab", inline.classes)
 
     @override_settings(ALLOW_RATINGS=True)
     def test_rating_category_appears_when_ratings_enabled(self):
@@ -571,6 +596,24 @@ class EncodingAdminTest(TestCase):
 
 
 class PageAdminFormTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = make_user("page_admin_root", is_superuser=True)
+        cls.page = Page.objects.create(slug="about-us", title="About us", description="<p>hi</p>")
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_changelist_links_slug_and_full_page_url(self):
+        response = self.client.get(reverse("admin:files_page_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="field-link_slug"')
+        self.assertContains(response, 'class="field-page_url"')
+        self.assertContains(response, f'href="{self.page.get_absolute_url()}"')
+        self.assertContains(response, f">{self.page.slug}</a>")
+        full_url = f"{settings.SSL_FRONTEND_HOST.rstrip('/')}{self.page.get_absolute_url()}"
+        self.assertContains(response, full_url)
+
     def test_iframes_are_sandboxed(self):
         form = PageAdminForm(data={"slug": "sandboxed", "title": "Sandboxed", "description": '<p>x</p><iframe src="https://example.org"></iframe>'})
         self.assertTrue(form.is_valid(), form.errors)
@@ -721,6 +764,42 @@ class UserAdminTest(TestCase):
         self.assertIn("is_editor", form_fields)
         self.assertIn("is_active", form_fields)
 
+    def test_user_change_fieldsets_and_related_tabs(self):
+        media = create_media(self.editor, title="editor owned media")
+        Playlist.objects.create(title="editor playlist", user=self.editor)
+        Comment.objects.create(media=media, user=self.editor, text="editor comment")
+        MediaAction.objects.create(user=self.editor, media=media, action="like")
+        self.client.force_login(self.superuser)
+
+        model_admin = admin.site._registry[User]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=self.editor))
+        self.assertEqual(list(fieldsets.keys()), ["Profile", "Access", "Related"])
+        self.assertIn("tab", fieldsets["Profile"]["classes"])
+        self.assertNotIn("media_count", fieldsets["Profile"]["fields"])
+        self.assertIn("related_media", fieldsets["Related"]["fields"])
+        self.assertIn("related_likes", fieldsets["Related"]["fields"])
+        self.assertNotIn("related_encodings", fieldsets["Related"]["fields"])
+        self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
+        inline_models = [inline.model for inline in model_admin.inlines]
+        self.assertEqual(inline_models, [Media, Playlist, Channel, Comment, MediaAction])
+        for inline in model_admin.inlines:
+            self.assertIn("related-objects-tab", inline.classes)
+
+        response = self.client.get(reverse("admin:users_user_change", args=[self.editor.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "editor owned media")
+        self.assertContains(response, "editor playlist")
+        self.assertContains(response, "editor comment")
+        self.assertContains(response, reverse("admin:files_media_changelist"))
+        self.assertContains(response, f"user__id__exact={self.editor.pk}")
+        self.assertContains(response, reverse("admin:actions_mediaaction_changelist"))
+        self.assertContains(response, "action__exact=like")
+        self.assertContains(response, reverse("admin:files_comment_changelist"))
+        self.assertContains(response, "related-links-tab")
+        self.assertContains(response, "related-objects-tab")
+
     def test_deactivate_and_reactivate_actions(self):
         self.client.force_login(self.superuser)
         response = self.client.post(
@@ -819,6 +898,45 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertContains(response, self.superuser.username)
         self.assertContains(response, "Listable")
 
+    def test_playlist_change_puts_title_before_description(self):
+        model_admin = admin.site._registry[Playlist]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=self.playlist))
+        fields = list(fieldsets["Playlist"]["fields"])
+        self.assertLess(fields.index("title"), fields.index("description"))
+        self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
+
+    def test_playlist_inline_delete_resequences_ordering(self):
+        second = create_media(self.superuser, title="playlist member two")
+        third = create_media(self.superuser, title="playlist member three")
+        pm1 = PlaylistMedia.objects.get(playlist=self.playlist, media=self.media)
+        pm2 = PlaylistMedia.objects.create(playlist=self.playlist, media=second, ordering=2)
+        pm3 = PlaylistMedia.objects.create(playlist=self.playlist, media=third, ordering=3)
+
+        response = self.client.post(
+            reverse("admin:files_playlist_change", args=[self.playlist.pk]),
+            {
+                "title": self.playlist.title,
+                "description": self.playlist.description,
+                "playlistmedia_set-TOTAL_FORMS": "3",
+                "playlistmedia_set-INITIAL_FORMS": "3",
+                "playlistmedia_set-MIN_NUM_FORMS": "0",
+                "playlistmedia_set-MAX_NUM_FORMS": "1000",
+                "playlistmedia_set-0-id": str(pm1.pk),
+                "playlistmedia_set-0-DELETE": "on",
+                "playlistmedia_set-1-id": str(pm2.pk),
+                "playlistmedia_set-2-id": str(pm3.pk),
+                "_save": "Save",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(PlaylistMedia.objects.filter(pk=pm1.pk).exists())
+        orderings = list(
+            PlaylistMedia.objects.filter(playlist=self.playlist).order_by("ordering").values_list("media__title", "ordering")
+        )
+        self.assertEqual(orderings, [("playlist member two", 1), ("playlist member three", 2)])
+
     def test_playlist_changelist_media_count_links_to_filtered_media(self):
         response = self.client.get(reverse("admin:files_playlist_changelist"))
         self.assertEqual(response.status_code, 200)
@@ -851,10 +969,21 @@ class TagAdminTest(TestCase):
         filtered = reverse("admin:files_media_changelist") + f"?tags__id__exact={self.tag.pk}"
         self.assertContains(response, filtered)
 
+    def test_tag_changelist_links_user_by_username(self):
+        self.tag.user = self.superuser
+        self.tag.save(update_fields=["user"])
+        response = self.client.get(reverse("admin:files_tag_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="field-link_user"')
+        row_html = response.content.decode().split('class="field-link_user"', 1)[1].split("</td>", 1)[0]
+        self.assertIn(reverse("admin:users_user_change", args=[self.superuser.pk]), row_html)
+        self.assertIn(self.superuser.username, row_html)
+        self.assertNotIn(f"{self.superuser.name} - {self.superuser.email}", row_html)
+
     def test_tag_change_lists_media_inline(self):
         response = self.client.get(reverse("admin:files_tag_change", args=[self.tag.pk]))
         self.assertEqual(response.status_code, 200)
-        # General tab shows total tagged media (not public/reviewed-only media_count).
+        # Related tab shows total tagged media (not public/reviewed-only media_count).
         self.assertContains(response, "View 1 media item(s)")
         self.assertContains(response, f"tags__id__exact={self.tag.pk}")
         self.assertContains(response, "tagged admin media")
@@ -862,6 +991,9 @@ class TagAdminTest(TestCase):
         self.assertContains(response, "Listable")
         self.assertContains(response, 'id="jazzy-tabs"')
         self.assertContains(response, "General")
+        self.assertContains(response, "Related")
+        self.assertContains(response, "related-links-tab")
+        self.assertContains(response, "related-objects-tab")
 
     def test_media_changelist_filters_by_tag(self):
         other = create_media(self.superuser, title="untagged admin media")
@@ -870,6 +1002,30 @@ class TagAdminTest(TestCase):
         titles = {m.title for m in response.context["cl"].result_list}
         self.assertEqual(titles, {"tagged admin media"})
         self.assertNotIn(other.title, titles)
+
+
+class TinyMCEMediaAdminTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = make_user("tinymce_admin_root", is_superuser=True)
+        cls.media = TinyMCEMedia.objects.create(
+            file=SimpleUploadedFile("tinymce-smoke.png", b"png"),
+            file_type="image",
+            original_filename="tinymce-smoke.png",
+            user=cls.superuser,
+        )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_changelist_links_user_by_username(self):
+        response = self.client.get(reverse("admin:files_tinymcemedia_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="field-link_user"')
+        row_html = response.content.decode().split('class="field-link_user"', 1)[1].split("</td>", 1)[0]
+        self.assertIn(reverse("admin:users_user_change", args=[self.superuser.pk]), row_html)
+        self.assertIn(self.superuser.username, row_html)
+        self.assertNotIn(f"{self.superuser.name} - {self.superuser.email}", row_html)
 
 
 class LicenseAdminTest(TestCase):
@@ -898,6 +1054,20 @@ class LicenseAdminTest(TestCase):
         self.assertContains(response, "View 1 media item(s)")
         self.assertContains(response, f"license__id__exact={self.license.pk}")
 
+    def test_license_change_lists_media_inline(self):
+        response = self.client.get(reverse("admin:files_license_change", args=[self.license.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "licensed media")
+        self.assertContains(response, self.superuser.username)
+        self.assertContains(response, "Listable")
+        self.assertContains(response, 'id="jazzy-tabs"')
+        self.assertContains(response, "General")
+        self.assertContains(response, "Related")
+        self.assertContains(response, "related-links-tab")
+        self.assertContains(response, "related-objects-tab")
+        model_admin = admin.site._registry[License]
+        self.assertEqual([inline.model for inline in model_admin.inlines], [Media])
+
     def test_media_changelist_filters_by_license(self):
         other = create_media(self.superuser, title="unlicensed media")
         response = self.client.get(reverse("admin:files_media_changelist"), {"license__id__exact": self.license.pk})
@@ -905,6 +1075,63 @@ class LicenseAdminTest(TestCase):
         titles = {m.title for m in response.context["cl"].result_list}
         self.assertEqual(titles, {"licensed media"})
         self.assertNotIn(other.title, titles)
+
+
+class VideoTrimRequestAdminTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = make_user("trim_request_admin_root", is_superuser=True)
+        cls.media = create_media(cls.superuser, title="trim request media")
+        cls.request = VideoTrimRequest.objects.create(
+            media=cls.media,
+            status="initial",
+            video_action="replace",
+            media_trim_style="no_encoding",
+            timestamps=[{"startTime": "00:00:00.000", "endTime": "00:00:01.000"}],
+        )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_list_links_to_trim_request_change(self):
+        model_admin = admin.site._registry[VideoTrimRequest]
+        self.assertEqual(model_admin.list_display_links, ("id", "status"))
+        response = self.client.get(reverse("admin:files_videotrimrequest_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("admin:files_videotrimrequest_change", args=[self.request.pk]))
+        # Media column still links to the media, separately from the request change link.
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+
+    def test_change_form_can_update_status_and_timestamps(self):
+        response = self.client.post(
+            reverse("admin:files_videotrimrequest_change", args=[self.request.pk]),
+            {
+                "media": self.media.pk,
+                "status": "fail",
+                "video_action": "save_new",
+                "media_trim_style": "precise",
+                "timestamps": '[{"startTime": "00:00:01.000", "endTime": "00:00:02.000"}]',
+                "_continue": "Save and continue editing",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.status, "fail")
+        self.assertEqual(self.request.video_action, "save_new")
+        self.assertEqual(self.request.media_trim_style, "precise")
+        self.assertEqual(self.request.timestamps, [{"startTime": "00:00:01.000", "endTime": "00:00:02.000"}])
+
+    def test_media_change_shows_trim_requests_tab(self):
+        response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Trim Requests")
+        self.assertContains(response, 'id="jazzy-tabs"')
+        self.assertContains(response, reverse("admin:files_videotrimrequest_change", args=[self.request.pk]))
+        self.assertContains(response, "Initial")
+        model_admin = admin.site._registry[Media]
+        trim_inline = next(inline for inline in model_admin.inlines if inline.model is VideoTrimRequest)
+        self.assertIn("tab", trim_inline.classes)
+        self.assertEqual(trim_inline.verbose_name_plural, "Trim Requests")
 
 
 class TranscriptionRequestAdminTest(TestCase):
@@ -1015,11 +1242,57 @@ class LanguageAdminTest(TestCase):
         self.assertContains(response, reverse("admin:files_language_change", args=[self.language.pk]))
         self.assertContains(response, "English")
 
+    def test_caption_change_shows_linked_media_and_user_once(self):
+        subtitle = Subtitle.objects.get(media=self.media, language=self.language)
+        model_admin = admin.site._registry[Subtitle]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=subtitle))
+        self.assertEqual(list(fieldsets["Caption"]["fields"]), ["subtitle_file"])
+        self.assertEqual(list(fieldsets["Related"]["fields"]), ["link_language", "link_media", "link_user"])
+        self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
+        self.assertNotIn("media", fieldsets["Caption"]["fields"])
+        self.assertNotIn("user", fieldsets["Caption"]["fields"])
+        self.assertNotIn("media", fieldsets["Related"]["fields"])
+        self.assertNotIn("user", fieldsets["Related"]["fields"])
+
+        response = self.client.get(reverse("admin:files_subtitle_change", args=[subtitle.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'field-link_media')
+        self.assertContains(response, 'field-link_user')
+        self.assertNotContains(response, 'field-media')
+        self.assertNotContains(response, 'field-user')
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, f">{self.superuser.username}</a>")
+        self.assertContains(response, "related-links-tab")
+
     def test_media_change_caption_inline_links_language(self):
         response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_language_change", args=[self.language.pk]))
         self.assertContains(response, "English")
+        self.assertContains(response, "Captions")
+        self.assertContains(response, 'id="jazzy-tabs"')
+        subtitle = Subtitle.objects.get(media=self.media, language=self.language)
+        self.assertContains(response, reverse("admin:files_subtitle_change", args=[subtitle.pk]))
+        model_admin = admin.site._registry[Media]
+        subtitle_inline = next(inline for inline in model_admin.inlines if inline.model is Subtitle)
+        self.assertIn("tab", subtitle_inline.classes)
+        self.assertEqual(subtitle_inline.verbose_name_plural, "Captions")
+
+    def test_media_related_shows_caption_count_link(self):
+        model_admin = admin.site._registry[Media]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=self.media))
+        self.assertIn("related_captions", fieldsets["Related"]["fields"])
+        response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "View 1 caption(s)")
+        self.assertContains(response, reverse("admin:files_subtitle_changelist"))
+        self.assertContains(response, f"media__id__exact={self.media.pk}")
+        self.assertContains(response, "related-links-tab")
+        self.assertContains(response, "related-objects-tab")
 
 
 class MediaRelationshipNavigationTest(TestCase):
@@ -1041,6 +1314,29 @@ class MediaRelationshipNavigationTest(TestCase):
         self.assertContains(response, reverse("admin:files_comment_changelist"))
         self.assertContains(response, f"media__id__exact={self.media.pk}")
         self.assertContains(response, "nav playlist")
+        self.assertNotContains(response, "View the full filtered list")
+
+    def test_media_comment_inline_limits_to_latest_rows_with_overflow_note(self):
+        # Oldest through newest; inline orders by -add_date so the newest stay visible.
+        for index in range(RELATED_INLINE_LIMIT + 1):
+            Comment.objects.create(
+                media=self.media,
+                user=self.superuser,
+                text=f"overflow comment {index:02d}",
+            )
+        response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("View the full filtered list", content)
+        self.assertIn(f"Showing {RELATED_INLINE_LIMIT} of {RELATED_INLINE_LIMIT + 2} related Comments", content)
+        self.assertIn(reverse("admin:files_comment_changelist"), content)
+        self.assertIn(f"media__id__exact={self.media.pk}", content)
+        # Newest RELATED_INLINE_LIMIT overflow comments are shown; the oldest overflow one is not.
+        self.assertIn(f"overflow comment {RELATED_INLINE_LIMIT:02d}", content)
+        self.assertIn("overflow comment 01", content)
+        self.assertNotIn("overflow comment 00", content)
+        # Original setup comment is older than all overflow comments, so it is truncated away.
+        self.assertNotIn("visible on media change", content)
 
     def test_comment_changelist_filters_by_media(self):
         other = create_media(self.superuser, title="other nav media")
@@ -1049,6 +1345,27 @@ class MediaRelationshipNavigationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         texts = {c.text for c in response.context["cl"].result_list}
         self.assertEqual(texts, {"visible on media change"})
+
+    def test_comment_change_shows_linked_user_and_media_once(self):
+        model_admin = admin.site._registry[Comment]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=self.comment))
+        self.assertEqual(list(fieldsets["Comment"]["fields"]), ["text", "parent", "add_date", "uid"])
+        self.assertEqual(list(fieldsets["Related"]["fields"]), ["link_user", "link_media"])
+        self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
+        self.assertNotIn("user", fieldsets["Comment"]["fields"])
+        self.assertNotIn("media", fieldsets["Comment"]["fields"])
+
+        response = self.client.get(reverse("admin:files_comment_change", args=[self.comment.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "field-link_user")
+        self.assertContains(response, "field-link_media")
+        self.assertNotContains(response, "field-user")
+        self.assertNotContains(response, "field-media")
+        self.assertContains(response, f"{self.superuser.username}</a>")
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, "related-links-tab")
 
     def test_user_change_shows_related_media_link(self):
         response = self.client.get(reverse("admin:users_user_change", args=[self.superuser.pk]))

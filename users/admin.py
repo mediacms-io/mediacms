@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.utils import timezone
 
+from actions.models import MediaAction
 from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
@@ -69,7 +70,7 @@ class ChannelMediaInline(ReadOnlyTabularInline):
     fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
     readonly_fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
     ordering = ("-add_date",)
-    classes = ["tab"]
+    classes = ["tab", "related-objects-tab"]
     verbose_name = "Media"
     verbose_name_plural = "Media"
 
@@ -95,9 +96,113 @@ class ChannelMediaInline(ReadOnlyTabularInline):
         return obj.listable
 
 
+class UserMediaInline(ReadOnlyTabularInline):
+    model = Media
+    fk_name = "user"
+    fields = ("link_title", "media_type", "state", "encoding_status", "add_date")
+    readonly_fields = ("link_title", "media_type", "state", "encoding_status", "add_date")
+    ordering = ("-add_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Media"
+    verbose_name_plural = "Media"
+
+    @admin.display(description="Media")
+    def link_title(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, obj.title)
+
+
+class UserPlaylistInline(ReadOnlyTabularInline):
+    model = Playlist
+    fk_name = "user"
+    fields = ("link_title", "add_date", "friendly_token")
+    readonly_fields = ("link_title", "add_date", "friendly_token")
+    ordering = ("-add_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Playlist"
+    verbose_name_plural = "Playlists"
+
+    @admin.display(description="Playlist")
+    def link_title(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, obj.title)
+
+
+class UserChannelInline(ReadOnlyTabularInline):
+    model = Channel
+    fk_name = "user"
+    fields = ("link_title", "add_date", "friendly_token")
+    readonly_fields = ("link_title", "add_date", "friendly_token")
+    ordering = ("-add_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Channel"
+    verbose_name_plural = "Channels"
+
+    @admin.display(description="Channel")
+    def link_title(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return admin_change_link(obj, obj.title)
+
+
+class UserCommentInline(ReadOnlyTabularInline):
+    model = Comment
+    fk_name = "user"
+    fields = ("link_media", "text", "add_date")
+    readonly_fields = ("link_media", "text", "add_date")
+    ordering = ("-add_date",)
+    can_delete = True
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Comment"
+    verbose_name_plural = "Comments"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("media")
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+
+class UserActivityInline(ReadOnlyTabularInline):
+    model = MediaAction
+    fk_name = "user"
+    fields = ("action", "link_media", "action_date", "remote_ip", "extra_info")
+    readonly_fields = ("action", "link_media", "action_date", "remote_ip", "extra_info")
+    ordering = ("-action_date",)
+    classes = ["tab", "related-objects-tab"]
+    verbose_name = "Activity"
+    verbose_name_plural = "Activity"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("media")
+
+    @admin.display(description="Media")
+    def link_media(self, obj):
+        if not obj or not obj.media_id:
+            return "—"
+        return admin_change_link(obj.media, obj.media.title)
+
+
 class UserAdmin(admin.ModelAdmin):
     search_fields = ["email", "username", "name"]
-    exclude = ["user_permissions", "title", "password", "groups", "last_login", "is_featured", "location", "first_name", "last_name", "media_count", "date_joined", "is_approved"]
+    exclude = [
+        "user_permissions",
+        "title",
+        "password",
+        "groups",
+        "is_featured",
+        "location",
+        "first_name",
+        "last_name",
+        "date_joined",
+        "is_approved",
+        "media_count",
+    ]
     list_display = [
         "username",
         "name",
@@ -115,11 +220,18 @@ class UserAdmin(admin.ModelAdmin):
     ordering = ("-date_added",)
     date_hierarchy = "date_added"
     readonly_fields = (
+        "last_login",
         "related_media",
         "related_channels",
         "related_playlists",
         "related_comments",
+        "related_likes",
+        "related_dislikes",
+        "related_watches",
+        "related_reports",
+        "related_actions",
     )
+    inlines = [UserMediaInline, UserPlaylistInline, UserChannelInline, UserCommentInline, UserActivityInline]
     action_form = GroupedActionForm
     action_groups = [
         ["approve_users", "unapprove_users"],
@@ -135,6 +247,65 @@ class UserAdmin(admin.ModelAdmin):
         list_filter.append("is_approved")
         list_editable = ["is_approved"]
         exclude.remove("is_approved")
+
+    def get_fieldsets(self, request, obj=None):
+        """Organize the change form into purpose-based Jazzmin tabs."""
+        access_fields = [
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "is_editor",
+            "is_manager",
+            "advancedUser",
+            "last_login",
+        ]
+        if getattr(settings, "USERS_NEEDS_TO_BE_APPROVED", False):
+            access_fields.insert(-1, "is_approved")
+
+        return (
+            (
+                "Profile",
+                {
+                    "fields": (
+                        "username",
+                        "name",
+                        "email",
+                        "logo",
+                        "description",
+                        "allow_contact",
+                        "notification_on_comments",
+                        "date_added",
+                    ),
+                    "classes": ("tab",),
+                },
+            ),
+            (
+                "Access",
+                {
+                    "fields": tuple(access_fields),
+                    "classes": ("tab",),
+                    "description": "Account status and MediaCMS roles.",
+                },
+            ),
+            (
+                "Related",
+                {
+                    "fields": (
+                        "related_media",
+                        "related_playlists",
+                        "related_channels",
+                        "related_comments",
+                        "related_likes",
+                        "related_dislikes",
+                        "related_watches",
+                        "related_reports",
+                        "related_actions",
+                    ),
+                    "classes": ("tab", "related-links-tab"),
+                    "description": "Links to filtered admin lists for this user's content and engagement.",
+                },
+            ),
+        )
 
     @admin.display(description="Media")
     def related_media(self, obj):
@@ -163,6 +334,47 @@ class UserAdmin(admin.ModelAdmin):
             return "—"
         count = Comment.objects.filter(user=obj).count()
         return admin_changelist_link(Comment, f"View {count} comment(s)", user__id__exact=obj.pk)
+
+    @admin.display(description="Likes")
+    def related_likes(self, obj):
+        if not obj.pk:
+            return "—"
+        count = MediaAction.objects.filter(user=obj, action="like").count()
+        return admin_changelist_link(MediaAction, f"View {count} like(s)", user__id__exact=obj.pk, action__exact="like")
+
+    @admin.display(description="Dislikes")
+    def related_dislikes(self, obj):
+        if not obj.pk:
+            return "—"
+        count = MediaAction.objects.filter(user=obj, action="dislike").count()
+        return admin_changelist_link(
+            MediaAction, f"View {count} dislike(s)", user__id__exact=obj.pk, action__exact="dislike"
+        )
+
+    @admin.display(description="Watches")
+    def related_watches(self, obj):
+        if not obj.pk:
+            return "—"
+        count = MediaAction.objects.filter(user=obj, action="watch").count()
+        return admin_changelist_link(
+            MediaAction, f"View {count} watch(es)", user__id__exact=obj.pk, action__exact="watch"
+        )
+
+    @admin.display(description="Reports")
+    def related_reports(self, obj):
+        if not obj.pk:
+            return "—"
+        count = MediaAction.objects.filter(user=obj, action="report").count()
+        return admin_changelist_link(
+            MediaAction, f"View {count} report(s)", user__id__exact=obj.pk, action__exact="report"
+        )
+
+    @admin.display(description="All activity")
+    def related_actions(self, obj):
+        if not obj.pk:
+            return "—"
+        count = MediaAction.objects.filter(user=obj).count()
+        return admin_changelist_link(MediaAction, f"View {count} action(s)", user__id__exact=obj.pk)
 
     @admin.action(description="Approve users", permissions=["change"])
     def approve_users(self, request, queryset):
@@ -215,9 +427,16 @@ class ChannelAdmin(admin.ModelAdmin):
                     "friendly_token",
                     "banner_logo",
                     "subscribers",
-                    "related_media",
                 ),
                 "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("related_media",),
+                "classes": ("tab", "related-links-tab"),
+                "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
             },
         ),
     )

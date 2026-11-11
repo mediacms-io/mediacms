@@ -1163,11 +1163,88 @@ body.jazzmin-login-page {
     line-height: 1.4;
 }
 
+#changelist .actions .changelist-list-editable-save {
+    flex: 0 0 auto;
+    margin: 0;
+    margin-inline-start: auto;
+    min-width: 7rem;
+    padding: 0.55rem 1.75rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+#changelist .actions .changelist-list-editable-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 #changelist .actions .action-counter,
 #changelist .actions .all,
 #changelist .actions .question,
 #changelist .actions .clear {
     margin-inline-start: 0.5rem;
+}
+
+#changelist .change-list-actions-bottom .actions {
+    margin-block-start: 0.75rem;
+}
+
+/*
+ * Change-form tab groups:
+ * - default object tabs keep theme styling
+ * - Related (links/counts) uses teal
+ * - related-object inlines use warm slate
+ */
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab),
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-objects-tab) {
+    margin-inline-start: 0.15rem;
+}
+
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab) {
+    margin-inline-start: 0.85rem;
+    padding-inline-start: 0.85rem;
+    border-inline-start: 1px solid #ced4da;
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab {
+    color: #146c7a;
+    background-color: rgba(20, 108, 122, 0.1);
+    border-color: rgba(20, 108, 122, 0.2);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab:hover,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab:hover {
+    color: #0f5661;
+    background-color: rgba(20, 108, 122, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab.active,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab.active {
+    color: #fff;
+    background-color: #146c7a;
+    border-color: #146c7a;
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab {
+    color: #5b5348;
+    background-color: rgba(91, 83, 72, 0.1);
+    border-color: rgba(91, 83, 72, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab:hover,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab:hover {
+    color: #433d35;
+    background-color: rgba(91, 83, 72, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab.active,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab.active {
+    color: #fff;
+    background-color: #5b5348;
+    border-color: #5b5348;
 }
 
 #changelist-filter {

@@ -30,8 +30,20 @@ class MediaActionAdmin(admin.ModelAdmin):
     ]
 
     fieldsets = (
-        ('Action Details', {'fields': ('action', 'link_media', 'link_user', 'session_key')}),
-        ('Additional Information', {'fields': ('extra_info', 'action_date', 'remote_ip')}),
+        (
+            "Action",
+            {
+                "fields": ("action", "extra_info", "action_date", "remote_ip", "session_key"),
+                "classes": ("tab",),
+            },
+        ),
+        (
+            "Related",
+            {
+                "fields": ("link_media", "link_user"),
+                "classes": ("tab", "related-links-tab"),
+            },
+        ),
     )
 
     @admin.display(description="Media", ordering="media__title")
