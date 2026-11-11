@@ -43,6 +43,7 @@ services:
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
       DEVELOPMENT_MODE: True
+      ALLOW_POPULATE_FAKE_MEDIA: 'True'
     ports:
       - "80:80"
     volumes:

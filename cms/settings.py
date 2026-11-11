@@ -599,6 +599,12 @@ ALLOW_MEDIA_REPLACEMENT = False
 
 ALLOW_ANONYMOUS_USER_LISTING = True
 
+# Whether the populate_fake_media management command may run.
+# None means follow DEBUG after settings are fully loaded (off in production,
+# on when DEBUG is True). Override explicitly via local_settings or the
+# ALLOW_POPULATE_FAKE_MEDIA environment variable.
+ALLOW_POPULATE_FAKE_MEDIA = None
+
 # Who can see the members page
 # valid choices are all, editors, admins
 CAN_SEE_MEMBERS_PAGE = "all"
@@ -668,6 +674,10 @@ try:
         from .dev_settings import *  # noqa
 except ImportError:
     pass
+
+# Resolve after local_settings / DEVELOPMENT_MODE may have changed DEBUG.
+if ALLOW_POPULATE_FAKE_MEDIA is None:
+    ALLOW_POPULATE_FAKE_MEDIA = bool(DEBUG)
 
 
 if GLOBAL_LOGIN_REQUIRED:

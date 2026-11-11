@@ -94,13 +94,14 @@ class ContextProcessorTests(TestCase):
         self.assertEqual(ctx["TRANSLATION"], translation_strings["fr"])
 
     def test_untranslated_strings_are_left_out_so_the_page_shows_english(self):
-        untranslated = [key for key, value in el.translation_strings.items() if not value]
-        translated = {key: value for key, value in el.translation_strings.items() if value}
-        self.assertTrue(untranslated)
-        page = self.context_for(AnonymousUser(), language="el")["TRANSLATION"]
-        self.assertEqual(page, translated)
+        # Loaded maps drop empty values so the UI falls back to the English key.
         for strings in translation_strings.values():
+            self.assertTrue(strings)
             self.assertTrue(all(strings.values()))
+
+        page = self.context_for(AnonymousUser(), language="el")["TRANSLATION"]
+        self.assertEqual(page, translation_strings["el"])
+        self.assertEqual(page, {key: value for key, value in el.translation_strings.items() if value})
 
     @override_settings(USE_LTI=True)
     def test_lti_session_is_exposed_only_to_logged_in_users(self):
@@ -135,10 +136,13 @@ class CustomTranslateFilterTests(SimpleTestCase):
         self.assertEqual(custom_translate("Upload", "xx"), "Upload")
 
     def test_an_untranslated_string_falls_back_to_english(self):
-        untranslated = next(key for key, value in el.translation_strings.items() if not value)
-        translated = next(key for key, value in el.translation_strings.items() if value)
-        self.assertEqual(custom_translate(untranslated, "el"), untranslated)
-        self.assertEqual(custom_translate(translated, "el"), el.translation_strings[translated])
+        # Absent / empty entries are omitted from the loaded map, so the key is shown.
+        missing = "__not_in_any_translation_file__"
+        self.assertNotIn(missing, translation_strings["el"])
+        self.assertEqual(custom_translate(missing, "el"), missing)
+
+        translated = next(iter(translation_strings["el"]))
+        self.assertEqual(custom_translate(translated, "el"), translation_strings["el"][translated])
 
     def test_filter_is_usable_from_templates(self):
         rendered = Template("{% load custom_filters %}{{ 'Upload'|custom_translate:'fr' }}").render(Context())

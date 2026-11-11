@@ -94,6 +94,14 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not getattr(settings, 'ALLOW_POPULATE_FAKE_MEDIA', False):
+            raise CommandError(
+                'Refusing to run populate_fake_media: ALLOW_POPULATE_FAKE_MEDIA is disabled. '
+                'This command is for development and demo instances only. '
+                'Set ALLOW_POPULATE_FAKE_MEDIA=True in local_settings or the environment '
+                '(or run with DEBUG=True).'
+            )
+
         count = options['count']
         clear_existing = options['clear']
 

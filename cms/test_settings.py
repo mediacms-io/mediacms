@@ -9,6 +9,9 @@ from .settings import BASE_DIR, DATABASES  # noqa: E402
 
 CELERY_TASK_ALWAYS_EAGER = True
 
+# Tests may invoke populate_fake_media helpers; allow the command under test settings.
+ALLOW_POPULATE_FAKE_MEDIA = True
+
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "mediacms-tests"}}
