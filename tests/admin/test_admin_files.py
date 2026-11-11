@@ -329,8 +329,13 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertIn("related_captions", fieldsets["Related"]["fields"])
         self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
         self.assertNotIn("allow_download", model_admin.readonly_fields)
-        for machine_field in ("encoding_status", "duration", "md5sum", "search", "views"):
+        for machine_field in ("display_encoding_status", "duration", "md5sum", "search", "views"):
             self.assertIn(machine_field, model_admin.readonly_fields)
+        self.assertIn("display_media_type", model_admin.readonly_fields)
+        self.assertIn("display_media_type", fieldsets["Media file"]["fields"])
+        self.assertIn("display_encoding_status", fieldsets["Media file"]["fields"])
+        self.assertNotIn("media_type", fieldsets["Media file"]["fields"])
+        self.assertNotIn("encoding_status", fieldsets["Media file"]["fields"])
         for inline in model_admin.inlines:
             self.assertIn("tab", inline.classes)
             self.assertIn("related-objects-tab", inline.classes)

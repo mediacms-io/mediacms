@@ -1,4 +1,4 @@
-{% load i18n static jazzmin admin_urls %}
+{% load i18n static jazzmin admin_urls custom_filters %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_current_language_bidi as LANGUAGE_BIDI %}
 {% get_jazzmin_settings request as jazzmin_settings %}
@@ -215,22 +215,22 @@
                             <li class="nav-item">
                                 <a href="/" class="nav-link">
                                     <i class="nav-icon fas fa-th-large"></i>
-                                    <p>View Site</p>
+                                    <p>{{ "View Site"|custom_translate:LANGUAGE_CODE }}</p>
                                 </a>
                             </li>
 
                             {% if jazzmin_settings.navigation_expanded %}
                                 {% for app in side_menu_list %}
-                                    <li class="nav-header">{{ app.name }}</li>
+                                    <li class="nav-header">{{ app.name|custom_translate:LANGUAGE_CODE }}</li>
                                     {% for model in app.models %}
                                         <li class="nav-item">
                                             {% if model.url %}
                                             <a href="{{ model.url }}" class="nav-link">
-                                                <i class="nav-icon {{ model.icon }}"></i> <p>{{ model.name }}</p>
+                                                <i class="nav-icon {{ model.icon }}"></i> <p>{{ model.name|custom_translate:LANGUAGE_CODE }}</p>
                                             </a>
                                         {% else %}
                                             <span class="nav-link disabled">
-                                                <i class="nav-icon {{ model.icon }}"></i> <p>{{ model.name }}</p>
+                                                <i class="nav-icon {{ model.icon }}"></i> <p>{{ model.name|custom_translate:LANGUAGE_CODE }}</p>
                                             </span>
                                         {% endif %}
                                         </li>
@@ -241,14 +241,14 @@
                                     <li class="nav-item has-treeview">
                                         <a href="#" class="nav-link">
                                             <i class="nav-icon {{ app.icon }}"></i>
-                                            <p>{{ app.name|truncatechars:21 }} <i class="fas fa-angle-left right"></i></p>
+                                            <p>{{ app.name|custom_translate:LANGUAGE_CODE|truncatechars:21 }} <i class="fas fa-angle-left right"></i></p>
                                         </a>
                                         <ul class="nav nav-treeview" style="display: none;">
                                             {% for model in app.models %}
                                                 <li class="nav-item">
                                                     <a href="{% if model.url %}{{ model.url }}{% else %}javascript:void(0){% endif %}" class="nav-link">
                                                         <i class="nav-icon {{ model.icon }}"></i>
-                                                        <p>{{ model.name }}</p>
+                                                        <p>{{ model.name|custom_translate:LANGUAGE_CODE }}</p>
                                                     </a>
                                                 </li>
                                             {% endfor %}

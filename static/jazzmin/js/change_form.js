@@ -110,11 +110,48 @@
         });
     }
 
+    function labelSelect2SearchFields($select) {
+        // Select2's multi-select search control is a <textarea> with neither id nor
+        // name; Chrome flags that as an autofill warning. Tie it to the <select>.
+        const selectId = $select.attr('id');
+        if (!selectId) {
+            return;
+        }
+        $select.next('.select2-container').find('.select2-search__field').each(function (index) {
+            const $field = $(this);
+            if ($field.attr('id') || $field.attr('name')) {
+                return;
+            }
+            $field.attr('id', selectId + '-select2-search' + (index ? '-' + index : ''));
+        });
+    }
+
     function applySelect2() {
         // Apply select2 to any select boxes that don't yet have it
         // and are not part of the django's empty-form inline
         const noSelect2 = '.empty-form select, .select2-hidden-accessible, .selectfilter, .selector-available select, .selector-chosen select, select[data-autocomplete-light-function=select2]';
-        $('select').not(noSelect2).select2({ width: 'element' });
+        $('select').not(noSelect2).each(function () {
+            const $select = $(this);
+            $select.select2({ width: 'element' });
+            labelSelect2SearchFields($select);
+            $select.off('select2:open.jazzminSearchId').on('select2:open.jazzminSearchId', function () {
+                // Dropdown search fields are created on open (single selects / autocomplete).
+                window.setTimeout(function () {
+                    labelSelect2SearchFields($select);
+                    const selectId = $select.attr('id');
+                    if (!selectId) {
+                        return;
+                    }
+                    $('.select2-container--open .select2-search__field').each(function (index) {
+                        const $field = $(this);
+                        if ($field.attr('id') || $field.attr('name')) {
+                            return;
+                        }
+                        $field.attr('id', selectId + '-select2-dropdown-search' + (index ? '-' + index : ''));
+                    });
+                }, 0);
+            });
+        });
     }
 
     $(document).ready(function () {

@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import escape, format_html
+from django.utils.translation import get_language
 from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
@@ -18,10 +19,13 @@ from admin_customizations.action_choices import (
 )
 from files.admin_helpers import (
     ReadOnlyTabularInline,
+    TranslateChoiceLabelsMixin,
+    TranslateManyToManyHelpMixin,
     admin_change_link,
     admin_change_url,
     admin_changelist_link,
     admin_changelist_url,
+    admin_text,
     join_links,
     translated_choice_display,
 )
@@ -387,7 +391,7 @@ class CommentAdmin(admin.ModelAdmin):
         return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
 
 
-class MediaAdmin(admin.ModelAdmin):
+class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin.ModelAdmin):
     search_fields = ["title", "user__username", "friendly_token"]
     change_list_template = "admin/files/media/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
@@ -590,8 +594,8 @@ class MediaAdmin(admin.ModelAdmin):
         "link_user",
         "link_channel",
         "listable",
-        "media_type",
-        "encoding_status",
+        "display_media_type",
+        "display_encoding_status",
         "duration",
         "size",
         "video_height",
@@ -637,8 +641,8 @@ class MediaAdmin(admin.ModelAdmin):
         """
         media_file_fields = [
             "media_file",
-            "media_type",
-            "encoding_status",
+            "display_media_type",
+            "display_encoding_status",
             "duration",
             "size",
             "video_height",
@@ -769,7 +773,7 @@ class MediaAdmin(admin.ModelAdmin):
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
-    @admin.display(description="media type", ordering="media_type")
+    @admin.display(description="Media type", ordering="media_type")
     def display_media_type(self, obj):
         return translated_choice_display(obj, "media_type")
 
@@ -777,7 +781,7 @@ class MediaAdmin(admin.ModelAdmin):
     def display_state(self, obj):
         return translated_choice_display(obj, "state")
 
-    @admin.display(description="encoding status", ordering="encoding_status")
+    @admin.display(description="Encoding status", ordering="encoding_status")
     def display_encoding_status(self, obj):
         return translated_choice_display(obj, "encoding_status")
 
@@ -788,33 +792,33 @@ class MediaAdmin(admin.ModelAdmin):
     @admin.display(description="Comments", ordering="_comments_count")
     def get_comments_count(self, obj):
         count = getattr(obj, "_comments_count", obj.comments.count())
-        return admin_changelist_link(Comment, f"{count} comments", media__id__exact=obj.pk)
+        return admin_changelist_link(Comment, admin_text(None, "{count} comments", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Encodings", ordering="_encodings_count")
     def get_encodings_count(self, obj):
         count = getattr(obj, "_encodings_count", obj.encodings.count())
-        return admin_changelist_link(Encoding, f"{count} encodings", media__id__exact=obj.pk)
+        return admin_changelist_link(Encoding, admin_text(None, "{count} encodings", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Comments")
     def related_comments(self, obj):
         if not obj.pk:
             return "—"
         count = obj.comments.count()
-        return admin_changelist_link(Comment, f"View {count} comment(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(Comment, admin_text(None, "View {count} comment(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Encodings")
     def related_encodings(self, obj):
         if not obj.pk:
             return "—"
         count = obj.encodings.count()
-        return admin_changelist_link(Encoding, f"View {count} encoding(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(Encoding, admin_text(None, "View {count} encoding(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Actions / reports")
     def related_actions(self, obj):
         if not obj.pk:
             return "—"
         count = obj.mediaactions.count()
-        return admin_changelist_link(MediaAction, f"View {count} action(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} action(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Reports")
     def related_reports(self, obj):
@@ -823,7 +827,12 @@ class MediaAdmin(admin.ModelAdmin):
         count = obj.mediaactions.filter(action__in=MEDIA_REPORT_TAB_ACTIONS).count()
         return admin_changelist_link(
             MediaAction,
-            f"View {count} report/moderation action(s) (reported_times={obj.reported_times})",
+            admin_text(
+                None,
+                "View {count} report/moderation action(s) (reported_times={reported_times})",
+                count=count,
+                reported_times=obj.reported_times,
+            ),
             media__id__exact=obj.pk,
         )
 
@@ -833,27 +842,32 @@ class MediaAdmin(admin.ModelAdmin):
         if not obj or not obj.pk:
             return "—"
 
+        lang = get_language() or "en"
         actions = MediaAction.objects.filter(media=obj, action__in=MEDIA_REPORT_TAB_ACTIONS).select_related("user").order_by("-action_date")
         changelist = admin_changelist_url(MediaAction, media__id__exact=obj.pk)
         header = format_html(
-            '<p style="margin-bottom:0.75em;"><a href="{}">Open all MediaActions for this media</a> · ' '<a href="{}">Open reports only</a></p>',
+            '<p style="margin-bottom:0.75em;"><a href="{}">{}</a> · <a href="{}">{}</a></p>',
             changelist,
+            admin_text(lang, "Open all MediaActions for this media"),
             admin_changelist_url(MediaAction, media__id__exact=obj.pk, action__exact="report"),
+            admin_text(lang, "Open reports only"),
         )
         if not actions.exists():
-            return mark_safe(f"{header}<p>No report or moderation actions yet.</p>")
+            return mark_safe(f"{header}<p>{escape(admin_text(lang, 'No report or moderation actions yet.'))}</p>")
 
         rows = []
+        view_label = admin_text(lang, "View")
         for action in actions:
-            user_cell = admin_change_link(action.user, action.user.username) if action.user_id else escape(action.session_key or "anonymous")
+            user_cell = admin_change_link(action.user, action.user.username) if action.user_id else escape(action.session_key or admin_text(lang, "anonymous"))
             action_url = admin_change_url(action)
-            action_label = escape(action.get_action_display() if hasattr(action, "get_action_display") else action.action)
+            raw_label = action.get_action_display() if hasattr(action, "get_action_display") else action.action
+            action_label = escape(admin_text(lang, raw_label))
             extra = escape((action.extra_info or "")[:200])
             when = escape(action.action_date.strftime("%Y-%m-%d %H:%M") if action.action_date else "")
             ip = escape(action.remote_ip or "—")
             rows.append(
                 format_html(
-                    "<tr>" '<td><a href="{}">{}</a></td>' "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" '<td><a class="btn btn-xs btn-primary" href="{}">View</a></td>' "</tr>",
+                    "<tr>" '<td><a href="{}">{}</a></td>' "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" '<td><a class="btn btn-xs btn-primary" href="{}">{}</a></td>' "</tr>",
                     action_url,
                     action_label,
                     user_cell,
@@ -861,11 +875,20 @@ class MediaAdmin(admin.ModelAdmin):
                     when,
                     ip,
                     action_url,
+                    view_label,
                 )
             )
 
         table = format_html(
-            '<table class="table table-sm table-striped">' "<thead><tr>" "<th>Action</th><th>User</th><th>Extra info</th><th>When</th><th>IP</th><th></th>" "</tr></thead><tbody>{}</tbody></table>",
+            '<table class="table table-sm table-striped">'
+            "<thead><tr>"
+            "<th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th></th>"
+            "</tr></thead><tbody>{}</tbody></table>",
+            admin_text(lang, "Action"),
+            admin_text(lang, "User"),
+            admin_text(lang, "Extra info"),
+            admin_text(lang, "When"),
+            admin_text(lang, "IP"),
             mark_safe("".join(str(row) for row in rows)),
         )
         return mark_safe(f"{header}{table}")
@@ -881,7 +904,7 @@ class MediaAdmin(admin.ModelAdmin):
         extra = obj.playlist_set.count() - len(playlists)
         result = join_links(links)
         if extra > 0:
-            return format_html("{} (+{} more)", result, extra)
+            return format_html("{} ({})", result, admin_text(None, "+{extra} more", extra=extra))
         return result
 
     @admin.display(description="Trim requests")
@@ -889,21 +912,21 @@ class MediaAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = obj.trim_requests.count()
-        return admin_changelist_link(VideoTrimRequest, f"View {count} trim request(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(VideoTrimRequest, admin_text(None, "View {count} trim request(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Transcription requests")
     def related_transcription_requests(self, obj):
         if not obj.pk:
             return "—"
         count = obj.transcriptionrequests.count()
-        return admin_changelist_link(TranscriptionRequest, f"View {count} transcription request(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(TranscriptionRequest, admin_text(None, "View {count} transcription request(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Captions")
     def related_captions(self, obj):
         if not obj.pk:
             return "—"
         count = obj.subtitles.count()
-        return admin_changelist_link(Subtitle, f"View {count} caption(s)", media__id__exact=obj.pk)
+        return admin_changelist_link(Subtitle, admin_text(None, "View {count} caption(s)", count=count), media__id__exact=obj.pk)
 
     def has_clear_reports_permission(self, request):
         return is_mediacms_editor(request.user)
@@ -951,7 +974,7 @@ class MediaAdmin(admin.ModelAdmin):
             queued += 1
         self.message_user(
             request,
-            f"Queued missing encodings for {queued} media item(s); skipped {skipped} without an original file.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued missing encodings for {queued} media item(s); skipped {skipped} without an original file.", queued=queued, skipped=skipped),
             messages.SUCCESS if queued else messages.WARNING,
         )
 
@@ -967,7 +990,7 @@ class MediaAdmin(admin.ModelAdmin):
             queued += 1
         self.message_user(
             request,
-            f"Queued force re-encode for {queued} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued force re-encode for {queued} media item(s); skipped {skipped}.", queued=queued, skipped=skipped),
             messages.SUCCESS if queued else messages.WARNING,
         )
 
@@ -993,7 +1016,7 @@ class MediaAdmin(admin.ModelAdmin):
                 skipped += 1
         self.message_user(
             request,
-            f"Regenerated thumbnails for {done} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Regenerated thumbnails for {done} media item(s); skipped {skipped}.", done=done, skipped=skipped),
             messages.SUCCESS if done else messages.WARNING,
         )
 
@@ -1009,7 +1032,7 @@ class MediaAdmin(admin.ModelAdmin):
             done += 1
         self.message_user(
             request,
-            f"Queued sprite regeneration for {done} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued sprite regeneration for {done} media item(s); skipped {skipped}.", done=done, skipped=skipped),
             messages.SUCCESS if done else messages.WARNING,
         )
 
@@ -1027,7 +1050,7 @@ class MediaAdmin(admin.ModelAdmin):
                 skipped += 1
         self.message_user(
             request,
-            f"Queued preview regeneration for {done} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued preview regeneration for {done} media item(s); skipped {skipped}.", done=done, skipped=skipped),
             messages.SUCCESS if done else messages.WARNING,
         )
 
@@ -1045,7 +1068,7 @@ class MediaAdmin(admin.ModelAdmin):
             done += 1
         self.message_user(
             request,
-            f"Queued HLS regeneration for {done} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued HLS regeneration for {done} media item(s); skipped {skipped}.", done=done, skipped=skipped),
             messages.SUCCESS if done else messages.WARNING,
         )
 
@@ -1070,7 +1093,7 @@ class MediaAdmin(admin.ModelAdmin):
             done += 1
         self.message_user(
             request,
-            f"Queued derivative refresh for {done} media item(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued derivative refresh for {done} media item(s); skipped {skipped}.", done=done, skipped=skipped),
             messages.SUCCESS if done else messages.WARNING,
         )
 
@@ -1092,7 +1115,7 @@ class MediaAdmin(admin.ModelAdmin):
         for media in queryset:
             if set_media_reviewed(media, True, user=request.user):
                 count += 1
-        self.message_user(request, f"Marked {count} media item(s) as reviewed.", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Marked {count} media item(s) as reviewed.", count=count), messages.SUCCESS)
 
     @admin.action(description="Mark as not reviewed", permissions=["change"])
     def mark_as_unreviewed(self, request, queryset):
@@ -1100,19 +1123,19 @@ class MediaAdmin(admin.ModelAdmin):
         for media in queryset:
             if set_media_reviewed(media, False, user=request.user):
                 count += 1
-        self.message_user(request, f"Marked {count} media item(s) as not reviewed.", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Marked {count} media item(s) as not reviewed.", count=count), messages.SUCCESS)
 
     @admin.action(description="Clear reports", permissions=["clear_reports"])
     def clear_reports(self, request, queryset):
         count = clear_media_reports(queryset, user=request.user)
-        self.message_user(request, f"Cleared reports for {count} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Cleared reports for {count} media item(s).", count=count), messages.SUCCESS)
 
     @admin.action(description="Confirm reports and set private", permissions=["change"])
     def confirm_reports_set_private(self, request, queryset):
         count = confirm_media_reports(queryset, user=request.user)
         self.message_user(
             request,
-            f"Confirmed reports for {count} media item(s) by setting state to private (reports kept).",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Confirmed reports for {count} media item(s) by setting state to private (reports kept).", count=count),
             messages.SUCCESS,
         )
 
@@ -1124,7 +1147,7 @@ class MediaAdmin(admin.ModelAdmin):
             media.save()
         self.message_user(
             request,
-            f"Cleared reports for {cleared} media item(s) and kept/set private.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Cleared reports for {cleared} media item(s) and kept/set private.", cleared=cleared),
             messages.SUCCESS,
         )
 
@@ -1136,7 +1159,7 @@ class MediaAdmin(admin.ModelAdmin):
             media.save()
         self.message_user(
             request,
-            f"Cleared reports for {cleared} media item(s) and set public.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Cleared reports for {cleared} media item(s) and set public.", cleared=cleared),
             messages.SUCCESS,
         )
 
@@ -1147,7 +1170,7 @@ class MediaAdmin(admin.ModelAdmin):
             media.state = "public"
             media.save()
             count += 1
-        self.message_user(request, f"Set {count} media item(s) to public.", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Set {count} media item(s) to public.", count=count), messages.SUCCESS)
 
     @admin.action(description="Set private", permissions=["change"])
     def set_state_private(self, request, queryset):
@@ -1156,7 +1179,7 @@ class MediaAdmin(admin.ModelAdmin):
             media.state = "private"
             media.save()
             count += 1
-        self.message_user(request, f"Set {count} media item(s) to private.", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Set {count} media item(s) to private.", count=count), messages.SUCCESS)
 
     @admin.action(description="Set unlisted", permissions=["change"])
     def set_state_unlisted(self, request, queryset):
@@ -1165,37 +1188,37 @@ class MediaAdmin(admin.ModelAdmin):
             media.state = "unlisted"
             media.save()
             count += 1
-        self.message_user(request, f"Set {count} media item(s) to unlisted.", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Set {count} media item(s) to unlisted.", count=count), messages.SUCCESS)
 
     @admin.action(description="Enable download", permissions=["change"])
     def enable_download(self, request, queryset):
         updated = queryset.update(allow_download=True)
-        self.message_user(request, f"Enabled download for {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Enabled download for {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Disable download", permissions=["change"])
     def disable_download(self, request, queryset):
         updated = queryset.update(allow_download=False)
-        self.message_user(request, f"Disabled download for {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Disabled download for {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Enable comments", permissions=["change"])
     def enable_comments(self, request, queryset):
         updated = queryset.update(enable_comments=True)
-        self.message_user(request, f"Enabled comments for {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Enabled comments for {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Disable comments", permissions=["change"])
     def disable_comments(self, request, queryset):
         updated = queryset.update(enable_comments=False)
-        self.message_user(request, f"Disabled comments for {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Disabled comments for {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Feature", permissions=["change"])
     def feature_selected(self, request, queryset):
         updated = queryset.update(featured=True)
-        self.message_user(request, f"Featured {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Featured {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Unfeature", permissions=["change"])
     def unfeature_selected(self, request, queryset):
         updated = queryset.update(featured=False)
-        self.message_user(request, f"Unfeatured {updated} media item(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Unfeatured {updated} media item(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Delete original file", permissions=["delete_original"])
     def delete_original_media_files(self, request, queryset):
@@ -1217,13 +1240,13 @@ class MediaAdmin(admin.ModelAdmin):
             if entered_tokens != set(expected_tokens):
                 self.message_user(
                     request,
-                    translate_string(request.LANGUAGE_CODE, "The media ID does not match. Enter the exact media ID."),
+                    translate_string(getattr(request, "LANGUAGE_CODE", None), "The media ID does not match. Enter the exact media ID."),
                     messages.ERROR,
                 )
             elif not eligible:
                 self.message_user(
                     request,
-                    translate_string(request.LANGUAGE_CODE, "No media can be deleted. Change the selection and try again."),
+                    translate_string(getattr(request, "LANGUAGE_CODE", None), "No media can be deleted. Change the selection and try again."),
                     messages.ERROR,
                 )
             else:
@@ -1237,7 +1260,7 @@ class MediaAdmin(admin.ModelAdmin):
                         failed += 1
                 self.message_user(
                     request,
-                    f"Deleted original file for {deleted} media item(s); blocked/failed {failed + len(blocked)}.",
+                    admin_text(getattr(request, "LANGUAGE_CODE", None), "Deleted original file for {deleted} media item(s); blocked/failed {failed}.", deleted=deleted, failed=failed + len(blocked)),
                     messages.SUCCESS if deleted else messages.WARNING,
                 )
                 return None
@@ -1268,7 +1291,7 @@ class MediaAdmin(admin.ModelAdmin):
             if not new_user:
                 self.message_user(
                     request,
-                    translate_string(request.LANGUAGE_CODE, "Enter a valid username for the new owner."),
+                    translate_string(getattr(request, "LANGUAGE_CODE", None), "Enter a valid username for the new owner."),
                     messages.ERROR,
                 )
             else:
@@ -1276,7 +1299,7 @@ class MediaAdmin(admin.ModelAdmin):
                 for media in queryset:
                     if change_media_owner(media.id, new_user):
                         changed += 1
-                self.message_user(request, f"Changed owner to {new_user.username} for {changed} media item(s).", messages.SUCCESS)
+                self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Changed owner to {username} for {changed} media item(s).", username=new_user.username, changed=changed), messages.SUCCESS)
                 return None
 
         context = self._intermediate_action_context(
@@ -1484,7 +1507,7 @@ class CategoryAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = obj.media_count if obj.media_count is not None else Media.objects.filter(category=obj).count()
-        return admin_changelist_link(Media, f"View {count} media item(s)", category__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), category__id__exact=obj.pk)
 
     @admin.display(description="Media count", ordering="media_count")
     def related_media_count(self, obj):
@@ -1536,7 +1559,7 @@ class TagAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = self._media_total(obj)
-        return admin_changelist_link(Media, f"View {count} media item(s)", tags__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), tags__id__exact=obj.pk)
 
     @admin.display(description="Media count", ordering="_media_total")
     def related_media_count(self, obj):
@@ -1593,7 +1616,7 @@ class LanguageAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = getattr(obj, "_captions_count", obj.subtitle_set.count())
-        return admin_changelist_link(Subtitle, f"View {count} caption(s)", language__id__exact=obj.pk)
+        return admin_changelist_link(Subtitle, admin_text(None, "View {count} caption(s)", count=count), language__id__exact=obj.pk)
 
     @admin.display(description="Captions", ordering="_captions_count")
     def related_captions_count(self, obj):
@@ -1750,7 +1773,7 @@ class EncodingAdmin(admin.ModelAdmin):
             queued += 1
         self.message_user(
             request,
-            f"Queued retry for {queued} failed encoding(s); skipped {skipped}.",
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Queued retry for {queued} failed encoding(s); skipped {skipped}.", queued=queued, skipped=skipped),
             messages.SUCCESS if queued else messages.WARNING,
         )
 
@@ -1888,7 +1911,7 @@ class PlaylistAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = getattr(obj, "_media_count", obj.media.count())
-        return admin_changelist_link(Media, f"View {count} media item(s)", playlist__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), playlist__id__exact=obj.pk)
 
     @admin.display(description="Media count", ordering="_media_count")
     def related_media_count(self, obj):
@@ -1975,7 +1998,7 @@ class LicenseAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = getattr(obj, "_media_count", Media.objects.filter(license=obj).count())
-        return admin_changelist_link(Media, f"View {count} media item(s)", license__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), license__id__exact=obj.pk)
 
     @admin.display(description="Media count", ordering="_media_count")
     def related_media_count(self, obj):
@@ -1984,7 +2007,7 @@ class LicenseAdmin(admin.ModelAdmin):
 
 
 @admin.register(TinyMCEMedia)
-class TinyMCEMediaAdmin(admin.ModelAdmin):
+class TinyMCEMediaAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
     list_display = ["original_filename", "display_file_type", "link_user"]
     list_filter = ["file_type", "uploaded_at"]
     list_select_related = ("user",)

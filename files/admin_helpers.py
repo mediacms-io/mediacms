@@ -12,6 +12,54 @@ from files.frontend_translations import translate_string
 RELATED_INLINE_LIMIT = 20
 
 
+def admin_text(lang, english, **format_kwargs):
+    """Translate an English admin UI string, optionally formatting placeholders."""
+    if lang is not None and not isinstance(lang, str):
+        lang = getattr(lang, "LANGUAGE_CODE", None)
+    language = lang or get_language() or "en"
+    text = translate_string(language, english)
+    if format_kwargs:
+        try:
+            return text.format(**format_kwargs)
+        except (KeyError, ValueError, IndexError):
+            return text
+    return text
+
+
+class TranslateManyToManyHelpMixin:
+    """Use translated model help_text for M2M fields; drop Django's Control hint.
+
+    Django admin appends a gettext "Hold down Control/Command..." suffix. With
+    Jazzmin Select2 that hint is obsolete, and the combined string breaks
+    ``custom_translate`` (English model help + already-localized suffix).
+    """
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        form_field = super().formfield_for_manytomany(db_field, request, **kwargs)
+        if form_field is None:
+            return None
+        if db_field.help_text:
+            form_field.help_text = admin_text(getattr(request, "LANGUAGE_CODE", None), str(db_field.help_text))
+        else:
+            form_field.help_text = ""
+        return form_field
+
+
+class TranslateChoiceLabelsMixin:
+    """Translate CharField/IntegerField choice labels for admin select widgets."""
+
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        form_field = super().formfield_for_choice_field(db_field, request, **kwargs)
+        if form_field is None:
+            return None
+        choices = getattr(form_field, "choices", None)
+        if choices is None:
+            return form_field
+        lang = getattr(request, "LANGUAGE_CODE", None)
+        form_field.choices = [(value, admin_text(lang, str(label)) if label else label) for value, label in choices]
+        return form_field
+
+
 def translated_choice_display(obj, field_name):
     """Return a choice field's display label through frontend_translations."""
     display = getattr(obj, f"get_{field_name}_display")()
@@ -92,13 +140,20 @@ class ReadOnlyTabularInline(admin.TabularInline):
     def get_related_overflow_note(self, parent, total, limit):
         model = self.get_related_changelist_model()
         filters = self.get_related_changelist_filters(parent)
-        label = self.verbose_name_plural or model._meta.verbose_name_plural
+        lang = get_language() or "en"
+        label = admin_text(lang, str(self.verbose_name_plural or model._meta.verbose_name_plural))
         return format_html(
-            "Showing {} of {} related {}. " '<a href="{}">View the full filtered list</a> instead.',
-            limit,
-            total,
-            label,
+            "{} <a href=\"{}\">{}</a> {}",
+            admin_text(
+                lang,
+                "Showing {limit} of {total} related {label}.",
+                limit=limit,
+                total=total,
+                label=label,
+            ),
             admin_changelist_url(model, **filters),
+            admin_text(lang, "View the full filtered list"),
+            admin_text(lang, "instead."),
         )
 
     def get_formset(self, request, obj=None, **kwargs):

@@ -16,10 +16,10 @@
         </select>
         <button type="submit"
                 class="btn {{ jazzmin_ui.button_classes.primary }} btn-sm object-tools-actions-go"
-                title="{% trans "Run the selected action" %}"
+                title="{{ "Run the selected action"|custom_translate:LANGUAGE_CODE }}"
                 formaction="{{ object_action_url }}"
                 formmethod="post">
-            {% trans "Go" %}
+            {{ "Go"|custom_translate:LANGUAGE_CODE }}
         </button>
     </div>
 </li>

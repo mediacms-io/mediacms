@@ -1,0 +1,60 @@
+{% load jazzmin i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if card %}
+<div class="card {{ fieldset.classes|cut:"collapse" }}">
+    {% if card_header and fieldset.name %}
+        <div class="card-header">
+            <div class="card-title">
+                <strong>{{ fieldset.name|custom_translate:LANGUAGE_CODE }}</strong>{% if fieldset.description %} - <i>{{ fieldset.description|custom_translate:LANGUAGE_CODE }}</i>{% endif %}
+            </div>
+        </div>
+    {%elif fieldset.description %}
+    <div class="card-header">
+        <div class="card-title">
+            {{ fieldset.description|custom_translate:LANGUAGE_CODE }}
+        </div>
+    </div>
+    {%endif%}
+
+    <div class="p-5{% if fieldset.name %} card-body{% endif %}">
+{% endif %}
+
+    {% for line in fieldset %}
+    <div class="form-group{% if line.fields|length == 1 and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
+        <div class="row">
+            {% for field in line %}
+                <label class="{% if not line.fields|length == 1 and forloop.counter != 1 %}col-auto {% else %}col-sm-3 {% endif %}text-left" for="id_{{ field.field.name }}">
+                    {{ field.field.label|capfirst|custom_translate:LANGUAGE_CODE }}
+                    {% if field.field.field.required %}
+                    <span class="text-red">* </span>
+                    {% endif %}
+                </label>
+                <div class="{% if not line.fields|length == 1 %} col-auto  fieldBox {% else %} col-sm-7 {% endif %}
+                             {% if field.field.name %} field-{{ field.field.name }}{% endif %}
+                             {% if not field.is_readonly and field.errors %} errors{% endif %}
+                             {% if field.field.is_hidden %} hidden {% endif %}
+                             {% if field.is_checkcard %} checkcard-row{% endif %}">
+                    {% if field.is_readonly %}
+                        <div class="readonly">{{ field.contents|custom_translate:LANGUAGE_CODE }}</div>
+                    {% else %}
+                        {{ field.field }}
+                    {% endif %}
+                    <div class="help-block red">
+                        {% if not line.fields|length == 1 and not field.is_readonly %}{{ field.errors }}{% endif %}
+                    </div>
+                    {% if field.field.help_text %}
+                        <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                    {% endif %}
+                    <div class="help-block text-red">
+                        {% if line.fields|length == 1 %}{{ line.errors }}{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+{% if card %}
+    </div>
+</div>
+{% endif %}

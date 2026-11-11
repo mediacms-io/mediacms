@@ -4,7 +4,7 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
-from files.admin_helpers import admin_change_link
+from files.admin_helpers import TranslateChoiceLabelsMixin, admin_change_link, translated_choice_display
 from files.methods import clear_media_reports, is_mediacms_editor
 from files.models import Media
 
@@ -15,8 +15,8 @@ MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATI
 
 
 @admin.register(MediaAction)
-class MediaActionAdmin(admin.ModelAdmin):
-    list_display = ['action', 'link_media', 'link_user', 'action_date', 'remote_ip', 'extra_info']
+class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
+    list_display = ['display_action', 'link_media', 'link_user', 'action_date', 'remote_ip', 'extra_info']
     list_filter = ['action', 'action_date', ('media', admin.RelatedOnlyFieldListFilter), ('user', admin.RelatedOnlyFieldListFilter)]
     search_fields = ['media__title', 'user__username', 'extra_info']
     list_select_related = ('media', 'user')
@@ -45,6 +45,10 @@ class MediaActionAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    @admin.display(description="Action", ordering="action")
+    def display_action(self, obj):
+        return translated_choice_display(obj, "action")
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):

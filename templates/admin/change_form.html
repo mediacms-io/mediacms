@@ -1,0 +1,129 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'vendor/select2/css/select2.min.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+    {{ media }}
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% if not is_popup %}
+    {% block breadcrumbs %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{{ "Home"|custom_translate:LANGUAGE_CODE }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name|custom_translate:LANGUAGE_CODE }}</a></li>
+            <li class="breadcrumb-item">
+                {% if has_view_permission %}
+                    <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|custom_translate:LANGUAGE_CODE }}</a>
+                {% else %}
+                    {{ opts.verbose_name_plural|custom_translate:LANGUAGE_CODE }}
+                {% endif %}
+            </li>
+            <li class="breadcrumb-item active">
+                {% if add %}
+                    {{ "Add"|custom_translate:LANGUAGE_CODE }} {{ opts.verbose_name|custom_translate:LANGUAGE_CODE }}
+                {% else %}
+                    {{ original|truncatewords:"18" }}
+                {% endif %}
+            </li>
+        </ol>
+    {% endblock %}
+{% endif %}
+
+{% block content_title %} {{ opts.verbose_name_plural|custom_translate:LANGUAGE_CODE }} {% endblock %}
+
+{% block content %}
+
+    <div id="content-main" class="col-12">
+        <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>
+            {% csrf_token %}
+            {% block form_top %}{% endblock %}
+
+            {% if errors %}
+                <div class="alert alert-danger">
+                    {% if errors|length == 1 %}
+                        {% trans "Please correct the error below." %}
+                    {% else %}
+                        {% trans "Please correct the errors below." %}
+                    {% endif %}
+                </div>
+                {% for error in adminform.form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                        <i class="icon fa fa-ban"></i>{{ error|capfirst }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+                {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
+
+                {% block field_sets %}
+                    <div class="col-12 col-lg-9">
+                        <div class="card">
+                            <div class="card-body">
+                                {% get_changeform_template adminform as changeform_template %}
+                                {% include changeform_template %}
+                            </div>
+                        </div>
+                    </div>
+                {% endblock %}
+
+                {% block after_field_sets %}{% endblock %}
+
+                {% block inline_field_sets %}{% endblock %}
+
+                {% block after_related_objects %}{% endblock %}
+
+                <div class="col-12 col-lg-3">
+                    <div id="jazzy-actions" class="{{ jazzmin_ui.actions_classes }}">
+                        {% block submit_buttons_bottom %}
+                            {% submit_row %}
+                            {% block object-tools %}
+                                {% if change %}
+                                    {% if not is_popup %}
+                                        <div class="object-tools">
+                                            {% block object-tools-items %}
+                                                {% change_form_object_tools %}
+                                                {% block extra_actions %}{% endblock %}
+                                            {% endblock %}
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endblock %}
+                        {% endblock %}
+                    </div>
+                </div>
+
+                {% block admin_change_form_document_ready %}
+                    <script type="text/javascript" id="django-admin-form-add-constants" src="{% static 'admin/js/change_form.js' %}" {% if adminform and add %}data-model-name="{{ opts.model_name }}"{% endif %}></script>
+                {% endblock %}
+
+                {% prepopulated_fields_js %}
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
+
+{% block extrajs %}
+    {{  block.super }}
+    <script type="text/javascript" src="{% static 'vendor/select2/js/select2.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jazzmin/js/change_form.js' %}"></script>
+    {% if jazzmin_settings.related_modal_active %}
+    <script type="text/javascript" src="{% static 'jazzmin/plugins/bootstrap-show-modal/bootstrap-show-modal.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'jazzmin/js/related-modal.js' %}"></script>
+    {% endif %}
+{% endblock %}

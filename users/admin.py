@@ -13,6 +13,7 @@ from files.admin_helpers import (
     ReadOnlyTabularInline,
     admin_change_link,
     admin_changelist_link,
+    admin_text,
 )
 from files.models import Comment, Media, Playlist
 
@@ -317,83 +318,83 @@ class UserAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = Media.objects.filter(user=obj).count()
-        return admin_changelist_link(Media, f"View {count} media item(s)", user__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), user__id__exact=obj.pk)
 
     @admin.display(description="Channels")
     def related_channels(self, obj):
         if not obj.pk:
             return "—"
         count = obj.channels.count()
-        return admin_changelist_link(Channel, f"View {count} channel(s)", user__id__exact=obj.pk)
+        return admin_changelist_link(Channel, admin_text(None, "View {count} channel(s)", count=count), user__id__exact=obj.pk)
 
     @admin.display(description="Playlists")
     def related_playlists(self, obj):
         if not obj.pk:
             return "—"
         count = obj.playlists.count()
-        return admin_changelist_link(Playlist, f"View {count} playlist(s)", user__id__exact=obj.pk)
+        return admin_changelist_link(Playlist, admin_text(None, "View {count} playlist(s)", count=count), user__id__exact=obj.pk)
 
     @admin.display(description="Comments")
     def related_comments(self, obj):
         if not obj.pk:
             return "—"
         count = Comment.objects.filter(user=obj).count()
-        return admin_changelist_link(Comment, f"View {count} comment(s)", user__id__exact=obj.pk)
+        return admin_changelist_link(Comment, admin_text(None, "View {count} comment(s)", count=count), user__id__exact=obj.pk)
 
     @admin.display(description="Likes")
     def related_likes(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="like").count()
-        return admin_changelist_link(MediaAction, f"View {count} like(s)", user__id__exact=obj.pk, action__exact="like")
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} like(s)", count=count), user__id__exact=obj.pk, action__exact="like")
 
     @admin.display(description="Dislikes")
     def related_dislikes(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="dislike").count()
-        return admin_changelist_link(MediaAction, f"View {count} dislike(s)", user__id__exact=obj.pk, action__exact="dislike")
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} dislike(s)", count=count), user__id__exact=obj.pk, action__exact="dislike")
 
     @admin.display(description="Watches")
     def related_watches(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="watch").count()
-        return admin_changelist_link(MediaAction, f"View {count} watch(es)", user__id__exact=obj.pk, action__exact="watch")
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} watch(es)", count=count), user__id__exact=obj.pk, action__exact="watch")
 
     @admin.display(description="Reports")
     def related_reports(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="report").count()
-        return admin_changelist_link(MediaAction, f"View {count} report(s)", user__id__exact=obj.pk, action__exact="report")
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} report(s)", count=count), user__id__exact=obj.pk, action__exact="report")
 
     @admin.display(description="All activity")
     def related_actions(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj).count()
-        return admin_changelist_link(MediaAction, f"View {count} action(s)", user__id__exact=obj.pk)
+        return admin_changelist_link(MediaAction, admin_text(None, "View {count} action(s)", count=count), user__id__exact=obj.pk)
 
     @admin.action(description="Approve users", permissions=["change"])
     def approve_users(self, request, queryset):
         updated = queryset.update(is_approved=True)
-        self.message_user(request, f"Approved {updated} user(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Approved {updated} user(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Unapprove users", permissions=["change"])
     def unapprove_users(self, request, queryset):
         updated = queryset.update(is_approved=False)
-        self.message_user(request, f"Unapproved {updated} user(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Unapproved {updated} user(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Deactivate users", permissions=["change"])
     def deactivate_users(self, request, queryset):
         updated = queryset.exclude(pk=request.user.pk).update(is_active=False)
-        self.message_user(request, f"Deactivated {updated} user(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Deactivated {updated} user(s).", updated=updated), messages.SUCCESS)
 
     @admin.action(description="Reactivate users", permissions=["change"])
     def reactivate_users(self, request, queryset):
         updated = queryset.update(is_active=True)
-        self.message_user(request, f"Reactivated {updated} user(s).", messages.SUCCESS)
+        self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Reactivated {updated} user(s).", updated=updated), messages.SUCCESS)
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -449,7 +450,7 @@ class ChannelAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = Media.objects.filter(channel=obj).count()
-        return admin_changelist_link(Media, f"View {count} media item(s)", channel__id__exact=obj.pk)
+        return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), channel__id__exact=obj.pk)
 
     @admin.display(description="Media count")
     def related_media_count(self, obj):

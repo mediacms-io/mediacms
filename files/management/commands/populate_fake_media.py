@@ -5,11 +5,12 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.files import File
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import models
 from django.utils import timezone
 
 from actions.models import MediaAction
+from files.management.commands.fake_media_locales import FAKE_MEDIA_LOCALES, RTL_LANGUAGE_CODES
 from files.models import (
     Category,
     Comment,
@@ -59,12 +60,19 @@ class Command(BaseCommand):
             action='store_true',
             help='Clear existing fake media before creating new ones',
         )
+        parser.add_argument(
+            '--rtl-language',
+            choices=list(RTL_LANGUAGE_CODES) + ['random'],
+            default='random',
+            help='RTL language mixed with Greek for titles/names/comments (default: random among ar, he, ur)',
+        )
 
     def handle(self, *args, **options):
         count = options['count']
         clear_existing = options['clear']
 
         self.stdout.write(self.style.SUCCESS(f'Starting to populate {count} fake media records...'))
+        self._init_content_locales(options['rtl_language'])
         self._init_time_horizon()
         self.stdout.write(self.style.SUCCESS(f'Dating content from {self._horizon_start.date()} to {self._now.date()} (12 months)'))
 
@@ -186,6 +194,27 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'\nSuccessfully populated {count} fake media records!'))
 
+    def _init_content_locales(self, rtl_language='random'):
+        """Mix Greek with exactly one RTL language for generated text."""
+        if rtl_language == 'random':
+            rtl_code = random.choice(RTL_LANGUAGE_CODES)
+        elif rtl_language in RTL_LANGUAGE_CODES:
+            rtl_code = rtl_language
+        else:
+            raise CommandError(f'Unsupported RTL language: {rtl_language}. Choose from {", ".join(RTL_LANGUAGE_CODES)} or random.')
+
+        greek = FAKE_MEDIA_LOCALES['el']
+        rtl = FAKE_MEDIA_LOCALES[rtl_code]
+        self.content_locales = [greek, rtl]
+        self.rtl_language_code = rtl_code
+        self.stdout.write(self.style.SUCCESS(f'Content languages: Greek (el) + {rtl["name"]} ({rtl_code}, RTL)'))
+
+    def _locale(self):
+        """Pick Greek or the run's RTL language at random."""
+        if not getattr(self, 'content_locales', None):
+            self._init_content_locales('random')
+        return random.choice(self.content_locales)
+
     def _init_time_horizon(self):
         """Use a rolling 12-month window for all generated timestamps."""
         self._now = timezone.now()
@@ -222,11 +251,10 @@ class Command(BaseCommand):
         """Generate a random alphanumeric string"""
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
-    def generate_name(self):
-        """Generate a random name"""
-        first_names = ['John', 'Jane', 'Mike', 'Sarah', 'David', 'Emily', 'Chris', 'Lisa', 'Tom', 'Anna', 'Alex', 'Maria', 'James', 'Emma', 'Robert', 'Olivia']
-        last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Wilson', 'Anderson']
-        return f"{random.choice(first_names)} {random.choice(last_names)}"
+    def generate_name(self, locale=None):
+        """Generate a random name in Greek or the run's RTL language."""
+        locale = locale or self._locale()
+        return f"{random.choice(locale['first_names'])} {random.choice(locale['last_names'])}"
 
     def generate_email(self, username=None):
         """Generate a random email"""
@@ -245,7 +273,8 @@ class Command(BaseCommand):
             is_editor = random.random() < 0.2  # 20% chance
             is_manager = random.random() < 0.1  # 10% chance
 
-            name = self.generate_name()
+            locale = self._locale()
+            name = self.generate_name(locale=locale)
             username = f"user_{self.generate_random_string(6)}"
             email = self.generate_email(username)
 
@@ -267,7 +296,7 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 name=name,
-                description=f"Fake user account for testing purposes. User #{i + 1}",
+                description=locale['user_description'].format(n=i + 1),
                 is_editor=is_editor,
                 is_manager=is_manager,
                 date_joined=date_joined,
@@ -283,29 +312,18 @@ class Command(BaseCommand):
 
     def setup_channels(self, users):
         """Enrich auto-created default channels, add extras, and wire subscribers."""
-        channel_themes = [
-            ('Tech Talks', 'Talks and demos about technology and software.'),
-            ('Campus Lectures', 'Recorded lectures and course sessions.'),
-            ('Creative Studio', 'Original creative media and experiments.'),
-            ('Sports Highlights', 'Game clips, highlights, and analysis.'),
-            ('Music Lab', 'Performances, mixes, and audio projects.'),
-            ('Science Hour', 'Science explainers and lab demos.'),
-            ('Travel Diaries', 'Trips, places, and field recordings.'),
-            ('News Desk', 'Updates, briefings, and announcements.'),
-            ('Workshop Series', 'Hands-on workshops and how-to sessions.'),
-            ('Archive', 'Older media kept for reference.'),
-        ]
-
         channels = []
         for user in users:
             user_channels = list(user.channels.order_by('add_date'))
             default = user_channels[0] if user_channels else None
+            locale = self._locale()
 
             if default:
                 # Give the auto-created "default" channel a real title/description
-                first_name = (user.name or user.username).split()[0]
-                default.title = f"{first_name}'s Channel"
-                default.description = f"Primary channel for {user.name or user.username}. " "Demo content generated for dashboard testing."
+                display_name = user.name or user.username
+                first_name = display_name.split()[0]
+                default.title = locale['channel_suffix'].format(name=first_name)
+                default.description = locale['channel_description'].format(name=display_name)
                 default.save(update_fields=['title', 'description'])
                 # Channel is created by the user post_save signal; place it just after join.
                 channel_date = self._random_datetime_between(
@@ -319,6 +337,7 @@ class Command(BaseCommand):
             # ~35% of users get 1–2 additional themed channels
             if random.random() < 0.35:
                 extra_count = random.randint(1, 2)
+                channel_themes = locale['channel_themes']
                 themes = random.sample(channel_themes, min(extra_count, len(channel_themes)))
                 for title, description in themes:
                     channel = Channel.objects.create(
@@ -351,42 +370,10 @@ class Command(BaseCommand):
         num_tags = random.randint(20, 30)
         tags = []
 
-        # Common tag words
-        tag_words = [
-            'tutorial',
-            'demo',
-            'example',
-            'test',
-            'sample',
-            'video',
-            'audio',
-            'image',
-            'document',
-            'presentation',
-            'guide',
-            'howto',
-            'review',
-            'unboxing',
-            'music',
-            'tech',
-            'gaming',
-            'sports',
-            'news',
-            'entertainment',
-            'education',
-            'science',
-            'art',
-            'photography',
-            'travel',
-            'food',
-            'cooking',
-            'fitness',
-            'health',
-            'business',
-            'finance',
-            'programming',
-            'coding',
-        ]
+        # Pool tag words from Greek and the selected RTL language
+        tag_words = []
+        for locale in self.content_locales:
+            tag_words.extend(locale['tag_words'])
 
         # Get existing tags to avoid duplicates
         existing_tag_titles = set(Tag.objects.values_list('title', flat=True))
@@ -400,7 +387,7 @@ class Command(BaseCommand):
             else:
                 tag_title = self.generate_random_string(random.randint(5, 10))
 
-            # Make it alphanumeric and ensure uniqueness
+            # Keep letters/digits from any script; strip spaces and punctuation
             tag_title = ''.join(c for c in tag_title if c.isalnum())
             tag_title = tag_title[:100]  # Max length
 
@@ -428,16 +415,20 @@ class Command(BaseCommand):
         """Setup categories - use existing or create new ones"""
         categories = list(Category.objects.all())
 
-        # If no categories exist, create some basic ones
+        # If no categories exist, create some from Greek + the selected RTL language
         if not categories:
-            category_names = ['Technology', 'Entertainment', 'Education', 'Sports', 'News', 'Music', 'Gaming', 'Travel', 'Food', 'Science']
-            for name in category_names:
-                category = Category.objects.create(
-                    title=name,
-                    description=f'Category for {name}',
-                    is_global=True,
-                )
-                categories.append(category)
+            seen = set()
+            for locale in self.content_locales:
+                for name in locale['category_names']:
+                    if name in seen:
+                        continue
+                    seen.add(name)
+                    category = Category.objects.create(
+                        title=name,
+                        description=locale['category_description'].format(name=name),
+                        is_global=True,
+                    )
+                    categories.append(category)
 
         return categories
 
@@ -511,74 +502,34 @@ class Command(BaseCommand):
 
         return fixture_files
 
-    def generate_title(self):
-        """Generate a random media title"""
-        title_templates = [
-            "Amazing {topic} Tutorial",
-            "Introduction to {topic}",
-            "How to {action} {topic}",
-            "Best Practices for {topic}",
-            "Complete Guide to {topic}",
-            "{topic} Explained Simply",
-            "Advanced {topic} Techniques",
-            "Getting Started with {topic}",
-            "{topic} Tips and Tricks",
-            "Understanding {topic}",
-        ]
-
-        topics = [
-            'Video Editing',
-            'Photography',
-            'Music Production',
-            'Coding',
-            'Design',
-            'Cooking',
-            'Fitness',
-            'Travel',
-            'Gaming',
-            'Technology',
-            'Business',
-            'Education',
-            'Science',
-            'Art',
-            'Sports',
-            'Entertainment',
-        ]
-        actions = ['Master', 'Learn', 'Understand', 'Create', 'Build', 'Design', 'Develop']
-
-        template = random.choice(title_templates)
-        topic = random.choice(topics)
+    def generate_title(self, locale=None):
+        """Generate a random media title in Greek or the run's RTL language."""
+        locale = locale or self._locale()
+        template = random.choice(locale['title_templates'])
+        topic = random.choice(locale['topics'])
 
         # Check if template has both placeholders
         if '{action}' in template and '{topic}' in template:
-            action = random.choice(actions)
+            action = random.choice(locale['actions'])
             title = template.format(action=action, topic=topic)
         elif '{topic}' in template:
             title = template.format(topic=topic)
         elif '{action}' in template:
-            action = random.choice(actions)
+            action = random.choice(locale['actions'])
             title = template.format(action=action)
         else:
             title = template
 
         # Sometimes add a number or extra text
         if random.random() < 0.3:
-            title = f"{title} - Part {random.randint(1, 5)}"
+            title = title + locale['title_part_suffix'].format(n=random.randint(1, 5))
 
         return title[:100]  # Max 100 chars
 
-    def generate_description(self):
-        """Generate a random media description"""
-        description_parts = [
-            "This is a sample media file created for testing purposes.",
-            "Learn about various topics and improve your skills.",
-            "Watch this comprehensive guide to understand the concepts better.",
-            "Perfect for beginners and advanced users alike.",
-            "Discover new techniques and best practices.",
-            "This content covers important aspects you should know.",
-            "Follow along and practice the examples shown here.",
-            "Great resource for anyone interested in this topic.",
-        ]
+    def generate_description(self, locale=None):
+        """Generate a random media description in Greek or the run's RTL language."""
+        locale = locale or self._locale()
+        description_parts = locale['description_parts']
 
         # Combine 2-4 random parts
         num_parts = random.randint(2, 4)
@@ -587,55 +538,25 @@ class Command(BaseCommand):
 
         return description
 
-    def generate_comment_text(self, media_title=None):
-        """Generate a random comment text"""
-        short_comments = [
-            "Great!",
-            "Thanks!",
-            "Awesome video",
-            "Love this",
-            "Nice work",
-            "Well done",
-            "Excellent",
-            "Perfect",
-            "Amazing!",
-            "So helpful",
-        ]
-
-        medium_comments = [
-            "This is really helpful, thanks for sharing",
-            "I learned a lot from this",
-            "Great explanation, very clear",
-            "Thanks for making this available",
-            "This is exactly what I needed",
-            "Really enjoyed watching this",
-            "Great content, keep it up",
-            "Very informative, thank you",
-            "This helped me understand the topic better",
-            "Clear and concise explanation",
-        ]
-
-        long_comments = [
-            "This is exactly what I was looking for. The explanation is clear and the examples are helpful. Keep up the great work!",
-            "Really appreciate you taking the time to create this. It's been very useful for my project. Thank you!",
-            "Excellent video with great detail. I especially liked the part about {topic}. Looking forward to more content like this.",
-            "This is one of the best explanations I've seen on this topic. The step-by-step approach makes it easy to follow along.",
-            "Thank you for sharing your knowledge. This has been incredibly helpful and I've learned a lot from it.",
-        ]
+    def generate_comment_text(self, media_title=None, locale=None):
+        """Generate a random comment in Greek or the run's RTL language."""
+        locale = locale or self._locale()
 
         # Choose comment length
         rand = random.random()
         if rand < 0.4:  # 40% short
-            text = random.choice(short_comments)
+            text = random.choice(locale['short_comments'])
         elif rand < 0.8:  # 40% medium
-            text = random.choice(medium_comments)
+            text = random.choice(locale['medium_comments'])
         else:  # 20% long
-            text = random.choice(long_comments)
+            text = random.choice(locale['long_comments'])
             # Replace {topic} placeholder if present
-            if '{topic}' in text and media_title:
-                # Extract a word from media title as topic
-                words = media_title.split()
-                topic = words[0] if words else "this topic"
+            if '{topic}' in text:
+                if media_title:
+                    words = media_title.split()
+                    topic = words[0] if words else random.choice(locale['topics'])
+                else:
+                    topic = random.choice(locale['topics'])
                 text = text.replace('{topic}', topic)
 
         # Ensure text doesn't exceed MAX_CHARS_FOR_COMMENT
@@ -645,42 +566,11 @@ class Command(BaseCommand):
 
         return text
 
-    def generate_playlist_title(self):
-        """Generate a random playlist title"""
-        playlist_templates = [
-            "My {topic} Collection",
-            "{topic} Playlist",
-            "Best of {topic}",
-            "Favorite {topic} Videos",
-            "Complete {topic} Series",
-            "Top {topic} Content",
-            "{topic} Essentials",
-            "Amazing {topic} Selection",
-            "{topic} Highlights",
-            "Curated {topic} Playlist",
-        ]
-
-        topics = [
-            'Video Editing',
-            'Photography',
-            'Music Production',
-            'Coding',
-            'Design',
-            'Cooking',
-            'Fitness',
-            'Travel',
-            'Gaming',
-            'Technology',
-            'Business',
-            'Education',
-            'Science',
-            'Art',
-            'Sports',
-            'Entertainment',
-        ]
-
-        template = random.choice(playlist_templates)
-        topic = random.choice(topics)
+    def generate_playlist_title(self, locale=None):
+        """Generate a random playlist title in Greek or the run's RTL language."""
+        locale = locale or self._locale()
+        template = random.choice(locale['playlist_templates'])
+        topic = random.choice(locale['topics'])
         title = template.format(topic=topic)
 
         # Sometimes add a number or extra text
@@ -711,9 +601,10 @@ class Command(BaseCommand):
         else:
             media_type = 'video'  # default
 
-        # Generate basic fields
-        title = self.generate_title()
-        description = self.generate_description()
+        # Generate basic fields (same locale for title + description on one media item)
+        locale = self._locale()
+        title = self.generate_title(locale=locale)
+        description = self.generate_description(locale=locale)
 
         # Media date must be after the owner joined; slight recent bias for dashboards.
         add_date = self._random_datetime_between(user.date_joined, self._now, recent_bias=True)
@@ -810,20 +701,13 @@ class Command(BaseCommand):
         num_playlists = random.randint(10, 20)
         playlists = []
 
-        description_parts = [
-            "A curated collection of great content.",
-            "Handpicked selection of the best media.",
-            "My personal favorites in this category.",
-            "Essential viewing for anyone interested in this topic.",
-            "A comprehensive collection covering various aspects.",
-        ]
-
         for i in range(num_playlists):
             # Select a random user (some users may get multiple playlists)
             user = random.choice(users)
 
-            title = self.generate_playlist_title()
-            description = random.choice(description_parts)
+            locale = self._locale()
+            title = self.generate_playlist_title(locale=locale)
+            description = random.choice(locale['playlist_descriptions'])
 
             playlist = Playlist.objects.create(
                 user=user,
@@ -1539,7 +1423,7 @@ class Command(BaseCommand):
 <p>Whichever of these are present: <code>test_image.png</code>, <code>test_image2.jpg</code>, <code>small_video.mp4</code>, <code>medium_video.mp4</code>, <code>sample_audio.wav</code>, <code>sample_audio.mp3</code>, and <code>sample_document.pdf</code>.</p>
 {figure}
 <h3>How do I run it?</h3>
-<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones.</p>
+<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones. Titles, names, and comments randomly mix Greek with one RTL language (<code>--rtl-language</code>: <code>ar</code>, <code>he</code>, <code>ur</code>, or <code>random</code>).</p>
 <h3>Will running it again duplicate these pages?</h3>
 <p>No. About, FAQ, and Terms are updated in place while they still contain the generator marker comment. Media, users, and comments are added again, so those counts grow unless you pass <code>--clear</code>, and that flag only removes media.</p>
 <h3>Why do some videos have captions, chapters, or trim requests?</h3>
@@ -1622,6 +1506,9 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('=' * 60))
 
         # Basic counts
+        if getattr(self, 'content_locales', None):
+            locale_label = ' + '.join(f'{loc["name"]} ({loc["code"]})' for loc in self.content_locales)
+            self.stdout.write(f'\nContent languages: {locale_label}')
         self.stdout.write(f'\nTotal media created: {len(created_media)}')
         self.stdout.write(f'Total users: {len(users)}')
         self.stdout.write(f'Total channels: {len(channels)}')

@@ -1,5 +1,6 @@
 {% extends "admin/change_form_with_object_actions.html" %}
-{% load static %}
+{% load static i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -7,7 +8,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     const importCsvField = document.querySelector('.field-import_csv');
     let targetFieldset = null;
-	  
+
     if (importCsvField) {
       targetFieldset = importCsvField.closest('fieldset.module.aligned');
 
@@ -15,16 +16,21 @@
       const lastInlineFormset = inlineFormsets[inlineFormsets.length - 1];
 
       if (false && targetFieldset && lastInlineFormset) {
-	      lastInlineFormset.after(targetFieldset);
+          lastInlineFormset.after(targetFieldset);
       }
     }
 
   const providerLabel = document.querySelector('label[for="id_provider"]');
-  if (providerLabel && providerLabel.textContent.includes('Provider:')) {
-    providerLabel.textContent = providerLabel.textContent.replace('Provider:', 'Protocol:');
+  if (providerLabel) {
+    const providerText = "{{ 'Provider'|custom_translate:LANGUAGE_CODE|escapejs }}";
+    const protocolText = "{{ 'Protocol'|custom_translate:LANGUAGE_CODE|escapejs }}";
+    providerLabel.childNodes.forEach(function(node) {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.indexOf(providerText) !== -1) {
+        node.textContent = node.textContent.split(providerText).join(protocolText);
+      }
+    });
   }
-	  
+
   });
 </script>
 {% endblock %}
-
