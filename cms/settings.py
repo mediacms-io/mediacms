@@ -587,6 +587,13 @@ MIGRATION_API_TIMEOUT = 60
 MIGRATION_DOWNLOAD_TIMEOUT = 60 * 30
 MIGRATION_MAX_RETRIES = 5
 
+# Enable Jazzmin's navbar language dropdown. Selection posts to Django's
+# /i18n/setlang/ and sets the django_language cookie, which LocaleMiddleware
+# prefers over Accept-Language — so users can override the browser language
+# for both admin and the main site.
+JAZZMIN_SETTINGS = {
+    "language_chooser": True,
+}
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 USE_ROUNDED_CORNERS = True

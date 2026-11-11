@@ -536,6 +536,8 @@ to be written
 
 The Django admin index (`/admin/`) includes a Jazzmin dashboard with site metrics and deep links into changelists. Use the cards for triage, then finish the work with filters, inline edits, or the Actions dropdown.
 
+Admin UI language follows Django’s locale detection (language cookie, then browser `Accept-Language`, then `LANGUAGE_CODE`). Use the globe icon in the admin navbar to override the browser language; the choice is stored in the `django_language` cookie and also applies to the main site.
+
 ### Dashboard → changelist map
 
 | Card | Opens | What to do next |
@@ -940,6 +942,8 @@ By default the video player and media items are now having rounded corners, on l
 ### 20.1 Set a default language
 
 By default MediaCMS is available in a number of languages. To set the default language, edit `settings.py` and set LANGUAGE_CODE to the code of one of the languages.
+
+Logged-in admins can also override the detected language from the globe menu in the Django admin navbar (Jazzmin `language_chooser`). That posts to `/i18n/setlang/` and sets the `django_language` cookie, which takes precedence over the browser language for both admin and the public site. The public site still has `/setlanguage` for the same cookie-based override.
 
 ### 20.2 Remove existing languages
 To limit the number of languages that are shown as available, remove them from the LANGUAGES list in `settings.py` or comment them. Only what is there is shown.
