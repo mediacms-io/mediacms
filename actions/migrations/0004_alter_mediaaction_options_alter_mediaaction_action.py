@@ -17,6 +17,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='mediaaction',
             name='action',
-            field=models.CharField(choices=[('like', 'Like'), ('dislike', 'Dislike'), ('watch', 'Watch'), ('report', 'Report'), ('rate', 'Rate'), ('report_cleared', 'Report cleared'), ('report_confirmed', 'Report confirmed'), ('media_reviewed', 'Media reviewed'), ('media_unreviewed', 'Media unreviewed'), ('original_deleted', 'Original deleted')], default='watch', max_length=20),
+            field=models.CharField(
+                choices=[
+                    ('like', 'Like'),
+                    ('dislike', 'Dislike'),
+                    ('watch', 'Watch'),
+                    ('report', 'Report'),
+                    ('rate', 'Rate'),
+                    ('report_cleared', 'Report cleared'),
+                    ('report_confirmed', 'Report confirmed'),
+                    ('media_reviewed', 'Media reviewed'),
+                    ('media_unreviewed', 'Media unreviewed'),
+                    ('original_deleted', 'Original deleted'),
+                ],
+                default='watch',
+                max_length=20,
+            ),
         ),
     ]
