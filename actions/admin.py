@@ -17,7 +17,7 @@ MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATI
 @admin.register(MediaAction)
 class MediaActionAdmin(admin.ModelAdmin):
     list_display = ['action', 'link_media', 'link_user', 'action_date', 'remote_ip', 'extra_info']
-    list_filter = ['action', 'action_date', ('media', admin.RelatedOnlyFieldListFilter)]
+    list_filter = ['action', 'action_date', ('media', admin.RelatedOnlyFieldListFilter), ('user', admin.RelatedOnlyFieldListFilter)]
     search_fields = ['media__title', 'user__username', 'extra_info']
     list_select_related = ('media', 'user')
     readonly_fields = ['user', 'media', 'action_date', 'remote_ip', 'session_key', 'link_media', 'link_user']

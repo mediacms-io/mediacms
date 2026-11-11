@@ -118,25 +118,29 @@
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Reporter"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for report in stats.moderation.recent_reports %}
                                                     <tr>
-                                                        <td title="{{ report.extra_info|default:'' }}">{{ report.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ report.user__username|default:'-' }}</td>
-                                                        <td>{{ report.action_date|date:"Y-m-d H:i" }}</td>
-                                                        <td>
+                                                        <td title="{{ report.extra_info|default:'' }}">
                                                             {% if report.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' report.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' report.media_id %}#reports-tab">{{ report.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
+                                                        <td>
+                                                            {% if report.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' report.user_id %}">{{ report.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ report.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ report.action_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -156,26 +160,36 @@
                                                     <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Audit"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for audit in stats.moderation.recent_report_audits %}
                                                     <tr>
-                                                        <td title="{{ audit.extra_info|default:'' }}">{{ audit.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ audit.user__username|default:'-' }}</td>
-                                                        <td>{{ audit.action_label }}</td>
-                                                        <td>{{ audit.action_date|date:"Y-m-d H:i" }}</td>
-                                                        <td>
+                                                        <td title="{{ audit.extra_info|default:'' }}">
                                                             {% if audit.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' audit.media_id %}#reports-tab" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' audit.media_id %}#reports-tab">{{ audit.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
+                                                        <td>
+                                                            {% if audit.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' audit.user_id %}">{{ audit.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ audit.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if audit.id %}
+                                                                <a href="{% url 'admin:actions_mediaaction_change' audit.id %}">{{ audit.action_label }}</a>
+                                                            {% else %}
+                                                                {{ audit.action_label }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ audit.action_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -194,21 +208,23 @@
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for media in stats.moderation.recent_pending_review %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ media.user__username|default:'-' }}</td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30|default:'-' }}</a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
                                                         </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -227,25 +243,29 @@
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for approval in stats.moderation.recent_approved %}
                                                     <tr>
-                                                        <td>{{ approval.media__title|truncatechars:30|default:'-' }}</td>
-                                                        <td>{{ approval.user__username|default:'-' }}</td>
-                                                        <td>{{ approval.action_date|date:"Y-m-d H:i" }}</td>
                                                         <td>
                                                             {% if approval.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' approval.media_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:files_media_change' approval.media_id %}">{{ approval.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
                                                         </td>
+                                                        <td>
+                                                            {% if approval.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' approval.user_id %}">{{ approval.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ approval.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ approval.action_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -288,13 +308,13 @@
                                     <div class="icon">
                                         <i class="fas fa-user-plus"></i>
                                     </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                    <a href="{% url 'admin:users_user_changelist' %}?joined=7d" class="small-box-footer">
                                         {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
                             {% if stats.users.approval_workflow_enabled %}
-                            <div class="col-lg-3 col-6">
+                            <div class="col-lg-2 col-6">
                                 <div class="small-box bg-danger">
                                     <div class="inner">
                                         <h3>{{ stats.users.pending_approvals }}</h3>
@@ -308,7 +328,7 @@
                                     </a>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-6">
+                            <div class="col-lg-2 col-6">
                                 <div class="small-box bg-primary">
                                     <div class="inner">
                                         <h3>{{ stats.users.approved_users }}</h3>
@@ -322,6 +342,20 @@
                                     </a>
                                 </div>
                             </div>
+                            <div class="col-lg-2 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.inactive_users }}</h3>
+                                        <p>{{ "Inactive users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-slash"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_active__exact=0" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
                             {% else %}
                             <div class="col-lg-3 col-6">
                                 <div class="small-box bg-warning">
@@ -332,7 +366,21 @@
                                     <div class="icon">
                                         <i class="fas fa-user-check"></i>
                                     </div>
-                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                    <a href="{% url 'admin:users_user_changelist' %}?activity=30d" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.inactive_users }}</h3>
+                                        <p>{{ "Inactive users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-slash"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_active__exact=0" class="small-box-footer">
                                         {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
@@ -341,7 +389,80 @@
                         </div>
 
                         <div class="row mt-3">
-                            {% if stats.users.approval_workflow_enabled %}
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.superusers }}</h3>
+                                        <p>{{ "Superusers"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_superuser__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.staff_users }}</h3>
+                                        <p>{{ "Staff users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-id-badge"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_staff__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.editors }}</h3>
+                                        <p>{{ "Editors"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-edit"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_editor__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.managers }}</h3>
+                                        <p>{{ "Managers"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_manager__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.regular_users }}</h3>
+                                        <p>{{ "Regular users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?role=regular" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if stats.users.approval_workflow_enabled %}
+                        <div class="row mt-3">
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
@@ -353,18 +474,47 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.recent_pending_users %}
                                                     <tr>
-                                                        <td>{{ user.username }}</td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
                                                         <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recently registered"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_registered %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -372,12 +522,39 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                            {% else %}
-                            <div class="col-md-12">
-                            {% endif %}
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "User activity"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Last activity"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_activity %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td>{{ user.last_activity|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top uploaders"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title">{{ "Top uploaders by count"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
                                         <table class="table table-sm">
@@ -385,18 +562,43 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Media count"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.top_uploaders %}
                                                     <tr>
-                                                        <td>{{ user.username }}</td>
-                                                        <td><span class="badge badge-info">{{ user.media_count_annotated }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-info">{{ user.media_count_annotated }}</span></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top uploaders by size"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Upload size"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_uploaders_by_size %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-secondary">{{ user.upload_size_label }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -417,18 +619,16 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.top_commenters %}
                                                     <tr>
-                                                        <td>{{ user.user__username }}</td>
-                                                        <td><span class="badge badge-primary">{{ user.comment_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_comment_changelist' %}?user__id__exact={{ user.user_id }}"><span class="badge badge-primary">{{ user.comment_count }}</span></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -446,18 +646,16 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Reports"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.top_reporters %}
                                                     <tr>
-                                                        <td>{{ user.user__username }}</td>
-                                                        <td><span class="badge badge-warning">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-warning">{{ user.action_count }}</span></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -478,18 +676,16 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.top_likers %}
                                                     <tr>
-                                                        <td>{{ user.user__username }}</td>
-                                                        <td><span class="badge badge-success">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-success">{{ user.action_count }}</span></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -507,18 +703,16 @@
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.top_dislikers %}
                                                     <tr>
-                                                        <td>{{ user.user__username }}</td>
-                                                        <td><span class="badge badge-danger">{{ user.action_count }}</span></td>
-                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-danger">{{ user.action_count }}</span></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -605,24 +799,20 @@
                                     <div class="card-body">
                                         <table class="table table-sm">
                                             <tr>
-                                                <td><i class="fas fa-video text-danger"></i> {{ "Video"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_type.video }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><i class="fas fa-video text-danger"></i> {{ "Video"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><strong>{{ stats.media.by_type.video }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-music text-info"></i> {{ "Audio"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_type.audio }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio"><i class="fas fa-music text-info"></i> {{ "Audio"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio"><strong>{{ stats.media.by_type.audio }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-image text-success"></i> {{ "Image"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_type.image }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image"><i class="fas fa-image text-success"></i> {{ "Image"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image"><strong>{{ stats.media.by_type.image }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-file-pdf text-danger"></i> {{ "PDF"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_type.pdf }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf" class="btn btn-sm btn-outline-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf"><i class="fas fa-file-pdf text-danger"></i> {{ "PDF"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf"><strong>{{ stats.media.by_type.pdf }}</strong></a></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -636,24 +826,20 @@
                                     <div class="card-body">
                                         <table class="table table-sm">
                                             <tr>
-                                                <td><i class="fas fa-globe text-success"></i> {{ "Public"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_state.public }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><i class="fas fa-globe text-success"></i> {{ "Public"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><strong>{{ stats.media.by_state.public }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-lock text-warning"></i> {{ "Private"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_state.private }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private"><i class="fas fa-lock text-warning"></i> {{ "Private"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private"><strong>{{ stats.media.by_state.private }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-eye-slash text-secondary"></i> {{ "Unlisted"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.by_state.unlisted }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted"><i class="fas fa-eye-slash text-secondary"></i> {{ "Unlisted"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted"><strong>{{ stats.media.by_state.unlisted }}</strong></a></td>
                                             </tr>
                                             <tr>
-                                                <td><i class="fas fa-star text-primary"></i> {{ "Featured"|custom_translate:LANGUAGE_CODE }}</td>
-                                                <td><strong>{{ stats.media.featured }}</strong></td>
-                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1" class="btn btn-sm btn-outline-info">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1"><i class="fas fa-star text-primary"></i> {{ "Featured"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1"><strong>{{ stats.media.featured }}</strong></a></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -670,40 +856,52 @@
                                     <div class="card-body">
                                         <div class="row">
                                             <div class="col-md-3">
-                                                <div class="info-box">
+                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=pending" class="info-box">
                                                     <span class="info-box-icon bg-info"><i class="fas fa-clock"></i></span>
                                                     <div class="info-box-content">
                                                         <span class="info-box-text">{{ "Pending"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.pending }}</span>
                                                     </div>
-                                                </div>
+                                                </a>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="info-box">
+                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=running" class="info-box">
                                                     <span class="info-box-icon bg-warning"><i class="fas fa-spinner fa-spin"></i></span>
                                                     <div class="info-box-content">
                                                         <span class="info-box-text">{{ "Running"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.running }}</span>
                                                     </div>
-                                                </div>
+                                                </a>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="info-box">
+                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=success" class="info-box">
                                                     <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
                                                     <div class="info-box-content">
                                                         <span class="info-box-text">{{ "Success"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.success }}</span>
                                                     </div>
-                                                </div>
+                                                </a>
                                             </div>
                                             <div class="col-md-3">
-                                                <div class="info-box">
+                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=fail" class="info-box">
                                                     <span class="info-box-icon bg-danger"><i class="fas fa-times"></i></span>
                                                     <div class="info-box-content">
                                                         <span class="info-box-text">{{ "Failed"|custom_translate:LANGUAGE_CODE }}</span>
                                                         <span class="info-box-number">{{ stats.media.by_encoding_status.fail }}</span>
                                                     </div>
-                                                </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="info-box">
+                                                    <span class="info-box-icon bg-warning"><i class="fas fa-tasks"></i></span>
+                                                    <div class="info-box-content">
+                                                        <span class="info-box-text">{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</span>
+                                                        <span class="info-box-number">{{ stats.media.encoding_queue }}</span>
+                                                        <span class="progress-description">{{ "Media with encoding pending or running"|custom_translate:LANGUAGE_CODE }}</span>
+                                                    </div>
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
@@ -724,21 +922,23 @@
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for media in stats.media.recent_by_type.video %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:30 }}</td>
-                                                        <td>{{ media.user__username|default:'-' }}</td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
                                                         </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -757,21 +957,23 @@
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for media in stats.media.recent_by_type.audio %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:30 }}</td>
-                                                        <td>{{ media.user__username|default:'-' }}</td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
                                                         </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -790,21 +992,23 @@
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for media in stats.media.recent_by_type.image %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:30 }}</td>
-                                                        <td>{{ media.user__username|default:'-' }}</td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
                                                         </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -823,21 +1027,23 @@
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for media in stats.media.recent_by_type.pdf %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:30 }}</td>
-                                                        <td>{{ media.user__username|default:'-' }}</td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
                                                         </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -880,8 +1086,8 @@
                                     <div class="icon">
                                         <i class="fas fa-thumbs-up"></i>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -894,8 +1100,8 @@
                                     <div class="icon">
                                         <i class="fas fa-thumbs-down"></i>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -908,8 +1114,8 @@
                                     <div class="icon">
                                         <i class="fas fa-eye"></i>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
-                                        {{ "Open media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=watch" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -933,10 +1139,9 @@
                                             <tbody>
                                                 {% for media in stats.engagement.most_liked %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:40 }}</td>
-                                                        <td><span class="badge badge-success">{{ media.likes }}</span></td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like&amp;media__id__exact={{ media.id }}"><span class="badge badge-success">{{ media.likes }}</span></a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
@@ -965,10 +1170,9 @@
                                             <tbody>
                                                 {% for media in stats.engagement.most_viewed %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:40 }}</td>
-                                                        <td><span class="badge badge-primary">{{ media.views }}</span></td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=watch&amp;media__id__exact={{ media.id }}"><span class="badge badge-primary">{{ media.views }}</span></a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
@@ -1000,10 +1204,9 @@
                                             <tbody>
                                                 {% for media in stats.engagement.most_commented %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:40 }}</td>
-                                                        <td><span class="badge badge-info">{{ media.comment_count }}</span></td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:files_comment_changelist' %}?media__id__exact={{ media.id }}"><span class="badge badge-info">{{ media.comment_count }}</span></a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
@@ -1032,10 +1235,9 @@
                                             <tbody>
                                                 {% for media in stats.engagement.most_disliked %}
                                                     <tr>
-                                                        <td>{{ media.title|truncatechars:40 }}</td>
-                                                        <td><span class="badge badge-danger">{{ media.dislikes }}</span></td>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike&amp;media__id__exact={{ media.id }}"><span class="badge badge-danger">{{ media.dislikes }}</span></a></td>
                                                         <td>
-                                                            <a href="{% url 'admin:files_media_change' media.id %}" class="btn btn-xs btn-primary">{{ "Open"|custom_translate:LANGUAGE_CODE }}</a>
                                                             <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
                                                         </td>
                                                     </tr>
@@ -1060,7 +1262,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-lg-3 col-6">
+                            <div class="col-6 col-lg">
                                 <a href="{% url 'admin:users_channel_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-info"><i class="fas fa-folder"></i></span>
                                     <div class="info-box-content">
@@ -1069,7 +1271,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-lg-3 col-6">
+                            <div class="col-6 col-lg">
                                 <a href="{% url 'admin:files_category_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-success"><i class="fas fa-tags"></i></span>
                                     <div class="info-box-content">
@@ -1078,7 +1280,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-lg-3 col-6">
+                            <div class="col-6 col-lg">
                                 <a href="{% url 'admin:files_playlist_changelist' %}" class="info-box">
                                     <span class="info-box-icon bg-warning"><i class="fas fa-list"></i></span>
                                     <div class="info-box-content">
@@ -1086,31 +1288,6 @@
                                         <span class="info-box-number">{{ stats.system.total_playlists }}</span>
                                     </div>
                                 </a>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="info-box">
-                                    <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
-                                    <div class="info-box-content">
-                                        <span class="info-box-text">{{ "Encoding failures"|custom_translate:LANGUAGE_CODE }}</span>
-                                        <span class="info-box-number">{{ stats.system.encoding_failures }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="card card-outline card-warning">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body">
-                                        <h4>{{ stats.system.encoding_queue }}</h4>
-                                        <p class="text-muted">{{ "Media with encoding pending or running"|custom_translate:LANGUAGE_CODE }}</p>
-                                        <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="btn btn-warning">
-                                            {{ "Open encoding queue"|custom_translate:LANGUAGE_CODE }}
-                                        </a>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

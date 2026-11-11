@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib import admin, messages
+from django.utils import timezone
 
 from admin_customizations.action_choices import (
     GroupedActionForm,
@@ -13,6 +16,51 @@ from files.admin_helpers import (
 from files.models import Comment, Media, Playlist
 
 from .models import Channel, User
+
+
+class JoinedRecentlyFilter(admin.SimpleListFilter):
+    title = "Joined"
+    parameter_name = "joined"
+
+    def lookups(self, request, model_admin):
+        return (("7d", "Last 7 days"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "7d":
+            return queryset.filter(date_added__gte=timezone.now() - timedelta(days=7))
+        return queryset
+
+
+class ActiveUploaderFilter(admin.SimpleListFilter):
+    title = "Activity"
+    parameter_name = "activity"
+
+    def lookups(self, request, model_admin):
+        return (("30d", "Uploaded in the last 30 days"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "30d":
+            cutoff = timezone.now() - timedelta(days=30)
+            return queryset.filter(media__add_date__gte=cutoff).distinct()
+        return queryset
+
+
+class RegularUserFilter(admin.SimpleListFilter):
+    title = "Role"
+    parameter_name = "role"
+
+    def lookups(self, request, model_admin):
+        return (("regular", "Regular users"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "regular":
+            return queryset.filter(
+                is_superuser=False,
+                is_staff=False,
+                is_editor=False,
+                is_manager=False,
+            )
+        return queryset
 
 
 class ChannelMediaInline(ReadOnlyTabularInline):
@@ -62,7 +110,7 @@ class UserAdmin(admin.ModelAdmin):
         "is_manager",
         "media_count",
     ]
-    list_filter = ["is_active", "is_superuser", "is_editor", "is_manager"]
+    list_filter = ["is_active", "is_superuser", "is_staff", "is_editor", "is_manager", RegularUserFilter, JoinedRecentlyFilter, ActiveUploaderFilter]
     list_editable = []
     ordering = ("-date_added",)
     date_hierarchy = "date_added"
