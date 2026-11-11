@@ -1104,4 +1104,3 @@ replacement_strings = {
     "year ago": "vor einem Jahr",
     "years ago": "vor Jahren",
 }
-

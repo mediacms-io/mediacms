@@ -8,8 +8,8 @@ from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.html import escape, format_html
-from django.utils.translation import get_language
 from django.utils.safestring import mark_safe
+from django.utils.translation import get_language
 from tinymce.widgets import TinyMCE
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
@@ -880,10 +880,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
             )
 
         table = format_html(
-            '<table class="table table-sm table-striped">'
-            "<thead><tr>"
-            "<th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th></th>"
-            "</tr></thead><tbody>{}</tbody></table>",
+            '<table class="table table-sm table-striped">' "<thead><tr>" "<th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th></th>" "</tr></thead><tbody>{}</tbody></table>",
             admin_text(lang, "Action"),
             admin_text(lang, "User"),
             admin_text(lang, "Extra info"),
@@ -1299,7 +1296,11 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
                 for media in queryset:
                     if change_media_owner(media.id, new_user):
                         changed += 1
-                self.message_user(request, admin_text(getattr(request, "LANGUAGE_CODE", None), "Changed owner to {username} for {changed} media item(s).", username=new_user.username, changed=changed), messages.SUCCESS)
+                self.message_user(
+                    request,
+                    admin_text(getattr(request, "LANGUAGE_CODE", None), "Changed owner to {username} for {changed} media item(s).", username=new_user.username, changed=changed),
+                    messages.SUCCESS,
+                )
                 return None
 
         context = self._intermediate_action_context(

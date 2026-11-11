@@ -10,7 +10,10 @@ from django.db import models
 from django.utils import timezone
 
 from actions.models import MediaAction
-from files.management.commands.fake_media_locales import FAKE_MEDIA_LOCALES, RTL_LANGUAGE_CODES
+from files.management.commands.fake_media_locales import (
+    FAKE_MEDIA_LOCALES,
+    RTL_LANGUAGE_CODES,
+)
 from files.models import (
     Category,
     Comment,

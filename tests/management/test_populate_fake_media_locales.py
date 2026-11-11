@@ -2,7 +2,10 @@ from django.core.management import load_command_class
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase
 
-from files.management.commands.fake_media_locales import FAKE_MEDIA_LOCALES, RTL_LANGUAGE_CODES
+from files.management.commands.fake_media_locales import (
+    FAKE_MEDIA_LOCALES,
+    RTL_LANGUAGE_CODES,
+)
 
 
 class PopulateFakeMediaLocalesTest(SimpleTestCase):

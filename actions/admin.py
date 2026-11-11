@@ -4,7 +4,11 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
-from files.admin_helpers import TranslateChoiceLabelsMixin, admin_change_link, translated_choice_display
+from files.admin_helpers import (
+    TranslateChoiceLabelsMixin,
+    admin_change_link,
+    translated_choice_display,
+)
 from files.methods import clear_media_reports, is_mediacms_editor
 from files.models import Media
 
