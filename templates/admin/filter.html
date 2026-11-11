@@ -1,0 +1,16 @@
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="form-group">
+    <select class="form-control search-filter" style="width: 100%;" tabindex="-1" aria-hidden="true" data-name="{{ field_name }}">
+        <option value="">{{ title|custom_translate:LANGUAGE_CODE }}</option>
+        <option value="">---------</option>
+        {% for choice in choices %}
+            {% if choice.name %}
+                <option data-name="{{ choice.name }}" value="{{ choice.value }}" {% if choice.selected %}selected {% endif %}>
+                    {{ choice.display|custom_translate:LANGUAGE_CODE }}
+                </option>
+            {% endif %}
+        {% endfor %}
+    </select>
+</div>

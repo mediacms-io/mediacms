@@ -79,3 +79,30 @@ class ActionChoicesHelperTest(TestCase):
         labels = [label for _value, label in choices]
         self.assertFalse(any("%(" in label for label in labels))
         self.assertTrue(any(label.startswith("Delete selected ") for label in labels))
+
+    def test_delete_selected_avoids_django_locale_reorder(self):
+        from django.utils.translation import gettext_lazy as _
+
+        actions = {
+            "delete_selected": (None, "delete_selected", _("Delete selected %(verbose_name_plural)s")),
+        }
+        choices = build_grouped_action_choices(
+            actions,
+            [["delete_selected"]],
+            opts=Media._meta,
+            language_code="el",
+        )
+        labels = [label for _value, label in choices if _value == "delete_selected"]
+        self.assertEqual(len(labels), 1)
+        self.assertFalse(labels[0].startswith(f"{Media._meta.verbose_name_plural}:"))
+        self.assertIn("Διαγραφή επιλεγμένων", labels[0])
+        self.assertIn("αρχεία", labels[0])
+
+    def test_actions_placeholder_is_translated(self):
+        from files.frontend_translations import translate_string
+
+        actions = {
+            "delete_selected": (None, "delete_selected", "Delete selected %(verbose_name_plural)s"),
+        }
+        choices = build_grouped_action_choices(actions, [["delete_selected"]], opts=Media._meta, language_code="el")
+        self.assertEqual(choices[0], ("", translate_string("el", "Actions")))

@@ -192,9 +192,7 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
             output_field=FloatField(),
         )
     )
-    top_by_size = list(
-        User.objects.annotate(upload_mb=upload_mb).filter(upload_mb__gt=0).order_by('-upload_mb')[:5].values('id', 'username', 'upload_mb')
-    )
+    top_by_size = list(User.objects.annotate(upload_mb=upload_mb).filter(upload_mb__gt=0).order_by('-upload_mb')[:5].values('id', 'username', 'upload_mb'))
     for row in top_by_size:
         row['upload_size_label'] = format_upload_size(row['upload_mb'])
     user_stats['top_uploaders_by_size'] = top_by_size

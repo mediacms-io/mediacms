@@ -240,7 +240,12 @@ class UserAdmin(admin.ModelAdmin):
     ]
 
     def get_action_choices(self, request, default_choices=None):
-        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            self.action_groups,
+            opts=self.opts,
+            language_code=getattr(request, "LANGUAGE_CODE", None),
+        )
 
     if settings.USERS_NEEDS_TO_BE_APPROVED:
         list_display.append("is_approved")
@@ -347,27 +352,21 @@ class UserAdmin(admin.ModelAdmin):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="dislike").count()
-        return admin_changelist_link(
-            MediaAction, f"View {count} dislike(s)", user__id__exact=obj.pk, action__exact="dislike"
-        )
+        return admin_changelist_link(MediaAction, f"View {count} dislike(s)", user__id__exact=obj.pk, action__exact="dislike")
 
     @admin.display(description="Watches")
     def related_watches(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="watch").count()
-        return admin_changelist_link(
-            MediaAction, f"View {count} watch(es)", user__id__exact=obj.pk, action__exact="watch"
-        )
+        return admin_changelist_link(MediaAction, f"View {count} watch(es)", user__id__exact=obj.pk, action__exact="watch")
 
     @admin.display(description="Reports")
     def related_reports(self, obj):
         if not obj.pk:
             return "—"
         count = MediaAction.objects.filter(user=obj, action="report").count()
-        return admin_changelist_link(
-            MediaAction, f"View {count} report(s)", user__id__exact=obj.pk, action__exact="report"
-        )
+        return admin_changelist_link(MediaAction, f"View {count} report(s)", user__id__exact=obj.pk, action__exact="report")
 
     @admin.display(description="All activity")
     def related_actions(self, obj):

@@ -181,9 +181,9 @@
                                                         </td>
                                                         <td>
                                                             {% if audit.id %}
-                                                                <a href="{% url 'admin:actions_mediaaction_change' audit.id %}">{{ audit.action_label }}</a>
+                                                                <a href="{% url 'admin:actions_mediaaction_change' audit.id %}">{{ audit.action_label|custom_translate:LANGUAGE_CODE }}</a>
                                                             {% else %}
-                                                                {{ audit.action_label }}
+                                                                {{ audit.action_label|custom_translate:LANGUAGE_CODE }}
                                                             {% endif %}
                                                         </td>
                                                         <td>{{ audit.action_date|date:"Y-m-d H:i" }}</td>

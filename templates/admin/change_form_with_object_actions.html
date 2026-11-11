@@ -1,5 +1,6 @@
 {% extends "admin/change_form.html" %}
-{% load i18n jazzmin %}
+{% load i18n jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 
 {% block extra_actions %}
@@ -7,7 +8,7 @@
 {% if object_action_choices %}
 <li class="object-tools-actions">
     <div class="object-tools-actions-form">
-        <label class="sr-only" for="id_object_action">{% trans "Actions" %}</label>
+        <label class="sr-only" for="id_object_action">{{ "Actions"|custom_translate:LANGUAGE_CODE }}</label>
         <select name="action" id="id_object_action" class="form-control object-tools-actions-select">
             {% for value, label, disabled in object_action_choices %}
             <option value="{{ value }}"{% if disabled %} disabled{% endif %}{% if not value %} selected{% endif %}>{{ label }}</option>

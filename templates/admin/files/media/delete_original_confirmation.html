@@ -21,7 +21,7 @@
         {% for item in blocked %}
         <li>
             <strong>{{ item.media.title|truncatechars:60 }}</strong>
-            (<code class="media-id" dir="ltr">{{ item.media.friendly_token }}</code>) — {{ item.reason }}
+            (<code class="media-id" dir="ltr">{{ item.media.friendly_token }}</code>) — {{ item.reason|custom_translate:LANGUAGE_CODE }}
         </li>
         {% endfor %}
     </ul>

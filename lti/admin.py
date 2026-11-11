@@ -192,7 +192,12 @@ class LTIToolKeysAdmin(admin.ModelAdmin):
             self.message_user(request, f"Keys regenerated for {key_obj.key_id}", messages.SUCCESS)
 
     def get_action_choices(self, request, default_choices=None):
-        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            self.action_groups,
+            opts=self.opts,
+            language_code=getattr(request, "LANGUAGE_CODE", None),
+        )
 
     def has_add_permission(self, request):
         """Only allow one key pair - disable manual add if exists"""

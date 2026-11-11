@@ -5,8 +5,17 @@ from django.forms.models import _get_foreign_key
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.utils.translation import get_language
+
+from files.frontend_translations import translate_string
 
 RELATED_INLINE_LIMIT = 20
+
+
+def translated_choice_display(obj, field_name):
+    """Return a choice field's display label through frontend_translations."""
+    display = getattr(obj, f"get_{field_name}_display")()
+    return translate_string(get_language() or "en", display)
 
 
 def admin_changelist_url(model, **query):

@@ -13,8 +13,8 @@ from admin_customizations.admin import (
 )
 from files.methods import clear_media_reports, confirm_media_reports, set_media_reviewed
 from files.models import Comment, Media
-from users.models import User
 from files.tests import create_account, create_media
+from users.models import User
 
 
 class DashboardStatisticsTest(TestCase):

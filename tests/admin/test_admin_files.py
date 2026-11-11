@@ -932,9 +932,7 @@ class PlaylistChannelAdminTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertFalse(PlaylistMedia.objects.filter(pk=pm1.pk).exists())
-        orderings = list(
-            PlaylistMedia.objects.filter(playlist=self.playlist).order_by("ordering").values_list("media__title", "ordering")
-        )
+        orderings = list(PlaylistMedia.objects.filter(playlist=self.playlist).order_by("ordering").values_list("media__title", "ordering"))
         self.assertEqual(orderings, [("playlist member two", 1), ("playlist member three", 2)])
 
     def test_playlist_changelist_media_count_links_to_filtered_media(self):
@@ -1095,7 +1093,7 @@ class VideoTrimRequestAdminTest(TestCase):
 
     def test_list_links_to_trim_request_change(self):
         model_admin = admin.site._registry[VideoTrimRequest]
-        self.assertEqual(model_admin.list_display_links, ("id", "status"))
+        self.assertEqual(model_admin.list_display_links, ("id", "display_status"))
         response = self.client.get(reverse("admin:files_videotrimrequest_changelist"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_videotrimrequest_change", args=[self.request.pk]))

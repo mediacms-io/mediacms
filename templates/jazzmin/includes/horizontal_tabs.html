@@ -1,13 +1,13 @@
-{% load i18n jazzmin %}
-{% trans "General" as general_tab %}
+{% load i18n jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
 {% get_sections adminform inline_admin_formsets as forms %}
 
 {% block tabs %}
 <ul class="nav nav-tabs mb-3" role="tablist" id="jazzy-tabs">
     {% for fieldset in forms %}
         <li class="nav-item">
-            <a class="nav-link{% if forloop.first %} active{% endif %} {{ fieldset.classes }}" data-toggle="pill" role="tab" aria-controls="{{ fieldset.name|default:general_tab|unicode_slugify }}-tab" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" href="#{{ fieldset.name|default:general_tab|unicode_slugify }}-tab">
-                {{ fieldset.name|default:general_tab }}
+            <a class="nav-link{% if forloop.first %} active{% endif %} {{ fieldset.classes }}" data-toggle="pill" role="tab" aria-controls="{{ fieldset.name|default:'General'|unicode_slugify }}-tab" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" href="#{{ fieldset.name|default:'General'|unicode_slugify }}-tab">
+                {{ fieldset.name|default:"General"|custom_translate:LANGUAGE_CODE }}
             </a>
         </li>
     {% endfor %}
@@ -16,7 +16,7 @@
 
 <div class="tab-content">
     {% for fieldset in forms %}
-        <div id="{{ fieldset.name|default:general_tab|unicode_slugify }}-tab" class="tab-pane fade{% if forloop.first %} active show{% endif %} {{ fieldset.classes }}" role="tabpanel" aria-labelledby="{{ fieldset.name|default:general_tab|unicode_slugify }}-tab">
+        <div id="{{ fieldset.name|default:'General'|unicode_slugify }}-tab" class="tab-pane fade{% if forloop.first %} active show{% endif %} {{ fieldset.classes }}" role="tabpanel" aria-labelledby="{{ fieldset.name|default:'General'|unicode_slugify }}-tab">
             {% if fieldset.is_inline %}
                 {% include fieldset.opts.template with inline_admin_formset=fieldset %}
             {% else %}

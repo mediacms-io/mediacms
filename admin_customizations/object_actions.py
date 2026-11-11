@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 from django.urls import path, reverse
 
 from admin_customizations.action_choices import object_action_select_choices
+from files.frontend_translations import translate_string
 
 CHANGE_FORM_TEMPLATE = "admin/change_form_with_object_actions.html"
 EXCLUDED_ACTIONS = frozenset({"delete_selected"})
@@ -21,6 +22,7 @@ def object_action_choices_for_request(model_admin, request):
         getattr(model_admin, "action_groups", None),
         exclude=EXCLUDED_ACTIONS,
         opts=model_admin.opts,
+        language_code=getattr(request, "LANGUAGE_CODE", None),
     )
 
 
@@ -49,7 +51,10 @@ def object_action_view(model_admin, request, object_id):
     action_name = request.POST.get("action")
     actions = model_admin.get_actions(request)
     if not action_name or action_name in EXCLUDED_ACTIONS or action_name not in actions:
-        messages.error(request, "Unknown or unavailable action.")
+        messages.error(
+            request,
+            translate_string(getattr(request, "LANGUAGE_CODE", "en"), "Unknown or unavailable action."),
+        )
         return redirect(_change_url(model_admin, obj))
 
     func, _name, _description = actions[action_name]

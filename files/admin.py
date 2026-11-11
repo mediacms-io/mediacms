@@ -23,7 +23,9 @@ from files.admin_helpers import (
     admin_changelist_link,
     admin_changelist_url,
     join_links,
+    translated_choice_display,
 )
+from files.frontend_translations import translate_string
 from files.methods import (
     can_delete_original_media_file,
     change_media_owner,
@@ -393,11 +395,11 @@ class MediaAdmin(admin.ModelAdmin):
         "title",
         "link_user",
         "add_date",
-        "media_type",
+        "display_media_type",
         "duration",
-        "state",
+        "display_state",
         "is_reviewed",
-        "encoding_status",
+        "display_encoding_status",
         "listable",
         "reported_times",
         "featured",
@@ -489,7 +491,12 @@ class MediaAdmin(admin.ModelAdmin):
         return actions
 
     def get_action_choices(self, request, default_choices=None):
-        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            self.action_groups,
+            opts=self.opts,
+            language_code=getattr(request, "LANGUAGE_CODE", None),
+        )
 
     def _optional_column_keys(self):
         return {key for key, _label, _filters in self.optional_list_columns}
@@ -562,10 +569,11 @@ class MediaAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         visible = self._visible_optional_columns(request)
         filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
         extra_context["media_optional_columns"] = [
             {
                 "key": key,
-                "label": label,
+                "label": translate_string(lang, label),
                 "checked": key in visible,
                 "filter_forced": key in filter_forced,
             }
@@ -760,6 +768,18 @@ class MediaAdmin(admin.ModelAdmin):
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="media type", ordering="media_type")
+    def display_media_type(self, obj):
+        return translated_choice_display(obj, "media_type")
+
+    @admin.display(description="state", ordering="state")
+    def display_state(self, obj):
+        return translated_choice_display(obj, "state")
+
+    @admin.display(description="encoding status", ordering="encoding_status")
+    def display_encoding_status(self, obj):
+        return translated_choice_display(obj, "encoding_status")
 
     @admin.display(description="Channel")
     def link_channel(self, obj):
@@ -1195,9 +1215,17 @@ class MediaAdmin(admin.ModelAdmin):
             confirmation = (request.POST.get("confirmation_text") or "").strip()
             entered_tokens = {line.strip() for line in confirmation.splitlines() if line.strip()}
             if entered_tokens != set(expected_tokens):
-                self.message_user(request, "The media ID does not match. Enter the exact media ID.", messages.ERROR)
+                self.message_user(
+                    request,
+                    translate_string(request.LANGUAGE_CODE, "The media ID does not match. Enter the exact media ID."),
+                    messages.ERROR,
+                )
             elif not eligible:
-                self.message_user(request, "No media can be deleted. Change the selection and try again.", messages.ERROR)
+                self.message_user(
+                    request,
+                    translate_string(request.LANGUAGE_CODE, "No media can be deleted. Change the selection and try again."),
+                    messages.ERROR,
+                )
             else:
                 deleted = 0
                 failed = 0
@@ -1238,7 +1266,11 @@ class MediaAdmin(admin.ModelAdmin):
             username = (request.POST.get("new_owner") or "").strip()
             new_user = User.objects.filter(username=username).first() if username else None
             if not new_user:
-                self.message_user(request, "Enter a valid username for the new owner.", messages.ERROR)
+                self.message_user(
+                    request,
+                    translate_string(request.LANGUAGE_CODE, "Enter a valid username for the new owner."),
+                    messages.ERROR,
+                )
             else:
                 changed = 0
                 for media in queryset:
@@ -1607,8 +1639,8 @@ class SubtitleAdmin(admin.ModelAdmin):
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
-    list_display = ["id", "link_media", "status", "add_date", "video_action", "media_trim_style"]
-    list_display_links = ("id", "status")
+    list_display = ["id", "link_media", "display_status", "add_date", "display_video_action", "display_media_trim_style"]
+    list_display_links = ("id", "display_status")
     list_filter = ["status", "video_action", "media_trim_style", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title"]
     list_select_related = ("media",)
@@ -1636,9 +1668,21 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
     def link_media(self, obj):
         return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
 
+    @admin.display(description="status", ordering="status")
+    def display_status(self, obj):
+        return translated_choice_display(obj, "status")
+
+    @admin.display(description="video action", ordering="video_action")
+    def display_video_action(self, obj):
+        return translated_choice_display(obj, "video_action")
+
+    @admin.display(description="media trim style", ordering="media_trim_style")
+    def display_media_trim_style(self, obj):
+        return translated_choice_display(obj, "media_trim_style")
+
 
 class EncodingAdmin(admin.ModelAdmin):
-    list_display = ["get_title", "link_media", "chunk", "profile", "progress", "status", "has_file"]
+    list_display = ["get_title", "link_media", "chunk", "profile", "progress", "display_status", "has_file"]
     list_filter = ["chunk", "profile", "status", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
@@ -1667,7 +1711,12 @@ class EncodingAdmin(admin.ModelAdmin):
     )
 
     def get_action_choices(self, request, default_choices=None):
-        return build_grouped_action_choices(self.get_actions(request), self.action_groups, opts=self.opts)
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            self.action_groups,
+            opts=self.opts,
+            language_code=getattr(request, "LANGUAGE_CODE", None),
+        )
 
     @admin.display(description="Encoding", ordering="media__title")
     def get_title(self, obj):
@@ -1680,6 +1729,10 @@ class EncodingAdmin(admin.ModelAdmin):
     @admin.display(description="Has file", boolean=True)
     def has_file(self, obj):
         return obj.media_encoding_url is not None
+
+    @admin.display(description="status", ordering="status")
+    def display_status(self, obj):
+        return translated_choice_display(obj, "status")
 
     @admin.action(description="Retry failed encodings", permissions=["change"])
     def retry_failed_encodings(self, request, queryset):
@@ -1703,7 +1756,7 @@ class EncodingAdmin(admin.ModelAdmin):
 
 
 class TranscriptionRequestAdmin(admin.ModelAdmin):
-    list_display = ["id", "link_media", "status", "translate_to_english", "add_date"]
+    list_display = ["id", "link_media", "display_status", "translate_to_english", "add_date"]
     list_display_links = ("id", "link_media")
     list_filter = ["status", "translate_to_english", "add_date", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "logs"]
@@ -1730,6 +1783,10 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
         return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+
+    @admin.display(description="status", ordering="status")
+    def display_status(self, obj):
+        return translated_choice_display(obj, "status")
 
 
 class PageAdminForm(forms.ModelForm):
@@ -1772,7 +1829,7 @@ class PageAdmin(admin.ModelAdmin):
         ),
     )
 
-    @admin.display(description="Slug", ordering="slug")
+    @admin.display(description="slug", ordering="slug")
     def link_slug(self, obj):
         if not obj or not obj.slug:
             return "—"
@@ -1840,7 +1897,7 @@ class PlaylistAdmin(admin.ModelAdmin):
 
 
 class MediaPermissionAdmin(admin.ModelAdmin):
-    list_display = ["id", "link_media", "link_user", "link_owner", "permission", "source", "created_at"]
+    list_display = ["id", "link_media", "link_user", "link_owner", "display_permission", "display_source", "created_at"]
     list_display_links = ("id", "link_media")
     list_filter = ["permission", "source", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "user__username", "owner_user__username"]
@@ -1876,6 +1933,14 @@ class MediaPermissionAdmin(admin.ModelAdmin):
     @admin.display(description="Owner", ordering="owner_user__username")
     def link_owner(self, obj):
         return admin_change_link(obj.owner_user, obj.owner_user.username if obj.owner_user_id else None)
+
+    @admin.display(description="permission", ordering="permission")
+    def display_permission(self, obj):
+        return translated_choice_display(obj, "permission")
+
+    @admin.display(description="source", ordering="source")
+    def display_source(self, obj):
+        return translated_choice_display(obj, "source")
 
 
 class LicenseAdmin(admin.ModelAdmin):
@@ -1920,7 +1985,7 @@ class LicenseAdmin(admin.ModelAdmin):
 
 @admin.register(TinyMCEMedia)
 class TinyMCEMediaAdmin(admin.ModelAdmin):
-    list_display = ["original_filename", "file_type", "link_user"]
+    list_display = ["original_filename", "display_file_type", "link_user"]
     list_filter = ["file_type", "uploaded_at"]
     list_select_related = ("user",)
     search_fields = ["original_filename", "user__username"]
@@ -1930,6 +1995,10 @@ class TinyMCEMediaAdmin(admin.ModelAdmin):
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="file type", ordering="file_type")
+    def display_file_type(self, obj):
+        return translated_choice_display(obj, "file_type")
 
 
 admin.site.register(EncodeProfile, EncodeProfileAdmin)
