@@ -20,11 +20,22 @@ MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATI
 
 @admin.register(MediaAction)
 class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
+    """Append-only audit of user/moderation actions. View and delete (or clear reports); never edit."""
+
     list_display = ['display_action', 'link_media', 'link_user', 'action_date', 'remote_ip', 'extra_info']
     list_filter = ['action', 'action_date', ('media', admin.RelatedOnlyFieldListFilter), ('user', admin.RelatedOnlyFieldListFilter)]
     search_fields = ['media__title', 'user__username', 'extra_info']
     list_select_related = ('media', 'user')
-    readonly_fields = ['user', 'media', 'action_date', 'remote_ip', 'session_key', 'link_media', 'link_user']
+    readonly_fields = [
+        'action',
+        'extra_info',
+        'action_date',
+        'remote_ip',
+        'session_key',
+        'link_media',
+        'link_user',
+    ]
+    exclude = ('user', 'media')
     ordering = ('-action_date',)
     date_hierarchy = 'action_date'
     action_form = GroupedActionForm
@@ -49,6 +60,12 @@ class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
             },
         ),
     )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     @admin.display(description="Action", ordering="action")
     def display_action(self, obj):

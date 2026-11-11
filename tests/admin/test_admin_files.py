@@ -557,6 +557,23 @@ class MediaActionAdminTest(TestCase):
     def setUp(self):
         self.client.force_login(self.superuser)
 
+    def test_change_form_is_read_only_audit_record(self):
+        model_admin = admin.site._registry[MediaAction]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertFalse(model_admin.has_change_permission(request))
+        for field in ("action", "extra_info", "action_date", "remote_ip", "session_key"):
+            self.assertIn(field, model_admin.readonly_fields)
+
+        response = self.client.get(reverse("admin:actions_mediaaction_change", args=[self.report.pk]))
+        self.assertEqual(response.status_code, 200)
+        # Model fields render as readonly; object-tools may still use name="action" for the actions select.
+        self.assertContains(response, '<div class="readonly">Report</div>')
+        self.assertContains(response, '<div class="readonly">offensive</div>')
+        self.assertNotContains(response, 'name="extra_info"')
+        self.assertNotContains(response, 'id="id_action"')
+
     def test_extra_info_column_and_clear_related_action(self):
         model_admin = admin.site._registry[MediaAction]
         self.assertIn("extra_info", model_admin.list_display)
@@ -599,6 +616,24 @@ class EncodingAdminTest(TestCase):
         model_admin = admin.site._registry[Encoding]
         self.assertEqual(model_admin.get_title(encoding), str(encoding))
         self.assertFalse(model_admin.has_file(encoding))
+
+    def test_change_form_fields_are_read_only(self):
+        user = make_user("files_encoding_readonly", is_superuser=True)
+        media = create_media(user, title="encoding readonly media")
+        encoding = Encoding.objects.create(media=media, profile=EncodeProfile.objects.first(), status="pending")
+        model_admin = admin.site._registry[Encoding]
+        request = RequestFactory().get("/admin/")
+        request.user = user
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertTrue(model_admin.has_change_permission(request))
+        for field in ("profile", "status", "progress", "chunk", "has_file", "link_media"):
+            self.assertIn(field, model_admin.readonly_fields)
+
+        self.client.force_login(user)
+        response = self.client.get(reverse("admin:files_encoding_change", args=[encoding.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="status"')
+        self.assertNotContains(response, 'name="profile"')
 
     def test_retry_failed_encodings_action(self):
         user = make_user("files_encoding_retry", is_superuser=True)
@@ -1123,11 +1158,25 @@ class VideoTrimRequestAdminTest(TestCase):
         # Media column still links to the media, separately from the request change link.
         self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
 
-    def test_change_form_can_update_status_and_timestamps(self):
+    def test_change_form_is_read_only(self):
+        model_admin = admin.site._registry[VideoTrimRequest]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertFalse(model_admin.has_change_permission(request))
+        for field in ("status", "video_action", "media_trim_style", "timestamps", "add_date", "link_media"):
+            self.assertIn(field, model_admin.readonly_fields)
+
+        response = self.client.get(reverse("admin:files_videotrimrequest_change", args=[self.request.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="status"')
+        self.assertNotContains(response, 'name="video_action"')
+        self.assertNotContains(response, 'name="timestamps"')
+
+        # POST must not mutate the request snapshot.
         response = self.client.post(
             reverse("admin:files_videotrimrequest_change", args=[self.request.pk]),
             {
-                "media": self.media.pk,
                 "status": "fail",
                 "video_action": "save_new",
                 "media_trim_style": "precise",
@@ -1135,12 +1184,12 @@ class VideoTrimRequestAdminTest(TestCase):
                 "_continue": "Save and continue editing",
             },
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertIn(response.status_code, (200, 403))
         self.request.refresh_from_db()
-        self.assertEqual(self.request.status, "fail")
-        self.assertEqual(self.request.video_action, "save_new")
-        self.assertEqual(self.request.media_trim_style, "precise")
-        self.assertEqual(self.request.timestamps, [{"startTime": "00:00:01.000", "endTime": "00:00:02.000"}])
+        self.assertEqual(self.request.status, "initial")
+        self.assertEqual(self.request.video_action, "replace")
+        self.assertEqual(self.request.media_trim_style, "no_encoding")
+        self.assertEqual(self.request.timestamps, [{"startTime": "00:00:00.000", "endTime": "00:00:01.000"}])
 
     def test_media_change_shows_trim_requests_tab(self):
         response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
@@ -1169,28 +1218,40 @@ class TranscriptionRequestAdminTest(TestCase):
         model_admin = admin.site._registry[TranscriptionRequest]
         self.assertEqual(model_admin.list_display_links, ("id", "link_media"))
         self.assertFalse(getattr(model_admin, "list_editable", ()))
-        self.assertNotIn("logs", model_admin.readonly_fields)
+        self.assertIn("logs", model_admin.readonly_fields)
 
         response = self.client.get(reverse("admin:files_transcriptionrequest_changelist"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_transcriptionrequest_change", args=[self.request.pk]))
         self.assertNotContains(response, 'name="form-0-status"')
 
-    def test_change_form_can_update_status_and_logs(self):
+    def test_change_form_is_read_only(self):
+        model_admin = admin.site._registry[TranscriptionRequest]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertFalse(model_admin.has_change_permission(request))
+        for field in ("status", "translate_to_english", "logs", "add_date", "link_media"):
+            self.assertIn(field, model_admin.readonly_fields)
+
+        response = self.client.get(reverse("admin:files_transcriptionrequest_change", args=[self.request.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="status"')
+        self.assertNotContains(response, 'name="logs"')
+
         response = self.client.post(
             reverse("admin:files_transcriptionrequest_change", args=[self.request.pk]),
             {
-                "media": self.media.pk,
                 "status": "fail",
                 "translate_to_english": "",
                 "logs": "manual failure note",
                 "_continue": "Save and continue editing",
             },
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertIn(response.status_code, (200, 403))
         self.request.refresh_from_db()
-        self.assertEqual(self.request.status, "fail")
-        self.assertEqual(self.request.logs, "manual failure note")
+        self.assertEqual(self.request.status, "pending")
+        self.assertEqual(self.request.logs, "waiting")
 
     def test_media_change_shows_caption_request_inline(self):
         response = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))

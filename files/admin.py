@@ -1672,13 +1672,15 @@ class SubtitleAdmin(admin.ModelAdmin):
 
 
 class VideoTrimRequestAdmin(admin.ModelAdmin):
+    """Pipeline request snapshot. Inspect or delete; do not rewrite request params or status."""
+
     list_display = ["id", "link_media", "display_status", "add_date", "display_video_action", "display_media_trim_style"]
     list_display_links = ("id", "display_status")
     list_filter = ["status", "video_action", "media_trim_style", "add_date"]
     search_fields = ["media__title"]
     list_select_related = ("media",)
-    autocomplete_fields = ("media",)
-    readonly_fields = ("add_date", "link_media")
+    readonly_fields = ("status", "video_action", "media_trim_style", "timestamps", "add_date", "link_media")
+    exclude = ("media",)
     ordering = ("-add_date",)
     fieldsets = (
         (
@@ -1691,11 +1693,17 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
         (
             "Related",
             {
-                "fields": ("link_media", "media"),
+                "fields": ("link_media",),
                 "classes": ("tab", "related-links-tab"),
             },
         ),
     )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
@@ -1715,12 +1723,14 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
 
 
 class EncodingAdmin(admin.ModelAdmin):
+    """Encoding job rows are pipeline-owned. Inspect or retry/delete; do not hand-edit state."""
+
     list_display = ["get_title", "link_media", "chunk", "profile", "progress", "display_status", "has_file"]
     list_filter = ["chunk", "profile", "status"]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
-    autocomplete_fields = ("media", "profile")
-    readonly_fields = ("link_media", "has_file")
+    readonly_fields = ("profile", "status", "progress", "chunk", "has_file", "link_media")
+    exclude = ("media",)
     actions = ["retry_failed_encodings"]
     action_form = GroupedActionForm
     action_groups = [
@@ -1738,11 +1748,14 @@ class EncodingAdmin(admin.ModelAdmin):
         (
             "Related",
             {
-                "fields": ("link_media", "media"),
+                "fields": ("link_media",),
                 "classes": ("tab", "related-links-tab"),
             },
         ),
     )
+
+    def has_add_permission(self, request):
+        return False
 
     def get_action_choices(self, request, default_choices=None):
         return build_grouped_action_choices(
@@ -1790,13 +1803,15 @@ class EncodingAdmin(admin.ModelAdmin):
 
 
 class TranscriptionRequestAdmin(admin.ModelAdmin):
+    """Whisper caption request snapshot. Inspect or delete; do not rewrite request params or logs."""
+
     list_display = ["id", "link_media", "display_status", "translate_to_english", "add_date"]
     list_display_links = ("id", "link_media")
     list_filter = ["status", "translate_to_english", "add_date"]
     search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
-    autocomplete_fields = ("media",)
-    readonly_fields = ("add_date", "link_media")
+    readonly_fields = ("status", "translate_to_english", "logs", "add_date", "link_media")
+    exclude = ("media",)
     ordering = ("-add_date",)
     fieldsets = (
         (
@@ -1809,11 +1824,17 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
         (
             "Related",
             {
-                "fields": ("link_media", "media"),
+                "fields": ("link_media",),
                 "classes": ("tab", "related-links-tab"),
             },
         ),
     )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
